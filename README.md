@@ -1,7 +1,5 @@
 # Baobab
 
-[![CircleCI](https://circleci.com/gh/deep-learning-indaba/Baobab.svg?style=svg)](https://circleci.com/gh/deep-learning-indaba/Baobab)
-
 Deep Learning Indaba applications and selection web application.
 
 # Structure
