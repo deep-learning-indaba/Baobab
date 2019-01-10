@@ -6,6 +6,9 @@ Deep Learning Indaba applications and selection web-app.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
+## Tasks
+
+Tasks are being managed on trello and here is the link to the board : https://trello.com/baobab_2019
 
 ## License
 
