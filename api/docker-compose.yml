@@ -1,0 +1,21 @@
+redis:
+    image: redis
+    ports:
+        - 6379:6379
+db:
+    image: orchardup/postgresql
+    ports:
+        - 5432:5432
+web:
+    build: .
+    command: python run.py runserver -h 0.0.0.0 -p 5000
+    volumes:
+        - .:/code
+    ports:
+        - 5000:5000
+    links:
+        - db
+    environment:
+        DEBUG: 'True'
+        SECRET_KEY: asdklfjeoja039rjdlkjfaoi3rdk
+        
