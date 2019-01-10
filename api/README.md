@@ -14,8 +14,8 @@ The development environment uses [Docker](http://www.docker.com/) and [Docker Co
 
 With Docker/Compose installed, use the following steps to launch for the first time:
 
-* `docker-compose up` to start the web app. This will download and provision two containers: one running PostgreSQL and one running the Flask app. This will take a while, but once it completes subsequent launches will be much faster. (NOTE: if you are using the Vagrant VM that was provisioned in the first step, change into the `/vagrant` directory before running `docker-compose up`.)
-* When `docker-compose up` completes, the app should be accessible at [http://127.0.0.1:5000](http://127.0.0.1:5000). (NOTE: if running commands within the Vagrant VM that was provisioned in the first step, the app can be found at: [http://192.168.13.81:5000](http://192.168.13.81:5000))
+* `docker-compose up` to start the web app. This will download and provision two containers: one running PostgreSQL and one running the Flask app. This will take a while, but once it completes subsequent launches will be much faster.
+* When `docker-compose up` completes, the app should be accessible at [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 
 ## Environment Variables

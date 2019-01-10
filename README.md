@@ -1,6 +1,11 @@
 # Baobab
 
-Deep Learning Indaba applications and selection web-app.
+Deep Learning Indaba applications and selection web application.
+
+# Structure
+
+- `api/` contains the flask-based web api
+- `webapp/` contains the react front-end
 
 ## Contributing
 
