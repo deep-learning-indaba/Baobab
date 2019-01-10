@@ -1,4 +1,4 @@
-from flask.ext.restful import reqparse
+from flask_restful import reqparse
 
 
 class SignupLoginMixin(object):

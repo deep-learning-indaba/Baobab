@@ -1,10 +1,10 @@
 from flask import Flask
-from flask.ext import restful
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.bcrypt import Bcrypt
-from flask.ext.migrate import Migrate, MigrateCommand
-from flask.ext.script import Manager
-from flask_redis import Redis
+import flask_restful as restful
+from flask_sqlalchemy import SQLAlchemy
+from flask_bcrypt import Bcrypt
+from flask_migrate import Migrate, MigrateCommand
+from flask_script import Manager
+from flask_redis import FlaskRedis
 
 
 app = Flask(__name__)
@@ -13,7 +13,7 @@ print(app.config['SQLALCHEMY_DATABASE_URI'])
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-redis = Redis(app)
+redis = FlaskRedis(app)
 
 
 import routes
