@@ -54,7 +54,7 @@ yarn test
 
 
 ## Adding Code
-Add a new folder for each component/container/page. Make the name of the folder, the name of what the item you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
+Add a new folder for each component/container/page. Name the folder according to the item/feature you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
 
 In each item folder, create a `[item].js`, `[item].css` and `__tests__/[item].test.js`.
 
