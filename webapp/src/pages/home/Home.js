@@ -6,7 +6,7 @@ class Home extends Component {
   render() {
     return (
       <div >
-          <img src={logo} className="Background" alt="logo" />
+          <img src={logo} className="Logo" alt="logo" />
       </div>
     );
   }

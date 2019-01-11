@@ -1,4 +1,6 @@
-.Background{
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+.Logo{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 10px;
 }
