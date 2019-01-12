@@ -44,3 +44,35 @@ yarn start
 ```
 yarn test
 ```
+
+## Project Structure
+- src
+  - components
+  - containers
+  - images
+  - pages
+
+
+## Adding Code
+Add a new folder for each component/container/page. Name the folder according to the item/feature you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
+
+In each item folder, create a `[item].js`, `[item].css` and `__tests__/[item].test.js`.
+
+## Adding Tests
+We are using Jest + Enzyme as a testing framework. Read this [article](https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f), which explains how to use jest and enzyme. Note we are not doing snapshot testing - simply testing rendering, props and events.
+
+Example
+```javascript
+import React from 'react';
+import {shallow} from 'enzyme';
+import Home from '../Home.js';
+
+test('Check if Home component renders.', () => {
+  // Render Home main component.
+  const wrapper = shallow(<Home />);
+  expect(wrapper.length).toEqual(1);
+});
+```
+## Styling
+We use react-bootstrap as a component library, details and components can be found [here](https://react-bootstrap.github.io/).
+

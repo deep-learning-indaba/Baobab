@@ -7,8 +7,8 @@ db:
     ports:
         - 5432:5432
 web:
-    build: .
-    command: python run.py runserver -h 0.0.0.0 -p 5000
+    build: ./api
+    command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
     volumes:
         - .:/code
     ports:
@@ -18,4 +18,13 @@ web:
     environment:
         DEBUG: 'True'
         SECRET_KEY: asdklfjeoja039rjdlkjfaoi3rdk
-        
+
+webapp:
+    build: ./webapp
+    volumes:
+        - '.:/usr/src/app'
+        - '/usr/src/app/node_modules'
+    ports:
+        - '8080:80'
+    environment:
+        - NODE_ENV=development
