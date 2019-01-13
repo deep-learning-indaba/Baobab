@@ -1,19 +1,14 @@
 version: 2.1
 jobs:
   build:
-    docker:
-      # It's a standard image. Not sure if I can omite
-      - image: circleci/python:3.4-jessie-browsers-legacy 
-
-    environment:
-      TEST_RESULTS: /tmp/test-results
+    machine: true
+      - image: circleci/classic:latest
 
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Start container and verify it's working
           command: |
             docker-compose up -d
             docker-compose run web ls
-            docker-compose run web nosetests -w /code/api
+            docker-compose run web nosetests -v
