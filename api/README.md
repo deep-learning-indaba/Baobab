@@ -44,7 +44,7 @@ There are just a couple of configurations managed as environment variables. In t
 Tests are ran with [nose](https://nose.readthedocs.org/en/latest/) from inside the `docker-compose` web container:
 
 ```
-$ docker-compose run web nosetests -v
+$ docker-compose run web nosetests
 ```
 
 
