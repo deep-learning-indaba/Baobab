@@ -7,8 +7,7 @@ jobs:
       - checkout
       - run:
           name: Start container and run tests
-          command: |
-            docker-compose up -d
+          command: docker-compose up -d
       - run: 
           name: Run migrations
           command: |
@@ -17,4 +16,4 @@ jobs:
             docker-compose run web python api/run.py db upgrade --directory api/migrations
       - run:
           name: Run tests
-            docker-compose run web nosetests -v
+          command: docker-compose run web nosetests -v
