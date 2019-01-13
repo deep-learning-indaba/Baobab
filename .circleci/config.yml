@@ -16,11 +16,4 @@ jobs:
           command: |
             set -x
             docker-compose up -d
-            docker-compose run web nosetests -v
-
-      - store_artifacts:
-          path: /tmp/test-results
-          destination: raw-test-output
-
-      - store_test_results:
-          path: /tmp/test-results
+            docker-compose run web nosetests -w api/
