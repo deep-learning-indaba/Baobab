@@ -16,4 +16,5 @@ jobs:
           command: |
             set -x
             docker-compose up -d
-            docker-compose run web nosetests
+            docker-compose run web nosetests -w ./api/
+            docker-compose run web nosetests -c setup.cfg
