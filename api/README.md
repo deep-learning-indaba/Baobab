@@ -44,7 +44,7 @@ There are just a couple of configurations managed as environment variables. In t
 Tests are ran with [nose](https://nose.readthedocs.org/en/latest/) from inside the `docker-compose` web container:
 
 ```
-$ docker-compose run web nosetests -v
+$ docker-compose run web nosetests
 ```
 
 
@@ -53,8 +53,8 @@ $ docker-compose run web nosetests -v
 
 Migrations for the provided models are part of the seed project. To generate new migrations use `Flask-Migrate`:
 
-    $ docker-compose run web python run.py db migrate
-    $ docker-compose run web python run.py db upgrade
+    $ docker-compose run web python run.py db migrate --directory api/migrations
+    $ docker-compose run web python run.py db upgrade --directory api/migrations
 
 
 ## API Routes
