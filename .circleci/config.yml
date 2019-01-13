@@ -1,9 +1,25 @@
 version: 2.1
+jobs:
+  build:
+    docker:
+      # It's a standard image. Not sure if I can omite
+      - image: circleci/python:3.4-jessie-browsers-legacy 
 
-orbs:
-    hello: circleci/hello-build@0.0.7 # uses the circleci/buildpack-deps Docker image
+    environment:
+      TEST_RESULTS: /tmp/test-results
 
-workflows:
-    "Hello Workflow":
-        jobs:
-          - hello/hello-build
+    steps:
+      - checkout
+      - run:
+          name: Start container and verify it's working
+          command: |
+            set -x
+            docker-compose up -d
+            docker-compose run web nosetests -v
+
+      - store_artifacts:
+          path: /tmp/test-results
+          destination: raw-test-output
+
+      - store_test_results:
+          path: /tmp/test-results
