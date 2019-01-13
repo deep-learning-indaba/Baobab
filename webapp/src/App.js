@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Link, NavLink } from 'react-router-dom';
 import logo from './images/logo-32x32-white.png'
 import Home from './pages/home';
+import Login from "./pages/login";
 import './App.css';
 
 class App extends Component {
@@ -20,7 +21,10 @@ class App extends Component {
             <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav">
                 <li class="nav-item active">
-                  <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+                  <NavLink to="/" activeClassName="nav-link active" class="nav-link">Home <span class="sr-only">(current)</span></NavLink>
+                </li>
+                <li class="nav-item">
+                  <NavLink to="/login" activeClassName="nav-link active" class="nav-link">Login</NavLink>
                 </li>
               </ul>
             </div>
@@ -28,6 +32,7 @@ class App extends Component {
 
           <div className="Body">
             <Route exact path="/" component={Home} />
+            <Route exact path="/login" component={Login} />
           </div>
         </div>
       </Router>
