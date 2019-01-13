@@ -9,5 +9,4 @@ jobs:
           name: Start container and run tests
           command: |
             docker-compose up -d
-            docker-compose run web ls
             docker-compose run web nosetests -v
