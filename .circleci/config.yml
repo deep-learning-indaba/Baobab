@@ -1,9 +1,19 @@
 version: 2.1
+jobs:
+  build:
+    machine: true
 
-orbs:
-    hello: circleci/hello-build@0.0.7 # uses the circleci/buildpack-deps Docker image
-
-workflows:
-    "Hello Workflow":
-        jobs:
-          - hello/hello-build
+    steps:
+      - checkout
+      - run:
+          name: Start container
+          command: docker-compose up -d
+      - run: 
+          name: Run migrations
+          command: |
+            docker-compose run web python api/run.py db upgrade --directory api/migrations
+            docker-compose run web python api/run.py db downgrade --directory api/migrations
+            docker-compose run web python api/run.py db upgrade --directory api/migrations
+      - run:
+          name: Run tests
+          command: docker-compose run web nosetests -v
