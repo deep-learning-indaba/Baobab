@@ -1,6 +1,7 @@
 export const userService = {
     login,
     logout,
+    create
 };
 
 export function authHeader() {
@@ -14,14 +15,34 @@ export function authHeader() {
     }
 }
 
-function login(username, password) {
+function login(email, password) {
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email: email, password: password })
     };
 
-    return fetch(`http://localhost:5000/api/v1/user/authenticate`, requestOptions)
+    return fetch(`http://localhost:5000/api/v1/authenticate`, requestOptions)
+        .then(handleResponse)
+        .then(user => {
+            // login successful if there's a user in the response
+            if (user) {
+                // store user details in local storage 
+                localStorage.setItem('user', JSON.stringify(user));
+            }
+
+            return user;
+        });
+}
+
+function create(email, password) {
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+    };
+
+    return fetch(`http://localhost:5000/api/v1/user`, requestOptions)
         .then(handleResponse)
         .then(user => {
             // login successful if there's a user in the response

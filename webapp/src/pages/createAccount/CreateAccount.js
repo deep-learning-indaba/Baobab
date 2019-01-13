@@ -1,15 +1,15 @@
 import React, { Component } from "react";
 import { userService } from '../../services';
-import { Link } from 'react-router-dom';
-import "./Login.css";
+import "./CreateAccount.css";
 
-export default class Login extends Component {
+export default class CreateAccount extends Component {
     constructor(props) {
       super(props);
   
       this.state = {
         email: "",
         password: "",
+        confirmPassword: "",
         submitted: false,
         loading: false,
         error: ''
@@ -29,9 +29,14 @@ export default class Login extends Component {
     handleSubmit = event => {
       event.preventDefault();
       this.setState({ submitted: true });
+
+      if (this.state.password != this.state.confirmPassword) {
+        return;
+      }
+
       this.setState({ loading: true });
 
-      userService.login(this.state.email, this.state.password)
+      userService.create(this.state.email, this.state.password)
         .then(
             user => {
                 const { from } = this.props.location.state || { from: { pathname: "/" } };
@@ -42,18 +47,25 @@ export default class Login extends Component {
     }
   
     render() {
-      const { email, password, submitted, loading, error } = this.state;
+      const { email, password, confirmPassword, submitted, loading, error } = this.state;
 
       return (
         <div className="Login">
           <form onSubmit={this.handleSubmit}>
             <div class="form-group">
-                <label for="exampleInputEmail1">Email address</label>
+                <label for="email">Email address</label>
                 <input type="email" class="form-control" id="email" placeholder="Enter email" onChange={this.handleChange} value={this.state.email} autoFocus="true"/>
             </div>
             <div class="form-group">
-                <label for="exampleInputPassword1">Password</label>
+                <label for="password">Password</label>
                 <input type="password" class="form-control" id="password" placeholder="Password" onChange={this.handleChange} value={this.state.password}/>
+            </div>
+            <div className={'form-group' + (submitted && (password != confirmPassword) ? ' invalid' : '')}>
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" onChange={this.handleChange} value={this.state.confirmPassword}/>
+                {submitted && (password != confirmPassword) &&
+                            <div className="form-text text-danger">The passwords do not match</div>
+                        }
             </div>
             <button type="submit" class="btn btn-primary" disabled={!this.validateForm() || loading}>Login</button>
             {loading &&
@@ -63,7 +75,7 @@ export default class Login extends Component {
               <div className={'alert alert-danger'}>{error}</div>
             }
           </form>
-          <Link to="/createAccount">Create an account</Link>
+          
         </div>
       );
     }

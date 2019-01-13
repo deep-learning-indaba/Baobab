@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link, NavLink } from 'react-router-dom';
 import logo from './images/logo-32x32-white.png'
 import Home from './pages/home';
-import Login from "./pages/login";
+import Login from './pages/login';
+import CreateAccount from './pages/createAccount'
+import { PrivateRoute } from './components';
 import './App.css';
 
 class App extends Component {
@@ -31,8 +33,9 @@ class App extends Component {
           </nav>
 
           <div className="Body">
-            <Route exact path="/" component={Home} />
+            <PrivateRoute exact path="/" component={Home} />
             <Route exact path="/login" component={Login} />
+            <Route exact path="/createAccount" component={CreateAccount} />
           </div>
         </div>
       </Router>
