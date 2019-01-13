@@ -10,7 +10,7 @@ from flask_redis import FlaskRedis
 
 app = Flask(__name__)
 app.config.from_object('config')
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:8080"}}, supports_credentials=True)
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 print(app.config['SQLALCHEMY_DATABASE_URI'])
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
@@ -19,7 +19,6 @@ redis = FlaskRedis(app)
 
 
 import routes
-
 
 migrate = Migrate(app, db)
 
