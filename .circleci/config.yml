@@ -14,7 +14,6 @@ jobs:
       - run:
           name: Start container and verify it's working
           command: |
-            set -x
             docker-compose up -d
             docker-compose run web ls
             docker-compose run web nosetests -w api/
