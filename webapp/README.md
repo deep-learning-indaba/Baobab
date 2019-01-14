@@ -47,16 +47,18 @@ yarn test
 
 ## Project Structure
 - src
-  - components
-  - containers
   - images
   - pages
+    - components
+  - services
 
 
 ## Adding Code
-Add a new folder for each component/container/page. Name the folder according to the item/feature you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
+Add a new folder for each component/page. Name the folder according to the item/feature you are building. Do not include the item type in the name. Example: `Home` **not** `HomePage`.
 
-In each item folder, create a `[item].js`, `[item].css` and `__tests__/[item].test.js`.
+In each item folder, create a `[item].js`, `[item].css` and `__tests__/[item].test.js`. Also create a  `components` folder where you will be break up parts of a page into re-usable components. A page should just be a collection of components, with each component (as far as possible) handling its own logic.
+
+When wanting to call a service, create a folder in the `services` folder with the name of the service and `[service].js` that handles the service calls. 
 
 ## Adding Tests
 We are using Jest + Enzyme as a testing framework. Read this [article](https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f), which explains how to use jest and enzyme. Note we are not doing snapshot testing - simply testing rendering, props and events.
