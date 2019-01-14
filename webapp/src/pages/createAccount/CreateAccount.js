@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { userService } from '../../services';
+import { userService } from '../../services/user';
 import "./CreateAccount.css";
 
 export default class CreateAccount extends Component {
