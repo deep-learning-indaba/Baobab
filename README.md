@@ -13,7 +13,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Tasks
 
-Tasks are being managed on trello and here is the link to the board : https://trello.com/baobab_2019
+Tasks are being managed in the Issues and Projects tabs. 
 
 ## License
 
