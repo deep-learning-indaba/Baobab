@@ -1,8 +1,9 @@
 import React, { Component } from "react";
 import { userService } from '../../../services/user';
 import { Link } from 'react-router-dom';
+import { withRouter } from "react-router";
 
-export default class LoginForm extends Component {
+class LoginForm extends Component {
   constructor(props) {
       super(props);
   
@@ -65,3 +66,5 @@ export default class LoginForm extends Component {
       );
     }
   }
+
+  export default withRouter(LoginForm)

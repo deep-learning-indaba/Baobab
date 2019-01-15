@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { userService } from '../../../services/user';
-
-export default class CreateAccountForm extends Component {
+import { withRouter } from "react-router";
+class CreateAccountForm extends Component {
     constructor(props) {
       super(props);
   
@@ -79,3 +79,6 @@ export default class CreateAccountForm extends Component {
       );
     }
   }
+
+
+export default withRouter(CreateAccountForm)
