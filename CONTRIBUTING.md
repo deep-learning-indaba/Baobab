@@ -4,7 +4,10 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Pull Request Process
 
-- TBC
+- Assign yourself to an existing issue or create a new issue for the bug/feature you are working on
+- Create a branch for to make your changes
+- Create a pull request to merge your changes into **develop**. 
+- Your pull request will need to be approved by Jade, Kale-ab or Avishkar before it can be merged.
 
 ## Code of Conduct
 
