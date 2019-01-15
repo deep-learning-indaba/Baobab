@@ -13,7 +13,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Tasks
 
-Tasks are being managed in the Issues and Projects tabs. 
+Tasks are being managed in the Issues and Projects tabs. If you want to work on a particular issue, please assign yourself to it. Each issue should include a "definition of done" checklist that should be met before submitting a pull request to merge into the develop branch. 
 
 ## Running with Docker
 The database, back-end and front-end can be brought up together with
