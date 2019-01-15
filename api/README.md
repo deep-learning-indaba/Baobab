@@ -53,8 +53,8 @@ $ docker-compose run web nosetests
 
 Migrations for the provided models are part of the seed project. To generate new migrations use `Flask-Migrate`:
 
-    $ docker-compose run web python run.py db migrate --directory api/migrations
-    $ docker-compose run web python run.py db upgrade --directory api/migrations
+    $ docker-compose run web python ./api/run.py db migrate --directory api/migrations
+    $ docker-compose run web python ./api/run.py db upgrade --directory api/migrations
 
 
 ## API Routes
