@@ -54,6 +54,8 @@ It will take a fair bit of time the first time you do it, subsequently it will b
 
 6. Launch the containers using ```docker-compose up``` - you should see messages like "Starting baobab_webapp_1 ... done". You can then navigate to the application in your browser at ```http://localhost:8080```. The back-end API can be found at ```http://localhost:5000``` (note, you won't see anything if you navigate to localhost:5000 in your browser) 
 
+7. The first time you run the app, you may need to run the **migrations** to ensure that all the tables are created in the database. While the app is running (after following the previous step), run the following in another terminal/command prompt: ```docker-compose run web python ./app/api/run.py db upgrade --directory app/api/migrations```
+
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
