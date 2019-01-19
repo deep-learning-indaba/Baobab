@@ -17,14 +17,17 @@ Tasks are being managed in the Issues and Projects tabs. If you want to work on 
 
 ## Technology Stack
 **Backend**
-* **Language**: Python
-* **Database**: PostgreSQL
-* **ORM**: SQLAlchemy
-* **REST API**: Flask
+* **Language**: [Python](https://www.python.org/)
+* **Database**: [PostgreSQL](https://www.postgresql.org/)
+* **ORM**: [SQLAlchemy](https://www.sqlalchemy.org/)
+* **REST API**: [Flask](http://flask.pocoo.org/)
 
 **Frontend**
-* **Components**: ReactJS
-* **CSS**: Bootstrap 4
+* **Language**: [Javascript](https://developer.mozilla.org/bm/docs/Web/JavaScript)
+* **Components**: [ReactJS](https://reactjs.org/)
+* **CSS**: [Bootstrap 4](https://getbootstrap.com/)
+
+You don't need to be familar with all of these technologies to work on the project. We've tried to make the application decoupled, especially the front-end and back-end. If you want to work on a front-end task, you need to know a little Javascript, ReactJS and Bootstrap, but don't need to know anything about Flask/SQLAlchemy etc!  
 
 ## Running with Docker
 We are using Docker which means you don't need to install any of the dependencies on your local machine (except for docker itself). If you are already familiar with Docker and the technologies listed above, you can clone the repository to you local machine and bring up the database, back-end and front-end together with:
@@ -35,7 +38,7 @@ We are using Docker which means you don't need to install any of the dependencie
 
 The front-end will then be available at localhost:8080 and the backend API at localhost:5000
 
-If you are not familiar with these technologies, here is a more detailed description:
+If you are not familiar with this style of development, here is a more detailed description:
 
 ## Getting Started (Detailed)
 1. Make sure you have the following installed on your machine:
