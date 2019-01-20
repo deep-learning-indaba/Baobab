@@ -4,6 +4,7 @@ import logo from './images/logo-32x32-white.png'
 import Home from './pages/home';
 import Login from './pages/login';
 import CreateAccount from './pages/createAccount'
+import ApplicationForm from './pages/applicationForm'
 import { PrivateRoute } from './components';
 import './App.css';
 
@@ -28,6 +29,9 @@ class App extends Component {
                 <li class="nav-item">
                   <NavLink to="/login" activeClassName="nav-link active" class="nav-link">Login</NavLink>
                 </li>
+                <li class="nav-item">
+                  <NavLink to="/applicationForm" activeClassName="nav-link active" class="nav-link">Apply</NavLink>
+                </li>
               </ul>
             </div>
           </nav>
@@ -36,6 +40,7 @@ class App extends Component {
             <PrivateRoute exact path="/" component={Home} />
             <Route exact path="/login" component={Login} />
             <Route exact path="/createAccount" component={CreateAccount} />
+            <Route exact path="/applicationForm" component={ApplicationForm} />
           </div>
         </div>
       </Router>
