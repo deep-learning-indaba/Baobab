@@ -1,3 +1,3 @@
-import ApplicationForm from './components/ApplicationForm.js';
+import Application from './Application.js';
 
-export default ApplicationForm;
+export default Application;

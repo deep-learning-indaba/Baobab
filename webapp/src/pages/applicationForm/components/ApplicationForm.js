@@ -1,6 +1,33 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
+function Section (props) {
+    return (
+        <div class="row">
+            <div class="col">
+                <h2>{props.name}</h2>
+                <p>{props.description}</p>
+                {props.questions.map(function(question) {
+                    return (
+                        <p>{question.description}</p>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
+function Confirmation(props) {
+    return (
+        <div class="row">
+            <div class="col">
+                <h2>Confirmation</h2>
+                <p>Are you sure the answers are correct?</p>
+            </div>
+        </div>
+    )
+}
+
 class ApplicationForm extends Component {
     constructor(props) {
         super(props);
@@ -55,17 +82,41 @@ class ApplicationForm extends Component {
         })
     }
 
+    handleSubmit = event => {
+        event.preventDefault();
+        // Get the values from the form
+        // Submit using the applicationFormService
+    }
+
     render() {
         let step = this.state.currentStep;
+        let numSteps = this.state.formSpec.sections.length;
+        var style = {
+            width : (step / (numSteps+1) * 100) + '%'
+        }
+        let currentSection = step <= numSteps ? this.state.formSpec.sections[step-1] : null;
         return (
-            <div class="">
-                {this.state.formSpec.sections.map(function(section) {
-                    return (
-                        <h2>Section {section.name}<br/><small>{section.description}</small></h2>
-                    )
-                })
+            <form onSubmit={this.handleSubmit}>
+                <span className="progress-step">{currentSection ? currentSection.name : "Confirmation"}</span>
+                <progress className="progress" style={style}></progress>
+                
+                {currentSection && 
+                    <Section name={currentSection.name} description={currentSection.description} questions={currentSection.questions} />
                 }
-            </div>
+                {!currentSection &&
+                    <Confirmation/>
+                }
+                
+                {step > 1 &&
+                    <button type="button" class="btn btn-secondary" onClick={this.prevStep}>Previous</button>
+                }
+                {step <= numSteps &&
+                    <button type="button" class="btn btn-primary" onClick={this.nextStep}>Next</button>
+                }
+                {step > numSteps &&
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                }
+            </form>
         )
     }
 

@@ -4,7 +4,7 @@ import logo from './images/logo-32x32-white.png'
 import Home from './pages/home';
 import Login from './pages/login';
 import CreateAccount from './pages/createAccount'
-import ApplicationForm from './pages/applicationForm'
+import Application from './pages/applicationForm'
 import { PrivateRoute } from './components';
 import './App.css';
 
@@ -36,11 +36,11 @@ class App extends Component {
             </div>
           </nav>
 
-          <div className="Body">
+          <div className="Body container">
             <PrivateRoute exact path="/" component={Home} />
             <Route exact path="/login" component={Login} />
             <Route exact path="/createAccount" component={CreateAccount} />
-            <Route exact path="/applicationForm" component={ApplicationForm} />
+            <Route exact path="/applicationForm" component={Application} />
           </div>
         </div>
       </Router>
