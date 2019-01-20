@@ -53,11 +53,20 @@ If you are not familiar with this style of development, here is a more detailed 
 4. Navigate to the Baobab folder (```cd Baobab```)
 
 5. Build the containers using ```docker-compose build``` -  this will build the front-end, back-end and database together.
-It will take a fair bit of time the first time you do it, subsequently it will be much faster! If you get an error about "apt-get update -qq", run ```curl -sSL https://get.docker.com/ | sh``` and then rerun the ```docker-compose build``` command. If you get any other errors at this step, please get in touch! 
+It will take a fair bit of time the first time you do it, subsequently it will be much faster. If you get any errors, check the **troubleshooting** section below. If you get any other errors at this step, please get in touch!  
 
 6. Launch the containers using ```docker-compose up``` - you should see messages like "Starting baobab_webapp_1 ... done". You can then navigate to the application in your browser at ```http://localhost:8080```. The back-end API can be found at ```http://localhost:5000``` (note, you won't see anything if you navigate to localhost:5000 in your browser) 
 
 7. The first time you run the app, you may need to run the **migrations** to ensure that all the tables are created in the database. While the app is running (after following the previous step), run the following in **another terminal/command prompt**: ```docker-compose run web python ./api/run.py db upgrade --directory api/migrations```
+
+## Troubleshooting
+Common errors you may get when running the ```docker-compose build``` or ```docker-compose up``` commands.
+
+|Error|Resolution|
+|-----|----------|
+|Error about "apt-get update -qq" failing | Run `curl -sSL https://get.docker.com/ \| sh` and then rerun the ```docker-compose build``` command.|
+|driver failed programming external connectivity on endpoint <IP Address> | This is a common issue on Windows 10, try stopping all docker containers with ```docker stop $(docker ps -a -q)``` then restart docker on your machine and try again. See [here](https://github.com/docker/for-win/issues/573) for more information|
+
 
 ## License
 
