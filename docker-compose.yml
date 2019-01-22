@@ -18,6 +18,12 @@ web:
     environment:
         DEBUG: 'True'
         SECRET_KEY: asdklfjeoja039rjdlkjfaoi3rdk
+        SMTP_USERNAME: __filler__
+        SMTP_PASSWORD: __filler__
+        SMTP_SENDER_NAME: __filler__
+        SMTP_SENDER_EMAIL: __filler__
+        SMTP_HOST: __filler__
+        SMTP_PORT: __filler__
 
 webapp:
     build: ./webapp

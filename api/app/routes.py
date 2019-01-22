@@ -1,6 +1,6 @@
 from app import rest_api
 
-from app.users import api as users_api
+from users import api as users_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
