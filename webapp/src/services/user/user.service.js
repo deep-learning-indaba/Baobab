@@ -1,4 +1,5 @@
 import axios from 'axios';
+const baseUrl = process.env.REACT_APP_API_URL;
 export const userService = {
     login,
     logout,
@@ -18,7 +19,7 @@ export function authHeader() {
 
 
 function login(email, password) {
-    return axios.post(`http://localhost:5000/api/v1/authenticate`, { email:email, password:password })
+    return axios.post(baseUrl+`/api/v1/authenticate`, { email:email, password:password })
     .then(response => {
         let user = null
         if(response)
@@ -35,7 +36,7 @@ function login(email, password) {
 }
 
 function create(email, password) {
-    return axios.post(`http://localhost:5000/api/v1/user`, {email: email, password: password})
+    return axios.post(baseUrl+`/api/v1/user`, {email: email, password: password})
         .then(response => {
             let user = null
             if(response)
