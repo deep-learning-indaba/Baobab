@@ -17,7 +17,19 @@ from app import db, bcrypt
 
 user_fields = {
     'id': fields.Integer,
-    'email': fields.String
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'user_title_id': fields.Integer,
+    'nationality_id': fields.Integer,
+    'residence_id': fields.Integer,
+    'user_ethinicity_id': fields.Integer,
+    'user_gender_id': fields.Integer,
+    'affiliation': fields.String,
+    'department': fields.String,
+    'user_disability_id': fields.Integer,
+    'user_category_id': fields.Integer,
+    'password': fields.String
 }
 
 
@@ -31,7 +43,35 @@ class UserAPI(SignupLoginMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
-        user = AppUser(email=args['email'], password=args['password'])
+        email = args['email']
+        firstname = args['firstname']
+        lastname = args['lastname']
+        user_title_id = args['user_title_id']
+        nationality_id = args['nationality_id']
+        residence_id = args['residence_id']
+        user_ethnicity_id = args['user_ethnicity_id']
+        user_gender_id = args['user_gender_id']
+        affiliation = args['affiliation']
+        department = args['department']
+        user_disability_id = args['user_disability_id']
+        user_category_id = args['user_category_id']
+        password = args['password']
+
+        user = AppUser(
+            email=email,
+            firstname=firstname,
+            lastname=lastname,
+            user_title_id=user_title_id,
+            nationality_id=nationality_id,
+            residence_id=residence_id,
+            user_ethnicity_id=user_ethnicity_id,
+            user_gender_id=user_gender_id,
+            affiliation=affiliation,
+            department=department,
+            user_disability_id=user_disability_id,
+            user_category_id=user_category_id,
+            password=password)
+
         db.session.add(user)
 
         try:

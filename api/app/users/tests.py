@@ -9,7 +9,18 @@ class UserApiTest(ApiTestCase):
 
     user_data = {
         'email': 'something@email.com',
-        'password': '123456',
+        'firstname': 'Some',
+        'lastname': 'Thing',
+        'user_title_id': 1,
+        'nationality_id': 1,
+        'residence_id': 1,
+        'user_ethnicity_id': 1,
+        'user_gender_id': 1,
+        'affiliation': 'University',
+        'department': 'Computer Science',
+        'user_disability_id': 1,
+        'user_category_id': 1,
+        'password': '123456'
     }
 
     def test_registration(self):
