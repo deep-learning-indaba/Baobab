@@ -11,22 +11,22 @@ def expiration_date():
 class AppUser(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
-    email = db.Column(db.String(255), unique=True)
-    firstname = db.Column(db.String(100))
-    lastname = db.Column(db.String(100))
-    user_title_id = db.Column(db.Integer(), db.ForeignKey('user_title.id'))
-    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'))
-    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'))
-    user_ethnicity_id = db.Column(db.Integer(), db.ForeignKey('user_ethnicity.id'))
-    user_gender_id = db.Column(db.Integer(), db.ForeignKey('user_gender.id'))
-    affiliation = db.Column(db.String(255))
-    department = db.Column(db.String(255))
-    user_disability_id = db.Column(db.Integer(), db.ForeignKey('user_disability.id'))
-    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'))
-    password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
-    is_admin = db.Column(db.Boolean())
-    is_deleted = db.Column(db.Boolean())
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    firstname = db.Column(db.String(100), nullable=False)
+    lastname = db.Column(db.String(100), nullable=False)
+    user_title_id = db.Column(db.Integer(), db.ForeignKey('user_title.id'), nullable=False)
+    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    user_ethnicity_id = db.Column(db.Integer(), db.ForeignKey('user_ethnicity.id'), nullable=False)
+    user_gender_id = db.Column(db.Integer(), db.ForeignKey('user_gender.id'), nullable=False)
+    affiliation = db.Column(db.String(255), nullable=False)
+    department = db.Column(db.String(255), nullable=False)
+    user_disability_id = db.Column(db.Integer(), db.ForeignKey('user_disability.id'), nullable=False)
+    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    active = db.Column(db.Boolean(), nullable=False)
+    is_admin = db.Column(db.Boolean(), nullable=False)
+    is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
 
     def __init__(self,
@@ -85,26 +85,26 @@ class PasswordReset(db.Model):
 
 class UserTitle(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(10))
+    name = db.Column(db.String(10), nullable=False)
 
 class Country(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=False)
 
 class UserEthnicity(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=False)
 
 class UserGender(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(10))
+    name = db.Column(db.String(10), nullable=False)
 
 class UserCategory(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500))
     group = db.Column(db.String(100))
     
 class UserDisability(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(100), nullable=False)
