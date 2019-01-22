@@ -21,8 +21,8 @@ user_fields = {
     'firstname': fields.String,
     'lastname': fields.String,
     'user_title_id': fields.Integer,
-    'nationality_id': fields.Integer,
-    'residence_id': fields.Integer,
+    'nationality_country_id': fields.Integer,
+    'residence_country_id': fields.Integer,
     'user_ethinicity_id': fields.Integer,
     'user_gender_id': fields.Integer,
     'affiliation': fields.String,
@@ -47,8 +47,8 @@ class UserAPI(SignupLoginMixin, restful.Resource):
         firstname = args['firstname']
         lastname = args['lastname']
         user_title_id = args['user_title_id']
-        nationality_id = args['nationality_id']
-        residence_id = args['residence_id']
+        nationality_country_id = args['nationality_country_id']
+        residence_country_id = args['residence_country_id']
         user_ethnicity_id = args['user_ethnicity_id']
         user_gender_id = args['user_gender_id']
         affiliation = args['affiliation']
@@ -62,8 +62,8 @@ class UserAPI(SignupLoginMixin, restful.Resource):
             firstname=firstname,
             lastname=lastname,
             user_title_id=user_title_id,
-            nationality_id=nationality_id,
-            residence_id=residence_id,
+            nationality_country_id=nationality_country_id,
+            residence_country_id=residence_country_id,
             user_ethnicity_id=user_ethnicity_id,
             user_gender_id=user_gender_id,
             affiliation=affiliation,

@@ -8,8 +8,8 @@ class SignupLoginMixin(object):
     req_parser.add_argument('firstname', type=str, required=True)
     req_parser.add_argument('lastname', type=str, required=True),
     req_parser.add_argument('user_title_id', type=int, required=True)
-    req_parser.add_argument('nationality_id', type=int, required=True)
-    req_parser.add_argument('residence_id', type=int, required=True)
+    req_parser.add_argument('nationality_country_id', type=int, required=True)
+    req_parser.add_argument('residence_country_id', type=int, required=True)
     req_parser.add_argument('user_ethnicity_id', type=int, required=True)
     req_parser.add_argument('user_gender_id', type=int, required=True)
     req_parser.add_argument('affiliation', type=str, required=True)
