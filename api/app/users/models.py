@@ -22,6 +22,7 @@ class AppUser(db.Model):
     affiliation = db.Column(db.String(255))
     department = db.Column(db.String(255))
     user_disability_id = db.Column(db.Integer(), db.ForeignKey('user_disability.user_disability_id'))
+    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.user_category_id'))
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     is_admin = db.Column(db.Boolean())
@@ -40,6 +41,7 @@ class AppUser(db.Model):
                  affiliation,
                  department,
                  user_disability_id,
+                 user_category_id,
                  password,
                  is_admin=False):
         self.email = email
@@ -53,6 +55,7 @@ class AppUser(db.Model):
         self.affiliation = affiliation,
         self.department = department,
         self.user_disability_id = user_disability_id,
+        self.user_category_id = user_category_id
         self.set_password(password)
         self.active = True
         self.is_admin = is_admin
