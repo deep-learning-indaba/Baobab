@@ -23,13 +23,12 @@ user_fields = {
     'user_title_id': fields.Integer,
     'nationality_country_id': fields.Integer,
     'residence_country_id': fields.Integer,
-    'user_ethinicity_id': fields.Integer,
+    'user_ethnicity_id': fields.Integer,
     'user_gender_id': fields.Integer,
     'affiliation': fields.String,
     'department': fields.String,
     'user_disability_id': fields.Integer,
-    'user_category_id': fields.Integer,
-    'password': fields.String
+    'user_category_id': fields.Integer
 }
 
 
@@ -38,7 +37,8 @@ class UserAPI(SignupMixin, restful.Resource):
     @auth_required
     @marshal_with(user_fields)
     def get(self):
-        return g.current_user
+        user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+        return user
 
     def post(self):
         args = self.req_parser.parse_args()
