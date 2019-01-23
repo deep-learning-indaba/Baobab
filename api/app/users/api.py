@@ -21,14 +21,21 @@ user_fields = {
     'firstname': fields.String,
     'lastname': fields.String,
     'user_title_id': fields.Integer,
+    'user_title': fields.String(attribute='user_title.name'),
     'nationality_country_id': fields.Integer,
+    'nationality_country': fields.String(attribute='nationality_country.name'),
     'residence_country_id': fields.Integer,
+    'residence_country': fields.String(attribute='residence_country.name'),
     'user_ethnicity_id': fields.Integer,
+    'user_ethnicity': fields.String(attribute='user_ethnicity.name'),
     'user_gender_id': fields.Integer,
+    'user_gender': fields.String(attribute='user_gender.name'),
     'affiliation': fields.String,
     'department': fields.String,
     'user_disability_id': fields.Integer,
-    'user_category_id': fields.Integer
+    'user_disability': fields.String(attribute='user_disability.name'),
+    'user_category_id': fields.Integer,
+    'user_category': fields.String(attribute='user_category.name')
 }
 
 

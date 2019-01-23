@@ -29,6 +29,14 @@ class AppUser(db.Model):
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
 
+    user_title = db.relationship('UserTitle')
+    nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
+    residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
+    user_ethnicity = db.relationship('UserEthnicity')
+    user_gender = db.relationship('UserGender')
+    user_disability = db.relationship('UserDisability')
+    user_category = db.relationship('UserCategory')
+
     def __init__(self,
                  email,
                  firstname,
