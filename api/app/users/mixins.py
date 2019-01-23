@@ -1,7 +1,7 @@
 from flask_restful import reqparse
 
 
-class SignupLoginMixin(object):
+class SignupMixin(object):
 
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('email', type=str, required=True, )
@@ -16,4 +16,10 @@ class SignupLoginMixin(object):
     req_parser.add_argument('department', type=str, required=True)
     req_parser.add_argument('user_disability_id', type=int, required=True)
     req_parser.add_argument('user_category_id', type=int, required=True)
+    req_parser.add_argument('password', type=str, required=True)
+
+class AuthenticateMixin(object):
+
+    req_parser = reqparse.RequestParser()
+    req_parser.add_argument('email', type=str, required=True, )
     req_parser.add_argument('password', type=str, required=True)

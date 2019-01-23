@@ -6,7 +6,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
 
-from app.users.mixins import SignupLoginMixin
+from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 
 from app.utils.auth import auth_required, admin_required, generate_token
@@ -33,7 +33,7 @@ user_fields = {
 }
 
 
-class UserAPI(SignupLoginMixin, restful.Resource):
+class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
     @marshal_with(user_fields)
@@ -85,7 +85,7 @@ class UserAPI(SignupLoginMixin, restful.Resource):
         }, 201
 
 
-class AuthenticationAPI(SignupLoginMixin, restful.Resource):
+class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
     def post(self):
         args = self.req_parser.parse_args()
