@@ -58,6 +58,17 @@ class UserApiTest(ApiTestCase):
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
         assert data['email'] == 'something@email.com'
+        assert data['firstname'] == 'Some'
+        assert data['lastname'] == 'Thing'
+        assert data['user_title'] == 'Mr'
+        assert data['nationality_country'] == 'South Africa'
+        assert data['residence_country'] == 'South Africa'
+        assert data['user_ethnicity'] == 'None'
+        assert data['user_gender'] == 'Male'
+        assert data['affiliation'] == 'University'
+        assert data['department'] == 'Computer Science'
+        assert data['user_disability'] == 'None'
+        assert data['user_category'] == 'Postdoc'
 
     def test_password_reset(self):
         self.seed_static_data()
