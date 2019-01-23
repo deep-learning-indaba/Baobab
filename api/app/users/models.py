@@ -84,27 +84,47 @@ class PasswordReset(db.Model):
         self.user = user
 
 class UserTitle(db.Model):
+    def __init__(self, name):
+        self.name = name
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(10), nullable=False)
 
 class Country(db.Model):
+    def __init__(self, name):
+        self.name = name
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
 class UserEthnicity(db.Model):
+    def __init__(self, name):
+        self.name = name
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
 class UserGender(db.Model):
+    def __init__(self, name):
+        self.name = name
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
 class UserCategory(db.Model):
+    def __init__(self, name, description=None, group=None):
+        self.name = name
+        self.description = description
+        self.group = group
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500))
     group = db.Column(db.String(100))
     
 class UserDisability(db.Model):
+    def __init__(self, name):
+        self.name = name
+
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)

@@ -2,7 +2,7 @@ import json
 
 from app import db
 from app.utils.testing import ApiTestCase
-from app.users.models import PasswordReset
+from app.users.models import PasswordReset, UserTitle, UserCategory, UserDisability, UserEthnicity, UserGender, Country
 
 
 class UserApiTest(ApiTestCase):
@@ -23,7 +23,17 @@ class UserApiTest(ApiTestCase):
         'password': '123456'
     }
 
+    def seed_static_data(self):
+        db.session.add(UserTitle('Mr'))
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(UserDisability('None'))
+        db.session.add(UserEthnicity('None'))
+        db.session.add(UserGender('Male'))
+        db.session.add(Country('South Africa'))
+        db.session.flush()
+
     def test_registration(self):
+        self.seed_static_data()
         response = self.app.post('/api/v1/user', data=self.user_data)
         data = json.loads(response.data)
 
@@ -31,6 +41,7 @@ class UserApiTest(ApiTestCase):
         assert len(data['token']) > 10
 
     def test_duplicate_registration(self):
+        self.seed_static_data()
         response = self.app.post('/api/v1/user', data=self.user_data)
         assert response.status_code == 201
 
@@ -38,6 +49,7 @@ class UserApiTest(ApiTestCase):
         assert response.status_code == 409
 
     def test_get_user(self):
+        self.seed_static_data()
         response = self.app.post('/api/v1/user', data=self.user_data)
         data = json.loads(response.data)
 
@@ -48,6 +60,7 @@ class UserApiTest(ApiTestCase):
         assert data['email'] == 'something@email.com'
 
     def test_password_reset(self):
+        self.seed_static_data()
         response = self.app.post('/api/v1/user', data=self.user_data)
         assert response.status_code == 201
 
@@ -74,4 +87,5 @@ class UserApiTest(ApiTestCase):
             'email': 'something@email.com',
             'password': 'abc123'
         })
+
         assert response.status_code == 200
