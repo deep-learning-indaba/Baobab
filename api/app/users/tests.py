@@ -2,7 +2,7 @@ import json
 
 from app import db
 from app.utils.testing import ApiTestCase
-from app.users.models import PasswordReset, UserTitle, UserCategory, UserDisability, UserEthnicity, UserGender, Country
+from app.users.models import PasswordReset, UserCategory, Country
 
 
 class UserApiTest(ApiTestCase):
@@ -11,24 +11,20 @@ class UserApiTest(ApiTestCase):
         'email': 'something@email.com',
         'firstname': 'Some',
         'lastname': 'Thing',
-        'user_title_id': 1,
+        'user_title': 'Mr',
         'nationality_country_id': 1,
         'residence_country_id': 1,
-        'user_ethnicity_id': 1,
-        'user_gender_id': 1,
+        'user_ethnicity': 'None',
+        'user_gender': 'Male',
         'affiliation': 'University',
         'department': 'Computer Science',
-        'user_disability_id': 1,
+        'user_disability': 'None',
         'user_category_id': 1,
         'password': '123456'
     }
 
     def seed_static_data(self):
-        db.session.add(UserTitle('Mr'))
         db.session.add(UserCategory('Postdoc'))
-        db.session.add(UserDisability('None'))
-        db.session.add(UserEthnicity('None'))
-        db.session.add(UserGender('Male'))
         db.session.add(Country('South Africa'))
         db.session.flush()
 

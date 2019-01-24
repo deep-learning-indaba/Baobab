@@ -14,14 +14,14 @@ class AppUser(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
-    user_title_id = db.Column(db.Integer(), db.ForeignKey('user_title.id'), nullable=False)
+    user_title = db.Column(db.String(20), nullable=False)
     nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
     residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    user_ethnicity_id = db.Column(db.Integer(), db.ForeignKey('user_ethnicity.id'), nullable=False)
-    user_gender_id = db.Column(db.Integer(), db.ForeignKey('user_gender.id'), nullable=False)
+    user_ethnicity = db.Column(db.String(50), nullable=False)
+    user_gender = db.Column(db.String(20), nullable=False)
     affiliation = db.Column(db.String(255), nullable=False)
     department = db.Column(db.String(255), nullable=False)
-    user_disability_id = db.Column(db.Integer(), db.ForeignKey('user_disability.id'), nullable=False)
+    user_disability = db.Column(db.String(255), nullable=False)
     user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean(), nullable=False)
@@ -29,40 +29,36 @@ class AppUser(db.Model):
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
 
-    user_title = db.relationship('UserTitle')
     nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
     residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
-    user_ethnicity = db.relationship('UserEthnicity')
-    user_gender = db.relationship('UserGender')
-    user_disability = db.relationship('UserDisability')
     user_category = db.relationship('UserCategory')
 
     def __init__(self,
                  email,
                  firstname,
                  lastname,
-                 user_title_id,
+                 user_title,
                  nationality_country_id,
                  residence_country_id,
-                 user_ethnicity_id,
-                 user_gender_id,
+                 user_ethnicity,
+                 user_gender,
                  affiliation,
                  department,
-                 user_disability_id,
+                 user_disability,
                  user_category_id,
                  password,
                  is_admin=False):
         self.email = email
         self.firstname = firstname,
         self.lastname = lastname,
-        self.user_title_id = user_title_id,
+        self.user_title = user_title,
         self.nationality_country_id = nationality_country_id,
         self.residence_country_id = residence_country_id,
-        self.user_ethnicity_id = user_ethnicity_id,
-        self.user_gender_id = user_gender_id,
+        self.user_ethnicity = user_ethnicity,
+        self.user_gender = user_gender,
         self.affiliation = affiliation,
         self.department = department,
-        self.user_disability_id = user_disability_id,
+        self.user_disability = user_disability,
         self.user_category_id = user_category_id
         self.set_password(password)
         self.active = True
@@ -91,28 +87,7 @@ class PasswordReset(db.Model):
     def __init__(self, user):
         self.user = user
 
-class UserTitle(db.Model):
-    def __init__(self, name):
-        self.name = name
-
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(10), nullable=False)
-
 class Country(db.Model):
-    def __init__(self, name):
-        self.name = name
-
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-
-class UserEthnicity(db.Model):
-    def __init__(self, name):
-        self.name = name
-
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-
-class UserGender(db.Model):
     def __init__(self, name):
         self.name = name
 
@@ -129,10 +104,3 @@ class UserCategory(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500))
     group = db.Column(db.String(100))
-    
-class UserDisability(db.Model):
-    def __init__(self, name):
-        self.name = name
-
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)

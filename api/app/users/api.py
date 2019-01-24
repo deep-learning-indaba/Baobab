@@ -20,20 +20,16 @@ user_fields = {
     'email': fields.String,
     'firstname': fields.String,
     'lastname': fields.String,
-    'user_title_id': fields.Integer,
-    'user_title': fields.String(attribute='user_title.name'),
+    'user_title': fields.String,
     'nationality_country_id': fields.Integer,
     'nationality_country': fields.String(attribute='nationality_country.name'),
     'residence_country_id': fields.Integer,
     'residence_country': fields.String(attribute='residence_country.name'),
-    'user_ethnicity_id': fields.Integer,
-    'user_ethnicity': fields.String(attribute='user_ethnicity.name'),
-    'user_gender_id': fields.Integer,
-    'user_gender': fields.String(attribute='user_gender.name'),
+    'user_ethnicity': fields.String,
+    'user_gender': fields.String,
     'affiliation': fields.String,
     'department': fields.String,
-    'user_disability_id': fields.Integer,
-    'user_disability': fields.String(attribute='user_disability.name'),
+    'user_disability': fields.String,
     'user_category_id': fields.Integer,
     'user_category': fields.String(attribute='user_category.name')
 }
@@ -53,14 +49,14 @@ class UserAPI(SignupMixin, restful.Resource):
         email = args['email']
         firstname = args['firstname']
         lastname = args['lastname']
-        user_title_id = args['user_title_id']
+        user_title = args['user_title']
         nationality_country_id = args['nationality_country_id']
         residence_country_id = args['residence_country_id']
-        user_ethnicity_id = args['user_ethnicity_id']
-        user_gender_id = args['user_gender_id']
+        user_ethnicity = args['user_ethnicity']
+        user_gender = args['user_gender']
         affiliation = args['affiliation']
         department = args['department']
-        user_disability_id = args['user_disability_id']
+        user_disability = args['user_disability']
         user_category_id = args['user_category_id']
         password = args['password']
 
@@ -68,14 +64,14 @@ class UserAPI(SignupMixin, restful.Resource):
             email=email,
             firstname=firstname,
             lastname=lastname,
-            user_title_id=user_title_id,
+            user_title=user_title,
             nationality_country_id=nationality_country_id,
             residence_country_id=residence_country_id,
-            user_ethnicity_id=user_ethnicity_id,
-            user_gender_id=user_gender_id,
+            user_ethnicity=user_ethnicity,
+            user_gender=user_gender,
             affiliation=affiliation,
             department=department,
-            user_disability_id=user_disability_id,
+            user_disability=user_disability,
             user_category_id=user_category_id,
             password=password)
 
