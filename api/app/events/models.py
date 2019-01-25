@@ -3,53 +3,53 @@ from app import db
 
 class Event(db.Model):
 
-    __tablename__ = "Event"
+    __tablename__ = "event"
 
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50))
-    description = db.Column(db.String(255))
-    startDate = db.Column(db.DateTime())
-    endDate = db.Column(DateTime())
+    name = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    start_date = db.Column(db.DateTime(), nullable=False)
+    end_date = db.Column(DateTime(), nullable=False)
     
 
-    def __init__(self, name, description, startDate, endDate):
+    def __init__(self, name, description, start_date, end_date):
         self.name = name
         self.description = description
-        self.startDate = startDate
-        self.endDate = endDate
+        self.start_date = start_date
+        self.end_date = end_date
 
-    def setName(self, newName):
-       self.name = newName
+    def set_name(self, new_name):
+       self.name = new_name
 
-    def setDescription(self, newDescription):
-       self.description = newDescription
+    def set_description(self, new_description):
+       self.description = new_description
 
-    def setStartDate(self, newStartDate):
-       self.startDate = newStartDate
+    def set_start_date(self, new_start_date):
+       self.start_date = new_start_date
 
-    def setEndDate(self, newEndDate):
-       self.endDate = newEndDate
+    def set_end_date(self, new_end_date):
+       self.end_date = new_end_date
 
 class EventRole(db.Model):
 
-    __tablename__ = "Event_Role"
+    __tablename__ = "event_role"
 
     id = db.Column(db.Integer(), primary_key=True)
-    eventID = db.Column(db.Integer(), db.ForeignKey("Event.event_id"))
-    userID = db.Column(Integer(), db.ForeignKey("app_user.id"))
-    role = db.Column(db.String(50))
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.event_id"), nullable=False)
+    user_id = db.Column(Integer(), db.ForeignKey("app_user.id"), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
 
 
-    def __init__(self, role, userID, eventID):
+    def __init__(self, role, user_id, event_id):
         self.role = role
-        self.userID = userID
-        self.eventID = eventID        
+        self.user_id = user_id
+        self.event_id = event_id        
 
-    def setUser(self, newUserID):
-       self.userID = newUserID
+    def set_user(self, new_user_id):
+       self.userID = new_user_id
 
-    def setEvent(self, newEventID):
-       self.eventID = newEventID
+    def set_event(self, new_event_id):
+       self.eventID = new_event_id
 
-    def setRole(self, newRole):
-       self.role = newRole
+    def set_role(self, new_role):
+       self.role = new_role
