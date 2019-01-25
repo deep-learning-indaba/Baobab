@@ -13,4 +13,5 @@ class ApiTestCase(unittest.TestCase):
 
     def tearDown(self):
         db.session.remove()
+        db.reflect()
         db.drop_all()
