@@ -18,7 +18,7 @@ jobs:
           command: docker-compose run web nosetests -v
 
   frontEnd:
-     docker:
+    docker:
       - image: circleci/node:8
     steps:
       - checkout
