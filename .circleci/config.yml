@@ -24,9 +24,8 @@ jobs:
       - run:
           name: Front-end install and tests.
           command: |
-            yarn install
-            yarn test
-          working_directory: /webapp
+            cd ./webapp && yarn install
+            cd ./webapp && yarn test
 
 workflows:
   build_and_test:
