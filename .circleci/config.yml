@@ -19,7 +19,6 @@ jobs:
 
   frontEnd:
     machine: true
-    working_directory: ./webapp
     steps:
       - checkout
       - run:
