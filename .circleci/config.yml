@@ -25,8 +25,8 @@ jobs:
           name: Front-end install and tests.
           command: |
             pwd
-            cd ./webapp && yarn install
-            cd ./webapp && yarn test
+            cd ./Baobab/webapp && yarn install
+            cd ./Baobab/webapp && yarn test
 
 workflows:
   build_and_test:
