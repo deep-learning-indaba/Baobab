@@ -23,8 +23,8 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Front-end install and tests.
-        command: |
+          name: Front-end install and tests.
+          command: |
             yarn install
             yarn test
 
@@ -32,4 +32,4 @@ workflows:
   build_and_test:
     jobs:
       - build
-      - front-end
+      - frontEnd
