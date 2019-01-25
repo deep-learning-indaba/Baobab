@@ -17,3 +17,13 @@ jobs:
       - run:
           name: Run tests
           command: docker-compose run web nosetests -v
+
+  front-end:
+    working_directory: ./webapp
+    steps:
+      - checkout
+      - run:
+        name: Front-end install and tests.
+        command: |
+            yarn install
+            yarn test
