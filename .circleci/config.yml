@@ -24,6 +24,7 @@ jobs:
       - run:
           name: Front-end install and tests.
           command: |
+            pwd
             cd ./webapp && yarn install
             cd ./webapp && yarn test
 
