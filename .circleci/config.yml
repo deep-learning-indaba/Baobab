@@ -22,7 +22,7 @@ jobs:
       - image: circleci/node:8
     steps:
       - checkout:
-        path: ~/webapp
+          path: ~/webapp
       - run:
           name: Front-end install and tests.
           command: |
