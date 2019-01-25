@@ -21,7 +21,8 @@ jobs:
     docker:
       - image: circleci/node:8
     steps:
-      - checkout
+      - checkout:
+        path: ~/webapp
       - run:
           name: Front-end install and tests.
           command: |
