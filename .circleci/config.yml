@@ -17,7 +17,7 @@ jobs:
           name: Run tests
           command: docker-compose run web nosetests -v
 
-  front-end:
+  frontEnd:
     machine: true
     working_directory: ./webapp
     steps:
