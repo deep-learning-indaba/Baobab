@@ -1,5 +1,5 @@
 import unittest
-from api.app.utils.logger import Logger
+from app.utils.logger import Logger
 import sys
 import io
 
