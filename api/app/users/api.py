@@ -13,6 +13,8 @@ from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import EMAIL_IN_USE, CODE_NOT_VALID, BAD_CREDENTIALS
 
 from app import db, bcrypt
+from app.utils.emailer import send_mail
+from app import LOGGER
 
 
 user_fields = {
@@ -117,6 +119,9 @@ class PasswordResetRequestAPI(restful.Resource):
             db.session.add(password_reset)
             db.session.commit()
             # TODO: Send the email using any preferred method
+            send_mail(recipient=args['email'], 
+                      subject='Password Reset for IndabaDeepLearning portal', 
+                      body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
 
         return {}, 201
 
