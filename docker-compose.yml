@@ -17,7 +17,14 @@ web:
         - db
     environment:
         DEBUG: 'True'
-        SECRET_KEY: asdklfjeoja039rjdlkjfaoi3rdk
+        SECRET_KEY: __filler__
+        SMTP_USERNAME: __filler__
+        SMTP_PASSWORD: __filler__
+        SMTP_SENDER_NAME: __filler__-mail
+        SMTP_SENDER_EMAIL: __filler__.hp@gmail.com
+        SMTP_HOST: __filler__-smtp.us-east-1.amazonaws.com
+        SMTP_PORT: __filler__
+
 
 webapp:
     build: ./webapp
