@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 export const applicationFormService = {
-    getForEvent
+    getForEvent,
+    submit
 };
 
 let dummyFormSpec = {
@@ -37,4 +38,8 @@ function getForEvent(eventId) {
     return new Promise(function(resolve, reject) {
         setTimeout(() => resolve(dummyFormSpec), 1000);
       }).then(value => value);
+}
+
+function submit(response) {
+    alert("Submitting form");
 }
