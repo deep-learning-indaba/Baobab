@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 from flask_redis import FlaskRedis
+from utils.logger import Logger
 
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ rest_api = restful.Api(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 redis = FlaskRedis(app)
+LOGGER = Logger().get_logger()
 
 
 import routes
