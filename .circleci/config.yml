@@ -20,6 +20,7 @@ jobs:
   frontEndTests:
     machine: true
     steps:
+      - checkout
       - run:
           name: Front-end install and tests.
           command: |
