@@ -19,8 +19,7 @@ jobs:
 
   frontEndTests:
     working_directory: ~/Baobab/webapp
-    docker:
-      - image: circleci/node:8
+    machine: true
     steps:
       - run:
           name: Front-end install and tests.
