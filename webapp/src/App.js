@@ -24,23 +24,24 @@ class App extends Component {
             <div class="collapse navbar-collapse" id="navbarNav">
               <ul class="navbar-nav">
                 <li class="nav-item active">
-                  <NavLink to="/" activeClassName="nav-link active" class="nav-link">Home <span class="sr-only">(current)</span></NavLink>
+                  <NavLink to="/" activeClassName="nav-link active" className="nav-link">Home</NavLink>
                 </li>
                 <li class="nav-item">
-                  <NavLink to="/login" activeClassName="nav-link active" class="nav-link">Login</NavLink>
+                  <NavLink to="/login" activeClassName="nav-link active" className="nav-link">Login</NavLink>
                 </li>
                 <li class="nav-item">
-                  <NavLink to="/applicationForm" activeClassName="nav-link active" class="nav-link">Apply</NavLink>
+                  <NavLink to="/applicationForm" activeClassName="nav-link active" className="nav-link">Apply</NavLink>
                 </li>
               </ul>
             </div>
           </nav>
-
-          <div className="Body container">
-            <PrivateRoute exact path="/" component={Home} />
-            <Route exact path="/login" component={Login} />
-            <Route exact path="/createAccount" component={CreateAccount} />
-            <Route exact path="/applicationForm" component={Application} />
+          <div class="Body">
+            <div className="container">
+              <PrivateRoute exact path="/" component={Home} />
+              <Route exact path="/login" component={Login} />
+              <Route exact path="/createAccount" component={CreateAccount} />
+              <Route exact path="/applicationForm" component={Application} />
+            </div>
           </div>
         </div>
       </Router>
