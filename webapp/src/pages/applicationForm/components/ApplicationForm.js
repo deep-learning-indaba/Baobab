@@ -96,8 +96,6 @@ function Confirmation(props) {
                 </div>
                 )
             })}
-
-            <input type="submit" value="Submit" />
         </div>
     )
 }
