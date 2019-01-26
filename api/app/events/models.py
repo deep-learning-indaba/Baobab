@@ -46,10 +46,10 @@ class EventRole(db.Model):
         self.event_id = event_id        
 
     def set_user(self, new_user_id):
-       self.userID = new_user_id
+       self.user_id = new_user_id
 
     def set_event(self, new_event_id):
-       self.eventID = new_event_id
+       self.event_id = new_event_id
 
     def set_role(self, new_role):
        self.role = new_role
