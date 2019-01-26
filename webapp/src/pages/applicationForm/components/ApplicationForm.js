@@ -12,21 +12,21 @@ class FieldEditor extends React.Component {
   
     handleChange(event) {
       const value = event.target.value;
-      console.log("In FieldEditor.handleChange, value: " + value + " ID: " + this.props.id);
-      this.props.onChange(this.props.id, value);
+      const id = event.target.id;
+      this.props.onChange(id, value);
     }
   
     formControl(id, type, required, choices) {
         switch(type) {
             case "short-text":
-                return <input type="text" class="form-control" id={id} required={required || null} onChange={this.handleChange}/>
+                return <input type="text" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
             case "single-choice":
-                return <input type="checkbox" class="form-control" id={id} required={required || null} onChange={this.handleChange}/>
+                return <input type="checkbox" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
             case "long-text":
-                return (<textarea class="form-control" rows="5" id={id} required={required || null} onChange={this.handleChange}></textarea>)
+                return (<textarea class="form-control" rows="5" id={id} name={id} required={required || null} onChange={this.handleChange}></textarea>)
             case "multi-choice":
                 return (
-                    <select class="form-control" id={id} required={required || null} onChange={this.handleChange}>
+                    <select class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}>
                         {choices.map(function(c) {
                             return (
                                 <option>{c}</option>
@@ -35,7 +35,7 @@ class FieldEditor extends React.Component {
                     </select>
                 )
             case "file":
-                return <input type="file" class="form-control-file" id={id} onChange={this.handleChange}/>
+                return <input type="file" class="form-control-file" id={id} name={id} onChange={this.handleChange}/>
             default:
                 return <p className="text-danger">WARNING: No control found for type {type}!</p>
         }
@@ -71,14 +71,33 @@ function Section (props) {
 
 function Confirmation(props) {
     return (
-        <div class="row">
-            <div class="col">
-                <h2>Confirmation</h2>
-                <p>Are you sure the answers are correct?</p>
-                <p>
-                    {JSON.stringify(props.state)}
-                </p>
+        <div>
+            <div class="row">
+                <div class="col">
+                    <h2>Confirmation</h2>
+                    <p>Please confirm that your responses are correct. Use the previous button to correct them if they are not.</p>        
+                </div>
             </div>
+            {props.answers.map(answer => {
+                let question = props.questions.find(question => question.id == answer.questionId);
+
+                return (
+                <div>
+                    <div class="row">
+                        <div class="col">
+                            <h4>{question.description}</h4>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <p>{answer.value}</p>
+                        </div>
+                    </div>
+                </div>
+                )
+            })}
+
+            <input type="submit" value="Submit" />
         </div>
     )
 }
@@ -91,17 +110,22 @@ class ApplicationForm extends Component {
           currentStep: 1,
           formSpec: null,
           isLoading: true,
-          answers: {}
+          answers: []
         };
 
         this.handleFieldChange = this.handleFieldChange.bind(this);
       }
     
     handleFieldChange(fieldId, value) {
-        console.log("Updating state for " + fieldId + " with value " + value);
+        const questionId = fieldId.substring(fieldId.lastIndexOf('_')+1, fieldId.length);
+        const otherAnswers = this.state.answers.filter(answer => answer.questionId != questionId);
+        const currentAnswer = {
+            "questionId": questionId,
+            "value": value
+        };
         this.setState({
-            answers: Object.assign({}, this.state.answers, {[fieldId]: value})
-        });
+            answers: otherAnswers.concat(currentAnswer)
+        })
     }
     
     componentDidMount() {
@@ -110,8 +134,6 @@ class ApplicationForm extends Component {
                 formSpec: formSpec,
                 isLoading: false
               });
-              console.log("Received formSpec:");
-              console.log(formSpec);
         })
     }
 
@@ -131,28 +153,28 @@ class ApplicationForm extends Component {
 
     handleSubmit = event => {
         event.preventDefault();
-        // Get the values from the form
-        // Submit using the applicationFormService
+        applicationFormService.submit(this.state.answers);
     }
 
     render() {
-        const {currentStep, formSpec, isLoading} = this.state;
+        const {currentStep, formSpec, isLoading, answers} = this.state;
 
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
         
-        let sections = formSpec.sections.slice().sort(function(a, b) {
+        const sections = formSpec.sections.slice().sort(function(a, b) {
             return a.order - b.order;
         });
+        const allQuestions = sections.flatMap(section => section.questions);
 
-        let numSteps = sections.length;
+        const numSteps = sections.length;
         
-        var style = {
+        const style = {
             width : (currentStep / (numSteps+1) * 100) + '%'
         }
-        let currentSection = currentStep <= numSteps ? sections[currentStep-1] : null;
-
+        const currentSection = currentStep <= numSteps ? sections[currentStep-1] : null;
+        
         return (
             <form onSubmit={this.handleSubmit}>
                 <h2>Apply to attend the Deep Learning Indaba 2019</h2>
@@ -163,7 +185,7 @@ class ApplicationForm extends Component {
                     <Section name={currentSection.name} description={currentSection.description} questions={currentSection.questions} onChange={this.handleFieldChange}/>
                 }
                 {!currentSection &&
-                    <Confirmation state={this.state}/>
+                    <Confirmation answers={answers} questions={allQuestions}/>
                 }
                 
                 {currentStep > 1 &&
@@ -175,8 +197,6 @@ class ApplicationForm extends Component {
                 {currentStep > numSteps &&
                     <button type="submit" class="btn btn-primary">Submit</button>
                 }
-
-                <div>{JSON.stringify(this.state)}</div>
             </form>
         )
     }
