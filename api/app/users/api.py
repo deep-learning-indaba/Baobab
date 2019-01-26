@@ -118,10 +118,12 @@ class PasswordResetRequestAPI(restful.Resource):
             password_reset = PasswordReset(user=user)
             db.session.add(password_reset)
             db.session.commit()
-            # TODO: Send the email using any preferred method
+            # Once the SMTP credentials are set, this piece of code can be uncommented
+            '''
             send_mail(recipient=args['email'], 
                       subject='Password Reset for IndabaDeepLearning portal', 
                       body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
+            '''
 
         return {}, 201
 
