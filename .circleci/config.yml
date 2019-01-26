@@ -17,7 +17,7 @@ jobs:
           name: Run tests
           command: docker-compose run web nosetests -v
 
-  frontEnd:
+  frontEndTests:
     working_directory: ~/Baobab/webapp
     docker:
       - image: circleci/node:8
@@ -25,12 +25,11 @@ jobs:
       - run:
           name: Front-end install and tests.
           command: |
-            ls
-            yarn install
-            yarn test
+            docker-compose build test-ci 
+            docker-compose run test-ci  
 
 workflows:
   build_and_test:
     jobs:
       - build
-      - frontEnd
+      - frontEndTests
