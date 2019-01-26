@@ -18,7 +18,6 @@ jobs:
           command: docker-compose run web nosetests -v
 
   frontEndTests:
-    working_directory: ~/Baobab/webapp
     machine: true
     steps:
       - run:
