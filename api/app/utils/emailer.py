@@ -60,6 +60,7 @@ def send_mail(recipient, subject, body_text, body_html='', charset='UTF-8', mail
         else:
             LOGGER.info("Email sent successfully ")
 
-
+'''
 if __name__=="__main__":
     send_mail(recipient='nischal.hp@gmail.com', subject='TestSMTPEmail', body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
+'''

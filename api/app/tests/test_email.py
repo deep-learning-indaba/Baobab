@@ -10,6 +10,7 @@ class TestMailer(unittest.TestCase):
             return True
         except Exception:
             return False
-
+'''
 if __name__ == '__main__':
     unittest.main()
+'''
