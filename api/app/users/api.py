@@ -6,7 +6,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
 
-from app.users.mixins import SignupLoginMixin
+from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 
 from app.utils.auth import auth_required, admin_required, generate_token
@@ -17,21 +17,64 @@ from app import db, bcrypt
 
 user_fields = {
     'id': fields.Integer,
-    'email': fields.String
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'user_title': fields.String,
+    'nationality_country_id': fields.Integer,
+    'nationality_country': fields.String(attribute='nationality_country.name'),
+    'residence_country_id': fields.Integer,
+    'residence_country': fields.String(attribute='residence_country.name'),
+    'user_ethnicity': fields.String,
+    'user_gender': fields.String,
+    'affiliation': fields.String,
+    'department': fields.String,
+    'user_disability': fields.String,
+    'user_category_id': fields.Integer,
+    'user_category': fields.String(attribute='user_category.name')
 }
 
 
-class UserAPI(SignupLoginMixin, restful.Resource):
+class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
     @marshal_with(user_fields)
     def get(self):
-        return g.current_user
+        user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+        return user
 
     def post(self):
         args = self.req_parser.parse_args()
 
-        user = AppUser(email=args['email'], password=args['password'])
+        email = args['email']
+        firstname = args['firstname']
+        lastname = args['lastname']
+        user_title = args['user_title']
+        nationality_country_id = args['nationality_country_id']
+        residence_country_id = args['residence_country_id']
+        user_ethnicity = args['user_ethnicity']
+        user_gender = args['user_gender']
+        affiliation = args['affiliation']
+        department = args['department']
+        user_disability = args['user_disability']
+        user_category_id = args['user_category_id']
+        password = args['password']
+
+        user = AppUser(
+            email=email,
+            firstname=firstname,
+            lastname=lastname,
+            user_title=user_title,
+            nationality_country_id=nationality_country_id,
+            residence_country_id=residence_country_id,
+            user_ethnicity=user_ethnicity,
+            user_gender=user_gender,
+            affiliation=affiliation,
+            department=department,
+            user_disability=user_disability,
+            user_category_id=user_category_id,
+            password=password)
+
         db.session.add(user)
 
         try:
@@ -45,7 +88,7 @@ class UserAPI(SignupLoginMixin, restful.Resource):
         }, 201
 
 
-class AuthenticationAPI(SignupLoginMixin, restful.Resource):
+class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
     def post(self):
         args = self.req_parser.parse_args()
