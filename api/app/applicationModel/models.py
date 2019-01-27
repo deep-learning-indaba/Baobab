@@ -10,7 +10,7 @@ class ApplicationForm(db.Model):
     deadline = db.Column(db.DateTime(), nullable=False)
 
     def __init__(self, event_id, is_open, deadline):
-        self.eventID = event_id
+        self.event_id = event_id
         self.is_open = is_open
         self.deadline = deadline
         
