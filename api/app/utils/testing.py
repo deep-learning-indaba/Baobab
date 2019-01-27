@@ -16,5 +16,5 @@ class ApiTestCase(unittest.TestCase):
     def tearDown(self):
         db.session.remove()
         db.reflect()
-        db.drop_all()
         db.engine.execute('DELETE FROM alembic_version;')
+        db.drop_all()
