@@ -2,7 +2,6 @@ version: 2.1
 jobs:
   build:
     machine: true
-
     steps:
       - checkout
       - run:
@@ -17,3 +16,19 @@ jobs:
       - run:
           name: Run tests
           command: docker-compose run web nosetests -v
+
+  frontEndTests:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Front-end install and tests.
+          command: |
+            docker-compose build test-ci 
+            docker-compose run test-ci  
+
+workflows:
+  build_and_test:
+    jobs:
+      - build
+      - frontEndTests

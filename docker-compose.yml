@@ -35,3 +35,8 @@ webapp:
         - '8080:80'
     environment:
         - NODE_ENV=development
+
+test-ci:
+    build: ./webapp
+    command: yarn test-ci
+    dockerfile: Dockerfile-test
