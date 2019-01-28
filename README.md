@@ -27,6 +27,9 @@ Tasks are being managed in the Issues and Projects tabs. If you want to work on 
 * **Components**: [ReactJS](https://reactjs.org/)
 * **CSS**: [Bootstrap 4](https://getbootstrap.com/)
 
+**Continuous Integration**
+We are using [CircleCI](https://circleci.com/gh/deep-learning-indaba/Baobab) to build, test and deploy the project. 
+
 You don't need to be familar with all of these technologies to work on the project. We've tried to make the application decoupled, especially the front-end and back-end. If you want to work on a front-end task, you need to know a little Javascript, ReactJS and Bootstrap, but don't need to know anything about Flask/SQLAlchemy etc!  
 
 ## Running with Docker
