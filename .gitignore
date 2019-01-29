@@ -113,3 +113,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Mac desktop services
+.DS_Store

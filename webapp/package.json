@@ -18,7 +18,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start-test": "env-cmd .env.test react-scripts start"
+    "test-ci": "react-scripts test --env=jsdom --ci --coverage -u"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -30,6 +30,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@babel/runtime": "^7.3.1",
     "react-test-renderer": "^16.7.0"
   }
 }
