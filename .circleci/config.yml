@@ -28,13 +28,15 @@ jobs:
             docker-compose run test-ci  
   
   deploy:
-    docker:
-      - image: google/cloud-sdk
+    machine: true
     steps:
+      - checkout
       - run: |
           echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+          cd webapp
+          docker build --rm=false -t eu.gcr.io/${GOOGLE_PROJECT_ID}/webapp:$CIRCLE_SHA1 .
 
 workflows:
   build_and_test:
@@ -42,3 +44,4 @@ workflows:
       - build
       - frontEndTests
       - deploy
+
