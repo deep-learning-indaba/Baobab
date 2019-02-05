@@ -3,10 +3,7 @@ api_version: 1
 threadsafe: true
 handlers:
 - url: /
-  static_files: build/index.html
-  upload: build/index.html
+  static_files: webapp/build/index.html
+  upload: webapp/build/index.html
 - url: /
   static_dir: build
-automatic_scaling:
-  min_num_instances: 2
-  max_num_instances: 20
