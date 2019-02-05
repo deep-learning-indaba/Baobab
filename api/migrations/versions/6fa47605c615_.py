@@ -23,7 +23,8 @@ def upgrade():
     sa.Column('is_submitted', sa.Boolean(), nullable=False),
     sa.Column('submitted_timestamp', sa.DateTime(), nullable=True),
     sa.Column('is_withdrawn', sa.Boolean(), nullable=False),
-    sa.Column('withdrawn_timestamp', sa.Boolean(), nullable=True),
+    sa.Column('withdrawn_timestamp', sa.DateTime(), nullable=True),
+    sa.Column('started_timestamp', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['app_user.id'] ),
     sa.ForeignKeyConstraint(['application_form_id'], ['application_form.id'] ),
     sa.PrimaryKeyConstraint('id')

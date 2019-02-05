@@ -13,6 +13,7 @@ class Response(db.Model):
     submitted_timestamp = db.Column(db.DateTime(), nullable=True)
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)    
+    started_timestamp = db.Column(db.DateTime(), nullable=True)    
     
 
     def __init__(self, application_form_id, user_id, is_submitted = False, submitted_timestamp = None, is_withdrawn = False, withdrawn_timestamp = None):
@@ -22,6 +23,7 @@ class Response(db.Model):
         self.submitted_timestamp = submitted_timestamp
         self.is_withdrawn = is_withdrawn
         self.withdrawn_timestamp = withdrawn_timestamp
+        self.started_timestamp = date.today().strftime('%Y/%m/%d')
 
     def submit_response(self):
        self.is_submitted = True
