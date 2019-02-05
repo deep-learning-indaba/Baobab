@@ -36,8 +36,9 @@ jobs:
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
           cd webapp
-          docker build --rm=false -t us.gcr.io/${GCP_PROJECT}/website:$CIRCLE_SHA1 .
-          gcloud docker -- push us.gcr.io/${GCP_PROJECT}/website:$CIRCLE_SHA1
+          docker build --rm=false -t us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 .
+          gcloud docker -- push us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1
+          gcloud app deploy --image-url=us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1
 
 workflows:
   build_and_test:
