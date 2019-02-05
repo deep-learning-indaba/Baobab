@@ -4,9 +4,9 @@ threadsafe: true
 
 handlers:
 - url: /
-  static_files: build/index.html
-  upload: build/index.html
+  static_files: www/index.html
+  upload: www/index.html
 
 - url: /(.*)
-  static_files: build/\1
-  upload: build/(.*)
+  static_files: www/\1
+  upload: www/(.*)
