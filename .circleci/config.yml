@@ -38,7 +38,6 @@ jobs:
           cd webapp
           docker build --rm=false -t us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 .
           gcloud docker -- push us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1
-          gcloud compute firewall-rules create allow-http \  --allow tcp:80 --target-tags http-server
           gcloud app deploy --image-url=us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 
 
 workflows:
