@@ -1,2 +1,10 @@
 runtime: nodejs
 env: flex
+network:
+  instance_tag: test
+  name: default
+  forwarded_ports:
+    - PORT
+    - 8080:80
+    - PORT/tcp
+    - 8080:80/udp
