@@ -6,3 +6,5 @@ BAD_CREDENTIALS = ({'message': 'Invalid credentials'}, 401)
 FORBIDDEN = ({'message': 'Access to this resource is forbidden'}, 403)
 CODE_NOT_VALID = ({'message': 'Valid code is required to reset a password'}, 401)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
+EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
+
