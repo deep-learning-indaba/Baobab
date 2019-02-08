@@ -1,12 +1,14 @@
 from app import db, bcrypt
-
+import app
 
 class ApplicationForm(db.Model):
+    __tablename__ = 'application_form'
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
+
 
     def __init__(self, event_id, is_open, deadline):
         self.event_id = event_id
@@ -17,6 +19,7 @@ class ApplicationForm(db.Model):
 
 
 class Section(db.Model):
+    __tablename__ = 'section'
 
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
@@ -31,6 +34,7 @@ class Section(db.Model):
         self.order = order
 
 class Question(db.Model):
+    __tablename__ = 'question'
 
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)

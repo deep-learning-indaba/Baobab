@@ -39,7 +39,7 @@ class Answer(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
-    question_id = db.Column(Integer(), db.ForeignKey("question.id"), nullable=False)
+    question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
 
 
