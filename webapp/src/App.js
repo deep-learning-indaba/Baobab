@@ -6,9 +6,30 @@ import Login from './pages/login';
 import CreateAccount from './pages/createAccount'
 import Application from './pages/applicationForm'
 import { PrivateRoute } from './components';
+import UserDropdown from './components/User';
 import './App.css';
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+        user: {},
+    };
+  }
+
+  componentDidMount() {
+    this.setState({ 
+        user: JSON.parse(localStorage.getItem('user')),
+    });
+  }
+
+  refreshUser() {
+    this.setState({ 
+      user: JSON.parse(localStorage.getItem('user')),
+    });
+  }
+
   render() {
     return (
       <Router>
@@ -22,25 +43,26 @@ class App extends Component {
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav">
-                <li class="nav-item active">
-                  <NavLink to="/" activeClassName="nav-link active" className="nav-link">Home</NavLink>
-                </li>
+              <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                  <NavLink to="/login" activeClassName="nav-link active" className="nav-link">Login</NavLink>
+                  <NavLink to="/" activeClassName="nav-link active" className="nav-link">Home</NavLink>
                 </li>
                 <li class="nav-item">
                   <NavLink to="/applicationForm" activeClassName="nav-link active" className="nav-link">Apply</NavLink>
                 </li>
               </ul>
+              <UserDropdown logout={this.refreshUser}/>
             </div>
           </nav>
           <div class="Body">
             <div className="container">
-              <PrivateRoute exact path="/" component={Home} />
+              <Route exact path="/" component={Home} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/createAccount" component={CreateAccount} />
-              <Route exact path="/applicationForm" component={Application} />
+              <PrivateRoute exact path="/applicationForm" component={Application} />
+            </div>
+            <div className="container">
+              User: {JSON.stringify(this.state.user)}
             </div>
           </div>
         </div>
