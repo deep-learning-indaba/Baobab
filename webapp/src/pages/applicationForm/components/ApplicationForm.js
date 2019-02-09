@@ -2,6 +2,12 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from '../../../services/applicationForm';
 
+const SHORT_TEXT = "short-text";
+const SINGLE_CHOICE = "single-choice";
+const LONG_TEXT = "long-text";
+const MULTI_CHOICE = "multi-choice";
+const FILE = "file";
+
 class FieldEditor extends React.Component {
     constructor(props) {
       super(props);
@@ -13,18 +19,20 @@ class FieldEditor extends React.Component {
     handleChange(event) {
       const value = event.target.value;
       const id = event.target.id;
-      this.props.onChange(id, value);
+      if (this.props.onChange) {
+        this.props.onChange(id, value);
+      }
     }
   
     formControl(id, type, required, choices) {
         switch(type) {
-            case "short-text":
+            case SHORT_TEXT:
                 return <input type="text" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
-            case "single-choice":
+            case SINGLE_CHOICE:
                 return <input type="checkbox" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
-            case "long-text":
+            case LONG_TEXT:
                 return (<textarea class="form-control" rows="5" id={id} name={id} required={required || null} onChange={this.handleChange}></textarea>)
-            case "multi-choice":
+            case MULTI_CHOICE:
                 return (
                     <select class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}>
                         {choices.map(function(c) {
@@ -34,7 +42,7 @@ class FieldEditor extends React.Component {
                         })}
                     </select>
                 )
-            case "file":
+            case FILE:
                 return <input type="file" class="form-control-file" id={id} name={id} onChange={this.handleChange}/>
             default:
                 return <p className="text-danger">WARNING: No control found for type {type}!</p>
@@ -53,14 +61,12 @@ class FieldEditor extends React.Component {
   }
 
 function Section (props) {
-    let questions = props.questions.slice().sort(function(a, b) {
-        return a.order - b.order;
-    });
+    let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
     return (
         <div>
             <h2>{props.name}</h2>
             <p>{props.description}</p>
-            {questions.map(function(question) {
+            {questions && questions.map(function(question) {
                     return (
                         <FieldEditor id={question.id} description={question.description} type={question.type} choices={question.choices} required={question.required} onChange={props.onChange}/>
                     )
@@ -78,10 +84,14 @@ function Confirmation(props) {
                     <p>Please confirm that your responses are correct. Use the previous button to correct them if they are not.</p>        
                 </div>
             </div>
-            {props.answers.map(answer => {
+            {props.answers && props.answers.map(answer => {
+                if (!props.questions) {
+                    return <span></span>
+                }
+
                 let question = props.questions.find(question => question.id == answer.questionId);
 
-                return (
+                return (question && 
                 <div>
                     <div class="row">
                         <div class="col">
@@ -161,17 +171,17 @@ class ApplicationForm extends Component {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
         
-        const sections = formSpec.sections.slice().sort(function(a, b) {
+        const sections = formSpec.sections && formSpec.sections.slice().sort(function(a, b) {
             return a.order - b.order;
         });
-        const allQuestions = sections.flatMap(section => section.questions);
+        const allQuestions = sections && sections.flatMap(section => section.questions);
 
-        const numSteps = sections.length;
+        const numSteps = sections ? sections.length : 0;
         
         const style = {
             width : (currentStep / (numSteps+1) * 100) + '%'
         }
-        const currentSection = currentStep <= numSteps ? sections[currentStep-1] : null;
+        const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
         
         return (
             <form onSubmit={this.handleSubmit}>

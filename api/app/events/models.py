@@ -9,7 +9,7 @@ class Event(db.Model):
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
-    end_date = db.Column(DateTime(), nullable=False)
+    end_date = db.Column(db.DateTime(), nullable=False)
     
 
     def __init__(self, name, description, start_date, end_date):
@@ -35,7 +35,7 @@ class EventRole(db.Model):
     __tablename__ = "event_role"
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey("event.event_id"), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     user_id = db.Column(Integer(), db.ForeignKey("app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
 
