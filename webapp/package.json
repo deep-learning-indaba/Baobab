@@ -16,7 +16,7 @@
   "scripts": {
     "start": "react-scripts start ",
     "build": "react-scripts build",
-    "build-test": "dotenv -e .env.test react-scripts build",
+    "build-test": "set REACT_APP_ENV=test react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "test-ci": "react-scripts test --env=jsdom --ci --coverage -u"
