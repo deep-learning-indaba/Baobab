@@ -29,8 +29,7 @@ jobs:
   
   deploy:
     docker:
-      - image: circleci/node:8
-      - image: google/cloud-sdk
+      - image: gcr.io/google-appengine/nodejs
     steps:
       - checkout
       - run: |
