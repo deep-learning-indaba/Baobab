@@ -28,9 +28,6 @@ jobs:
             docker-compose run test-ci  
   
   deploy-test:
-    filters:
-      branches:
-        only: develop
     machine : true
     steps:
       - checkout
@@ -53,9 +50,6 @@ jobs:
           
 
   deploy-prod:
-    filters:
-      branches:
-        only: master
     machine : true
     steps:
       - checkout
@@ -81,6 +75,12 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy-test
-      - deploy-prod
+      - deploy-test:
+          filters:
+            branches:
+              only: develop
+      - deploy-prod:
+          filters:
+            branches:
+              only: master
 
