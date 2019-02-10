@@ -40,9 +40,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
     @marshal_with(form_fields)
     def get(self):
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True, help = 'Invalid event_id requested. Event_id\'s should be of type int.')
-        args = req_parser.parse_args()
+        args = self.req_parser.parse_args()
 
         try:
             form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
