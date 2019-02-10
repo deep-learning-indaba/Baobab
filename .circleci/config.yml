@@ -43,7 +43,7 @@ jobs:
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
           cd webapp
           yarn
-          CI=true yarn build
+          CI=false yarn build
           gcloud app deploy
 
 workflows:
