@@ -34,8 +34,10 @@ jobs:
       - run: |
           curl -o- -L https://yarnpkg.com/install.sh | sh
           export PATH=~/.yarn/bin:$PATH
-          nvm install v8.11.3
-          nvm alias default v8.11.3
+          export NVM_DIR="/opt/circleci/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+          nvm install v8.11.3 && nvm use v8.11.3 && nvm alias default v8.11.3
+          node -v
           echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
