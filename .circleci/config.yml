@@ -29,10 +29,12 @@ jobs:
   
   deploy:
     docker:
-      - image: gcr.io/google-appengine/nodejs
+      - image: circleci/node:8 
     steps:
       - checkout
       - run: |
+          RUN curl -sSL https://sdk.cloud.google.com | bash
+          ENV PATH $PATH:/root/google-cloud-sdk/bin
           echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
