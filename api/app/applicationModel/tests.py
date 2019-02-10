@@ -8,10 +8,6 @@ from app.applicationModel.models import ApplicationForm, Section, Question
 
 
 class ApplicationFormApiTest(ApiTestCase):
-    test_event = Event('Test Event', 'Event Description', '2019/02/24', '2019/03/24')
-    test_form = ApplicationForm(1, True, '2019/03/24')
-    test_section = Section(test_form.id, 'Test Section', 'Test Description', 1)
-    test_question = Question(test_form.id, test_section.id, 'Test Question Description', 1, 'Test Type')
 
 
     def seed_static_data(self):
