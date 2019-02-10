@@ -28,7 +28,7 @@ jobs:
             docker-compose run test-ci  
   
   deploy:
-    machine: true
+    image: circleci/node:8
     steps:
       - checkout
       - run: |
@@ -36,9 +36,8 @@ jobs:
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
           cd webapp
-          docker build --rm=false -t us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 .
-          gcloud docker -- push us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1
-          gcloud app deploy --image-url=us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 
+          yarn build
+          gcloud app deploy
 
 workflows:
   build_and_test:
