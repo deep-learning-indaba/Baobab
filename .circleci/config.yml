@@ -27,7 +27,7 @@ jobs:
             docker-compose build test-ci 
             docker-compose run test-ci  
   
-  deploy:
+  deploy-test:
     machine : true
     steps:
       - checkout
@@ -43,7 +43,7 @@ jobs:
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
           cd webapp
           yarn
-          CI=false yarn build
+          CI=false yarn build-test
           gcloud app deploy
 
 workflows:
@@ -51,5 +51,5 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy
+      - deploy-test
 
