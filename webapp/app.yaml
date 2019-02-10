@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -9,3 +10,7 @@ handlers:
 
 - url: /
   static_dir: build
+=======
+runtime: custom
+env: flex
+>>>>>>> 06573f2e3312ad54cd36eb6163290c868f4714a1
