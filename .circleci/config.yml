@@ -31,20 +31,29 @@ jobs:
     machine : true
     steps:
       - checkout
-      - run: |
-          curl -o- -L https://yarnpkg.com/install.sh | sh
-          export PATH=~/.yarn/bin:$PATH
-          export NVM_DIR="/opt/circleci/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-          nvm install v8.11.3 && nvm use v8.11.3 && nvm alias default v8.11.3
-          node -v
-          echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
-          gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
-          cd webapp
-          yarn
-          CI=false yarn build-test
-          gcloud app deploy
+      - run: 
+          name: Install Dependencies
+          command: |
+            curl -o- -L https://yarnpkg.com/install.sh | sh
+            export PATH=~/.yarn/bin:$PATH
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            nvm install v8.11.3 && nvm use v8.11.3 && nvm alias default v8.11.3
+            node -v
+      - run:
+          name: Setup GCP
+          command: |
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            
+      - run:
+          name: Run and Deploy
+          command: | 
+            cd webapp
+            yarn
+            CI=false yarn build-test
+            gcloud app deploy
 
 workflows:
   build_and_test:
