@@ -12,13 +12,11 @@ handlers:
 
 skip_files:
 - ^(.*/)?.*/assets/.*$
-- ^(.*/)?.*/build/.*$
 - ^(.*/)?.*/test/.*$
 - ^(.*/)?.*/templates/.*$
 - ^(.*/)?.*/node_modules/.*$
 
 - ^(assets/.*)
-- ^(build/.*)
 - ^(test/.*)
 - ^(templates/.*)
 - ^(node_modules/.*)
