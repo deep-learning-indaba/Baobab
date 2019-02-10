@@ -28,7 +28,8 @@ jobs:
             docker-compose run test-ci  
   
   deploy:
-    image: circleci/node:8
+    docker:
+      - image: circleci/node:8
     steps:
       - checkout
       - run: |
