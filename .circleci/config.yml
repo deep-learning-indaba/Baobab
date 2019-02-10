@@ -28,13 +28,11 @@ jobs:
             docker-compose run test-ci  
   
   deploy:
-    docker:
-      - image: circleci/node:8 
+    machine : true
     steps:
       - checkout
       - run: |
-          RUN curl -sSL https://sdk.cloud.google.com | sh
-          ENV PATH $PATH:/root/google-cloud-sdk/bin
+          curl -o- -L https://yarnpkg.com/install.sh | sh
           echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
           gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
           gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
