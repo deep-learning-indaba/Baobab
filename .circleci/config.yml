@@ -28,6 +28,9 @@ jobs:
             docker-compose run test-ci  
   
   deploy-test:
+    filters:
+      branches:
+        only: develop
     machine : true
     steps:
       - checkout
@@ -47,6 +50,31 @@ jobs:
             yarn
             CI=false yarn build-test
             gcloud app deploy
+          
+
+  deploy-prod:
+    filters:
+      branches:
+        only: master
+    machine : true
+    steps:
+      - checkout
+      - run: 
+          name: Deploy to test
+          command: |
+            curl -o- -L https://yarnpkg.com/install.sh | sh
+            export PATH=~/.yarn/bin:$PATH
+            export NVM_DIR="/opt/circleci/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+            nvm install v8.11.3 && nvm use v8.11.3 && nvm alias default v8.11.3
+            node -v
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            cd webapp
+            yarn
+            CI=false yarn build
+            gcloud app deploy
 
 workflows:
   build_and_test:
@@ -54,4 +82,5 @@ workflows:
       - build
       - frontEndTests
       - deploy-test
+      - deploy-prod
 
