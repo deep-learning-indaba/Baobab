@@ -30,6 +30,7 @@ jobs:
   deploy:
     docker:
       - image: circleci/node:8
+      - image: google/cloud-sdk
     steps:
       - checkout
       - run: |
