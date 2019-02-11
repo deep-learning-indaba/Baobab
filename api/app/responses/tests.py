@@ -4,4 +4,5 @@ from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
 
 class ResponseApiTest(ApiTestCase):
-    pass
+    def test_get_response(self):
+        assert False
