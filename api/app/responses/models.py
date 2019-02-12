@@ -23,15 +23,15 @@ class Response(db.Model):
         self.submitted_timestamp = submitted_timestamp
         self.is_withdrawn = is_withdrawn
         self.withdrawn_timestamp = withdrawn_timestamp
-        self.started_timestamp = date.today().strftime('%Y/%m/%d')
+        self.started_timestamp = date.today()
 
     def submit_response(self):
        self.is_submitted = True
-       self.submitted_timestamp = date.today().strftime('%Y/%m/%d')
+       self.submitted_timestamp = date.today()
 
     def withdraw_response(self):
        self.is_withdrawn = True
-       self.withdrawn_timestamp = date.today().strftime('%Y/%m/%d')
+       self.withdrawn_timestamp = date.today()
 
 class Answer(db.Model):
 

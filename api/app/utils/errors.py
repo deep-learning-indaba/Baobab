@@ -10,5 +10,5 @@ EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
 SECTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
 QUESTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
 FORM_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
+RESPONSE_NOT_FOUND = ({'message': 'No response found for the given event and user'}, 409)
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
-
