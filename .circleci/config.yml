@@ -27,6 +27,30 @@ jobs:
             docker-compose build test-ci 
             docker-compose run test-ci  
   
+  migrate-test:
+    machine: true
+    steps:
+      - checkout
+      - run: 
+          name: Migrate the staging database
+          command: |
+            # Setup the gcloud credentials
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+
+            # Install the cloud_sql_proxy
+            wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+            chmod +x cloud_sql_proxy
+            sudo mkdir /cloudsql
+            sudo chmod 777 /cloudsql
+            ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab & # Run the cloud_sql_proxy
+
+            # Run the migrations
+            pip install -r requirements
+            cd api
+            DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
+
 
   deploy-backend-test:
     machine: true
