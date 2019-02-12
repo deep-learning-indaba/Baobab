@@ -7,7 +7,7 @@ export default class CreateAccount extends Component {
   
     render() {
       return (
-       <CreateAccountForm></CreateAccountForm> 
+       <CreateAccountForm> </CreateAccountForm> 
       );
-    }
+     }
   }
