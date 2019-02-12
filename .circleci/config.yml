@@ -83,7 +83,7 @@ jobs:
       - run: 
           name: Deploy backend to test
           command: |
-            openssl aes256 -md md5 -d -in api/prod.yaml.enc -out api/approdp.yaml -pass pass:$CONFIG_PASSWORD
+            openssl aes256 -md md5 -d -in api/prod.yaml.enc -out api/prod.yaml -pass pass:$CONFIG_PASSWORD
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
