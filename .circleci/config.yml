@@ -140,7 +140,10 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy-backend-test
+      - deploy-backend-test:
+          filters:
+            branches:
+              only: develop
       - deploy-backend-prod:
           filters:
             branches:
