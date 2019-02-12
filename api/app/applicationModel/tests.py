@@ -11,10 +11,10 @@ class ApplicationFormApiTest(ApiTestCase):
 
 
     def seed_static_data(self):
-        test_event = Event('Test Event', 'Event Description', '2019/02/24', '2019/03/24')
+        test_event = Event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24))
         db.session.add(test_event)
         db.session.commit()
-        test_form = ApplicationForm(test_event.id, True, '2019/03/24')
+        test_form = ApplicationForm(test_event.id, True, date(2019, 3, 24))
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(test_form.id, 'Test Section', 'Test Description', 1)

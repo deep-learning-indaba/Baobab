@@ -14,8 +14,6 @@ class ApplicationForm(db.Model):
         self.event_id = event_id
         self.is_open = is_open
         self.deadline = deadline
-    
-
 
 
 class Section(db.Model):
