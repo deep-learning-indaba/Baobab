@@ -49,7 +49,11 @@ jobs:
             # Run the migrations
             pip install -r requirements
             cd api
+<<<<<<< HEAD
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
+=======
+            DATABASE_URL=$STAGING_DB_PROXY python run.py  db upgrade # Temporarily update the database url to the proxy and run migrations
+>>>>>>> 1e2fbf46344fed9e2ee651828d09333bdb42af59
 
 
   deploy-backend-test:
