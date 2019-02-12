@@ -52,7 +52,7 @@ jobs:
     steps:
       - checkout
       - run: 
-          name: Migrate the staging database
+          name: Migrate the prod database
           command: |
             # Install the cloud_sql_proxy
             echo $GCLOUD_SQL_SERVICE_KEY > cloud_proxy.key
