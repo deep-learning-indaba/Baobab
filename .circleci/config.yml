@@ -47,7 +47,7 @@ jobs:
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab & # Run the cloud_sql_proxy
 
             # Run the migrations
-            pip install -r requirements
+            pip install -r requirements.txt
             cd api
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
