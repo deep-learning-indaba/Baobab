@@ -27,12 +27,44 @@ jobs:
             docker-compose build test-ci 
             docker-compose run test-ci  
   
+
+  deploy-backend-test:
+    machine: true
+    steps:
+      - checkout
+      - run: 
+          name: Deploy backend to test
+          command: |
+            openssl aes256 -md md5 -d -in api/app.yaml.enc -out api/app.yaml -pass pass:$CONFIG_PASSWORD
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            cd api
+            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
+            gcloud app deploy
+
+  deploy-backend-prod:
+    machine: true
+    steps:
+      - checkout
+      - run: 
+          name: Deploy backend to test
+          command: |
+            openssl aes256 -md md5 -d -in api/prod.yaml.enc -out api/prod.yaml -pass pass:$CONFIG_PASSWORD
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            cd api
+            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
+            gcloud app deploy prod.yaml
+
+
   deploy-test:
     machine : true
     steps:
       - checkout
       - run: 
-          name: Deploy to test
+          name: Deploy Frontend to test
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
             export PATH=~/.yarn/bin:$PATH
@@ -47,14 +79,14 @@ jobs:
             yarn
             CI=false yarn build-test
             gcloud app deploy
-          
+
 
   deploy-prod:
     machine : true
     steps:
       - checkout
       - run: 
-          name: Deploy to test
+          name: Deploy to production
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
             export PATH=~/.yarn/bin:$PATH
@@ -75,6 +107,14 @@ workflows:
     jobs:
       - build
       - frontEndTests
+      - deploy-backend-test:
+          filters:
+            branches:
+              only: develop
+      - deploy-backend-prod:
+          filters:
+            branches:
+              only: master
       - deploy-test:
           filters:
             branches:
