@@ -129,17 +129,6 @@ def seed_question_data(question):
         {
             'id': 1,
             'application_form_id': 1,
-            'section_id': 1,
-            'type': 'short-text',
-            'headline': 'Email address',
-            'order': 1,
-            'description': None,
-            'is_required': True,  
-            'options': None     
-        },
-        {
-            'id': 2,
-            'application_form_id': 1,
             'section_id': 2,
             'type': 'long_text',
             'headline': 'Why is attending the Deep Learning Indaba 2019 important to you?',
@@ -149,7 +138,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 3,
+            'id': 2,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'long_text',
@@ -160,7 +149,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 4,
+            'id': 3,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'long_text',
@@ -171,7 +160,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 5,
+            'id': 4,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'long_text',
@@ -182,7 +171,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 6,
+            'id': 5,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'long_text',
@@ -193,7 +182,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 7,
+            'id': 6,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'file',
@@ -204,7 +193,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 8,
+            'id': 7,
             'application_form_id': 1,
             'section_id': 2,
             'type': 'multi-choice',
@@ -218,7 +207,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 9,
+            'id': 8,
             'application_form_id': 1,
             'section_id': 3,
             'type': 'multi-choice',
@@ -234,7 +223,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 10,
+            'id': 9,
             'application_form_id': 1,
             'section_id': 3,
             'type': 'long-text',
@@ -245,7 +234,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 11,
+            'id': 10,
             'application_form_id': 1,
             'section_id': 3,
             'type': 'short-text',
@@ -256,7 +245,7 @@ def seed_question_data(question):
             'options': None           
         },
         {
-            'id': 12,
+            'id': 11,
             'application_form_id': 1,
             'section_id': 3,
             'type': 'multi-choice',
@@ -270,7 +259,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 13,
+            'id': 12,
             'application_form_id': 1,
             'section_id': 4,
             'type': 'multi-choice',
@@ -285,7 +274,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 14,
+            'id': 13,
             'application_form_id': 1,
             'section_id': 4,
             'type': 'multi-choice',
@@ -302,7 +291,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 15,
+            'id': 14,
             'application_form_id': 1,
             'section_id': 4,
             'type': 'multi-choice',
@@ -322,7 +311,7 @@ def seed_question_data(question):
             ]     
         },
         {
-            'id': 16,
+            'id': 15,
             'application_form_id': 1,
             'section_id': 5,
             'type': 'multi-choice',
@@ -338,7 +327,7 @@ def seed_question_data(question):
             ]      
         },
         {
-            'id': 17,
+            'id': 16,
             'application_form_id': 1,
             'section_id': 5,
             'type': 'long-text',
@@ -349,7 +338,7 @@ def seed_question_data(question):
             'options': None        
         },
         {
-            'id': 18,
+            'id': 17,
             'application_form_id': 1,
             'section_id': 6,
             'type': 'long-text',
@@ -360,7 +349,7 @@ def seed_question_data(question):
             'options': None        
         },
         {
-            'id': 19,
+            'id': 18,
             'application_form_id': 1,
             'section_id': 6,
             'type': 'long-text',
