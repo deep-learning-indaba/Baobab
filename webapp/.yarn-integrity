@@ -1,0 +1,12 @@
+{
+  "systemParams": "linux-x64-57",
+  "modulesFolders": [
+    "webapp"
+  ],
+  "flags": [],
+  "linkedModules": [],
+  "topLevelPatterns": [],
+  "lockfileEntries": {},
+  "files": [],
+  "artifacts": {}
+}

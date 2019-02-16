@@ -1,10 +1,11 @@
 import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
-import FormTextBox from "./FromTextBox";
-import FormSelect from "./FormSelect";
+import FormTextBox from "../../../components/form/FromTextBox";
+import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { default as ReactSelect } from "react-select";
+import { titleOptions } from "../../../utils/validation/contentHelpers";
 class CreateAccountForm extends Component {
   constructor(props) {
     super(props);
@@ -53,14 +54,6 @@ class CreateAccountForm extends Component {
   };
 
   render() {
-    const titleOptions = [
-      { value: "Mr", label: "Mr" },
-      { value: "Mrs", label: "Mrs" },
-      { value: "Ms", label: "Ms" },
-      { value: "Hon", label: "Hon" },
-      { value: "Prof", label: "Prof" },
-      { value: "Dr", label: "Dr" }
-    ];
     const {
       firstName,
       lastName,
@@ -84,14 +77,6 @@ class CreateAccountForm extends Component {
             label={validationFields.title.display}
           />
           <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
-          <FormTextBox
             id={validationFields.firstName.name}
             type="text"
             placeholder={validationFields.firstName.display}
@@ -106,6 +91,14 @@ class CreateAccountForm extends Component {
             onChange={this.handleChange(validationFields.lastName)}
             value={lastName}
             label={validationFields.lastName.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
           />
           <FormTextBox
             id={validationFields.email.name}
