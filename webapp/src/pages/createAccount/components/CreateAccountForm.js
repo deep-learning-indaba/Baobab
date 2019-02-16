@@ -2,7 +2,9 @@ import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "./FromTextBox";
+import FormSelect from "./FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
+import { default as ReactSelect } from "react-select";
 class CreateAccountForm extends Component {
   constructor(props) {
     super(props);
@@ -51,11 +53,100 @@ class CreateAccountForm extends Component {
   };
 
   render() {
-    const { email, password, confirmPassword, loading, error } = this.state;
+    const titleOptions = [
+      { value: "Mr", label: "Mr" },
+      { value: "Mrs", label: "Mrs" },
+      { value: "Ms", label: "Ms" },
+      { value: "Hon", label: "Hon" },
+      { value: "Prof", label: "Prof" },
+      { value: "Dr", label: "Dr" }
+    ];
+    const {
+      firstName,
+      lastName,
+      email,
+      title,
+      password,
+      confirmPassword,
+      loading,
+      error
+    } = this.state;
 
     return (
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
+          <FormSelect
+            options={titleOptions}
+            id={validationFields.title.name}
+            placeholder={validationFields.title.display}
+            onChange={this.handleChange(validationFields.title)}
+            value={title}
+            label={validationFields.title.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
+          <FormTextBox
+            id={validationFields.firstName.name}
+            type="text"
+            placeholder={validationFields.firstName.display}
+            onChange={this.handleChange(validationFields.firstName)}
+            value={firstName}
+            label={validationFields.firstName.display}
+          />
+          <FormTextBox
+            id={validationFields.lastName.name}
+            type="text"
+            placeholder={validationFields.lastName.display}
+            onChange={this.handleChange(validationFields.lastName)}
+            value={lastName}
+            label={validationFields.lastName.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
+          <FormTextBox
+            id={validationFields.email.name}
+            type="email"
+            placeholder={validationFields.email.display}
+            onChange={this.handleChange(validationFields.email)}
+            value={email}
+            label={validationFields.email.display}
+          />
           <FormTextBox
             id={validationFields.email.name}
             type="email"
