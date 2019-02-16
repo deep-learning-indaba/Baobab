@@ -5,7 +5,11 @@ import FormTextBox from "../../../components/form/FromTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { default as ReactSelect } from "react-select";
-import { titleOptions } from "../../../utils/validation/contentHelpers";
+import {
+  titleOptions,
+  getCounties
+} from "../../../utils/validation/contentHelpers";
+
 class CreateAccountForm extends Component {
   constructor(props) {
     super(props);
@@ -62,9 +66,9 @@ class CreateAccountForm extends Component {
       password,
       confirmPassword,
       loading,
-      error
+      error,
+      nationality
     } = this.state;
-
     return (
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
@@ -99,6 +103,14 @@ class CreateAccountForm extends Component {
             onChange={this.handleChange(validationFields.email)}
             value={email}
             label={validationFields.email.display}
+          />
+          <FormSelect
+            options={getCounties()}
+            id={validationFields.nationality.name}
+            placeholder={validationFields.nationality.display}
+            onChange={this.handleChange(validationFields.nationality)}
+            value={nationality}
+            label={validationFields.nationality.display}
           />
           <FormTextBox
             id={validationFields.email.name}
