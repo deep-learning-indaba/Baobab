@@ -7,7 +7,8 @@ import validationFields from "../../../utils/validation/validationFields";
 import { default as ReactSelect } from "react-select";
 import {
   titleOptions,
-  getCounties
+  getCounties,
+  genderOptions
 } from "../../../utils/validation/contentHelpers";
 
 class CreateAccountForm extends Component {
@@ -67,7 +68,12 @@ class CreateAccountForm extends Component {
       confirmPassword,
       loading,
       error,
-      nationality
+      nationality,
+      nationalityId,
+      residence,
+      residenceId,
+      ethnicity,
+      gender
     } = this.state;
     return (
       <div className="Login">
@@ -113,23 +119,49 @@ class CreateAccountForm extends Component {
             label={validationFields.nationality.display}
           />
           <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
+            id={validationFields.nationalityId.name}
+            type="text"
+            placeholder={validationFields.nationalityId.display}
+            onChange={this.handleChange(validationFields.nationalityId)}
+            value={nationalityId}
+            label={validationFields.nationalityId.display}
+          />
+          <FormSelect
+            options={getCounties()}
+            id={validationFields.residence.name}
+            placeholder={validationFields.residence.display}
+            onChange={this.handleChange(validationFields.residence)}
+            value={residence}
+            label={validationFields.residence.display}
           />
           <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
+            id={validationFields.residenceId.name}
+            type="text"
+            placeholder={validationFields.residenceId.display}
+            onChange={this.handleChange(validationFields.residenceId)}
+            value={residenceId}
+            label={validationFields.residenceId.display}
           />
+
           <FormTextBox
-            id={validationFields.email.name}
+            id={validationFields.ethnicity.name}
+            type="text"
+            placeholder={validationFields.ethnicity.display}
+            onChange={this.handleChange(validationFields.ethnicity)}
+            value={ethnicity}
+            label={validationFields.ethnicity.display}
+          />
+          <FormSelect
+            options={genderOptions}
+            id={validationFields.gender.name}
+            placeholder={validationFields.gender.display}
+            onChange={this.handleChange(validationFields.gender)}
+            value={gender}
+            label={validationFields.gender.display}
+          />
+
+          <FormTextBox
+            id={validationFields.gender.name}
             type="email"
             placeholder={validationFields.email.display}
             onChange={this.handleChange(validationFields.email)}
