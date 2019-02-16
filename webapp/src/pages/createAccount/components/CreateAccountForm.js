@@ -73,7 +73,10 @@ class CreateAccountForm extends Component {
       residence,
       residenceId,
       ethnicity,
-      gender
+      gender,
+      affiliation,
+      department,
+      disability
     } = this.state;
     return (
       <div className="Login">
@@ -118,14 +121,6 @@ class CreateAccountForm extends Component {
             value={nationality}
             label={validationFields.nationality.display}
           />
-          <FormTextBox
-            id={validationFields.nationalityId.name}
-            type="text"
-            placeholder={validationFields.nationalityId.display}
-            onChange={this.handleChange(validationFields.nationalityId)}
-            value={nationalityId}
-            label={validationFields.nationalityId.display}
-          />
           <FormSelect
             options={getCounties()}
             id={validationFields.residence.name}
@@ -134,15 +129,6 @@ class CreateAccountForm extends Component {
             value={residence}
             label={validationFields.residence.display}
           />
-          <FormTextBox
-            id={validationFields.residenceId.name}
-            type="text"
-            placeholder={validationFields.residenceId.display}
-            onChange={this.handleChange(validationFields.residenceId)}
-            value={residenceId}
-            label={validationFields.residenceId.display}
-          />
-
           <FormTextBox
             id={validationFields.ethnicity.name}
             type="text"
@@ -159,38 +145,29 @@ class CreateAccountForm extends Component {
             value={gender}
             label={validationFields.gender.display}
           />
-
           <FormTextBox
-            id={validationFields.gender.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
+            id={validationFields.affiliation.name}
+            type="text"
+            placeholder={validationFields.affiliation.display}
+            onChange={this.handleChange(validationFields.affiliation)}
+            value={affiliation}
+            label={validationFields.affiliation.display}
           />
           <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
+            id={validationFields.department.name}
+            type="text"
+            placeholder={validationFields.department.display}
+            onChange={this.handleChange(validationFields.department)}
+            value={department}
+            label={validationFields.department.display}
           />
           <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
-          <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
+            id={validationFields.disability.name}
+            type="text"
+            placeholder={validationFields.disability.display}
+            onChange={this.handleChange(validationFields.disability)}
+            value={disability}
+            label={validationFields.disability.display}
           />
           <FormTextBox
             id={validationFields.password.name}

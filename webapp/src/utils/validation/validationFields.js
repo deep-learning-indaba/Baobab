@@ -5,9 +5,7 @@ const validationFields = {
   lastName: { name: "lastName", display: "Last Name" },
   gender: { name: "gender", display: "Gender" },
   nationality: { name: "nationality", display: "Country of Nationality" },
-  nationalityId: { name: "nationalityId", display: "National Id Number" },
   residence: { name: "residence", display: "Country of Residence" },
-  residenceId: { name: "residenceId", display: "Country of Residence Id Number" },
   ethnicity: { name: "ethnicityId", display: "Ethnicity" },
   affiliation: { name: "affiliation", display: "Affiliation" },
   department: { name: "department", display: "Department" },
@@ -15,7 +13,7 @@ const validationFields = {
   username: { name: "username", display: "Username" },
   password: { name: "password", display: "Password" },
   confirmPassword: { name: "confirmPassword", display: "Confirm Password" },
-  dateOfBirth: { name: "upgradedateOfBirth", display: "Date of Birth" },
-}
+  dateOfBirth: { name: "upgradedateOfBirth", display: "Date of Birth" }
+};
 
-export default validationFields
+export default validationFields;
