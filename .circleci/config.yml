@@ -7,7 +7,7 @@ jobs:
       - run:
           name: Start container
           command: docker-compose up -d
-      - run: 
+      - run:
           name: Run migrations
           command: |
             docker-compose run web python api/run.py db upgrade --directory api/migrations
@@ -26,12 +26,12 @@ jobs:
           command: |
             docker-compose build test-ci 
             docker-compose run test-ci  
-  
+
   deploy-test:
-    machine : true
+    machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Deploy to test
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
@@ -47,13 +47,12 @@ jobs:
             yarn
             CI=false yarn build-test
             gcloud app deploy
-          
 
   deploy-prod:
-    machine : true
+    machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Deploy to test
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
@@ -75,12 +74,8 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy-test:
-          filters:
-            branches:
-              only: develop
+      - deploy-test
       - deploy-prod:
           filters:
             branches:
               only: master
-
