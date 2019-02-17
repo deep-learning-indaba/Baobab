@@ -2,21 +2,24 @@ runtime: python27
 api_version: 1
 threadsafe: true
 
-handlers:
-- url: /
-  static_files: build/index.html
-  upload: build/index.html
+runtime_config:
+  document_root: web
 
-- url: /
-  static_dir: build
+handlers:
+  - url: /
+    static_files: build/index.html
+    upload: build/index.html
+
+  - url: /
+    static_dir: build
 
 skip_files:
-- ^(.*/)?.*/assets/.*$
-- ^(.*/)?.*/test/.*$
-- ^(.*/)?.*/templates/.*$
-- ^(.*/)?.*/node_modules/.*$
+  - ^(.*/)?.*/assets/.*$
+  - ^(.*/)?.*/test/.*$
+  - ^(.*/)?.*/templates/.*$
+  - ^(.*/)?.*/node_modules/.*$
 
-- ^(assets/.*)
-- ^(test/.*)
-- ^(templates/.*)
-- ^(node_modules/.*)
+  - ^(assets/.*)
+  - ^(test/.*)
+  - ^(templates/.*)
+  - ^(node_modules/.*)
