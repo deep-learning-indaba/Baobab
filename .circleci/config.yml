@@ -48,6 +48,19 @@ jobs:
             CI=false yarn build-test
             gcloud app deploy
 
+  deploy-image:
+    machine: true
+    steps:
+      - checkout
+      - run: |
+          echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+          gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+          gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+          cd webapp
+          docker build --rm=false -t us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 .
+          gcloud docker -- push us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1
+          gcloud app deploy --image-url=us.gcr.io/${GOOGLE_PROJECT_ID}/website:$CIRCLE_SHA1 
+
   deploy-prod:
     machine: true
     steps:
@@ -74,7 +87,7 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy-test
+      - deploy-image
       - deploy-prod:
           filters:
             branches:
