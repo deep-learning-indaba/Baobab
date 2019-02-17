@@ -53,7 +53,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Deploy to test
+          name: Deploy to production
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
             export PATH=~/.yarn/bin:$PATH
@@ -74,6 +74,22 @@ workflows:
     jobs:
       - build
       - frontEndTests
+      - migrate-test:
+          filters:
+            branches:
+              only: develop
+      - migrate-prod:
+          filters:
+            branches:
+              only: master
+      - deploy-backend-test:
+          filters:
+            branches:
+              only: develop
+      - deploy-backend-prod:
+          filters:
+            branches:
+              only: master
       - deploy-test:
           filters:
             branches:
