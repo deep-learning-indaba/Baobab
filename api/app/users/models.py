@@ -49,16 +49,16 @@ class AppUser(db.Model):
                  password,
                  is_admin=False):
         self.email = email
-        self.firstname = firstname,
-        self.lastname = lastname,
-        self.user_title = user_title,
-        self.nationality_country_id = nationality_country_id,
-        self.residence_country_id = residence_country_id,
-        self.user_ethnicity = user_ethnicity,
-        self.user_gender = user_gender,
-        self.affiliation = affiliation,
-        self.department = department,
-        self.user_disability = user_disability,
+        self.firstname = firstname
+        self.lastname = lastname
+        self.user_title = user_title
+        self.nationality_country_id = nationality_country_id
+        self.residence_country_id = residence_country_id
+        self.user_ethnicity = user_ethnicity
+        self.user_gender = user_gender
+        self.affiliation = affiliation
+        self.department = department
+        self.user_disability = user_disability
         self.user_category_id = user_category_id
         self.set_password(password)
         self.active = True
