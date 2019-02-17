@@ -3,13 +3,13 @@ api_version: 1
 threadsafe: true
 
 handlers:
-  - url: /
-    static_files: build/index.html
-    upload: build/index.html
+  - url: /(.*\.(gif|png|jpg|css|js|pdf)(|\.map))$
+    static_files: build/\1
+    upload: build/(.*)(|\.map)
 
   - url: /(.*)
-    static_files: build/\1
-    upload: build/(.*)
+    static_files: build/index.html
+    upload: build/index.html
 
 skip_files:
   - ^(.*/)?.*/assets/.*$
