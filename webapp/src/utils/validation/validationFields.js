@@ -6,7 +6,7 @@ const validationFields = {
   gender: { name: "gender", display: "Gender" },
   nationality: { name: "nationality", display: "Country of Nationality" },
   residence: { name: "residence", display: "Country of Residence" },
-  ethnicity: { name: "ethnicityId", display: "Ethnicity" },
+  ethnicity: { name: "ethnicity", display: "Ethnicity" },
   affiliation: { name: "affiliation", display: "Affiliation" },
   department: { name: "department", display: "Department" },
   disability: { name: "disability", display: "Disability" },
