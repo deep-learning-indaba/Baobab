@@ -9,9 +9,14 @@ const validationFields = {
   ethnicity: { name: "ethnicity", display: "Ethnicity" },
   affiliation: { name: "affiliation", display: "Affiliation" },
   department: { name: "department", display: "Department" },
-  disability: { name: "disability", display: "Disability" },
+  disability: {
+    name: "disability",
+    display: "Disability",
+    placeholder: "Type of Disability or None"
+  },
   username: { name: "username", display: "Username" },
   password: { name: "password", display: "Password" },
+  category: { name: "category", display: "User Category" },
   confirmPassword: { name: "confirmPassword", display: "Confirm Password" },
   dateOfBirth: { name: "upgradedateOfBirth", display: "Date of Birth" }
 };

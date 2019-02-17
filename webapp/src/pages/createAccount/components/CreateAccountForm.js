@@ -8,7 +8,8 @@ import { default as ReactSelect } from "react-select";
 import {
   titleOptions,
   getCounties,
-  genderOptions
+  genderOptions,
+  getCategories
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -30,7 +31,9 @@ const fieldValidations = [
   ruleRunner(validationFields.affiliation, requiredText),
   ruleRunner(validationFields.department, requiredText),
   ruleRunner(validationFields.disability, requiredText),
-  ruleRunner(validationFields.password, requiredText)
+  ruleRunner(validationFields.password, requiredText),
+  ruleRunner(validationFields.confirmPassword, requiredText),
+  ruleRunner(validationFields.category, requiredDropdown)
 ];
 
 class CreateAccountForm extends Component {
@@ -88,10 +91,11 @@ class CreateAccountForm extends Component {
   handleSubmit = event => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
+
     if (this.state.password != this.state.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
-      return;
     }
+    if (this.state.errors.$set.length > 0) return;
 
     this.setState({ loading: true });
 
@@ -142,7 +146,8 @@ class CreateAccountForm extends Component {
       affiliation,
       department,
       disability,
-      showErrors
+      showErrors,
+      category
     } = this.state;
 
     return (
@@ -255,14 +260,28 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
-          <FormTextBox
-            id={validationFields.disability.name}
-            type="text"
-            placeholder={validationFields.disability.display}
-            onChange={this.handleChange(validationFields.disability)}
-            value={disability}
-            label={validationFields.disability.display}
-          />
+          <div class="row">
+            <div class={commonColClassName}>
+              <FormTextBox
+                id={validationFields.disability.name}
+                type="text"
+                placeholder={validationFields.disability.placeholder}
+                onChange={this.handleChange(validationFields.disability)}
+                value={disability}
+                label={validationFields.disability.display}
+              />
+            </div>
+            <div class={commonColClassName}>
+              <FormSelect
+                options={getCategories}
+                id={validationFields.category.name}
+                placeholder={validationFields.category.display}
+                onChange={this.handleChangeDropdown}
+                value={category}
+                label={validationFields.category.display}
+              />
+            </div>
+          </div>
           <div class="row">
             <div class={commonColClassName}>
               <FormTextBox

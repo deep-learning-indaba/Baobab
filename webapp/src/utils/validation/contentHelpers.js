@@ -27,3 +27,19 @@ export function getCounties() {
   });
   return countries;
 }
+export const getCategories = [
+  { value: "4th year/honours student", label: "4th year/honours student" },
+  {
+    value: "Student at a coding academy/institute",
+    label: "Student at a coding academy/institute"
+  },
+  { value: "MSc student", label: "MSc student" },
+  { value: "PhD student", label: "PhD student" },
+  { value: "Postdoc", label: "Postdoc" },
+  { value: "Academic", label: "Academic" },
+  { value: "Industry professional", label: "Industry professional" },
+  {
+    value: "Mentor Attendee (By Invitation)",
+    label: "Mentor Attendee (By Invitation)"
+  }
+];
