@@ -60,9 +60,6 @@ class CreateAccountForm extends Component {
   }
 
   handleChangeDropdown = (name, dropdown) => {
-    // let errorsForm = run(this.state, fieldValidations);
-    // this.setState({ [name]: dropdown.value, errors: { $set: errorsForm } });
-
     this.setState(
       {
         [name]: dropdown.value
