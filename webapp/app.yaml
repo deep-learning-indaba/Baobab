@@ -3,7 +3,7 @@ api_version: 1
 threadsafe: true
 
 runtime_config:
-  document_root: web
+  document_root: .
 
 handlers:
   - url: /
