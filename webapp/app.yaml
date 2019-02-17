@@ -1,25 +1,2 @@
-runtime: python27
-api_version: 1
-threadsafe: true
-
-runtime_config:
-  document_root: .
-
-handlers:
-  - url: /
-    static_files: build/index.html
-    upload: build/index.html
-
-  - url: /
-    static_dir: build
-
-skip_files:
-  - ^(.*/)?.*/assets/.*$
-  - ^(.*/)?.*/test/.*$
-  - ^(.*/)?.*/templates/.*$
-  - ^(.*/)?.*/node_modules/.*$
-
-  - ^(assets/.*)
-  - ^(test/.*)
-  - ^(templates/.*)
-  - ^(node_modules/.*)
+runtime: custom
+env: flex
