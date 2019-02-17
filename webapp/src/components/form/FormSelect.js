@@ -12,7 +12,7 @@ class FormTextBox extends React.Component {
     }
   }
   render() {
-    const { id, options, placeholder } = this.props;
+    const { id, options, placeholder, onChange } = this.props;
     return (
       <div>
         <FormGroup
@@ -21,7 +21,12 @@ class FormTextBox extends React.Component {
           errorText={this.props.errorText}
         >
           <label htmlFor={this.props.Id}>{this.props.label}</label>
-          <ReactSelect id={id} options={options} placeholder={placeholder} />
+          <ReactSelect
+            id={id}
+            options={options}
+            placeholder={placeholder}
+            onChange={e => onChange(id, e)}
+          />
         </FormGroup>
       </div>
     );
