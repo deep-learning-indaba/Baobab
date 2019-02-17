@@ -10,7 +10,28 @@ import {
   getCounties,
   genderOptions
 } from "../../../utils/validation/contentHelpers";
+import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
+import {
+  requiredText,
+  requiredDropdown,
+  validEmail
+} from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
+
+const fieldValidations = [
+  ruleRunner(validationFields.title, requiredDropdown),
+  ruleRunner(validationFields.firstName, requiredText),
+  ruleRunner(validationFields.lastName, requiredText),
+  ruleRunner(validationFields.email, validEmail),
+  ruleRunner(validationFields.nationality, requiredDropdown),
+  ruleRunner(validationFields.residence, requiredDropdown),
+  ruleRunner(validationFields.ethnicity, requiredText),
+  ruleRunner(validationFields.gender, requiredDropdown),
+  ruleRunner(validationFields.affiliation, requiredText),
+  ruleRunner(validationFields.department, requiredText),
+  ruleRunner(validationFields.disability, requiredText),
+  ruleRunner(validationFields.password, requiredText)
+];
 
 class CreateAccountForm extends Component {
   constructor(props) {
@@ -20,35 +41,61 @@ class CreateAccountForm extends Component {
       email: "",
       password: "",
       confirmPassword: "",
+      showErrors: false,
       submitted: false,
       loading: false,
-      error: ""
+      errors: []
     };
   }
 
   validateForm() {
-    return this.state.email.length > 0 && this.state.password.length > 0;
+    return (
+      this.state.email.length > 0 &&
+      this.state.password.length > 0 &&
+      this.state.confirmPassword.length > 0
+    );
   }
+
+  handleChangeDropdown = (name, dropdown) => {
+    // let errorsForm = run(this.state, fieldValidations);
+    // this.setState({ [name]: dropdown.value, errors: { $set: errorsForm } });
+
+    this.setState(
+      {
+        [name]: dropdown.value
+      },
+      function() {
+        let errorsForm = run(this.state, fieldValidations);
+        this.setState({ errors: { $set: errorsForm } });
+      }
+    );
+  };
 
   handleChange = field => {
     return event => {
-      this.setState({
-        [field.name]: event.target.value
-      });
+      this.setState(
+        {
+          [field.name]: event.target.value
+        },
+        function() {
+          let errorsForm = run(this.state, fieldValidations);
+          this.setState({ errors: { $set: errorsForm } });
+        }
+      );
     };
   };
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true });
-
+    this.setState({ submitted: true, showErrors: true });
     if (this.state.password != this.state.confirmPassword) {
+      this.state.errors.$set.push({ passwords: "Passwords do not match" });
       return;
     }
 
     this.setState({ loading: true });
 
-    userService.create(this.state.email, this.state.password).then(
+    userService.create(this.state, this.state).then(
       user => {
         const { from } = this.props.location.state || {
           from: { pathname: "/" }
@@ -59,6 +106,18 @@ class CreateAccountForm extends Component {
     );
   };
 
+  getErrorMessages = errors => {
+    let errorMessages = [];
+    if (errors.$set === null) return;
+
+    let arr = errors.$set;
+    for (let i = 0; i < arr.length; i++) {
+      errorMessages.push(
+        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+      );
+    }
+    return errorMessages;
+  };
   render() {
     const xs = 12;
     const sm = 6;
@@ -75,17 +134,17 @@ class CreateAccountForm extends Component {
       password,
       confirmPassword,
       loading,
-      error,
+      errors,
       nationality,
-      nationalityId,
       residence,
-      residenceId,
       ethnicity,
       gender,
       affiliation,
       department,
-      disability
+      disability,
+      showErrors
     } = this.state;
+
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
@@ -96,7 +155,7 @@ class CreateAccountForm extends Component {
                 options={titleOptions}
                 id={validationFields.title.name}
                 placeholder={validationFields.title.display}
-                onChange={this.handleChange(validationFields.title)}
+                onChange={this.handleChangeDropdown}
                 value={title}
                 label={validationFields.title.display}
               />
@@ -136,7 +195,7 @@ class CreateAccountForm extends Component {
                 options={getCounties()}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
-                onChange={this.handleChange(validationFields.nationality)}
+                onChange={this.handleChangeDropdown}
                 value={nationality}
                 label={validationFields.nationality.display}
               />
@@ -146,7 +205,7 @@ class CreateAccountForm extends Component {
                 options={getCounties()}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
-                onChange={this.handleChange(validationFields.residence)}
+                onChange={this.handleChangeDropdown}
                 value={residence}
                 label={validationFields.residence.display}
               />
@@ -168,7 +227,7 @@ class CreateAccountForm extends Component {
                 options={genderOptions}
                 id={validationFields.gender.name}
                 placeholder={validationFields.gender.display}
-                onChange={this.handleChange(validationFields.gender)}
+                onChange={this.handleChangeDropdown}
                 value={gender}
                 label={validationFields.gender.display}
               />
@@ -236,7 +295,7 @@ class CreateAccountForm extends Component {
           {loading && (
             <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
           )}
-          {error && <div className={"alert alert-danger"}>{error}</div>}
+          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
         </form>
       </div>
     );
