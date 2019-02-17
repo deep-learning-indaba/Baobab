@@ -74,7 +74,10 @@ workflows:
     jobs:
       - build
       - frontEndTests
-      - deploy-test
+      - deploy-test:
+          filters:
+            branches:
+              only: develop
       - deploy-prod:
           filters:
             branches:
