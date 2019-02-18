@@ -7,7 +7,7 @@ jobs:
       - run:
           name: Start container
           command: docker-compose up -d
-      - run: 
+      - run:
           name: Run migrations
           command: |
             docker-compose run web python api/run.py db upgrade --directory api/migrations
@@ -26,12 +26,12 @@ jobs:
           command: |
             docker-compose build test-ci 
             docker-compose run test-ci  
-  
+
   migrate-test:
     machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Migrate the staging database
           command: |
             # Install the cloud_sql_proxy
@@ -41,7 +41,6 @@ jobs:
             sudo mkdir /cloudsql
             sudo chmod 777 /cloudsql
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
-
             # Run the migrations
             cd api
             pip install -r requirements.txt
@@ -51,7 +50,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Migrate the prod database
           command: |
             # Install the cloud_sql_proxy
@@ -61,18 +60,16 @@ jobs:
             sudo mkdir /cloudsql
             sudo chmod 777 /cloudsql
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
-
             # Run the migrations
             cd api
             pip install -r requirements.txt
             DATABASE_URL=$PROD_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
-
   deploy-backend-test:
     machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Deploy backend to test
           command: |
             openssl aes256 -md md5 -d -in api/app.yaml.enc -out api/app.yaml -pass pass:$CONFIG_PASSWORD
@@ -87,7 +84,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Deploy backend to test
           command: |
             openssl aes256 -md md5 -d -in api/prod.yaml.enc -out api/prod.yaml -pass pass:$CONFIG_PASSWORD
@@ -98,13 +95,12 @@ jobs:
             rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
             gcloud app deploy prod.yaml
 
-
   deploy-test:
-    machine : true
+    machine: true
     steps:
       - checkout
-      - run: 
-          name: Deploy Frontend to test
+      - run:
+          name: Deploy to test
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
             export PATH=~/.yarn/bin:$PATH
@@ -120,12 +116,11 @@ jobs:
             CI=false yarn build-test
             gcloud app deploy
 
-
   deploy-prod:
-    machine : true
+    machine: true
     steps:
       - checkout
-      - run: 
+      - run:
           name: Deploy to production
           command: |
             curl -o- -L https://yarnpkg.com/install.sh | sh
@@ -171,4 +166,3 @@ workflows:
           filters:
             branches:
               only: master
-
