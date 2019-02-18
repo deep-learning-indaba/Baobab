@@ -4,9 +4,10 @@ import datetime
 from flask_restful import reqparse, fields, marshal_with
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
-from app.applicationModel.models import ApplicationForm
+from app.applicationModel.models import ApplicationForm, Question
 from app.events.models import Event
 from app.utils.auth import auth_required
+from app.utils import emailer, strings
 
 from app.utils import errors
 
@@ -82,7 +83,15 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 db.session.add(answer)
             db.session.commit()
 
-            return {'id': response.id, 'user_id': user_id}, 201  # 201 is 'CREATED' status code
+            try:
+                #recipient = g.current_user['email']
+                #subject = strings.build_response_email_subject(g.current_user['title'], g.current_user['firstname'], g.current_user['lastname'])
+                #body_text = strings.build_response_email_body()
+                summary = build_response_summary(response)
+            except:
+                print('Failed to send email')
+            finally:
+                return {'id': response.id, 'user_id': user_id}, 201  # 201 is 'CREATED' status code
         except:
             return errors.DB_NOT_AVAILABLE
 
@@ -150,3 +159,11 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
         return {}, 204
+
+    def build_response_summary(self, response):
+        answers = db.session.query(Answer).filter(Answer.response_id == response.id)
+        questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id)
+        summary =  zip(questions, answers) 
+        print(summary)
+            
+
