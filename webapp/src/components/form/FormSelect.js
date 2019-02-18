@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import FormGroup from "./FormGroup";
 import { default as ReactSelect } from "react-select";
-class FormTextBox extends React.Component {
+class FormSelect extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -32,4 +32,4 @@ class FormTextBox extends React.Component {
     );
   }
 }
-export default FormTextBox;
+export default FormSelect;

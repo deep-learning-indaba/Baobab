@@ -96,7 +96,7 @@ class CreateAccountForm extends Component {
 
     this.setState({ loading: true });
 
-    userService.create(this.state, this.state).then(
+    userService.create(this.state).then(
       user => {
         const { from } = this.props.location.state || {
           from: { pathname: "/" }
