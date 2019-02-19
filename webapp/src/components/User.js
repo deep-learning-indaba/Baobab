@@ -11,12 +11,6 @@ class UserDropdown extends Component {
           user: props.user
       };
     }
-  
-    // componentDidMount() {
-    //   this.setState({ 
-    //       user: JSON.parse(localStorage.getItem('user')),
-    //   });
-    // }
 
     componentWillReceiveProps = props => {
         this.setState({user: props.user});
