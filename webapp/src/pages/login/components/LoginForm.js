@@ -34,6 +34,10 @@ class LoginForm extends Component {
     userService.login(this.state.email, this.state.password).then(response => {
       console.log("Response from user service: ", response);
       if (response.user) {
+        if(this.props.loggedIn) {
+          this.props.loggedIn(response.user);
+        }
+
         // Login was successful, redirect to refering location.
         const { from } = this.props.location.state || {
           from: { pathname: "/" }

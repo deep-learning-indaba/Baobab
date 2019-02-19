@@ -22,6 +22,8 @@ class App extends Component {
     this.state = {
       user: {}
     };
+
+    this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
@@ -83,14 +85,14 @@ class App extends Component {
                   </NavLink>
                 </li>
               </ul>
-              <UserDropdown logout={this.refreshUser} />
+              <UserDropdown logout={this.refreshUser} user={this.state.user}/>
             </div>
           </nav>
           <div class="Body">
             <div className="container">
               <Switch>
                 <Route exact path="/" component={Home} />
-                <Route exact path="/login" component={Login} />
+                <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
                 <Route exact path="/createAccount" component={CreateAccount} />
                 <PrivateRoute
                   exact
