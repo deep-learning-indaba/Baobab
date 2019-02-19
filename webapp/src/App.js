@@ -93,7 +93,7 @@ class App extends Component {
               <Switch>
                 <Route exact path="/" component={Home} />
                 <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/createAccount" component={CreateAccount} />
+                <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
                 <PrivateRoute
                   exact
                   path="/applicationForm"
