@@ -6,10 +6,10 @@ from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
 from app.events.models import Event
+from app.users.models import AppUser
 from app.utils.auth import auth_required
-from app.utils import emailer, strings
-
-from app.utils import errors
+from app.utils import errors, emailer, strings
+from app import LOGGER
 
 from app import db, bcrypt
 
@@ -84,12 +84,38 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             db.session.commit()
 
             try:
-                #recipient = g.current_user['email']
-                #subject = strings.build_response_email_subject(g.current_user['title'], g.current_user['firstname'], g.current_user['lastname'])
-                #body_text = strings.build_response_email_body()
-                summary = build_response_summary(response)
+                user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+                subject = strings.build_response_email_subject(user.user_title, user.firstname, user.lastname)
+
+                answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+                if answers is None:
+                    LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
+
+                questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id).all()
+                if questions is None:
+                    LOGGER.warn('Found no questions associated with application form with id {form_id}'.format(form_id=response.application_form_id))
+
+                #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
+                summary = {}
+                for answer in answers:
+                    for question in questions:
+                        if answer.question_id == question.id:
+                            summary[question.headline] = answer.value
+
+                application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == args['application_form_id']).first() 
+                if application_form is None:
+                    LOGGER.warn('Found no application form with id {form_id}'.format(form_id=args['application_form_id']))
+
+                event = db.session.query(Event).filter(Event.id == application_form.event_id).first() 
+                if event is None:
+                    LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
+
+                body_text = strings.build_response_email_body(event.name, event.description, summary)
+
+                emailer.send_mail(user.email, subject, body_text)
             except:
-                print('Failed to send email')
+                LOGGER.warn('Response {response_id} confirmation email failed to send'.format(response_id=response.id))
+
             finally:
                 return {'id': response.id, 'user_id': user_id}, 201  # 201 is 'CREATED' status code
         except:
@@ -160,10 +186,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         return {}, 204
 
-    def build_response_summary(self, response):
-        answers = db.session.query(Answer).filter(Answer.response_id == response.id)
-        questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id)
-        summary =  zip(questions, answers) 
-        print(summary)
+
+
             
 
