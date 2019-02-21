@@ -84,38 +84,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             db.session.commit()
 
             try:
-                user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
-                subject = strings.build_response_email_subject(user.user_title, user.firstname, user.lastname)
-
-                answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
-                if answers is None:
-                    LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
-
-                questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id).all()
-                if questions is None:
-                    LOGGER.warn('Found no questions associated with application form with id {form_id}'.format(form_id=response.application_form_id))
-
-                #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
-                summary = {}
-                for answer in answers:
-                    for question in questions:
-                        if answer.question_id == question.id:
-                            summary[question.headline] = answer.value
-
-                application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == args['application_form_id']).first() 
-                if application_form is None:
-                    LOGGER.warn('Found no application form with id {form_id}'.format(form_id=args['application_form_id']))
-
-                event = db.session.query(Event).filter(Event.id == application_form.event_id).first() 
-                if event is None:
-                    LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
-
-                body_text = strings.build_response_email_body(event.name, event.description, summary)
-
-                emailer.send_mail(user.email, subject, body_text)
+                if response.is_submitted:
+                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
+                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+                    self.send_confirmation(user, response)
             except:
-                LOGGER.warn('Response {response_id} confirmation email failed to send'.format(response_id=response.id))
-
+                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
             finally:
                 return {'id': response.id, 'user_id': user_id}, 201  # 201 is 'CREATED' status code
         except:
@@ -155,7 +129,16 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             db.session.commit()
             db.session.flush()
 
-            return {}, 204
+            try:
+                if old_response.is_submitted:
+                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=old_response.id))
+                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+                    self.send_confirmation(user, old_response)
+            except:                
+                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
+            finally:
+                return {}, 204
+
         except Exception as e:
             return errors.DB_NOT_AVAILABLE
 
@@ -185,6 +168,40 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
         return {}, 204
+
+    def send_confirmation(self, user, response):
+        try:
+            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+            if answers is None:
+                LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
+
+            questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id).all()
+            if questions is None:
+                LOGGER.warn('Found no questions associated with application form with id {form_id}'.format(form_id=response.application_form_id))
+
+            application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == response.application_form_id).first() 
+            if application_form is None:
+                LOGGER.warn('Found no application form with id {form_id}'.format(form_id=response.application_form_id))
+
+            event = db.session.query(Event).filter(Event.id == application_form.event_id).first() 
+            if event is None:
+                LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
+        except:
+            LOGGER.warn('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
+
+        try:
+            #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
+            summary = {}
+            for answer in answers:
+                for question in questions:
+                    if answer.question_id == question.id:
+                        summary[question.headline] = answer.value
+            subject = strings.build_response_email_subject(user.user_title, user.firstname, user.lastname)
+            body_text = strings.build_response_email_body(event.name, event.description, summary)
+            emailer.send_mail(user.email, subject, body_text)
+
+        except:
+            LOGGER.warn('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
 
 
 
