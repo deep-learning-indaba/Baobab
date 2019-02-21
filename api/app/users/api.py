@@ -88,6 +88,22 @@ class UserAPI(SignupMixin, restful.Resource):
             'id': user.id,
             'token': generate_token(user)
         }, 201
+    
+    @auth_required
+    def delete(self):
+        '''
+        The function that lets the user delete the account
+        '''
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('email', type=str, required=True)
+        args = req_parser.parse_args()
+
+        user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+        if user:
+            user.is_deleted = True
+            db.session.update(user)
+            db.session.commit()
+        return {}, 201
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
