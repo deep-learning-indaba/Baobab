@@ -36,6 +36,14 @@ user_fields = {
     'user_category': fields.String(attribute='user_category.name')
 }
 
+def user_info(user):
+    return {
+            'id': user.id,
+            'token': generate_token(user),
+            'firstname': user.firstname,
+            'lastname': user.lastname,
+            'title': user.user_title
+    }
 
 class UserAPI(SignupMixin, restful.Resource):
 
@@ -84,10 +92,7 @@ class UserAPI(SignupMixin, restful.Resource):
         except IntegrityError:
             return EMAIL_IN_USE
 
-        return {
-            'id': user.id,
-            'token': generate_token(user)
-        }, 201
+        return user_info(user), 201
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
@@ -97,11 +102,7 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
         user = db.session.query(AppUser).filter(AppUser.email==args['email']).first()
         if user and bcrypt.check_password_hash(user.password, args['password']):
-
-            return {
-                'id': user.id,
-                'token': generate_token(user)
-            }
+            return user_info(user)
 
         return BAD_CREDENTIALS
 
