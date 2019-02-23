@@ -9,7 +9,9 @@ import {
   titleOptions,
   getCounties,
   genderOptions,
-  getCategories
+  getCategories,
+  disabilityOptions,
+  ethnicityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -47,8 +49,26 @@ class CreateAccountForm extends Component {
       showErrors: false,
       submitted: false,
       loading: false,
-      errors: []
+      errors: [],
+      category: [],
+      countries: [],
+      title: [],
+      gender: [],
+      disability: [],
+      ethnicity: []
     };
+  }
+
+  componentWillMount() {
+    this.setState({
+      category: getCategories,
+      countries: getCounties,
+      gender: genderOptions,
+      title: titleOptions,
+      disability: disabilityOptions,
+      ethnicity: ethnicityOptions
+    });
+    console.log(this.state);
   }
 
   validateForm() {
@@ -154,7 +174,7 @@ class CreateAccountForm extends Component {
           <div class="row">
             <div class={colClassNameTitle}>
               <FormSelect
-                options={titleOptions}
+                options={this.state.titleOptions}
                 id={validationFields.title.name}
                 placeholder={validationFields.title.display}
                 onChange={this.handleChangeDropdown}
@@ -194,7 +214,7 @@ class CreateAccountForm extends Component {
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
-                options={getCounties()}
+                options={this.state.countries}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 onChange={this.handleChangeDropdown}
@@ -204,7 +224,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={getCounties()}
+                options={this.state.countries}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 onChange={this.handleChangeDropdown}
@@ -226,7 +246,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={genderOptions}
+                options={this.state.gender}
                 id={validationFields.gender.name}
                 placeholder={validationFields.gender.display}
                 onChange={this.handleChangeDropdown}
@@ -270,7 +290,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={getCategories}
+                options={this.state.category}
                 id={validationFields.category.name}
                 placeholder={validationFields.category.display}
                 onChange={this.handleChangeDropdown}
