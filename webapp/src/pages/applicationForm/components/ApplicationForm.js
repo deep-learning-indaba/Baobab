@@ -1,60 +1,104 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from '../../../services/applicationForm';
+import FormTextBox from "../../../components/form/FromTextBox";
+import FormSelect from "../../../components/form/FormSelect";
+import FormTextArea from "../../../components/form/FormTextArea";
+
+const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
-const LONG_TEXT = "long-text";
+const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
 
 class FieldEditor extends React.Component {
     constructor(props) {
       super(props);
-      this.handleChange = this.handleChange.bind(this);
-
       this.state = {}
     }
   
-    handleChange(event) {
+    handleChange = event => {
       const value = event.target.value;
       const id = event.target.id;
+      console.log('CHANGE: id is: ' + id + ' value is: ' + value);
       if (this.props.onChange) {
+        console.log('Calling onChange');
         this.props.onChange(id, value);
       }
     }
-  
-    formControl(id, type, required, choices) {
-        switch(type) {
+    
+    handleChangeDropdown = (name, dropdown) => {
+        if (this.props.onChange) {
+            this.props.onChange(name, dropdown.value);
+        }
+    }
+
+    formControl(question) {
+        let id = "question_" + question.id;
+
+        switch(question.type) {
             case SHORT_TEXT:
-                return <input type="text" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
+                return <FormTextBox
+                    Id={id}
+                    type="text"
+                    label={question.description}
+                    placeholder={question.placeholder}
+                    onChange={this.handleChange}
+                    // value={value}
+                    key={'i_' + this.props.key}
+                    />
             case SINGLE_CHOICE:
-                return <input type="checkbox" class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}/>
-            case LONG_TEXT:
-                return (<textarea class="form-control" rows="5" id={id} name={id} required={required || null} onChange={this.handleChange}></textarea>)
+                return <FormTextBox
+                    Id={id}
+                    type="checkbox"
+                    label={question.description}
+                    placeholder={question.placeholder}
+                    onChange={this.handleChange}
+                    // value={value}
+                    key={this.props.key}
+                    />
+            case LONG_TEXT[0]:
+            case LONG_TEXT[1]:
+                return <FormTextArea
+                    Id={id}
+                    label={question.description}
+                    placeholder={question.placeholder}
+                    onChange={this.handleChange}
+                    rows={5}
+                    key={this.props.key}
+                    />
             case MULTI_CHOICE:
-                return (
-                    <select class="form-control" id={id} name={id} required={required || null} onChange={this.handleChange}>
-                        {choices.map(function(c) {
-                            return (
-                                <option>{c}</option>
-                            )
-                        })}
-                    </select>
-                )
+                return <FormSelect
+                    options={question.options && question.options.map(c=>c.selection)}
+                    Id={id}
+                    label={question.description}
+                    placeholder={question.placeholder}
+                    onChange={this.handleChangeDropdown}
+                    // value={value}
+                    key={this.props.key}
+                    />
             case FILE:
-                return <input type="file" class="form-control-file" id={id} name={id} onChange={this.handleChange}/>
+                return <FormTextBox
+                    Id={id}
+                    type="file"
+                    label={question.description}
+                    placeholder={question.placeholder}
+                    onChange={this.handleChange}
+                    // value={value}
+                    key={this.props.key}
+                    />
             default:
-                return <p className="text-danger">WARNING: No control found for type {type}!</p>
+                return <p className="text-danger">WARNING: No control found for type {question.type}!</p>
         }
     }
 
     render() {
-        let formId = "question_" + this.props.id;
         return (
-            <div class="form-group">            
-                <label for={formId}>{this.props.description}</label>
-                {this.formControl(formId, this.props.type, this.props.required, this.props.choices)}
+            <div>
+                <h4>{this.props.question.headline}</h4>
+                {this.formControl(this.props.question)}
             </div>
         )
     }
@@ -66,11 +110,9 @@ function Section (props) {
         <div>
             <h2>{props.name}</h2>
             <p>{props.description}</p>
-            {questions && questions.map(function(question) {
-                    return (
-                        <FieldEditor id={question.id} description={question.description} type={question.type} choices={question.choices} required={question.required} onChange={props.onChange}/>
-                    )
-                })}
+            {questions && questions.map(question => 
+                <FieldEditor key={question.id} question={question} onChange={props.onChange}/>
+            )}
         </div>
     )
 }
@@ -95,7 +137,7 @@ function Confirmation(props) {
                 <div>
                     <div class="row">
                         <div class="col">
-                            <h4>{question.description}</h4>
+                            <h4>{question.headline}</h4>
                         </div>
                     </div>
                     <div class="row">
@@ -118,6 +160,8 @@ class ApplicationForm extends Component {
           currentStep: 1,
           formSpec: null,
           isLoading: true,
+          isError: false,
+          errorMessage: "",
           answers: []
         };
 
@@ -137,9 +181,11 @@ class ApplicationForm extends Component {
     }
     
     componentDidMount() {
-        applicationFormService.getForEvent(1).then(formSpec => {
+        applicationFormService.getForEvent(DEFAULT_EVENT_ID).then(response => {
             this.setState({
-                formSpec: formSpec,
+                formSpec: response.formSpec,
+                isError: response.formSpec === null,
+                errorMessage: response.message,
                 isLoading: false
               });
         })
@@ -165,15 +211,17 @@ class ApplicationForm extends Component {
     }
 
     render() {
-        const {currentStep, formSpec, isLoading, answers} = this.state;
+        const {currentStep, formSpec, isLoading, isError, errorMessage, answers} = this.state;
 
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
+
+        if (isError) {
+            return <div className={"alert alert-danger"}>{errorMessage}</div>
+        }
         
-        const sections = formSpec.sections && formSpec.sections.slice().sort(function(a, b) {
-            return a.order - b.order;
-        });
+        const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
         const allQuestions = sections && sections.flatMap(section => section.questions);
 
         const numSteps = sections ? sections.length : 0;
@@ -190,7 +238,7 @@ class ApplicationForm extends Component {
                 <progress className="progress" style={style}></progress>
                 
                 {currentSection && 
-                    <Section name={currentSection.name} description={currentSection.description} questions={currentSection.questions} onChange={this.handleFieldChange}/>
+                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} onChange={this.handleFieldChange}/>
                 }
                 {!currentSection &&
                     <Confirmation answers={answers} questions={allQuestions}/>
