@@ -96,7 +96,7 @@ class FieldEditor extends React.Component {
 
     render() {
         return (
-            <div>
+            <div className={"question"}>
                 <h4>{this.props.question.headline}</h4>
                 {this.formControl(this.props.question)}
             </div>
@@ -107,9 +107,11 @@ class FieldEditor extends React.Component {
 function Section (props) {
     let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
     return (
-        <div>
-            <h2>{props.name}</h2>
-            <p>{props.description}</p>
+        <div className={"section"}>
+            <div className={"headline"}>
+                <h2>{props.name}</h2>
+                <p>{props.description}</p>
+            </div>
             {questions && questions.map(question => 
                 <FieldEditor key={question.id} question={question} onChange={props.onChange}/>
             )}
@@ -195,7 +197,8 @@ class ApplicationForm extends Component {
         let step = this.state.currentStep;
         this.setState({
             currentStep : step + 1
-        })
+        });
+        window.scrollTo(0, 0);  
     }
 
     prevStep = () => {
