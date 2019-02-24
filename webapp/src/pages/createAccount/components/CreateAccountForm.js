@@ -6,12 +6,12 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { default as ReactSelect } from "react-select";
 import {
-  titleOptions,
+  getTitleOptions,
   getCounties,
-  genderOptions,
+  getGenderOptions,
   getCategories,
-  disabilityOptions,
-  ethnicityOptions
+  getDisabilityOptions,
+  getEthnicityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -50,25 +50,33 @@ class CreateAccountForm extends Component {
       submitted: false,
       loading: false,
       errors: [],
-      category: [],
-      countries: [],
-      title: [],
-      gender: [],
-      disability: [],
-      ethnicity: []
+      categoryOptions: [],
+      countryOptions: [],
+      titleOptions: [],
+      genderOptions: [],
+      disabilityOptions: [],
+      ethnicityOptions: []
     };
   }
 
   componentWillMount() {
-    this.setState({
-      category: getCategories,
-      countries: getCounties,
-      gender: genderOptions,
-      title: titleOptions,
-      disability: disabilityOptions,
-      ethnicity: ethnicityOptions
+    Promise.all([
+      getTitleOptions,
+      getGenderOptions,
+      getCounties,
+      getCategories,
+      getEthnicityOptions,
+      getDisabilityOptions
+    ]).then(result => {
+      this.setState({
+        titleOptions: result[0],
+        genderOptions: result[1],
+        countryOptions: result[2],
+        categoryOptions: result[3],
+        ethnicityOptions: result[4],
+        disabilityOptions: result[5]
+      });
     });
-    console.log(this.state);
   }
 
   validateForm() {
@@ -214,7 +222,7 @@ class CreateAccountForm extends Component {
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
-                options={this.state.countries}
+                options={this.state.countryOptions}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 onChange={this.handleChangeDropdown}
@@ -224,7 +232,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={this.state.countries}
+                options={this.state.countryOptions}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 onChange={this.handleChangeDropdown}
@@ -235,9 +243,9 @@ class CreateAccountForm extends Component {
           </div>
           <div class="row">
             <div class={commonColClassName}>
-              <FormTextBox
+              <FormSelect
                 id={validationFields.ethnicity.name}
-                type="text"
+                options={this.state.ethnicityOptions}
                 placeholder={validationFields.ethnicity.display}
                 onChange={this.handleChange(validationFields.ethnicity)}
                 value={ethnicity}
@@ -246,7 +254,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={this.state.gender}
+                options={this.state.genderOptions}
                 id={validationFields.gender.name}
                 placeholder={validationFields.gender.display}
                 onChange={this.handleChangeDropdown}
@@ -279,10 +287,9 @@ class CreateAccountForm extends Component {
           </div>
           <div class="row">
             <div class={commonColClassName}>
-              <FormTextBox
+              <FormSelect
+                options={this.state.disabilityOptions}
                 id={validationFields.disability.name}
-                type="text"
-                placeholder={validationFields.disability.placeholder}
                 onChange={this.handleChange(validationFields.disability)}
                 value={disability}
                 label={validationFields.disability.display}
@@ -290,7 +297,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={this.state.category}
+                options={this.state.categoryOptions}
                 id={validationFields.category.name}
                 placeholder={validationFields.category.display}
                 onChange={this.handleChangeDropdown}
