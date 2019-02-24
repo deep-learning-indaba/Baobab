@@ -5,7 +5,8 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const applicationFormService = {
     getForEvent,
-    submit
+    submit,
+    getResponse
 };
 
 
@@ -39,6 +40,36 @@ function getForEvent(eventId) {
     });
 }
 
+function getResponse(eventId) {
+  return axios
+    .get(baseUrl + "/api/v1/response?event_id=" + eventId, { 'headers': authHeader() })
+    .then(resp => {
+        let response = null;
+        if (resp) response = resp.data;
+        return {
+            response: response,
+            status: resp.status,
+            message: resp.statusText
+        }
+    })
+    .catch(error => {
+      if (error.response) {
+        return {
+            response: null,
+            status: error.response.status,
+            message: error.response.statusText
+        };
+      } else {
+        // The request was made but no response was received
+        return {
+          response: null,
+          status: null,
+          message: error.message
+        };
+      }
+    });
+}
+
 function submit(applicationFormId, isSubmitted, answers) {
     // TODO: Handle put for updates
     let response = {
@@ -53,6 +84,8 @@ function submit(applicationFormId, isSubmitted, answers) {
       .then(resp=> {
         return {
           response_id: resp.data.id,
+          is_submitted: resp.data.is_submitted,
+          submitted_timestamp: resp.data.submitted_timestamp,
           status: response.status,
           message: response.statusText
         };
@@ -62,14 +95,18 @@ function submit(applicationFormId, isSubmitted, answers) {
           return {
             response_id: null,
             status: error.response.status,
-            message: error.response.statusText
+            message: error.response.statusText,
+            is_submitted: false,
+            submitted_timestamp: null
           };
         } else {
           // The request was made but no response was received
           return {
             response_id: null,
             status: null,
-            message: error.message
+            message: error.message,
+            is_submitted: false,
+            submitted_timestamp: null
           };
         }
       })

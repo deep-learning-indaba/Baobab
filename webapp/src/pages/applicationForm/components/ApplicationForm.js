@@ -152,6 +152,16 @@ function Confirmation(props) {
     )
 }
 
+function Submitted(props) {
+    return (
+        <div class="submitted">
+            <p class="thank-you">Thank you for applying to attend  The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya . Your application is being reviewed by our committee and we will get back to you as soon as possible.</p>
+            <p class="timestamp">You submitted your application on {props.timestamp}</p>
+        </div>
+        // TODO: Add withdraw functionality
+    )
+}
+
 class ApplicationForm extends Component {
     constructor(props) {
         super(props);
@@ -162,6 +172,7 @@ class ApplicationForm extends Component {
           isLoading: true,
           isError: false,
           isSubmitted: false,
+          submittedTimestamp: null,
           errorMessage: "",
           answers: []
         };
@@ -189,7 +200,16 @@ class ApplicationForm extends Component {
                 errorMessage: response.message,
                 isLoading: false
               });
-        })
+        });
+        applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
+            if (resp.response) {
+                // TODO: Load response values if not submitted
+                this.setState({
+                    isSubmitted: resp.response.is_submitted,
+                    submittedTimestamp: resp.response.submitted_timestamp
+                })
+            }
+        });
     }
 
     nextStep = () => {
@@ -213,16 +233,19 @@ class ApplicationForm extends Component {
             isLoading: true
         });
         applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
+            let submitError = resp.response_id === null;
             this.setState({
-                isError: resp.response_id === null,
+                isError: submitError,
                 errorMessage: resp.message,
-                isLoading: false
+                isLoading: false,
+                isSubmitted: resp.is_submitted,
+                submittedTimestamp: resp.submitted_timestamp
               });
         });
     }
 
     render() {
-        const {currentStep, formSpec, isLoading, isError, errorMessage, answers} = this.state;
+        const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers} = this.state;
 
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
@@ -232,6 +255,10 @@ class ApplicationForm extends Component {
             return <div className={"alert alert-danger"}>{errorMessage}</div>
         }
         
+        if (isSubmitted) {
+            return <Submitted timestamp={this.state.submittedTimestamp}/>
+        }
+
         const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
         const allQuestions = sections && sections.flatMap(section => section.questions);
 
