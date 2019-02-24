@@ -21,3 +21,7 @@
 .section .headline {
     margin-bottom: 4em;
 }
+
+.confirmation.answer {
+    margin-bottom: 3em;
+}

@@ -22,9 +22,7 @@ class FieldEditor extends React.Component {
     handleChange = event => {
       const value = event.target.value;
       const id = event.target.id;
-      console.log('CHANGE: id is: ' + id + ' value is: ' + value);
       if (this.props.onChange) {
-        console.log('Calling onChange');
         this.props.onChange(id, value);
       }
     }
@@ -72,7 +70,7 @@ class FieldEditor extends React.Component {
             case MULTI_CHOICE:
                 return <FormSelect
                     options={question.options}
-                    Id={id}
+                    id={id}
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChangeDropdown}
@@ -133,13 +131,13 @@ function Confirmation(props) {
                     return <span></span>
                 }
 
-                let question = props.questions.find(question => question.id == answer.questionId);
+                let question = props.questions.find(question => question.id == answer.question_id);
 
                 return (question && 
-                <div>
+                <div className={"confirmation answer"}>
                     <div class="row">
                         <div class="col">
-                            <h4>{question.headline}</h4>
+                            <h5>{question.headline}</h5>
                         </div>
                     </div>
                     <div class="row">
@@ -173,9 +171,9 @@ class ApplicationForm extends Component {
     
     handleFieldChange(fieldId, value) {
         const questionId = fieldId.substring(fieldId.lastIndexOf('_')+1, fieldId.length);
-        const otherAnswers = this.state.answers.filter(answer => answer.questionId != questionId);
+        const otherAnswers = this.state.answers.filter(answer => answer.question_id != questionId);
         const currentAnswer = {
-            "questionId": questionId,
+            "question_id": questionId,
             "value": value
         };
         this.setState({
@@ -214,7 +212,7 @@ class ApplicationForm extends Component {
         this.setState({
             isLoading: true
         });
-        applicationFormService.submit(this.state.answers).then(resp=> {
+        applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
             this.setState({
                 isError: resp.response_id === null,
                 errorMessage: resp.message,

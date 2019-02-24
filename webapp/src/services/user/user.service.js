@@ -1,21 +1,12 @@
 import axios from "axios";
+import {authHeader} from '../base.service';
+
 const baseUrl = process.env.REACT_APP_API_URL;
 export const userService = {
   login,
   logout,
   create
 };
-
-export function authHeader() {
-  // return authorization header with basic auth credentials
-  let user = JSON.parse(localStorage.getItem("user"));
-
-  if (user) {
-    return { Authorization: user.token };
-  } else {
-    return {};
-  }
-}
 
 function login(email, password) {
   return axios
