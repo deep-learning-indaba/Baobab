@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import logo from '../../images/indaba-logo-black.png';
+import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
 
 class Home extends Component {
