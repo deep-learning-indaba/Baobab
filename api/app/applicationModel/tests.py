@@ -20,7 +20,7 @@ class ApplicationFormApiTest(ApiTestCase):
         test_section = Section(test_form.id, 'Test Section', 'Test Description', 1)
         db.session.add(test_section)
         db.session.commit()
-        test_question = Question(test_form.id, test_section.id, 'Test Question Headline', 1, 'multi-choice', True, 'Test Question Description', None)
+        test_question = Question(test_form.id, test_section.id, 'Test Question Headline', 'Test question placeholder', 1, 'multi-choice', None, True, 'Test Question Description', None)
         db.session.add(test_question)
         db.session.flush()
 

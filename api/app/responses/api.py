@@ -61,6 +61,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
+    @marshal_with(response_fields)
     def post(self):
         # Save a new response for the logged-in user.
         req_parser = reqparse.RequestParser()
@@ -91,7 +92,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             except:
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
             finally:
-                return {'id': response.id, 'user_id': user_id}, 201  # 201 is 'CREATED' status code
+                return response, 201  # 201 is 'CREATED' status code
         except:
             return errors.DB_NOT_AVAILABLE
 
