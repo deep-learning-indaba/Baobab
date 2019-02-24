@@ -16,7 +16,8 @@ from app import LOGGER
 class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
     option_fields = {
-        'selection': fields.String
+        'value': fields.String,
+        'label': fields.String
     }
 
     question_fields = {

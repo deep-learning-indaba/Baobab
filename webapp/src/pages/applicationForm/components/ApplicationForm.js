@@ -71,7 +71,7 @@ class FieldEditor extends React.Component {
                     />
             case MULTI_CHOICE:
                 return <FormSelect
-                    options={question.options && question.options.map(c=>c.selection)}
+                    options={question.options}
                     Id={id}
                     label={question.description}
                     placeholder={question.placeholder}
@@ -217,7 +217,7 @@ class ApplicationForm extends Component {
         applicationFormService.submit(this.state.answers).then(resp=> {
             this.setState({
                 isError: resp.response_id === null,
-                errorMessage: response.message,
+                errorMessage: resp.message,
                 isLoading: false
               });
         });
