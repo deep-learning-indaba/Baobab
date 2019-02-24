@@ -6,7 +6,6 @@ export function getContent(type) {
     .get(baseUrl + `/api/v1/content/` + type)
     .then(function(response) {
       // handle success
-      // conso0le.log(JSON.stringify(response));
       return response.data;
     })
     .catch(function(error) {
