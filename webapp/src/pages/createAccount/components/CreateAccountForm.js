@@ -43,9 +43,11 @@ class CreateAccountForm extends Component {
     super(props);
 
     this.state = {
-      email: "",
-      password: "",
-      confirmPassword: "",
+      user: {
+        email: "",
+        password: "",
+        confirmPassword: ""
+      },
       showErrors: false,
       submitted: false,
       loading: false,
@@ -81,19 +83,22 @@ class CreateAccountForm extends Component {
 
   validateForm() {
     return (
-      this.state.email.length > 0 &&
-      this.state.password.length > 0 &&
-      this.state.confirmPassword.length > 0
+      this.state.user.email.length > 0 &&
+      this.state.user.password.length > 0 &&
+      this.state.user.confirmPassword.length > 0
     );
   }
 
   handleChangeDropdown = (name, dropdown) => {
     this.setState(
       {
-        [name]: dropdown.value
+        user: {
+          ...this.state.user,
+          [name]: dropdown.value
+        }
       },
       function() {
-        let errorsForm = run(this.state, fieldValidations);
+        let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
     );
@@ -103,10 +108,13 @@ class CreateAccountForm extends Component {
     return event => {
       this.setState(
         {
-          [field.name]: event.target.value
+          user: {
+            ...this.state.user,
+            [field.name]: event.target.value
+          }
         },
         function() {
-          let errorsForm = run(this.state, fieldValidations);
+          let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
       );
@@ -117,14 +125,14 @@ class CreateAccountForm extends Component {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
-    if (this.state.password != this.state.confirmPassword) {
+    if (this.state.user.password != this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
     if (this.state.errors.$set.length > 0) return;
 
     this.setState({ loading: true });
 
-    userService.create(this.state).then(
+    userService.create(this.state.user).then(
       user => {
         const { from } = this.props.location.state || {
           from: { pathname: "/" }
@@ -162,8 +170,6 @@ class CreateAccountForm extends Component {
       title,
       password,
       confirmPassword,
-      loading,
-      errors,
       nationality,
       residence,
       ethnicity,
@@ -171,9 +177,10 @@ class CreateAccountForm extends Component {
       affiliation,
       department,
       disability,
-      showErrors,
       category
-    } = this.state;
+    } = this.state.user;
+
+    const { loading, errors, showErrors } = this.state;
 
     return (
       <div className="CreateAccount">
@@ -247,7 +254,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.ethnicity.name}
                 options={this.state.ethnicityOptions}
                 placeholder={validationFields.ethnicity.display}
-                onChange={this.handleChange(validationFields.ethnicity)}
+                onChange={this.handleChangeDropdown}
                 value={ethnicity}
                 label={validationFields.ethnicity.display}
               />
@@ -290,7 +297,8 @@ class CreateAccountForm extends Component {
               <FormSelect
                 options={this.state.disabilityOptions}
                 id={validationFields.disability.name}
-                onChange={this.handleChange(validationFields.disability)}
+                placeholder={validationFields.disability.display}
+                onChange={this.handleChangeDropdown}
                 value={disability}
                 label={validationFields.disability.display}
               />
