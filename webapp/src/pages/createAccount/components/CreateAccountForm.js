@@ -6,10 +6,12 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { default as ReactSelect } from "react-select";
 import {
-  titleOptions,
+  getTitleOptions,
   getCounties,
-  genderOptions,
-  getCategories
+  getGenderOptions,
+  getCategories,
+  getDisabilityOptions,
+  getEthnicityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -41,31 +43,62 @@ class CreateAccountForm extends Component {
     super(props);
 
     this.state = {
-      email: "",
-      password: "",
-      confirmPassword: "",
+      user: {
+        email: "",
+        password: "",
+        confirmPassword: ""
+      },
       showErrors: false,
       submitted: false,
       loading: false,
-      errors: []
+      errors: [],
+      categoryOptions: [],
+      countryOptions: [],
+      titleOptions: [],
+      genderOptions: [],
+      disabilityOptions: [],
+      ethnicityOptions: []
     };
+  }
+
+  componentWillMount() {
+    Promise.all([
+      getTitleOptions,
+      getGenderOptions,
+      getCounties,
+      getCategories,
+      getEthnicityOptions,
+      getDisabilityOptions
+    ]).then(result => {
+      this.setState({
+        titleOptions: result[0],
+        genderOptions: result[1],
+        countryOptions: result[2],
+        categoryOptions: result[3],
+        ethnicityOptions: result[4],
+        disabilityOptions: result[5]
+      });
+    });
   }
 
   validateForm() {
     return (
-      this.state.email.length > 0 &&
-      this.state.password.length > 0 &&
-      this.state.confirmPassword.length > 0
+      this.state.user.email.length > 0 &&
+      this.state.user.password.length > 0 &&
+      this.state.user.confirmPassword.length > 0
     );
   }
 
   handleChangeDropdown = (name, dropdown) => {
     this.setState(
       {
-        [name]: dropdown.value
+        user: {
+          ...this.state.user,
+          [name]: dropdown.value
+        }
       },
       function() {
-        let errorsForm = run(this.state, fieldValidations);
+        let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
     );
@@ -75,10 +108,13 @@ class CreateAccountForm extends Component {
     return event => {
       this.setState(
         {
-          [field.name]: event.target.value
+          user: {
+            ...this.state.user,
+            [field.name]: event.target.value
+          }
         },
         function() {
-          let errorsForm = run(this.state, fieldValidations);
+          let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
       );
@@ -89,14 +125,14 @@ class CreateAccountForm extends Component {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
-    if (this.state.password != this.state.confirmPassword) {
+    if (this.state.user.password != this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
     if (this.state.errors.$set.length > 0) return;
 
     this.setState({ loading: true });
 
-    userService.create(this.state).then(
+    userService.create(this.state.user).then(
       user => {
         if (this.props.loggedIn) {
           this.props.loggedIn(user);
@@ -137,8 +173,6 @@ class CreateAccountForm extends Component {
       title,
       password,
       confirmPassword,
-      loading,
-      errors,
       nationality,
       residence,
       ethnicity,
@@ -146,9 +180,10 @@ class CreateAccountForm extends Component {
       affiliation,
       department,
       disability,
-      showErrors,
       category
-    } = this.state;
+    } = this.state.user;
+
+    const { loading, errors, showErrors } = this.state;
 
     return (
       <div className="CreateAccount">
@@ -157,7 +192,7 @@ class CreateAccountForm extends Component {
           <div class="row">
             <div class={colClassNameTitle}>
               <FormSelect
-                options={titleOptions}
+                options={this.state.titleOptions}
                 id={validationFields.title.name}
                 placeholder={validationFields.title.display}
                 onChange={this.handleChangeDropdown}
@@ -197,7 +232,7 @@ class CreateAccountForm extends Component {
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
-                options={getCounties()}
+                options={this.state.countryOptions}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 onChange={this.handleChangeDropdown}
@@ -207,7 +242,7 @@ class CreateAccountForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={getCounties()}
+                options={this.state.countryOptions}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 onChange={this.handleChangeDropdown}
@@ -218,18 +253,18 @@ class CreateAccountForm extends Component {
           </div>
           <div class="row">
             <div class={commonColClassName}>
-              <FormTextBox
+              <FormSelect
                 id={validationFields.ethnicity.name}
-                type="text"
+                options={this.state.ethnicityOptions}
                 placeholder={validationFields.ethnicity.display}
-                onChange={this.handleChange(validationFields.ethnicity)}
+                onChange={this.handleChangeDropdown}
                 value={ethnicity}
                 label={validationFields.ethnicity.display}
               />
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={genderOptions}
+                options={this.state.genderOptions}
                 id={validationFields.gender.name}
                 placeholder={validationFields.gender.display}
                 onChange={this.handleChangeDropdown}
@@ -262,18 +297,18 @@ class CreateAccountForm extends Component {
           </div>
           <div class="row">
             <div class={commonColClassName}>
-              <FormTextBox
+              <FormSelect
+                options={this.state.disabilityOptions}
                 id={validationFields.disability.name}
-                type="text"
-                placeholder={validationFields.disability.placeholder}
-                onChange={this.handleChange(validationFields.disability)}
+                placeholder={validationFields.disability.display}
+                onChange={this.handleChangeDropdown}
                 value={disability}
                 label={validationFields.disability.display}
               />
             </div>
             <div class={commonColClassName}>
               <FormSelect
-                options={getCategories}
+                options={this.state.categoryOptions}
                 id={validationFields.category.name}
                 placeholder={validationFields.category.display}
                 onChange={this.handleChangeDropdown}

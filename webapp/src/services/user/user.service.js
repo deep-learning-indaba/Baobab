@@ -64,14 +64,14 @@ function create(user) {
       firstname: user.firstName,
       lastname: user.lastName,
       user_title: user.title,
-      nationality_country_id: 1,
-      residence_country_id: 1,
+      nationality_country_id: user.nationality,
+      residence_country_id: user.residence,
       user_ethnicity: user.ethnicity,
       user_gender: user.gender,
       affiliation: user.affiliation,
       department: user.department,
       user_disability: user.disability,
-      user_category_id: 1,
+      user_category_id: user.category,
       password: user.password
     })
     .then(response => {
