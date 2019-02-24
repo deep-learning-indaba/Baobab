@@ -163,6 +163,7 @@ class ApplicationForm extends Component {
           formSpec: null,
           isLoading: true,
           isError: false,
+          isSubmitted: false,
           errorMessage: "",
           answers: []
         };
@@ -210,7 +211,16 @@ class ApplicationForm extends Component {
 
     handleSubmit = event => {
         event.preventDefault();
-        applicationFormService.submit(this.state.answers);
+        this.setState({
+            isLoading: true
+        });
+        applicationFormService.submit(this.state.answers).then(resp=> {
+            this.setState({
+                isError: resp.response_id === null,
+                errorMessage: response.message,
+                isLoading: false
+              });
+        });
     }
 
     render() {
