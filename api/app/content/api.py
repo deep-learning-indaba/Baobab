@@ -1,23 +1,20 @@
 from datetime import datetime
 
-from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-from sqlalchemy.exc import IntegrityError
-from app import LOGGER
 
 from app.users.models import Country, UserCategory
 from app import db
 
 
 country_fields = {
-    'id': fields.Integer,
-    'name': fields.String
+    'value': fields.Integer(attribute='id'),
+    'label': fields.String(attribute='name')
 }
 
 category_fields = {
-    'id': fields.Integer,
-    'name': fields.String
+    'value': fields.Integer(attribute='id'),
+    'label': fields.String(attribute='name')
 }
 
 
@@ -52,9 +49,9 @@ class TitleContentAPI(restful.Resource):
     def get(self):
         return [
             {"value": "Mr", "label": "Mr"},
-            {"value": "Mrs", " label": "Mrs"},
+            {"value": "Mrs", "label": "Mrs"},
             {"value": "Ms", "label": "Ms"},
-            {"value": "Hon", " label": "Hon"},
+            {"value": "Hon", "label": "Hon"},
             {"value": "Prof", "label": "Prof"},
             {"value": "Dr", "label": "Dr"}
         ]
