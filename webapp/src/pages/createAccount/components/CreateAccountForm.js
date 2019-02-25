@@ -260,6 +260,7 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={ethnicity}
                 label={validationFields.ethnicity.display}
+                description={validationFields.ethnicity.description}
               />
             </div>
             <div class={commonColClassName}>
@@ -282,6 +283,7 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChange(validationFields.affiliation)}
                 value={affiliation}
                 label={validationFields.affiliation.display}
+                description={validationFields.affiliation.description}
               />
             </div>
             <div class={commonColClassName}>
@@ -292,6 +294,7 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChange(validationFields.department)}
                 value={department}
                 label={validationFields.department.display}
+                description={validationFields.department.description}
               />
             </div>
           </div>
@@ -304,6 +307,7 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={disability}
                 label={validationFields.disability.display}
+                description={validationFields.disability.description}
               />
             </div>
             <div class={commonColClassName}>
@@ -314,6 +318,7 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={category}
                 label={validationFields.category.display}
+                description={validationFields.category.description}
               />
             </div>
           </div>

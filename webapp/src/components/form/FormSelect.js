@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import FormGroup from "./FormGroup";
 import { default as ReactSelect } from "react-select";
+import ReactToolTip from "react-tooltip";
+
 class FormSelect extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
@@ -20,7 +22,8 @@ class FormSelect extends React.Component {
           showError={this.shouldDisplayError()}
           errorText={this.props.errorText}
         >
-          <label htmlFor={this.props.id}>{this.props.label}</label>
+          <label data-tip={this.props.description} htmlFor={this.props.id}>{this.props.label}</label>
+          <ReactToolTip />
           <ReactSelect
             id={id}
             options={options}
