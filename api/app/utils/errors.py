@@ -1,15 +1,25 @@
 # Define custom error messages here
 
 EMAIL_IN_USE = ({'message': 'User with that email already exists'}, 409)
-UNAUTHORIZED = ({'message': 'Authentication is required to access this resource'}, 401)
+UNAUTHORIZED = (
+    {'message': 'Authentication is required to access this resource'}, 401)
 BAD_CREDENTIALS = ({'message': 'Invalid credentials'}, 401)
 FORBIDDEN = ({'message': 'Access to this resource is forbidden'}, 403)
-CODE_NOT_VALID = ({'message': 'Valid code is required to reset a password'}, 401)
+RESET_PASSWORD_CODE_NOT_VALID = (
+    {'message': 'Valid code is required to reset a password'}, 401)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 SECTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
 QUESTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
 FORM_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
-RESPONSE_NOT_FOUND = ({'message': 'No response found for the given event and user'}, 404)
-UPDATE_CONFLICT = ({'message': 'The requested update conflicts with the existing resource'}, 409)
+RESPONSE_NOT_FOUND = (
+    {'message': 'No response found for the given event and user'}, 404)
+UPDATE_CONFLICT = (
+    {'message': 'The requested update conflicts with the existing resource'}, 409)
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
+EMAIL_NOT_VERIFIED = ({'message': 'The email address is not verified'}, 400)
+EMAIL_VERIFY_CODE_NOT_VALID = (
+    {'message': 'Valid code is required to verify email'}, 401)
+USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 409)
+RESET_PASSWORD_CODE_EXPIRED = (
+    {'message': 'The password reset request has expired'}, 400)
