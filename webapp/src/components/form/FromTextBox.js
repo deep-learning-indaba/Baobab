@@ -1,5 +1,7 @@
 import React, { Component } from "react";
-import FormGroup from "./FormGroup"
+import ReactToolTip from "react-tooltip";
+import FormGroup from "./FormGroup";
+
 class FormTextBox extends React.Component {
     shouldDisplayError = () => {
       return this.props.showError && this.props.errorText !== ""
@@ -18,9 +20,10 @@ class FormTextBox extends React.Component {
             showError={this.shouldDisplayError()}
             errorText={this.props.errorText}
           >
-            <label htmlFor={this.props.Id}>
+            <label data-tip={this.props.description} htmlFor={this.props.Id}>
               {this.props.label}
             </label>
+            <ReactToolTip/>
             <input
               id={this.props.Id}
               className={"form-control"}
