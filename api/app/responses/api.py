@@ -168,6 +168,23 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         except:
             return errors.DB_NOT_AVAILABLE
 
+        try:
+            user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
+            subject = 'Withdrawal of Application for the Deep Learning Indaba'
+            
+            body_text = """Dear {title} {firstname} {lastname},
+
+            This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
+
+            If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
+
+            Kind Regards,
+            The Deep Learning Indaba 2019 Organisers
+            """.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
+            emailer.send_mail(user.email, subject, body_text)
+        except:                
+            LOGGER.warn('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
+
         return {}, 204
 
     def send_confirmation(self, user, response):
