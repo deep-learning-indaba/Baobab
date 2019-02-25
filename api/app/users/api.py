@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import g
+from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
@@ -10,7 +10,7 @@ from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, CODE_NOT_VALID, BAD_CREDENTIALS
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED
 
 from app import db, bcrypt
 from app.utils.emailer import send_mail
@@ -36,21 +36,24 @@ user_fields = {
     'user_category': fields.String(attribute='user_category.name')
 }
 
+
 def user_info(user):
     return {
-            'id': user.id,
-            'token': generate_token(user),
-            'firstname': user.firstname,
-            'lastname': user.lastname,
-            'title': user.user_title
+        'id': user.id,
+        'token': generate_token(user),
+        'firstname': user.firstname,
+        'lastname': user.lastname,
+        'title': user.user_title
     }
+
 
 class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
     @marshal_with(user_fields)
     def get(self):
-        user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+        user = db.session.query(AppUser).filter(
+            AppUser.id == g.current_user['id']).first()
         return user
 
     def post(self):
@@ -92,6 +95,10 @@ class UserAPI(SignupMixin, restful.Resource):
         except IntegrityError:
             return EMAIL_IN_USE
 
+        send_mail(recipient=user.email,
+                  subject='Password verification for IndabaDeepLearning portal',
+                  body_text='Dear user, Please use the following link to successfully verify your email address : www.placeholder.com/VerifyEmail?token=' + user.verify_token)
+
         return user_info(user), 201
 
 
@@ -100,9 +107,15 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
-        user = db.session.query(AppUser).filter(AppUser.email==args['email']).first()
-        if user and bcrypt.check_password_hash(user.password, args['password']):
-            return user_info(user)
+        user = db.session.query(AppUser).filter(
+            AppUser.email == args['email']).first()
+
+        if user:
+            if not user.verified_email:
+                return EMAIL_NOT_VERIFIED
+
+            if bcrypt.check_password_hash(user.password, args['password']):
+                return user_info(user)
 
         return BAD_CREDENTIALS
 
@@ -114,17 +127,19 @@ class PasswordResetRequestAPI(restful.Resource):
         req_parser.add_argument('email', type=str, required=True)
         args = req_parser.parse_args()
 
-        user = db.session.query(AppUser).filter(AppUser.email==args['email']).first()
-        if user:
-            password_reset = PasswordReset(user=user)
-            db.session.add(password_reset)
-            db.session.commit()
-            # Once the SMTP credentials are set, this piece of code can be uncommented
-            '''
-            send_mail(recipient=args['email'], 
-                      subject='Password Reset for IndabaDeepLearning portal', 
-                      body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
-            '''
+        user = db.session.query(AppUser).filter(
+            AppUser.email == args['email']).first()
+
+        if not user:
+            return USER_NOT_FOUND
+
+        password_reset = PasswordReset(user=user)
+        db.session.add(password_reset)
+        db.session.commit()
+
+        send_mail(recipient=args['email'],
+                  subject='Password Reset for IndabaDeepLearning portal',
+                  body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
 
         return {}, 201
 
@@ -138,11 +153,14 @@ class PasswordResetConfirmAPI(restful.Resource):
         args = req_parser.parse_args()
 
         password_reset = db.session.query(PasswordReset
-                            ).filter(PasswordReset.code==args['code']
-                            ).filter(PasswordReset.date>datetime.now()).first()
+                                          ).filter(PasswordReset.code == args['code']
+                                                   ).first()
 
         if not password_reset:
-            return CODE_NOT_VALID
+            return RESET_PASSWORD_CODE_NOT_VALID
+
+        if password_reset.date < datetime.now():
+            return RESET_PASSWORD_CODE_EXPIRED
 
         password_reset.user.set_password(args['password'])
         db.session.delete(password_reset)
@@ -150,6 +168,23 @@ class PasswordResetConfirmAPI(restful.Resource):
 
         return {}, 200
 
+
+class VerifyEmailAPI(restful.Resource):
+
+    def get(self):
+        token = request.args.get('token')
+
+        user = db.session.query(AppUser).filter(
+            AppUser.verify_token == token).first()
+
+        if not user:
+            return EMAIL_VERIFY_CODE_NOT_VALID
+
+        user.verified_email = True
+
+        db.session.commit()
+
+        return {}, 201
 
 
 class AdminOnlyAPI(restful.Resource):
