@@ -13,3 +13,15 @@
     text-transform: uppercase;
     width: 100%;
 }
+
+.section .question {
+    margin-bottom: 4em;
+}
+
+.section .headline {
+    margin-bottom: 4em;
+}
+
+.confirmation.answer {
+    margin-bottom: 3em;
+}

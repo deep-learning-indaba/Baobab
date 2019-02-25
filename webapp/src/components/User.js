@@ -8,21 +8,16 @@ class UserDropdown extends Component {
       super(props);
   
       this.state = {
-          user: {},
+          user: props.user
       };
     }
-  
-    componentDidMount() {
-      this.setState({ 
-          user: JSON.parse(localStorage.getItem('user')),
-      });
+
+    componentWillReceiveProps = props => {
+        this.setState({user: props.user});
     }
 
     handleLogout = event => {
         userService.logout();
-        this.setState({ 
-            user: JSON.parse(localStorage.getItem('user')),
-        });
         if (this.props.logout) {
             this.props.logout();
         }
