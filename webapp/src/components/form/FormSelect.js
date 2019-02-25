@@ -16,11 +16,11 @@ class FormSelect extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           showError={this.shouldDisplayError()}
           errorText={this.props.errorText}
         >
-          <label htmlFor={this.props.Id}>{this.props.label}</label>
+          <label htmlFor={this.props.id}>{this.props.label}</label>
           <ReactSelect
             id={id}
             options={options}

@@ -101,9 +101,6 @@ class App extends Component {
                 />
               </Switch>
             </div>
-            <div className="container">
-              User: {JSON.stringify(this.state.user)}
-            </div>
           </div>
         </div>
       </Router>
