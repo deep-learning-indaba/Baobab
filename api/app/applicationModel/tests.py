@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
-from app import db
+from pytz import UTC
+from app import db, LOGGER
 from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.applicationModel.models import ApplicationForm, Section, Question
@@ -9,12 +10,15 @@ from app.applicationModel.models import ApplicationForm, Section, Question
 class ApplicationFormApiTest(ApiTestCase):
 
     def seed_static_data(self):
+        self.start_time = datetime.now() + timedelta(days=30)
+        self.end_time = datetime.now() + timedelta(days=60)
+
         test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           self.start_time, self.end_time)
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(
-            test_event.id, True, datetime.now() + timedelta(days=60))
+            test_event.id, True, self.end_time)
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(
@@ -31,7 +35,8 @@ class ApplicationFormApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/application-form?event_id=1')
         data = json.loads(response.data)
-        assert data['deadline'] == 'Sun, 24 Mar 2019 00:00:00 -0000'
+        assert data['deadline'] == self.end_time.strftime(
+            "%a, %d %b %Y %H:%M:%S") + " -0000"
         assert data['event_id'] == 1
         assert data['is_open'] == True
         assert data['sections'][0]['description'] == 'Test Description'
