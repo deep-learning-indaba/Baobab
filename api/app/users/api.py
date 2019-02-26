@@ -14,7 +14,8 @@ from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CR
 
 from app import db, bcrypt
 from app.utils.emailer import send_mail
-from app import LOGGER
+
+from config import BOABAB_HOST
 
 
 user_fields = {
@@ -96,8 +97,8 @@ class UserAPI(SignupMixin, restful.Resource):
             return EMAIL_IN_USE
 
         send_mail(recipient=user.email,
-                  subject='Password verification for IndabaDeepLearning portal',
-                  body_text='Dear user, Please use the following link to successfully verify your email address : www.placeholder.com/VerifyEmail?token=' + user.verify_token)
+                  subject='Password verification for Deep Learning Indaba portal',
+                  body_text='Dear user, Please use the following link to successfully verify your email address : {}/VerifyEmail?token={}'.format(BOABAB_HOST, user.verify_token))
 
         return user_info(user), 201
 
@@ -138,8 +139,8 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.commit()
 
         send_mail(recipient=args['email'],
-                  subject='Password Reset for IndabaDeepLearning portal',
-                  body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
+                  subject='Password Reset for Deep Learning Indaba portal',
+                  body_text='Dear user, Please use the following link to successfully reset your password : {}/ResetPassword?resetToken={}.'.format(BOABAB_HOST, password_reset.code))
 
         return {}, 201
 

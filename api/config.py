@@ -10,7 +10,7 @@ DEBUG = os.getenv('DEBUG', False)
 PORT = os.getenv('PORT', 5000)
 
 SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
-    'postgres://docker:docker@{0}/docker'.format(os.getenv('DB_PORT_5432_TCP_ADDR')))
+                                    'postgres://docker:docker@{0}/docker'.format(os.getenv('DB_PORT_5432_TCP_ADDR')))
 
 SECRET_KEY = os.getenv('SECRET_KEY', None)
 assert SECRET_KEY
@@ -36,3 +36,5 @@ GCP_CREDENTIALS_DICT = {
 GCP_PROJECT_NAME = os.getenv('GCP_PROJECT_NAME', None)
 GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
 FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))
+
+BOABAB_HOST = os.getenv('BOABAB_HOST', None)
