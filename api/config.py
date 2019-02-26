@@ -24,3 +24,15 @@ SMTP_SENDER_NAME = os.getenv('SMTP_SENDER_NAME', None)
 SMTP_SENDER_EMAIL = os.getenv('SMTP_SENDER_EMAIL', None)
 SMTP_HOST = os.getenv('SMTP_HOST', None)
 SMTP_PORT = os.getenv('SMTP_PORT', None)
+
+GCP_CREDENTIALS_DICT = {
+    'type': 'service_account',
+    'client_id': os.getenv('GCP_CLIENT_ID', None),
+    'client_email': os.getenv('GCP_CLIENT_EMAIL', None),
+    'private_key_id': os.getenv('GCP_PRIVATE_KEY_ID', None),
+    'private_key': os.getenv('GCP_PRIVATE_KEY', None),
+    'token_uri': 'https://oauth2.googleapis.com/token'
+}
+GCP_PROJECT_NAME = os.getenv('GCP_PROJECT_NAME', None)
+GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
+FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))

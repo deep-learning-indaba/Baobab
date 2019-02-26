@@ -23,3 +23,4 @@ EMAIL_VERIFY_CODE_NOT_VALID = (
 USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 409)
 RESET_PASSWORD_CODE_EXPIRED = (
     {'message': 'The password reset request has expired'}, 400)
+FILE_SIZE_EXCEEDED = ({'message': 'File size exceeded'}, 400)

@@ -4,6 +4,7 @@ import { applicationFormService } from '../../../services/applicationForm';
 import FormTextBox from "../../../components/form/FromTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
+import { ConfirmModal } from 'react-bootstrap4-modal';
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
@@ -152,14 +153,59 @@ function Confirmation(props) {
     )
 }
 
-function Submitted(props) {
-    return (
-        <div class="submitted">
-            <p class="thank-you">Thank you for applying to attend  The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya . Your application is being reviewed by our committee and we will get back to you as soon as possible.</p>
-            <p class="timestamp">You submitted your application on {props.timestamp}</p>
-        </div>
-        // TODO: Add withdraw functionality
-    )
+
+class Submitted extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        withdrawModalVisible: false,
+        isError: false,
+        errorMessage: ""
+      }
+    }
+
+    handleWithdrawOK = event => {
+        applicationFormService.withdraw(this.props.responseId).then(resp=> {
+            this.setState({
+                isError: resp.isError,
+                errorMessage: resp.message,
+                withdrawModalVisible: false
+            }, ()=> {
+                if (this.props.onWithdrawn) {
+                    this.props.onWithdrawn();
+                }
+            });
+        })
+    }
+
+    handleWithdrawCancel = event => {
+        this.setState({
+            withdrawModalVisible: false
+        });
+    }
+
+    handleWithdraw = event => {
+        this.setState({
+            withdrawModalVisible: true
+        })
+    }
+
+    render() {
+        return (
+            <div class="submitted">
+                <h2>Thank you for applying!</h2>
+                {this.state.isError && <div className={"alert alert-danger"}>{this.state.errorMessage}</div>}
+
+                <p class="thank-you">Thank you for applying to attend  The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya . Your application is being reviewed by our committee and we will get back to you as soon as possible.</p>
+                <p class="timestamp">You submitted your application on {this.props.timestamp.toLocaleString()}</p>
+                <button class="btn btn-danger" onClick={this.handleWithdraw}>Withdraw Application</button>
+                 <ConfirmModal visible={this.state.withdrawModalVisible} onOK={this.handleWithdrawOK} onCancel={this.handleWithdrawCancel} okText={"Yes - Withdraw"} cancelText={"No - Don't withdraw"}>
+                    <p>Are you SURE you want to withdraw your application to the Deep Learning Indaba 2019? You will NOT be considered for a place at the Indaba if you continue.</p>
+                </ConfirmModal>
+            </div>
+            
+        )
+    }
 }
 
 class ApplicationForm extends Component {
@@ -172,6 +218,7 @@ class ApplicationForm extends Component {
           isLoading: true,
           isError: false,
           isSubmitted: false,
+          responseId: null,
           submittedTimestamp: null,
           errorMessage: "",
           answers: []
@@ -201,12 +248,17 @@ class ApplicationForm extends Component {
                 isLoading: false
               });
         });
+        this.loadResponse();
+    }
+
+    loadResponse = () => {
         applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
             if (resp.response) {
                 // TODO: Load response values if not submitted
                 this.setState({
                     isSubmitted: resp.response.is_submitted,
-                    submittedTimestamp: resp.response.submitted_timestamp
+                    submittedTimestamp: resp.response.submitted_timestamp,
+                    responseId: resp.response.id
                 })
             }
         });
@@ -239,9 +291,14 @@ class ApplicationForm extends Component {
                 errorMessage: resp.message,
                 isLoading: false,
                 isSubmitted: resp.is_submitted,
-                submittedTimestamp: resp.submitted_timestamp
+                submittedTimestamp: resp.submitted_timestamp,
+                responseId: resp.response.id
               });
         });
+    }
+
+    handleWithdrawn = () => {
+        this.loadResponse();
     }
 
     render() {
@@ -256,7 +313,7 @@ class ApplicationForm extends Component {
         }
         
         if (isSubmitted) {
-            return <Submitted timestamp={this.state.submittedTimestamp}/>
+            return <Submitted timestamp={this.state.submittedTimestamp} onWithdrawn={this.handleWithdrawn} responseId={this.state.responseId}/>
         }
 
         const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
