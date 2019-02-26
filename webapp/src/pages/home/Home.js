@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
 import { getEvents } from "../../services/events";
+import { NavLink } from "react-router-dom";
 
 const headings = ["Event", "Start date", "End date", "Status"];
 const fieldNames = ["description", "start_date", "end_date", "status"];
@@ -46,7 +47,10 @@ class Home extends Component {
           {fieldNames.map((_cell, cellIndex) => {
             return (
               <td className="Cell">
-                {this.state.rows[rowIndex][fieldNames[cellIndex]]}
+                {
+                  this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" ?
+                    <NavLink to="/applicationForm" activeClassName="nav-link active" className="nav-link">Apply now</NavLink> :
+                    this.state.rows[rowIndex][fieldNames[cellIndex]]}
               </td>
             )
           })}
