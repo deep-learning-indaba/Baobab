@@ -6,7 +6,8 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const applicationFormService = {
     getForEvent,
     submit,
-    getResponse
+    getResponse,
+    updateResponse
 };
 
 
@@ -110,4 +111,48 @@ function submit(applicationFormId, isSubmitted, answers) {
           };
         }
       })
+}
+
+
+
+function updateResponse(applicationFormId, isSubmitted, answers) {
+  // TODO: Handle put for updates
+  let response = {
+    "application_form_id": applicationFormId,
+    "is_submitted": isSubmitted,
+    "answers": answers
+  }
+
+  console.log("Updating response: " + response);
+
+  return axios.put(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
+    .then(resp=> {
+      return {
+        response_id: resp.data.id,
+        is_submitted: resp.data.is_submitted,
+        submitted_timestamp: resp.data.submitted_timestamp,
+        status: response.status,
+        message: response.statusText
+      };
+    })
+    .catch(error => {
+      if (error.response) {
+        return {
+          response_id: null,
+          status: error.response.status,
+          message: error.response.statusText,
+          is_submitted: false,
+          submitted_timestamp: null
+        };
+      } else {
+        // The request was made but no response was received
+        return {
+          response_id: null,
+          status: null,
+          message: error.message,
+          is_submitted: false,
+          submitted_timestamp: null
+        };
+      }
+    })
 }

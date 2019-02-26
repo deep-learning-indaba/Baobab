@@ -205,8 +205,13 @@ class ApplicationForm extends Component {
             if (resp.response) {
                 // TODO: Load response values if not submitted
                 this.setState({
+                    new_response: false,
                     isSubmitted: resp.response.is_submitted,
                     submittedTimestamp: resp.response.submitted_timestamp
+                })
+            } else {
+                this.setState({
+                    new_response: true
                 })
             }
         });
@@ -242,6 +247,36 @@ class ApplicationForm extends Component {
                 submittedTimestamp: resp.submitted_timestamp
               });
         });
+    }
+
+    handleSave(isSubmitted){
+        this.setState({
+            isLoading: true
+        });
+        if(this.state.new_response) {
+            applicationFormService.submit(this.state.formSpec.id, isSubmitted, this.state.answers).then(resp=> {
+                let submitError = resp.response_id === null;
+                this.setState({
+                    isError: submitError,
+                    errorMessage: resp.message,
+                    isLoading: false,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp
+                  });
+            });
+        } else {
+            applicationFormService.updateResponse(this.state.formSpec.id, isSubmitted, this.state.answers).then(resp=> {
+                let submitError = resp.response_id === null;
+                this.setState({
+                    isError: submitError,
+                    errorMessage: resp.message,
+                    isLoading: false,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp
+                  });
+            });
+        }
+
     }
 
     render() {
@@ -287,6 +322,9 @@ class ApplicationForm extends Component {
                 }
                 {currentStep <= numSteps &&
                     <button type="button" class="btn btn-primary" onClick={this.nextStep}>Next</button>
+                }
+                {
+                    <button type="save" class="btn btn-primary" onClick={this.handleSave(false)}>Save For Later</button>
                 }
                 {currentStep > numSteps &&
                     <button type="submit" class="btn btn-primary">Submit</button>
