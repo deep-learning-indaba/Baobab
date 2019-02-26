@@ -36,21 +36,24 @@ user_fields = {
     'user_category': fields.String(attribute='user_category.name')
 }
 
+
 def user_info(user):
     return {
-            'id': user.id,
-            'token': generate_token(user),
-            'firstname': user.firstname,
-            'lastname': user.lastname,
-            'title': user.user_title
+        'id': user.id,
+        'token': generate_token(user),
+        'firstname': user.firstname,
+        'lastname': user.lastname,
+        'title': user.user_title
     }
+
 
 class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
     @marshal_with(user_fields)
     def get(self):
-        user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+        user = db.session.query(AppUser).filter(
+            AppUser.id == g.current_user['id']).first()
         return user
 
     def post(self):
@@ -100,7 +103,8 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
-        user = db.session.query(AppUser).filter(AppUser.email==args['email']).first()
+        user = db.session.query(AppUser).filter(
+            AppUser.email == args['email']).first()
         if user and bcrypt.check_password_hash(user.password, args['password']):
             return user_info(user)
 
@@ -114,15 +118,16 @@ class PasswordResetRequestAPI(restful.Resource):
         req_parser.add_argument('email', type=str, required=True)
         args = req_parser.parse_args()
 
-        user = db.session.query(AppUser).filter(AppUser.email==args['email']).first()
+        user = db.session.query(AppUser).filter(
+            AppUser.email == args['email']).first()
         if user:
             password_reset = PasswordReset(user=user)
             db.session.add(password_reset)
             db.session.commit()
             # Once the SMTP credentials are set, this piece of code can be uncommented
             '''
-            send_mail(recipient=args['email'], 
-                      subject='Password Reset for IndabaDeepLearning portal', 
+            send_mail(recipient=args['email'],
+                      subject='Password Reset for IndabaDeepLearning portal',
                       body_text='Dear user, Please use the following link to successfully reset your password : www.placeholder.com/ResetPassword?resetToken=[reset_password_token].')
             '''
 
@@ -138,8 +143,8 @@ class PasswordResetConfirmAPI(restful.Resource):
         args = req_parser.parse_args()
 
         password_reset = db.session.query(PasswordReset
-                            ).filter(PasswordReset.code==args['code']
-                            ).filter(PasswordReset.date>datetime.now()).first()
+                                          ).filter(PasswordReset.code == args['code']
+                                                   ).filter(PasswordReset.date > datetime.now()).first()
 
         if not password_reset:
             return CODE_NOT_VALID
@@ -149,7 +154,6 @@ class PasswordResetConfirmAPI(restful.Resource):
         db.session.commit()
 
         return {}, 200
-
 
 
 class AdminOnlyAPI(restful.Resource):
