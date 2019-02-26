@@ -22,14 +22,15 @@ class TestLogger(unittest.TestCase):
             out = io.StringIO()
             a = 100
             b = 0
-            c = a/b
-        except Exception as e:
+            a/b
+        except Exception:
             LOGGER.error("Exception has occured", exc_info=True)
             output = out.getvalue().strip()
             if "ZeroDivisionError" in output:
                 return True
             else:
                 return False
+
 
 if __name__ == "__main__":
     unittest.main()
