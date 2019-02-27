@@ -153,9 +153,8 @@ class PasswordResetConfirmAPI(restful.Resource):
         req_parser.add_argument('password', type=str, required=True)
         args = req_parser.parse_args()
 
-        password_reset = db.session.query(PasswordReset
-                                          ).filter(PasswordReset.code == args['code']
-                                                   ).first()
+        password_reset = db.session.query(PasswordReset).filter(
+            PasswordReset.code == args['code']).first()
 
         if not password_reset:
             return RESET_PASSWORD_CODE_NOT_VALID

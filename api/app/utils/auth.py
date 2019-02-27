@@ -42,6 +42,18 @@ def auth_required(func):
     return wrapper
 
 
+def auth_optional(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get('Authorization', '')
+        if token:
+            user = verify_token(token)
+            g.current_user = user
+
+        return func(*args, **kwargs)
+    return wrapper
+
+
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
