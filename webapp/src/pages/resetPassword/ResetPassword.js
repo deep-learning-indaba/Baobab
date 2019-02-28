@@ -12,7 +12,7 @@ export default class ResetPassword extends Component {
     }
 
     componentDidMount() {
-        if (this.props.location.search) {
+        if (this.props.location && this.props.location.search) {
             this.setState({
                 resetToken: this.props.location.search.substring(this.props.location.search.indexOf('=') + 1)
             });
