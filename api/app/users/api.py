@@ -140,7 +140,7 @@ class PasswordResetRequestAPI(restful.Resource):
 
         send_mail(recipient=args['email'],
                   subject='Password Reset for Deep Learning Indaba portal',
-                  body_text='Dear user, Please use the following link to successfully reset your password : {}/ResetPassword?resetToken={}.'.format(BOABAB_HOST, password_reset.code))
+                  body_text='Dear user, Please use the following link to successfully reset your password : {}/ResetPassword?resetToken={}'.format(BOABAB_HOST, password_reset.code))
 
         return {}, 201
 
@@ -166,7 +166,7 @@ class PasswordResetConfirmAPI(restful.Resource):
         db.session.delete(password_reset)
         db.session.commit()
 
-        return {}, 200
+        return {}, 201
 
 
 class VerifyEmailAPI(restful.Resource):
