@@ -283,30 +283,18 @@ class ApplicationForm extends Component {
     }
 
     nextStep = () => {
-        console.log("next step:")
-
         let step = this.state.currentStep;
         this.setState({
             currentStep : step + 1
-        }, () => {
-            console.log("nextstep callback:")
-
-            console.log(this.state)
         });
         window.scrollTo(0, 0);  
     }
 
     prevStep = () => {
-        console.log("prev step:")
-
         let step = this.state.currentStep;
         this.setState({
             currentStep : step - 1
-        }, () => {
-            console.log("prevstep callback:")
-
-            console.log(this.state)
-        })
+        });
     }
 
     handleSubmit = event => {
@@ -375,9 +363,7 @@ class ApplicationForm extends Component {
     }
 
     render() {
-        console.log("render:")
         const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers} = this.state;
-        console.log(this.state)
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
@@ -399,7 +385,6 @@ class ApplicationForm extends Component {
             width : (currentStep / (numSteps+1) * 100) + '%'
         }
         const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
-        console.log(answers)
         return (
             <form onSubmit={this.handleSubmit}>
                 <h2>Apply to attend the Deep Learning Indaba 2019</h2>
