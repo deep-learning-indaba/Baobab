@@ -25,3 +25,5 @@ six>=1.7.3
 flask-cors>=3.0.7
 python-dateutil>=2.8.0
 gunicorn==19.5.0
+google-cloud-storage>=1.13.0
+oauth2client>=4.1.3

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app import db, bcrypt
+from app import db, bcrypt, LOGGER
 from app.utils.misc import make_code
 
 
@@ -15,22 +15,30 @@ class AppUser(db.Model):
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     user_title = db.Column(db.String(20), nullable=False)
-    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    nationality_country_id = db.Column(
+        db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    residence_country_id = db.Column(
+        db.Integer(), db.ForeignKey('country.id'), nullable=False)
     user_ethnicity = db.Column(db.String(50), nullable=False)
     user_gender = db.Column(db.String(20), nullable=False)
     affiliation = db.Column(db.String(255), nullable=False)
     department = db.Column(db.String(255), nullable=False)
     user_disability = db.Column(db.String(255), nullable=False)
-    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
+    user_category_id = db.Column(db.Integer(), db.ForeignKey(
+        'user_category.id'), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean(), nullable=False)
     is_admin = db.Column(db.Boolean(), nullable=False)
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
+    verified_email = db.Column(db.Boolean(), nullable=True)
+    verify_token = db.Column(
+        db.String(255), nullable=True, unique=True, default=make_code)
 
-    nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
-    residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
+    nationality_country = db.relationship(
+        'Country', foreign_keys=[nationality_country_id])
+    residence_country = db.relationship(
+        'Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
 
     def __init__(self,
@@ -65,6 +73,7 @@ class AppUser(db.Model):
         self.is_admin = is_admin
         self.is_deleted = False
         self.deleted_datetime_utc = None
+        self.verified_email = False
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password)
@@ -87,20 +96,24 @@ class PasswordReset(db.Model):
     def __init__(self, user):
         self.user = user
 
+
 class Country(db.Model):
-    def __init__(self, name):
-        self.name = name
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
-class UserCategory(db.Model):
-    def __init__(self, name, description=None, group=None):
+    def __init__(self, name):
         self.name = name
-        self.description = description
-        self.group = group
+
+
+class UserCategory(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500))
     group = db.Column(db.String(100))
+
+    def __init__(self, name, description=None, group=None):
+        self.name = name
+        self.description = description
+        self.group = group

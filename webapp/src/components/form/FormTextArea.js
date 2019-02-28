@@ -1,8 +1,8 @@
 import React, { Component } from "react";
+import FormGroup from "./FormGroup"
 import ReactToolTip from "react-tooltip";
-import FormGroup from "./FormGroup";
 
-class FormTextBox extends React.Component {
+class FormTextArea extends React.Component {
     shouldDisplayError = () => {
       return this.props.showError && this.props.errorText !== ""
     }
@@ -20,27 +20,27 @@ class FormTextBox extends React.Component {
             showError={this.shouldDisplayError()}
             errorText={this.props.errorText}
           >
-            <label data-tip={this.props.description} htmlFor={this.props.Id}>
+            <label data-tip={this.props.description}  htmlFor={this.props.Id}>
               {this.props.label}
             </label>
-            <ReactToolTip/>
-            <input
+            <ReactToolTip />
+            <textarea
               id={this.props.Id}
               className={"form-control"}
-              type={this.props.type || "text"}
               placeholder={this.props.placeholder}
+              rows={this.props.rows} 
               value={this.props.value}
               onChange={this.props.onChange}
-              min={this.props.min || null}
               ref={input => {
                 this.nameInput = input
               }}
               tabIndex={this.props.tabIndex}
               autoFocus={this.props.autoFocus}
-            />
+            ></textarea>
           </FormGroup>
         </div>
       )
     }
   }
-  export default FormTextBox
+
+  export default FormTextArea

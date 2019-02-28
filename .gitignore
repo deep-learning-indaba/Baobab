@@ -116,3 +116,7 @@ dmypy.json
 
 # Mac desktop services
 .DS_Store
+
+# Decrypted environment files
+api/prod.yaml
+api/app.yaml

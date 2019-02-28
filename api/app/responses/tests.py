@@ -55,9 +55,9 @@ class ResponseApiTest(ApiTestCase):
         _add_object_to_db(self.test_form)
         test_section = Section(self.test_form.id, 'Test Section', 'Test Description', 1)
         _add_object_to_db(test_section)
-        self.test_question = Question(self.test_form.id, test_section.id, 'Test Question Description', 1, 'Test Type')
+        self.test_question = Question(self.test_form.id, test_section.id, 'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
         _add_object_to_db(self.test_question)
-        self.test_question2 = Question(self.test_form.id, test_section.id, 'Test Question 2', 2, 'short-text')
+        self.test_question2 = Question(self.test_form.id, test_section.id, 'Test Question 2', 'Enter something', 2, 'short-text', None)
         _add_object_to_db(self.test_question2)
 
         self.test_response = Response(self.test_form.id, self.other_user_data['id'])
