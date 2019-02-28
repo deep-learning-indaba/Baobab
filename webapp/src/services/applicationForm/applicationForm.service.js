@@ -7,7 +7,8 @@ export const applicationFormService = {
     getForEvent,
     submit,
     getResponse,
-    updateResponse
+    updateResponse,
+    withdraw
 };
 
 
@@ -155,4 +156,31 @@ function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
         };
       }
     })
+  }
+  
+function withdraw(id) {
+  return axios.delete(baseUrl + `/api/v1/response`, {'headers': authHeader(), 'data': {'id': id} })
+      .then(resp=> {
+        return {
+          isError: false,
+          status: resp.status,
+          message: resp.statusText
+        };
+      })
+      .catch(error => {
+        if (error.response) {
+          return {
+            isError: true,
+            status: error.response.status,
+            message: error.response.statusText,
+          };
+        } else {
+          // The request was made but no response was received
+          return {
+            isError: true,
+            status: null,
+            message: error.message,
+          };
+        }
+      });
 }
