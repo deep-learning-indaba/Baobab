@@ -19,7 +19,6 @@ class FormSelect extends React.Component {
       <div>
         <FormGroup
           id={this.props.id + "-group"}
-          showError={this.shouldDisplayError()}
           errorText={this.props.errorText}
         >
           <label data-tip={this.props.description} htmlFor={this.props.id}>{this.props.label}</label>

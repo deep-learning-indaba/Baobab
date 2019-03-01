@@ -17,7 +17,6 @@ class FormTextArea extends React.Component {
         <div>
           <FormGroup
             id={this.props.Id + "-group"}
-            showError={this.shouldDisplayError()}
             errorText={this.props.errorText}
           >
             <label data-tip={this.props.description}  htmlFor={this.props.Id}>
@@ -26,7 +25,7 @@ class FormTextArea extends React.Component {
             <ReactToolTip />
             <textarea
               id={this.props.Id}
-              className={"form-control"}
+              className={this.shouldDisplayError() ? "form-control is-invalid" : "form-control"}
               placeholder={this.props.placeholder}
               rows={this.props.rows} 
               value={this.props.value}
