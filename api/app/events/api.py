@@ -54,7 +54,7 @@ class EventsAPI(restful.Resource):
     def get(self):
         user_id = 0
 
-        if g and hasattr(g, 'current_user'):
+        if g and hasattr(g, 'current_user') and g.current_user:
             user_id = g.current_user["id"]
 
         events = db.session.query(Event).filter(

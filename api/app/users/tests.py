@@ -180,7 +180,7 @@ class UserApiTest(ApiTestCase):
             'code': pw_reset.code,
             'password': 'abc123'
         })
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
