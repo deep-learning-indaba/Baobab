@@ -34,7 +34,7 @@ class Home extends Component {
 
     let table = (<div></div>)
 
-    if (this.state.rows) {
+    if (this.state.rows && this.state.rows.length > 0) {
       const theadMarkup = (
         <tr>
           {this.state.headings.map((_cell, cellIndex) => {
