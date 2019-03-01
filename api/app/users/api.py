@@ -102,6 +102,18 @@ class UserAPI(SignupMixin, restful.Resource):
 
         return user_info(user), 201
 
+    @auth_required
+    def delete(self):
+        '''
+        The function that lets the user delete the account
+        '''
+        user = db.session.query(AppUser).filter(
+            AppUser.id == g.current_user['id']).first()
+        if user:
+            user.is_deleted = True
+            db.session.commit()
+        return {}, 201
+
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
