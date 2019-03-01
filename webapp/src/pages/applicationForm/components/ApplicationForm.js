@@ -106,7 +106,7 @@ class FieldEditor extends React.Component {
 
 function Section (props) {
     let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
-    let answers = props.questions && props.answers.slice().sort((a, b) => a.order - b.order);
+    let answers = props.answers && props.answers.slice().sort((a, b) => a.order - b.order);
 
     return (
         <div className={"section"}>
