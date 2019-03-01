@@ -17,15 +17,29 @@ const FILE = "file";
 class FieldEditor extends React.Component {
     constructor(props) {
       super(props);
-      this.state = {}
+      this.state = {
+        errorMessage: null,
+        value: null
+      }
+      this.fieldValidations = []
+      this.id = "question_" + props.question.id;
     }
   
     handleChange = event => {
-      const value = event.target.value;
-      const id = event.target.id;
-      if (this.props.onChange) {
-        this.props.onChange(id, value);
-      }
+        const value = event.target.value;
+        const id = event.target.id;
+
+        if (this.props.onChange) {
+            this.props.onChange(id, value);
+        }
+        this.setState({
+            value: value
+        }, function() {
+            let valid = value.match(this.props.question.validation_regex);
+            this.setState({
+                errorMessage: valid ? "" : "Not valid!"
+            });
+        });
     }
     
     handleChangeDropdown = (name, dropdown) => {
@@ -35,58 +49,71 @@ class FieldEditor extends React.Component {
     }
 
     formControl(question) {
-        let id = "question_" + question.id;
-
         switch(question.type) {
             case SHORT_TEXT:
                 return <FormTextBox
-                    Id={id}
+                    Id={this.id}
+                    name={this.id}
                     type="text"
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     // value={value}
                     key={'i_' + this.props.key}
+                    showError={this.state.errorMessage}
+                    errorText={this.state.errorMessage}
                     />
             case SINGLE_CHOICE:
                 return <FormTextBox
-                    Id={id}
+                    Id={this.id}
+                    name={this.id}
                     type="checkbox"
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     // value={value}
                     key={this.props.key}
+                    showError={this.state.errorMessage}
+                    errorText={this.state.errorMessage}
                     />
             case LONG_TEXT[0]:
             case LONG_TEXT[1]:
                 return <FormTextArea
-                    Id={id}
+                    Id={this.id}
+                    name={this.id}
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     rows={5}
                     key={this.props.key}
+                    showError={this.state.errorMessage}
+                    errorText={this.state.errorMessage}
                     />
             case MULTI_CHOICE:
                 return <FormSelect
                     options={question.options}
-                    id={id}
+                    id={this.id}
+                    name={this.id}
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChangeDropdown}
                     // value={value}
                     key={this.props.key}
+                    showError={this.state.errorMessage}
+                    errorText={this.state.errorMessage}
                     />
             case FILE:
                 return <FormTextBox
-                    Id={id}
+                    Id={this.id}
+                    name={this.id}
                     type="file"
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     // value={value}
                     key={this.props.key}
+                    showError={this.state.errorMessage}
+                    errorText={this.state.errorMessage}
                     />
             default:
                 return <p className="text-danger">WARNING: No control found for type {question.type}!</p>
