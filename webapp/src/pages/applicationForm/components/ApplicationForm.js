@@ -37,7 +37,7 @@ class FieldEditor extends React.Component {
         }, function() {
             let valid = value.match(this.props.question.validation_regex);
             this.setState({
-                errorMessage: valid ? "" : "Not valid!"
+                errorMessage: valid ? "" : this.props.question.validation_text
             });
         });
     }
