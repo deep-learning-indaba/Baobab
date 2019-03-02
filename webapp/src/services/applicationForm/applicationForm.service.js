@@ -7,6 +7,7 @@ export const applicationFormService = {
     getForEvent,
     submit,
     getResponse,
+    updateResponse,
     withdraw
 };
 
@@ -113,6 +114,50 @@ function submit(applicationFormId, isSubmitted, answers) {
       })
 }
 
+
+
+function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
+  // TODO: Handle put for updates
+  let response = {
+    "id": response_id,
+    "application_form_id": applicationFormId,
+    "is_submitted": isSubmitted,
+    "answers": answers
+  }
+
+  return axios.put(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
+    .then(resp=> {
+      return {
+        //We might want to look into returning these values on put in the api just for consistency's sake
+        response_id: resp.data.id,
+        is_submitted: resp.data.is_submitted,
+        submitted_timestamp: resp.data.submitted_timestamp,
+        status: response.status,
+        message: response.statusText,
+      };
+    })
+    .catch(error => {
+      if (error.response) {
+        return {
+          response_id: null,
+          status: error.response.status,
+          message: error.response.statusText,
+          is_submitted: response.is_submitted,
+          submitted_timestamp: null
+        };
+      } else {
+        // The request was made but no response was received
+        return {
+          response_id: response.id,
+          status: null,
+          message: error.message,
+          is_submitted: response.is_submitted,
+          submitted_timestamp: null
+        };
+      }
+    })
+  }
+  
 function withdraw(id) {
   return axios.delete(baseUrl + `/api/v1/response`, {'headers': authHeader(), 'data': {'id': id} })
       .then(resp=> {
