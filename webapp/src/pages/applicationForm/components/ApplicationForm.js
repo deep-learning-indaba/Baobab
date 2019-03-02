@@ -319,7 +319,7 @@ class ApplicationForm extends Component {
                 isLoading: false,
                 isSubmitted: resp.is_submitted,
                 submittedTimestamp: resp.submitted_timestamp,
-                responseId: resp.response.id
+                responseId: resp.response_id
               });
         });
     }
