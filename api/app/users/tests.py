@@ -180,7 +180,7 @@ class UserApiTest(ApiTestCase):
             'code': pw_reset.code,
             'password': 'abc123'
         })
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -188,3 +188,17 @@ class UserApiTest(ApiTestCase):
         })
 
         assert response.status_code == 200
+
+    def test_deletion(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=self.user_data)
+        data = json.loads(response.data)
+
+        user_id = data['id']
+        headers = {'Authorization': data['token']}
+        response = self.app.delete('/api/v1/user', headers=headers)
+        assert response.status_code == 201
+
+        user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
+        assert user.email == 'something@email.com'
+        assert user.is_deleted == True

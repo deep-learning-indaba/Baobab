@@ -4,7 +4,6 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FromTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import { default as ReactSelect } from "react-select";
 import {
   getTitleOptions,
   getCounties,
@@ -85,7 +84,8 @@ class CreateAccountForm extends Component {
     return (
       this.state.user.email.length > 0 &&
       this.state.user.password.length > 0 &&
-      this.state.user.confirmPassword.length > 0
+      this.state.user.confirmPassword.length > 0 &&
+      this.state.user.password === this.state.user.confirmPassword
     );
   }
 
@@ -97,7 +97,7 @@ class CreateAccountForm extends Component {
           [name]: dropdown.value
         }
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -113,7 +113,7 @@ class CreateAccountForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }

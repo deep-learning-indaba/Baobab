@@ -14,7 +14,11 @@ class FormSelect extends React.Component {
     }
   }
   render() {
-    const { id, options, placeholder, onChange } = this.props;
+    const { id, options, placeholder, onChange, defaultValue } = this.props;
+    var value
+     if(defaultValue){
+        value = options.filter(option => option.value === defaultValue)
+     }
     return (
       <div>
         <FormGroup
@@ -28,6 +32,7 @@ class FormSelect extends React.Component {
             options={options}
             placeholder={placeholder}
             onChange={e => onChange(id, e)}
+            defaultValue = {value || null}
           />
         </FormGroup>
       </div>

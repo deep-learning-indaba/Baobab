@@ -4,6 +4,7 @@ import { applicationFormService } from '../../../services/applicationForm';
 import FormTextBox from "../../../components/form/FromTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
+import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from 'react-bootstrap4-modal';
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
@@ -48,7 +49,7 @@ class FieldEditor extends React.Component {
         }
     }
 
-    formControl(question) {
+    formControl(question, answer) {
         switch(question.type) {
             case SHORT_TEXT:
                 return <FormTextBox
@@ -58,7 +59,7 @@ class FieldEditor extends React.Component {
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
-                    // value={value}
+                    value={answer}
                     key={'i_' + this.props.key}
                     showError={this.state.errorMessage}
                     errorText={this.state.errorMessage}
@@ -71,7 +72,7 @@ class FieldEditor extends React.Component {
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
-                    // value={value}
+                    value={answer}
                     key={this.props.key}
                     showError={this.state.errorMessage}
                     errorText={this.state.errorMessage}
@@ -84,6 +85,7 @@ class FieldEditor extends React.Component {
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
+                    value={answer}
                     rows={5}
                     key={this.props.key}
                     showError={this.state.errorMessage}
@@ -97,7 +99,7 @@ class FieldEditor extends React.Component {
                     label={question.description}
                     placeholder={question.placeholder}
                     onChange={this.handleChangeDropdown}
-                    // value={value}
+                    defaultValue={answer || null}
                     key={this.props.key}
                     showError={this.state.errorMessage}
                     errorText={this.state.errorMessage}
@@ -108,9 +110,8 @@ class FieldEditor extends React.Component {
                     name={this.id}
                     type="file"
                     label={question.description}
-                    placeholder={question.placeholder}
+                    placeholder={answer || question.placeholder}
                     onChange={this.handleChange}
-                    // value={value}
                     key={this.props.key}
                     showError={this.state.errorMessage}
                     errorText={this.state.errorMessage}
@@ -124,7 +125,7 @@ class FieldEditor extends React.Component {
         return (
             <div className={"question"}>
                 <h4>{this.props.question.headline}</h4>
-                {this.formControl(this.props.question)}
+                {this.formControl(this.props.question, this.props.answer)}
             </div>
         )
     }
@@ -132,6 +133,8 @@ class FieldEditor extends React.Component {
 
 function Section (props) {
     let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
+    let answers = props.answers && props.answers.slice().sort((a, b) => a.order - b.order);
+
     return (
         <div className={"section"}>
             <div className={"headline"}>
@@ -139,7 +142,13 @@ function Section (props) {
                 <p>{props.description}</p>
             </div>
             {questions && questions.map(question => 
-                <FieldEditor key={question.id} question={question} onChange={props.onChange}/>
+                //ToDo: Look for a cleaner way to do this. Also, this might not work in older versions of IE
+                <FieldEditor 
+                    key={question.id} 
+                    question={question} 
+                    answer={answers.find(answer => answer.question_id === question.id) ? answers.find(answer => answer.question_id === question.id).value : null} 
+                    onChange={props.onChange}
+                />
             )}
         </div>
     )
@@ -262,7 +271,8 @@ class ApplicationForm extends Component {
             "value": value
         };
         this.setState({
-            answers: otherAnswers.concat(currentAnswer)
+            answers: otherAnswers.concat(currentAnswer),
+            unsaved_changes : true
         })
     }
     
@@ -281,11 +291,19 @@ class ApplicationForm extends Component {
     loadResponse = () => {
         applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
             if (resp.response) {
-                // TODO: Load response values if not submitted
                 this.setState({
+                    responseId: resp.response.id, 
+                    new_response: false,
                     isSubmitted: resp.response.is_submitted,
                     submittedTimestamp: resp.response.submitted_timestamp,
-                    responseId: resp.response.id
+                    answers: resp.response.answers,
+                    unsaved_changes : false
+                    
+                })
+            } else {
+                this.setState({
+                    new_response: true,
+                    unsaved_changes : false
                 })
             }
         });
@@ -303,7 +321,7 @@ class ApplicationForm extends Component {
         let step = this.state.currentStep;
         this.setState({
             currentStep : step - 1
-        })
+        });
     }
 
     handleSubmit = event => {
@@ -311,17 +329,61 @@ class ApplicationForm extends Component {
         this.setState({
             isLoading: true
         });
-        applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
-            let submitError = resp.response_id === null;
-            this.setState({
-                isError: submitError,
-                errorMessage: resp.message,
-                isLoading: false,
-                isSubmitted: resp.is_submitted,
-                submittedTimestamp: resp.submitted_timestamp,
-                responseId: resp.response_id
-              });
-        });
+        if(this.state.new_response){
+            applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
+                let submitError = resp.response_id === null;
+                this.setState({
+                    isError: submitError,
+                    errorMessage: resp.message,
+                    isLoading: false,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp,
+                    unsaved_changes : false,
+                    responseId: resp.response_id
+                  });
+            });
+        } else {
+            applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, true, this.state.answers).then(resp=> {
+                let saveError = resp.response_id === null;
+                this.setState({
+                    isError: saveError,
+                    errorMessage: resp.message,
+                    isLoading: false,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp,
+                    unsaved_changes : false
+                  });
+            });
+        }
+
+    }
+
+    handleSave = event => {
+        if(this.state.new_response) {
+            applicationFormService.submit(this.state.formSpec.id, false, this.state.answers).then(resp=> {
+                let submitError = resp.response_id === null;
+                this.setState({
+                    isError: submitError,
+                    errorMessage: resp.message,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp,
+                    new_response: false,
+                    unsaved_changes : false
+                  });
+            });
+        } else {
+            applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, false, this.state.answers).then(resp=> {
+                let saveError = resp.response_id === null;
+                this.setState({
+                    isError: saveError,
+                    errorMessage: resp.message,
+                    isSubmitted: resp.is_submitted,
+                    submittedTimestamp: resp.submitted_timestamp,
+                    unsaved_changes : false
+                  });
+            });
+        }
+
     }
 
     handleWithdrawn = () => {
@@ -330,7 +392,6 @@ class ApplicationForm extends Component {
 
     render() {
         const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers} = this.state;
-
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
@@ -345,14 +406,13 @@ class ApplicationForm extends Component {
 
         const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
         const allQuestions = sections && sections.flatMap(section => section.questions);
-
+        
         const numSteps = sections ? sections.length : 0;
         
         const style = {
             width : (currentStep / (numSteps+1) * 100) + '%'
         }
         const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
-        
         return (
             <form onSubmit={this.handleSubmit}>
                 <h2>Apply to attend the Deep Learning Indaba 2019</h2>
@@ -360,7 +420,7 @@ class ApplicationForm extends Component {
                 <progress className="progress" style={style}></progress>
                 
                 {currentSection && 
-                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} onChange={this.handleFieldChange}/>
+                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} answers={answers} onChange={this.handleFieldChange}/>
                 }
                 {!currentSection &&
                     <Confirmation answers={answers} questions={allQuestions}/>
@@ -372,9 +432,13 @@ class ApplicationForm extends Component {
                 {currentStep <= numSteps &&
                     <button type="button" class="btn btn-primary" onClick={this.nextStep}>Next</button>
                 }
+                {
+                    <button type="button" class={this.state.unsaved_changes ? "btn btn-warning" : "btn btn-success"} data-tip="Clicking this button will save your current answers, allowing you to pick up from where you left off when you return" onClick={this.handleSave}>Save For Later</button>                  
+                }
                 {currentStep > numSteps &&
                     <button type="submit" class="btn btn-primary">Submit</button>
                 }
+                <ReactToolTip/>
             </form>
         )
     }

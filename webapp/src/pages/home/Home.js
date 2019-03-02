@@ -21,42 +21,57 @@ class Home extends Component {
 
   componentDidMount() {
     getEvents().then(response => {
-      this.setState({
-        headings: headings,
-        rows: response
-      })
+      if (response) {
+        this.setState({
+          headings: headings,
+          rows: response
+        })
+      }
     });
   }
 
   render() {
-    const theadMarkup = (
-      <tr>
-        {this.state.headings.map((_cell, cellIndex) => {
-          return (
-            <th className="Cell">
-              {this.state.headings[cellIndex]}
-            </th>
-          )
-        })}
-      </tr>
-    );
 
-    const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
-      return (
+    let table = (<div></div>)
+
+    if (this.state.rows && this.state.rows.length > 0) {
+      const theadMarkup = (
         <tr>
-          {fieldNames.map((_cell, cellIndex) => {
+          {this.state.headings.map((_cell, cellIndex) => {
             return (
-              <td className="Cell">
-                {
-                  this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" ?
-                    <NavLink to="/applicationForm" activeClassName="nav-link active" className="nav-link">Apply now</NavLink> :
-                    this.state.rows[rowIndex][fieldNames[cellIndex]]}
-              </td>
+              <th className="Cell">
+                {this.state.headings[cellIndex]}
+              </th>
             )
           })}
         </tr>
-      )
-    });
+      );
+
+      const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
+        return (
+          <tr>
+            {fieldNames.map((_cell, cellIndex) => {
+              return (
+                <td className="Cell">
+                  {
+                    this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" ?
+                      <NavLink to="/applicationForm">Apply now</NavLink> :
+                      this.state.rows[rowIndex][fieldNames[cellIndex]]
+                  }
+                </td>
+              )
+            })}
+          </tr>
+        )
+      });
+
+      table = this.state.rows ? (
+        <table align="center" className="Table">
+          <thead>{theadMarkup}</thead>
+          <tbody>{tbodyMarkup}</tbody>
+        </table>
+      ) : (<div></div>)
+    }
 
     return (
       <div>
@@ -64,10 +79,7 @@ class Home extends Component {
           <img src={logo} className="Logo" alt="logo" />
         </div>
         <h2 className="Blurb">Welcome to Boabab</h2>
-        <table align="center" className="Table">
-          <thead>{theadMarkup}</thead>
-          <tbody>{tbodyMarkup}</tbody>
-        </table>
+        {table}
       </div>
     );
   }
