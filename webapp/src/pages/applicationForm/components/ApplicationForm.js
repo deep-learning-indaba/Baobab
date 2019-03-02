@@ -15,6 +15,7 @@ const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
 
+
 class FieldEditor extends React.Component {
     constructor(props) {
       super(props);
@@ -25,7 +26,23 @@ class FieldEditor extends React.Component {
       this.fieldValidations = []
       this.id = "question_" + props.question.id;
     }
-  
+    
+    arraysEqual = (array1, array2) => {
+        if (array1 === array2) {
+          return true;
+        }
+        
+        if (array1 === null || array2 === null) {
+            return false;
+        }
+    
+        if (array1.length != array2.length) {
+          return false;
+        }
+      
+        return array1.every((value, index) => value === array2[index]);
+    }
+
     handleChange = event => {
         const value = event.target.value;
         const id = event.target.id;
@@ -42,11 +59,24 @@ class FieldEditor extends React.Component {
             });
         });
     }
-    
+
+    componentDidUpdate = prevProps => {
+        if (this.arraysEqual(prevProps.errors, this.props.errors)) {
+            return;
+        }
+        this.setState({
+            errorMessage: (this.props.errors && this.props.errors.join(", ")) || ""
+        })
+    }
+
     handleChangeDropdown = (name, dropdown) => {
         if (this.props.onChange) {
             this.props.onChange(name, dropdown.value);
         }
+    }
+
+    getErrorMessage = () => {
+        return this.state.errorMessage;
     }
 
     formControl(question, answer) {
@@ -61,8 +91,8 @@ class FieldEditor extends React.Component {
                     onChange={this.handleChange}
                     value={answer}
                     key={'i_' + this.props.key}
-                    showError={this.state.errorMessage}
-                    errorText={this.state.errorMessage}
+                    showError={this.getErrorMessage()}
+                    errorText={this.getErrorMessage()}
                     />
             case SINGLE_CHOICE:
                 return <FormTextBox
@@ -74,8 +104,8 @@ class FieldEditor extends React.Component {
                     onChange={this.handleChange}
                     value={answer}
                     key={this.props.key}
-                    showError={this.state.errorMessage}
-                    errorText={this.state.errorMessage}
+                    showError={this.getErrorMessage()}
+                    errorText={this.getErrorMessage()}
                     />
             case LONG_TEXT[0]:
             case LONG_TEXT[1]:
@@ -88,8 +118,8 @@ class FieldEditor extends React.Component {
                     value={answer}
                     rows={5}
                     key={this.props.key}
-                    showError={this.state.errorMessage}
-                    errorText={this.state.errorMessage}
+                    showError={this.getErrorMessage()}
+                    errorText={this.getErrorMessage()}
                     />
             case MULTI_CHOICE:
                 return <FormSelect
@@ -101,8 +131,8 @@ class FieldEditor extends React.Component {
                     onChange={this.handleChangeDropdown}
                     defaultValue={answer || null}
                     key={this.props.key}
-                    showError={this.state.errorMessage}
-                    errorText={this.state.errorMessage}
+                    showError={this.getErrorMessage()}
+                    errorText={this.getErrorMessage()}
                     />
             case FILE:
                 return <FormTextBox
@@ -113,8 +143,8 @@ class FieldEditor extends React.Component {
                     placeholder={answer || question.placeholder}
                     onChange={this.handleChange}
                     key={this.props.key}
-                    showError={this.state.errorMessage}
-                    errorText={this.state.errorMessage}
+                    showError={this.getErrorMessage()}
+                    errorText={this.getErrorMessage()}
                     />
             default:
                 return <p className="text-danger">WARNING: No control found for type {question.type}!</p>
@@ -134,6 +164,7 @@ class FieldEditor extends React.Component {
 function Section (props) {
     let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
     let answers = props.answers && props.answers.slice().sort((a, b) => a.order - b.order);
+    let errors = props.errors;
 
     return (
         <div className={"section"}>
@@ -147,6 +178,7 @@ function Section (props) {
                     key={question.id} 
                     question={question} 
                     answer={answers.find(answer => answer.question_id === question.id) ? answers.find(answer => answer.question_id === question.id).value : null} 
+                    errors={errors.filter(e=>e.question_id === question.id).map(e=>e.errorMessage)}
                     onChange={props.onChange}
                 />
             )}
@@ -257,6 +289,7 @@ class ApplicationForm extends Component {
           responseId: null,
           submittedTimestamp: null,
           errorMessage: "",
+          errors: [],
           answers: []
         };
 
@@ -311,10 +344,19 @@ class ApplicationForm extends Component {
 
     nextStep = () => {
         let step = this.state.currentStep;
-        this.setState({
-            currentStep : step + 1
-        });
-        window.scrollTo(0, 0);  
+        let validation_result = this.validate();
+        if (validation_result.passed) {
+            this.setState({
+                currentStep : step + 1,
+                errors: validation_result.errors
+            });
+            window.scrollTo(0, 0);  
+        }
+        else {
+            this.setState({
+                errors: validation_result.errors
+            });
+        }
     }
 
     prevStep = () => {
@@ -390,8 +432,44 @@ class ApplicationForm extends Component {
         this.loadResponse();
     }
 
+    validate = () => {
+        console.log("Running validate");
+        // TODO: Refactor to set currentSection in the next/previous methods
+        const {currentStep, formSpec, answers} = this.state;
+        const sections = this.state.formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
+        const numSteps = sections ? sections.length : 0;
+        const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
+        if (currentSection) {
+            let errors = [];
+            currentSection.questions.forEach(question=>{
+                let answer = answers.find(answer => answer.question_id === question.id)
+                if (question.is_required && (!answer || !answer.value)) {
+                    errors.push({
+                        question_id: question.id, 
+                        errorMessage: 'An answer is required.'
+                    });
+                }
+                if (answer && !answer.value.match(this.props.question.validation_regex)) {
+                    errors.push({
+                        question_id: question.id, 
+                        errorMessage: question.validation_text
+                    });
+                }
+            });
+            return {
+                passed: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        return {
+            passed: true,
+            errors: []
+        };
+    }
+
     render() {
-        const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers} = this.state;
+        const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers, errors} = this.state;
         if (isLoading) {
             return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
@@ -420,7 +498,7 @@ class ApplicationForm extends Component {
                 <progress className="progress" style={style}></progress>
                 
                 {currentSection && 
-                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} answers={answers} onChange={this.handleFieldChange}/>
+                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} answers={answers} onChange={this.handleFieldChange} errors={errors}/>
                 }
                 {!currentSection &&
                     <Confirmation answers={answers} questions={allQuestions}/>
