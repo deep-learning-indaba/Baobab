@@ -121,6 +121,8 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             old_response.is_submitted = args['is_submitted']
             if args['is_submitted']:
                 old_response.submitted_timestamp = datetime.datetime.now()
+                old_response.is_withdrawn = False
+                old_response.withdrawn_timestamp = None
 
             for answer_args in args['answers']:
                 old_answer = db.session.query(Answer).filter(Answer.response_id == old_response.id, Answer.question_id == answer_args['question_id']).first()
