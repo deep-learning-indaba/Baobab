@@ -33,12 +33,12 @@ def update_question_data():
     update_question(session, 1, 'Enter 50 to 150 words')
 
     update_question(session, 2, 'Enter 50 to 150 words')
-    update_question(session, 3, 'Enter up to 80 words')
-    update_question(session, 4, 'Enter up to 80 words')
-    update_question(session, 5, 'Enter up to 150 words')
-    update_question(session, 9, 'Enter up to 150 words')
-    update_question(session, 16, 'Enter up to 150 words')
-    update_question(session, 18, 'Enter up to 150 words')
+    update_question(session, 3, 'Enter a maximum of 80 words')
+    update_question(session, 4, 'Enter a maximum of 80 words')
+    update_question(session, 5, 'Enter a maximum of 150 words')
+    update_question(session, 9, 'Enter a maximum of 150 words')
+    update_question(session, 16, 'Enter a maximum of 150 words')
+    update_question(session, 18, 'Enter a maximum of 150 words')
 
 def downgrade():
     op.drop_column('question', 'validation_text')
