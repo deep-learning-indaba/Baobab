@@ -233,7 +233,7 @@ class Submitted extends React.Component {
                 {this.state.isError && <div className={"alert alert-danger"}>{this.state.errorMessage}</div>}
 
                 <p class="thank-you">Thank you for applying to attend  The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya . Your application is being reviewed by our committee and we will get back to you as soon as possible.</p>
-                <p class="timestamp">You submitted your application on {this.props.timestamp.toLocaleString()}</p>
+                <p class="timestamp">You submitted your application on {this.props.timestamp && this.props.timestamp.toLocaleString()}</p>
                 <button class="btn btn-danger" onClick={this.handleWithdraw}>Withdraw Application</button>
                  <ConfirmModal visible={this.state.withdrawModalVisible} onOK={this.handleWithdrawOK} onCancel={this.handleWithdrawCancel} okText={"Yes - Withdraw"} cancelText={"No - Don't withdraw"}>
                     <p>Are you SURE you want to withdraw your application to the Deep Learning Indaba 2019? You will NOT be considered for a place at the Indaba if you continue.</p>

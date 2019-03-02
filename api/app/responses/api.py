@@ -99,6 +99,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
+    @marshal_with(response_fields)
     def put(self):
         # Update an existing response for the logged-in user.
         req_parser = reqparse.RequestParser()
