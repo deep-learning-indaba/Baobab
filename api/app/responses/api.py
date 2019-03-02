@@ -48,8 +48,10 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             if not form:
                 return errors.FORM_NOT_FOUND
             
+            # Get the latest response (note there may be older withdrawn responses)
             response = db.session.query(Response).filter(
-                Response.application_form_id == form.id, Response.user_id == g.current_user['id']).first()
+                Response.application_form_id == form.id, Response.user_id == g.current_user['id']
+                ).order_by(Response.started_timestamp.desc()).first()
             if not response:
                 return errors.RESPONSE_NOT_FOUND
             
@@ -138,7 +140,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             except:                
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
             finally:
-                return {}, 204
+                return old_response, 204
 
         except Exception as e:
             return errors.DB_NOT_AVAILABLE

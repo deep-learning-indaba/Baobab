@@ -117,7 +117,6 @@ function submit(applicationFormId, isSubmitted, answers) {
 
 
 function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
-  // TODO: Handle put for updates
   let response = {
     "id": response_id,
     "application_form_id": applicationFormId,
@@ -128,7 +127,6 @@ function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
   return axios.put(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
     .then(resp=> {
       return {
-        //We might want to look into returning these values on put in the api just for consistency's sake
         response_id: resp.data.id,
         is_submitted: resp.data.is_submitted,
         submitted_timestamp: resp.data.submitted_timestamp,
