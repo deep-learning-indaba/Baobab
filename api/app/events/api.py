@@ -34,7 +34,7 @@ def get_user_event_response_status(user_id, event_id):
             return "Application closed"
         elif user_id:
             response = db.session.query(Response).filter(
-                Response.application_form_id == applicationForm.id).filter(Response.user_id == user_id).first()
+                Response.application_form_id == applicationForm.id).filter(Response.user_id == user_id).order_by(Response.started_timestamp.desc()).first()
 
             if response:
                 if response.is_withdrawn:
