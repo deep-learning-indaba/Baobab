@@ -60,6 +60,7 @@ class LoginForm extends Component {
       }
     });
   };
+
   render() {
     const xs = 6;
     const sm = 6;

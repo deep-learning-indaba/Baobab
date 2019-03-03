@@ -24,3 +24,4 @@ USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 409)
 RESET_PASSWORD_CODE_EXPIRED = (
     {'message': 'The password reset request has expired'}, 400)
 FILE_SIZE_EXCEEDED = ({'message': 'File size exceeded'}, 400)
+USER_DELETED = ({'message': 'This account has been deleted'}, 404)
