@@ -73,6 +73,60 @@ class UserApiTest(ApiTestCase):
         assert data['user_disability'] == 'None'
         assert data['user_category'] == 'Postdoc'
 
+    def test_update_user(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=self.user_data)
+        data = json.loads(response.data)
+        assert response.status_code == 201
+
+        headers = {'Authorization': data['token']}
+
+        response = self.app.put('/api/v1/user', headers=headers, data={
+            'email': 'something@email.com',
+            'firstname': 'Updated',
+            'lastname': 'Updated',
+            'user_title': 'Mrs',
+            'nationality_country_id': 1,
+            'residence_country_id': 1,
+            'user_ethnicity': 'None',
+            'user_gender': 'Female',
+            'affiliation': 'Company',
+            'department': 'AI',
+            'user_disability': 'None',
+            'user_category_id': 1,
+            'password': ''
+        })
+        assert response.status_code == 200
+
+        response = self.app.get('/api/v1/user', headers=headers)
+        data = json.loads(response.data)
+        assert data['email'] == 'something@email.com'
+        assert data['firstname'] == 'Updated'
+        assert data['lastname'] == 'Updated'
+        assert data['user_title'] == 'Mrs'
+        assert data['nationality_country'] == 'South Africa'
+        assert data['residence_country'] == 'South Africa'
+        assert data['user_ethnicity'] == 'None'
+        assert data['user_gender'] == 'Female'
+        assert data['affiliation'] == 'Company'
+        assert data['department'] == 'AI'
+        assert data['user_disability'] == 'None'
+        assert data['user_category'] == 'Postdoc'
+
+    def test_authentication_deleted(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=self.user_data)
+        data = json.loads(response.data)
+        assert response.status_code == 201
+
+        headers = {'Authorization': data['token']}
+
+        response = self.app.delete('api/v1/user', headers=headers)
+        assert response.status_code == 200
+
+        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        assert response.status_code == 404
+
     def test_authentication_unverified_email(self):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=self.user_data)
@@ -197,7 +251,7 @@ class UserApiTest(ApiTestCase):
         user_id = data['id']
         headers = {'Authorization': data['token']}
         response = self.app.delete('/api/v1/user', headers=headers)
-        assert response.status_code == 201
+        assert response.status_code == 200
 
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         assert user.email == 'something@email.com'
