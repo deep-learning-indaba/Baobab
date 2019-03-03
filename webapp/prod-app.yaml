@@ -1,0 +1,24 @@
+service: prod-frontend
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+  - url: /(.*\.(gif|png|jpg|css|js|pdf)(|\.map))$
+    static_files: build/\1
+    upload: build/(.*)(|\.map)
+
+  - url: /(.*)
+    static_files: build/index.html
+    upload: build/index.html
+
+skip_files:
+  - ^(.*/)?.*/assets/.*$
+  - ^(.*/)?.*/test/.*$
+  - ^(.*/)?.*/templates/.*$
+  - ^(.*/)?.*/node_modules/.*$
+
+  - ^(assets/.*)
+  - ^(test/.*)
+  - ^(templates/.*)
+  - ^(node_modules/.*)
