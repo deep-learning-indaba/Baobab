@@ -134,7 +134,7 @@ jobs:
             cd webapp
             yarn
             CI=false yarn build
-            gcloud app deploy prod-app.yml
+            gcloud app deploy prod-app.yaml
 
 workflows:
   build_and_test:
