@@ -60,6 +60,12 @@ class CreateAccountForm extends Component {
     };
   }
 
+  getContentValue(options, value) {
+    return options.filter(option => {
+      return option.value === value;
+    });
+  }
+
   componentWillMount() {
     Promise.all([
       getTitleOptions,
@@ -171,8 +177,6 @@ class CreateAccountForm extends Component {
       lastName,
       email,
       title,
-      password,
-      confirmPassword,
       nationality,
       residence,
       ethnicity,
@@ -180,8 +184,18 @@ class CreateAccountForm extends Component {
       affiliation,
       department,
       disability,
-      category
+      category,
+      password,
+      confirmPassword
     } = this.state.user;
+
+    const titleValue = this.getContentValue(this.state.titleOptions, title);
+    const nationalityValue = this.getContentValue(this.state.countryOptions, nationality);
+    const residenceValue = this.getContentValue(this.state.countryOptions, residence);
+    const ethnicityValue = this.getContentValue(this.state.ethnicityOptions, ethnicity);
+    const genderValue = this.getContentValue(this.state.genderOptions, gender);
+    const categoryValue = this.getContentValue(this.state.categoryOptions, category);
+    const disabilityValue = this.getContentValue(this.state.disabilityOptions, disability);
 
     const { loading, errors, showErrors } = this.state;
 
@@ -196,7 +210,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.title.name}
                 placeholder={validationFields.title.display}
                 onChange={this.handleChangeDropdown}
-                value={title}
+                value={titleValue}
                 label={validationFields.title.display}
               />
             </div>
@@ -236,7 +250,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 onChange={this.handleChangeDropdown}
-                value={nationality}
+                value={nationalityValue}
                 label={validationFields.nationality.display}
               />
             </div>
@@ -246,7 +260,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 onChange={this.handleChangeDropdown}
-                value={residence}
+                value={residenceValue}
                 label={validationFields.residence.display}
               />
             </div>
@@ -258,7 +272,7 @@ class CreateAccountForm extends Component {
                 options={this.state.ethnicityOptions}
                 placeholder={validationFields.ethnicity.display}
                 onChange={this.handleChangeDropdown}
-                value={ethnicity}
+                value={ethnicityValue}
                 label={validationFields.ethnicity.display}
                 description={validationFields.ethnicity.description}
               />
@@ -269,7 +283,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.gender.name}
                 placeholder={validationFields.gender.display}
                 onChange={this.handleChangeDropdown}
-                value={gender}
+                value={genderValue}
                 label={validationFields.gender.display}
               />
             </div>
@@ -305,7 +319,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.disability.name}
                 placeholder={validationFields.disability.display}
                 onChange={this.handleChangeDropdown}
-                value={disability}
+                value={disabilityValue}
                 label={validationFields.disability.display}
                 description={validationFields.disability.description}
               />
@@ -316,7 +330,7 @@ class CreateAccountForm extends Component {
                 id={validationFields.category.name}
                 placeholder={validationFields.category.display}
                 onChange={this.handleChangeDropdown}
-                value={category}
+                value={categoryValue}
                 label={validationFields.category.display}
                 description={validationFields.category.description}
               />
