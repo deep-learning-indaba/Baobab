@@ -7,8 +7,6 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 from flask_redis import FlaskRedis
 from utils.logger import Logger
-import logging
-
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -18,7 +16,6 @@ rest_api = restful.Api(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 redis = FlaskRedis(app)
-logging.basicConfig()
 LOGGER = Logger().get_logger()
 
 
