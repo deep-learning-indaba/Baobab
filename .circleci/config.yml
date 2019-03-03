@@ -114,8 +114,7 @@ jobs:
             cd webapp
             yarn
             CI=false yarn build-test
-            gcloud app deploy
-
+            gcloud app deploy staging-app.yaml
   deploy-prod:
     machine: true
     steps:
@@ -135,7 +134,7 @@ jobs:
             cd webapp
             yarn
             CI=false yarn build
-            gcloud app deploy
+            gcloud app deploy prod-app.yaml
 
 workflows:
   build_and_test:
