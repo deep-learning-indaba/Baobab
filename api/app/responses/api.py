@@ -143,7 +143,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             except:                
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
             finally:
-                return old_response, 204
+                return old_response, 200
 
         except Exception as e:
             return errors.DB_NOT_AVAILABLE
