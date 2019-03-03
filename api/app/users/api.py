@@ -10,9 +10,9 @@ from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED
 
-from app import db, bcrypt
+from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
 
 from config import BOABAB_HOST
@@ -103,6 +103,46 @@ class UserAPI(SignupMixin, restful.Resource):
         return user_info(user), 201
 
     @auth_required
+    def put(self):
+        args = self.req_parser.parse_args()
+
+        email = args['email']
+        firstname = args['firstname']
+        lastname = args['lastname']
+        user_title = args['user_title']
+        nationality_country_id = args['nationality_country_id']
+        residence_country_id = args['residence_country_id']
+        user_ethnicity = args['user_ethnicity']
+        user_gender = args['user_gender']
+        affiliation = args['affiliation']
+        department = args['department']
+        user_disability = args['user_disability']
+        user_category_id = args['user_category_id']
+
+        user = db.session.query(AppUser).filter(
+            AppUser.id == g.current_user['id']).first()
+
+        user.email = email
+        user.firstname = firstname
+        user.lastname = lastname
+        user.user_title = user_title
+        user.nationality_country_id = nationality_country_id
+        user.residence_country_id = residence_country_id
+        user.user_ethnicity = user_ethnicity
+        user.user_gender = user_gender
+        user.affiliation = affiliation
+        user.department = department
+        user.user_disability = user_disability
+        user.user_category_id = user_category_id
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            return EMAIL_IN_USE
+
+        return user_info(user), 200
+
+    @auth_required
     def delete(self):
         '''
         The function that lets the user delete the account
@@ -112,7 +152,7 @@ class UserAPI(SignupMixin, restful.Resource):
         if user:
             user.is_deleted = True
             db.session.commit()
-        return {}, 201
+        return {}, 200
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
@@ -124,6 +164,9 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
             AppUser.email == args['email']).first()
 
         if user:
+            if user.is_deleted:
+                return USER_DELETED
+
             if not user.verified_email:
                 return EMAIL_NOT_VERIFIED
 
