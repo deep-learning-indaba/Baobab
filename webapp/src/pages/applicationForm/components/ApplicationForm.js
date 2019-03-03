@@ -6,6 +6,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from 'react-bootstrap4-modal';
+import StepZilla from "react-stepzilla";
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
@@ -19,67 +20,23 @@ const FILE = "file";
 class FieldEditor extends React.Component {
     constructor(props) {
       super(props);
-      this.state = {
-        errorMessage: null,
-        value: null
-      }
-      this.fieldValidations = []
       this.id = "question_" + props.question.id;
-    }
-    
-    arraysEqual = (array1, array2) => {
-        if (array1 === array2) {
-          return true;
-        }
-        
-        if (array1 === null || array2 === null) {
-            return false;
-        }
-    
-        if (array1.length != array2.length) {
-          return false;
-        }
-      
-        return array1.every((value, index) => value === array2[index]);
     }
 
     handleChange = event => {
         const value = event.target.value;
-        const id = event.target.id;
-
         if (this.props.onChange) {
-            this.props.onChange(id, value);
+            this.props.onChange(this.props.question, value);
         }
-        this.setState({
-            value: value
-        }, function() {
-            let valid = value.match(this.props.question.validation_regex);
-            this.setState({
-                errorMessage: valid ? "" : this.props.question.validation_text
-            });
-        });
-    }
-
-    componentDidUpdate = prevProps => {
-        if (this.arraysEqual(prevProps.errors, this.props.errors)) {
-            return;
-        }
-        this.setState({
-            errorMessage: (this.props.errors && this.props.errors.join(", ")) || ""
-        })
     }
 
     handleChangeDropdown = (name, dropdown) => {
         if (this.props.onChange) {
-            this.props.onChange(name, dropdown.value);
+            this.props.onChange(this.props.question, dropdown.value);
         }
     }
 
-    getErrorMessage = () => {
-        return this.state.errorMessage;
-    }
-
-    formControl(question, answer) {
+    formControl = (key, question, answer, validationError) => {
         switch(question.type) {
             case SHORT_TEXT:
                 return <FormTextBox
@@ -90,9 +47,9 @@ class FieldEditor extends React.Component {
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     value={answer}
-                    key={'i_' + this.props.key}
-                    showError={this.getErrorMessage()}
-                    errorText={this.getErrorMessage()}
+                    key={"i_" + key}
+                    showError={validationError}
+                    errorText={validationError}
                     />
             case SINGLE_CHOICE:
                 return <FormTextBox
@@ -103,9 +60,9 @@ class FieldEditor extends React.Component {
                     placeholder={question.placeholder}
                     onChange={this.handleChange}
                     value={answer}
-                    key={this.props.key}
-                    showError={this.getErrorMessage()}
-                    errorText={this.getErrorMessage()}
+                    key={"i_" + key}
+                    showError={validationError}
+                    errorText={validationError}
                     />
             case LONG_TEXT[0]:
             case LONG_TEXT[1]:
@@ -117,9 +74,9 @@ class FieldEditor extends React.Component {
                     onChange={this.handleChange}
                     value={answer}
                     rows={5}
-                    key={this.props.key}
-                    showError={this.getErrorMessage()}
-                    errorText={this.getErrorMessage()}
+                    key={"i_" + key}
+                    showError={validationError}
+                    errorText={validationError}
                     />
             case MULTI_CHOICE:
                 return <FormSelect
@@ -130,9 +87,9 @@ class FieldEditor extends React.Component {
                     placeholder={question.placeholder}
                     onChange={this.handleChangeDropdown}
                     defaultValue={answer || null}
-                    key={this.props.key}
-                    showError={this.getErrorMessage()}
-                    errorText={this.getErrorMessage()}
+                    key={"i_" + key}
+                    showError={validationError}
+                    errorText={validationError}
                     />
             case FILE:
                 return <FormTextBox
@@ -142,9 +99,9 @@ class FieldEditor extends React.Component {
                     label={question.description}
                     placeholder={answer || question.placeholder}
                     onChange={this.handleChange}
-                    key={this.props.key}
-                    showError={this.getErrorMessage()}
-                    errorText={this.getErrorMessage()}
+                    key={"i_" + key}
+                    showError={validationError}
+                    errorText={validationError}
                     />
             default:
                 return <p className="text-danger">WARNING: No control found for type {question.type}!</p>
@@ -155,68 +112,160 @@ class FieldEditor extends React.Component {
         return (
             <div className={"question"}>
                 <h4>{this.props.question.headline}</h4>
-                {this.formControl(this.props.question, this.props.answer)}
+                {this.formControl(this.props.key, this.props.question, this.props.answer ? this.props.answer.value : null, this.props.validationError)}
             </div>
         )
     }
   }
 
-function Section (props) {
-    let questions = props.questions && props.questions.slice().sort((a, b) => a.order - b.order);
-    let answers = props.answers && props.answers.slice().sort((a, b) => a.order - b.order);
-    let errors = props.errors;
 
-    return (
-        <div className={"section"}>
-            <div className={"headline"}>
-                <h2>{props.name}</h2>
-                <p>{props.description}</p>
+class Section extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            section: props.section,
+            questionModels: props.questionModels.slice().sort((a, b) => a.question.order - b.question.order),
+            hasValidated: false,
+            validationStale: false
+        }
+    }
+
+    updateQuestionModelState = (question, apply) => {
+        const newQuestionModels = this.state.questionModels.map(q=>{
+            if (q.question.id !== question.id) {
+                return q;
+            }
+            return apply(q)
+        });
+        this.setState({
+            questionModels: newQuestionModels
+        });
+    }
+
+    onChange = (question, value) => {
+        const newAnswer = {
+            question_id: question.id,
+            value: value
+        };
+
+        const newQuestionModels = this.state.questionModels.map(q=>{
+            if (q.question.id !== question.id) {
+                return q;
+            }
+            return {
+                ...q,
+                validationError: this.state.hasValidated ? this.validate(q, newAnswer) : "",
+                answer: newAnswer
+            }
+        });
+
+        this.setState({
+            questionModels: newQuestionModels,
+            validationStale: true
+        }, () => {
+            if (this.props.changed) {
+                this.props.changed();
+            }
+        });
+    }
+
+    validate = (questionModel, updatedAnswer) => {
+        let errors = [];
+        const question = questionModel.question;
+        const answer = updatedAnswer || questionModel.answer;
+
+        if (question.is_required && (!answer || !answer.value)) {
+            errors.push("An answer is required.");
+        }
+        if (answer && question.validation_regex && !answer.value.match(question.validation_regex)) {
+            errors.push(question.validation_text);
+        }
+        
+        return errors.join("; ")
+    }
+
+    isValidated = () => {
+        const validatedModels = this.state.questionModels.map(q=>{
+            return {
+                ...q,
+                validationError: this.validate(q)
+            }
+        });
+
+        const isValid = !validatedModels.some(v=>v.validationError);
+
+        this.setState({
+            questionModels: validatedModels,
+            hasValidated: true,
+            validationStale: false
+        }, ()=>{
+            if (this.props.answerChanged && isValid) {
+                this.props.answerChanged(this.state.questionModels.map(q=>q.answer).filter(a=>a));
+            }
+        });
+
+        return isValid;
+    }
+
+    handleSave = () => {
+        if (this.props.save) {
+            this.props.save(this.state.questionModels.map(q=>q.answer).filter(a=>a));
+        }
+    }
+
+    render() {
+        const {section, questionModels, hasValidated, validationStale} = this.state;
+        return (
+            <div className={"section"}>
+                <div className={"headline"}>
+                    <h2>{section.name}</h2>
+                    <p>{section.description}</p>
+                </div>
+                {questionModels && questionModels.map(model => 
+                    <FieldEditor
+                        key={model.question.id}
+                        question={model.question}
+                        answer={model.answer}
+                        validationError={model.validationError}
+                        onChange={this.onChange}
+                    />
+                )}
+                {this.props.unsavedChanges && !this.props.isSaving && <a href="#" class="save mx-auto" onClick={this.handleSave}>Save for later...</a>}
+                {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
+                {hasValidated && !validationStale && 
+                    <div class="alert alert-danger">Please fix the errors before continuing.</div>}
             </div>
-            {questions && questions.map(question => 
-                //ToDo: Look for a cleaner way to do this. Also, this might not work in older versions of IE
-                <FieldEditor 
-                    key={question.id} 
-                    question={question} 
-                    answer={answers.find(answer => answer.question_id === question.id) ? answers.find(answer => answer.question_id === question.id).value : null} 
-                    errors={errors.filter(e=>e.question_id === question.id).map(e=>e.errorMessage)}
-                    onChange={props.onChange}
-                />
-            )}
-        </div>
-    )
+        )
+    }
 }
+
 
 function Confirmation(props) {
     return (
         <div>
             <div class="row">
-                <div class="col">
+                <div class="col confirmation-heading">
                     <h2>Confirmation</h2>
                     <p>Please confirm that your responses are correct. Use the previous button to correct them if they are not.</p>        
                 </div>
             </div>
-            {props.answers && props.answers.map(answer => {
-                if (!props.questions) {
-                    return <span></span>
-                }
-
-                let question = props.questions.find(question => question.id == answer.question_id);
-
-                return (question && 
+            {props.questionModels && props.questionModels.map(qm => {
+                return (qm.question && 
                 <div className={"confirmation answer"}>
                     <div class="row">
                         <div class="col">
-                            <h5>{question.headline}</h5>
+                            <h5>{qm.question.headline}</h5>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col">
-                            <p>{answer.value}</p>
+                            <p>{qm.answer ? qm.answer.value : "No answer provided."}</p>
                         </div>
                     </div>
                 </div>
                 )
             })}
+            <button class="btn btn-primary submit-application mx-auto" onClick={props.submit}>Submit</button>
         </div>
     )
 }
@@ -266,7 +315,9 @@ class Submitted extends React.Component {
 
                 <p class="thank-you">Thank you for applying to attend  The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya . Your application is being reviewed by our committee and we will get back to you as soon as possible.</p>
                 <p class="timestamp">You submitted your application on {this.props.timestamp && this.props.timestamp.toLocaleString()}</p>
-                <button class="btn btn-danger" onClick={this.handleWithdraw}>Withdraw Application</button>
+                <div class="submitted-footer">
+                    <button class="btn btn-danger" onClick={this.handleWithdraw}>Withdraw Application</button>
+                </div>
                  <ConfirmModal visible={this.state.withdrawModalVisible} onOK={this.handleWithdrawOK} onCancel={this.handleWithdrawCancel} okText={"Yes - Withdraw"} cancelText={"No - Don't withdraw"}>
                     <p>Are you SURE you want to withdraw your application to the Deep Learning Indaba 2019? You will NOT be considered for a place at the Indaba if you continue.</p>
                 </ConfirmModal>
@@ -281,33 +332,20 @@ class ApplicationForm extends Component {
         super(props);
 
         this.state = {
-          currentStep: 1,
           formSpec: null,
           isLoading: true,
+          isSubmitting: false,
           isError: false,
           isSubmitted: false,
           responseId: null,
           submittedTimestamp: null,
           errorMessage: "",
           errors: [],
-          answers: []
+          answers: [],
+          unsavedChanges: false
         };
 
-        this.handleFieldChange = this.handleFieldChange.bind(this);
       }
-    
-    handleFieldChange(fieldId, value) {
-        const questionId = fieldId.substring(fieldId.lastIndexOf('_')+1, fieldId.length);
-        const otherAnswers = this.state.answers.filter(answer => answer.question_id != questionId);
-        const currentAnswer = {
-            "question_id": questionId,
-            "value": value
-        };
-        this.setState({
-            answers: otherAnswers.concat(currentAnswer),
-            unsaved_changes : true
-        })
-    }
     
     componentDidMount() {
         applicationFormService.getForEvent(DEFAULT_EVENT_ID).then(response => {
@@ -330,148 +368,111 @@ class ApplicationForm extends Component {
                     isSubmitted: resp.response.is_submitted,
                     submittedTimestamp: resp.response.submitted_timestamp,
                     answers: resp.response.answers,
-                    unsaved_changes : false
+                    unsavedChanges : false
                     
                 })
             } else {
                 this.setState({
                     new_response: true,
-                    unsaved_changes : false
+                    unsavedChanges : false
                 })
             }
-        });
-    }
-
-    nextStep = () => {
-        let step = this.state.currentStep;
-        let validation_result = this.validate();
-        if (validation_result.passed) {
-            this.setState({
-                currentStep : step + 1,
-                errors: validation_result.errors
-            });
-            window.scrollTo(0, 0);  
-        }
-        else {
-            this.setState({
-                errors: validation_result.errors
-            });
-        }
-    }
-
-    prevStep = () => {
-        let step = this.state.currentStep;
-        this.setState({
-            currentStep : step - 1
         });
     }
 
     handleSubmit = event => {
         event.preventDefault();
         this.setState({
-            isLoading: true
+            isSubmitting: true
+        }, ()=> {
+            if(this.state.new_response){
+                applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
+                    let submitError = resp.response_id === null;
+                    this.setState({
+                        isError: submitError,
+                        errorMessage: resp.message,
+                        isSubmitting: false,
+                        isSubmitted: resp.is_submitted,
+                        submittedTimestamp: resp.submitted_timestamp,
+                        unsavedChanges : false,
+                        new_response: false,
+                        responseId: resp.response_id
+                      });
+                });
+            } else {
+                applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, true, this.state.answers).then(resp=> {
+                    let saveError = resp.response_id === null;
+                    this.setState({
+                        isError: saveError,
+                        errorMessage: resp.message,
+                        isSubmitting: false,
+                        isSubmitted: resp.is_submitted,
+                        submittedTimestamp: resp.submitted_timestamp,
+                        unsavedChanges : false
+                      });
+                });
+            }
         });
-        if(this.state.new_response){
-            applicationFormService.submit(this.state.formSpec.id, true, this.state.answers).then(resp=> {
-                let submitError = resp.response_id === null;
-                this.setState({
-                    isError: submitError,
-                    errorMessage: resp.message,
-                    isLoading: false,
-                    isSubmitted: resp.is_submitted,
-                    submittedTimestamp: resp.submitted_timestamp,
-                    unsaved_changes : false,
-                    responseId: resp.response_id
-                  });
-            });
-        } else {
-            applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, true, this.state.answers).then(resp=> {
-                let saveError = resp.response_id === null;
-                this.setState({
-                    isError: saveError,
-                    errorMessage: resp.message,
-                    isLoading: false,
-                    isSubmitted: resp.is_submitted,
-                    submittedTimestamp: resp.submitted_timestamp,
-                    unsaved_changes : false
-                  });
-            });
-        }
-
     }
 
-    handleSave = event => {
-        if(this.state.new_response) {
-            applicationFormService.submit(this.state.formSpec.id, false, this.state.answers).then(resp=> {
-                let submitError = resp.response_id === null;
-                this.setState({
-                    isError: submitError,
-                    errorMessage: resp.message,
-                    isSubmitted: resp.is_submitted,
-                    submittedTimestamp: resp.submitted_timestamp,
-                    new_response: false,
-                    unsaved_changes : false
-                  });
-            });
-        } else {
-            applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, false, this.state.answers).then(resp=> {
-                let saveError = resp.response_id === null;
-                this.setState({
-                    isError: saveError,
-                    errorMessage: resp.message,
-                    isSubmitted: resp.is_submitted,
-                    submittedTimestamp: resp.submitted_timestamp,
-                    unsaved_changes : false
-                  });
-            });
-        }
-
+    handleSave = answers => {
+        this.setState(prevState => {
+            return {
+                isSaving: true,
+                answers: prevState.answers.filter(a=>!answers.includes(a.question_id)).concat(answers)
+            }
+        }, ()=> {
+            if(this.state.new_response) {
+                applicationFormService.submit(this.state.formSpec.id, false, this.state.answers).then(resp=> {
+                    let submitError = resp.response_id === null;
+                    this.setState({
+                        isError: submitError,
+                        errorMessage: resp.message,
+                        isSubmitted: resp.is_submitted,
+                        submittedTimestamp: resp.submitted_timestamp,
+                        new_response: false,
+                        unsavedChanges : false,
+                        isSaving: false
+                      });
+                });
+            } else {
+                applicationFormService.updateResponse(this.state.responseId, this.state.formSpec.id, false, this.state.answers).then(resp=> {
+                    let saveError = resp.response_id === null;
+                    this.setState({
+                        isError: saveError,
+                        errorMessage: resp.message,
+                        isSubmitted: resp.is_submitted,
+                        submittedTimestamp: resp.submitted_timestamp,
+                        unsavedChanges : false,
+                        isSaving: false
+                      });
+                });
+            }
+        });
     }
 
     handleWithdrawn = () => {
-        this.loadResponse();
+        this.props.history.push('/');
     }
 
-    validate = () => {
-        console.log("Running validate");
-        // TODO: Refactor to set currentSection in the next/previous methods
-        const {currentStep, formSpec, answers} = this.state;
-        const sections = this.state.formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
-        const numSteps = sections ? sections.length : 0;
-        const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
-        if (currentSection) {
-            let errors = [];
-            currentSection.questions.forEach(question=>{
-                let answer = answers.find(answer => answer.question_id === question.id)
-                if (question.is_required && (!answer || !answer.value)) {
-                    errors.push({
-                        question_id: question.id, 
-                        errorMessage: 'An answer is required.'
-                    });
-                }
-                if (answer && !answer.value.match(this.props.question.validation_regex)) {
-                    errors.push({
-                        question_id: question.id, 
-                        errorMessage: question.validation_text
-                    });
+    handleAnswerChanged = (answers) => {
+        if (answers) {
+            this.setState(prevState => {
+                return {
+                    answers: prevState.answers.filter(a=>!answers.includes(a.question_id)).concat(answers)
                 }
             });
-            return {
-                passed: errors.length === 0,
-                errors: errors
-            };
         }
+    }
 
-        return {
-            passed: true,
-            errors: []
-        };
+    handleStepChange = () => {
+        window.scrollTo(0, 0);  
     }
 
     render() {
-        const {currentStep, formSpec, isLoading, isError, isSubmitted, errorMessage, answers, errors} = this.state;
+        const {formSpec, isLoading, isError, isSubmitted, errorMessage, answers, isSubmitting} = this.state;
         if (isLoading) {
-            return <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
+            return <img class="loading-indicator mx-auto" src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
         }
 
         if (isError) {
@@ -479,45 +480,61 @@ class ApplicationForm extends Component {
         }
         
         if (isSubmitted) {
-            return <Submitted timestamp={this.state.submittedTimestamp} onWithdrawn={this.handleWithdrawn} responseId={this.state.responseId}/>
+            return <Submitted 
+                    timestamp={this.state.submittedTimestamp} 
+                    onWithdrawn={this.handleWithdrawn} 
+                    responseId={this.state.responseId}/>
         }
 
         const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
-        const allQuestions = sections && sections.flatMap(section => section.questions);
-        
-        const numSteps = sections ? sections.length : 0;
-        
-        const style = {
-            width : (currentStep / (numSteps+1) * 100) + '%'
-        }
-        const currentSection = (sections && currentStep <= numSteps) ? sections[currentStep-1] : null;
+        const sectionModels = sections && sections.map(section=>{
+            return {
+                section: section,
+                questionModels: section.questions.map(q=>{
+                    return {
+                        question: q,
+                        answer: answers.find(a=>a.question_id === q.id),
+                        validationError: "" 
+                    }
+                })
+            }
+        });
+
+        const steps = sectionModels && sectionModels.map((model, i) => {
+            return {
+                name: "Step " + i,
+                component: <Section 
+                            key={model.section.id} 
+                            section={model.section} 
+                            questionModels={model.questionModels} 
+                            answerChanged={this.handleAnswerChanged} 
+                            save={this.handleSave}
+                            changed={()=>this.setState({unsavedChanges: true})}
+                            unsavedChanges={this.state.unsavedChanges}
+                            isSaving={this.state.isSaving}/>
+            }
+        });
+
+        const allQuestionModels = sectionModels && sectionModels.flatMap(section => section.questionModels.slice().sort((a, b) => a.question.order - b.question.order));
+
+        steps.push({
+            name: "Confirmation",
+            component: <Confirmation 
+                        questionModels={allQuestionModels} 
+                        submit={this.handleSubmit}/>
+        })
         return (
-            <form onSubmit={this.handleSubmit}>
-                <h2>Apply to attend the Deep Learning Indaba 2019</h2>
-                <span className="progress-step">{currentSection ? currentSection.name : "Confirmation"}</span>
-                <progress className="progress" style={style}></progress>
-                
-                {currentSection && 
-                    <Section key={currentSection.name} name={currentSection.name} description={currentSection.description} questions={currentSection.questions} answers={answers} onChange={this.handleFieldChange} errors={errors}/>
-                }
-                {!currentSection &&
-                    <Confirmation answers={answers} questions={allQuestions}/>
-                }
-                
-                {currentStep > 1 &&
-                    <button type="button" class="btn btn-secondary" onClick={this.prevStep}>Previous</button>
-                }
-                {currentStep <= numSteps &&
-                    <button type="button" class="btn btn-primary" onClick={this.nextStep}>Next</button>
-                }
-                {
-                    <button type="button" class={this.state.unsaved_changes ? "btn btn-warning" : "btn btn-success"} data-tip="Clicking this button will save your current answers, allowing you to pick up from where you left off when you return" onClick={this.handleSave}>Save For Later</button>                  
-                }
-                {currentStep > numSteps &&
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                }
-                <ReactToolTip/>
-            </form>
+            <div class="application-form-container">
+                <div className="step-progress">
+                    <StepZilla 
+                        steps={steps} 
+                        onStepChange={this.handleStepChange} 
+                        backButtonCls={"btn btn-prev btn-secondary"} 
+                        nextButtonCls={"btn btn-next btn-primary float-right"}/>
+                    <ReactToolTip/>
+                </div>
+                {isSubmitting && <h2 class="submitting">Saving Responses...</h2>}
+            </div>
         )
     }
 
