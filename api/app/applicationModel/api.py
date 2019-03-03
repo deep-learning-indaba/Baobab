@@ -10,16 +10,26 @@ from app.applicationModel.models import ApplicationForm, Question, Section
 from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND
 
 from app import db, bcrypt
-
+from app import LOGGER
 
 
 class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
+
+    option_fields = {
+        'value': fields.String,
+        'label': fields.String
+    }
 
     question_fields = {
         'id': fields.Integer,
         'type': fields.String,
         'description': fields.String,
-        'order': fields.Integer
+        'headline': fields.String,
+        'order': fields.Integer,
+        'options': fields.List(fields.Nested(option_fields)),
+        'placeholder': fields.String,
+        'validation_regex': fields.String,
+        'is_required': fields.Boolean
     } 
 
     section_fields = {
@@ -40,7 +50,9 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
     @marshal_with(form_fields)
     def get(self):
+        LOGGER.info('Received get request for application form')
         args = self.req_parser.parse_args()
+        LOGGER.info('Parsed Args: {}'.format(args['event_id']))
 
         try:
             form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
@@ -69,5 +81,3 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 return EVENT_NOT_FOUND
         except:
             return DB_NOT_AVAILABLE
-        
-        

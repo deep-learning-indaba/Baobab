@@ -8,7 +8,6 @@ from flask_script import Manager
 from flask_redis import FlaskRedis
 from utils.logger import Logger
 
-
 app = Flask(__name__)
 app.config.from_object('config')
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)

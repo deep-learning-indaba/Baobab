@@ -1,21 +1,14 @@
 import axios from "axios";
+import { authHeader } from '../base.service';
+
 const baseUrl = process.env.REACT_APP_API_URL;
 export const userService = {
   login,
   logout,
-  create
+  create,
+  requestPasswordReset,
+  confirmPasswordReset
 };
-
-export function authHeader() {
-  // return authorization header with basic auth credentials
-  let user = JSON.parse(localStorage.getItem("user"));
-
-  if (user) {
-    return { Authorization: user.token };
-  } else {
-    return {};
-  }
-}
 
 function login(email, password) {
   return axios
@@ -64,14 +57,14 @@ function create(user) {
       firstname: user.firstName,
       lastname: user.lastName,
       user_title: user.title,
-      nationality_country_id: 1,
-      residence_country_id: 1,
+      nationality_country_id: user.nationality,
+      residence_country_id: user.residence,
       user_ethnicity: user.ethnicity,
       user_gender: user.gender,
       affiliation: user.affiliation,
       department: user.department,
       user_disability: user.disability,
-      user_category_id: 1,
+      user_category_id: user.category,
       password: user.password
     })
     .then(response => {
@@ -90,4 +83,59 @@ function create(user) {
 function logout() {
   // remove user from local storage to log user out
   localStorage.removeItem("user");
+}
+
+function requestPasswordReset(email) {
+  return axios
+    .post(baseUrl + `/api/v1/password-reset/request`, {
+      email: email,
+    })
+    .then(response => {
+      return {
+        status: response.status,
+        message: response.statusText
+      };
+    })
+    .catch(error => {
+      if (error.response) {
+        return {
+          status: error.response.status,
+          message: error.response.statusText
+        };
+      } else {
+        // The request was made but no response was received
+        return {
+          status: null,
+          message: error.message
+        };
+      }
+    });
+}
+
+function confirmPasswordReset(password, code) {
+  return axios
+    .post(baseUrl + `/api/v1/password-reset/confirm`, {
+      password: password,
+      code: code,
+    })
+    .then(response => {
+      return {
+        status: response.status,
+        message: response.statusText
+      };
+    })
+    .catch(error => {
+      if (error.response) {
+        return {
+          status: error.response.status,
+          message: error.response.statusText
+        };
+      } else {
+        // The request was made but no response was received
+        return {
+          status: null,
+          message: error.message
+        };
+      }
+    });
 }

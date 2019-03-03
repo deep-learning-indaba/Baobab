@@ -9,6 +9,7 @@ import {
 import logo from "./images/logo-32x32-white.png";
 import Home from "./pages/home";
 import Login from "./pages/login";
+import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
 import Application from "./pages/applicationForm";
 import { PrivateRoute } from "./components";
@@ -22,6 +23,8 @@ class App extends Component {
     this.state = {
       user: {}
     };
+
+    this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
@@ -83,24 +86,22 @@ class App extends Component {
                   </NavLink>
                 </li>
               </ul>
-              <UserDropdown logout={this.refreshUser} />
+              <UserDropdown logout={this.refreshUser} user={this.state.user} />
             </div>
           </nav>
           <div class="Body">
             <div className="container">
               <Switch>
                 <Route exact path="/" component={Home} />
-                <Route exact path="/login" component={Login} />
-                <Route exact path="/createAccount" component={CreateAccount} />
+                <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
+                <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
+                <Route exact path="/resetPassword" render={(props) => <ResetPassword {...props} loggedIn={this.refreshUser} />} />
                 <PrivateRoute
                   exact
                   path="/applicationForm"
                   component={Application}
                 />
               </Switch>
-            </div>
-            <div className="container">
-              User: {JSON.stringify(this.state.user)}
             </div>
           </div>
         </div>

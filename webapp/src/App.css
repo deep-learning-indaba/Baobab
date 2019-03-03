@@ -1,9 +1,17 @@
+/*   Color scheme
+#1F2232;    # Dark Metallic
+#EC4E20;    # Red
+#E8ECEE;    # Light grey
+#40798C;    # Teal
+#70A9A1;    # Green
+*/
+
 .App {
   text-align: center;
 }
 
 .App-header {
-  background-color: #282c34;
+  background-color: #1F2232;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,16 +22,12 @@
 }
 
 .App-link {
-  color: #61dafb;
+  color: #40798C;
 }
 
 .Body{
-  background: black;
+  background: #E8ECEE;
   min-height: 100vh;
-  background-image: url("images/background.jpg");
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: 50% 50%;
 }
 
 .HomeNavBar{
