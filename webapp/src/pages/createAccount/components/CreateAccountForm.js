@@ -56,7 +56,8 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       genderOptions: [],
       disabilityOptions: [],
-      ethnicityOptions: []
+      ethnicityOptions: [],
+      error: ""
     };
   }
 
@@ -148,7 +149,10 @@ class CreateAccountForm extends Component {
         };
         this.props.history.push(from);
       },
-      error => this.setState({ error, loading: false })
+      error => this.setState({ 
+        error: error.response && error.response.data ? error.response.data.message : error.message, 
+        loading: false 
+      })
     );
   };
 
@@ -197,7 +201,7 @@ class CreateAccountForm extends Component {
     const categoryValue = this.getContentValue(this.state.categoryOptions, category);
     const disabilityValue = this.getContentValue(this.state.disabilityOptions, disability);
 
-    const { loading, errors, showErrors } = this.state;
+    const { loading, errors, showErrors, error } = this.state;
 
     return (
       <div className="CreateAccount">
@@ -369,6 +373,7 @@ class CreateAccountForm extends Component {
             <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
           )}
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
+          {error && <div class="alert alert-danger">{error}</div>}
         </form>
       </div>
     );
