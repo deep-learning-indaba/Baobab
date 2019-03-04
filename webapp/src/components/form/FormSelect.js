@@ -30,7 +30,6 @@ class FormSelect extends React.Component {
             id={id}
             options={options}
             placeholder={placeholder}
-            value={value}
             onChange={e => onChange(id, e)}
             defaultValue = {value || null}
             className={this.shouldDisplayError() ? "select-control is-invalid" : "select-control"}
