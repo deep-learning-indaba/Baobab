@@ -12,6 +12,7 @@ import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
 import Application from "./pages/applicationForm";
+import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
@@ -97,7 +98,8 @@ class App extends Component {
                 <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
                 <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
                 <Route exact path="/resetPassword" render={(props) => <ResetPassword {...props} loggedIn={this.refreshUser} />} />
-                <PrivateRoute exact path="/profile" component={Profile} />} />
+                <Route exact path="/verifyEmail" component={VerifyEmail}/>
+                <PrivateRoute exact path="/profile" component={Profile} />} /> 
                 <PrivateRoute exact path="/applicationForm" component={Application} />
               </Switch>
             </div>
