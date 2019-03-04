@@ -198,7 +198,7 @@ class ResponseApiTest(ApiTestCase):
                     content_type='application/json',
                     headers={'Authorization': self.other_user_data['token']})
             
-            self.assertEqual(response.status_code, 204)
+            self.assertEqual(response.status_code, 200)
 
             # Retrieve the response and check that the fields are as expected
             response = self.app.get(
