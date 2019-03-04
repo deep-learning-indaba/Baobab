@@ -206,7 +206,7 @@ class PasswordResetRequestAPI(restful.Resource):
                   body_text="""Dear {} {} {}, 
                   
                   You recently requested a password reset on Baobab, please use the following link to reset you password: 
-                  {}/ResetPassword?resetToken={}
+                  {}/resetPassword?resetToken={}
                   
                   If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
 
