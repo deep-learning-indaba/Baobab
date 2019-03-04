@@ -102,6 +102,11 @@ class App extends Component {
               </Switch>
             </div>
           </div>
+          <footer class="text-muted">
+            <div class="container">
+              <p>Baobab, © 2019 | <a href="www.deeplearningindaba.com">Deep Learning Indaba</a></p>
+            </div>
+          </footer>
         </div>
       </Router>
     );
