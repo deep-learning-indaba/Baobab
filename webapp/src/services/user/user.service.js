@@ -10,7 +10,8 @@ export const userService = {
   get,
   deleteAccount,
   requestPasswordReset,
-  confirmPasswordReset
+  confirmPasswordReset,
+  verifyEmail
 };
 
 function login(email, password) {
@@ -108,7 +109,7 @@ function deleteAccount() {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -153,7 +154,7 @@ function requestPasswordReset(email) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -181,7 +182,7 @@ function confirmPasswordReset(password, code) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -190,5 +191,20 @@ function confirmPasswordReset(password, code) {
           message: error.message
         };
       }
+    });
+}
+
+function verifyEmail(token) {
+  return axios
+    .get(baseUrl + "/api/v1/verify-email?token=" + token)
+    .then(response => {
+      return {
+        error: ""
+      };
+    })
+    .catch(error => {
+      return {
+        error: (error.response && error.response.data) ? error.response.data.message : error.message
+      };
     });
 }
