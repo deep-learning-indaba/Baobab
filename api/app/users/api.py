@@ -97,8 +97,12 @@ class UserAPI(SignupMixin, restful.Resource):
             return EMAIL_IN_USE
 
         send_mail(recipient=user.email,
-                  subject='Password verification for Deep Learning Indaba portal',
-                  body_text='Dear user, Please use the following link to successfully verify your email address : {}/VerifyEmail?token={}'.format(BOABAB_HOST, user.verify_token))
+                  subject='Baobab Email Verification',
+                  body_text="""Dear {} {} {}, 
+                  
+                  Thank you for creating a new Baobab account. Please following link to verify your email address: 
+                  
+                  {}/VerifyEmail?token={}""".format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
 
         return user_info(user), 201
 

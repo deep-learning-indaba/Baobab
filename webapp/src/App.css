@@ -33,3 +33,7 @@
 .HomeNavBar{
   margin-bottom: 0px;
 }
+
+footer > .container > p {
+  margin-top: 1em;
+}
