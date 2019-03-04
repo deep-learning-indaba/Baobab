@@ -102,7 +102,11 @@ class UserAPI(SignupMixin, restful.Resource):
                   
                   Thank you for creating a new Baobab account. Please following link to verify your email address: 
                   
-                  {}/VerifyEmail?token={}""".format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
+                  {}/VerifyEmail?token={}
+                  
+                  Kind Regards,
+                  The Baobab Team
+                  """.format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
 
         return user_info(user), 201
 
