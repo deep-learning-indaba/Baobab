@@ -24,14 +24,12 @@ def send_mail(recipient, subject, body_text, body_html='', charset='UTF-8', mail
     '''
     if (not DEBUG):
         if mail_type == 'AMZ':
-            configuration_set = 'ConfigSet'
             try:
                 msg = MIMEMultipart()
                 msg['Subject'] = subject
                 msg['From'] = email.utils.formataddr(
                     (SMTP_SENDER_NAME, SMTP_SENDER_EMAIL))
                 msg['To'] = recipient
-                msg.add_header('X-SES-CONFIGURATION-SET', configuration_set)
 
                 body_part1 = MIMEText(body_text, 'plain', _charset=charset)
                 body_part2 = MIMEText(body_html, 'html', _charset=charset)
