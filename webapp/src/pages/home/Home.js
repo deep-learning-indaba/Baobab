@@ -78,7 +78,7 @@ class Home extends Component {
         <div >
           <img src={logo} className="Logo" alt="logo" />
         </div>
-        <h2 className="Blurb">Welcome to Boabab</h2>
+        <h2 className="Blurb">Welcome to Baobab</h2>
         {table}
       </div>
     );
