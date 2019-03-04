@@ -57,7 +57,8 @@ class CreateAccountForm extends Component {
       genderOptions: [],
       disabilityOptions: [],
       ethnicityOptions: [],
-      error: ""
+      error: "",
+      created: false
     };
   }
 
@@ -141,13 +142,10 @@ class CreateAccountForm extends Component {
 
     userService.create(this.state.user).then(
       user => {
-        if (this.props.loggedIn) {
-          this.props.loggedIn(user);
-        }
-        const { from } = this.props.location.state || {
-          from: { pathname: "/" }
-        };
-        this.props.history.push(from);
+        this.setState({
+          loading: false,
+          created: true
+        })
       },
       error => this.setState({ 
         error: error.response && error.response.data ? error.response.data.message : error.message, 
@@ -193,6 +191,19 @@ class CreateAccountForm extends Component {
       confirmPassword
     } = this.state.user;
 
+    const { loading, errors, showErrors, error, created } = this.state;
+
+    if (created) {
+      return (
+        <div className="CreateAccount">
+          <p className="h5 text-center mb-4">Create Account</p>
+          <p className="account-created">
+          Your Baobab account has been created, but before you can use it, we need to verify you email address. 
+          Please check your email (and spam folder) for a message containing a link to verify your email address.</p>
+        </div>  
+      )
+    }
+
     const titleValue = this.getContentValue(this.state.titleOptions, title);
     const nationalityValue = this.getContentValue(this.state.countryOptions, nationality);
     const residenceValue = this.getContentValue(this.state.countryOptions, residence);
@@ -200,8 +211,6 @@ class CreateAccountForm extends Component {
     const genderValue = this.getContentValue(this.state.genderOptions, gender);
     const categoryValue = this.getContentValue(this.state.categoryOptions, category);
     const disabilityValue = this.getContentValue(this.state.disabilityOptions, disability);
-
-    const { loading, errors, showErrors, error } = this.state;
 
     return (
       <div className="CreateAccount">

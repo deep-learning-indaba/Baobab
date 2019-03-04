@@ -54,12 +54,6 @@ function create(user) {
     .then(response => {
       let user = null;
       if (response) user = response.data;
-      // login successful if there's a user in the response
-      if (user) {
-        // store user details in local storage
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
       return user;
     });
 }
@@ -84,12 +78,6 @@ function update(user) {
     .then(response => {
       let user = null;
       if (response) user = response.data;
-      // login successful if there's a user in the response
-      if (user) {
-        // store user details in local storage
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
       return user;
     });
 }
@@ -195,6 +183,7 @@ function confirmPasswordReset(password, code) {
 }
 
 function verifyEmail(token) {
+  console.log("Verifying email with token: " + token);
   return axios
     .get(baseUrl + "/api/v1/verify-email?token=" + token)
     .then(response => {
