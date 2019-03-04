@@ -29,6 +29,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'options': fields.List(fields.Nested(option_fields)),
         'placeholder': fields.String,
         'validation_regex': fields.String,
+        'validation_text': fields.String,
         'is_required': fields.Boolean
     } 
 

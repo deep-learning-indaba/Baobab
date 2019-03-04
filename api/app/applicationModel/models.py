@@ -42,11 +42,12 @@ class Question(db.Model):
     headline = db.Column(db.String(), nullable=False)
     placeholder = db.Column(db.String(), nullable=True)
     validation_regex = db.Column(db.String(), nullable=True)
+    validation_text = db.Column(db.String(), nullable=True)
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
 
-    def __init__(self, application_form_id, section_id, headline, placeholder, order, questionType, validation_regex, is_required = True, description = None, options = None):
+    def __init__(self, application_form_id, section_id, headline, placeholder, order, questionType, validation_regex, validation_text=None, is_required = True, description = None, options = None):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.headline = headline
@@ -57,3 +58,4 @@ class Question(db.Model):
         self.options = options
         self.is_required = is_required
         self.validation_regex = validation_regex
+        self.validation_text = validation_text

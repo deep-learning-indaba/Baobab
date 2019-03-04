@@ -22,7 +22,6 @@ class FormSelect extends React.Component {
       <div>
         <FormGroup
           id={this.props.id + "-group"}
-          showError={this.shouldDisplayError()}
           errorText={this.props.errorText}
         >
           <label data-tip={this.props.description} htmlFor={this.props.id}>{this.props.label}</label>
@@ -33,7 +32,8 @@ class FormSelect extends React.Component {
             placeholder={placeholder}
             value={value}
             onChange={e => onChange(id, e)}
-            defaultValue={value || null}
+            defaultValue = {value || null}
+            className={this.shouldDisplayError() ? "select-control is-invalid" : "select-control"}
           />
         </FormGroup>
       </div>

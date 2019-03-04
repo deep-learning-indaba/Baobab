@@ -15,18 +15,16 @@ class FormTextBox extends React.Component {
     render() {
       return (
         <div>
-          <FormGroup
+          <FormGroup 
             id={this.props.Id + "-group"}
-            showError={this.shouldDisplayError()}
-            errorText={this.props.errorText}
-          >
+            errorText={this.props.errorText}>
             <label data-tip={this.props.description} htmlFor={this.props.Id}>
               {this.props.label}
             </label>
             <ReactToolTip/>
             <input
               id={this.props.Id}
-              className={"form-control"}
+              className={this.shouldDisplayError() ? "form-control is-invalid" : "form-control"}
               type={this.props.type || "text"}
               placeholder={this.props.placeholder}
               value={this.props.value}
@@ -37,6 +35,7 @@ class FormTextBox extends React.Component {
               }}
               tabIndex={this.props.tabIndex}
               autoFocus={this.props.autoFocus}
+              required={this.props.required || null}
             />
           </FormGroup>
         </div>

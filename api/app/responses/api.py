@@ -48,8 +48,10 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             if not form:
                 return errors.FORM_NOT_FOUND
             
+            # Get the latest response (note there may be older withdrawn responses)
             response = db.session.query(Response).filter(
-                Response.application_form_id == form.id, Response.user_id == g.current_user['id']).first()
+                Response.application_form_id == form.id, Response.user_id == g.current_user['id']
+                ).order_by(Response.started_timestamp.desc()).first()
             if not response:
                 return errors.RESPONSE_NOT_FOUND
             
@@ -97,6 +99,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
+    @marshal_with(response_fields)
     def put(self):
         # Update an existing response for the logged-in user.
         req_parser = reqparse.RequestParser()
@@ -119,6 +122,8 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             old_response.is_submitted = args['is_submitted']
             if args['is_submitted']:
                 old_response.submitted_timestamp = datetime.datetime.now()
+                old_response.is_withdrawn = False
+                old_response.withdrawn_timestamp = None
 
             for answer_args in args['answers']:
                 old_answer = db.session.query(Answer).filter(Answer.response_id == old_response.id, Answer.question_id == answer_args['question_id']).first()
@@ -138,7 +143,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             except:                
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
             finally:
-                return {}, 204
+                return old_response, 200
 
         except Exception as e:
             return errors.DB_NOT_AVAILABLE
