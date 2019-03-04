@@ -29,27 +29,7 @@ function login(email, password) {
         localStorage.setItem("user", JSON.stringify(user));
       }
 
-      return {
-        user: user,
-        status: response.status,
-        message: response.statusText
-      };
-    })
-    .catch(error => {
-      if (error.response) {
-        return {
-          user: null,
-          status: error.response.status,
-          message: error.response.statusText
-        };
-      } else {
-        // The request was made but no response was received
-        return {
-          user: null,
-          status: null,
-          message: error.message
-        };
-      }
+      return user;
     });
 }
 

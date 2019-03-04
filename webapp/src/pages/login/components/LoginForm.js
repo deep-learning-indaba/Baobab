@@ -11,7 +11,6 @@ class LoginForm extends Component {
     this.state = {
       email: "",
       password: "",
-      submitted: false,
       loading: false,
       error: ""
     };
@@ -28,14 +27,14 @@ class LoginForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true });
     this.setState({ loading: true });
 
-    userService.login(this.state.email, this.state.password).then(response => {
-      console.log("Response from user service: ", response);
-      if (response.user) {
+    userService.login(this.state.email, this.state.password).then(
+      user => {
+        console.log("Response from user service: ", user);
+        
         if (this.props.loggedIn) {
-          this.props.loggedIn(response.user);
+          this.props.loggedIn(user);
         }
 
         // Login was successful, redirect to refering location.
@@ -43,22 +42,12 @@ class LoginForm extends Component {
           from: { pathname: "/" }
         };
         this.props.history.push(from);
-      } else {
-        // Login was unsuccessful
-        if (response.status == 401) {
-          //Invalid username or password
-          this.setState({
-            error: "Incorrect username or password.",
-            loading: false
-          });
-        } else {
-          this.setState({
-            error: response.messsage,
-            loading: false
-          });
-        }
-      }
-    });
+        
+      }, 
+      e => this.setState({
+        error: (e.response && e.response.data) ? e.response.data.message : e.message,
+        loading: false
+      }));
   };
 
   render() {
@@ -67,11 +56,11 @@ class LoginForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, password, submitted, loading, error } = this.state;
+    const { email, password, loading, error } = this.state;
 
     return (
       <div className="Login">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
+        
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Sign in</p>
           <div class="form-group">
@@ -82,7 +71,7 @@ class LoginForm extends Component {
               id="email"
               placeholder="Enter email"
               onChange={this.handleChange}
-              value={this.state.email}
+              value={email}
               autoFocus="true"
             />
           </div>
@@ -94,7 +83,7 @@ class LoginForm extends Component {
               id="password"
               placeholder="Password"
               onChange={this.handleChange}
-              value={this.state.password}
+              value={password}
             />
           </div>
           <div class="row">
@@ -118,10 +107,12 @@ class LoginForm extends Component {
           {loading && (
             <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
           )}
-          <div />
-          <Link to="/resetPassword">
-            Forgot password
-          </Link>
+          {error && <div className={"alert alert-danger"}>{error}</div>}
+          <div class="forgot-password">
+            <Link to="/resetPassword">
+              Forgot password
+            </Link>
+          </div>
         </form>
 
       </div>
