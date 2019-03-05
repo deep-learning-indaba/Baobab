@@ -32,7 +32,7 @@ class UserDropdown extends Component {
                             <i class="fas fa-user"></i> {this.state.user.firstname + ' ' + this.state.user.lastname}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="#">Profile</a>
+                            <a class="dropdown-item" href="/profile">Profile</a>
                             <a class="dropdown-item" href="#" onClick={this.handleLogout}>Logout</a>
                         </div>
                     </li>
