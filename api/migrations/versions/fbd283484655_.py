@@ -79,8 +79,7 @@ def update_question(session, question_id, placeholder, validation_regex):
 
 def update_question_data():
     Base.metadata.bind = op.get_bind()
-    bind = op.get_bind()
-    session = orm.Session(bind=bind)
+    session = orm.Session(bind=Base.metadata.bind)
     update_question(session, 1, 'Enter 50 to 150 words', r'^\W*(\w+(\W+|$)){50,150}$')
     update_question(session, 2, 'Enter 50 to 150 words', r'^\W*(\w+(\W+|$)){50,150}$')
     update_question(session, 3, 'Enter up to 80 words, remember to include *why*', r'^\W*(\w+(\W+|$)){0,80}$')
