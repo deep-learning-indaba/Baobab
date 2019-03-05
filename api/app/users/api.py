@@ -18,6 +18,29 @@ from app.utils.emailer import send_mail
 from config import BOABAB_HOST
 
 
+VERIFY_EMAIL_BODY = """
+Dear {} {} {}, 
+                  
+Thank you for creating a new Baobab account. Please following link to verify your email address: 
+                  
+{}/verifyEmail?token={}
+                  
+Kind Regards,
+The Baobab Team
+"""
+
+RESET_EMAIL_BODY = """
+Dear {} {} {}, 
+                  
+You recently requested a password reset on Baobab, please use the following link to reset you password: 
+{}/resetPassword?resetToken={}
+
+If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
+
+Kind Regards,
+The Baobab Team
+"""
+
 user_fields = {
     'id': fields.Integer,
     'email': fields.String,
@@ -47,6 +70,9 @@ def user_info(user):
         'title': user.user_title
     }
 
+
+def get_baobab_host():
+    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 class UserAPI(SignupMixin, restful.Resource):
 
@@ -98,15 +124,10 @@ class UserAPI(SignupMixin, restful.Resource):
 
         send_mail(recipient=user.email,
                   subject='Baobab Email Verification',
-                  body_text="""Dear {} {} {}, 
-                  
-                  Thank you for creating a new Baobab account. Please following link to verify your email address: 
-                  
-                  {}/verifyEmail?token={}
-                  
-                  Kind Regards,
-                  The Baobab Team
-                  """.format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
+                  body_text=VERIFY_EMAIL_BODY.format(
+                      user_title, firstname, lastname, 
+                      get_baobab_host(), 
+                      user.verify_token))
 
         return user_info(user), 201
 
@@ -203,16 +224,9 @@ class PasswordResetRequestAPI(restful.Resource):
 
         send_mail(recipient=args['email'],
                   subject='Password Reset for Deep Learning Indaba portal',
-                  body_text="""Dear {} {} {}, 
-                  
-                  You recently requested a password reset on Baobab, please use the following link to reset you password: 
-                  {}/resetPassword?resetToken={}
-                  
-                  If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
-
-                  Kind Regards,
-                  The Baobab Team
-                  """.format(user.user_title, user.firstname, user.lastname, BOABAB_HOST, password_reset.code))
+                  body_text=RESET_EMAIL_BODY.format(
+                        user.user_title, user.firstname, user.lastname, 
+                        get_baobab_host(), password_reset.code))
 
         return {}, 201
 
