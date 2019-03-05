@@ -102,7 +102,11 @@ class UserAPI(SignupMixin, restful.Resource):
                   
                   Thank you for creating a new Baobab account. Please following link to verify your email address: 
                   
-                  {}/VerifyEmail?token={}""".format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
+                  {}/verifyEmail?token={}
+                  
+                  Kind Regards,
+                  The Baobab Team
+                  """.format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
 
         return user_info(user), 201
 
@@ -199,7 +203,16 @@ class PasswordResetRequestAPI(restful.Resource):
 
         send_mail(recipient=args['email'],
                   subject='Password Reset for Deep Learning Indaba portal',
-                  body_text='Dear user, Please use the following link to successfully reset your password : {}/ResetPassword?resetToken={}'.format(BOABAB_HOST, password_reset.code))
+                  body_text="""Dear {} {} {}, 
+                  
+                  You recently requested a password reset on Baobab, please use the following link to reset you password: 
+                  {}/resetPassword?resetToken={}
+                  
+                  If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
+
+                  Kind Regards,
+                  The Baobab Team
+                  """.format(user.user_title, user.firstname, user.lastname, BOABAB_HOST, password_reset.code))
 
         return {}, 201
 

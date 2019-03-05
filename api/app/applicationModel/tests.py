@@ -25,8 +25,12 @@ class ApplicationFormApiTest(ApiTestCase):
             test_form.id, 'Test Section', 'Test Description', 1)
         db.session.add(test_section)
         db.session.commit()
-        test_question = Question(test_form.id, test_section.id, 'Test Question Headline',
-                                 'Test question placeholder', 1, 'multi-choice', None, True, 'Test Question Description', None)
+        test_question = Question(
+            application_form_id=test_form.id, section_id=test_section.id, 
+            headline='Test Question Headline', placeholder='Test question placeholder', 
+            order=1, questionType='multi-choice', 
+            validation_regex=None, is_required=True,
+            description='Test Question Description', options=None)
         db.session.add(test_question)
         db.session.flush()
 

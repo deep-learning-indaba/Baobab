@@ -10,7 +10,8 @@ export const userService = {
   get,
   deleteAccount,
   requestPasswordReset,
-  confirmPasswordReset
+  confirmPasswordReset,
+  verifyEmail
 };
 
 function login(email, password) {
@@ -53,12 +54,6 @@ function create(user) {
     .then(response => {
       let user = null;
       if (response) user = response.data;
-      // login successful if there's a user in the response
-      if (user) {
-        // store user details in local storage
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
       return user;
     });
 }
@@ -83,12 +78,6 @@ function update(user) {
     .then(response => {
       let user = null;
       if (response) user = response.data;
-      // login successful if there's a user in the response
-      if (user) {
-        // store user details in local storage
-        localStorage.setItem("user", JSON.stringify(user));
-      }
-
       return user;
     });
 }
@@ -108,7 +97,7 @@ function deleteAccount() {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -153,7 +142,7 @@ function requestPasswordReset(email) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -181,7 +170,7 @@ function confirmPasswordReset(password, code) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.statusText
+          message: error.response.data ? error.response.data.message : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -190,5 +179,21 @@ function confirmPasswordReset(password, code) {
           message: error.message
         };
       }
+    });
+}
+
+function verifyEmail(token) {
+  console.log("Verifying email with token: " + token);
+  return axios
+    .get(baseUrl + "/api/v1/verify-email?token=" + token)
+    .then(response => {
+      return {
+        error: ""
+      };
+    })
+    .catch(error => {
+      return {
+        error: (error.response && error.response.data) ? error.response.data.message : error.message
+      };
     });
 }
