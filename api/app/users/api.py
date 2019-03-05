@@ -48,6 +48,9 @@ def user_info(user):
     }
 
 
+def get_baobab_host():
+    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
+
 class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
@@ -106,7 +109,10 @@ class UserAPI(SignupMixin, restful.Resource):
                   
                   Kind Regards,
                   The Baobab Team
-                  """.format(user_title, firstname, lastname, BOABAB_HOST, user.verify_token))
+                  """.format(
+                      user_title, firstname, lastname, 
+                      get_baobab_host(), 
+                      user.verify_token))
 
         return user_info(user), 201
 
@@ -212,7 +218,9 @@ class PasswordResetRequestAPI(restful.Resource):
 
                   Kind Regards,
                   The Baobab Team
-                  """.format(user.user_title, user.firstname, user.lastname, BOABAB_HOST, password_reset.code))
+                  """.format(
+                        user.user_title, user.firstname, user.lastname, 
+                        get_baobab_host(), password_reset.code))
 
         return {}, 201
 
