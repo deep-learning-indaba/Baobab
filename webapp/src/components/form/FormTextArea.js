@@ -17,15 +17,12 @@ class FormTextArea extends React.Component {
       if (this.props.value) {
         const length= this.props.value.split(" ").filter(value => (value!== "")).length;
         if(length<10){
-          console.log("  "+length+"a");
           return ":  "+length;
         }
         else if(length<100 && length>=10){
-          console.log(" "+length+"b");
           return ": "+length;
         }
         else{
-          console.log(length+"c");
           return ":"+length;
         }
       }
