@@ -515,7 +515,9 @@ class ApplicationForm extends Component {
             }
         });
 
-        const allQuestionModels = sectionModels && sectionModels.flatMap(section => section.questionModels.slice().sort((a, b) => a.question.order - b.question.order));
+        const allQuestionModels = sectionModels && sectionModels.map(
+            section => section.questionModels.slice().sort((a, b) => a.question.order - b.question.order)
+            ).reduce((a, b) => a.concat(b), []);
 
         steps.push({
             name: "Confirmation",
