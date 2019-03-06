@@ -3,6 +3,7 @@ import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FromTextBox";
 import FormSelect from "../../../components/form/FormSelect";
+import { ConfirmModal } from 'react-bootstrap4-modal';
 import validationFields from "../../../utils/validation/validationFields";
 import {
     getTitleOptions,
@@ -51,7 +52,8 @@ class ProfileForm extends Component {
             titleOptions: [],
             genderOptions: [],
             disabilityOptions: [],
-            ethnicityOptions: []
+            ethnicityOptions: [],
+            confirmResetVisible: false
         };
     }
 
@@ -139,7 +141,8 @@ class ProfileForm extends Component {
             } else {
                 this.setState({
                     error: response.messsage,
-                    loading: false
+                    loading: false,
+                    confirmResetVisible: false
                 });
             }
         });
@@ -373,12 +376,12 @@ class ProfileForm extends Component {
                                 type="button"
                                 class="btn btn-primary Button"
                                 disabled={loading}
-                                onClick={this.deleteAccount}
+                                onClick={()=>this.setState({confirmResetVisible: true})}
                             >
                                 Reset password
                             </button>
                         </div>
-                        <div class={commonColClassName}>
+                        {/* <div class={commonColClassName}>
                             <button
                                 type="button"
                                 class="btn btn-primary Button"
@@ -387,7 +390,7 @@ class ProfileForm extends Component {
                             >
                                 Delete profile
                             </button>
-                        </div>
+                        </div> */}
                         <div class={commonColClassName}>
                             <button
                                 type="submit"
@@ -404,6 +407,14 @@ class ProfileForm extends Component {
                     )}
                     {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
                 </form>
+                <ConfirmModal 
+                    visible={this.state.confirmResetVisible} 
+                    onOK={this.resetPassword} 
+                    onCancel={()=>this.setState({confirmResetVisible: false})} 
+                    okText={"Reset Password"} 
+                    cancelText={"Cancel"}>
+                    <p>Are you sure? Click "Reset Password" to receive an email with a link to reset your password.</p>
+                </ConfirmModal>
             </div>
         );
     }
