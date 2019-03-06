@@ -34,22 +34,6 @@ class UserCategory(Base):
         self.description = description
         self.group = group
 
-class Section(Base):
-    __tablename__ = 'section'
-    __table_args__ = {'extend_existing': True}
-    id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
-    name = db.Column(db.String(255), unique=True, nullable=False)
-    description = db.Column(db.String(255), nullable=False)
-    order = db.Column(db.Integer(), unique=True, nullable=False)
-
-    def __init__(self, application_form_id, name, description, order):
-        self.application_form_id = application_form_id
-        self.name = name
-        self.description = description
-        self.order = order
-
-
 
 class Question(Base):
     __tablename__ = 'question'
@@ -116,9 +100,6 @@ def upgrade():
 
     session.commit()
     session.flush()
-
-
-    pass
     # ### end Alembic commands ###
 
 
