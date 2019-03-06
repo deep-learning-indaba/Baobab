@@ -12,6 +12,15 @@ class FormTextArea extends React.Component {
         this.nameInput.focus()
       }
     }
+
+    getWordCount = () => {
+      if (this.props.value) {
+        return this.props.value.split(" ").filter(value => (value!== "")).length;
+      }
+      else {
+        return 0;
+      }
+    }
     render() {
       return (
         <div>
@@ -37,6 +46,7 @@ class FormTextArea extends React.Component {
               autoFocus={this.props.autoFocus}
             ></textarea>
           </FormGroup>
+          <p class="question__word-count">Word Count:{this.getWordCount()}</p>
         </div>
       )
     }
