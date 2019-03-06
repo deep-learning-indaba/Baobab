@@ -27,8 +27,8 @@ class FormSelect extends React.Component {
           id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
-          <label htmlFor={this.props.id}>{this.props.label}</label>
           <div className="rowC">
+            <label htmlFor={this.props.id}>{this.props.label}</label>
             <FormToolTip description={this.props.description} />
           </div>
           <ReactSelect
