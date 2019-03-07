@@ -170,5 +170,6 @@ ol.progtrckr li.progtrckr-done:hover:before {
 }
 
 .question__word-count {
-  text-align: right;
+  font-size: 80%;
+  margin-top: .25em;
 }
