@@ -9,7 +9,7 @@ class FormToolTip extends React.Component {
       tooltip = (
         <div>
           <i class="fas fa-question-circle" data-tip={this.props.description} />
-          <ReactToolTip />
+          <ReactToolTip type="info" place="right" effect="solid" />
         </div>
       );
     } else {
