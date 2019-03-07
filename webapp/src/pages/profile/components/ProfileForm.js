@@ -381,16 +381,6 @@ class ProfileForm extends Component {
                                 Reset password
                             </button>
                         </div>
-                        {/* <div class={commonColClassName}>
-                            <button
-                                type="button"
-                                class="btn btn-primary Button"
-                                disabled={loading}
-                                onClick={this.deleteAccount}
-                            >
-                                Delete profile
-                            </button>
-                        </div> */}
                         <div class={commonColClassName}>
                             <button
                                 type="submit"
