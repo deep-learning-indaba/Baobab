@@ -1,9 +1,10 @@
 import React, { Component } from "react";
-import FormGroup from "./FormGroup";
 import ReactToolTip from "react-tooltip";
+import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
+import "./Style.css";
 
-class FormTextArea extends React.Component {
+class FormTextBox extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -13,14 +14,6 @@ class FormTextArea extends React.Component {
       this.nameInput.focus();
     }
   }
-
-  getWordCount = () => {
-    if (this.props.value) {
-      return this.props.value.split(" ").filter(value => value !== "").length;
-    } else {
-      return 0;
-    }
-  };
   render() {
     return (
       <div>
@@ -36,28 +29,28 @@ class FormTextArea extends React.Component {
               <div />
             )}
           </div>
-          <textarea
+          <input
             id={this.props.Id}
             className={
               this.shouldDisplayError()
                 ? "form-control is-invalid"
                 : "form-control"
             }
+            type={this.props.type || "text"}
             placeholder={this.props.placeholder}
-            rows={this.props.rows}
             value={this.props.value}
             onChange={this.props.onChange}
+            min={this.props.min || null}
             ref={input => {
               this.nameInput = input;
             }}
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
+            required={this.props.required || null}
           />
         </FormGroup>
-        <p class="question__word-count">Word Count:{this.getWordCount()}</p>
       </div>
     );
   }
 }
-
-export default FormTextArea;
+export default FormTextBox;

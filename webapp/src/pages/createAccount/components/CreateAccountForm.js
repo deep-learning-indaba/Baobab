@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
-import FormTextBox from "../../../components/form/FromTextBox";
+import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import {
@@ -92,8 +92,7 @@ class CreateAccountForm extends Component {
     return (
       this.state.user.email.length > 0 &&
       this.state.user.password.length > 0 &&
-      this.state.user.confirmPassword.length > 0 &&
-      this.state.user.password === this.state.user.confirmPassword
+      this.state.user.confirmPassword.length > 0
     );
   }
 
@@ -105,7 +104,7 @@ class CreateAccountForm extends Component {
           [name]: dropdown.value
         }
       },
-      function () {
+      function() {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -121,7 +120,7 @@ class CreateAccountForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function () {
+        function() {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -145,12 +144,16 @@ class CreateAccountForm extends Component {
         this.setState({
           loading: false,
           created: true
-        })
+        });
       },
-      error => this.setState({ 
-        error: error.response && error.response.data ? error.response.data.message : error.message, 
-        loading: false 
-      })
+      error =>
+        this.setState({
+          error:
+            error.response && error.response.data
+              ? error.response.data.message
+              : error.message,
+          loading: false
+        })
     );
   };
 
@@ -198,19 +201,37 @@ class CreateAccountForm extends Component {
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
-          Your Baobab account has been created, but before you can use it, we need to verify you email address. 
-          Please check your email (and spam folder) for a message containing a link to verify your email address.</p>
-        </div>  
-      )
+            Your Baobab account has been created, but before you can use it, we
+            need to verify you email address. Please check your email (and spam
+            folder) for a message containing a link to verify your email
+            address.
+          </p>
+        </div>
+      );
     }
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
-    const nationalityValue = this.getContentValue(this.state.countryOptions, nationality);
-    const residenceValue = this.getContentValue(this.state.countryOptions, residence);
-    const ethnicityValue = this.getContentValue(this.state.ethnicityOptions, ethnicity);
+    const nationalityValue = this.getContentValue(
+      this.state.countryOptions,
+      nationality
+    );
+    const residenceValue = this.getContentValue(
+      this.state.countryOptions,
+      residence
+    );
+    const ethnicityValue = this.getContentValue(
+      this.state.ethnicityOptions,
+      ethnicity
+    );
     const genderValue = this.getContentValue(this.state.genderOptions, gender);
-    const categoryValue = this.getContentValue(this.state.categoryOptions, category);
-    const disabilityValue = this.getContentValue(this.state.disabilityOptions, disability);
+    const categoryValue = this.getContentValue(
+      this.state.categoryOptions,
+      category
+    );
+    const disabilityValue = this.getContentValue(
+      this.state.disabilityOptions,
+      disability
+    );
 
     return (
       <div className="CreateAccount">
