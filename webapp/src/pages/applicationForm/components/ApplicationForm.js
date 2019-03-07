@@ -595,9 +595,55 @@ class ApplicationForm extends Component {
       );
     }
 
-    if (isError) {
-      return <div className={"alert alert-danger"}>{errorMessage}</div>;
-    }
+    render() {
+        const {formSpec, isLoading, isError, isSubmitted, errorMessage, answers, isSubmitting} = this.state;
+        if (isLoading) {
+            return <img class="loading-indicator mx-auto" src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
+        }
+
+        if (isError) {
+            return <div className={"alert alert-danger"}>{errorMessage}</div>
+        }
+        
+        if (isSubmitted) {
+            return <Submitted 
+                    timestamp={this.state.submittedTimestamp} 
+                    onWithdrawn={this.handleWithdrawn} 
+                    responseId={this.state.responseId}/>
+        }
+
+        const sections = formSpec.sections && formSpec.sections.slice().sort((a, b) => a.order - b.order);
+        const sectionModels = sections && sections.map(section=>{
+            return {
+                section: section,
+                questionModels: section.questions.map(q=>{
+                    return {
+                        question: q,
+                        answer: answers.find(a=>a.question_id === q.id),
+                        validationError: "" 
+                    }
+                })
+            }
+        });
+
+        const steps = sectionModels && sectionModels.map((model, i) => {
+            return {
+                name: "Step " + i,
+                component: <Section 
+                            key={model.section.id} 
+                            section={model.section} 
+                            questionModels={model.questionModels} 
+                            answerChanged={this.handleAnswerChanged} 
+                            save={this.handleSave}
+                            changed={()=>this.setState({unsavedChanges: true})}
+                            unsavedChanges={this.state.unsavedChanges}
+                            isSaving={this.state.isSaving}/>
+            }
+        });
+
+        const allQuestionModels = sectionModels && sectionModels.map(
+            section => section.questionModels.slice().sort((a, b) => a.question.order - b.question.order)
+            ).reduce((a, b) => a.concat(b), []);
 
     if (isSubmitted) {
       return (
