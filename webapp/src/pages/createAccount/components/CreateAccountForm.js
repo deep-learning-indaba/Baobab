@@ -92,8 +92,7 @@ class CreateAccountForm extends Component {
     return (
       this.state.user.email.length > 0 &&
       this.state.user.password.length > 0 &&
-      this.state.user.confirmPassword.length > 0 &&
-      this.state.user.password === this.state.user.confirmPassword
+      this.state.user.confirmPassword.length > 0
     );
   }
 
