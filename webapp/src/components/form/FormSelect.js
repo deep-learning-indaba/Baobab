@@ -29,7 +29,11 @@ class FormSelect extends React.Component {
         >
           <div className="rowC">
             <label htmlFor={this.props.id}>{this.props.label}</label>
-            <FormToolTip description={this.props.description} />
+            {this.props.description ? (
+              <FormToolTip description={this.props.description} />
+            ) : (
+              <div />
+            )}
           </div>
           <ReactSelect
             id={id}
