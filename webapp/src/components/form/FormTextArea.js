@@ -5,15 +5,6 @@ import FormToolTip from "./FormToolTip";
 import "./Style.css";
 
 class FormTextArea extends React.Component {
-<<<<<<< HEAD
-  shouldDisplayError = () => {
-    return this.props.showError && this.props.errorText !== "";
-  };
-
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.showFocus) {
-      this.nameInput.focus();
-=======
     shouldDisplayError = () => {
       return this.props.showError && this.props.errorText !== ""
     }
@@ -60,7 +51,6 @@ class FormTextArea extends React.Component {
           <p class="question__word-count">Word Count:{this.getWordCount()}</p>
         </div>
       )
->>>>>>> develop
     }
   }
   render() {
