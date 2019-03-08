@@ -92,7 +92,7 @@ class App extends Component {
             </div>
           </nav>
           <div class="Body">
-            <div className="container">
+            <div className="container-fluid">
               <Switch>
                 <Route exact path="/" component={Home} />
                 <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />

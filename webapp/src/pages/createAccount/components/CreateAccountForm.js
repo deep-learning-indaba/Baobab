@@ -63,9 +63,19 @@ class CreateAccountForm extends Component {
   }
 
   getContentValue(options, value) {
-    return options.filter(option => {
-      return option.value === value;
-    });
+    if(options && options.filter){
+      return options.filter(option => {
+        return option.value === value;
+      });
+    }
+    else return null
+  }
+
+  checkOptionsList(optionsList){
+    if(Array.isArray(optionsList)){
+      return optionsList
+    }
+    else return []
   }
 
   componentWillMount() {
@@ -78,12 +88,12 @@ class CreateAccountForm extends Component {
       getDisabilityOptions
     ]).then(result => {
       this.setState({
-        titleOptions: result[0],
-        genderOptions: result[1],
-        countryOptions: result[2],
-        categoryOptions: result[3],
-        ethnicityOptions: result[4],
-        disabilityOptions: result[5]
+        titleOptions: this.checkOptionsList(result[0]) ,
+        genderOptions: this.checkOptionsList(result[1]) ,
+        countryOptions: this.checkOptionsList(result[2]) ,
+        categoryOptions: this.checkOptionsList(result[3]) ,
+        ethnicityOptions: this.checkOptionsList(result[4]) ,
+        disabilityOptions: this.checkOptionsList(result[5]) 
       });
     });
   }
