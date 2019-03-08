@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def send_mail(recipient, subject, body_text, body_html='', charset='UTF-8', mail_type='AMZ'):
+def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ'):
     '''[summary]
 
     Arguments:
@@ -49,4 +49,5 @@ def send_mail(recipient, subject, body_text, body_html='', charset='UTF-8', mail
     else:
         LOGGER.debug('Recipient : {recipient}'.format(recipient=recipient))
         LOGGER.debug('Subject : {subject}'.format(subject=subject))
-        LOGGER.debug('Body : {body}'.format(body=body_text))
+        LOGGER.debug('Body Text : {body}'.format(body=body_text))
+        LOGGER.debug('Body HTML : {body}'.format(body=body_html))

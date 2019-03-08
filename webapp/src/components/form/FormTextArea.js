@@ -16,7 +16,7 @@ class FormTextArea extends React.Component {
 
   getWordCount = () => {
     if (this.props.value) {
-      return this.props.value.split(" ").filter(value => value !== "").length;
+      return this.props.value.trim().split(/\s+/).length;
     } else {
       return 0;
     }
@@ -50,11 +50,13 @@ class FormTextArea extends React.Component {
             ref={input => {
               this.nameInput = input;
             }}
+            key={"text_"+this.props.key}
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
           />
+          <span class="question__word-count float-right">Word Count:{this.getWordCount()}</span>
         </FormGroup>
-        <p class="question__word-count">Word Count:{this.getWordCount()}</p>
+        
       </div>
     );
   }

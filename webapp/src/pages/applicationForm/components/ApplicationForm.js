@@ -149,18 +149,6 @@ class Section extends React.Component {
     };
   }
 
-  updateQuestionModelState = (question, apply) => {
-    const newQuestionModels = this.state.questionModels.map(q => {
-      if (q.question.id !== question.id) {
-        return q;
-      }
-      return apply(q);
-    });
-    this.setState({
-      questionModels: newQuestionModels
-    });
-  };
-
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
@@ -229,7 +217,7 @@ class Section extends React.Component {
         validationStale: false
       },
       () => {
-        if (this.props.answerChanged && isValid) {
+        if (this.props.answerChanged) {
           this.props.answerChanged(
             this.state.questionModels.map(q => q.answer).filter(a => a)
           );
@@ -264,7 +252,7 @@ class Section extends React.Component {
         {questionModels &&
           questionModels.map(model => (
             <FieldEditor
-              key={model.question.id}
+              key={"question_" + model.question.id}
               question={model.question}
               answer={model.answer}
               validationError={model.validationError}
@@ -319,8 +307,9 @@ function Confirmation(props) {
           );
         })}
       <button
-        class="btn btn-primary submit-application mx-auto"
+        className="btn btn-primary submit-application mx-auto"
         onClick={props.submit}
+        disabled={props.isSubmitting}
       >
         Submit
       </button>
@@ -565,7 +554,7 @@ class ApplicationForm extends Component {
       this.setState(prevState => {
         return {
           answers: prevState.answers
-            .filter(a => !answers.includes(a.question_id))
+            .filter(a => !answers.map(a=>a.question_id).includes(a.question_id))
             .concat(answers)
         };
       });
@@ -634,7 +623,7 @@ class ApplicationForm extends Component {
           name: "Step " + i,
           component: (
             <Section
-              key={model.section.id}
+              key={"section_" + model.section.id}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
@@ -663,6 +652,7 @@ class ApplicationForm extends Component {
         <Confirmation
           questionModels={allQuestionModels}
           submit={this.handleSubmit}
+          isSubmitting={isSubmitting}
         />
       )
     });
