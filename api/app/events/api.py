@@ -42,6 +42,9 @@ def get_user_event_response_status(user_id, event_id):
 
                 if response.is_submitted:
                     return "Applied"
+            else:
+                return "Apply now"
+
         else:
             return "Apply now"
 
