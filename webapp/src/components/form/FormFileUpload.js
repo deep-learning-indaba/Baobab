@@ -3,8 +3,6 @@ import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 
-// uploading, uploadPercentComplete, uploadFile, uploaded
-
 class FormFileUpload extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
