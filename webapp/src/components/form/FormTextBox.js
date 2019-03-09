@@ -1,11 +1,10 @@
 import React, { Component } from "react";
-import FormGroup from "./FormGroup";
-import { default as ReactSelect } from "react-select";
 import ReactToolTip from "react-tooltip";
+import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 
-class FormSelect extends React.Component {
+class FormTextBox extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -16,15 +15,10 @@ class FormSelect extends React.Component {
     }
   }
   render() {
-    const { id, options, placeholder, onChange, defaultValue } = this.props;
-    let value = this.props.value;
-    if (defaultValue) {
-      value = options.filter(option => option.value === defaultValue);
-    }
     return (
       <div>
         <FormGroup
-          id={this.props.id + "-group"}
+          id={this.props.Id + "-group"}
           errorText={this.props.errorText}
         >
           <div className="rowC">
@@ -35,22 +29,28 @@ class FormSelect extends React.Component {
               <div />
             )}
           </div>
-          <ReactSelect
-            id={id}
-            options={options}
-            placeholder={placeholder}
-            value={value}
-            onChange={e => onChange(id, e)}
-            defaultValue={value || null}
+          <input
+            id={this.props.Id}
             className={
               this.shouldDisplayError()
-                ? "select-control is-invalid"
-                : "select-control"
+                ? "form-control is-invalid"
+                : "form-control"
             }
+            type={this.props.type || "text"}
+            placeholder={this.props.placeholder}
+            value={this.props.value}
+            onChange={this.props.onChange}
+            min={this.props.min || null}
+            ref={input => {
+              this.nameInput = input;
+            }}
+            tabIndex={this.props.tabIndex}
+            autoFocus={this.props.autoFocus}
+            required={this.props.required || null}
           />
         </FormGroup>
       </div>
     );
   }
 }
-export default FormSelect;
+export default FormTextBox;

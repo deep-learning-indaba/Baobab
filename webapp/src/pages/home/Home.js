@@ -74,9 +74,9 @@ class Home extends Component {
     }
 
     return (
-      <div>
-        <div >
-          <img src={logo} className="Logo" alt="logo" />
+      <div >
+        <div>
+          <img src={logo} className="img-fluid" alt="logo" />
         </div>
         <h2 className="Blurb">Welcome to Baobab</h2>
         {table}
