@@ -1,12 +1,15 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from "../../../services/applicationForm";
+
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
+import FormFileUpload from "../../../components/form/FormFileUpload";
+import { fileService } from "../../../services/file/file.service";
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
@@ -20,6 +23,12 @@ class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
+    this.state = {
+      uploading: false,
+      uploadPercentComplete: 0,
+      uploadError: "",
+      uploaded: false
+    }
   }
 
   handleChange = event => {
@@ -34,6 +43,28 @@ class FieldEditor extends React.Component {
       this.props.onChange(this.props.question, dropdown.value);
     }
   };
+
+  handleUploadFile = (file) => {
+    this.setState({
+      uploading: true
+    }, ()=> {
+      fileService.uploadFile(file, progressEvent=> {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        this.setState({
+          uploadPercentComplete: percentCompleted
+        });
+      }).then(response=>{
+        if (response.fileId && this.props.onChange) {
+          this.props.onChange(this.props.question, response.fileId);
+        }
+        this.setState({
+          uploaded: response.fileId !== "",
+          uploadError: response.error,
+          uploading: false
+        });
+      })
+    })
+  }
 
   formControl = (key, question, answer, validationError) => {
     switch (question.type) {
@@ -100,16 +131,17 @@ class FieldEditor extends React.Component {
         );
       case FILE:
         return (
-          <FormTextBox
+          <FormFileUpload
             Id={this.id}
             name={this.id}
-            type="file"
             label={question.description}
-            placeholder={answer || question.placeholder}
-            onChange={this.handleChange}
             key={"i_" + key}
-            showError={validationError}
-            errorText={validationError}
+            showError={validationError || this.state.uploadError}
+            errorText={validationError || this.state.uploadError}
+            uploading={this.state.uploading}
+            uploadPercentComplete={this.state.uploadPercentComplete}
+            uploadFile={this.handleUploadFile}
+            uploaded={this.state.uploaded}
           />
         );
       default:
