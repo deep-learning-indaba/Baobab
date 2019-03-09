@@ -13,7 +13,17 @@ from app import LOGGER
 
 from app import db, bcrypt
 
-# TODO: Refactor ApplicationFormMixin
+
+WITHDRAWAL_BODY = """Dear {title} {firstname} {lastname},
+
+This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
+
+If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
+
+Kind Regards,
+The Deep Learning Indaba 2019 Organisers
+"""
+
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
     answer_fields = {
@@ -177,15 +187,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
             subject = 'Withdrawal of Application for the Deep Learning Indaba'
             
-            body_text = """Dear {title} {firstname} {lastname},
-
-            This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
-
-            If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
-
-            Kind Regards,
-            The Deep Learning Indaba 2019 Organisers
-            """.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
+            WITHDRAWAL_BODY.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
             emailer.send_mail(user.email, subject, body_text)
         except:                
             LOGGER.warn('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
@@ -219,9 +221,11 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 for question in questions:
                     if answer.question_id == question.id:
                         summary[question.headline] = answer.value
-            subject = strings.build_response_email_subject(user.user_title, user.firstname, user.lastname)
-            body_text = strings.build_response_email_body(event.name, event.description, summary)
-            emailer.send_mail(user.email, subject, body_text)
+
+            subject = 'Your application to {}'.format(event.description)
+            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
+            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, summary)
+            emailer.send_mail(user.email, subject, body_text=body_text)
 
         except:
             LOGGER.warn('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
