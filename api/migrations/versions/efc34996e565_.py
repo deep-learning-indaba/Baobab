@@ -33,7 +33,7 @@ class Section(Base):
         self.name = name
         self.description = description
         self.order = order
-        
+
 # Freeze the models
 class UserCategory(Base):
     __tablename__ = 'user_category'
@@ -110,7 +110,8 @@ def upgrade():
 
     # Update "Academic" to "Academic Faculty" in user category
     category = session.query(UserCategory).filter(UserCategory.name=='Academic').first()
-    category.name = 'Academic Faculty'
+    if category is not None:
+        category.name = 'Academic Faculty'
 
     session.commit()
     session.flush()
