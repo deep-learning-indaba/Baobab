@@ -30,12 +30,12 @@ manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
 # set optional bootswatch theme
-app.config['FLASK_ADMIN_SWATCH'] = 'cosmo'
+app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 from applicationModel.models import Question, Section
 from responses.models import Response, Answer
 from users.models import UserCategory, AppUser
 from events.models import Event, EventRole
-admin = Admin(app, name='Deep Learning Indaba Admin Portal')
+admin = Admin(app, name='Deep Learning Indaba Admin Portal',template_mode='bootstrap3')
 
 
 admin.add_view(ModelView(Question, db.session))
