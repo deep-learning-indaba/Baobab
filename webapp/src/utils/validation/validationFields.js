@@ -8,7 +8,7 @@ const validationFields = {
   residence: { name: "residence", display: "Country of Residence" },
   ethnicity: { name: "ethnicity", display: "Ethnicity", description: "We use South African demographic groupings for reporting." },
   affiliation: { name: "affiliation", display: "Affiliation", description: "Please enter the name of your university if academic or student, or the name of your company if industry professional" },
-  department: { name: "department", display: "Department", description: "Please enter the name of your faculty if academic or student, or the department you work for if industry professional" },
+  department: { name: "department", display: "Department", description: "Please enter the name of your faculty if academic or student, the department you work for if industry professional or N/A if not applicable." },
   disability: {
     name: "disability",
     display: "Disability",

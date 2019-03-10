@@ -37,3 +37,9 @@
 footer > .container > p {
   margin-top: 1em;
 }
+
+@media (max-width: 650px) {
+  .Body {
+    padding-top: 3em;
+  }
+}

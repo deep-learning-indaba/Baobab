@@ -71,6 +71,7 @@ class App extends Component {
               <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                   <NavLink
+                    exact
                     to="/"
                     activeClassName="nav-link active"
                     className="nav-link"
@@ -78,7 +79,7 @@ class App extends Component {
                     Home
                   </NavLink>
                 </li>
-                <li class="nav-item">
+                {this.state.user && <li class="nav-item">
                   <NavLink
                     to="/applicationForm"
                     activeClassName="nav-link active"
@@ -86,7 +87,7 @@ class App extends Component {
                   >
                     Apply
                   </NavLink>
-                </li>
+                </li>}
               </ul>
               <UserDropdown logout={this.refreshUser} user={this.state.user} />
             </div>
@@ -94,7 +95,7 @@ class App extends Component {
           <div class="Body">
             <div className="container-fluid">
               <Switch>
-                <Route exact path="/" component={Home} />
+                <Route exact path="/" render={(props) => <Home {...props} user={this.state.user} />} />
                 <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
                 <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
                 <Route exact path="/resetPassword" render={(props) => <ResetPassword {...props} loggedIn={this.refreshUser} />} />
