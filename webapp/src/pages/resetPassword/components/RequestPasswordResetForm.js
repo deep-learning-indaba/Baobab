@@ -56,8 +56,11 @@ class RequestPasswordResetForm extends Component {
 
     if (resetRequested) {
       return (
-        <div className="Login">
-          Your password reset request has been processed. Please check your email for a link that will allow you to change your password. 
+        <div className={"reset-status text-center"}>
+          <p className="h5 text-center mb-4">Reset Password</p>
+          <div class="col">
+            Your password reset request has been processed. Please check your email for a link that will allow you to change your password. 
+          </div>
         </div>
       )
     }
