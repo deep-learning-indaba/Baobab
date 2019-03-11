@@ -8,7 +8,8 @@ class UserDropdown extends Component {
       super(props);
   
       this.state = {
-          user: props.user
+          user: props.user,
+          collapsed: true
       };
     }
 
@@ -17,10 +18,18 @@ class UserDropdown extends Component {
     }
 
     handleLogout = event => {
+        this.toggleMenu()
         userService.logout();
         if (this.props.logout) {
             this.props.logout();
         }
+    }
+
+    toggleMenu = (e) => {
+        if (e) {
+            e.preventDefault();
+        }
+        this.setState({collapsed: !this.state.collapsed});
     }
   
     render() {
@@ -32,7 +41,7 @@ class UserDropdown extends Component {
                             <i class="fas fa-user"></i> {this.state.user.firstname + ' ' + this.state.user.lastname}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="/profile">Profile</a>
+                            <a class="dropdown-item" href="/profile" onClick={this.toggleMenu}>Profile</a>
                             <a class="dropdown-item" href="#" onClick={this.handleLogout}>Logout</a>
                         </div>
                     </li>
@@ -41,9 +50,9 @@ class UserDropdown extends Component {
         }
         else {
             return (
-                <ul class="navbar-nav">
+                <ul class={"navbar-nav"+ (this.state.collapsed ? ' collapsed' : '')}>
                     <li class="nav-item">
-                        <NavLink to="/login" activeClassName="nav-link active" className="nav-link">Login</NavLink>
+                        <NavLink to="/login" activeClassName="nav-link active" className="nav-link" onClick={this.toggleMenu}>Login</NavLink>
                     </li>
                 </ul>
             )

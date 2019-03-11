@@ -23,7 +23,8 @@ class App extends Component {
     super(props);
 
     this.state = {
-      user: {}
+      user: {},
+      collapsed: true
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -39,6 +40,13 @@ class App extends Component {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
     });
+  }
+
+  toggleMenu = (e) => {
+    if (e) {
+        e.preventDefault();
+    }
+    this.setState({collapsed: !this.state.collapsed});
   }
 
   render() {
@@ -67,22 +75,24 @@ class App extends Component {
             >
               <span class="navbar-toggler-icon" />
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class={"collapse navbar-collapse" + (this.state.collapsed ? ' collapsed' : '')} id="navbarNav">
               <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
+                <li class={"nav-item"}>
                   <NavLink
                     to="/"
                     activeClassName="nav-link active"
                     className="nav-link"
+                    onClick={this.toggleMenu}
                   >
                     Home
                   </NavLink>
                 </li>
-                <li class="nav-item">
+                <li class={"nav-item"} >
                   <NavLink
                     to="/applicationForm"
                     activeClassName="nav-link active"
                     className="nav-link"
+                    onClick={this.toggleMenu}
                   >
                     Apply
                   </NavLink>
