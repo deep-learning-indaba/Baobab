@@ -63,22 +63,21 @@ class CreateAccountForm extends Component {
   }
 
   getContentValue(options, value) {
-    if(options && options.filter){
+    if (options && options.filter) {
       return options.filter(option => {
         return option.value === value;
       });
-    }
-    else return null
+    } else return null;
   }
 
-  checkOptionsList(optionsList){
-    if(Array.isArray(optionsList)){
-      return optionsList
-    }
-    else return []
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
   }
 
   componentWillMount() {
+    throw new Error("I crashed!");
     Promise.all([
       getTitleOptions,
       getGenderOptions,
@@ -88,12 +87,12 @@ class CreateAccountForm extends Component {
       getDisabilityOptions
     ]).then(result => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0]) ,
-        genderOptions: this.checkOptionsList(result[1]) ,
-        countryOptions: this.checkOptionsList(result[2]) ,
-        categoryOptions: this.checkOptionsList(result[3]) ,
-        ethnicityOptions: this.checkOptionsList(result[4]) ,
-        disabilityOptions: this.checkOptionsList(result[5]) 
+        titleOptions: this.checkOptionsList(result[0]),
+        genderOptions: this.checkOptionsList(result[1]),
+        countryOptions: this.checkOptionsList(result[2]),
+        categoryOptions: this.checkOptionsList(result[3]),
+        ethnicityOptions: this.checkOptionsList(result[4]),
+        disabilityOptions: this.checkOptionsList(result[5])
       });
     });
   }

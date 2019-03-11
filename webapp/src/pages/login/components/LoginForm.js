@@ -32,7 +32,7 @@ class LoginForm extends Component {
     userService.login(this.state.email, this.state.password).then(
       user => {
         console.log("Response from user service: ", user);
-        
+
         if (this.props.loggedIn) {
           this.props.loggedIn(user);
         }
@@ -42,12 +42,14 @@ class LoginForm extends Component {
           from: { pathname: "/" }
         };
         this.props.history.push(from);
-        
-      }, 
-      e => this.setState({
-        error: (e.response && e.response.data) ? e.response.data.message : e.message,
-        loading: false
-      }));
+      },
+      e =>
+        this.setState({
+          error:
+            e.response && e.response.data ? e.response.data.message : e.message,
+          loading: false
+        })
+    );
   };
 
   render() {
@@ -60,7 +62,6 @@ class LoginForm extends Component {
 
     return (
       <div className="Login">
-        
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Sign in</p>
           <div class="form-group">
@@ -109,12 +110,9 @@ class LoginForm extends Component {
           )}
           {error && <div className={"alert alert-danger"}>{error}</div>}
           <div class="forgot-password">
-            <Link to="/resetPassword">
-              Forgot password
-            </Link>
+            <Link to="/resetPassword">Forgot password</Link>
           </div>
         </form>
-
       </div>
     );
   }
