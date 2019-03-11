@@ -18,18 +18,11 @@ class UserDropdown extends Component {
     }
 
     handleLogout = event => {
-        this.toggleMenu()
+        this.props.onClick()
         userService.logout();
         if (this.props.logout) {
             this.props.logout();
         }
-    }
-
-    toggleMenu = (e) => {
-        if (e) {
-            e.preventDefault();
-        }
-        this.setState({collapsed: !this.state.collapsed});
     }
   
     render() {
@@ -50,9 +43,9 @@ class UserDropdown extends Component {
         }
         else {
             return (
-                <ul class={"navbar-nav"+ (this.state.collapsed ? ' collapsed' : '')}>
+                <ul class="navbar-nav">
                     <li class="nav-item">
-                        <NavLink to="/login" activeClassName="nav-link active" className="nav-link" onClick={this.toggleMenu}>Login</NavLink>
+                        <NavLink to="/login" activeClassName="nav-link active" className="nav-link" onClick={this.props.onClick}>Login</NavLink>
                     </li>
                 </ul>
             )

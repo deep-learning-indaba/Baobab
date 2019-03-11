@@ -98,7 +98,7 @@ class App extends Component {
                   </NavLink>
                 </li>
               </ul>
-              <UserDropdown logout={this.refreshUser} user={this.state.user} />
+              <UserDropdown logout={this.refreshUser} user={this.state.user} onClick={this.toggleMenu}/>
             </div>
           </nav>
           <div class="Body">
