@@ -1,7 +1,7 @@
 import { ErrorBoundary } from "react-error-boundary";
 import logo from "../images/indaba-logo-dark.png";
 import React from "react";
-// Consider logging componentStack and error to string- stacktrace for components
+// Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => (
   <div className="Body">
     <div class="container h-100">
