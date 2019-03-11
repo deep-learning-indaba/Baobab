@@ -9,6 +9,7 @@
     "enzyme": "^3.8.0",
     "enzyme-adapter-react-16": "^1.7.1",
     "react": "^16.7.0",
+    "react-app-polyfill": "^0.2.2",
     "react-bootstrap4-modal": "^1.7.0",
     "react-dom": "^16.7.0",
     "react-error-boundary": "^1.2.3",

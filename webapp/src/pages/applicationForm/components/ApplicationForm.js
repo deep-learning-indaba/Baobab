@@ -1,12 +1,15 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from "../../../services/applicationForm";
+
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
+import FormFileUpload from "../../../components/form/FormFileUpload";
+import { fileService } from "../../../services/file/file.service";
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
@@ -20,6 +23,12 @@ class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
+    this.state = {
+      uploading: false,
+      uploadPercentComplete: 0,
+      uploadError: "",
+      uploaded: false
+    }
   }
 
   handleChange = event => {
@@ -34,6 +43,28 @@ class FieldEditor extends React.Component {
       this.props.onChange(this.props.question, dropdown.value);
     }
   };
+
+  handleUploadFile = (file) => {
+    this.setState({
+      uploading: true
+    }, ()=> {
+      fileService.uploadFile(file, progressEvent=> {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        this.setState({
+          uploadPercentComplete: percentCompleted
+        });
+      }).then(response=>{
+        if (response.fileId && this.props.onChange) {
+          this.props.onChange(this.props.question, response.fileId);
+        }
+        this.setState({
+          uploaded: response.fileId !== "",
+          uploadError: response.error,
+          uploading: false
+        });
+      })
+    })
+  }
 
   formControl = (key, question, answer, validationError) => {
     switch (question.type) {
@@ -100,16 +131,17 @@ class FieldEditor extends React.Component {
         );
       case FILE:
         return (
-          <FormTextBox
+          <FormFileUpload
             Id={this.id}
             name={this.id}
-            type="file"
             label={question.description}
-            placeholder={answer || question.placeholder}
-            onChange={this.handleChange}
             key={"i_" + key}
-            showError={validationError}
-            errorText={validationError}
+            showError={validationError || this.state.uploadError}
+            errorText={validationError || this.state.uploadError}
+            uploading={this.state.uploading}
+            uploadPercentComplete={this.state.uploadPercentComplete}
+            uploadFile={this.handleUploadFile}
+            uploaded={this.state.uploaded}
           />
         );
       default:
@@ -374,6 +406,10 @@ class Submitted extends React.Component {
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
+        <p class="awards">
+        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html">here</a> by 12 April 2019.
+Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
+        </p>
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             Withdraw Application
@@ -575,12 +611,19 @@ class ApplicationForm extends Component {
       answers,
       isSubmitting
     } = this.state;
+
+    const loadingStyle = {
+      "width": "3rem",
+      "height": "3rem"
+    }
+
     if (isLoading) {
       return (
-        <img
-          class="loading-indicator mx-auto"
-          src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA=="
-        />
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border" style={loadingStyle} role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
       );
     }
 

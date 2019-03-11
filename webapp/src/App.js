@@ -82,6 +82,7 @@ class App extends Component {
               <ul class="navbar-nav mr-auto">
                 <li class={"nav-item"}>
                   <NavLink
+                    exact
                     to="/"
                     activeClassName="nav-link active"
                     className="nav-link"
@@ -90,16 +91,18 @@ class App extends Component {
                     Home
                   </NavLink>
                 </li>
-                <li class={"nav-item"}>
-                  <NavLink
-                    to="/applicationForm"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Apply
-                  </NavLink>
-                </li>
+                {this.state.user && (
+                  <li class="nav-item">
+                    <NavLink
+                      to="/applicationForm"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Apply
+                    </NavLink>
+                  </li>
+                )}
               </ul>
               <UserDropdown
                 logout={this.refreshUser}
@@ -111,7 +114,11 @@ class App extends Component {
           <div class="Body">
             <div className="container-fluid">
               <Switch>
-                <Route exact path="/" component={Home} />
+                <Route
+                  exact
+                  path="/"
+                  render={props => <Home {...props} user={this.state.user} />}
+                />
                 <Route
                   exact
                   path="/login"

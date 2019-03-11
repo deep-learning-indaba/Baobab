@@ -14,6 +14,9 @@
 
 .application-form-container {
   text-align: center;
+  padding-left: 3em;
+  padding-right: 3em;
+  padding-bottom: 3em;
 }
 
 .footer-buttons {
@@ -88,21 +91,10 @@ ol.progtrckr li span {
   padding: 0 1.5rem;
 }
 
-@media (max-width: 650px) {
-  .progtrckr li span {
-    display: none;
-  }
-}
 .progtrckr em {
   display: none;
   font-weight: 700;
   padding-left: 1rem;
-}
-
-@media (max-width: 650px) {
-  .progtrckr em {
-    display: inline;
-  }
 }
 
 ol.progtrckr li.progtrckr-todo {
@@ -172,4 +164,19 @@ ol.progtrckr li.progtrckr-done:hover:before {
 .question__word-count {
   font-size: 80%;
   margin-top: .25em;
+}
+
+@media (max-width: 650px) {
+  .progtrckr li span {
+    display: none;
+  }
+
+  .application-form-container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .progtrckr em {
+    display: inline;
+  }
 }

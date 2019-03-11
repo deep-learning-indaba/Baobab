@@ -11,17 +11,22 @@ from app.utils.auth import auth_required
 from google.cloud import storage
 from google.oauth2 import service_account
 
+from app import LOGGER
+
 class FileUploadAPI(FileUploadMixin, restful.Resource):
     
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
 
-        credentials = service_account.Credentials.from_service_account_info(
-            GCP_CREDENTIALS_DICT
-        )
+        if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+            storage_client = storage.Client(project=GCP_PROJECT_NAME)
+        else:
+            credentials = service_account.Credentials.from_service_account_info(
+                GCP_CREDENTIALS_DICT
+            )
+            storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
 
-        storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
         bucket = storage_client.get_bucket(GCP_BUCKET_NAME)
         unique_name = str(uuid.uuid4().hex)
         blob = bucket.blob(unique_name)
