@@ -77,7 +77,6 @@ class CreateAccountForm extends Component {
   }
 
   componentWillMount() {
-    throw new Error("I crashed!");
     Promise.all([
       getTitleOptions,
       getGenderOptions,
@@ -406,7 +405,13 @@ class CreateAccountForm extends Component {
             class="btn btn-primary"
             disabled={!this.validateForm() || loading}
           >
-            {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
+            {loading && (
+              <span
+                class="spinner-grow spinner-grow-sm"
+                role="status"
+                aria-hidden="true"
+              />
+            )}
             Sign Up
           </button>
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
