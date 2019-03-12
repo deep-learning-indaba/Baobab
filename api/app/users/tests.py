@@ -256,3 +256,14 @@ class UserApiTest(ApiTestCase):
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         assert user.email == 'something@email.com'
         assert user.is_deleted == True
+
+
+    def test_resend_verification_email(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=self.user_data)
+        data = json.loads(response.data)
+        headers = {'Authorization': data['token']}
+
+        response = self.app.get('/api/v1/resend-verification-email', headers=headers)
+        print(response)
+        assert response.status_code == 201
