@@ -273,10 +273,14 @@ class VerifyEmailAPI(restful.Resource):
         return {}, 201
 
 class ResendVerificationEmailAPI(restful.Resource):
-    @auth_required
     def get(self):
+        email = request.args.get('email')
+
         user = db.session.query(AppUser).filter(
-            AppUser.id == g.current_user['id']).first()
+            AppUser.email == email).first()
+
+        if not user:
+            return USER_NOT_FOUND
 
         send_mail(recipient=user.email,
             subject='Baobab Email Verification',
