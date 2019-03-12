@@ -8306,6 +8306,8 @@ react-app-polyfill@^0.2.0:
     raf "3.4.0"
     whatwg-fetch "3.0.0"
 
+<<<<<<< HEAD
+=======
 react-app-polyfill@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/react-app-polyfill/-/react-app-polyfill-0.2.2.tgz#a903b61a8bfd9c5e5f16fc63bebe44d6922a44fb"
@@ -8317,6 +8319,7 @@ react-app-polyfill@^0.2.2:
     raf "3.4.1"
     whatwg-fetch "3.0.0"
 
+>>>>>>> develop
 react-bootstrap4-modal@^1.7.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/react-bootstrap4-modal/-/react-bootstrap4-modal-1.7.0.tgz#e4ffeb799e4011544297397b1dc4cae846b1e5c4"
@@ -8364,6 +8367,11 @@ react-dom@^16.7.0:
     object-assign "^4.1.1"
     prop-types "^15.6.2"
     scheduler "^0.12.0"
+
+react-error-boundary@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/react-error-boundary/-/react-error-boundary-1.2.3.tgz#2b9eb8fbd4b1d90656fe769d9bad9f69a2b7b529"
+  integrity sha512-3naGugvlzwcYjiqPr8o89oYHe2R5QxK6ysCQj/GvyenBvruVHu2hRsuWvjQcNbNiiOkEPYKfcMm7tV/Tfle5rA==
 
 react-error-overlay@^5.1.2:
   version "5.1.2"
