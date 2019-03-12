@@ -12,7 +12,9 @@ class LoginForm extends Component {
       email: "",
       password: "",
       loading: false,
-      error: ""
+      notVerified: false,
+      error: "",
+      resendStatus: ""
     };
   }
   validateForm() {
@@ -47,10 +49,25 @@ class LoginForm extends Component {
         this.setState({
           error:
             e.response && e.response.data ? e.response.data.message : e.message,
-          loading: false
+          loading: false,
+          notVerified: e.response && e.response.status === 422
         })
     );
   };
+
+  resendVerification = event => {
+    event.preventDefault();
+    this.setState({ loading: true });
+    userService.resendVerification(this.state.email).then(resp => {
+      this.setState({
+        loading: false,
+        error: resp.error,
+        resendStatus: resp.error ? "": "We have re-sent you verification email, please check your inbox and spam and click on the link to verify your email address.",
+        email: "",
+        password: ""
+      });
+    });
+  }
 
   render() {
     const xs = 6;
@@ -58,7 +75,7 @@ class LoginForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, password, loading, error } = this.state;
+    const { email, password, loading, error, notVerified, resendStatus } = this.state;
 
     return (
       <div className="Login">
@@ -110,7 +127,13 @@ class LoginForm extends Component {
               </Link>
             </div>
           </div>
-          {error && <div className={"alert alert-danger"}>{error}</div>}
+          {error && 
+            <div className={"alert alert-danger"}>
+              {error}
+              {notVerified && <a href="#" onClick={this.resendVerification}> Resend Verification Email</a>}
+            </div>
+          }
+          {resendStatus && <div className={"alert alert-success"}>{resendStatus}</div>}
           <div class="forgot-password text-center">
             <Link to="/resetPassword">Forgot password</Link>
           </div>
