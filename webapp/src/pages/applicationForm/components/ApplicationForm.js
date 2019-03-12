@@ -406,7 +406,7 @@ class Submitted extends React.Component {
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
-        <p class="awards">
+        <p class="awards alert alert-info">
         Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank">here</a> by 12 April 2019.
 Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
         </p>
