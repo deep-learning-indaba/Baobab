@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import {
-  BrowserRouter as Router,
+  Router,
   Route,
   Link,
   NavLink,
@@ -16,7 +16,19 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import ReactGA from 'react-ga';
+import createHistory from "history/createBrowserHistory";
 import "./App.css";
+
+const history = createHistory()
+ReactGA.initialize('UA-136093201-1',{
+  debug: true,
+  testMode: process.env.NODE_ENV === 'test'
+})
+
+history.listen((location, action) => {
+    ReactGA.pageview(location.pathname + location.search);
+});
 
 class App extends Component {
   constructor(props) {
@@ -48,7 +60,7 @@ class App extends Component {
 
   render() {
     return (
-      <Router>
+      <Router history={history}>
         <div>
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="/">
@@ -154,7 +166,7 @@ class App extends Component {
             <div class="container">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
               </p>
             </div>
           </footer>
