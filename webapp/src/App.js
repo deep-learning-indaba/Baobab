@@ -166,7 +166,7 @@ class App extends Component {
             <div class="container">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="https://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
               </p>
             </div>
           </footer>
