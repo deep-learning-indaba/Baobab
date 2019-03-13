@@ -31,7 +31,6 @@ class Home extends Component {
   }
 
   render() {
-
     let table = (<div></div>)
 
     if (this.state.rows && this.state.rows.length > 0) {
@@ -74,12 +73,14 @@ class Home extends Component {
     }
 
     return (
-      <div>
-        <div >
-          <img src={logo} className="Logo" alt="logo" />
+      <div >
+        <div>
+          <img src={logo} className="img-fluid" alt="logo" />
         </div>
         <h2 className="Blurb">Welcome to Baobab</h2>
-        {table}
+        {!this.props.user && 
+          <p class="text-center"><NavLink to="/createAccount">Sign up</NavLink> for an account in order to apply for an Indaba event, or <NavLink to="/login">login</NavLink> if you already have one.</p>}
+        {this.props.user && table}
       </div>
     );
   }

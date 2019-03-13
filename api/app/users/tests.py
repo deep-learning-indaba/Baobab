@@ -133,7 +133,7 @@ class UserApiTest(ApiTestCase):
         assert response.status_code == 201
 
         response = self.app.post('/api/v1/authenticate', data=self.auth_data)
-        assert response.status_code == 400
+        assert response.status_code == 422
 
     def test_authentication_wrong_password(self):
         self.seed_static_data()
@@ -256,3 +256,17 @@ class UserApiTest(ApiTestCase):
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         assert user.email == 'something@email.com'
         assert user.is_deleted == True
+
+
+    def test_resend_verification_email(self):
+        self.seed_static_data()
+        self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.get('/api/v1/resend-verification-email?email={}'.format(self.user_data['email']))
+        assert response.status_code == 201
+
+
+    def test_resend_verification_email_no_user(self):
+        self.seed_static_data()
+        
+        response = self.app.get('/api/v1/resend-verification-email?email={}'.format('nonexistant@dummy.com'))
+        assert response.status_code == 409

@@ -11,7 +11,8 @@ export const userService = {
   deleteAccount,
   requestPasswordReset,
   confirmPasswordReset,
-  verifyEmail
+  verifyEmail,
+  resendVerification
 };
 
 function login(email, password) {
@@ -189,6 +190,21 @@ function verifyEmail(token) {
     .then(response => {
       return {
         error: ""
+      };
+    })
+    .catch(error => {
+      return {
+        error: (error.response && error.response.data) ? error.response.data.message : error.message
+      };
+    });
+}
+
+function resendVerification(email) {
+  return axios
+    .get(baseUrl + "/api/v1/resend-verification-email?email=" + email)
+    .then(response => {
+      return {
+        error: "",
       };
     })
     .catch(error => {

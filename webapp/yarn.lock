@@ -2589,6 +2589,11 @@ core-js@2.5.7:
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.5.7.tgz#f972608ff0cead68b841a16a932d0b183791814e"
   integrity sha512-RszJCAxg/PP6uzXVXL6BsxSXx/B05oJAQ2vkJRjyjrEcNVycaqOmNb5OTxZPE3xa5gwZduqza6L9JOCenh/Ecw==
 
+core-js@2.6.4:
+  version "2.6.4"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.4.tgz#b8897c062c4d769dd30a0ac5c73976c47f92ea0d"
+  integrity sha512-05qQ5hXShcqGkPZpXEFLIpxayZscVD2kuMBZewxiIPPEagukO4mqgPA9CWhUvFBJfy3ODdK2p9xyHh7FTU9/7A==
+
 core-js@^2.4.0, core-js@^2.5.0:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.6.1.tgz#87416ae817de957a3f249b3b5ca475d4aaed6042"
@@ -8097,7 +8102,7 @@ prompts@^0.1.9:
     kleur "^2.0.1"
     sisteransi "^0.1.1"
 
-prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.1:
+prop-types@^15.5.10, prop-types@^15.5.8, prop-types@^15.6.0, prop-types@^15.6.1:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -8221,7 +8226,7 @@ raf@3.4.0:
   dependencies:
     performance-now "^2.1.0"
 
-raf@^3.4.0:
+raf@3.4.1, raf@^3.4.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/raf/-/raf-3.4.1.tgz#0742e99a4a6552f445d73e3ee0328af0ff1ede39"
   integrity sha512-Sq4CW4QhwOHE8ucn6J34MqtZCeWFP2aQSmrlroYgqAV1PjStIhJXxYuTgUIfkEk7zTLjmIjLmU5q+fbD1NnOJA==
@@ -8301,6 +8306,28 @@ react-app-polyfill@^0.2.0:
     raf "3.4.0"
     whatwg-fetch "3.0.0"
 
+<<<<<<< HEAD
+=======
+react-app-polyfill@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/react-app-polyfill/-/react-app-polyfill-0.2.2.tgz#a903b61a8bfd9c5e5f16fc63bebe44d6922a44fb"
+  integrity sha512-mAYn96B/nB6kWG87Ry70F4D4rsycU43VYTj3ZCbKP+SLJXwC0x6YCbwcICh3uW8/C9s1VgP197yx+w7SCWeDdQ==
+  dependencies:
+    core-js "2.6.4"
+    object-assign "4.1.1"
+    promise "8.0.2"
+    raf "3.4.1"
+    whatwg-fetch "3.0.0"
+
+>>>>>>> develop
+react-bootstrap4-modal@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/react-bootstrap4-modal/-/react-bootstrap4-modal-1.7.0.tgz#e4ffeb799e4011544297397b1dc4cae846b1e5c4"
+  integrity sha512-MykJAkPTOdQTrZO1ndOBqEwvpKons6EITACLsbfQWQPjBkEKOyLhjfqsQmb54xkUuoEN7xrZqlBoGJnacNlxfg==
+  dependencies:
+    classnames "^2.2.5"
+    prop-types "^15.5.10"
+
 react-dev-utils@^7.0.1:
   version "7.0.1"
   resolved "https://registry.yarnpkg.com/react-dev-utils/-/react-dev-utils-7.0.1.tgz#c53e759a22668ee2c0d146c24ce4bdec2b41e3c8"
@@ -8340,6 +8367,11 @@ react-dom@^16.7.0:
     object-assign "^4.1.1"
     prop-types "^15.6.2"
     scheduler "^0.12.0"
+
+react-error-boundary@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/react-error-boundary/-/react-error-boundary-1.2.3.tgz#2b9eb8fbd4b1d90656fe769d9bad9f69a2b7b529"
+  integrity sha512-3naGugvlzwcYjiqPr8o89oYHe2R5QxK6ysCQj/GvyenBvruVHu2hRsuWvjQcNbNiiOkEPYKfcMm7tV/Tfle5rA==
 
 react-error-overlay@^5.1.2:
   version "5.1.2"
@@ -8456,6 +8488,11 @@ react-select@2.3.0:
     react-input-autosize "^2.2.1"
     react-transition-group "^2.2.1"
 
+react-stepzilla@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/react-stepzilla/-/react-stepzilla-5.0.0.tgz#b5d7caaf5c914744bf7bd192131d3e348bc15789"
+  integrity sha512-cIWvOXsa9yj9Y4az1Rt7q5zt8zK6u6Na9BQIoMLlc2TqtMGjflcQmZ1gLmRf+nCofY+fl/uAEoTyo9OtuSIgHQ==
+
 react-test-renderer@^16.0.0-0, react-test-renderer@^16.7.0:
   version "16.8.2"
   resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-16.8.2.tgz#3ce0bf12aa211116612fda01a886d6163c9c459b"
@@ -8465,6 +8502,14 @@ react-test-renderer@^16.0.0-0, react-test-renderer@^16.7.0:
     prop-types "^15.6.2"
     react-is "^16.8.2"
     scheduler "^0.13.2"
+
+react-tooltip@^3.9.2:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/react-tooltip/-/react-tooltip-3.10.0.tgz#268b5ef519fd8a1369288d1f086f42c90d5da7ef"
+  integrity sha512-GGdxJvM1zSFztkTP7gCQbLTstWr1OOoMpJ5WZUGhimj0nhRY+MPz+92MpEnKmj0cftJ9Pd/M6FfSl0sfzmZWkg==
+  dependencies:
+    classnames "^2.2.5"
+    prop-types "^15.6.0"
 
 react-transition-group@^2.2.1:
   version "2.6.0"

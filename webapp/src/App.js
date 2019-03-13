@@ -23,7 +23,8 @@ class App extends Component {
     super(props);
 
     this.state = {
-      user: {}
+      user: {},
+      collapsed: true
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -40,6 +41,10 @@ class App extends Component {
       user: JSON.parse(localStorage.getItem("user"))
     });
   }
+
+  toggleMenu = () => {
+    this.setState({ collapsed: !this.state.collapsed });
+  };
 
   render() {
     return (
@@ -67,46 +72,90 @@ class App extends Component {
             >
               <span class="navbar-toggler-icon" />
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div
+              class={
+                "collapse navbar-collapse" +
+                (this.state.collapsed ? " collapsed" : "")
+              }
+              id="navbarNav"
+            >
               <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
+                <li class={"nav-item"}>
                   <NavLink
+                    exact
                     to="/"
                     activeClassName="nav-link active"
                     className="nav-link"
+                    onClick={this.toggleMenu}
                   >
                     Home
                   </NavLink>
                 </li>
-                <li class="nav-item">
-                  <NavLink
-                    to="/applicationForm"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                  >
-                    Apply
-                  </NavLink>
-                </li>
+                {this.state.user && (
+                  <li class="nav-item">
+                    <NavLink
+                      to="/applicationForm"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Apply
+                    </NavLink>
+                  </li>
+                )}
               </ul>
-              <UserDropdown logout={this.refreshUser} user={this.state.user} />
+              <UserDropdown
+                logout={this.refreshUser}
+                user={this.state.user}
+                onClick={this.toggleMenu}
+              />
             </div>
           </nav>
           <div class="Body">
-            <div className="container">
+            <div className="container-fluid">
               <Switch>
-                <Route exact path="/" component={Home} />
-                <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/resetPassword" render={(props) => <ResetPassword {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/verifyEmail" component={VerifyEmail}/>
-                <PrivateRoute exact path="/profile" component={Profile} />} /> 
-                <PrivateRoute exact path="/applicationForm" component={Application} />
+                <Route
+                  exact
+                  path="/"
+                  render={props => <Home {...props} user={this.state.user} />}
+                />
+                <Route
+                  exact
+                  path="/login"
+                  render={props => (
+                    <Login {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/createAccount"
+                  render={props => (
+                    <CreateAccount {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/resetPassword"
+                  render={props => (
+                    <ResetPassword {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route exact path="/verifyEmail" component={VerifyEmail} />
+                <PrivateRoute exact path="/profile" component={Profile} />} />
+                <PrivateRoute
+                  exact
+                  path="/applicationForm"
+                  component={Application}
+                />
               </Switch>
             </div>
           </div>
           <footer class="text-muted">
             <div class="container">
-              <p>Baobab, © 2019 | <a href="www.deeplearningindaba.com">Deep Learning Indaba</a></p>
+              <p>
+                Baobab, © 2019 |{" "}
+                <a href="www.deeplearningindaba.com">Deep Learning Indaba</a>
+              </p>
             </div>
           </footer>
         </div>
