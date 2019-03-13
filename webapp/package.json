@@ -13,6 +13,7 @@
     "react-bootstrap4-modal": "^1.7.0",
     "react-dom": "^16.7.0",
     "react-error-boundary": "^1.2.3",
+    "react-ga": "^2.5.7",
     "react-router-dom": "^4.3.1",
     "react-scripts": "2.1.3",
     "react-select": "2.3.0",
