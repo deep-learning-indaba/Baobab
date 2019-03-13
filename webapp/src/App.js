@@ -27,7 +27,6 @@ ReactGA.initialize('UA-136093201-1',{
 
 history.listen((location, action) => {
     ReactGA.pageview(location.pathname + location.search);
-    console.log(location.pathname)
 });
 
 class App extends Component {
