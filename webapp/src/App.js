@@ -23,6 +23,7 @@ import "./App.css";
 const history = createHistory()
 ReactGA.initialize('UA-136093201-1',{
   debug: true,
+  testMode: true
 })
 
 history.listen((location, action) => {
