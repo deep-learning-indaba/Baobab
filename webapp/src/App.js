@@ -23,7 +23,7 @@ import "./App.css";
 const history = createHistory()
 ReactGA.initialize('UA-136093201-1',{
   debug: true,
-  testMode: true
+  testMode: process.env.NODE_ENV === 'test'
 })
 
 history.listen((location, action) => {
