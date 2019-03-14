@@ -53,7 +53,7 @@ user_fields = {
     'residence_country': fields.String(attribute='residence_country.name'),
     'user_ethnicity': fields.String,
     'user_gender': fields.String,
-    'user_dateOfBirth': fields.DateTime,
+    'user_dateOfBirth': fields.DateTime('iso8601'),
     'user_primaryLanguage': fields.String,
     'affiliation': fields.String,
     'department': fields.String,
