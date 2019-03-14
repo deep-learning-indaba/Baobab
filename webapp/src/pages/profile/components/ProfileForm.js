@@ -10,8 +10,7 @@ import {
   getCounties,
   getGenderOptions,
   getCategories,
-  getDisabilityOptions,
-  getEthnicityOptions
+  getDisabilityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -28,7 +27,6 @@ const fieldValidations = [
   ruleRunner(validationFields.email, validEmail),
   ruleRunner(validationFields.nationality, requiredDropdown),
   ruleRunner(validationFields.residence, requiredDropdown),
-  ruleRunner(validationFields.ethnicity, requiredText),
   ruleRunner(validationFields.gender, requiredDropdown),
   ruleRunner(validationFields.affiliation, requiredText),
   ruleRunner(validationFields.department, requiredText),
@@ -52,7 +50,6 @@ class ProfileForm extends Component {
       titleOptions: [],
       genderOptions: [],
       disabilityOptions: [],
-      ethnicityOptions: [],
       confirmResetVisible: false
     };
   }
@@ -63,7 +60,6 @@ class ProfileForm extends Component {
       getGenderOptions,
       getCounties,
       getCategories,
-      getEthnicityOptions,
       getDisabilityOptions
     ]).then(result => {
       this.setState({
@@ -71,8 +67,7 @@ class ProfileForm extends Component {
         genderOptions: this.checkOptionsList(result[1]),
         countryOptions: this.checkOptionsList(result[2]),
         categoryOptions: this.checkOptionsList(result[3]),
-        ethnicityOptions: this.checkOptionsList(result[4]),
-        disabilityOptions: this.checkOptionsList(result[5])
+        disabilityOptions: this.checkOptionsList(result[4])
       });
     });
 
@@ -88,7 +83,6 @@ class ProfileForm extends Component {
           nationality: result.nationality_country_id,
           residence: result.residence_country_id,
           gender: result.user_gender,
-          ethnicity: result.user_ethnicity,
           disability: result.user_disability,
           affiliation: result.affiliation,
           department: result.department,
@@ -227,7 +221,6 @@ class ProfileForm extends Component {
       title,
       nationality,
       residence,
-      ethnicity,
       gender,
       affiliation,
       department,
@@ -245,10 +238,6 @@ class ProfileForm extends Component {
     const residenceValue = this.getContentValue(
       this.state.countryOptions,
       residence
-    );
-    const ethnicityValue = this.getContentValue(
-      this.state.ethnicityOptions,
-      ethnicity
     );
     const genderValue = this.getContentValue(this.state.genderOptions, gender);
     const categoryValue = this.getContentValue(
@@ -353,17 +342,6 @@ class ProfileForm extends Component {
             </div>
           </div>
           <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                id={validationFields.ethnicity.name}
-                options={this.state.ethnicityOptions}
-                placeholder={validationFields.ethnicity.display}
-                onChange={this.handleChangeDropdown}
-                value={ethnicityValue}
-                label={validationFields.ethnicity.display}
-                description={validationFields.ethnicity.description}
-              />
-            </div>
             <div class={commonColClassName}>
               <FormSelect
                 options={this.state.genderOptions}
