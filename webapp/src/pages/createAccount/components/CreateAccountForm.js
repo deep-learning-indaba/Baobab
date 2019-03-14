@@ -34,7 +34,8 @@ const fieldValidations = [
   ruleRunner(validationFields.disability, requiredText),
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
-  ruleRunner(validationFields.category, requiredDropdown)
+  ruleRunner(validationFields.category, requiredDropdown),
+  ruleRunner(validationFields.primaryLanguage, requiredText)
 ];
 
 class CreateAccountForm extends Component {
@@ -281,36 +282,36 @@ class CreateAccountForm extends Component {
             </div>
           </div>
           <div class="row">
-          <div class={colClassEmailLanguageDob}>
-          <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
-          </div>
-          <div class={colClassEmailLanguageDob}>
-          <FormTextBox
-            id={validationFields.dateOfBirth.name}
-            type="date"
-            placeholder={validationFields.dateOfBirth.display}
-            onChange={this.handleChange(validationFields.dateOfBirth)}
-            value={dateOfBirth}
-            label={validationFields.dateOfBirth.display}
-          />
-          </div>
-          <div class={colClassEmailLanguageDob}>
-          <FormTextBox
-            id={validationFields.primaryLanguage.name}
-            type="text"
-            placeholder={validationFields.primaryLanguage.display}
-            onChange={this.handleChange(validationFields.primaryLanguage)}
-            value={primaryLanguage}
-            label={validationFields.primaryLanguage.display}
-          />
-          </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.email.name}
+                type="email"
+                placeholder={validationFields.email.display}
+                onChange={this.handleChange(validationFields.email)}
+                value={email}
+                label={validationFields.email.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.dateOfBirth.name}
+                type="date"
+                placeholder={validationFields.dateOfBirth.display}
+                onChange={this.handleChange(validationFields.dateOfBirth)}
+                value={dateOfBirth}
+                label={validationFields.dateOfBirth.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.primaryLanguage.name}
+                type="text"
+                placeholder={validationFields.primaryLanguage.display}
+                onChange={this.handleChange(validationFields.primaryLanguage)}
+                value={primaryLanguage}
+                label={validationFields.primaryLanguage.display}
+              />
+            </div>
           </div>
           <div class="row">
             <div class={commonColClassName}>

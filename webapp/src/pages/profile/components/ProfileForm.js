@@ -33,13 +33,13 @@ const fieldValidations = [
   ruleRunner(validationFields.affiliation, requiredText),
   ruleRunner(validationFields.department, requiredText),
   ruleRunner(validationFields.disability, requiredText),
-  ruleRunner(validationFields.category, requiredDropdown)
+  ruleRunner(validationFields.category, requiredDropdown),
+  ruleRunner(validationFields.primaryLanguage, requiredText)
 ];
 
 class ProfileForm extends Component {
   constructor(props) {
     super(props);
-    console.log(props);
 
     this.state = {
       user: {},
@@ -67,12 +67,12 @@ class ProfileForm extends Component {
       getDisabilityOptions
     ]).then(result => {
       this.setState({
-        titleOptions: result[0],
-        genderOptions: result[1],
-        countryOptions: result[2],
-        categoryOptions: result[3],
-        ethnicityOptions: result[4],
-        disabilityOptions: result[5]
+        titleOptions: this.checkOptionsList(result[0]),
+        genderOptions: this.checkOptionsList(result[1]),
+        countryOptions: this.checkOptionsList(result[2]),
+        categoryOptions: this.checkOptionsList(result[3]),
+        ethnicityOptions: this.checkOptionsList(result[4]),
+        disabilityOptions: this.checkOptionsList(result[5])
       });
     });
 
@@ -90,16 +90,26 @@ class ProfileForm extends Component {
           disability: result.user_disability,
           affiliation: result.affiliation,
           department: result.department,
-          category: result.user_category_id
+          category: result.user_category_id,
+          dateOfBirth: result.user_dateOfBirth.split("T")[0],
+          primaryLanguage: result.user_primaryLanguage
         }
       });
     });
   }
 
   getContentValue(options, value) {
-    return options.filter(option => {
-      return option.value === value;
-    });
+    if (options && options.filter) {
+      return options.filter(option => {
+        return option.value === value;
+      });
+    } else return null;
+  }
+
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
   }
 
   handleChangeDropdown = (name, dropdown) => {
@@ -207,6 +217,7 @@ class ProfileForm extends Component {
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassNameTitle = createColClassName(12, 4, 2, 2);
     const colClassNameSurname = createColClassName(12, 4, 5, 5);
+    const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
       lastName,
@@ -219,7 +230,9 @@ class ProfileForm extends Component {
       affiliation,
       department,
       disability,
-      category
+      category,
+      dateOfBirth,
+      primaryLanguage
     } = this.state.user;
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
@@ -283,14 +296,38 @@ class ProfileForm extends Component {
               />
             </div>
           </div>
-          <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
+          <div class="row">
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.email.name}
+                type="email"
+                placeholder={validationFields.email.display}
+                onChange={this.handleChange(validationFields.email)}
+                value={email}
+                label={validationFields.email.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.dateOfBirth.name}
+                type="date"
+                placeholder={validationFields.dateOfBirth.display}
+                onChange={this.handleChange(validationFields.dateOfBirth)}
+                value={dateOfBirth}
+                label={validationFields.dateOfBirth.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.primaryLanguage.name}
+                type="text"
+                placeholder={validationFields.primaryLanguage.display}
+                onChange={this.handleChange(validationFields.primaryLanguage)}
+                value={primaryLanguage}
+                label={validationFields.primaryLanguage.display}
+              />
+            </div>
+          </div>{" "}
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
@@ -307,7 +344,7 @@ class ProfileForm extends Component {
                 options={this.state.countryOptions}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
-                onChange={this.handleChangopdown}
+                onChange={this.handleChangeDropdown}
                 value={residenceValue}
                 label={validationFields.residence.display}
               />
@@ -401,7 +438,13 @@ class ProfileForm extends Component {
                 class="btn btn-primary Button"
                 disabled={loading}
               >
-                {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
+                {loading && (
+                  <span
+                    class="spinner-grow spinner-grow-sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                )}
                 Save profile
               </button>
             </div>
