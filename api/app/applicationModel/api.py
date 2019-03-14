@@ -1,8 +1,9 @@
 from datetime import datetime
+import traceback
 
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
@@ -51,21 +52,24 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
     @marshal_with(form_fields)
     def get(self):
-        LOGGER.info('Received get request for application form')
+        LOGGER.debug('Received get request for application form')
         args = self.req_parser.parse_args()
-        LOGGER.info('Parsed Args: {}'.format(args['event_id']))
+        LOGGER.debug('Parsed Args for event_id: {}'.format(args))
 
         try:
             form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
             if(not form):
+                LOGGER.warn('Form not found for event_id: {}'.format(args['event_id']))
                 return FORM_NOT_FOUND
 
             sections = db.session.query(Section).filter(Section.application_form_id == form.id).all()   #All sections in our form
             if(not sections):
+                LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
                 return SECTION_NOT_FOUND
 
             questions = db.session.query(Question).filter(Question.application_form_id == form.id).all() #All questions in our form        
             if(not questions):
+                LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
                 return QUESTION_NOT_FOUND
 
             form.sections = sections
@@ -78,7 +82,13 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
             if (form): 
                 return form
-            else: 
+            else:
+                LOGGER.warn("Event not found for event_id: {}".format(args['event_id'])) 
                 return EVENT_NOT_FOUND
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))
+            return DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return DB_NOT_AVAILABLE

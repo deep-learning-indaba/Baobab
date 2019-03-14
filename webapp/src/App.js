@@ -25,6 +25,12 @@ history.listen((location, action) => {
   ReactGA.pageview(location.pathname + location.search);
 });
 
+const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
+const BUG_BODY_TEXT = `Browser name and version:
+What I was trying to do:
+Description of problem: 
+`;
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -54,6 +60,8 @@ class App extends Component {
   };
 
   render() {
+    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+
     return (
       <Router history={history}>
         <div>
@@ -158,11 +166,12 @@ class App extends Component {
             </div>
           </div>
           <footer class="text-muted">
-            <div class="container">
+            <div class="container-flex">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="http://www.deeplearningindaba.com">
-                  Deep Learning Indaba
+                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href={bug_mailto} class="btn btn-info float-right">
+                  Report a Bug
                 </a>
               </p>
             </div>
