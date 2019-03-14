@@ -22,7 +22,7 @@ class UserApiTest(ApiTestCase):
         'user_disability': 'None',
         'user_category_id': 1,
         'user_primaryLanguage': 'Zulu',
-        'user_dateOfBirth': '1984-12-12',
+        'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'password': '123456'
     }
 
@@ -73,7 +73,8 @@ class UserApiTest(ApiTestCase):
         assert data['user_disability'] == 'None'
         assert data['user_category'] == 'Postdoc'
         assert data['user_primaryLanguage'] == 'Zulu'
-        assert data['user_dateOfBirth'] == '1984-12-12'
+        assert data['user_dateOfBirth'] == datetime(
+            1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S')
 
     def test_update_user(self):
         self.seed_static_data()
@@ -96,7 +97,7 @@ class UserApiTest(ApiTestCase):
             'user_disability': 'None',
             'user_category_id': 1,
             'user_primaryLanguage': 'Zulu',
-            'user_dateOfBirth': '1984-12-12',
+            'user_dateOfBirth':  datetime(1984, 12, 12, 0, 0, 0).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             'password': ''
         })
         assert response.status_code == 200
@@ -115,7 +116,8 @@ class UserApiTest(ApiTestCase):
         assert data['user_disability'] == 'None'
         assert data['user_category'] == 'Postdoc'
         assert data['user_primaryLanguage'] == 'Zulu'
-        assert data['user_dateOfBirth'] == '1984-12-12'
+        assert data['user_dateOfBirth'] == datetime(
+            1984, 12, 12, 0, 0, 0, 0).strftime('%Y-%m-%dT%H:%M:%S')
 
     def test_authentication_deleted(self):
         self.seed_static_data()

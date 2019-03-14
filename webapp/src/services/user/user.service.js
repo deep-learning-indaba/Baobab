@@ -49,7 +49,7 @@ function create(user) {
       department: user.department,
       user_disability: user.disability,
       user_category_id: user.category,
-      user_dateOfBirth: user.dateOfBirth,
+      user_dateOfBirth: new Date(user.dateOfBirth).toISOString(),
       user_primaryLanguage: user.primaryLanguage,
       password: user.password
     })

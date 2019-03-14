@@ -19,20 +19,20 @@ from config import BOABAB_HOST
 
 
 VERIFY_EMAIL_BODY = """
-Dear {} {} {}, 
-                  
-Thank you for creating a new Baobab account. Please following link to verify your email address: 
-                  
+Dear {} {} {},
+
+Thank you for creating a new Baobab account. Please following link to verify your email address:
+
 {}/verifyEmail?token={}
-                  
+
 Kind Regards,
 The Baobab Team
 """
 
 RESET_EMAIL_BODY = """
-Dear {} {} {}, 
-                  
-You recently requested a password reset on Baobab, please use the following link to reset you password: 
+Dear {} {} {},
+
+You recently requested a password reset on Baobab, please use the following link to reset you password:
 {}/resetPassword?resetToken={}
 
 If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
@@ -100,7 +100,8 @@ class UserAPI(SignupMixin, restful.Resource):
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
         password = args['password']
-        user_dateOfBirth = args['user_dateOfBirth']
+        user_dateOfBirth = datetime.strptime(
+            (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user_primaryLanguage = args['user_primaryLanguage']
 
         user = AppUser(
