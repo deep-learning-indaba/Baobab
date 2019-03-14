@@ -27,7 +27,7 @@ class AppUser(db.Model):
     user_category_id = db.Column(db.Integer(), db.ForeignKey(
         'user_category.id'), nullable=False)
     user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
-    user_primaryLanguage = db.Column(db.String(255), nullable=False)
+    user_primaryLanguage = db.Column(db.String(255), nullable=True)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean(), nullable=False)
     is_admin = db.Column(db.Boolean(), nullable=False)
@@ -36,7 +36,6 @@ class AppUser(db.Model):
     verified_email = db.Column(db.Boolean(), nullable=True)
     verify_token = db.Column(
         db.String(255), nullable=True, unique=True, default=make_code)
-    
 
     nationality_country = db.relationship(
         'Country', foreign_keys=[nationality_country_id])
