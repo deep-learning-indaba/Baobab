@@ -50,6 +50,8 @@ function create(user) {
       department: user.department,
       user_disability: user.disability,
       user_category_id: user.category,
+      user_dateOfBirth: user.dateOfBirth,
+      user_primaryLanguage: user.primaryLanguage,
       password: user.password
     })
     .then(response => {

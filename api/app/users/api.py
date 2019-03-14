@@ -53,6 +53,8 @@ user_fields = {
     'residence_country': fields.String(attribute='residence_country.name'),
     'user_ethnicity': fields.String,
     'user_gender': fields.String,
+    'user_dateOfBirth': fields.DateTime,
+    'user_primaryLanguage': fields.String,
     'affiliation': fields.String,
     'department': fields.String,
     'user_disability': fields.String,
@@ -99,6 +101,9 @@ class UserAPI(SignupMixin, restful.Resource):
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
         password = args['password']
+        user_dateOfBirth = args['user_dateOfBirth']
+        LOGGER.info(args)
+        user_primaryLanguage = args['user_primaryLanguage'] 
 
         user = AppUser(
             email=email,
@@ -113,6 +118,8 @@ class UserAPI(SignupMixin, restful.Resource):
             department=department,
             user_disability=user_disability,
             user_category_id=user_category_id,
+            user_dateOfBirth = user_dateOfBirth, 
+            user_primaryLanguage = user_primaryLanguage,
             password=password)
 
         db.session.add(user)

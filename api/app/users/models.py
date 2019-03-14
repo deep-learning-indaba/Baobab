@@ -26,6 +26,8 @@ class AppUser(db.Model):
     user_disability = db.Column(db.String(255), nullable=False)
     user_category_id = db.Column(db.Integer(), db.ForeignKey(
         'user_category.id'), nullable=False)
+    user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
+    user_primaryLanguage = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean(), nullable=False)
     is_admin = db.Column(db.Boolean(), nullable=False)
@@ -34,6 +36,7 @@ class AppUser(db.Model):
     verified_email = db.Column(db.Boolean(), nullable=True)
     verify_token = db.Column(
         db.String(255), nullable=True, unique=True, default=make_code)
+    
 
     nationality_country = db.relationship(
         'Country', foreign_keys=[nationality_country_id])
@@ -54,6 +57,8 @@ class AppUser(db.Model):
                  department,
                  user_disability,
                  user_category_id,
+                 user_dateOfBirth,
+                 user_primaryLanguage,
                  password,
                  is_admin=False):
         self.email = email
@@ -68,6 +73,8 @@ class AppUser(db.Model):
         self.department = department
         self.user_disability = user_disability
         self.user_category_id = user_category_id
+        self.user_dateOfBirth = user_dateOfBirth
+        self.user_primaryLanguage = user_primaryLanguage
         self.set_password(password)
         self.active = True
         self.is_admin = is_admin

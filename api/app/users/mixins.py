@@ -16,6 +16,8 @@ class SignupMixin(object):
     req_parser.add_argument('department', type=str, required=True)
     req_parser.add_argument('user_disability', type=str, required=True)
     req_parser.add_argument('user_category_id', type=int, required=True)
+    req_parser.add_argument('user_primaryLanguage', type=str, required=True)
+    req_parser.add_argument('user_dateOfBirth', type=datetime, required=True)
     req_parser.add_argument('password', type=str, required=True)
 
 class AuthenticateMixin(object):
