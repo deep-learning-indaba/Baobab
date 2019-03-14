@@ -76,6 +76,7 @@ def user_info(user):
 def get_baobab_host():
     return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
+
 class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
@@ -102,8 +103,7 @@ class UserAPI(SignupMixin, restful.Resource):
         user_category_id = args['user_category_id']
         password = args['password']
         user_dateOfBirth = args['user_dateOfBirth']
-        LOGGER.info(args)
-        user_primaryLanguage = args['user_primaryLanguage'] 
+        user_primaryLanguage = args['user_primaryLanguage']
 
         user = AppUser(
             email=email,
@@ -118,8 +118,8 @@ class UserAPI(SignupMixin, restful.Resource):
             department=department,
             user_disability=user_disability,
             user_category_id=user_category_id,
-            user_dateOfBirth = user_dateOfBirth, 
-            user_primaryLanguage = user_primaryLanguage,
+            user_dateOfBirth=user_dateOfBirth,
+            user_primaryLanguage=user_primaryLanguage,
             password=password)
 
         db.session.add(user)
@@ -132,8 +132,8 @@ class UserAPI(SignupMixin, restful.Resource):
         send_mail(recipient=user.email,
                   subject='Baobab Email Verification',
                   body_text=VERIFY_EMAIL_BODY.format(
-                      user_title, firstname, lastname, 
-                      get_baobab_host(), 
+                      user_title, firstname, lastname,
+                      get_baobab_host(),
                       user.verify_token))
 
         return user_info(user), 201
@@ -232,8 +232,8 @@ class PasswordResetRequestAPI(restful.Resource):
         send_mail(recipient=args['email'],
                   subject='Password Reset for Deep Learning Indaba portal',
                   body_text=RESET_EMAIL_BODY.format(
-                        user.user_title, user.firstname, user.lastname, 
-                        get_baobab_host(), password_reset.code))
+            user.user_title, user.firstname, user.lastname,
+            get_baobab_host(), password_reset.code))
 
         return {}, 201
 
@@ -279,6 +279,7 @@ class VerifyEmailAPI(restful.Resource):
 
         return {}, 201
 
+
 class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
         email = request.args.get('email')
@@ -290,13 +291,14 @@ class ResendVerificationEmailAPI(restful.Resource):
             return USER_NOT_FOUND
 
         send_mail(recipient=user.email,
-            subject='Baobab Email Verification',
-            body_text=VERIFY_EMAIL_BODY.format(
-                user.user_title, user.firstname, user.lastname, 
-                get_baobab_host(), 
-                user.verify_token))
+                  subject='Baobab Email Verification',
+                  body_text=VERIFY_EMAIL_BODY.format(
+                      user.user_title, user.firstname, user.lastname,
+                      get_baobab_host(),
+                      user.verify_token))
 
         return {}, 201
+
 
 class AdminOnlyAPI(restful.Resource):
 
