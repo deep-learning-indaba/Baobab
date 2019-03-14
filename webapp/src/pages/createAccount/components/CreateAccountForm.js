@@ -185,6 +185,7 @@ class CreateAccountForm extends Component {
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassNameTitle = createColClassName(12, 4, 2, 2);
     const colClassNameSurname = createColClassName(12, 4, 5, 5);
+    const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
       lastName,
@@ -280,7 +281,7 @@ class CreateAccountForm extends Component {
             </div>
           </div>
           <div class="row">
-          <div class={commonColClassName}>
+          <div class={colClassEmailLanguageDob}>
           <FormTextBox
             id={validationFields.email.name}
             type="email"
@@ -290,7 +291,7 @@ class CreateAccountForm extends Component {
             label={validationFields.email.display}
           />
           </div>
-          <div class={commonColClassName}>
+          <div class={colClassEmailLanguageDob}>
           <FormTextBox
             id={validationFields.dateOfBirth.name}
             type="date"
@@ -300,7 +301,7 @@ class CreateAccountForm extends Component {
             label={validationFields.dateOfBirth.display}
           />
           </div>
-          <div class={commonColClassName}>
+          <div class={colClassEmailLanguageDob}>
           <FormTextBox
             id={validationFields.primaryLanguage.name}
             type="text"
