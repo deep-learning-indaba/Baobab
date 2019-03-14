@@ -179,8 +179,8 @@ class CreateAccountForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassNameTitle = createColClassName(12, 4, 2, 2);
-    const colClassNameSurname = createColClassName(12, 4, 5, 5);
+    const colClassNameTitle = createColClassName(12, 3, 2, 2);
+    const colClassNameSurname = createColClassName(12, 3, 4, 4);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
@@ -270,6 +270,16 @@ class CreateAccountForm extends Component {
                 label={validationFields.lastName.display}
               />
             </div>
+            <div class={colClassNameTitle}>
+              <FormSelect
+                options={this.state.genderOptions}
+                id={validationFields.gender.name}
+                placeholder={validationFields.gender.display}
+                onChange={this.handleChangeDropdown}
+                value={genderValue}
+                label={validationFields.gender.display}
+              />
+            </div>
           </div>
           <div class="row">
             <div class={colClassEmailLanguageDob}>
@@ -322,18 +332,6 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={residenceValue}
                 label={validationFields.residence.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.genderOptions}
-                id={validationFields.gender.name}
-                placeholder={validationFields.gender.display}
-                onChange={this.handleChangeDropdown}
-                value={genderValue}
-                label={validationFields.gender.display}
               />
             </div>
           </div>

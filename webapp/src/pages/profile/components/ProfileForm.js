@@ -212,7 +212,7 @@ class ProfileForm extends Component {
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassNameTitle = createColClassName(12, 4, 2, 2);
-    const colClassNameSurname = createColClassName(12, 4, 5, 5);
+    const colClassNameSurname = createColClassName(12, 4, 4, 4);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
@@ -286,6 +286,16 @@ class ProfileForm extends Component {
                 label={validationFields.lastName.display}
               />
             </div>
+            <div class={colClassNameTitle}>
+              <FormSelect
+                options={this.state.genderOptions}
+                id={validationFields.gender.name}
+                placeholder={validationFields.gender.display}
+                onChange={this.handleChangeDropdown}
+                value={genderValue}
+                label={validationFields.gender.display}
+              />
+            </div>
           </div>
           <div class="row">
             <div class={colClassEmailLanguageDob}>
@@ -338,18 +348,6 @@ class ProfileForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={residenceValue}
                 label={validationFields.residence.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.genderOptions}
-                id={validationFields.gender.name}
-                placeholder={validationFields.gender.display}
-                onChange={this.handleChangeDropdown}
-                value={genderValue}
-                label={validationFields.gender.display}
               />
             </div>
           </div>
