@@ -22,7 +22,10 @@ class EventsAPITest(ApiTestCase):
         db.session.commit()
 
         self.test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                                 'None', 'Male', 'University', 'Computer Science', 'None', 1, '123456')
+                                 'Male', 'University', 'Computer Science', 'None', 1,
+                                 datetime(1984, 12, 12),
+                                 'Zulu',
+                                 '123456')
         self.test_user.verified_email = True
         db.session.add(self.test_user)
         db.session.commit()
