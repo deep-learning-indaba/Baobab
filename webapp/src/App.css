@@ -43,3 +43,8 @@ footer > .container > p {
     padding-top: 3em;
   }
 }
+
+.container-fluid {
+  padding-right: 30px;
+  padding-left: 30px;
+}
