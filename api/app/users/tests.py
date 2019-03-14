@@ -16,12 +16,13 @@ class UserApiTest(ApiTestCase):
         'user_title': 'Mr',
         'nationality_country_id': 1,
         'residence_country_id': 1,
-        'user_ethnicity': 'None',
         'user_gender': 'Male',
         'affiliation': 'University',
         'department': 'Computer Science',
         'user_disability': 'None',
         'user_category_id': 1,
+        'user_primaryLanguage': 'Zulu',
+        'user_dateOfBirth': '1984-12-12',
         'password': '123456'
     }
 
@@ -66,12 +67,13 @@ class UserApiTest(ApiTestCase):
         assert data['user_title'] == 'Mr'
         assert data['nationality_country'] == 'South Africa'
         assert data['residence_country'] == 'South Africa'
-        assert data['user_ethnicity'] == 'None'
         assert data['user_gender'] == 'Male'
         assert data['affiliation'] == 'University'
         assert data['department'] == 'Computer Science'
         assert data['user_disability'] == 'None'
         assert data['user_category'] == 'Postdoc'
+        assert data['user_primaryLanguage'] == 'Zulu'
+        assert data['user_dateOfBirth'] == '1984-12-12'
 
     def test_update_user(self):
         self.seed_static_data()
@@ -88,12 +90,13 @@ class UserApiTest(ApiTestCase):
             'user_title': 'Mrs',
             'nationality_country_id': 1,
             'residence_country_id': 1,
-            'user_ethnicity': 'None',
             'user_gender': 'Female',
             'affiliation': 'Company',
             'department': 'AI',
             'user_disability': 'None',
             'user_category_id': 1,
+            'user_primaryLanguage': 'Zulu',
+            'user_dateOfBirth': '1984-12-12',
             'password': ''
         })
         assert response.status_code == 200
@@ -106,12 +109,13 @@ class UserApiTest(ApiTestCase):
         assert data['user_title'] == 'Mrs'
         assert data['nationality_country'] == 'South Africa'
         assert data['residence_country'] == 'South Africa'
-        assert data['user_ethnicity'] == 'None'
         assert data['user_gender'] == 'Female'
         assert data['affiliation'] == 'Company'
         assert data['department'] == 'AI'
         assert data['user_disability'] == 'None'
         assert data['user_category'] == 'Postdoc'
+        assert data['user_primaryLanguage'] == 'Zulu'
+        assert data['user_dateOfBirth'] == '1984-12-12'
 
     def test_authentication_deleted(self):
         self.seed_static_data()
@@ -257,16 +261,16 @@ class UserApiTest(ApiTestCase):
         assert user.email == 'something@email.com'
         assert user.is_deleted == True
 
-
     def test_resend_verification_email(self):
         self.seed_static_data()
         self.app.post('/api/v1/user', data=self.user_data)
-        response = self.app.get('/api/v1/resend-verification-email?email={}'.format(self.user_data['email']))
+        response = self.app.get(
+            '/api/v1/resend-verification-email?email={}'.format(self.user_data['email']))
         assert response.status_code == 201
-
 
     def test_resend_verification_email_no_user(self):
         self.seed_static_data()
-        
-        response = self.app.get('/api/v1/resend-verification-email?email={}'.format('nonexistant@dummy.com'))
+
+        response = self.app.get(
+            '/api/v1/resend-verification-email?email={}'.format('nonexistant@dummy.com'))
         assert response.status_code == 409

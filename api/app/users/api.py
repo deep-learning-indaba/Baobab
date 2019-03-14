@@ -51,7 +51,6 @@ user_fields = {
     'nationality_country': fields.String(attribute='nationality_country.name'),
     'residence_country_id': fields.Integer,
     'residence_country': fields.String(attribute='residence_country.name'),
-    'user_ethnicity': fields.String,
     'user_gender': fields.String,
     'user_dateOfBirth': fields.DateTime('iso8601'),
     'user_primaryLanguage': fields.String,
@@ -95,7 +94,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user_title = args['user_title']
         nationality_country_id = args['nationality_country_id']
         residence_country_id = args['residence_country_id']
-        user_ethnicity = args['user_ethnicity']
         user_gender = args['user_gender']
         affiliation = args['affiliation']
         department = args['department']
@@ -112,7 +110,6 @@ class UserAPI(SignupMixin, restful.Resource):
             user_title=user_title,
             nationality_country_id=nationality_country_id,
             residence_country_id=residence_country_id,
-            user_ethnicity=user_ethnicity,
             user_gender=user_gender,
             affiliation=affiliation,
             department=department,
@@ -148,7 +145,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user_title = args['user_title']
         nationality_country_id = args['nationality_country_id']
         residence_country_id = args['residence_country_id']
-        user_ethnicity = args['user_ethnicity']
         user_gender = args['user_gender']
         affiliation = args['affiliation']
         department = args['department']
@@ -164,7 +160,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user.user_title = user_title
         user.nationality_country_id = nationality_country_id
         user.residence_country_id = residence_country_id
-        user.user_ethnicity = user_ethnicity
         user.user_gender = user_gender
         user.affiliation = affiliation
         user.department = department
