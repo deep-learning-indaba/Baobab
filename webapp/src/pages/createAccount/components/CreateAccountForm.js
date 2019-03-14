@@ -199,7 +199,9 @@ class CreateAccountForm extends Component {
       disability,
       category,
       password,
-      confirmPassword
+      confirmPassword,
+      dateOfBirth,
+      primaryLanguage
     } = this.state.user;
 
     const { loading, errors, showErrors, error, created } = this.state;
@@ -277,6 +279,8 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+          <div class="row">
+          <div class={commonColClassName}>
           <FormTextBox
             id={validationFields.email.name}
             type="email"
@@ -285,6 +289,28 @@ class CreateAccountForm extends Component {
             value={email}
             label={validationFields.email.display}
           />
+          </div>
+          <div class={commonColClassName}>
+          <FormTextBox
+            id={validationFields.dateOfBirth.name}
+            type="date"
+            placeholder={validationFields.dateOfBirth.display}
+            onChange={this.handleChange(validationFields.dateOfBirth)}
+            value={dateOfBirth}
+            label={validationFields.dateOfBirth.display}
+          />
+          </div>
+          <div class={commonColClassName}>
+          <FormTextBox
+            id={validationFields.primaryLanguage.name}
+            type="text"
+            placeholder={validationFields.primaryLanguage.display}
+            onChange={this.handleChange(validationFields.primaryLanguage)}
+            value={primaryLanguage}
+            label={validationFields.primaryLanguage.display}
+          />
+          </div>
+          </div>
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect

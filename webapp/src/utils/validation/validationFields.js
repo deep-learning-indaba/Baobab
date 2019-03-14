@@ -19,7 +19,8 @@ const validationFields = {
   password: { name: "password", display: "Password" },
   category: { name: "category", display: "User Category", description: "If you are a part-time student working as an academic, choose academic. Similarly for industry." },
   confirmPassword: { name: "confirmPassword", display: "Confirm Password" },
-  dateOfBirth: { name: "upgradedateOfBirth", display: "Date of Birth" }
+  dateOfBirth: { name: "dateOfBirth", display: "Date of Birth" },
+  primaryLanguage: {name: "primaryLanguage", display: "Primary Language"}
 };
 
 export default validationFields;
