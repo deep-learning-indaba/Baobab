@@ -77,6 +77,8 @@ class ProfileForm extends Component {
     });
 
     userService.get().then(result => {
+      var date = result.user_dateOfBirth;
+      if (date) date = date.split("T")[0];
       this.setState({
         user: {
           title: result.user_title,
@@ -91,7 +93,7 @@ class ProfileForm extends Component {
           affiliation: result.affiliation,
           department: result.department,
           category: result.user_category_id,
-          dateOfBirth: result.user_dateOfBirth.split("T")[0],
+          dateOfBirth: date,
           primaryLanguage: result.user_primaryLanguage
         }
       });
