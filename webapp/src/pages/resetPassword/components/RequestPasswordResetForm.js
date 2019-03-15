@@ -28,18 +28,19 @@ class RequestPasswordResetForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true });
-    this.setState({ loading: true });
+    this.setState({ 
+      submitted: true,
+      loading: true 
+    });
 
     userService.requestPasswordReset(this.state.email).then(response => {
-      console.log("Response from user service: ", response);
       if (response.status === 201) {
         this.setState({
           resetRequested: true
-        })
+        });
       } else {
         this.setState({
-          error: response.messsage,
+          error: response.message,
           loading: false
         });
       }
@@ -65,9 +66,10 @@ class RequestPasswordResetForm extends Component {
       )
     }
 
+    console.log("Rendering, error is: " + error);
+
     return (
       <div className="Login">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset Password</p>
           <div class="form-group">
@@ -93,6 +95,7 @@ class RequestPasswordResetForm extends Component {
                 Reset password
               </button>
             </div>
+            {error && <div className={"alert alert-danger"}>{error}</div>}
           </div>
           <div />
         </form>
