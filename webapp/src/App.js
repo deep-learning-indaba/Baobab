@@ -1,11 +1,5 @@
 import React, { Component } from "react";
-import {
-  Router,
-  Route,
-  Link,
-  NavLink,
-  Switch
-} from "react-router-dom";
+import { Router, Route, Link, NavLink, Switch } from "react-router-dom";
 import logo from "./images/logo-32x32-white.png";
 import Home from "./pages/home";
 import Login from "./pages/login";
@@ -16,19 +10,26 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
-import ReactGA from 'react-ga';
+import ReactGA from "react-ga";
 import createHistory from "history/createBrowserHistory";
 import "./App.css";
 
-const history = createHistory()
-ReactGA.initialize('UA-136093201-1',{
+const history = createHistory();
+ReactGA.initialize("UA-136093201-1", {
   debug: true,
-  testMode: process.env.NODE_ENV === 'test'
-})
-
-history.listen((location, action) => {
-    ReactGA.pageview(location.pathname + location.search);
+  testMode: process.env.NODE_ENV === "test"
 });
+
+ReactGA.pageview(window.location.pathname + window.location.search);
+history.listen((location, action) => {
+  ReactGA.pageview(location.pathname + location.search);
+});
+
+const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
+const BUG_BODY_TEXT = `Browser name and version:
+What I was trying to do:
+Description of problem: 
+`;
 
 class App extends Component {
   constructor(props) {
@@ -59,6 +60,8 @@ class App extends Component {
   };
 
   render() {
+    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+
     return (
       <Router history={history}>
         <div>
@@ -163,10 +166,13 @@ class App extends Component {
             </div>
           </div>
           <footer class="text-muted">
-            <div class="container">
+            <div class="container-flex">
               <p>
                 Baobab, © 2019 |{" "}
                 <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href={bug_mailto} class="btn btn-info float-right">
+                  Report a Bug
+                </a>
               </p>
             </div>
           </footer>

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { authHeader } from '../base.service';
+import { authHeader } from "../base.service";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 export const userService = {
@@ -44,12 +44,13 @@ function create(user) {
       user_title: user.title,
       nationality_country_id: user.nationality,
       residence_country_id: user.residence,
-      user_ethnicity: user.ethnicity,
       user_gender: user.gender,
       affiliation: user.affiliation,
       department: user.department,
       user_disability: user.disability,
       user_category_id: user.category,
+      user_dateOfBirth: new Date(user.dateOfBirth).toISOString(),
+      user_primaryLanguage: user.primaryLanguage,
       password: user.password
     })
     .then(response => {
@@ -61,21 +62,24 @@ function create(user) {
 
 function update(user) {
   return axios
-    .put(baseUrl + `/api/v1/user`, {
-      email: user.email,
-      firstname: user.firstName,
-      lastname: user.lastName,
-      user_title: user.title,
-      nationality_country_id: user.nationality,
-      residence_country_id: user.residence,
-      user_ethnicity: user.ethnicity,
-      user_gender: user.gender,
-      affiliation: user.affiliation,
-      department: user.department,
-      user_disability: user.disability,
-      user_category_id: user.category,
-      password: "",
-    }, { headers: authHeader() })
+    .put(
+      baseUrl + `/api/v1/user`,
+      {
+        email: user.email,
+        firstname: user.firstName,
+        lastname: user.lastName,
+        user_title: user.title,
+        nationality_country_id: user.nationality,
+        residence_country_id: user.residence,
+        user_gender: user.gender,
+        affiliation: user.affiliation,
+        department: user.department,
+        user_disability: user.disability,
+        user_category_id: user.category,
+        password: ""
+      },
+      { headers: authHeader() }
+    )
     .then(response => {
       let user = null;
       if (response) user = response.data;
@@ -85,7 +89,7 @@ function update(user) {
 
 function deleteAccount() {
   return axios
-    .delete(baseUrl + `/api/v1/user`, { 'headers': authHeader() })
+    .delete(baseUrl + `/api/v1/user`, { headers: authHeader() })
     .then(response => {
       localStorage.removeItem("user");
 
@@ -98,7 +102,9 @@ function deleteAccount() {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.data ? error.response.data.message : error.response.statusText
+          message: error.response.data
+            ? error.response.data.message
+            : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -117,12 +123,12 @@ function logout() {
 
 function get() {
   return axios
-    .get(baseUrl + `/api/v1/user`, { 'headers': authHeader() })
-    .then(function (response) {
+    .get(baseUrl + `/api/v1/user`, { headers: authHeader() })
+    .then(function(response) {
       // handle success
       return response.data;
     })
-    .catch(function (error) {
+    .catch(function(error) {
       // handle error
       return [], { error: error };
     });
@@ -131,7 +137,7 @@ function get() {
 function requestPasswordReset(email) {
   return axios
     .post(baseUrl + `/api/v1/password-reset/request`, {
-      email: email,
+      email: email
     })
     .then(response => {
       return {
@@ -143,7 +149,9 @@ function requestPasswordReset(email) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.data ? error.response.data.message : error.response.statusText
+          message: error.response.data
+            ? error.response.data.message
+            : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -159,7 +167,7 @@ function confirmPasswordReset(password, code) {
   return axios
     .post(baseUrl + `/api/v1/password-reset/confirm`, {
       password: password,
-      code: code,
+      code: code
     })
     .then(response => {
       return {
@@ -171,7 +179,9 @@ function confirmPasswordReset(password, code) {
       if (error.response) {
         return {
           status: error.response.status,
-          message: error.response.data ? error.response.data.message : error.response.statusText
+          message: error.response.data
+            ? error.response.data.message
+            : error.response.statusText
         };
       } else {
         // The request was made but no response was received
@@ -194,7 +204,10 @@ function verifyEmail(token) {
     })
     .catch(error => {
       return {
-        error: (error.response && error.response.data) ? error.response.data.message : error.message
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
       };
     });
 }
@@ -204,12 +217,15 @@ function resendVerification(email) {
     .get(baseUrl + "/api/v1/resend-verification-email?email=" + email)
     .then(response => {
       return {
-        error: "",
+        error: ""
       };
     })
     .catch(error => {
       return {
-        error: (error.response && error.response.data) ? error.response.data.message : error.message
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
       };
     });
 }

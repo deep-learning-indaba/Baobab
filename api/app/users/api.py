@@ -19,20 +19,20 @@ from config import BOABAB_HOST
 
 
 VERIFY_EMAIL_BODY = """
-Dear {} {} {}, 
-                  
-Thank you for creating a new Baobab account. Please following link to verify your email address: 
-                  
+Dear {} {} {},
+
+Thank you for creating a new Baobab account. Please following link to verify your email address:
+
 {}/verifyEmail?token={}
-                  
+
 Kind Regards,
 The Baobab Team
 """
 
 RESET_EMAIL_BODY = """
-Dear {} {} {}, 
-                  
-You recently requested a password reset on Baobab, please use the following link to reset you password: 
+Dear {} {} {},
+
+You recently requested a password reset on Baobab, please use the following link to reset you password:
 {}/resetPassword?resetToken={}
 
 If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
@@ -51,8 +51,9 @@ user_fields = {
     'nationality_country': fields.String(attribute='nationality_country.name'),
     'residence_country_id': fields.Integer,
     'residence_country': fields.String(attribute='residence_country.name'),
-    'user_ethnicity': fields.String,
     'user_gender': fields.String,
+    'user_dateOfBirth': fields.DateTime('iso8601'),
+    'user_primaryLanguage': fields.String,
     'affiliation': fields.String,
     'department': fields.String,
     'user_disability': fields.String,
@@ -74,6 +75,7 @@ def user_info(user):
 def get_baobab_host():
     return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
+
 class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
@@ -92,13 +94,15 @@ class UserAPI(SignupMixin, restful.Resource):
         user_title = args['user_title']
         nationality_country_id = args['nationality_country_id']
         residence_country_id = args['residence_country_id']
-        user_ethnicity = args['user_ethnicity']
         user_gender = args['user_gender']
         affiliation = args['affiliation']
         department = args['department']
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
         password = args['password']
+        user_dateOfBirth = datetime.strptime(
+            (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        user_primaryLanguage = args['user_primaryLanguage']
 
         user = AppUser(
             email=email,
@@ -107,12 +111,13 @@ class UserAPI(SignupMixin, restful.Resource):
             user_title=user_title,
             nationality_country_id=nationality_country_id,
             residence_country_id=residence_country_id,
-            user_ethnicity=user_ethnicity,
             user_gender=user_gender,
             affiliation=affiliation,
             department=department,
             user_disability=user_disability,
             user_category_id=user_category_id,
+            user_dateOfBirth=user_dateOfBirth,
+            user_primaryLanguage=user_primaryLanguage,
             password=password)
 
         db.session.add(user)
@@ -125,8 +130,8 @@ class UserAPI(SignupMixin, restful.Resource):
         send_mail(recipient=user.email,
                   subject='Baobab Email Verification',
                   body_text=VERIFY_EMAIL_BODY.format(
-                      user_title, firstname, lastname, 
-                      get_baobab_host(), 
+                      user_title, firstname, lastname,
+                      get_baobab_host(),
                       user.verify_token))
 
         return user_info(user), 201
@@ -141,7 +146,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user_title = args['user_title']
         nationality_country_id = args['nationality_country_id']
         residence_country_id = args['residence_country_id']
-        user_ethnicity = args['user_ethnicity']
         user_gender = args['user_gender']
         affiliation = args['affiliation']
         department = args['department']
@@ -157,7 +161,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user.user_title = user_title
         user.nationality_country_id = nationality_country_id
         user.residence_country_id = residence_country_id
-        user.user_ethnicity = user_ethnicity
         user.user_gender = user_gender
         user.affiliation = affiliation
         user.department = department
@@ -225,8 +228,8 @@ class PasswordResetRequestAPI(restful.Resource):
         send_mail(recipient=args['email'],
                   subject='Password Reset for Deep Learning Indaba portal',
                   body_text=RESET_EMAIL_BODY.format(
-                        user.user_title, user.firstname, user.lastname, 
-                        get_baobab_host(), password_reset.code))
+            user.user_title, user.firstname, user.lastname,
+            get_baobab_host(), password_reset.code))
 
         return {}, 201
 
@@ -272,6 +275,7 @@ class VerifyEmailAPI(restful.Resource):
 
         return {}, 201
 
+
 class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
         email = request.args.get('email')
@@ -283,13 +287,14 @@ class ResendVerificationEmailAPI(restful.Resource):
             return USER_NOT_FOUND
 
         send_mail(recipient=user.email,
-            subject='Baobab Email Verification',
-            body_text=VERIFY_EMAIL_BODY.format(
-                user.user_title, user.firstname, user.lastname, 
-                get_baobab_host(), 
-                user.verify_token))
+                  subject='Baobab Email Verification',
+                  body_text=VERIFY_EMAIL_BODY.format(
+                      user.user_title, user.firstname, user.lastname,
+                      get_baobab_host(),
+                      user.verify_token))
 
         return {}, 201
+
 
 class AdminOnlyAPI(restful.Resource):
 
