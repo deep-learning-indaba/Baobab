@@ -28,6 +28,7 @@
 .Body{
   background: #E8ECEE;
   min-height: 100vh;
+  padding-bottom: 1em;
 }
 
 .HomeNavBar{
