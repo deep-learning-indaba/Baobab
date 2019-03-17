@@ -1,10 +1,10 @@
 from datetime import datetime
+import traceback
 
 from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-from sqlalchemy.exc import IntegrityError
-
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event
 from app.applicationModel.models import ApplicationForm
@@ -26,28 +26,46 @@ def event_info(user_id, event):
 
 
 def get_user_event_response_status(user_id, event_id):
-    applicationForm = db.session.query(ApplicationForm).filter(
-        ApplicationForm.event_id == event_id).first()
 
-    if applicationForm:
-        if applicationForm.deadline < datetime.now():
-            return "Application closed"
-        elif user_id:
-            response = db.session.query(Response).filter(
-                Response.application_form_id == applicationForm.id).filter(Response.user_id == user_id).order_by(Response.started_timestamp.desc()).first()
+    def _log_application_status(context):
+        LOGGER.debug("Application {} for user_id: {}, event_id: {}".format(context, user_id, event_id))
 
-            if response:
-                if response.is_withdrawn:
-                    return "Application withdrawn"
+    try: 
+        applicationForm = db.session.query(ApplicationForm).filter(
+            ApplicationForm.event_id == event_id).first()
 
-                if response.is_submitted:
-                    return "Applied"
+        if applicationForm:
+            if applicationForm.deadline < datetime.now():
+                _log_application_status('closed, deadline passed')
+                return "Application closed"
+            elif user_id:
+                response = db.session.query(Response).filter(
+                    Response.application_form_id == applicationForm.id).filter(
+                        Response.user_id == user_id
+                        ).order_by(Response.started_timestamp.desc()).first()
+
+                if response:
+                    if response.is_withdrawn:
+                        _log_application_status('withdrawn')
+                        return "Application withdrawn"
+
+                    if response.is_submitted:
+                        _log_application_status('submitted')
+                        return "Applied"
+                else:
+                    _log_application_status('open')
+                    return "Apply now"
+
             else:
+                _log_application_status('open')
                 return "Apply now"
+    
+    except SQLAlchemyError as e:
+        LOGGER.error("Database error encountered: {}".format(e))            
+    except: 
+        LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
 
-        else:
-            return "Apply now"
-
+    _log_application_status('not available')
     return "Application not available"
 
 
