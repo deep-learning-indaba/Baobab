@@ -27,7 +27,8 @@
 
 .Body{
   background: #E8ECEE;
-  min-height: 100vh;
+  min-height: 90vh;
+  padding-bottom: 1em;
 }
 
 .HomeNavBar{
@@ -46,4 +47,9 @@ footer .btn {
   .Body {
     padding-top: 3em;
   }
+}
+
+.container-fluid {
+  padding-right: 30px;
+  padding-left: 30px;
 }
