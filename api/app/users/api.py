@@ -190,9 +190,9 @@ class UserAPI(SignupMixin, restful.Resource):
         if user:
             user.is_deleted = True
             db.session.commit()
-            LOGGER.debug("Successfully deleted user {}".info(g.current_user['id']))
+            LOGGER.debug("Successfully deleted user {}".format(g.current_user['id']))
         else:
-            LOGGER.debug("No user for id {}".info(g.current_user['id']))        
+            LOGGER.debug("No user for id {}".format(g.current_user['id']))        
         
         return {}, 200
 
