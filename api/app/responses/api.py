@@ -69,7 +69,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 Response.application_form_id == form.id, Response.user_id == g.current_user['id']
                 ).order_by(Response.started_timestamp.desc()).first()
             if not response:
-                LOGGER.warn("Response not found for event_id: {}".format(args['event_id']))
+                LOGGER.debug("Response not found for event_id: {}".format(args['event_id']))
                 return errors.RESPONSE_NOT_FOUND
             
             answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
