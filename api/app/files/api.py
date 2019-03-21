@@ -4,7 +4,6 @@ import flask_restful as restful
 from flask_restful import reqparse
 from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME, GCP_BUCKET_NAME, FILE_SIZE_LIMIT
 from app.utils.errors import FILE_SIZE_EXCEEDED
-
 from app.files.mixins import FileUploadMixin
 from app.utils.auth import auth_required
 
@@ -19,9 +18,13 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
+        LOGGER.debug("FileUpload args: {}".format(args))
+
         if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+            LOGGER.debug('Setting dummy storage client')
             storage_client = storage.Client(project=GCP_PROJECT_NAME)
         else:
+            LOGGER.debug('Setting GCP storage client')
             credentials = service_account.Credentials.from_service_account_info(
                 GCP_CREDENTIALS_DICT
             )
@@ -37,6 +40,7 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         file_size = len(bytes_file) 
 
         if file_size > FILE_SIZE_LIMIT:
+            LOGGER.debug('File size of {} exceeds limit of {}'.format(file_size, FILE_SIZE_EXCEEDED))
             return FILE_SIZE_EXCEEDED
 
         blob.upload_from_string(bytes_file, content_type=content_type)
