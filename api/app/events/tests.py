@@ -190,7 +190,7 @@ class EventsAPITest(ApiTestCase):
         assert len(data) == 1
         assert data[0]["id"] == 1
         assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Continue Application'
+        assert data[0]["status"] == 'Continue application'
 
     
     def test_get_events_unauthed_not_available(self):
