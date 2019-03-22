@@ -48,10 +48,12 @@ def get_user_event_response_status(user_id, event_id):
                     if response.is_withdrawn:
                         _log_application_status('withdrawn')
                         return "Application withdrawn"
-
-                    if response.is_submitted:
+                    elif response.is_submitted:
                         _log_application_status('submitted')
                         return "Applied"
+                    else:
+                        _log_application_status('continue')
+                        return "Continue application"
                 else:
                     _log_application_status('open')
                     return "Apply now"

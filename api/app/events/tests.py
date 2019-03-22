@@ -167,6 +167,32 @@ class EventsAPITest(ApiTestCase):
         assert data[0]["description"] == 'Event Description'
         assert data[0]["status"] == 'Application not available'
 
+    def test_unsubmitted_response(self):
+        self.seed_static_data()   
+        test_response = Response(
+            self.test_form.id, self.test_user.id, is_submitted=False, is_withdrawn=False)
+        db.session.add(test_response)
+        db.session.commit()
+
+        response = self.app.post('/api/v1/authenticate', data={
+            'email': 'something@email.com',
+            'password': '123456'
+        })
+
+        assert response.status_code == 200
+
+        data = json.loads(response.data)
+
+        response = self.app.get(
+            '/api/v1/events', headers={'Authorization': data["token"]})
+        data = json.loads(response.data)
+
+        assert len(data) == 1
+        assert data[0]["id"] == 1
+        assert data[0]["description"] == 'Event Description'
+        assert data[0]["status"] == 'Continue application'
+
+    
     def test_get_events_unauthed_not_available(self):
         self.seed_static_data()
 
