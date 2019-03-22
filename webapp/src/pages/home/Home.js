@@ -55,7 +55,7 @@ class Home extends Component {
                   {
                     this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
                       this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
-                      <NavLink to="/applicationForm">Apply now</NavLink> :
+                      <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
                       this.state.rows[rowIndex][fieldNames[cellIndex]]
                   }
                 </td>
