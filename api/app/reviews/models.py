@@ -68,7 +68,7 @@ class ReviewResponse(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
     reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
-    response_id = db.Column(db.Intger(), db.ForeignKey('response.id'), nullable=False)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=False)
     
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
