@@ -104,6 +104,8 @@ class UserAPI(SignupMixin, restful.Resource):
             (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user_primaryLanguage = args['user_primaryLanguage']
 
+        LOGGER.info("Registering email: {}".format(email))
+
         user = AppUser(
             email=email,
             firstname=firstname,
@@ -125,6 +127,7 @@ class UserAPI(SignupMixin, restful.Resource):
         try:
             db.session.commit()
         except IntegrityError:
+            LOGGER.error("email: {} already in use".format(email))
             return EMAIL_IN_USE
 
         send_mail(recipient=user.email,
@@ -133,6 +136,8 @@ class UserAPI(SignupMixin, restful.Resource):
                       user_title, firstname, lastname,
                       get_baobab_host(),
                       user.verify_token))
+
+        LOGGER.debug("Sent verification email to {}".format(user.email))
 
         return user_info(user), 201
 
@@ -170,6 +175,7 @@ class UserAPI(SignupMixin, restful.Resource):
         try:
             db.session.commit()
         except IntegrityError:
+            LOGGER.error("email {} already in use".format(email))
             return EMAIL_IN_USE
 
         return user_info(user), 200
@@ -179,11 +185,18 @@ class UserAPI(SignupMixin, restful.Resource):
         '''
         The function that lets the user delete the account
         '''
+
+        LOGGER.debug("Deleting user: {}".format(g.current_user['id']))
+
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
         if user:
             user.is_deleted = True
             db.session.commit()
+            LOGGER.debug("Successfully deleted user {}".format(g.current_user['id']))
+        else:
+            LOGGER.debug("No user for id {}".format(g.current_user['id']))        
+        
         return {}, 200
 
 
@@ -195,30 +208,42 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
         user = db.session.query(AppUser).filter(
             AppUser.email == args['email']).first()
 
+        LOGGER.debug("Authenticating user: {}".format(args['email']))
+
         if user:
             if user.is_deleted:
+                LOGGER.debug("Failed to authenticate, user {} deleted".format(args['email'])) 
                 return USER_DELETED
 
             if not user.verified_email:
+                LOGGER.debug("Failed to authenticate, email {} not verified".format(args['email']))
                 return EMAIL_NOT_VERIFIED
 
             if bcrypt.check_password_hash(user.password, args['password']):
+                LOGGER.debug("Successful authentication for email: {}".format(args['email']))
                 return user_info(user)
 
+        else:
+            LOGGER.debug("User not found for {}".format(args['email']))
+        
         return BAD_CREDENTIALS
 
 
 class PasswordResetRequestAPI(restful.Resource):
 
-    def post(self):
+    def post(self):        
+
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('email', type=str, required=True)
         args = req_parser.parse_args()
+
+        LOGGER.debug("Requesting password reset for email {}".format(args['email']))
 
         user = db.session.query(AppUser).filter(
             AppUser.email == args['email']).first()
 
         if not user:
+            LOGGER.debug("No user found for email {}".format(args['email']))
             return USER_NOT_FOUND
 
         password_reset = PasswordReset(user=user)
@@ -236,42 +261,55 @@ class PasswordResetRequestAPI(restful.Resource):
 
 class PasswordResetConfirmAPI(restful.Resource):
 
-    def post(self):
+    def post(self):        
+        
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('code', type=str, required=True)
         req_parser.add_argument('password', type=str, required=True)
-        args = req_parser.parse_args()
+        args = req_parser.parse_args()        
+
+        LOGGER.debug("Confirming password reset for code: {}".format(args['code']))
 
         password_reset = db.session.query(PasswordReset).filter(
             PasswordReset.code == args['code']).first()
 
         if not password_reset:
+            LOGGER.debug("Reset password code not valid: {}".format(args['code']))
             return RESET_PASSWORD_CODE_NOT_VALID
 
         if password_reset.date < datetime.now():
+            LOGGER.debug("Reset code expired for code: {}".format(args['code']))
             return RESET_PASSWORD_CODE_EXPIRED
 
         password_reset.user.set_password(args['password'])
         db.session.delete(password_reset)
         db.session.commit()
 
+        LOGGER.debug("Password reset successfully")
+
         return {}, 201
 
 
 class VerifyEmailAPI(restful.Resource):
 
-    def get(self):
+    def get(self):        
+        
         token = request.args.get('token')
+
+        LOGGER.debug("Verifying email for token: {}".format(token))
 
         user = db.session.query(AppUser).filter(
             AppUser.verify_token == token).first()
 
         if not user:
+            LOGGER.debug("No user found for token: {}".format(token))
             return EMAIL_VERIFY_CODE_NOT_VALID
 
         user.verified_email = True
 
         db.session.commit()
+
+        LOGGER.debug("Email verified successfully for token: {}".format(token))
 
         return {}, 201
 
@@ -280,10 +318,13 @@ class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
         email = request.args.get('email')
 
+        LOGGER.debug("Resending verification email to: ".format(email))
+
         user = db.session.query(AppUser).filter(
             AppUser.email == email).first()
 
         if not user:
+            LOGGER.debug("User not found for email: {}".format(email))
             return USER_NOT_FOUND
 
         send_mail(recipient=user.email,
@@ -292,6 +333,8 @@ class ResendVerificationEmailAPI(restful.Resource):
                       user.user_title, user.firstname, user.lastname,
                       get_baobab_host(),
                       user.verify_token))
+
+        LOGGER.debug("Resent email verification to: {}".format(email))
 
         return {}, 201
 
