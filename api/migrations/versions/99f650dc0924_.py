@@ -1,13 +1,13 @@
 """empty message
 
-Revision ID: 20bb90b8010c
+Revision ID: 99f650dc0924
 Revises: b4c1dfa70233
-Create Date: 2019-03-23 18:29:20.289469
+Create Date: 2019-03-23 19:02:35.328537
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '20bb90b8010c'
+revision = '99f650dc0924'
 down_revision = 'b4c1dfa70233'
 
 from alembic import op
@@ -46,9 +46,9 @@ def upgrade():
     op.create_table('review_question',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('review_form_id', sa.Integer(), nullable=False),
-    sa.Column('question_id', sa.Integer(), nullable=False),
+    sa.Column('question_id', sa.Integer(), nullable=True),
     sa.Column('description', sa.String(), nullable=True),
-    sa.Column('headline', sa.String(), nullable=False),
+    sa.Column('headline', sa.String(), nullable=True),
     sa.Column('type', sa.String(), nullable=False),
     sa.Column('placeholder', sa.String(), nullable=True),
     sa.Column('options', sa.JSON(), nullable=True),
@@ -65,7 +65,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('review_response_id', sa.Integer(), nullable=False),
     sa.Column('review_question_id', sa.Integer(), nullable=False),
-    sa.Column('value', sa.Float(), nullable=False),
+    sa.Column('value', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['review_question_id'], ['review_question.id'], ),
     sa.ForeignKeyConstraint(['review_response_id'], ['review_response.id'], ),
     sa.PrimaryKeyConstraint('id')

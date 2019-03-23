@@ -22,9 +22,9 @@ class ReviewForm(db.Model):
 class ReviewQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
-    question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=False)
+    question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
     description = db.Column(db.String(), nullable=True)
-    headline = db.Column(db.String(), nullable=False)
+    headline = db.Column(db.String(), nullable=True)
     type = db.Column(db.String(), nullable=False)
     placeholder = db.Column(db.String(), nullable=True)
     options = db.Column(db.JSON(), nullable=True)
@@ -89,7 +89,7 @@ class ReviewScore(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     review_response_id = db.Column(db.Integer(), db.ForeignKey('review_response.id'), nullable=False)
     review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
-    value = db.Column(db.Float(), nullable=False)
+    value = db.Column(db.String(), nullable=False)
 
     review_response = db.relationship('ReviewResponse', foreign_keys=[review_response_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[review_question_id])
