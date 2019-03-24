@@ -3,6 +3,8 @@ import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 
+const baseUrl = process.env.REACT_APP_API_URL;
+
 class FormFileUpload extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
@@ -48,12 +50,12 @@ class FormFileUpload extends React.Component {
                 }
                 type="file"
                 placeholder={this.props.placeholder}
-                value={this.props.value}
                 onChange={this.onChange}
                 min={this.props.min || null}
                 ref={input => {
                 this.nameInput = input;
                 }}
+                accept=".pdf, application/pdf"
                 tabIndex={this.props.tabIndex}
                 autoFocus={this.props.autoFocus}
                 required={this.props.required || null}
@@ -62,7 +64,8 @@ class FormFileUpload extends React.Component {
             {this.props.uploading && <div class="progress">
                 <div class="progress-bar" role="progressbar" style={progressStyle} aria-valuemin="0" aria-valuemax="100"></div>
             </div>}
-            {this.props.uploaded && <div class="text-success uploaded-status">Uploaded file</div>}
+            {(this.props.uploaded || this.props.value) && 
+              <a href={baseUrl + "/api/v1/file?filename=" + this.props.value} class="text-success uploaded-status">Uploaded file</a>}
         </FormGroup>
       </div>
     );
