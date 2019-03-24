@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
+from app.events.models import EventRole
 
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED
@@ -62,13 +63,14 @@ user_fields = {
 }
 
 
-def user_info(user):
+def user_info(user, roles):
     return {
         'id': user.id,
         'token': generate_token(user),
         'firstname': user.firstname,
         'lastname': user.lastname,
-        'title': user.user_title
+        'title': user.user_title,
+        'roles': [{'event_id': event_role.event_id, 'role': event_role.role} for event_role in roles]
     }
 
 
@@ -139,7 +141,7 @@ class UserAPI(SignupMixin, restful.Resource):
 
         LOGGER.debug("Sent verification email to {}".format(user.email))
 
-        return user_info(user), 201
+        return user_info(user, []), 201
 
     @auth_required
     def put(self):
@@ -178,7 +180,9 @@ class UserAPI(SignupMixin, restful.Resource):
             LOGGER.error("email {} already in use".format(email))
             return EMAIL_IN_USE
 
-        return user_info(user), 200
+        roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
+
+        return user_info(user, roles), 200
 
     @auth_required
     def delete(self):
@@ -221,7 +225,8 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
             if bcrypt.check_password_hash(user.password, args['password']):
                 LOGGER.debug("Successful authentication for email: {}".format(args['email']))
-                return user_info(user)
+                roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
+                return user_info(user, roles)
 
         else:
             LOGGER.debug("User not found for {}".format(args['email']))
