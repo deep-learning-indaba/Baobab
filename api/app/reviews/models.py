@@ -9,6 +9,7 @@ class ReviewForm(db.Model):
     deadline = db.Column(db.DateTime(), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
+    review_questions = db.relationship('ReviewQuestion')
 
     def __init__(self, application_form_id, deadline):
         self.application_form_id = application_form_id
