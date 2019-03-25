@@ -43,6 +43,7 @@ review_form_fields = {
 answer_fields = {
     'id': fields.Integer,
     'question_id': fields.Integer,
+    'question': fields.String(attribute='question.headline'),
     'value': fields.String
 }
 

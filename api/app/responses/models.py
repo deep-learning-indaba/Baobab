@@ -46,6 +46,7 @@ class Answer(db.Model):
     value = db.Column(db.String(), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
+    question = db.relationship('Question', foreign_keys=[question_id])
 
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id
