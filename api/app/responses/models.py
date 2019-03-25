@@ -57,11 +57,11 @@ class Answer(db.Model):
 class ResponseReviewer(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
-    user = db.relationship('AppUser', foreign_keys=[user_id])
+    user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
 
-    def __init__(self, response_id, user_id):
+    def __init__(self, response_id, reviewer_user_id):
         self.response_id = response_id
-        self.user_id = user_id
+        self.reviewer_user_id = reviewer_user_id
