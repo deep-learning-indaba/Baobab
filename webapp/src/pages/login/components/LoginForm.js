@@ -12,7 +12,9 @@ class LoginForm extends Component {
       email: "",
       password: "",
       loading: false,
-      error: ""
+      notVerified: false,
+      error: "",
+      resendStatus: ""
     };
   }
   validateForm() {
@@ -32,7 +34,7 @@ class LoginForm extends Component {
     userService.login(this.state.email, this.state.password).then(
       user => {
         console.log("Response from user service: ", user);
-        
+
         if (this.props.loggedIn) {
           this.props.loggedIn(user);
         }
@@ -42,13 +44,30 @@ class LoginForm extends Component {
           from: { pathname: "/" }
         };
         this.props.history.push(from);
-        
-      }, 
-      e => this.setState({
-        error: (e.response && e.response.data) ? e.response.data.message : e.message,
-        loading: false
-      }));
+      },
+      e =>
+        this.setState({
+          error:
+            e.response && e.response.data ? e.response.data.message : e.message,
+          loading: false,
+          notVerified: e.response && e.response.status === 422
+        })
+    );
   };
+
+  resendVerification = event => {
+    event.preventDefault();
+    this.setState({ loading: true });
+    userService.resendVerification(this.state.email).then(resp => {
+      this.setState({
+        loading: false,
+        error: resp.error,
+        resendStatus: resp.error ? "": "We have re-sent you verification email, please check your inbox and spam and click on the link to verify your email address.",
+        email: "",
+        password: ""
+      });
+    });
+  }
 
   render() {
     const xs = 6;
@@ -56,20 +75,18 @@ class LoginForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, password, loading, error } = this.state;
+    const { email, password, loading, error, notVerified, resendStatus } = this.state;
 
     return (
       <div className="Login">
-        
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Sign in</p>
+          <p className="h5 text-center mb-4">Login</p>
           <div class="form-group">
             <label for="email">Email address</label>
             <input
               type="email"
               class="form-control"
               id="email"
-              placeholder="Enter email"
               onChange={this.handleChange}
               value={email}
               autoFocus="true"
@@ -81,22 +98,28 @@ class LoginForm extends Component {
               type="password"
               class="form-control"
               id="password"
-              placeholder="Password"
               onChange={this.handleChange}
               value={password}
             />
           </div>
           <div class="row">
-            <div class={commonColClassName}>
+            <div class={commonColClassName + " text-center"}>
               <button
                 type="submit"
                 class="btn btn-primary"
                 disabled={!this.validateForm() || loading}
               >
+                {loading && (
+                  <span
+                    class="spinner-grow spinner-grow-sm"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                )}
                 Login
               </button>
             </div>
-            <div class={commonColClassName}>
+            <div class={commonColClassName + " text-center"}>
               <Link to="/createAccount">
                 <button type="submit" class="btn btn-primary">
                   Sign Up
@@ -104,17 +127,17 @@ class LoginForm extends Component {
               </Link>
             </div>
           </div>
-          {loading && (
-            <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
-          )}
-          {error && <div className={"alert alert-danger"}>{error}</div>}
-          <div class="forgot-password">
-            <Link to="/resetPassword">
-              Forgot password
-            </Link>
+          {error && 
+            <div className={"alert alert-danger"}>
+              {error}
+              {notVerified && <a href="#" onClick={this.resendVerification}> Resend Verification Email</a>}
+            </div>
+          }
+          {resendStatus && <div className={"alert alert-success"}>{resendStatus}</div>}
+          <div class="forgot-password text-center">
+            <Link to="/resetPassword">Forgot password</Link>
           </div>
         </form>
-
       </div>
     );
   }

@@ -15,6 +15,7 @@ def _add_object_to_db(obj):
     db.session.add(obj)
     db.session.commit()
 
+
 class ResponseApiTest(ApiTestCase):
     user_data_dict = {
         'email': 'something@email.com',
@@ -29,6 +30,8 @@ class ResponseApiTest(ApiTestCase):
         'department': 'Computer Science',
         'user_disability': 'None',
         'user_category_id': 1,
+        'user_primaryLanguage': 'Zulu',
+        'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'password': '123456'
     }
 
@@ -39,7 +42,7 @@ class ResponseApiTest(ApiTestCase):
 
         test_category = UserCategory('Category1')
         _add_object_to_db(test_category)
-        
+
         other_user_data = self.user_data_dict.copy()
         other_user_data['email'] = 'other@user.com'
         response = self.app.post('/api/v1/user', data=other_user_data)
@@ -49,23 +52,30 @@ class ResponseApiTest(ApiTestCase):
         self.user_data = json.loads(response.data)
 
         # Add application form data
-        self.test_event = Event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24))
+        self.test_event = Event('Test Event', 'Event Description', date(
+            2019, 2, 24), date(2019, 3, 24))
         _add_object_to_db(self.test_event)
-        self.test_form = ApplicationForm(self.test_event.id, True, date(2019, 3, 24))
+        self.test_form = ApplicationForm(
+            self.test_event.id, True, date(2019, 3, 24))
         _add_object_to_db(self.test_form)
-        test_section = Section(self.test_form.id, 'Test Section', 'Test Description', 1)
+        test_section = Section(
+            self.test_form.id, 'Test Section', 'Test Description', 1)
         _add_object_to_db(test_section)
-        self.test_question = Question(self.test_form.id, test_section.id, 'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
+        self.test_question = Question(self.test_form.id, test_section.id,
+                                      'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
         _add_object_to_db(self.test_question)
-        self.test_question2 = Question(self.test_form.id, test_section.id, 'Test Question 2', 'Enter something', 2, 'short-text', None)
+        self.test_question2 = Question(
+            self.test_form.id, test_section.id, 'Test Question 2', 'Enter something', 2, 'short-text', None)
         _add_object_to_db(self.test_question2)
 
-        self.test_response = Response(self.test_form.id, self.other_user_data['id'])
+        self.test_response = Response(
+            self.test_form.id, self.other_user_data['id'])
         _add_object_to_db(self.test_response)
 
-        self.test_answer1 = Answer(self.test_response.id, self.test_question.id, 'My Answer')
+        self.test_answer1 = Answer(
+            self.test_response.id, self.test_question.id, 'My Answer')
         _add_object_to_db(self.test_answer1)
-        
+
         db.session.flush()
 
     def test_get_response(self):
@@ -73,11 +83,12 @@ class ResponseApiTest(ApiTestCase):
         with app.app_context():
             self._seed_data()
 
-            response = self.app.get('/api/v1/response', 
-                                    headers={'Authorization': self.other_user_data['token']}, 
+            response = self.app.get('/api/v1/response',
+                                    headers={
+                                        'Authorization': self.other_user_data['token']},
                                     query_string={'event_id': self.test_event.id})
             data = json.loads(response.data)
-            
+
             self.assertEqual(data['application_form_id'], self.test_form.id)
             self.assertEqual(data['user_id'], self.other_user_data['id'])
             self.assertIsNone(data['submitted_timestamp'])
@@ -94,21 +105,24 @@ class ResponseApiTest(ApiTestCase):
         with app.app_context():
             self._seed_data()
 
-            response = self.app.get('/api/v1/response', 
-                                    headers={'Authorization': self.other_user_data['token']}, 
+            response = self.app.get('/api/v1/response',
+                                    headers={
+                                        'Authorization': self.other_user_data['token']},
                                     query_string={'event_id': self.test_event.id + 100})
 
             self.assertEqual(response.status_code, 404)
-    
+
     def test_get_missing_form(self):
         """Test that we get a 404 error if we try to get a response for an event with no application form."""
         with app.app_context():
             self._seed_data()
-            test_event2 = Event('Test Event 2', 'Event Description', date(2019, 2, 24), date(2019, 3, 24))
+            test_event2 = Event('Test Event 2', 'Event Description', date(
+                2019, 2, 24), date(2019, 3, 24))
             _add_object_to_db(test_event2)
 
-            response = self.app.get('/api/v1/response', 
-                                    headers={'Authorization': self.other_user_data['token']}, 
+            response = self.app.get('/api/v1/response',
+                                    headers={
+                                        'Authorization': self.other_user_data['token']},
                                     query_string={'event_id': test_event2.id})
 
             self.assertEqual(response.status_code, 404)
@@ -118,8 +132,9 @@ class ResponseApiTest(ApiTestCase):
         with app.app_context():
             self._seed_data()
 
-            response = self.app.get('/api/v1/response', 
-                                    headers={'Authorization': self.user_data['token']}, 
+            response = self.app.get('/api/v1/response',
+                                    headers={
+                                        'Authorization': self.user_data['token']},
                                     query_string={'event_id': self.test_event.id})
 
             self.assertEqual(response.status_code, 404)
@@ -145,15 +160,16 @@ class ResponseApiTest(ApiTestCase):
             }
 
             response = self.app.post(
-                '/api/v1/response', 
-                data=json.dumps(response_data), 
+                '/api/v1/response',
+                data=json.dumps(response_data),
                 content_type='application/json',
                 headers={'Authorization': self.user_data['token']})
 
             self.assertEqual(response.status_code, 201)
 
-            response = self.app.get('/api/v1/response', 
-                                    headers={'Authorization': self.user_data['token']}, 
+            response = self.app.get('/api/v1/response',
+                                    headers={
+                                        'Authorization': self.user_data['token']},
                                     query_string={'event_id': self.test_event.id})
             data = json.loads(response.data)
 
@@ -168,7 +184,8 @@ class ResponseApiTest(ApiTestCase):
             self.assertEqual(answer['question_id'], self.test_question.id)
 
             answer = data['answers'][1]
-            self.assertEqual(answer['value'], 'Hello world, this is the 2nd answer.')
+            self.assertEqual(
+                answer['value'], 'Hello world, this is the 2nd answer.')
             self.assertEqual(answer['question_id'], self.test_question2.id)
 
     def test_update(self):
@@ -181,39 +198,41 @@ class ResponseApiTest(ApiTestCase):
                 'application_form_id': self.test_form.id,
                 'is_submitted': True,  # Set submitted
                 'answers': [
-                        {
-                            'question_id': self.test_question.id,
-                            'value': 'Answer 1 UPDATED'  # Update an existing answer
-                        },
-                        {
-                            'question_id': self.test_question2.id,  # Add a new answer
-                            'value': 'This is the 2nd answer.'
-                        }
-                    ]
+                    {
+                        'question_id': self.test_question.id,
+                        'value': 'Answer 1 UPDATED'  # Update an existing answer
+                    },
+                    {
+                        'question_id': self.test_question2.id,  # Add a new answer
+                        'value': 'This is the 2nd answer.'
+                    }
+                ]
             }
 
             response = self.app.put(
-                    '/api/v1/response', 
-                    data=json.dumps(update_data), 
-                    content_type='application/json',
-                    headers={'Authorization': self.other_user_data['token']})
-            
+                '/api/v1/response',
+                data=json.dumps(update_data),
+                content_type='application/json',
+                headers={'Authorization': self.other_user_data['token']})
+
             self.assertEqual(response.status_code, 200)
 
             # Retrieve the response and check that the fields are as expected
             response = self.app.get(
-                    'api/v1/response', 
-                    headers={'Authorization': self.other_user_data['token']},
-                    query_string={'event_id': self.test_event.id})
+                'api/v1/response',
+                headers={'Authorization': self.other_user_data['token']},
+                query_string={'event_id': self.test_event.id})
 
             data = json.loads(response.data)
 
             self.assertEqual(data['application_form_id'], self.test_form.id)
             self.assertEqual(data['user_id'], self.other_user_data['id'])
 
-            parsed_submitted = dateutil.parser.parse(data['submitted_timestamp'])
-            self.assertLess(abs((datetime.now() - parsed_submitted).total_seconds()), 5*60)
-            
+            parsed_submitted = dateutil.parser.parse(
+                data['submitted_timestamp'])
+            self.assertLess(
+                abs((datetime.now() - parsed_submitted).total_seconds()), 5*60)
+
             self.assertTrue(data['is_submitted'])
             self.assertFalse(data['is_withdrawn'])
             self.assertTrue(data['answers'])
@@ -238,11 +257,11 @@ class ResponseApiTest(ApiTestCase):
             }
 
             response = self.app.put(
-                    '/api/v1/response', 
-                    data=json.dumps(update_data), 
-                    content_type='application/json',
-                    headers={'Authorization': self.other_user_data['token']})
-            
+                '/api/v1/response',
+                data=json.dumps(update_data),
+                content_type='application/json',
+                headers={'Authorization': self.other_user_data['token']})
+
             self.assertEqual(response.status_code, 404)
 
     def test_update_permission(self):
@@ -257,11 +276,11 @@ class ResponseApiTest(ApiTestCase):
             }
 
             response = self.app.put(
-                    '/api/v1/response', 
-                    data=json.dumps(update_data), 
-                    content_type='application/json',
-                    headers={'Authorization': self.user_data['token']})
-            
+                '/api/v1/response',
+                data=json.dumps(update_data),
+                content_type='application/json',
+                headers={'Authorization': self.user_data['token']})
+
             self.assertEqual(response.status_code, 401)
 
     def test_update_conflict(self):
@@ -276,11 +295,11 @@ class ResponseApiTest(ApiTestCase):
             }
 
             response = self.app.put(
-                    '/api/v1/response', 
-                    data=json.dumps(update_data), 
-                    content_type='application/json',
-                    headers={'Authorization': self.other_user_data['token']})
-            
+                '/api/v1/response',
+                data=json.dumps(update_data),
+                content_type='application/json',
+                headers={'Authorization': self.other_user_data['token']})
+
             self.assertEqual(response.status_code, 409)
 
     def test_delete(self):
@@ -288,29 +307,29 @@ class ResponseApiTest(ApiTestCase):
         with app.app_context():
             self._seed_data()
             response = self.app.delete(
-                    '/api/v1/response', 
-                    headers={'Authorization': self.other_user_data['token']},
-                    query_string={'id': self.test_response.id})
-            
+                '/api/v1/response',
+                headers={'Authorization': self.other_user_data['token']},
+                query_string={'id': self.test_response.id})
+
             self.assertEqual(response.status_code, 204)
 
             # We should still be able to get the response, but it is marked unsubmitted and withdrawn
             response = self.app.get(
-                    '/api/v1/response', 
-                    headers={'Authorization': self.other_user_data['token']},
-                    query_string={'event_id': self.test_event.id})
+                '/api/v1/response',
+                headers={'Authorization': self.other_user_data['token']},
+                query_string={'event_id': self.test_event.id})
             data = json.loads(response.data)
             self.assertFalse(data['is_submitted'])
             self.assertTrue(data['is_withdrawn'])
-    
+
     def test_delete_missing(self):
         """Test that we can't delete a response that doesn't exist."""
         with app.app_context():
             self._seed_data()
             response = self.app.delete(
-                    '/api/v1/response', 
-                    headers={'Authorization': self.other_user_data['token']},
-                    query_string={'id': self.test_response.id + 10})
+                '/api/v1/response',
+                headers={'Authorization': self.other_user_data['token']},
+                query_string={'id': self.test_response.id + 10})
             self.assertEqual(response.status_code, 404)  # Not found
 
     def test_delete_permission(self):
@@ -320,8 +339,8 @@ class ResponseApiTest(ApiTestCase):
 
             # test_response belongs to "other_user", check that "user" can't delete it
             response = self.app.delete(
-                    '/api/v1/response', 
-                    headers={'Authorization': self.user_data['token']},
-                    query_string={'id': self.test_response.id})
-            
+                '/api/v1/response',
+                headers={'Authorization': self.user_data['token']},
+                query_string={'id': self.test_response.id})
+
             self.assertEqual(response.status_code, 401)  # Unauthorized

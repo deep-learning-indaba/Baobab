@@ -406,6 +406,10 @@ class Submitted extends React.Component {
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
+        <p class="awards alert alert-info">
+        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank">here</a> by 12 April 2019.
+Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
+        </p>
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             Withdraw Application
@@ -607,12 +611,19 @@ class ApplicationForm extends Component {
       answers,
       isSubmitting
     } = this.state;
+
+    const loadingStyle = {
+      "width": "3rem",
+      "height": "3rem"
+    }
+
     if (isLoading) {
       return (
-        <img
-          class="loading-indicator mx-auto"
-          src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA=="
-        />
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border" style={loadingStyle} role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
       );
     }
 

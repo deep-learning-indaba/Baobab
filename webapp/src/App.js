@@ -1,11 +1,5 @@
 import React, { Component } from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Link,
-  NavLink,
-  Switch
-} from "react-router-dom";
+import { Router, Route, Link, NavLink, Switch } from "react-router-dom";
 import logo from "./images/logo-32x32-white.png";
 import Home from "./pages/home";
 import Login from "./pages/login";
@@ -16,14 +10,34 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import ReactGA from "react-ga";
+import createHistory from "history/createBrowserHistory";
 import "./App.css";
+
+const history = createHistory();
+ReactGA.initialize("UA-136093201-1", {
+  debug: true,
+  testMode: process.env.NODE_ENV === "test"
+});
+
+ReactGA.pageview(window.location.pathname + window.location.search);
+history.listen((location, action) => {
+  ReactGA.pageview(location.pathname + location.search);
+});
+
+const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
+const BUG_BODY_TEXT = `Browser name and version:
+What I was trying to do:
+Description of problem: 
+`;
 
 class App extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      user: {}
+      user: {},
+      collapsed: true
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -41,9 +55,15 @@ class App extends Component {
     });
   }
 
+  toggleMenu = () => {
+    this.setState({ collapsed: !this.state.collapsed });
+  };
+
   render() {
+    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+
     return (
-      <Router>
+      <Router history={history}>
         <div>
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="/">
@@ -67,46 +87,93 @@ class App extends Component {
             >
               <span class="navbar-toggler-icon" />
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div
+              class={
+                "collapse navbar-collapse" +
+                (this.state.collapsed ? " collapsed" : "")
+              }
+              id="navbarNav"
+            >
               <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
+                <li class={"nav-item"}>
                   <NavLink
+                    exact
                     to="/"
                     activeClassName="nav-link active"
                     className="nav-link"
+                    onClick={this.toggleMenu}
                   >
                     Home
                   </NavLink>
                 </li>
-                <li class="nav-item">
-                  <NavLink
-                    to="/applicationForm"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                  >
-                    Apply
-                  </NavLink>
-                </li>
+                {this.state.user && (
+                  <li class="nav-item">
+                    <NavLink
+                      to="/applicationForm"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Apply
+                    </NavLink>
+                  </li>
+                )}
               </ul>
-              <UserDropdown logout={this.refreshUser} user={this.state.user} />
+              <UserDropdown
+                logout={this.refreshUser}
+                user={this.state.user}
+                onClick={this.toggleMenu}
+              />
             </div>
           </nav>
           <div class="Body">
             <div className="container-fluid">
               <Switch>
-                <Route exact path="/" component={Home} />
-                <Route exact path="/login" render={(props) => <Login {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/createAccount" render={(props) => <CreateAccount {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/resetPassword" render={(props) => <ResetPassword {...props} loggedIn={this.refreshUser} />} />
-                <Route exact path="/verifyEmail" component={VerifyEmail}/>
-                <PrivateRoute exact path="/profile" component={Profile} />} /> 
-                <PrivateRoute exact path="/applicationForm" component={Application} />
+                <Route
+                  exact
+                  path="/"
+                  render={props => <Home {...props} user={this.state.user} />}
+                />
+                <Route
+                  exact
+                  path="/login"
+                  render={props => (
+                    <Login {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/createAccount"
+                  render={props => (
+                    <CreateAccount {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/resetPassword"
+                  render={props => (
+                    <ResetPassword {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route exact path="/verifyEmail" component={VerifyEmail} />
+                <PrivateRoute exact path="/profile" component={Profile} />} />
+                <PrivateRoute
+                  exact
+                  path="/applicationForm"
+                  component={Application}
+                />
               </Switch>
             </div>
           </div>
           <footer class="text-muted">
-            <div class="container">
-              <p>Baobab, © 2019 | <a href="www.deeplearningindaba.com">Deep Learning Indaba</a></p>
+            <div class="container-flex">
+              <p>
+                Baobab, © 2019 |{" "}
+                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href={bug_mailto} class="btn btn-info float-right">
+                  Report a Bug
+                </a>
+              </p>
             </div>
           </footer>
         </div>

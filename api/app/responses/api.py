@@ -1,7 +1,11 @@
+import datetime
+
+from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from flask import g, request
-import datetime
-from flask_restful import reqparse, fields, marshal_with
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
@@ -52,10 +56,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         try:
             event = db.session.query(Event).filter(Event.id == args['event_id']).first()
             if not event:
+                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
                 return errors.EVENT_NOT_FOUND
 
             form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
             if not form:
+                LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
                 return errors.FORM_NOT_FOUND
             
             # Get the latest response (note there may be older withdrawn responses)
@@ -63,13 +69,19 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 Response.application_form_id == form.id, Response.user_id == g.current_user['id']
                 ).order_by(Response.started_timestamp.desc()).first()
             if not response:
+                LOGGER.debug("Response not found for event_id: {}".format(args['event_id']))
                 return errors.RESPONSE_NOT_FOUND
             
             answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
             response.answers = list(answers)
 
             return response
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -105,7 +117,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
             finally:
                 return response, 201  # 201 is 'CREATED' status code
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -123,10 +140,13 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         try: 
             old_response = db.session.query(Response).filter(Response.id == args['id']).first()
             if not old_response:
+                LOGGER.error("Response not found for id {}".format(args['id']))
                 return errors.RESPONSE_NOT_FOUND
             if old_response.user_id != user_id:
+                LOGGER.error("Old user id {} does not match user id {}".format(old_response.user_id, user_id))
                 return errors.UNAUTHORIZED
             if old_response.application_form_id != args['application_form_id']:
+                LOGGER.error("Update conflict for {}".format(args['application_form_id']))
                 return errors.UPDATE_CONFLICT
 
             old_response.is_submitted = args['is_submitted']
@@ -155,7 +175,11 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             finally:
                 return old_response, 200
 
-        except Exception as e:
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -180,8 +204,13 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
             db.session.commit()
             db.session.flush()
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
             return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE            
 
         try:
             user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
@@ -190,7 +219,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             WITHDRAWAL_BODY.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
             emailer.send_mail(user.email, subject, body_text)
         except:                
-            LOGGER.warn('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
+            LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
 
         return {}, 204
 
@@ -212,7 +241,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             if event is None:
                 LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
         except:
-            LOGGER.warn('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
+            LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
             #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
@@ -228,7 +257,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             emailer.send_mail(user.email, subject, body_text=body_text)
 
         except:
-            LOGGER.warn('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
+            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
 
 
 

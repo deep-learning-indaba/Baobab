@@ -12,7 +12,8 @@ class RequestPasswordResetForm extends Component {
       email: "",
       submitted: false,
       loading: false,
-      error: ""
+      error: "",
+      resetRequested: false
     };
   }
   validateForm() {
@@ -27,17 +28,19 @@ class RequestPasswordResetForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true });
-    this.setState({ loading: true });
+    this.setState({ 
+      submitted: true,
+      loading: true 
+    });
 
     userService.requestPasswordReset(this.state.email).then(response => {
-      console.log("Response from user service: ", response);
       if (response.status === 201) {
-        const { from } = { from: { pathname: "/" } };
-        this.props.history.push(from);
+        this.setState({
+          resetRequested: true
+        });
       } else {
         this.setState({
-          error: response.messsage,
+          error: response.message,
           loading: false
         });
       }
@@ -50,13 +53,25 @@ class RequestPasswordResetForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, submitted, loading, error } = this.state;
+    const { email, submitted, loading, error, resetRequested } = this.state;
+
+    if (resetRequested) {
+      return (
+        <div className={"reset-status text-center"}>
+          <p className="h5 text-center mb-4">Reset Password</p>
+          <div class="col">
+            Your password reset request has been processed. Please check your email for a link that will allow you to change your password. 
+          </div>
+        </div>
+      )
+    }
+
+    console.log("Rendering, error is: " + error);
 
     return (
       <div className="Login">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Sign in</p>
+          <p className="h5 text-center mb-4">Reset Password</p>
           <div class="form-group">
             <label for="email">Email address</label>
             <input
@@ -76,15 +91,12 @@ class RequestPasswordResetForm extends Component {
                 class="btn btn-primary"
                 disabled={!this.validateForm() || loading}
               >
+                {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
                 Reset password
               </button>
             </div>
+            {error && <div className={"alert alert-danger"}>{error}</div>}
           </div>
-          {
-            loading && (
-              <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
-            )
-          }
           <div />
         </form>
       </div>

@@ -27,13 +27,29 @@
 
 .Body{
   background: #E8ECEE;
-  min-height: 100vh;
+  min-height: 90vh;
+  padding-bottom: 1em;
 }
 
 .HomeNavBar{
   margin-bottom: 0px;
 }
 
-footer > .container > p {
-  margin-top: 1em;
+footer {
+  margin: 1em;
+}
+
+footer .btn {
+  margin-top: -0.5em;
+}
+
+@media (max-width: 650px) {
+  .Body {
+    padding-top: 3em;
+  }
+}
+
+.container-fluid {
+  padding-right: 30px;
+  padding-left: 30px;
 }

@@ -9,8 +9,7 @@ import {
   getCounties,
   getGenderOptions,
   getCategories,
-  getDisabilityOptions,
-  getEthnicityOptions
+  getDisabilityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
@@ -27,14 +26,14 @@ const fieldValidations = [
   ruleRunner(validationFields.email, validEmail),
   ruleRunner(validationFields.nationality, requiredDropdown),
   ruleRunner(validationFields.residence, requiredDropdown),
-  ruleRunner(validationFields.ethnicity, requiredText),
   ruleRunner(validationFields.gender, requiredDropdown),
   ruleRunner(validationFields.affiliation, requiredText),
   ruleRunner(validationFields.department, requiredText),
   ruleRunner(validationFields.disability, requiredText),
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
-  ruleRunner(validationFields.category, requiredDropdown)
+  ruleRunner(validationFields.category, requiredDropdown),
+  ruleRunner(validationFields.primaryLanguage, requiredText)
 ];
 
 class CreateAccountForm extends Component {
@@ -56,26 +55,23 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       genderOptions: [],
       disabilityOptions: [],
-      ethnicityOptions: [],
       error: "",
       created: false
     };
   }
 
   getContentValue(options, value) {
-    if(options && options.filter){
+    if (options && options.filter) {
       return options.filter(option => {
         return option.value === value;
       });
-    }
-    else return null
+    } else return null;
   }
 
-  checkOptionsList(optionsList){
-    if(Array.isArray(optionsList)){
-      return optionsList
-    }
-    else return []
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
   }
 
   componentWillMount() {
@@ -84,16 +80,14 @@ class CreateAccountForm extends Component {
       getGenderOptions,
       getCounties,
       getCategories,
-      getEthnicityOptions,
       getDisabilityOptions
     ]).then(result => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0]) ,
-        genderOptions: this.checkOptionsList(result[1]) ,
-        countryOptions: this.checkOptionsList(result[2]) ,
-        categoryOptions: this.checkOptionsList(result[3]) ,
-        ethnicityOptions: this.checkOptionsList(result[4]) ,
-        disabilityOptions: this.checkOptionsList(result[5]) 
+        titleOptions: this.checkOptionsList(result[0]),
+        genderOptions: this.checkOptionsList(result[1]),
+        countryOptions: this.checkOptionsList(result[2]),
+        categoryOptions: this.checkOptionsList(result[3]),
+        disabilityOptions: this.checkOptionsList(result[4])
       });
     });
   }
@@ -185,8 +179,9 @@ class CreateAccountForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassNameTitle = createColClassName(12, 4, 2, 2);
-    const colClassNameSurname = createColClassName(12, 4, 5, 5);
+    const colClassNameTitle = createColClassName(12, 3, 2, 2);
+    const colClassNameSurname = createColClassName(12, 3, 4, 4);
+    const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
       lastName,
@@ -194,14 +189,15 @@ class CreateAccountForm extends Component {
       title,
       nationality,
       residence,
-      ethnicity,
       gender,
       affiliation,
       department,
       disability,
       category,
       password,
-      confirmPassword
+      confirmPassword,
+      dateOfBirth,
+      primaryLanguage
     } = this.state.user;
 
     const { loading, errors, showErrors, error, created } = this.state;
@@ -228,10 +224,6 @@ class CreateAccountForm extends Component {
     const residenceValue = this.getContentValue(
       this.state.countryOptions,
       residence
-    );
-    const ethnicityValue = this.getContentValue(
-      this.state.ethnicityOptions,
-      ethnicity
     );
     const genderValue = this.getContentValue(this.state.genderOptions, gender);
     const categoryValue = this.getContentValue(
@@ -278,15 +270,49 @@ class CreateAccountForm extends Component {
                 label={validationFields.lastName.display}
               />
             </div>
+            <div class={colClassNameTitle}>
+              <FormSelect
+                options={this.state.genderOptions}
+                id={validationFields.gender.name}
+                placeholder={validationFields.gender.display}
+                onChange={this.handleChangeDropdown}
+                value={genderValue}
+                label={validationFields.gender.display}
+              />
+            </div>
           </div>
-          <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
+          <div class="row">
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.email.name}
+                type="email"
+                placeholder={validationFields.email.display}
+                onChange={this.handleChange(validationFields.email)}
+                value={email}
+                label={validationFields.email.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.dateOfBirth.name}
+                type="date"
+                placeholder={validationFields.dateOfBirth.display}
+                onChange={this.handleChange(validationFields.dateOfBirth)}
+                value={dateOfBirth}
+                label={validationFields.dateOfBirth.display}
+              />
+            </div>
+            <div class={colClassEmailLanguageDob}>
+              <FormTextBox
+                id={validationFields.primaryLanguage.name}
+                type="text"
+                placeholder={validationFields.primaryLanguage.display}
+                onChange={this.handleChange(validationFields.primaryLanguage)}
+                value={primaryLanguage}
+                label={validationFields.primaryLanguage.display}
+              />
+            </div>
+          </div>
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
@@ -306,29 +332,6 @@ class CreateAccountForm extends Component {
                 onChange={this.handleChangeDropdown}
                 value={residenceValue}
                 label={validationFields.residence.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                id={validationFields.ethnicity.name}
-                options={this.state.ethnicityOptions}
-                placeholder={validationFields.ethnicity.display}
-                onChange={this.handleChangeDropdown}
-                value={ethnicityValue}
-                label={validationFields.ethnicity.display}
-                description={validationFields.ethnicity.description}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.genderOptions}
-                id={validationFields.gender.name}
-                placeholder={validationFields.gender.display}
-                onChange={this.handleChangeDropdown}
-                value={genderValue}
-                label={validationFields.gender.display}
               />
             </div>
           </div>
@@ -407,11 +410,15 @@ class CreateAccountForm extends Component {
             class="btn btn-primary"
             disabled={!this.validateForm() || loading}
           >
+            {loading && (
+              <span
+                class="spinner-grow spinner-grow-sm"
+                role="status"
+                aria-hidden="true"
+              />
+            )}
             Sign Up
           </button>
-          {loading && (
-            <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wCRHZnFVdmgHu2nFwlWCI3WGc3TSWhUFGxTAUkGCbtgENBMJAEJsxgMLWzpEAACH5BAkKAAAALAAAAAAQABAAAAMyCLrc/jDKSatlQtScKdceCAjDII7HcQ4EMTCpyrCuUBjCYRgHVtqlAiB1YhiCnlsRkAAAOwAAAAAAAAAAAA==" />
-          )}
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
           {error && <div class="alert alert-danger">{error}</div>}
         </form>

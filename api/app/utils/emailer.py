@@ -45,6 +45,7 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
                 server.sendmail(SMTP_SENDER_EMAIL, recipient, msg.as_string())
                 server.close()
             except Exception as e:
+                LOGGER.error("Exception {} while trying to send email: {}, {}".format(e, traceback.format_exc()))
                 raise e
     else:
         LOGGER.debug('Recipient : {recipient}'.format(recipient=recipient))

@@ -33,3 +33,5 @@ rest_api.add_resource(events_api.EventsAPI,
                       '/api/v1/events'),
 rest_api.add_resource(users_api.VerifyEmailAPI,
                       '/api/v1/verify-email'),
+rest_api.add_resource(users_api.ResendVerificationEmailAPI,
+                      '/api/v1/resend-verification-email')
