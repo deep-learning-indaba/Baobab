@@ -1,8 +1,10 @@
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
+from sqlalchemy.sql import func
+from sqlalchemy import and_
 
-from app import db
+from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin
@@ -67,14 +69,16 @@ user_fields = {
 review_response_fields = {
     'review_form': fields.Nested(review_form_fields),
     'response': fields.Nested(response_fields),
-    'user': fields.Nested(user_fields)
+    'user': fields.Nested(user_fields),
+    'reviews_remaining_count': fields.Integer
 }
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response):
+    def __init__(self, review_form, response, reviews_remaining_count):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
+        self.reviews_remaining_count = reviews_remaining_count
 
 class ReviewAPI(ReviewMixin, restful.Resource):
 
@@ -91,16 +95,26 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         if review_form is None:
             return EVENT_NOT_FOUND
 
-        skip = 0 if args['skip'] is None else args['skip']
+        reviews_remaining_count = db.session.query(func.count(ResponseReviewer.id))\
+                        .filter_by(user_id=g.current_user['id'])\
+                        .join(Response)\
+                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id)\
+                        .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
+                        .filter_by(id=None)\
+                        .all()[0][0]
+
+        skip = args['skip'] or 0
+        skip = skip if skip < reviews_remaining_count else reviews_remaining_count-1
+
         response = db.session.query(Response)\
                         .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id)\
                         .join(ResponseReviewer)\
                         .filter_by(user_id=g.current_user['id'])\
-                        .outerjoin(ReviewResponse, ReviewResponse.response_id==ResponseReviewer.response_id)\
+                        .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
                         .filter_by(id=None)\
                         .order_by(ResponseReviewer.response_id)\
                         .offset(skip)\
                         .limit(1)\
                         .first()
         
-        return ReviewResponseUser(review_form, response)
+        return ReviewResponseUser(review_form, response, reviews_remaining_count)
