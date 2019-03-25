@@ -105,7 +105,11 @@ class ReviewAPI(ReviewMixin, restful.Resource):
                         .all()[0][0]
 
         skip = args['skip'] or 0
-        skip = skip if skip < reviews_remaining_count else reviews_remaining_count-1
+        skip = skip if skip >= 0 else 0
+        if reviews_remaining_count == 0:
+            skip = 0
+        elif skip >= reviews_remaining_count:
+            skip = reviews_remaining_count - 1
 
         response = db.session.query(Response)\
                         .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
