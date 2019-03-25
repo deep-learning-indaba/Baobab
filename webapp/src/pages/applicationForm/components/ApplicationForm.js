@@ -12,6 +12,7 @@ import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
+const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -136,6 +137,7 @@ class FieldEditor extends React.Component {
             name={this.id}
             label={question.description}
             key={"i_" + key}
+            value={answer}
             showError={validationError || this.state.uploadError}
             errorText={validationError || this.state.uploadError}
             uploading={this.state.uploading}
@@ -307,6 +309,26 @@ class Section extends React.Component {
   }
 }
 
+function AnswerValue(props) {
+  if (props.qm.answer && props.qm.answer.value) {
+    switch(props.qm.question.type) {
+      case MULTI_CHOICE:
+        const options = props.qm.question.options.filter(o=>o.value === props.qm.answer.value);
+        if (options) {
+          return options[0].label;
+        }
+        else {
+          return props.qm.answer.value;
+        }
+      case FILE:
+        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>Uploaded File</a>
+      default:
+        return props.qm.answer.value;
+    }
+  }
+  return "No answer provided.";
+}
+
 function Confirmation(props) {
   return (
     <div>
@@ -331,7 +353,7 @@ function Confirmation(props) {
                 </div>
                 <div class="row">
                   <div class="col">
-                    <p>{qm.answer ? qm.answer.value : "No answer provided."}</p>
+                    <p><AnswerValue qm={qm}/></p>
                   </div>
                 </div>
               </div>

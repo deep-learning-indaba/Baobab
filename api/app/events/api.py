@@ -6,13 +6,15 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.events.models import Event
+from app.events.models import Event, EventRole
+from app.users.models import AppUser
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 
 from app import db, bcrypt, LOGGER
+from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN
 
-from app.utils.auth import auth_optional
+from app.utils.auth import auth_optional, auth_required
 
 
 def event_info(user_id, event):
@@ -71,6 +73,21 @@ def get_user_event_response_status(user_id, event_id):
     return "Application not available"
 
 
+def _is_event_admin(user_id, event_id):
+    user = db.session.query(AppUser).filter(
+            AppUser.id == user_id).first()
+    if user.is_admin:
+        return True
+    
+    roles = db.session.query(EventRole).filter(
+            EventRole.user_id == user_id, EventRole.event_id == event_id).all()
+    for role in roles:
+        if role.role == 'admin':
+            return True
+
+    return False
+
+
 class EventsAPI(restful.Resource):
 
     @auth_optional
@@ -89,3 +106,30 @@ class EventsAPI(restful.Resource):
             returnEvents.append(event_info(user_id, event))
 
         return returnEvents, 200
+
+
+class EventStatsAPI(restful.Resource):
+
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        event = db.session.query(Event).filter(Event.id == args['event_id']).first()
+        if not event:
+            return EVENT_NOT_FOUND
+
+        user_id = g.current_user["id"]
+        if not _is_event_admin(user_id, args['event_id']):
+            return FORBIDDEN
+
+        num_users = db.session.query(AppUser.id).count()
+        num_responses = db.session.query(Response.id).count()
+        num_submitted_respones = db.session.query(Response).filter(Response.is_submitted == True).count()
+
+        return {
+            'num_users': num_users,
+            'num_responses': num_responses,
+            'num_submitted_responses': num_submitted_respones
+        }, 200

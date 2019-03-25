@@ -5,6 +5,7 @@ from responses import api as responses_api
 from content import api as content_api
 from files import api as files_api
 from events import api as events_api
+from reviews import api as reviews_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -31,7 +32,10 @@ rest_api.add_resource(content_api.GenderContentAPI,
                       '/api/v1/content/gender'),
 rest_api.add_resource(events_api.EventsAPI,
                       '/api/v1/events'),
+rest_api.add_resource(events_api.EventStatsAPI,
+                      '/api/v1/eventstats'),
 rest_api.add_resource(users_api.VerifyEmailAPI,
                       '/api/v1/verify-email'),
 rest_api.add_resource(users_api.ResendVerificationEmailAPI,
-                      '/api/v1/resend-verification-email')
+                      '/api/v1/resend-verification-email'),
+rest_api.add_resource(reviews_api.ReviewAPI, '/api/v1/reviews')

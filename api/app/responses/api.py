@@ -1,4 +1,5 @@
 import datetime
+import traceback
 
 from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
@@ -27,6 +28,20 @@ If this was a mistake, you may resubmit an application before the application de
 Kind Regards,
 The Deep Learning Indaba 2019 Organisers
 """
+
+
+def _get_answer_value(answer, question):
+    if question.type == 'multi-choice' and question.options is not None:
+        value = [o for o in question.options if o['value'] == answer.value]
+        if not value:
+            return answer.value
+        return value[0]['label']
+    
+    if question.type == 'file' and answer.value:
+        return 'Uploaded File'
+
+    return answer.value
+
 
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
@@ -244,12 +259,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
+            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
             summary = {}
             for answer in answers:
                 for question in questions:
                     if answer.question_id == question.id:
-                        summary[question.headline] = answer.value
+                        summary[question.headline] = _get_answer_value(answer, question)
 
             subject = 'Your application to {}'.format(event.description)
             greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
