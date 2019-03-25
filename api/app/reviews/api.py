@@ -99,7 +99,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         reviews_remaining_count = db.session.query(func.count(ResponseReviewer.id))\
                         .filter_by(user_id=g.current_user['id'])\
                         .join(Response)\
-                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id)\
+                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
                         .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
                         .filter_by(id=None)\
                         .all()[0][0]
@@ -108,7 +108,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         skip = skip if skip < reviews_remaining_count else reviews_remaining_count-1
 
         response = db.session.query(Response)\
-                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id)\
+                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
                         .join(ResponseReviewer)\
                         .filter_by(user_id=g.current_user['id'])\
                         .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
