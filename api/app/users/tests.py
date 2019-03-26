@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from app import db
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, PasswordReset, UserCategory, Country
+from app.events.models import Event, EventRole
 
 
 class UserApiTest(ApiTestCase):
@@ -34,6 +35,15 @@ class UserApiTest(ApiTestCase):
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
+        self.event1 = Event('Indaba', 'Indaba Event', datetime.now(), datetime.now())
+        self.event2 = Event('IndabaX', 'IndabaX Sudan', datetime.now(), datetime.now())
+        db.session.add(self.event1)
+        db.session.add(self.event2)
+        db.session.commit()
+
+        self.event1_id = self.event1.id
+        self.event2_id = self.event2.id
+
         db.session.flush()
 
     def test_registration(self):
@@ -175,6 +185,36 @@ class UserApiTest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data=self.auth_data)
         assert response.status_code == 200
+
+    def test_authentication_response(self):
+        self.seed_static_data()
+        response = self.app.post('/api/v1/user', data=self.user_data)
+        data = json.loads(response.data)
+
+        user = db.session.query(AppUser).filter(
+            AppUser.id == data['id']).first()
+
+        response = self.app.get(
+            '/api/v1/verify-email?token='+user.verify_token)
+
+        role1 = EventRole('admin', data['id'], self.event1_id)
+        role2 = EventRole('reviewer', data['id'], self.event2_id)
+
+        db.session.add(role1)
+        db.session.add(role2)
+        db.session.commit()
+        db.session.flush()
+
+        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        data = json.loads(response.data)
+        
+        self.assertEqual(data['firstname'], self.user_data['firstname'])
+        self.assertEqual(data['lastname'], self.user_data['lastname'])
+        self.assertEqual(data['title'], self.user_data['user_title'])
+        self.assertEqual(data['roles'], [
+            {'event_id': self.event1_id, 'role': 'admin'},
+            {'event_id': self.event2_id, 'role': 'reviewer'},
+        ])
 
     def test_password_reset_user_does_not_exist(self):
         response = self.app.post('/api/v1/password-reset/request', data={
