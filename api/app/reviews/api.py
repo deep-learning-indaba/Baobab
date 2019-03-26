@@ -104,12 +104,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
                         .filter_by(id=None)\
                         .all()[0][0]
 
-        skip = args['skip'] or 0
-        skip = skip if skip >= 0 else 0
-        if reviews_remaining_count == 0:
-            skip = 0
-        elif skip >= reviews_remaining_count:
-            skip = reviews_remaining_count - 1
+        skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
         response = db.session.query(Response)\
                         .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
@@ -123,3 +118,17 @@ class ReviewAPI(ReviewMixin, restful.Resource):
                         .first()
         
         return ReviewResponseUser(review_form, response, reviews_remaining_count)
+
+    def sanitise_skip(self, skip, reviews_remaining_count):
+        if skip is None:
+            skip = 0
+
+        if skip < 0:
+            skip = 0
+
+        if reviews_remaining_count == 0:
+            skip = 0
+        elif skip >= reviews_remaining_count:
+            skip = reviews_remaining_count - 1
+        
+        return skip
