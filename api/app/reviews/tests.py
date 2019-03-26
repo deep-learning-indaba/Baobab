@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 
-from app import db, LOGGER
+from app import db
 from app.utils.testing import ApiTestCase
 from app.events.models import Event
 from app.users.models import AppUser, UserCategory, Country
@@ -141,7 +141,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 1
+        self.assertEqual(data['reviews_remaining_count'], 1)
 
     def setup_responses_and_no_reviewers(self):
         responses = [
@@ -166,7 +166,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 0
+        self.assertEqual(data['reviews_remaining_count'], 0)
     
     def setup_one_reviewer_three_candidates(self):
         responses = [
@@ -205,7 +205,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 3
+        self.assertEqual(data['reviews_remaining_count'], 3)
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
         responses = [
@@ -248,7 +248,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 2
+        self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
         withdrawn_response = Response(1, 5, True)
@@ -289,7 +289,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 1
+        self.assertEqual(data['reviews_remaining_count'], 1)
 
     def setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
         responses = [
@@ -315,19 +315,19 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         response_reviewers = [
-            ResponseReviewer(1, 1), # all of these must be unreviewed so 3
+            ResponseReviewer(1, 1),
             ResponseReviewer(2, 1),
             ResponseReviewer(3, 1),
 
-            ResponseReviewer(2, 2), # one of these must be reviewed so 1
+            ResponseReviewer(2, 2),
             ResponseReviewer(3, 2),
 
-            ResponseReviewer(1, 3), # two of these must be reviewed so 2
+            ResponseReviewer(1, 3),
             ResponseReviewer(2, 3),
             ResponseReviewer(3, 3),
             ResponseReviewer(4, 3),
 
-            ResponseReviewer(1, 4) # all of these must be reviewed so 0
+            ResponseReviewer(1, 4)
         ]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -359,10 +359,10 @@ class ReviewsApiTest(ApiTestCase):
         response4 = self.app.get('/api/v1/review', headers=header, data=params)
         data4 = json.loads(response4.data)
 
-        assert data1['reviews_remaining_count'] == 3
-        assert data2['reviews_remaining_count'] == 1
-        assert data3['reviews_remaining_count'] == 2
-        assert data4['reviews_remaining_count'] == 0
+        self.assertEqual(data1['reviews_remaining_count'], 3)
+        self.assertEqual(data2['reviews_remaining_count'], 1)
+        self.assertEqual(data3['reviews_remaining_count'], 2)
+        self.assertEqual(data4['reviews_remaining_count'], 0)
 
     def test_skipping(self):
         self.seed_static_data()
@@ -373,13 +373,13 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['response']['user_id'] == 6
-        assert data['response']['answers'][0]['value'] == 'I want to do a PhD.'
-        assert data['user']['affiliation'] == 'RU'
-        assert data['user']['department'] == 'Chem'
-        assert data['user']['nationality_country'] == 'Botswana'
-        assert data['user']['residence_country'] == 'Namibia'
-        assert data['user']['user_category'] == 'Student'
+        self.assertEqual(data['response']['user_id'], 6)
+        self.assertEqual(data['response']['answers'][0]['value'], 'I want to do a PhD.')
+        self.assertEqual(data['user']['affiliation'], 'RU')
+        self.assertEqual(data['user']['department'], 'Chem')
+        self.assertEqual(data['user']['nationality_country'], 'Botswana')
+        self.assertEqual(data['user']['residence_country'], 'Namibia')
+        self.assertEqual(data['user']['user_category'], 'Student')
         
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
@@ -390,13 +390,13 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['response']['user_id'] == 7
-        assert data['response']['answers'][1]['value'] == 'I will share by tutoring.'
-        assert data['user']['affiliation'] == 'UFH'
-        assert data['user']['department'] == 'Phys'
-        assert data['user']['nationality_country'] == 'Zimbabwe'
-        assert data['user']['residence_country'] == 'Mozambique'
-        assert data['user']['user_category'] == 'MSc'
+        self.assertEqual(data['response']['user_id'], 7)
+        self.assertEqual(data['response']['answers'][1]['value'], 'I will share by tutoring.')
+        self.assertEqual(data['user']['affiliation'], 'UFH')
+        self.assertEqual(data['user']['department'], 'Phys')
+        self.assertEqual(data['user']['nationality_country'], 'Zimbabwe')
+        self.assertEqual(data['user']['residence_country'], 'Mozambique')
+        self.assertEqual(data['user']['user_category'], 'MSc')
 
     def setup_candidate_who_has_applied_to_multiple_events(self):
         responses = [
@@ -431,11 +431,11 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        assert data['reviews_remaining_count'] == 1
-        assert data['response']['user_id'] == 5
-        assert data['response']['answers'][0]['value'] == 'Yes I worked on a vision task.'
-        assert data['user']['affiliation'] == 'UWC'
-        assert data['user']['department'] == 'CS'
-        assert data['user']['nationality_country'] == 'South Africa'
-        assert data['user']['residence_country'] == 'Egypt'
-        assert data['user']['user_category'] == 'Honours'
+        self.assertEqual(data['reviews_remaining_count'], 1)
+        self.assertEqual(data['response']['user_id'], 5)
+        self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
+        self.assertEqual(data['user']['affiliation'], 'UWC')
+        self.assertEqual(data['user']['department'], 'CS')
+        self.assertEqual(data['user']['nationality_country'], 'South Africa')
+        self.assertEqual(data['user']['residence_country'], 'Egypt')
+        self.assertEqual(data['user']['user_category'], 'Honours')

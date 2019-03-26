@@ -114,7 +114,6 @@ class ReviewAPI(ReviewMixin, restful.Resource):
                         .filter_by(id=None)\
                         .order_by(ResponseReviewer.response_id)\
                         .offset(skip)\
-                        .limit(1)\
                         .first()
         
         return ReviewResponseUser(review_form, response, reviews_remaining_count)
