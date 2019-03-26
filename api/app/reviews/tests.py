@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 
-from app import db, LOGGER
+from app import db
 from app.utils.testing import ApiTestCase
 from app.events.models import Event
 from app.users.models import AppUser, UserCategory, Country
