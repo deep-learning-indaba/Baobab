@@ -80,7 +80,7 @@ class ReviewResponse(db.Model):
                  review_form_id,
                  reviewer_user_id,
                  response_id):
-        self.review_form = review_form_id
+        self.review_form_id = review_form_id
         self.reviewer_user_id = reviewer_user_id
         self.response_id = response_id
         self.submitted_timestamp = datetime.now()
