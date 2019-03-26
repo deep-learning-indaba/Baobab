@@ -315,19 +315,19 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         response_reviewers = [
-            ResponseReviewer(1, 1), # all of these must be unreviewed so 3
+            ResponseReviewer(1, 1),
             ResponseReviewer(2, 1),
             ResponseReviewer(3, 1),
 
-            ResponseReviewer(2, 2), # one of these must be reviewed so 1
+            ResponseReviewer(2, 2),
             ResponseReviewer(3, 2),
 
-            ResponseReviewer(1, 3), # two of these must be reviewed so 2
+            ResponseReviewer(1, 3),
             ResponseReviewer(2, 3),
             ResponseReviewer(3, 3),
             ResponseReviewer(4, 3),
 
-            ResponseReviewer(1, 4) # all of these must be reviewed so 0
+            ResponseReviewer(1, 4)
         ]
         db.session.add_all(response_reviewers)
         db.session.commit()
