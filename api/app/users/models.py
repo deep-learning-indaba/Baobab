@@ -83,6 +83,9 @@ class AppUser(db.Model):
 
     def deactivate(self):
         self.active = False
+    
+    def verify(self):
+        self.verified_email = True
 
 
 class PasswordReset(db.Model):

@@ -305,7 +305,7 @@ class VerifyEmailAPI(restful.Resource):
             LOGGER.debug("No user found for token: {}".format(token))
             return EMAIL_VERIFY_CODE_NOT_VALID
 
-        user.verified_email = True
+        user.verify()
 
         db.session.commit()
 
