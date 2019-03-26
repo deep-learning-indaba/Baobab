@@ -222,7 +222,7 @@ class ReviewsApiTest(ApiTestCase):
             Answer(2, 1, 'I want to do a PhD.'),
             Answer(2, 2, 'I will share by writing a blog.'),
             Answer(3, 1, 'I want to solve new problems.'),
-            Answer(3, 2, 'I will share by tutoring.'),
+            Answer(3, 2, 'I will share by tutoring.')
         ]
         db.session.add_all(answers)
         db.session.commit()
@@ -250,12 +250,12 @@ class ReviewsApiTest(ApiTestCase):
 
         assert data['reviews_remaining_count'] == 2
 
-    def setup_one_reviewer_two_candidates_with_one_withdrawn_response(self):
+    def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
         withdrawn_response = Response(1, 5, True)
         withdrawn_response.withdraw_response()
         responses = [
             withdrawn_response,
-            Response(1, 6, True),
+            Response(1, 6, False),
             Response(1, 7, True)
         ]
         db.session.add_all(responses)
@@ -266,6 +266,8 @@ class ReviewsApiTest(ApiTestCase):
             Answer(1, 2, 'I will share by doing talks.'),
             Answer(2, 1, 'I want to do a PhD.'),
             Answer(2, 2, 'I will share by writing a blog.'),
+            Answer(3, 1, 'I want to solve new problems.'),
+            Answer(3, 2, 'I will share by tutoring.')
         ]
         db.session.add_all(answers)
         db.session.commit()
@@ -273,13 +275,14 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = [
             ResponseReviewer(1, 1),
             ResponseReviewer(2, 1),
+            ResponseReviewer(3, 1)
         ]
         db.session.add_all(response_reviewers)
         db.session.commit()
 
-    def test_one_reviewer_two_candidates_with_one_withdrawn_response(self):
+    def test_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
         self.seed_static_data()
-        self.setup_one_reviewer_two_candidates_with_one_withdrawn_response()
+        self.setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response()
         header = self.get_auth_header_for('r1@r.com')
         params = {'event_id': 1}
 
