@@ -290,3 +290,152 @@ class ReviewsApiTest(ApiTestCase):
         data = json.loads(response.data)
 
         assert data['reviews_remaining_count'] == 1
+
+    def setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
+        responses = [
+            Response(1, 5, True),
+            Response(1, 6, True),
+            Response(1, 7, True),
+            Response(1, 8, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        answers = [
+            Answer(1, 1, 'I will learn alot.'),
+            Answer(1, 2, 'I will share by doing talks.'),
+            Answer(2, 1, 'I want to do a PhD.'),
+            Answer(2, 2, 'I will share by writing a blog.'),
+            Answer(3, 1, 'I want to solve new problems.'),
+            Answer(3, 2, 'I will share by tutoring.'),
+            Answer(4, 1, 'I want to exchange ideas with like minded people'),
+            Answer(4, 2, 'I will mentor people interested in ML.')
+        ]
+        db.session.add_all(answers)
+        db.session.commit()
+
+        response_reviewers = [
+            ResponseReviewer(1, 1), # all of these must be unreviewed so 3
+            ResponseReviewer(2, 1),
+            ResponseReviewer(3, 1),
+
+            ResponseReviewer(2, 2), # one of these must be reviewed so 1
+            ResponseReviewer(3, 2),
+
+            ResponseReviewer(1, 3), # two of these must be reviewed so 2
+            ResponseReviewer(2, 3),
+            ResponseReviewer(3, 3),
+            ResponseReviewer(4, 3),
+
+            ResponseReviewer(1, 4) # all of these must be reviewed so 0
+        ]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+
+        review_responses = [
+            ReviewResponse(1, 2, 2),
+            ReviewResponse(1, 3, 1),
+            ReviewResponse(1, 3, 2),
+            ReviewResponse(1, 4, 1)
+        ]
+        db.session.add_all(review_responses)
+        db.session.commit()
+    
+    def test_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
+        self.seed_static_data()
+        self.setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed()
+        params = {'event_id': 1}
+
+        header = self.get_auth_header_for('r1@r.com')
+        response1 = self.app.get('/api/v1/review', headers=header, data=params)
+        data1 = json.loads(response1.data)
+        header = self.get_auth_header_for('r2@r.com')
+        response2 = self.app.get('/api/v1/review', headers=header, data=params)
+        data2 = json.loads(response2.data)
+        header = self.get_auth_header_for('r3@r.com')
+        response3 = self.app.get('/api/v1/review', headers=header, data=params)
+        data3 = json.loads(response3.data)
+        header = self.get_auth_header_for('r4@r.com')
+        response4 = self.app.get('/api/v1/review', headers=header, data=params)
+        data4 = json.loads(response4.data)
+
+        assert data1['reviews_remaining_count'] == 3
+        assert data2['reviews_remaining_count'] == 1
+        assert data3['reviews_remaining_count'] == 2
+        assert data4['reviews_remaining_count'] == 0
+
+    def test_skipping(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_three_candidates()
+        params = {'event_id': 1, 'skip': 1}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        assert data['response']['user_id'] == 6
+        assert data['response']['answers'][0]['value'] == 'I want to do a PhD.'
+        assert data['user']['affiliation'] == 'RU'
+        assert data['user']['department'] == 'Chem'
+        assert data['user']['nationality_country'] == 'Botswana'
+        assert data['user']['residence_country'] == 'Namibia'
+        assert data['user']['user_category'] == 'Student'
+        
+    def test_high_skip_defaults_to_last_review(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_three_candidates()
+        params = {'event_id': 1, 'skip': 5}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        assert data['response']['user_id'] == 7
+        assert data['response']['answers'][1]['value'] == 'I will share by tutoring.'
+        assert data['user']['affiliation'] == 'UFH'
+        assert data['user']['department'] == 'Phys'
+        assert data['user']['nationality_country'] == 'Zimbabwe'
+        assert data['user']['residence_country'] == 'Mozambique'
+        assert data['user']['user_category'] == 'MSc'
+
+    def setup_candidate_who_has_applied_to_multiple_events(self):
+        responses = [
+            Response(1, 5, True),
+            Response(2, 5, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        answers = [
+            Answer(1, 1, 'I will learn alot.'),
+            Answer(1, 2, 'I will share by doing talks.'),
+            Answer(2, 3, 'Yes I worked on a vision task.'),
+            Answer(2, 4, 'Yes I want the travel award.')
+        ]
+        db.session.add_all(answers)
+        db.session.commit()
+
+        response_reviewers = [
+            ResponseReviewer(1, 1),
+            ResponseReviewer(2, 1)
+        ]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+
+    def test_filtering_on_event_when_candidate_has_applied_to_more_than(self):
+        self.seed_static_data()
+        self.setup_candidate_who_has_applied_to_multiple_events()
+        params = {'event_id': 2}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        assert data['reviews_remaining_count'] == 1
+        assert data['response']['user_id'] == 5
+        assert data['response']['answers'][0]['value'] == 'Yes I worked on a vision task.'
+        assert data['user']['affiliation'] == 'UWC'
+        assert data['user']['department'] == 'CS'
+        assert data['user']['nationality_country'] == 'South Africa'
+        assert data['user']['residence_country'] == 'Egypt'
+        assert data['user']['user_category'] == 'Honours'
