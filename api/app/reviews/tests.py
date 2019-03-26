@@ -206,3 +206,84 @@ class ReviewsApiTest(ApiTestCase):
         data = json.loads(response.data)
 
         assert data['reviews_remaining_count'] == 3
+
+    def setup_one_reviewer_three_candidates_and_one_completed_review(self):
+        responses = [
+            Response(1, 5, True),
+            Response(1, 6, True),
+            Response(1, 7, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        answers = [
+            Answer(1, 1, 'I will learn alot.'),
+            Answer(1, 2, 'I will share by doing talks.'),
+            Answer(2, 1, 'I want to do a PhD.'),
+            Answer(2, 2, 'I will share by writing a blog.'),
+            Answer(3, 1, 'I want to solve new problems.'),
+            Answer(3, 2, 'I will share by tutoring.'),
+        ]
+        db.session.add_all(answers)
+        db.session.commit()
+
+        response_reviewers = [
+            ResponseReviewer(1, 1),
+            ResponseReviewer(2, 1),
+            ResponseReviewer(3, 1)
+        ]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+
+        review_response = ReviewResponse(1, 1, 1)
+        db.session.add(review_response)
+        db.session.commit()
+
+    def test_one_reviewer_three_candidates_and_one_completed_review(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_three_candidates_and_one_completed_review()
+        header = self.get_auth_header_for('r1@r.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        assert data['reviews_remaining_count'] == 2
+
+    def setup_one_reviewer_two_candidates_with_one_withdrawn_response(self):
+        withdrawn_response = Response(1, 5, True)
+        withdrawn_response.withdraw_response()
+        responses = [
+            withdrawn_response,
+            Response(1, 6, True),
+            Response(1, 7, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        answers = [
+            Answer(1, 1, 'I will learn alot.'),
+            Answer(1, 2, 'I will share by doing talks.'),
+            Answer(2, 1, 'I want to do a PhD.'),
+            Answer(2, 2, 'I will share by writing a blog.'),
+        ]
+        db.session.add_all(answers)
+        db.session.commit()
+
+        response_reviewers = [
+            ResponseReviewer(1, 1),
+            ResponseReviewer(2, 1),
+        ]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+
+    def test_one_reviewer_two_candidates_with_one_withdrawn_response(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_two_candidates_with_one_withdrawn_response()
+        header = self.get_auth_header_for('r1@r.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        assert data['reviews_remaining_count'] == 1
