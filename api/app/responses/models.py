@@ -12,9 +12,11 @@ class Response(db.Model):
     is_submitted = db.Column(db.Boolean(), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=True)
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
-    withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)    
-    started_timestamp = db.Column(db.DateTime(), nullable=True)    
-    
+    withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
+    started_timestamp = db.Column(db.DateTime(), nullable=True)
+
+    user = db.relationship('AppUser', foreign_keys=[user_id])
+    answers = db.relationship('Answer')
 
     def __init__(self, application_form_id, user_id, is_submitted = False, submitted_timestamp = None, is_withdrawn = False, withdrawn_timestamp = None):
         self.application_form_id = application_form_id
@@ -33,6 +35,7 @@ class Response(db.Model):
        self.is_withdrawn = True
        self.withdrawn_timestamp = date.today()
 
+
 class Answer(db.Model):
 
     __tablename__ = "answer"
@@ -42,6 +45,8 @@ class Answer(db.Model):
     question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
 
+    response = db.relationship('Response', foreign_keys=[response_id])
+    question = db.relationship('Question', foreign_keys=[question_id])
 
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id
@@ -52,11 +57,11 @@ class Answer(db.Model):
 class ResponseReviewer(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
-    user = db.relationship('AppUser', foreign_keys=[user_id])
+    user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
 
-    def __init__(self, response_id, user_id):
+    def __init__(self, response_id, reviewer_user_id):
         self.response_id = response_id
-        self.user_id = user_id
+        self.reviewer_user_id = reviewer_user_id
