@@ -11,10 +11,9 @@ import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ReactGA from "react-ga";
-import createHistory from "history/createBrowserHistory";
 import "./App.css";
+import history from "./History";
 
-const history = createHistory();
 ReactGA.initialize("UA-136093201-1", {
   debug: true,
   testMode: process.env.NODE_ENV === "test"
@@ -60,7 +59,11 @@ class App extends Component {
   };
 
   render() {
-    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+    const bug_mailto =
+      "mailto:baobab@deeplearningindaba.com?subject=" +
+      encodeURI(BUG_SUBJECT_TEXT) +
+      "&body=" +
+      encodeURI(BUG_BODY_TEXT);
 
     return (
       <Router history={history}>
@@ -169,7 +172,9 @@ class App extends Component {
             <div class="container-flex">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href="http://www.deeplearningindaba.com">
+                  Deep Learning Indaba
+                </a>
                 <a href={bug_mailto} class="btn btn-info float-right">
                   Report a Bug
                 </a>
