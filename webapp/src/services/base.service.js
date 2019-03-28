@@ -18,14 +18,14 @@ axios.interceptors.response.use(
   },
   function(error) {
     if (
+      error &&
       error.response &&
       error.response.status === 401 &&
-      error.response.type === "UNAUTHORIZED"
+      error.response.data &&
+      error.response.data.type === "UNAUTHORIZED"
     ) {
-      console.log("unauthorized, logging out ...");
-      history.push("/login");
       localStorage.removeItem("user");
-    }
-    return error;
+      history.push("/login");
+    } else throw error;
   }
 );
