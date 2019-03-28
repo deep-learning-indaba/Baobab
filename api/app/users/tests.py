@@ -35,8 +35,10 @@ class UserApiTest(ApiTestCase):
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = Event('Indaba', 'Indaba Event', datetime.now(), datetime.now())
-        self.event2 = Event('IndabaX', 'IndabaX Sudan', datetime.now(), datetime.now())
+        self.event1 = Event('Indaba', 'Indaba Event',
+                            datetime.now(), datetime.now())
+        self.event2 = Event('IndabaX', 'IndabaX Sudan',
+                            datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()
@@ -207,7 +209,7 @@ class UserApiTest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data=self.auth_data)
         data = json.loads(response.data)
-        
+
         self.assertEqual(data['firstname'], self.user_data['firstname'])
         self.assertEqual(data['lastname'], self.user_data['lastname'])
         self.assertEqual(data['title'], self.user_data['user_title'])
@@ -274,7 +276,7 @@ class UserApiTest(ApiTestCase):
             'code': "bad code",
             'password': 'abc123'
         })
-        assert response.status_code == 401
+        assert response.status_code == 418
 
         response = self.app.post('/api/v1/password-reset/confirm', data={
             'code': pw_reset.code,
