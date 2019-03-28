@@ -60,7 +60,11 @@ class App extends Component {
   };
 
   render() {
-    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+    const bug_mailto =
+      "mailto:baobab@deeplearningindaba.com?subject=" +
+      encodeURI(BUG_SUBJECT_TEXT) +
+      "&body=" +
+      encodeURI(BUG_BODY_TEXT);
 
     return (
       <Router history={history}>
@@ -169,7 +173,12 @@ class App extends Component {
             <div class="container-flex">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href="http://www.deeplearningindaba.com">
+                  Deep Learning Indaba |{" "}
+                </a>
+                <a href="/PrivacyPolicy.pdf" target="_blank">
+                  Privacy Policy
+                </a>
                 <a href={bug_mailto} class="btn btn-info float-right">
                   Report a Bug
                 </a>
