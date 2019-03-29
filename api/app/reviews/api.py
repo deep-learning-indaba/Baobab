@@ -7,10 +7,10 @@ from sqlalchemy import and_
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin
+from app.reviews.mixins import ReviewMixin, ReviewResponseMixin
 from app.reviews.models import ReviewForm, ReviewResponse
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND
 
 option_fields = {
     'value': fields.String,
@@ -131,3 +131,36 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             skip = reviews_remaining_count - 1
         
         return skip
+
+
+review_scores_fields = {
+    'review_question_id': fields.Integer,
+    'value': fields.String
+}
+
+review_response_fields = {
+    'id': fields.Integer,
+    'review_form_id': fields.Integer,
+    'response_id': fields.Integer,
+    'reviewer_user_id': fields.Integer,
+    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
+}
+
+class ReviewResponseAPI(ReviewResponseMixin, restful.Resource):
+
+    @auth_required
+    @marshal_with(review_response_fields)
+    def get(self):
+        args = self.req_parser.parse_args()
+        review_form_id = args['review_form_id']
+        response_id = args['response_id']
+        reviewer_user_id = g.current_user['id']
+
+        review_response = db.session.query(ReviewResponse)\
+                            .filter_by(review_form_id=review_form_id, response_id=response_id, reviewer_user_id=reviewer_user_id)\
+                            .first()
+        if review_response is None:
+            return REVIEW_RESPONSE_NOT_FOUND
+
+        return review_response
+        

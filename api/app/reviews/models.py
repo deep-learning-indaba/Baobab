@@ -75,6 +75,7 @@ class ReviewResponse(db.Model):
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
     response = db.relationship('Response', foreign_keys=[response_id])
+    review_scores = db.relationship('ReviewScore')
 
     def __init__(self,
                  review_form_id,

@@ -1,13 +1,14 @@
 from datetime import datetime
 import json
 
-from app import db
+from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.events.models import Event
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
+from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -482,4 +483,52 @@ class ReviewsApiTest(ApiTestCase):
         data = json.loads(response.data)
 
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
+
+    def test_review_response_not_found(self):
+        self.seed_static_data()
+        params = {'review_form_id': 55, 'response_id': 432}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, REVIEW_RESPONSE_NOT_FOUND[1])
+
+    def setup_review_response(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        answer = Answer(1, 1, 'To learn alot')
+        db.session.add(answer)
+        db.session.commit()
+
+        review_response = ReviewResponse(1, 1, 1)
+        db.session.add(review_response)
+        db.session.commit()
+
+        review_scores = [
+            ReviewScore(1, 1, 'answer1'),
+            ReviewScore(1, 2, 'answer2')
+        ]
+        db.session.add_all(review_scores)
+        db.session.commit()
+        
+
+    def test_review_response(self):
+        self.seed_static_data()
+        self.setup_review_response()
+        params = {'review_form_id': 1, 'response_id': 1}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], 1)
+        self.assertEqual(data['response_id'], 1)
+        self.assertEqual(data['review_form_id'], 1)
+        self.assertEqual(data['reviewer_user_id'], 1)
+        self.assertEqual(data['scores'][0]['value'], 'answer1')
+        self.assertEqual(data['scores'][1]['value'], 'answer2')
+
 
