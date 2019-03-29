@@ -75,11 +75,30 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(sections)
         db.session.commit()
 
+        options = [
+            {
+                "value": "indaba-2017",
+                "label": "Yes, I attended the 2017 Indaba"
+            },
+            {
+                "value": "indaba-2018",
+                "label": "Yes, I attended the 2018 Indaba"
+            },
+            {
+                "value": "indaba-2017-2018",
+                "label": "Yes, I attended both Indabas"
+            },
+            {
+                "value": "none",
+                "label": "No"
+            }
+        ]
         questions = [
             Question(1, 1, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1, 'long_text', ''),
             Question(1, 1, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2, 'long_text', ''),
             Question(2, 2, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', '')
+            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', ''),
+            Question(1, 1, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None, True, None, options)
         ]
         db.session.add_all(questions)
         db.session.commit()
@@ -439,3 +458,28 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['user']['nationality_country'], 'South Africa')
         self.assertEqual(data['user']['residence_country'], 'Egypt')
         self.assertEqual(data['user']['user_category'], 'Honours')
+
+    def setup_multi_choice_answer(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        answer = Answer(1, 5, 'indaba-2017')
+        db.session.add(answer)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+    
+    def test_multi_choice_answers_use_label_instead_of_value(self):
+        self.seed_static_data()
+        self.setup_multi_choice_answer()
+        params = {'event_id': 1}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
+

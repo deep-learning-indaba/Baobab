@@ -44,7 +44,7 @@ answer_fields = {
     'id': fields.Integer,
     'question_id': fields.Integer,
     'question': fields.String(attribute='question.headline'),
-    'value': fields.String
+    'value': fields.String(attribute='value_display')
 }
 
 response_fields = {

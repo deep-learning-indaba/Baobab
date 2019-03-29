@@ -52,6 +52,14 @@ class Answer(db.Model):
         self.response_id = response_id
         self.question_id = question_id
         self.value = value
+    
+    @property
+    def value_display(self):
+        if self.question.type == 'multi-choice' and self.question.options is not None:
+            option = [option for option in self.question.options if option['value'] == self.value]
+            if option is not None:
+                return option[0]['label']
+        return self.value
 
 
 class ResponseReviewer(db.Model):
