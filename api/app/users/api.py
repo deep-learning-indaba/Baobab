@@ -70,6 +70,7 @@ def user_info(user, roles):
         'firstname': user.firstname,
         'lastname': user.lastname,
         'title': user.user_title,
+        'is_admin': user.is_admin,
         'roles': [{'event_id': event_role.event_id, 'role': event_role.role} for event_role in roles]
     }
 
