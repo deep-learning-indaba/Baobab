@@ -70,7 +70,7 @@ class ReviewsApiTest(ApiTestCase):
 
         sections = [
             Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(2, 'Tell Us a Bit About You2', '', 2)
+            Section(2, 'Tell Us a Bit About You', '', 1)
         ]
         db.session.add_all(sections)
         db.session.commit()
