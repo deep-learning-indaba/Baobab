@@ -8,6 +8,7 @@ import CreateAccount from "./pages/createAccount";
 import Application from "./pages/applicationForm";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
+import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ReactGA from "react-ga";
@@ -58,6 +59,13 @@ class App extends Component {
   toggleMenu = () => {
     this.setState({ collapsed: !this.state.collapsed });
   };
+
+  isEventAdmin = user => {
+    if (!user) {
+      return false;
+    }
+    return user.is_admin || (user.roles && user.roles.some(r=>r.role === "admin"));
+  }
 
   render() {
     const bug_mailto =
@@ -122,6 +130,18 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                {this.isEventAdmin(this.state.user) && (
+                  <li class="nav-item">
+                  <NavLink
+                    to="/eventStats"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Event Stats
+                  </NavLink>
+                </li>
+                )}
               </ul>
               <UserDropdown
                 logout={this.refreshUser}
@@ -159,12 +179,25 @@ class App extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
-                <Route exact path="/verifyEmail" component={VerifyEmail} />
-                <PrivateRoute exact path="/profile" component={Profile} />} />
+                <Route 
+                  exact 
+                  path="/verifyEmail" 
+                  component={VerifyEmail} 
+                />
+                <PrivateRoute 
+                  exact 
+                  path="/profile" 
+                  component={Profile} 
+                />
                 <PrivateRoute
                   exact
                   path="/applicationForm"
                   component={Application}
+                />
+                <PrivateRoute
+                  exact
+                  path="/eventStats"
+                  component={EventStats}
                 />
               </Switch>
             </div>
@@ -174,8 +207,9 @@ class App extends Component {
               <p>
                 Baobab, © 2019 |{" "}
                 <a href="http://www.deeplearningindaba.com">
-                  Deep Learning Indaba |{" "}
+                  Deep Learning Indaba 
                 </a>
+                |{" "}
                 <a href="/PrivacyPolicy.pdf" target="_blank">
                   Privacy Policy
                 </a>
