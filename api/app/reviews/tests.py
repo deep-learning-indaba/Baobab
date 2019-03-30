@@ -1,13 +1,14 @@
 from datetime import datetime
 import json
 
-from app import db
+from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.events.models import Event
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
+from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -70,16 +71,35 @@ class ReviewsApiTest(ApiTestCase):
 
         sections = [
             Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(2, 'Tell Us a Bit About You2', '', 2)
+            Section(2, 'Tell Us a Bit About You', '', 1)
         ]
         db.session.add_all(sections)
         db.session.commit()
 
+        options = [
+            {
+                "value": "indaba-2017",
+                "label": "Yes, I attended the 2017 Indaba"
+            },
+            {
+                "value": "indaba-2018",
+                "label": "Yes, I attended the 2018 Indaba"
+            },
+            {
+                "value": "indaba-2017-2018",
+                "label": "Yes, I attended both Indabas"
+            },
+            {
+                "value": "none",
+                "label": "No"
+            }
+        ]
         questions = [
             Question(1, 1, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1, 'long_text', ''),
             Question(1, 1, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2, 'long_text', ''),
             Question(2, 2, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', '')
+            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', ''),
+            Question(1, 1, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None, True, None, options)
         ]
         db.session.add_all(questions)
         db.session.commit()
@@ -439,3 +459,129 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['user']['nationality_country'], 'South Africa')
         self.assertEqual(data['user']['residence_country'], 'Egypt')
         self.assertEqual(data['user']['user_category'], 'Honours')
+
+    def setup_multi_choice_answer(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        answer = Answer(1, 5, 'indaba-2017')
+        db.session.add(answer)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+    
+    def test_multi_choice_answers_use_label_instead_of_value(self):
+        self.seed_static_data()
+        self.setup_multi_choice_answer()
+        params = {'event_id': 1}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
+
+    def test_review_response_not_found(self):
+        self.seed_static_data()
+        params = {'review_form_id': 55, 'response_id': 432}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, REVIEW_RESPONSE_NOT_FOUND[1])
+
+    def setup_review_response(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        answer = Answer(1, 1, 'To learn alot')
+        db.session.add(answer)
+        db.session.commit()
+
+        review_response = ReviewResponse(1, 1, 1)
+        review_response.review_scores.append(ReviewScore(1, 'answer1'))
+        review_response.review_scores.append(ReviewScore(2, 'answer2'))
+        db.session.add(review_response)
+        db.session.commit()
+        
+
+    def test_review_response(self):
+        self.seed_static_data()
+        self.setup_review_response()
+        params = {'review_form_id': 1, 'response_id': 1}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], 1)
+        self.assertEqual(data['response_id'], 1)
+        self.assertEqual(data['review_form_id'], 1)
+        self.assertEqual(data['reviewer_user_id'], 1)
+        self.assertEqual(data['scores'][0]['value'], 'answer1')
+        self.assertEqual(data['scores'][1]['value'], 'answer2')
+
+    def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
+        self.seed_static_data()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def setup_response_reviewer(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+
+    def test_saving_review_response(self):
+        self.seed_static_data()
+        self.setup_response_reviewer()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).all()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(review_scores), 1)
+        self.assertEqual(review_scores[0].value, 'test_answer')
+
+    def setup_existing_review_response(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+
+        review_response = ReviewResponse(1, 1, 1)
+        review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
+        db.session.add(review_response)
+        db.session.commit()
+
+    def test_updating_review_response(self):
+        self.seed_static_data()
+        self.setup_existing_review_response()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).order_by(ReviewScore.review_question_id).all()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(review_scores), 2)
+        self.assertEqual(review_scores[0].value, 'test_answer3')
+        self.assertEqual(review_scores[1].value, 'test_answer4')
+

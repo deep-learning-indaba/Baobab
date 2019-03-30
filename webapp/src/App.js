@@ -173,7 +173,10 @@ class App extends Component {
               <p>
                 Baobab, © 2019 |{" "}
                 <a href="http://www.deeplearningindaba.com">
-                  Deep Learning Indaba
+                  Deep Learning Indaba |{" "}
+                </a>
+                <a href="/PrivacyPolicy.pdf" target="_blank">
+                  Privacy Policy
                 </a>
                 <a href={bug_mailto} class="btn btn-info float-right">
                   Report a Bug
