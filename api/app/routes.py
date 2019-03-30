@@ -39,3 +39,4 @@ rest_api.add_resource(users_api.VerifyEmailAPI,
 rest_api.add_resource(users_api.ResendVerificationEmailAPI,
                       '/api/v1/resend-verification-email'),
 rest_api.add_resource(reviews_api.ReviewAPI, '/api/v1/review')
+rest_api.add_resource(reviews_api.ReviewResponseAPI, '/api/v1/reviewresponse')
