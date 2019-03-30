@@ -176,21 +176,59 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
 
-        response_reviewer = db.session.query(ResponseReviewer)\
-                              .filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id)\
-                              .first()
+        response_reviewer = self.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
             return FORBIDDEN
 
         review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
-        for score in scores:
-            review_score = ReviewScore(score['review_question_id'], score['value'])
-            review_response.review_scores.append(review_score)
-        
+        review_response.review_scores = self.get_review_scores(scores)
         db.session.add(review_response)
         db.session.commit()
 
         return {}, 201
+
+    @auth_required
+    def put(self):
+        args = self.post_req_parser.parse_args()
+        validation_result = self.validate_scores(args['scores'])
+        if validation_result is not None:
+            return validation_result
+        
+        response_id = args['response_id']
+        review_form_id = args['review_form_id']
+        reviewer_user_id = g.current_user['id']
+        scores = args['scores']
+
+        response_reviewer = self.get_response_reviewer(response_id, reviewer_user_id)
+        if response_reviewer is None:
+            return FORBIDDEN
+
+        review_response = self.get_review_response(review_form_id, response_id, reviewer_user_id)
+        if review_response is None:
+            return REVIEW_RESPONSE_NOT_FOUND
+        
+        db.session.query(ReviewScore).filter(ReviewScore.review_response_id==review_response.id).delete()
+        review_response.review_scores = self.get_review_scores(scores)
+        db.session.commit()
+
+        return {}, 200
+    
+    def get_response_reviewer(self, response_id, reviewer_user_id):
+        return db.session.query(ResponseReviewer)\
+                         .filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id)\
+                         .first()
+
+    def get_review_response(self, review_form_id, response_id, reviewer_user_id):
+        return db.session.query(ReviewResponse)\
+                         .filter_by(review_form_id=review_form_id, response_id=response_id, reviewer_user_id=reviewer_user_id)\
+                         .first()
+    
+    def get_review_scores(self, scores):
+        review_scores = []
+        for score in scores:
+            review_score = ReviewScore(score['review_question_id'], score['value'])
+            review_scores.append(review_score)
+        return review_scores
     
     def validate_scores(self, scores):
         for score in scores:

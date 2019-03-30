@@ -552,5 +552,36 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
 
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).all()
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(review_scores), 1)
+        self.assertEqual(review_scores[0].value, 'test_answer')
+
+    def setup_existing_review_response(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+
+        review_response = ReviewResponse(1, 1, 1)
+        review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
+        db.session.add(review_response)
+        db.session.commit()
+
+    def test_updating_review_response(self):
+        self.seed_static_data()
+        self.setup_existing_review_response()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).order_by(ReviewScore.review_question_id).all()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(review_scores), 2)
+        self.assertEqual(review_scores[0].value, 'test_answer3')
+        self.assertEqual(review_scores[1].value, 'test_answer4')
 
