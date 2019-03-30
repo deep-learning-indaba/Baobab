@@ -97,9 +97,7 @@ class ReviewScore(db.Model):
     review_question = db.relationship('ReviewQuestion', foreign_keys=[review_question_id])
 
     def __init__(self,
-                 review_response_id,
                  review_question_id,
                  value):
-        self.review_response_id = review_response_id
         self.review_question_id = review_question_id
         self.value = value

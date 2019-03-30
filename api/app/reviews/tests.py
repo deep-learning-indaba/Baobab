@@ -8,7 +8,7 @@ from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
-from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND
+from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -504,14 +504,9 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_response = ReviewResponse(1, 1, 1)
+        review_response.review_scores.append(ReviewScore(1, 'answer1'))
+        review_response.review_scores.append(ReviewScore(2, 'answer2'))
         db.session.add(review_response)
-        db.session.commit()
-
-        review_scores = [
-            ReviewScore(1, 1, 'answer1'),
-            ReviewScore(1, 2, 'answer2')
-        ]
-        db.session.add_all(review_scores)
         db.session.commit()
         
 
@@ -531,4 +526,31 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['scores'][0]['value'], 'answer1')
         self.assertEqual(data['scores'][1]['value'], 'answer2')
 
+    def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
+        self.seed_static_data()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def setup_response_reviewer(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+
+    def test_saving_review_response(self):
+        self.seed_static_data()
+        self.setup_response_reviewer()
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        self.assertEqual(response.status_code, 201)
 

@@ -7,10 +7,10 @@ from sqlalchemy import and_
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, ReviewResponseMixin
-from app.reviews.models import ReviewForm, ReviewResponse
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
 
 option_fields = {
     'value': fields.String,
@@ -146,12 +146,12 @@ review_response_fields = {
     'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
 }
 
-class ReviewResponseAPI(ReviewResponseMixin, restful.Resource):
+class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
 
     @auth_required
     @marshal_with(review_response_fields)
     def get(self):
-        args = self.req_parser.parse_args()
+        args = self.get_req_parser.parse_args()
         review_form_id = args['review_form_id']
         response_id = args['response_id']
         reviewer_user_id = g.current_user['id']
@@ -163,4 +163,41 @@ class ReviewResponseAPI(ReviewResponseMixin, restful.Resource):
             return REVIEW_RESPONSE_NOT_FOUND
 
         return review_response
+
+    @auth_required
+    def post(self):
+        args = self.post_req_parser.parse_args()
+        validation_result = self.validate_scores(args['scores'])
+        if validation_result is not None:
+            return validation_result
+
+        response_id = args['response_id']
+        review_form_id = args['review_form_id']
+        reviewer_user_id = g.current_user['id']
+        scores = args['scores']
+
+        response_reviewer = db.session.query(ResponseReviewer)\
+                              .filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id)\
+                              .first()
+        if response_reviewer is None:
+            return FORBIDDEN
+
+        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+        for score in scores:
+            review_score = ReviewScore(score['review_question_id'], score['value'])
+            review_response.review_scores.append(review_score)
         
+        db.session.add(review_response)
+        db.session.commit()
+
+        return {}, 201
+    
+    def validate_scores(self, scores):
+        for score in scores:
+            if 'review_question_id' not in score.keys():
+                return self.get_error_message('review_question_id')
+            if 'value' not in score.keys():
+                return self.get_error_message('value')
+    
+    def get_error_message(self, key):
+        return ({'message': {key: 'Missing required parameter in the JSON body or the post body or the query string'}}, 400)
