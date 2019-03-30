@@ -11,10 +11,9 @@ import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ReactGA from "react-ga";
-import createHistory from "history/createBrowserHistory";
 import "./App.css";
+import history from "./History";
 
-const history = createHistory();
 ReactGA.initialize("UA-136093201-1", {
   debug: true,
   testMode: process.env.NODE_ENV === "test"

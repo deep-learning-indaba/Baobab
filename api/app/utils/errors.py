@@ -2,11 +2,12 @@
 
 EMAIL_IN_USE = ({'message': 'User with that email already exists'}, 409)
 UNAUTHORIZED = (
-    {'message': 'Authentication is required to access this resource'}, 401)
-BAD_CREDENTIALS = ({'message': 'Incorrect username or password'}, 401)
+    {'message': 'Authentication is required to access this resource', 'type': 'UNAUTHORIZED'}, 401)
+BAD_CREDENTIALS = (
+    {'message': 'Incorrect username or password', 'type': 'BAD_CREDENTIALS'}, 401)
 FORBIDDEN = ({'message': 'Access to this resource is forbidden'}, 403)
 RESET_PASSWORD_CODE_NOT_VALID = (
-    {'message': 'Valid code is required to reset a password'}, 401)
+    {'message': 'Valid code is required to reset a password'}, 418)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 SECTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
@@ -19,7 +20,7 @@ UPDATE_CONFLICT = (
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
 EMAIL_NOT_VERIFIED = ({'message': 'The email address is not verified'}, 422)
 EMAIL_VERIFY_CODE_NOT_VALID = (
-    {'message': 'Valid code is required to verify email'}, 401)
+    {'message': 'Valid code is required to verify email'}, 419)
 USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 409)
 RESET_PASSWORD_CODE_EXPIRED = (
     {'message': 'The password reset request has expired'}, 400)
