@@ -208,7 +208,7 @@ class App extends Component {
                 <a href="http://www.deeplearningindaba.com">
                   Deep Learning Indaba 
                 </a>
-                |{" "}
+                {" "}|{" "}
                 <a href="/PrivacyPolicy.pdf" target="_blank">
                   Privacy Policy
                 </a>
