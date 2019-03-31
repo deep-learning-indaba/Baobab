@@ -208,7 +208,7 @@ class CreateAccountForm extends Component {
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
             Your Baobab account has been created, but before you can use it, we
-            need to verify you email address. Please check your email (and spam
+            need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
             address.
           </p>
