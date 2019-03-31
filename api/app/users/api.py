@@ -159,6 +159,8 @@ class UserAPI(SignupMixin, restful.Resource):
         department = args['department']
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
+        user_dateOfBirth = datetime.strptime((args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
@@ -174,6 +176,8 @@ class UserAPI(SignupMixin, restful.Resource):
         user.department = department
         user.user_disability = user_disability
         user.user_category_id = user_category_id
+        user.user_dateOfBirth = user_dateOfBirth
+        user.user_primaryLanguage = user_primaryLanguage
 
         try:
             db.session.commit()
