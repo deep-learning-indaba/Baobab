@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { withRouter } from "react-router";
 import { userService } from "../services/user";
+import isEqual from "lodash.isequal";
 
 class UserDropdown extends Component {
   constructor(props) {
@@ -13,7 +14,10 @@ class UserDropdown extends Component {
   }
 
   componentWillReceiveProps = props => {
-    this.setState({ user: props.user });
+    let userFromStorage = JSON.parse(localStorage.getItem("user"));
+    if (!isEqual(userFromStorage, props.user)) {
+      this.setState({ user: userFromStorage });
+    } else this.setState({ user: props.user });
   };
 
   handleLogout = event => {

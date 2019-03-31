@@ -21,9 +21,9 @@ class Section(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
-    name = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
-    order = db.Column(db.Integer(), unique=True, nullable=False)
+    order = db.Column(db.Integer(), nullable=False)
 
     def __init__(self, application_form_id, name, description, order):
         self.application_form_id = application_form_id

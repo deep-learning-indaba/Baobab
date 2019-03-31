@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from flask_failsafe import failsafe
 
 

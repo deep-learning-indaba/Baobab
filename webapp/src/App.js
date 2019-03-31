@@ -8,13 +8,13 @@ import CreateAccount from "./pages/createAccount";
 import Application from "./pages/applicationForm";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
+import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ReactGA from "react-ga";
-import createHistory from "history/createBrowserHistory";
 import "./App.css";
+import history from "./History";
 
-const history = createHistory();
 ReactGA.initialize("UA-136093201-1", {
   debug: true,
   testMode: process.env.NODE_ENV === "test"
@@ -59,8 +59,19 @@ class App extends Component {
     this.setState({ collapsed: !this.state.collapsed });
   };
 
+  isEventAdmin = user => {
+    if (!user) {
+      return false;
+    }
+    return user.is_admin || (user.roles && user.roles.some(r=>r.role === "admin"));
+  }
+
   render() {
-    const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT);
+    const bug_mailto =
+      "mailto:baobab@deeplearningindaba.com?subject=" +
+      encodeURI(BUG_SUBJECT_TEXT) +
+      "&body=" +
+      encodeURI(BUG_BODY_TEXT);
 
     return (
       <Router history={history}>
@@ -118,6 +129,18 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                {this.isEventAdmin(this.state.user) && (
+                  <li class="nav-item">
+                  <NavLink
+                    to="/eventStats"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Event Stats
+                  </NavLink>
+                </li>
+                )}
               </ul>
               <UserDropdown
                 logout={this.refreshUser}
@@ -155,12 +178,25 @@ class App extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
-                <Route exact path="/verifyEmail" component={VerifyEmail} />
-                <PrivateRoute exact path="/profile" component={Profile} />} />
+                <Route 
+                  exact 
+                  path="/verifyEmail" 
+                  component={VerifyEmail} 
+                />
+                <PrivateRoute 
+                  exact 
+                  path="/profile" 
+                  component={Profile} 
+                />
                 <PrivateRoute
                   exact
                   path="/applicationForm"
                   component={Application}
+                />
+                <PrivateRoute
+                  exact
+                  path="/eventStats"
+                  component={EventStats}
                 />
               </Switch>
             </div>
@@ -169,7 +205,13 @@ class App extends Component {
             <div class="container-flex">
               <p>
                 Baobab, © 2019 |{" "}
-                <a href="http://www.deeplearningindaba.com">Deep Learning Indaba</a>
+                <a href="http://www.deeplearningindaba.com">
+                  Deep Learning Indaba 
+                </a>
+                {" "}|{" "}
+                <a href="/PrivacyPolicy.pdf" target="_blank">
+                  Privacy Policy
+                </a>
                 <a href={bug_mailto} class="btn btn-info float-right">
                   Report a Bug
                 </a>
