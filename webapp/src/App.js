@@ -16,7 +16,7 @@ import "./App.css";
 import history from "./History";
 
 ReactGA.initialize("UA-136093201-1", {
-  debug: true,
+  debug: false,
   testMode: process.env.NODE_ENV === "test"
 });
 
