@@ -77,13 +77,13 @@ def init_login():
 
 
 # Create customized index view class that handles login & registration
-class MyAdminIndexView(AdminIndexView):
+class BaobabAdminIndexView(AdminIndexView):
 
     @expose('/')
     def index(self):
         if not login.current_user.is_authenticated:
             return redirect(url_for('.login_view'))
-        return super(MyAdminIndexView, self).index()
+        return super(BaobabAdminIndexView, self).index()
 
     @expose('/login/', methods=('GET', 'POST'))
     def login_view(self):
@@ -96,7 +96,7 @@ class MyAdminIndexView(AdminIndexView):
         if login.current_user.is_authenticated:
             return redirect(url_for('.index'))
         self._template_args['form'] = form
-        return super(MyAdminIndexView, self).index()
+        return super(BaobabAdminIndexView, self).index()
 
 
     @expose('/logout/')
@@ -107,7 +107,7 @@ class MyAdminIndexView(AdminIndexView):
 # Initialize flask-login
 init_login()
 
-admin = Admin(app, name='Deep Learning Indaba Admin Portal', index_view=MyAdminIndexView(), template_mode='bootstrap3')
+admin = Admin(app, name='Deep Learning Indaba Admin Portal', index_view=BaobabAdminIndexView(), template_mode='bootstrap3')
 
 
 class BaobabModelView(ModelView):
