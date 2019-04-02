@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, g, url_for, redirect, render_template, request
 from flask_cors import CORS
 import flask_restful as restful
 from flask_sqlalchemy import SQLAlchemy
@@ -7,12 +7,14 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 from flask_redis import FlaskRedis
 from utils.logger import Logger
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView, helpers, expose
 from flask_admin.contrib.sqla import ModelView
+import flask_login as login
+from wtforms import form, fields, validators
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.config.from_object('config')
-
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 print(app.config['SQLALCHEMY_DATABASE_URI'])
 rest_api = restful.Api(app)
@@ -35,16 +37,95 @@ from applicationModel.models import Question, Section
 from responses.models import Response, Answer
 from users.models import UserCategory, AppUser
 from events.models import Event, EventRole
-admin = Admin(app, name='Deep Learning Indaba Admin Portal',template_mode='bootstrap3')
+from app.utils.auth import auth_required, admin_required, generate_token
+from app.utils.errors import UNAUTHORIZED, FORBIDDEN
+
+# Define login and registration forms (for flask-login)
+class LoginForm(form.Form):
+    email = fields.TextField(validators=[validators.required()])
+    password = fields.PasswordField(validators=[validators.required()])
+
+    def validate_login(self, field):
+        user = self.get_user()
+
+        if user is None:
+            raise validators.ValidationError('Invalid user')
 
 
-admin.add_view(ModelView(Question, db.session))
-admin.add_view(ModelView(Section, db.session))
-admin.add_view(ModelView(Response, db.session))
-admin.add_view(ModelView(Answer, db.session))
+        if not bcrypt.check_password_hash(user.password, self.password.data):
+            raise validators.ValidationError('Invalid password')
 
-admin.add_view(ModelView(Event, db.session))
-admin.add_view(ModelView(EventRole, db.session))
-admin.add_view(ModelView(UserCategory, db.session))
+        if not user.is_admin:
+            raise validators.ValidationError("User is not administrator")
+
+        LOGGER.debug("Successful authentication for email: {}".format(self.email.data))
+        return user.is_admin
+
+    def get_user(self):
+        return db.session.query(AppUser).filter(AppUser.email==self.email.data).first()
+
+# Initialize flask-login
+def init_login():
+    login_manager = login.LoginManager()
+    login_manager.init_app(app)
+
+    # Create user loader function
+    @login_manager.user_loader
+    def load_user(user_id):
+        return db.session.query(AppUser).get(user_id)
+
+
+
+# Create customized index view class that handles login & registration
+class MyAdminIndexView(AdminIndexView):
+
+    @expose('/')
+    def index(self):
+        if not login.current_user.is_authenticated:
+            return redirect(url_for('.login_view'))
+        return super(MyAdminIndexView, self).index()
+
+    @expose('/login/', methods=('GET', 'POST'))
+    def login_view(self):
+        # handle user login
+        form = LoginForm(request.form)
+        if helpers.validate_form_on_submit(form):
+            user = form.get_user()
+            login.login_user(user)
+
+        if login.current_user.is_authenticated:
+            return redirect(url_for('.index'))
+        self._template_args['form'] = form
+        return super(MyAdminIndexView, self).index()
+
+
+    @expose('/logout/')
+    def logout_view(self):
+        login.logout_user()
+        return redirect(url_for('.index'))
+
+# Initialize flask-login
+init_login()
+
+admin = Admin(app, name='Deep Learning Indaba Admin Portal', index_view=MyAdminIndexView(), template_mode='bootstrap3')
+
+
+class BaobabModelView(ModelView):
+    def is_accessible(self):
+        return login.current_user.is_authenticated
+
+    def inaccessible_callback(self, name, **kwargs):
+        # redirect to login page if user doesn't have access
+        return redirect(url_for('admin.login_view', next=request.url))
+
+admin.add_view(BaobabModelView(Question, db.session))
+admin.add_view(BaobabModelView(Section, db.session))
+admin.add_view(BaobabModelView(Response, db.session))
+admin.add_view(BaobabModelView(Answer, db.session))
+
+admin.add_view(BaobabModelView(Event, db.session))
+admin.add_view(BaobabModelView(EventRole, db.session))
+admin.add_view(BaobabModelView(UserCategory, db.session))
+admin.add_view(BaobabModelView(AppUser, db.session))
 
 

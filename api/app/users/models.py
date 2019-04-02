@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 
 from app import db, bcrypt, LOGGER
 from app.utils.misc import make_code
-
+from flask_login import UserMixin
 
 def expiration_date():
     return datetime.now() + timedelta(days=1)
 
 
-class AppUser(db.Model):
+class AppUser(db.Model, UserMixin):
 
     id = db.Column(db.Integer(), primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
