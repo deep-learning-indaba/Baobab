@@ -3,12 +3,12 @@ import json
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
-from app.events.models import Event
+from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
-from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
+from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -43,6 +43,8 @@ class ReviewsApiTest(ApiTestCase):
         candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 2, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 3, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
         reviewer1.verify()
         reviewer2.verify()
         reviewer3.verify()
@@ -51,7 +53,9 @@ class ReviewsApiTest(ApiTestCase):
         candidate2.verify()
         candidate3.verify()
         candidate4.verify()
-        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4]
+        system_admin.verify()
+        event_admin.verify()
+        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
         db.session.add_all(users)
         db.session.commit()
 
@@ -60,6 +64,13 @@ class ReviewsApiTest(ApiTestCase):
             Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15))
         ]
         db.session.add_all(events)
+        db.session.commit()
+
+        event_roles = [
+            EventRole('system_admin', 9, 1),
+            EventRole('event_admin', 10, 1)
+        ]
+        db.session.add_all(event_roles)
         db.session.commit()
 
         application_forms = [
@@ -584,4 +595,45 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(review_scores), 2)
         self.assertEqual(review_scores[0].value, 'test_answer3')
         self.assertEqual(review_scores[1].value, 'test_answer4')
+
+    def test_user_cant_assign_responsesreviewer_without_system_or_event_admin_role(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'r2@r.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('c1@c.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_reviewer_not_found(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'non_existent@user.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('sa@sa.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        self.assertEqual(response.status_code, USER_NOT_FOUND[1])
+
+    def test_add_reviewer_with_no_roles(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'r1@r.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        event_roles = db.session.query(EventRole).filter_by(user_id=1, event_id=1).all()
+        self.assertEqual(len(event_roles), 1)
+        self.assertEqual(event_roles[0].role, 'reviewer')
+
+    def test_add_reviewer_with_a_role(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'sa@sa.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        event_roles = db.session.query(EventRole).filter_by(user_id=9, event_id=1).order_by(EventRole.id).all()
+        self.assertEqual(len(event_roles), 2)
+        self.assertEqual(event_roles[0].role, 'system_admin')
+        self.assertEqual(event_roles[1].role, 'reviewer')
 
