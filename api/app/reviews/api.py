@@ -250,6 +250,7 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         user_id = g.current_user['id']
         event_id = args['event_id']
         reviewer_user_email = args['reviewer_user_email']
+        num_reviews = args['num_reviews']
 
         current_user_roles = self.get_roles(user_id, event_id)
         if 'event_admin' not in current_user_roles and 'system_admin' not in current_user_roles:
@@ -262,6 +263,11 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         reviewer_roles = self.get_roles(reviewer_user.id, event_id)
         if reviewer_roles is None or 'reviewer' not in reviewer_roles:
             self.add_reviewer_role(reviewer_user.id, event_id)
+
+        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
+        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
         
         return {}, 201
 
@@ -276,3 +282,13 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         event_role = EventRole('reviewer', user_id, event_id)
         db.session.add(event_role)
         db.session.commit()
+    
+    def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
+        responses = db.session.query(Response.id)\
+                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
+                         .group_by(Response.id)\
+                         .having(func.count(ResponseReviewer.reviewer_user_id) < 3)\
+                         .limit(num_reviews)\
+                         .all()
+        return list(map(lambda response: response[0], responses))
