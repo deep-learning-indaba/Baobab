@@ -2,7 +2,7 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.sql import func
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
@@ -287,8 +287,10 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         responses = db.session.query(Response.id)\
                          .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
                          .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
+                         .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
                          .group_by(Response.id)\
                          .having(func.count(ResponseReviewer.reviewer_user_id) < 3)\
                          .limit(num_reviews)\
                          .all()
+        
         return list(map(lambda response: response[0], responses))
