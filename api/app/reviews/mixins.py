@@ -17,3 +17,10 @@ class PostReviewResponseMixin(object):
     post_req_parser.add_argument('review_form_id', type=int, required=True)
     post_req_parser.add_argument('response_id', type=int, required=True)
     post_req_parser.add_argument('scores', type=dict, required=True, action='append')
+
+
+class PostReviewAssignmentMixin(object):
+    post_req_parser = reqparse.RequestParser()
+    post_req_parser.add_argument('event_id', type=int, required=True)
+    post_req_parser.add_argument('reviewer_user_email', type=str, required=True)
+    post_req_parser.add_argument('num_reviews', type=int, required=True)
