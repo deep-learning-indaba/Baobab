@@ -252,8 +252,9 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
+        is_user_admin = db.session.query(AppUser).get(user_id).is_admin
         current_user_roles = self.get_roles(user_id, event_id)
-        if 'event_admin' not in current_user_roles and 'system_admin' not in current_user_roles:
+        if 'admin' not in current_user_roles and not is_user_admin:
             return FORBIDDEN
         
         reviewer_user = self.get_reviewer_user(reviewer_user_email)

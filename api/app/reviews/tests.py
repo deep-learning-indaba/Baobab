@@ -43,7 +43,7 @@ class ReviewsApiTest(ApiTestCase):
         candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 2, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 3, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
         event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
         reviewer1.verify()
         reviewer2.verify()
@@ -67,8 +67,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         event_roles = [
-            EventRole('system_admin', 9, 1),
-            EventRole('event_admin', 10, 1),
+            EventRole('admin', 10, 1),
             EventRole('reviewer', 3, 1)
         ]
         db.session.add_all(event_roles)
@@ -628,14 +627,14 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_add_reviewer_with_a_role(self):
         self.seed_static_data()
-        params = {'event_id': 1, 'reviewer_user_email': 'sa@sa.com', 'num_reviews': 10}
-        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1, 'reviewer_user_email': 'ea@ea.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('sa@sa.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
-        event_roles = db.session.query(EventRole).filter_by(user_id=9, event_id=1).order_by(EventRole.id).all()
+        event_roles = db.session.query(EventRole).filter_by(user_id=10, event_id=1).order_by(EventRole.id).all()
         self.assertEqual(len(event_roles), 2)
-        self.assertEqual(event_roles[0].role, 'system_admin')
+        self.assertEqual(event_roles[0].role, 'admin')
         self.assertEqual(event_roles[1].role, 'reviewer')
 
     def setup_responses_without_reviewers(self):
@@ -652,7 +651,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_responses_without_reviewers()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 4}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
         response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
@@ -663,7 +662,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_responses_without_reviewers()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
@@ -682,7 +681,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_reviewer_with_own_response()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
@@ -703,7 +702,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_withdrawn_and_unsubmitted_responses()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
@@ -728,7 +727,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_response_with_three_reviewers()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
@@ -748,7 +747,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_responsereview_with_different_reviewer()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
         response_reviewers = db.session.query(ResponseReviewer).order_by(ResponseReviewer.reviewer_user_id).all()
@@ -766,7 +765,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_reviewer_is_not_assigned_to_response_more_than_once()
         params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
-        header = self.get_auth_header_for('sa@sa.com')
+        header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
         response2 = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
