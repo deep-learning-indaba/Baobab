@@ -318,3 +318,57 @@ class UserApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/resend-verification-email?email={}'.format('nonexistant@dummy.com'))
         assert response.status_code == 404
+
+    def setup_verified_user(self):
+        user = AppUser('something@email.com', 'Some', 'Thing', 'Mr',
+                         1, 1, 'Male', 'University', 'Computer Science', 
+                         'None', 1, datetime(1984, 12, 12),
+                          'English', '123456')
+        user.verify_token = 'existing token'
+        user.verify()
+        db.session.add(user)
+        db.session.commit()
+
+    def test_email_change_gets_new_token_and_is_unverified(self):
+        self.seed_static_data()
+        self.setup_verified_user()
+        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        data = json.loads(response.data)
+        headers = {'Authorization': data['token']}
+
+        response = self.app.put('/api/v1/user', headers=headers, data={
+            'email': 'somethingnew@email.com',
+            'firstname': 'Some',
+            'lastname': 'Thing',
+            'user_title': 'Mr',
+            'nationality_country_id': 1,
+            'residence_country_id': 1,
+            'user_gender': 'Male',
+            'affiliation': 'University',
+            'department': 'Computer Science',
+            'user_disability': 'None',
+            'user_category_id': 1,
+            'user_primaryLanguage': 'Zulu',
+            'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+            'password':''
+            })
+
+        self.assertEqual(response.status_code,  200)
+
+        user = db.session.query(AppUser).get(1)
+
+        self.assertEqual(user.email, 'somethingnew@email.com')
+        self.assertEqual(user.firstname, 'Some')
+        self.assertEqual(user.lastname, 'Thing')
+        self.assertEqual(user.user_title, 'Mr')
+        self.assertEqual(user.nationality_country_id, 1)
+        self.assertEqual(user.residence_country_id, 1)
+        self.assertEqual(user.user_gender, 'Male')
+        self.assertEqual(user.affiliation, 'University')
+        self.assertEqual(user.department, 'Computer Science')
+        self.assertEqual(user.user_disability, 'None')
+        self.assertEqual(user.user_category_id, 1)
+        self.assertEqual(user.user_primaryLanguage, 'Zulu')
+        self.assertEqual(user.user_dateOfBirth, datetime(1984, 12, 12))
+        self.assertEqual(user.verified_email, False)
+        self.assertNotEqual(user.verify_token, 'existing token')
