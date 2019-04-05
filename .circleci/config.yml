@@ -78,7 +78,7 @@ jobs:
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
             rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
-            gcloud app deploy --stop-previous-version
+            gcloud app deploy
 
   deploy-backend-prod:
     machine: true
