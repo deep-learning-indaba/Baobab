@@ -3,12 +3,12 @@ import json
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
-from app.events.models import Event
+from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
-from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
+from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -43,6 +43,8 @@ class ReviewsApiTest(ApiTestCase):
         candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 2, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 3, datetime(1984, 12, 12), 'Eng', 'abc')
         candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
         reviewer1.verify()
         reviewer2.verify()
         reviewer3.verify()
@@ -51,7 +53,9 @@ class ReviewsApiTest(ApiTestCase):
         candidate2.verify()
         candidate3.verify()
         candidate4.verify()
-        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4]
+        system_admin.verify()
+        event_admin.verify()
+        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
         db.session.add_all(users)
         db.session.commit()
 
@@ -60,6 +64,13 @@ class ReviewsApiTest(ApiTestCase):
             Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15))
         ]
         db.session.add_all(events)
+        db.session.commit()
+
+        event_roles = [
+            EventRole('admin', 10, 1),
+            EventRole('reviewer', 3, 1)
+        ]
+        db.session.add_all(event_roles)
         db.session.commit()
 
         application_forms = [
@@ -585,3 +596,179 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(review_scores[0].value, 'test_answer3')
         self.assertEqual(review_scores[1].value, 'test_answer4')
 
+    def test_user_cant_assign_responsesreviewer_without_system_or_event_admin_role(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'r2@r.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('c1@c.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_reviewer_not_found(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'non_existent@user.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('sa@sa.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        self.assertEqual(response.status_code, USER_NOT_FOUND[1])
+
+    def test_add_reviewer_with_no_roles(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'r1@r.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        event_roles = db.session.query(EventRole).filter_by(user_id=1, event_id=1).all()
+        self.assertEqual(len(event_roles), 1)
+        self.assertEqual(event_roles[0].role, 'reviewer')
+
+    def test_add_reviewer_with_a_role(self):
+        self.seed_static_data()
+        params = {'event_id': 1, 'reviewer_user_email': 'ea@ea.com', 'num_reviews': 10}
+        header = self.get_auth_header_for('sa@sa.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        event_roles = db.session.query(EventRole).filter_by(user_id=10, event_id=1).order_by(EventRole.id).all()
+        self.assertEqual(len(event_roles), 2)
+        self.assertEqual(event_roles[0].role, 'admin')
+        self.assertEqual(event_roles[1].role, 'reviewer')
+
+    def setup_responses_without_reviewers(self):
+        responses = [
+            Response(1, 5, True),
+            Response(1, 6, True),
+            Response(1, 7, True),
+            Response(1, 8, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+    def test_adding_first_reviewer(self):
+        self.seed_static_data()
+        self.setup_responses_without_reviewers()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 4}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+        response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response_reviewers), 4)
+    
+    def test_limit_of_num_reviews(self):
+        self.seed_static_data()
+        self.setup_responses_without_reviewers()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
+        self.assertEqual(len(response_reviewers), 3)
+
+    def setup_reviewer_with_own_response(self):
+        responses = [
+            Response(1, 3, True), # reviewer
+            Response(1, 5, True) # someone else
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+    def test_reviewer_does_not_get_assigned_to_own_response(self):
+        self.seed_static_data()
+        self.setup_reviewer_with_own_response()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
+        self.assertEqual(len(response_reviewers), 1)
+        self.assertEqual(response_reviewers[0].response_id, 2)
+
+    def setup_withdrawn_and_unsubmitted_responses(self):
+        responses = [
+            Response(1, 5, is_submitted=False, is_withdrawn=False),
+            Response(1, 6, is_submitted=True, is_withdrawn=True),
+            Response(1, 7, is_submitted=True, is_withdrawn=False)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+    def test_withdrawn_and_unsubmitted_responses_are_not_assigned_reviewers(self):
+        self.seed_static_data()
+        self.setup_withdrawn_and_unsubmitted_responses()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
+        self.assertEqual(len(response_reviewers), 1)
+        self.assertEqual(response_reviewers[0].response_id, 3)
+
+    def setup_response_with_three_reviewers(self):
+        response = Response(1, 5, True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewers = [
+            ResponseReviewer(1, 1),
+            ResponseReviewer(1, 2),
+            ResponseReviewer(1, 4)
+        ]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+
+    def test_response_with_three_reviewers_does_not_get_assigned_another_reviewer(self):
+        self.seed_static_data()
+        self.setup_response_with_three_reviewers()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+
+        response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
+        self.assertEqual(len(response_reviewers), 0)   
+
+    def setup_responsereview_with_different_reviewer(self):
+        response = Response(1, 5, is_submitted=True)
+        db.session.add(response)
+        db.session.commit()
+
+        response_reviewer = ResponseReviewer(1, 1)
+        db.session.add(response_reviewer)
+        db.session.commit()
+        
+    def test_response_will_get_multiple_reviewers_assigned(self):
+        self.seed_static_data()
+        self.setup_responsereview_with_different_reviewer()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+        response_reviewers = db.session.query(ResponseReviewer).order_by(ResponseReviewer.reviewer_user_id).all()
+
+        self.assertEqual(len(response_reviewers), 2)
+        self.assertEqual(response_reviewers[0].reviewer_user_id, 1)
+        self.assertEqual(response_reviewers[1].reviewer_user_id, 3)
+    
+    def setup_reviewer_is_not_assigned_to_response_more_than_once(self):
+        response = Response(1,5,is_submitted=True)
+        db.session.add(response)
+        db.session.commit()
+    
+    def test_reviewer_is_not_assigned_to_response_more_than_once(self):
+        self.seed_static_data()
+        self.setup_reviewer_is_not_assigned_to_response_more_than_once()
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        header = self.get_auth_header_for('ea@ea.com')
+
+        response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+        response2 = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
+        response_reviewers = db.session.query(ResponseReviewer).all()
+
+        self.assertEqual(len(response_reviewers), 1)

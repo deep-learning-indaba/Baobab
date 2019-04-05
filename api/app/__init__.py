@@ -1,4 +1,4 @@
-from flask import Flask, g, url_for, redirect, render_template, request
+from flask import Flask, g, url_for, redirect, render_template, request, flash
 from flask_cors import CORS
 import flask_restful as restful
 from flask_sqlalchemy import SQLAlchemy
@@ -45,7 +45,7 @@ class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])
     password = fields.PasswordField(validators=[validators.required()])
 
-    def validate_login(self, field):
+    def validate(self):
         user = self.get_user()
 
         if user is None:
@@ -56,10 +56,10 @@ class LoginForm(form.Form):
             raise validators.ValidationError('Invalid password')
 
         if not user.is_admin:
-            raise validators.ValidationError("User is not administrator")
+            raise validators.ValidationError("Adminstrator rights required")
 
         LOGGER.debug("Successful authentication for email: {}".format(self.email.data))
-        return user.is_admin
+        return True
 
     def get_user(self):
         return db.session.query(AppUser).filter(AppUser.email==self.email.data).first()
@@ -87,14 +87,20 @@ class BaobabAdminIndexView(AdminIndexView):
 
     @expose('/login/', methods=('GET', 'POST'))
     def login_view(self):
-        # handle user login
-        form = LoginForm(request.form)
-        if helpers.validate_form_on_submit(form):
-            user = form.get_user()
-            login.login_user(user)
+        try:
 
-        if login.current_user.is_authenticated:
-            return redirect(url_for('.index'))
+            # handle user login
+            form = LoginForm(request.form)
+            if request.method == 'POST': 
+                if form.validate():
+                    user = form.get_user()
+                    login.login_user(user)
+
+                if login.current_user.is_authenticated:
+                    return redirect(url_for('.index'))
+        except validators.ValidationError as error:
+            flash(str(error))
+
         self._template_args['form'] = form
         return super(BaobabAdminIndexView, self).index()
 
@@ -112,7 +118,7 @@ admin = Admin(app, name='Deep Learning Indaba Admin Portal', index_view=BaobabAd
 
 class BaobabModelView(ModelView):
     def is_accessible(self):
-        return login.current_user.is_authenticated
+        return login.current_user.is_authenticated and login.current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access

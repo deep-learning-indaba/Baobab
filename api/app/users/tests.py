@@ -222,7 +222,7 @@ class UserApiTest(ApiTestCase):
         response = self.app.post('/api/v1/password-reset/request', data={
             'email': 'something@email.com'
         })
-        assert response.status_code == 409
+        assert response.status_code == 404
 
     def test_password_reset_expired(self):
         self.seed_static_data()
@@ -317,7 +317,7 @@ class UserApiTest(ApiTestCase):
 
         response = self.app.get(
             '/api/v1/resend-verification-email?email={}'.format('nonexistant@dummy.com'))
-        assert response.status_code == 409
+        assert response.status_code == 404
 
     def setup_verified_user(self):
         user = AppUser('something@email.com', 'Some', 'Thing', 'Mr',
@@ -372,4 +372,3 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.user_dateOfBirth, datetime(1984, 12, 12))
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
-   
