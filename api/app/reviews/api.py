@@ -2,15 +2,17 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.sql import func
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
+from app.events.models import EventRole
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
+from app.users.models import AppUser
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 option_fields = {
     'value': fields.String,
@@ -239,3 +241,57 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
     
     def get_error_message(self, key):
         return ({'message': {key: 'Missing required parameter in the JSON body or the post body or the query string'}}, 400)
+
+class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
+    
+    @auth_required
+    def post(self):
+        args = self.post_req_parser.parse_args()
+        user_id = g.current_user['id']
+        event_id = args['event_id']
+        reviewer_user_email = args['reviewer_user_email']
+        num_reviews = args['num_reviews']
+
+        is_user_admin = db.session.query(AppUser).get(user_id).is_admin
+        current_user_roles = self.get_roles(user_id, event_id)
+        if 'admin' not in current_user_roles and not is_user_admin:
+            return FORBIDDEN
+        
+        reviewer_user = self.get_reviewer_user(reviewer_user_email)
+        if reviewer_user is None:
+            return USER_NOT_FOUND
+        
+        reviewer_roles = self.get_roles(reviewer_user.id, event_id)
+        if reviewer_roles is None or 'reviewer' not in reviewer_roles:
+            self.add_reviewer_role(reviewer_user.id, event_id)
+
+        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
+        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+        
+        return {}, 201
+
+
+    def get_roles(self, user_id, event_id):
+        return list(map(lambda event_role: event_role[0], db.session.query(EventRole.role).filter_by(event_id=event_id, user_id=user_id).all()))
+
+    def get_reviewer_user(self, reviewer_user_email):
+        return db.session.query(AppUser).filter_by(email=reviewer_user_email).first()
+    
+    def add_reviewer_role(self, user_id, event_id):
+        event_role = EventRole('reviewer', user_id, event_id)
+        db.session.add(event_role)
+        db.session.commit()
+    
+    def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
+        responses = db.session.query(Response.id)\
+                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
+                         .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
+                         .group_by(Response.id)\
+                         .having(func.count(ResponseReviewer.reviewer_user_id) < 3)\
+                         .limit(num_reviews)\
+                         .all()
+        
+        return list(map(lambda response: response[0], responses))
