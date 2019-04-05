@@ -163,7 +163,10 @@ class UserAPI(SignupMixin, restful.Resource):
         user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
-            AppUser.id == g.current_user['id']).first()
+            AppUser.id == g.current_user['id']).first() 
+        
+        current_email = user.email
+        user.verified_email = True if current_email == email else False
 
         user.email = email
         user.firstname = firstname
@@ -178,12 +181,22 @@ class UserAPI(SignupMixin, restful.Resource):
         user.user_category_id = user_category_id
         user.user_dateOfBirth = user_dateOfBirth
         user.user_primaryLanguage = user_primaryLanguage
-
+            
         try:
             db.session.commit()
         except IntegrityError:
             LOGGER.error("email {} already in use".format(email))
             return EMAIL_IN_USE
+
+        if not user.verified_email:
+            send_mail(recipient=user.email,
+                    subject='Baobab Email Re-Verification',
+                    body_text=VERIFY_EMAIL_BODY.format(
+                        user_title, firstname, lastname,
+                        get_baobab_host(),
+                        user.verify_token))
+
+            LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
         roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
 
