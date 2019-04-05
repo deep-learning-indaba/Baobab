@@ -87,6 +87,11 @@ class AppUser(db.Model, UserMixin):
     def verify(self):
         self.verified_email = True
 
+    def update_email(self, new_email):
+        self.verified_email = False
+        self.verify_token = make_code()
+        self.email = new_email
+
 
 class PasswordReset(db.Model):
 

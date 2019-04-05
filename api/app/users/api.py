@@ -5,7 +5,6 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
-
 from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 from app.events.models import EventRole
@@ -165,10 +164,9 @@ class UserAPI(SignupMixin, restful.Resource):
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first() 
         
-        current_email = user.email
-        user.verified_email = True if current_email == email else False
+        if user.email != email:
+            user.update_email(email)            
 
-        user.email = email
         user.firstname = firstname
         user.lastname = lastname
         user.user_title = user_title
@@ -181,7 +179,7 @@ class UserAPI(SignupMixin, restful.Resource):
         user.user_category_id = user_category_id
         user.user_dateOfBirth = user_dateOfBirth
         user.user_primaryLanguage = user_primaryLanguage
-            
+
         try:
             db.session.commit()
         except IntegrityError:
