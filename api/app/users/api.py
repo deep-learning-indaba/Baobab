@@ -21,7 +21,7 @@ from config import BOABAB_HOST
 VERIFY_EMAIL_BODY = """
 Dear {} {} {},
 
-Thank you for creating a new Baobab account. Please following link to verify your email address:
+Thank you for creating a new Baobab account. Please use the following link to verify your email address:
 
 {}/verifyEmail?token={}
 
