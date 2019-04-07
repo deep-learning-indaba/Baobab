@@ -6,6 +6,7 @@ import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
 import Application from "./pages/applicationForm";
+import Review from "./pages/review";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import EventStats from "./pages/eventStats";
@@ -64,6 +65,13 @@ class App extends Component {
       return false;
     }
     return user.is_admin || (user.roles && user.roles.some(r=>r.role === "admin"));
+  }
+
+  isEventReviewer = user => {
+    if (!user) {
+      return false;
+    }
+    return user.roles && user.roles.some(r=>r.role === "reviewer");
   }
 
   render() {
@@ -141,6 +149,18 @@ class App extends Component {
                   </NavLink>
                 </li>
                 )}
+                {this.isEventReviewer(this.state.user) && (
+                  <li class="nav-item">
+                  <NavLink
+                    to="/review"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Review
+                  </NavLink>
+                </li>
+                )}
               </ul>
               <UserDropdown
                 logout={this.refreshUser}
@@ -197,6 +217,11 @@ class App extends Component {
                   exact
                   path="/eventStats"
                   component={EventStats}
+                />
+                <PrivateRoute
+                  exact
+                  path="/review"
+                  component={Review}
                 />
               </Switch>
             </div>
