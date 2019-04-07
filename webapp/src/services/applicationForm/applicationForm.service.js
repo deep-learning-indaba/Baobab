@@ -73,14 +73,11 @@ function getResponse(eventId) {
 }
 
 function submit(applicationFormId, isSubmitted, answers) {
-    // TODO: Handle put for updates
     let response = {
       "application_form_id": applicationFormId,
       "is_submitted": isSubmitted,
       "answers": answers
     }
-
-    console.log("Submitting response: " + response);
 
     return axios.post(baseUrl + `/api/v1/response`, response, {headers: authHeader()})
       .then(resp=> {
