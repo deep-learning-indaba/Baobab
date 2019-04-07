@@ -20,7 +20,8 @@
     "react-select": "2.3.0",
     "react-stepzilla": "^5.0.0",
     "react-tooltip": "^3.9.2",
-    "react-google-charts": "^3.0.11"
+    "react-google-charts": "^3.0.11",
+    "react-linkify": "^0.2.2"
   },
   "scripts": {
     "start": "react-scripts start ",
