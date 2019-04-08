@@ -90,11 +90,24 @@ class AppUser(db.Model, UserMixin):
     def is_event_admin(self, event_id):
         if self.is_admin:
             return True
+        
+        if self.event_roles is None:
+            return False
 
         for event_role in self.event_roles:
             if event_role.event_id == event_id and event_role.role == 'admin':
                 return True
         
+        return False
+    
+    def is_reviewer(self, event_id):
+        if self.event_roles is None:
+            return False
+
+        for event_role in self.event_roles:
+            if event_role.event_id == event_id and event_role.role == 'reviewer':
+                return True
+
         return False
 
 class PasswordReset(db.Model):
