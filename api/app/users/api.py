@@ -5,7 +5,6 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
-
 from app.users.mixins import SignupMixin, AuthenticateMixin
 from app.users.models import AppUser, PasswordReset
 from app.events.models import EventRole
@@ -22,7 +21,7 @@ from config import BOABAB_HOST
 VERIFY_EMAIL_BODY = """
 Dear {} {} {},
 
-Thank you for creating a new Baobab account. Please following link to verify your email address:
+Thank you for creating a new Baobab account. Please use the following link to verify your email address:
 
 {}/verifyEmail?token={}
 
@@ -163,9 +162,11 @@ class UserAPI(SignupMixin, restful.Resource):
         user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
-            AppUser.id == g.current_user['id']).first()
+            AppUser.id == g.current_user['id']).first() 
+        
+        if user.email != email:
+            user.update_email(email)            
 
-        user.email = email
         user.firstname = firstname
         user.lastname = lastname
         user.user_title = user_title
@@ -184,6 +185,16 @@ class UserAPI(SignupMixin, restful.Resource):
         except IntegrityError:
             LOGGER.error("email {} already in use".format(email))
             return EMAIL_IN_USE
+
+        if not user.verified_email:
+            send_mail(recipient=user.email,
+                    subject='Baobab Email Re-Verification',
+                    body_text=VERIFY_EMAIL_BODY.format(
+                        user_title, firstname, lastname,
+                        get_baobab_host(),
+                        user.verify_token))
+
+            LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
         roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
 

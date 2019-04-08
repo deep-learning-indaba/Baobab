@@ -21,7 +21,7 @@ DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
 EMAIL_NOT_VERIFIED = ({'message': 'The email address is not verified'}, 422)
 EMAIL_VERIFY_CODE_NOT_VALID = (
     {'message': 'Valid code is required to verify email'}, 419)
-USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 409)
+USER_NOT_FOUND = ({'message': 'No user exists with that email'}, 404)
 RESET_PASSWORD_CODE_EXPIRED = (
     {'message': 'The password reset request has expired'}, 400)
 FILE_SIZE_EXCEEDED = ({'message': 'File size exceeded'}, 400)
