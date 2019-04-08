@@ -40,7 +40,7 @@ function sendReminderToSubmit(eventId) {
         })
         .catch(function(error) {
             return {
-                msg: "Failed",
+                msg: "",
                 error: (error.response && error.response.data) ? error.response.data.message : error.message
             }
         })
