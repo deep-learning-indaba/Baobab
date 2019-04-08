@@ -108,8 +108,8 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
         user_id = g.current_user["id"]
         event_id = args['event_id']
-        user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
-        if not user.is_event_admin(event_id):
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
         num_users = db.session.query(AppUser.id).count()
@@ -145,8 +145,8 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
-        user = user_repository.get_by_id(user_id)
-        if not user.is_event_admin(event_id):
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
         users = user_repository.get_all_with_unsubmitted_response()
