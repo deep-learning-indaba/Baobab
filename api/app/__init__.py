@@ -55,6 +55,8 @@ class LoginForm(form.Form):
         if not bcrypt.check_password_hash(user.password, self.password.data):
             raise validators.ValidationError('Invalid password')
 
+        if not user.is_admin:
+            raise validators.ValidationError("Adminstrator rights required")
 
         LOGGER.debug("Successful authentication for email: {}".format(self.email.data))
         return True
