@@ -15,16 +15,13 @@ class AppUser(db.Model, UserMixin):
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     user_title = db.Column(db.String(20), nullable=False)
-    nationality_country_id = db.Column(
-        db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    residence_country_id = db.Column(
-        db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
     user_gender = db.Column(db.String(20), nullable=False)
     affiliation = db.Column(db.String(255), nullable=False)
     department = db.Column(db.String(255), nullable=False)
     user_disability = db.Column(db.String(255), nullable=False)
-    user_category_id = db.Column(db.Integer(), db.ForeignKey(
-        'user_category.id'), nullable=False)
+    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
     user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
     user_primaryLanguage = db.Column(db.String(255), nullable=True)
     password = db.Column(db.String(255), nullable=False)
@@ -33,13 +30,10 @@ class AppUser(db.Model, UserMixin):
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
     verified_email = db.Column(db.Boolean(), nullable=True)
-    verify_token = db.Column(
-        db.String(255), nullable=True, unique=True, default=make_code)
+    verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
 
-    nationality_country = db.relationship(
-        'Country', foreign_keys=[nationality_country_id])
-    residence_country = db.relationship(
-        'Country', foreign_keys=[residence_country_id])
+    nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
+    residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
 
     def __init__(self,
