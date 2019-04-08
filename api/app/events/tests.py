@@ -8,6 +8,7 @@ from app.responses.models import Response, Answer
 from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
+from app.utils.errors import FORBIDDEN
 
 
 class EventsAPITest(ApiTestCase):
@@ -310,3 +311,87 @@ class EventsStatsAPITest(ApiTestCase):
             self.assertEqual(data['num_users'], 2)
             self.assertEqual(data['num_responses'], 2)
             self.assertEqual(data['num_submitted_responses'], 1)
+
+class RemindersAPITest(ApiTestCase):
+    def seed_static_data(self):
+        country = Country('South Africa')
+        db.session.add(country)
+
+        user_category = UserCategory('Post Doc')
+        db.session.add(user_category)
+
+        inactive_user = AppUser('inactive@mail.co.za', 'inactive', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+        inactive_user.deactivate()
+        deleted_user = AppUser('deleted@mail.co.za', 'deleted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+        deleted_user.delete()
+        users = [
+            AppUser('event@admin.co.za', 'event', 'admin', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            AppUser('applicant@mail.co.za', 'applicant', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            inactive_user,
+            deleted_user,
+            AppUser('notstarted@mail.co.za', 'notstarted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            AppUser('applicant2@mail.co.za', 'applicant', '2', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+        ]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31))
+        db.session.add(event)
+
+        event_role = EventRole('admin', 1, 1)
+        db.session.add(event_role)
+
+        application_form = ApplicationForm(1, True, datetime(2019, 4, 12))
+        db.session.add(application_form)
+
+        responses = [
+            Response(1, 1, True),
+            Response(1, 2, False),
+            Response(1, 4, True, datetime.now(), True, datetime.now()),
+            Response(1, 6, False),
+        ]
+        db.session.add_all(responses)
+
+        db.session.commit()
+
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
+    
+    def test_not_submitted_reminder(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('event@admin.co.za')
+        params = {'event_id': 1}
+
+        response = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['unsubmitted_responses'], 2)
+
+    def test_not_started_reminder(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('event@admin.co.za')
+        params = {'event_id': 1}
+
+        response = self.app.post('/api/v1/reminder-not-started', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['not_started_responses'], 1)
+    
+    def test_non_event_admin_blocked_from_sending_reminders(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('applicant@mail.co.za')
+        params = {'event_id': 1}
+
+        response_unsubmitted = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
+        response_not_started = self.app.post('/api/v1/reminder-not-started', headers=header, data=params)
+
+        self.assertEqual(response_unsubmitted.status_code, FORBIDDEN[1])
+        self.assertEqual(response_not_started.status_code, FORBIDDEN[1])

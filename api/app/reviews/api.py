@@ -252,17 +252,15 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
-        is_user_admin = db.session.query(AppUser).get(user_id).is_admin
-        current_user_roles = self.get_roles(user_id, event_id)
-        if 'admin' not in current_user_roles and not is_user_admin:
+        current_user = db.session.query(AppUser).get(user_id)
+        if not current_user.is_event_admin(event_id):
             return FORBIDDEN
         
         reviewer_user = self.get_reviewer_user(reviewer_user_email)
         if reviewer_user is None:
             return USER_NOT_FOUND
         
-        reviewer_roles = self.get_roles(reviewer_user.id, event_id)
-        if reviewer_roles is None or 'reviewer' not in reviewer_roles:
+        if not reviewer_user.is_reviewer(event_id):
             self.add_reviewer_role(reviewer_user.id, event_id)
 
         response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
@@ -272,9 +270,6 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         
         return {}, 201
 
-
-    def get_roles(self, user_id, event_id):
-        return list(map(lambda event_role: event_role[0], db.session.query(EventRole.role).filter_by(event_id=event_id, user_id=user_id).all()))
 
     def get_reviewer_user(self, reviewer_user_email):
         return db.session.query(AppUser).filter_by(email=reviewer_user_email).first()
