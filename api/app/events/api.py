@@ -145,7 +145,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
-        user = db.session.query(AppUser).get(user_id)
+        user = user_repository.get_by_id(user_id)
         if not user.is_event_admin(event_id):
             return FORBIDDEN
 
@@ -185,7 +185,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
-        current_user = db.session.query(AppUser).get(user_id)
+        current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 

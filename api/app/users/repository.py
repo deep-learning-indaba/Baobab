@@ -5,6 +5,10 @@ from app.users.models import AppUser
 class UserRepository():
 
     @staticmethod
+    def get_by_id(user_id):
+        return db.session.query(AppUser).get(user_id)
+
+    @staticmethod
     def get_all_with_unsubmitted_response():
         return db.session.query(AppUser)\
                          .filter_by(active=True, is_deleted=False)\
