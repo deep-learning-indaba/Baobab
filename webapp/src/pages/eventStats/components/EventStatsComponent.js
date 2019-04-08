@@ -93,7 +93,7 @@ class EventStatsComponent extends Component {
               }}
             />
             <form onSubmit={this.handleSubmit}>
-              <div class="event-actions text-center">
+              <div class="text-center">
                 <button type="submit" class="event-action btn btn-primary" visible={!emailSendStatus} >
                   {buttonLoading && (
 
