@@ -73,21 +73,6 @@ def get_user_event_response_status(user_id, event_id):
     return "Application not available"
 
 
-def _is_event_admin(user_id, event_id):
-    user = db.session.query(AppUser).filter(
-            AppUser.id == user_id).first()
-    if user.is_admin:
-        return True
-    
-    roles = db.session.query(EventRole).filter(
-            EventRole.user_id == user_id, EventRole.event_id == event_id).all()
-    for role in roles:
-        if role.role == 'admin':
-            return True
-
-    return False
-
-
 class EventsAPI(restful.Resource):
 
     @auth_optional
@@ -121,7 +106,9 @@ class EventStatsAPI(restful.Resource):
             return EVENT_NOT_FOUND
 
         user_id = g.current_user["id"]
-        if not _is_event_admin(user_id, args['event_id']):
+        event_id = args['event_id']
+        user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
+        if not user.is_event_admin(event_id):
             return FORBIDDEN
 
         num_users = db.session.query(AppUser.id).count()

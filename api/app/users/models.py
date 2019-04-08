@@ -35,6 +35,7 @@ class AppUser(db.Model, UserMixin):
     nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
     residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
+    event_roles = db.relationship('EventRole')
 
     def __init__(self,
                  email,
@@ -85,7 +86,16 @@ class AppUser(db.Model, UserMixin):
         self.verified_email = False
         self.verify_token = make_code()
         self.email = new_email
+    
+    def is_event_admin(self, event_id):
+        if self.is_admin:
+            return True
 
+        for event_role in self.event_roles:
+            if event_role.event_id == event_id and event_role.role == 'admin':
+                return True
+        
+        return False
 
 class PasswordReset(db.Model):
 

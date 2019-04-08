@@ -39,6 +39,7 @@ class EventRole(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
 
+    user = db.relationship('AppUser', foreign_keys=[user_id])
 
     def __init__(self, role, user_id, event_id):
         self.role = role
