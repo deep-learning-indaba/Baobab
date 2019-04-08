@@ -149,7 +149,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         if not user.is_event_admin(event_id):
             return FORBIDDEN
 
-        users = user_repository.get_all_users_with_unsubmitted_response()
+        users = user_repository.get_all_with_unsubmitted_response()
         for user in users:
             title = user.user_title
             firstname = user.firstname
@@ -163,3 +163,43 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             send_mail(recipient=user.email, subject=subject, body_text=body)
         
         return {'unsubmitted_responses': len(users)}, 201
+
+NOT_STARTED_EMAIL_BODY="""
+Dear {} {} {},
+
+We noticed that you have created a Baobab account but have not yet started your application to attend {}. This is a reminder that the deadline for applications is {} and any applications not submitted by this date will not be considered. Please ensure you have submitted your application before this date if you would still like to attend this event.
+
+Kind Regards,
+The Deep Learning Indaba team
+"""
+    
+class NotStartedReminderAPI(EventsMixin, restful.Resource):
+    
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        event = db.session.query(Event).get(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        current_user = db.session.query(AppUser).get(user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        users = user_repository.get_all_without_responses()
+        for user in users:
+            title = user.user_title
+            firstname = user.firstname
+            lastname = user.lastname
+            event_name = event.name
+            deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
+            
+            subject = '{} Reminder'.format(event_name)
+            body = NOT_STARTED_EMAIL_BODY.format(title, firstname, lastname, event_name, deadline)
+            
+            send_mail(recipient=user.email, subject=subject, body_text=body)
+        
+        return {'not_started_responses': len(users)}, 201

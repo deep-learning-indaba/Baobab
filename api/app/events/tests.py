@@ -325,10 +325,12 @@ class RemindersAPITest(ApiTestCase):
         deleted_user = AppUser('deleted@mail.co.za', 'deleted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
         deleted_user.delete()
         users = [
-            AppUser('amrit.purshotam@gmail.com', 'event', 'admin', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            AppUser('event@admin.co.za', 'event', 'admin', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
             AppUser('applicant@mail.co.za', 'applicant', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
             inactive_user,
-            deleted_user
+            deleted_user,
+            AppUser('notstarted@mail.co.za', 'notstarted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            AppUser('applicant2@mail.co.za', 'applicant', '2', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
         ]
         for user in users:
             user.verify()
@@ -346,7 +348,8 @@ class RemindersAPITest(ApiTestCase):
         responses = [
             Response(1, 1, True),
             Response(1, 2, False),
-            Response(1, 4, True, datetime.now(), True, datetime.now())
+            Response(1, 4, True, datetime.now(), True, datetime.now()),
+            Response(1, 6, False),
         ]
         db.session.add_all(responses)
 
@@ -364,19 +367,31 @@ class RemindersAPITest(ApiTestCase):
     
     def test_not_submitted_reminder(self):
         self.seed_static_data()
-        header = self.get_auth_header_for('amrit.purshotam@gmail.com')
+        header = self.get_auth_header_for('event@admin.co.za')
         params = {'event_id': 1}
 
         response = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['unsubmitted_responses'], 1)
+        self.assertEqual(data['unsubmitted_responses'], 2)
+
+    def test_not_started_reminder(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('event@admin.co.za')
+        params = {'event_id': 1}
+
+        response = self.app.post('/api/v1/reminder-not-started', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['not_started_responses'], 1)
     
     def test_non_event_admin_blocked_from_sending_reminders(self):
         self.seed_static_data()
         header = self.get_auth_header_for('applicant@mail.co.za')
         params = {'event_id': 1}
 
-        response = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
+        response_unsubmitted = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
+        response_not_started = self.app.post('/api/v1/reminder-not-started', headers=header, data=params)
 
-        self.assertEqual(response.status_code, FORBIDDEN[1])
+        self.assertEqual(response_unsubmitted.status_code, FORBIDDEN[1])
+        self.assertEqual(response_not_started.status_code, FORBIDDEN[1])
