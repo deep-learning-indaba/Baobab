@@ -87,6 +87,10 @@ class AppUser(db.Model, UserMixin):
         self.verify_token = make_code()
         self.email = new_email
     
+    def delete(self):
+        self.is_deleted = True
+        self.deleted_datetime_utc = datetime.now()
+    
     def is_event_admin(self, event_id):
         if self.is_admin:
             return True

@@ -10,7 +10,8 @@ class Event(db.Model):
     description = db.Column(db.String(255), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
-    
+
+    application_forms = db.relationship('ApplicationForm')
 
     def __init__(self, name, description, start_date, end_date):
         self.name = name
@@ -19,16 +20,19 @@ class Event(db.Model):
         self.end_date = end_date
 
     def set_name(self, new_name):
-       self.name = new_name
+        self.name = new_name
 
     def set_description(self, new_description):
-       self.description = new_description
+        self.description = new_description
 
     def set_start_date(self, new_start_date):
-       self.start_date = new_start_date
+        self.start_date = new_start_date
 
     def set_end_date(self, new_end_date):
-       self.end_date = new_end_date
+        self.end_date = new_end_date
+
+    def get_application_form(self):
+        return self.application_forms[0]
 
 class EventRole(db.Model):
 

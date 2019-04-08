@@ -9,6 +9,7 @@ class ApplicationForm(db.Model):
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
 
+    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(self, event_id, is_open, deadline):
         self.event_id = event_id
