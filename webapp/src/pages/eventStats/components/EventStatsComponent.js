@@ -32,9 +32,6 @@ class EventStatsComponent extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true, showErrors: true });
-
-
     this.setState({ buttonLoading: true });
 
     eventStatsService.sendReminderToSubmit(DEFAULT_EVENT_ID).then(
