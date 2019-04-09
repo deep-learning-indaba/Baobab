@@ -11,6 +11,7 @@ from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
 from app.users.models import AppUser
+from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
@@ -252,11 +253,11 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
-        current_user = db.session.query(AppUser).get(user_id)
+        current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
         
-        reviewer_user = self.get_reviewer_user(reviewer_user_email)
+        reviewer_user = user_repository.get_by_email(reviewer_user_email)
         if reviewer_user is None:
             return USER_NOT_FOUND
         
@@ -271,9 +272,6 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         return {}, 201
 
 
-    def get_reviewer_user(self, reviewer_user_email):
-        return db.session.query(AppUser).filter_by(email=reviewer_user_email).first()
-    
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
         db.session.add(event_role)
