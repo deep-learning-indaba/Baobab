@@ -41,3 +41,5 @@ rest_api.add_resource(users_api.ResendVerificationEmailAPI,
 rest_api.add_resource(reviews_api.ReviewAPI, '/api/v1/review')
 rest_api.add_resource(reviews_api.ReviewResponseAPI, '/api/v1/reviewresponse')
 rest_api.add_resource(reviews_api.ReviewAssignmentAPI, '/api/v1/reviewassignment')
+rest_api.add_resource(events_api.NotSubmittedReminderAPI, '/api/v1/reminder-unsubmitted')
+rest_api.add_resource(events_api.NotStartedReminderAPI, '/api/v1/reminder-not-started')

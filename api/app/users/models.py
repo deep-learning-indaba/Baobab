@@ -15,16 +15,13 @@ class AppUser(db.Model, UserMixin):
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     user_title = db.Column(db.String(20), nullable=False)
-    nationality_country_id = db.Column(
-        db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    residence_country_id = db.Column(
-        db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
+    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
     user_gender = db.Column(db.String(20), nullable=False)
     affiliation = db.Column(db.String(255), nullable=False)
     department = db.Column(db.String(255), nullable=False)
     user_disability = db.Column(db.String(255), nullable=False)
-    user_category_id = db.Column(db.Integer(), db.ForeignKey(
-        'user_category.id'), nullable=False)
+    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
     user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
     user_primaryLanguage = db.Column(db.String(255), nullable=True)
     password = db.Column(db.String(255), nullable=False)
@@ -33,14 +30,12 @@ class AppUser(db.Model, UserMixin):
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
     verified_email = db.Column(db.Boolean(), nullable=True)
-    verify_token = db.Column(
-        db.String(255), nullable=True, unique=True, default=make_code)
+    verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
 
-    nationality_country = db.relationship(
-        'Country', foreign_keys=[nationality_country_id])
-    residence_country = db.relationship(
-        'Country', foreign_keys=[residence_country_id])
+    nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
+    residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
+    event_roles = db.relationship('EventRole')
 
     def __init__(self,
                  email,
@@ -91,7 +86,33 @@ class AppUser(db.Model, UserMixin):
         self.verified_email = False
         self.verify_token = make_code()
         self.email = new_email
+    
+    def delete(self):
+        self.is_deleted = True
+        self.deleted_datetime_utc = datetime.now()
+    
+    def is_event_admin(self, event_id):
+        if self.is_admin:
+            return True
+        
+        if self.event_roles is None:
+            return False
 
+        for event_role in self.event_roles:
+            if event_role.event_id == event_id and event_role.role == 'admin':
+                return True
+        
+        return False
+    
+    def is_reviewer(self, event_id):
+        if self.event_roles is None:
+            return False
+
+        for event_role in self.event_roles:
+            if event_role.event_id == event_id and event_role.role == 'reviewer':
+                return True
+
+        return False
 
 class PasswordReset(db.Model):
 
