@@ -11,8 +11,10 @@ class EventStatsComponent extends Component {
 
     this.state = {
       loading: true,
+      buttonLoading: false,
       stats: null,
-      error: ""
+      error: "",
+      emailSendStatus: ""
     };
   }
 
@@ -20,14 +22,33 @@ class EventStatsComponent extends Component {
     eventStatsService.getStats(DEFAULT_EVENT_ID).then(result=>{
       this.setState({
         loading: false,
+        buttonLoading: false,
         stats: result.stats,
-        error: result.error
+        error: result.error,
+        emailSendStatus: ""
       });
     });
   }
 
+  handleSubmit = event => {
+    event.preventDefault();
+    this.setState({ buttonLoading: true });
+
+    eventStatsService.sendReminderToSubmit(DEFAULT_EVENT_ID).then(
+      result => {
+        return eventStatsService.sendReminderToBegin(DEFAULT_EVENT_ID)
+      },
+      error => this.setState({ error, buttonLoading: false })
+    ).then(
+      result => {
+        this.setState({buttonLoading: false, emailSendStatus: "Reminders sent!"})
+      },
+      error => this.setState({ error, buttonLoading: false })
+    );
+  }
+
   render() {
-      const {loading, stats, error} = this.state;
+      const {loading, buttonLoading, emailSendStatus, stats, error} = this.state;
 
       const loadingStyle = {
         "width": "3rem",
@@ -53,23 +74,40 @@ class EventStatsComponent extends Component {
       const not_started = stats.num_users - stats.num_responses;
 
       return (
-        <div className={"event-stats text-center"}>
-          <p className="h5">Statistics for {stats.event_description}</p>
-          <Chart 
-            chartType="PieChart" 
-            loader={<div class="spinner-border" role="status"><span class="sr-only">Loading Chart</span></div>}
-            data={[
-              ['Phase', 'Number'],
-              ['Not Started', not_started],
-              ['Not Submitted', not_submitted],
-              ['Complete', submitted],
-            ]}
-            options={{
-              title: 'Number of applications',
-            }}
-          />
-        </div>
+          <div className={"event-stats text-center"}>
+            <p className="h5">Statistics for {stats.event_description}</p>
+            <Chart 
+              chartType="PieChart" 
+              loader={<div class="spinner-border" role="status"><span class="sr-only">Loading Chart</span></div>}
+              data={[
+                ['Phase', 'Number'],
+                ['Not Started', not_started],
+                ['Not Submitted', not_submitted],
+                ['Complete', submitted],
+              ]}
+              options={{
+                title: 'Number of applications',
+              }}
+            />
+            <form onSubmit={this.handleSubmit}>
+              <div class="text-center">
+                <button type="submit" class="event-action btn btn-primary" visible={!emailSendStatus} >
+                  {buttonLoading && (
+
+                    <span
+                      class="spinner-grow spinner-grow-sm"
+                      role="status"
+                      aria-hidden="true"
+                    />
+                  )}
+                  Send Reminders to Applicants
+                </button>
+                {emailSendStatus && <div className={"alert alert-success"}>{emailSendStatus}</div>}
+              </div>
+            </form>
+          </div>
       )
+
   }
 
 }
