@@ -8,8 +8,9 @@ from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
+from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
@@ -243,8 +244,44 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
     def get_error_message(self, key):
         return ({'message': {key: 'Missing required parameter in the JSON body or the post body or the query string'}}, 400)
 
-class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
+
+class ReviewCountView():
+    def __init__(self, count):
+        self.email = count.email.encode('utf-8')
+        self.user_title = count.user_title
+        self.firstname = count.firstname
+        self.lastname = count.lastname
+        self.reviews_allocated = count.reviews_allocated
+        self.reviews_completed = count.reviews_completed
+
+
+class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
+    reviews_count_fields = {
+        'email': fields.String,
+        'user_title': fields.String,
+        'firstname': fields.String,
+        'lastname': fields.String,
+        'reviews_allocated': fields.Integer,
+        'reviews_completed': fields.Integer
+    }
+
+    @auth_required
+    @marshal_with(reviews_count_fields)
+    def get(self):
+        args = self.get_req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
+        views = [ReviewCountView(count) for count in counts]
+        return views
+        
+
     @auth_required
     def post(self):
         args = self.post_req_parser.parse_args()
@@ -271,7 +308,7 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         
         return {}, 201
 
-
+    
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
         db.session.add(event_role)
