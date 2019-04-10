@@ -764,3 +764,60 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = db.session.query(ResponseReviewer).all()
 
         self.assertEqual(len(response_reviewers), 1)
+
+    def setup_count_reviews_allocated_and_completed(self):
+        responses = [
+            Response(1, 5, True),
+            Response(1, 6, True),
+            Response(1, 7, True),
+            Response(1, 8, True),
+            Response(2, 5, True),
+            Response(2, 6, True)
+        ]
+        db.session.add_all(responses)
+
+        response_reviewers = [
+            ResponseReviewer(1, 2),
+            ResponseReviewer(2, 2),
+            ResponseReviewer(3, 2),
+            ResponseReviewer(4, 2),
+            ResponseReviewer(2, 3),
+            ResponseReviewer(4, 3),
+            ResponseReviewer(3, 4),
+            ResponseReviewer(5, 1),
+            ResponseReviewer(6, 2)
+        ]
+        db.session.add_all(response_reviewers)
+
+        review_responses = [
+            ReviewResponse(1, 3, 2),
+            ReviewResponse(1, 3, 4),
+            ReviewResponse(1, 2, 1),
+            ReviewResponse(1, 2, 3),
+            ReviewResponse(1, 2, 4),
+            ReviewResponse(2, 1, 5),
+            ReviewResponse(2, 2, 6)
+        ]
+        db.session.add_all(review_responses)
+
+        db.session.commit()
+
+    def test_count_reviews_allocated_and_completed(self):
+        self.seed_static_data()
+        self.setup_count_reviews_allocated_and_completed()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/reviewassignment', headers=header, data=params)
+        
+        data = json.loads(response.data)
+        data = sorted(data, key=lambda k: k['email'])
+        self.assertEqual(data[0]['email'], 'r2@r.com')
+        self.assertEqual(data[0]['reviews_allocated'], 4)
+        self.assertEqual(data[0]['reviews_completed'], 3)
+        self.assertEqual(data[1]['email'], 'r3@r.com')
+        self.assertEqual(data[1]['reviews_allocated'], 2)
+        self.assertEqual(data[1]['reviews_completed'], 2)
+        self.assertEqual(data[2]['email'], 'r4@r.com')
+        self.assertEqual(data[2]['reviews_allocated'], 1)
+        self.assertEqual(data[2]['reviews_completed'], 0)

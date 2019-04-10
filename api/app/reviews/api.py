@@ -280,7 +280,6 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
         views = [ReviewCountView(count) for count in counts]
         return views
-        
 
     @auth_required
     def post(self):
