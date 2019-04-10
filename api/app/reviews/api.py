@@ -247,7 +247,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
 class ReviewCountView():
     def __init__(self, count):
-        self.email = count.email.encode('utf-8')
+        self.email = count.email
         self.user_title = count.user_title
         self.firstname = count.firstname
         self.lastname = count.lastname
