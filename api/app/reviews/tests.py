@@ -45,17 +45,9 @@ class ReviewsApiTest(ApiTestCase):
         candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
         system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
         event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer1.verify()
-        reviewer2.verify()
-        reviewer3.verify()
-        reviewer4.verify()
-        candidate1.verify()
-        candidate2.verify()
-        candidate3.verify()
-        candidate4.verify()
-        system_admin.verify()
-        event_admin.verify()
         users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
+        for user in users:
+            user.verify()
         db.session.add_all(users)
         db.session.commit()
 
