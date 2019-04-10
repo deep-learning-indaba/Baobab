@@ -291,9 +291,32 @@ class ReviewAssignmentAPI(PostReviewAssignmentMixin, restful.Resource):
         
         return list(map(lambda response: response[0], responses))
 
-class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
+review_fields = {
+    'review_response_id' : fields.Integer,
+    'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
+    'nationality_country' : fields.String,
+    'residence_country' : fields.String, 
+    'affiliation' : fields.String, 
+    'department' : fields.String,
+    'user_category' : fields.String, 
+    'final_verdict' : fields.String,
+}
 
+class ReviewHistoryModel:
+    def __init__(self, review):
+        self.review_response_id = review.id
+        self.submitted_timestamp = review.submitted_timestamp
+        self.nationality_country = review.AppUser.nationality_country.name
+        self.residence_country = review.AppUser.residence_country.name
+        self.affiliation = review.AppUser.affiliation
+        self.department = review.AppUser.department
+        self.user_category = review.AppUser.user_category.name
+        self.final_verdict = review.value
+
+class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
+    
     @auth_required
+    @marshal_with(review_history_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -304,20 +327,23 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        try:
-            reviews = db.session.query(ReviewForm, ReviewResponse, AppUser, ReviewScore)\
-                            .filter(ReviewForm.application_form_id == form_id )\
-                            .join(ReviewResponse, ReviewForm.id == ReviewResponse.review_form_id)\
-                            .filter(ReviewResponse.reviewer_user_id == user_id)\
-                            .join(Response, ReviewResponse.response_id == Response.id)\
-                            .join(AppUser, Response.user_id == AppUser.id)\
-                            .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)\
-                            .filter(ReviewQuestion.headline == 'Final Verdict')\
-                            .join(ReviewScore, ReviewQuestion.id == ReviewScore.review_question_id).all()
+        reviews = db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)\
+                        .filter(ReviewResponse.reviewer_user_id == user_id)\
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)\
+                        .filter(ReviewForm.application_form_id == form_id)\
+                        .join(Response, ReviewResponse.response_id == Response.id)\
+                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)\
+                        .filter(ReviewQuestion.headline == 'Final Verdict')\
+                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))\
+                        .join(AppUser, Response.user_id == AppUser.id)\
+                        .all()
 
+        num_entries = db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)\
+                        .filter(ReviewResponse.reviewer_user_id == user_id)\
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)\
+                        .filter(ReviewForm.application_form_id == form_id)\
+                        .count()
 
+        LOGGER.debug(reviews)
 
-        except Exception as e:
-            LOGGER.debug(e)
-            return -1
-        return reviews
+        return [ReviewHistoryModel(review) for review in reviews] 
