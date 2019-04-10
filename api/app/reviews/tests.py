@@ -773,13 +773,16 @@ class ReviewsApiTest(ApiTestCase):
 
     #     self.assertEqual(len(response_reviewers), 1)
 
-    def setup_review_responses_and_score(self):
+    def setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score(self):
+        second_reviewer = EventRole('reviewer', 2, 1)
+        db.session.add(second_reviewer)
+        db.session.commit()
+
         responses = [
             Response(1, 5, is_submitted=True),
             Response(1, 6, is_submitted=True),
             Response(1, 7, is_submitted=True)
         ]
-        
         db.session.add_all(responses)
         db.session.commit()
 
@@ -790,28 +793,286 @@ class ReviewsApiTest(ApiTestCase):
         review_responses = [
             ReviewResponse(1,3,1), 
             ReviewResponse(1,3,2),
+            ReviewResponse(1,2,1), 
+            ReviewResponse(1,2,2),
             ReviewResponse(1,3,3)
         ]
-
         review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(5, 'Maybe')]
         review_responses[1].review_scores = [ReviewScore(1, '55'), ReviewScore(5, 'Yes')]
-        
+        review_responses[2].review_scores = [ReviewScore(1, '45'), ReviewScore(2, '67'), ReviewScore(5, 'No')]
+        review_responses[3].review_scores = [ReviewScore(1, '220'), ReviewScore(5, 'Yes')]
+        review_responses[4].review_scores = [ReviewScore(1, '221'), ReviewScore(5, 'Maybe')]
         db.session.add_all(review_responses)
         db.session.commit()
 
 
-    def test_review_history_returned(self):
-        self.seed_static_data()
-        self.setup_review_responses_and_score()
+    # def test_review_history_returned(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
 
-        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r3@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(len(data['reviews']), 3)
+    #     self.assertEqual(data['num_entries'], 3)
+
+    #     self.assertEqual(data['reviews'][0]['review_response_id'], 1)
+    #     self.assertEqual(data['reviews'][0]['nationality_country'], 'South Africa')
+    #     self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
+    #     self.assertEqual(data['reviews'][0]['affiliation'], 'UWC')
+    #     self.assertEqual(data['reviews'][0]['department'], 'CS')
+    #     self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
+    #     self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
+
+    #     self.assertEqual(data['reviews'][1]['review_response_id'], 2)
+    #     self.assertEqual(data['reviews'][1]['nationality_country'], 'Botswana')
+    #     self.assertEqual(data['reviews'][1]['residence_country'], 'Namibia')
+    #     self.assertEqual(data['reviews'][1]['affiliation'], 'RU')
+    #     self.assertEqual(data['reviews'][1]['department'], 'Chem')
+    #     self.assertEqual(data['reviews'][1]['user_category'], 'Student')
+    #     self.assertEqual(data['reviews'][1]['final_verdict'], 'Yes')
+
+    #     self.assertEqual(data['reviews'][2]['review_response_id'], 5)
+    #     self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
+    #     self.assertEqual(data['reviews'][2]['residence_country'], 'Mozambique')
+    #     self.assertEqual(data['reviews'][2]['affiliation'], 'UFH')
+    #     self.assertEqual(data['reviews'][2]['department'], 'Phys')
+    #     self.assertEqual(data['reviews'][2]['user_category'], 'MSc')
+    #     self.assertEqual(data['reviews'][2]['final_verdict'], 'Maybe')
+        
+    # def test_brings_back_only_looged_in_reviewer_reviews(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r2@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(len(data['reviews']), 2)
+    #     self.assertEqual(data['reviews'][0]['review_response_id'], 3)
+    #     self.assertEqual(data['reviews'][1]['review_response_id'], 4)
+
+    # def test_only_reviewer_gets_results_returned(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('c1@c.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+
+    #     self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    # def setup_reviewer_with_no_review_responses(self):
+    #     reviewer = EventRole('reviewer', 1, 1)
+    #     db.session.add(reviewer)
+    #     db.session.commit()
+
+    # def test_reviewer_with_no_responses(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    #     self.setup_reviewer_with_no_review_responses()
+
+    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r1@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(data['num_entries'], 0)
+    #     self.assertEqual(data['reviews'], [])  
+
+    def setup_reviewresponses_with_unordered_timestamps():
+        responses = [
+            Response(1, 5, is_submitted=True),
+            Response(1, 6, is_submitted=True),
+            Response(1, 7, is_submitted=True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        review_responses = [
+            ReviewResponse(1,3,1, datetime(2019, 1, 1)),
+            ReviewResponse(1,3,2, datetime(2018, 1, 1)),
+            ReviewResponse(1,3,3, datetime(2018, 6, 6))
+        ]
+        review_responses[0].review_scores = [ReviewScore(1, '67'), ReviewScore(5, 'Yes')] 
+        review_responses[1].review_scores = [ReviewScore(1, '23'), ReviewScore(5, 'Yes')]
+        review_responses[2].review_scores = [ReviewScore(1, '53'), ReviewScore(5, 'Yes')]
+        db.session.add_all(review_responses)
+        db.session.commit()
+
+    def test_order_by_submittedtimestamp(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'submitted_timestamp'}
         header = self.get_auth_header_for('r3@r.com')
 
-        scores = db.session.query(ReviewScore).all()
-        LOGGER.debug([scores[0].id, scores[0].review_response_id, scores[0].review_question_id, scores[0].value])
-        LOGGER.debug([scores[1].id, scores[1].review_response_id, scores[1].review_question_id, scores[1].value])
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+        LOGGER.debug(data)
+        self.assertEqual(data['reviews'][0]['submitted_timestamp'], '2018-01-01T00:00:00.000000')
+        self.assertEqual(data['reviews'][1]['submitted_timestamp'], '2018-06-06T00:00:00.000000')
+        self.assertEqual(data['reviews'][2]['submitted_timestamp'], '2019-01-01T00:00:00.000000')
+
+    def test_order_by_nationalitycountry(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'nationality_country'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+    
+        self.assertEqual(data['reviews'][0]['nationality_country'], 'Botswana')
+        self.assertEqual(data['reviews'][1]['nationality_country'], 'South Africa')
+        self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
+
+    def test_order_by_residencecountry(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'residence_country'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+    
+        self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
+        self.assertEqual(data['reviews'][1]['residence_country'], 'Mozambique')
+        self.assertEqual(data['reviews'][2]['residence_country'], 'Namibia')
+
+    def test_order_by_affiliation(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'affiliation'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+    
+        self.assertEqual(data['reviews'][0]['affiliation'], 'RU')
+        self.assertEqual(data['reviews'][1]['affiliation'], 'UFH')
+        self.assertEqual(data['reviews'][2]['affiliation'], 'UWC')
+
+    def test_order_by_department(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'department'}
+        header = self.get_auth_header_for('r3@r.com')
 
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
-        LOGGER.debug(data)
+        self.assertEqual(data['reviews'][0]['department'], 'CS') # ascii ordering orders capital letters before lowercase
+        self.assertEqual(data['reviews'][1]['department'], 'Chem')
+        self.assertEqual(data['reviews'][2]['department'], 'Phys')       
+
+    def test_order_by_usercategory(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'user_category'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
+        self.assertEqual(data['reviews'][1]['user_category'], 'MSc')
+        self.assertEqual(data['reviews'][2]['user_category'], 'Student')
+
+    def test_order_by_finalverdict(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'final_verdict'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][1]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][2]['final_verdict'], 'Yes')
+
+    # def setup_two_extra_responses_for_reviewer3(self):
+
+    #     responses = [
+    #         Response(1, 8, is_submitted=True),
+    #         Response(1, 1, is_submitted=True)
+    #     ]
+    #     db.session.add_all(responses)
+    #     db.session.commit()
+
+    #     review_responses = [
+    #         ReviewResponse(1,3,4),
+    #         ReviewResponse(1,3,5)
+    #     ]
+    #     review_responses[0].review_scores = [ReviewScore(1, '89'), ReviewScore(5, 'Maybe')] 
+    #     review_responses[1].review_scores = [ReviewScore(1, '75'), ReviewScore(5, 'Yes')]
+    #     db.session.add_all(review_responses)
+    #     db.session.commit()
+
+    # def test_first_page_in_pagination(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    #     self.setup_two_extra_responses_for_reviewer3()
+
+    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 2, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r3@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(len(data['reviews']), 2)
+    #     self.assertEqual(data['num_entries'], 5)
+
+    #     self.assertEqual(data['reviews'][0]['review_response_id'], 1)
+    #     self.assertEqual(data['reviews'][1]['review_response_id'], 2)
+
+    # def test_middle_page_in_pagination(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    #     self.setup_two_extra_responses_for_reviewer3()
+
+    #     params ={'event_id' : 1, 'page_number' : 1, 'limit' : 2, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r3@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(len(data['reviews']), 2)
+    #     self.assertEqual(data['num_entries'], 5)
+
+    #     self.assertEqual(data['reviews'][0]['review_response_id'], 5)
+    #     self.assertEqual(data['reviews'][1]['review_response_id'], 6)
+
+    # def test_last_page_in_pagination(self):
+    #     self.seed_static_data()
+    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    #     self.setup_two_extra_responses_for_reviewer3()
+
+    #     params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
+    #     header = self.get_auth_header_for('r3@r.com')
+
+    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+    #     data = json.loads(response.data)
+
+    #     self.assertEqual(len(data['reviews']), 1)
+    #     self.assertEqual(data['num_entries'], 5)
+    #     self.assertEqual(data['reviews'][0]['review_response_id'], 7)
+
+
+
+    #         # def setup_reviewresponse_with_none_finalverdict(self):
+    
