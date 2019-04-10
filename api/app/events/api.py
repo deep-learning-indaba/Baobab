@@ -207,7 +207,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
             
             subject = '{} Reminder'.format(event_name)
-            body = NOT_STARTED_EMAIL_BODY.format(title=title, fistname=firstname, lastname=lastname, event=event_name, deadline=deadline)
+            body = NOT_STARTED_EMAIL_BODY.format(title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
             
             send_mail(recipient=user.email, subject=subject, body_text=body)
         
