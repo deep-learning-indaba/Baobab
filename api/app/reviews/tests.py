@@ -806,88 +806,92 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
 
-    # def test_review_history_returned(self):
-    #     self.seed_static_data()
-    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    def test_review_history_returned(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
 
-    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
-    #     header = self.get_auth_header_for('r3@r.com')
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r3@r.com')
 
-    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
-    #     data = json.loads(response.data)
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
 
-    #     self.assertEqual(len(data['reviews']), 3)
-    #     self.assertEqual(data['num_entries'], 3)
+        self.assertEqual(len(data['reviews']), 3)
+        self.assertEqual(data['num_entries'], 3)
 
-    #     self.assertEqual(data['reviews'][0]['review_response_id'], 1)
-    #     self.assertEqual(data['reviews'][0]['nationality_country'], 'South Africa')
-    #     self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
-    #     self.assertEqual(data['reviews'][0]['affiliation'], 'UWC')
-    #     self.assertEqual(data['reviews'][0]['department'], 'CS')
-    #     self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
-    #     self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][0]['review_response_id'], 1)
+        self.assertEqual(data['reviews'][0]['nationality_country'], 'South Africa')
+        self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
+        self.assertEqual(data['reviews'][0]['affiliation'], 'UWC')
+        self.assertEqual(data['reviews'][0]['department'], 'CS')
+        self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
+        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
 
-    #     self.assertEqual(data['reviews'][1]['review_response_id'], 2)
-    #     self.assertEqual(data['reviews'][1]['nationality_country'], 'Botswana')
-    #     self.assertEqual(data['reviews'][1]['residence_country'], 'Namibia')
-    #     self.assertEqual(data['reviews'][1]['affiliation'], 'RU')
-    #     self.assertEqual(data['reviews'][1]['department'], 'Chem')
-    #     self.assertEqual(data['reviews'][1]['user_category'], 'Student')
-    #     self.assertEqual(data['reviews'][1]['final_verdict'], 'Yes')
+        self.assertEqual(data['reviews'][1]['review_response_id'], 2)
+        self.assertEqual(data['reviews'][1]['nationality_country'], 'Botswana')
+        self.assertEqual(data['reviews'][1]['residence_country'], 'Namibia')
+        self.assertEqual(data['reviews'][1]['affiliation'], 'RU')
+        self.assertEqual(data['reviews'][1]['department'], 'Chem')
+        self.assertEqual(data['reviews'][1]['user_category'], 'Student')
+        self.assertEqual(data['reviews'][1]['final_verdict'], 'Yes')
 
-    #     self.assertEqual(data['reviews'][2]['review_response_id'], 5)
-    #     self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
-    #     self.assertEqual(data['reviews'][2]['residence_country'], 'Mozambique')
-    #     self.assertEqual(data['reviews'][2]['affiliation'], 'UFH')
-    #     self.assertEqual(data['reviews'][2]['department'], 'Phys')
-    #     self.assertEqual(data['reviews'][2]['user_category'], 'MSc')
-    #     self.assertEqual(data['reviews'][2]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][2]['review_response_id'], 5)
+        self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
+        self.assertEqual(data['reviews'][2]['residence_country'], 'Mozambique')
+        self.assertEqual(data['reviews'][2]['affiliation'], 'UFH')
+        self.assertEqual(data['reviews'][2]['department'], 'Phys')
+        self.assertEqual(data['reviews'][2]['user_category'], 'MSc')
+        self.assertEqual(data['reviews'][2]['final_verdict'], 'Maybe')
         
-    # def test_brings_back_only_looged_in_reviewer_reviews(self):
-    #     self.seed_static_data()
-    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    def test_brings_back_only_looged_in_reviewer_reviews(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
 
-    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
-    #     header = self.get_auth_header_for('r2@r.com')
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r2@r.com')
 
-    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
-    #     data = json.loads(response.data)
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
 
-    #     self.assertEqual(len(data['reviews']), 2)
-    #     self.assertEqual(data['reviews'][0]['review_response_id'], 3)
-    #     self.assertEqual(data['reviews'][1]['review_response_id'], 4)
+        self.assertEqual(len(data['reviews']), 2)
+        self.assertEqual(data['reviews'][0]['review_response_id'], 3)
+        self.assertEqual(data['reviews'][1]['review_response_id'], 4)
 
-    # def test_only_reviewer_gets_results_returned(self):
-    #     self.seed_static_data()
-    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+    def test_only_reviewer_gets_results_returned(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
 
-    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
-    #     header = self.get_auth_header_for('c1@c.com')
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('c1@c.com')
 
-    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
 
-    #     self.assertEqual(response.status_code, FORBIDDEN[1])
+        self.assertEqual(response.status_code, FORBIDDEN[1])
 
-    # def setup_reviewer_with_no_review_responses(self):
-    #     reviewer = EventRole('reviewer', 1, 1)
-    #     db.session.add(reviewer)
-    #     db.session.commit()
+    def setup_reviewer_with_no_review_responses(self):
+        reviewer = EventRole('reviewer', 1, 1)
+        db.session.add(reviewer)
+        db.session.commit()
 
-    # def test_reviewer_with_no_responses(self):
-    #     self.seed_static_data()
-    #     self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
-    #     self.setup_reviewer_with_no_review_responses()
+    def test_reviewer_with_no_responses(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+        self.setup_reviewer_with_no_review_responses()
 
-    #     params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
-    #     header = self.get_auth_header_for('r1@r.com')
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r1@r.com')
 
-    #     response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
-    #     data = json.loads(response.data)
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        data = json.loads(response.data)
 
-    #     self.assertEqual(data['num_entries'], 0)
-    #     self.assertEqual(data['reviews'], [])  
+        self.assertEqual(data['num_entries'], 0)
+        self.assertEqual(data['reviews'], [])  
 
-    def setup_reviewresponses_with_unordered_timestamps():
+    def setup_reviewresponses_with_unordered_timestamps(self):
+        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, None, True, 3, None, None, 0)
+        db.session.add(verdict_question)
+        db.session.commit()
+
         responses = [
             Response(1, 5, is_submitted=True),
             Response(1, 6, is_submitted=True),
@@ -896,11 +900,13 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(responses)
         db.session.commit()
 
-        review_responses = [
-            ReviewResponse(1,3,1, datetime(2019, 1, 1)),
-            ReviewResponse(1,3,2, datetime(2018, 1, 1)),
-            ReviewResponse(1,3,3, datetime(2018, 6, 6))
-        ]
+        review_response_1 = ReviewResponse(1,3,1)
+        review_response_2 = ReviewResponse(1,3,2)
+        review_response_3 = ReviewResponse(1,3,3)
+        review_response_1.submitted_timestamp = datetime(2019, 1, 1)
+        review_response_2.submitted_timestamp = datetime(2018, 1, 1)
+        review_response_3.submitted_timestamp = datetime(2018, 6, 6)
+        review_responses = [review_response_1, review_response_2, review_response_3]
         review_responses[0].review_scores = [ReviewScore(1, '67'), ReviewScore(5, 'Yes')] 
         review_responses[1].review_scores = [ReviewScore(1, '23'), ReviewScore(5, 'Yes')]
         review_responses[2].review_scores = [ReviewScore(1, '53'), ReviewScore(5, 'Yes')]
@@ -909,7 +915,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_order_by_submittedtimestamp(self):
         self.seed_static_data()
-        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_score()
+        self.setup_reviewresponses_with_unordered_timestamps()
 
         params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'submitted_timestamp'}
         header = self.get_auth_header_for('r3@r.com')
@@ -917,9 +923,9 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
         LOGGER.debug(data)
-        self.assertEqual(data['reviews'][0]['submitted_timestamp'], '2018-01-01T00:00:00.000000')
-        self.assertEqual(data['reviews'][1]['submitted_timestamp'], '2018-06-06T00:00:00.000000')
-        self.assertEqual(data['reviews'][2]['submitted_timestamp'], '2019-01-01T00:00:00.000000')
+        self.assertEqual(data['reviews'][0]['submitted_timestamp'], '2018-01-01T00:00:00')
+        self.assertEqual(data['reviews'][1]['submitted_timestamp'], '2018-06-06T00:00:00')
+        self.assertEqual(data['reviews'][2]['submitted_timestamp'], '2019-01-01T00:00:00')
 
     def test_order_by_nationalitycountry(self):
         self.seed_static_data()
