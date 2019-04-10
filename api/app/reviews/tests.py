@@ -772,3 +772,39 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = db.session.query(ResponseReviewer).all()
 
         self.assertEqual(len(response_reviewers), 1)
+
+    def setup_review_responses_and_score(self):
+        responses = [
+            Response(1, 5, is_submitted=True),
+            Response(1, 6, is_submitted=True)
+        ]
+        
+        db.session.add_all(responses)
+        db.session.commit()
+
+        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, None, True, 3, None, None, 0)
+        db.session.add(verdict_question)
+        db.session.commit()
+
+        review_responses = [
+            ReviewResponse(1,3,1), 
+            ReviewResponse(1,3,2)
+        ]
+
+        review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(1, 'Maybe')]
+        
+        db.session.add_all(review_responses)
+        db.session.commit()
+
+
+    def test_review_history_returned(self):
+        self.seed_static_data()
+        self.setup_review_responses_and_score()
+
+        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
+        data = json.loads(response.data)
+
+        LOGGER.debug(data)
