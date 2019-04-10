@@ -1,12 +1,13 @@
-FROM node:8 as build-deps
-WORKDIR /webapp
-COPY package.json yarn.lock ./
-RUN yarn
-COPY . ./
-RUN yarn build-dev
+FROM node:8
 
-FROM nginx:1.12-alpine
-COPY --from=build-deps /webapp/nginx.conf /etc/nginx/nginx.conf
-COPY --from=build-deps /webapp/build /var/www
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ADD yarn.lock /yarn.lock
+ADD package.json /package.json
+
+ENV NODE_PATH=/node_modules
+ENV PATH=$PATH:/node_modules/.bin
+RUN yarn
+
+WORKDIR /webapp
+ADD . /webapp
+
+EXPOSE 3000
