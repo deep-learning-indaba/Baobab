@@ -1,4 +1,5 @@
 import { ErrorBoundary } from "react-error-boundary";
+import errorHandler from "./errorHandlerUtility";
 import logo from "../images/indaba-logo-dark.png";
 import React from "react";
 
@@ -11,7 +12,14 @@ Error Message:
 
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
-  const bug_mailto = "mailto:baobab@deeplearningindaba.com?subject=" + encodeURI(BUG_SUBJECT_TEXT) + "&body=" + encodeURI(BUG_BODY_TEXT) + encodeURI(error.toString());
+  errorHandler.report(error.toString());
+
+  const bug_mailto =
+    "mailto:baobab@deeplearningindaba.com?subject=" +
+    encodeURI(BUG_SUBJECT_TEXT) +
+    "&body=" +
+    encodeURI(BUG_BODY_TEXT) +
+    encodeURI(error.toString());
 
   return (
     <div className="Body">
@@ -28,8 +36,10 @@ export const ErrorPage = ({ componentStack, error }) => {
           <strong>Error:</strong> {error.toString()}
         </p>
         <p>
-          Please try again and if this issue persists, please <a href={bug_mailto}>get in touch</a> with us
+          Please try again and if this issue persists, please{" "}
+          <a href={bug_mailto}>get in touch</a> with us
         </p>
       </div>
     </div>
-)};
+  );
+};
