@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { reviewService } from "../../../services/reviews";
 import { withRouter } from "react-router";
-
+import ReactTable from 'react-table'
+import 'react-table/react-table.css'
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
 class ReviewAssignmentComponent extends Component {
@@ -18,6 +19,7 @@ class ReviewAssignmentComponent extends Component {
 
   componentDidMount() {
     reviewService.getReviewAssignments(DEFAULT_EVENT_ID).then(result=>{
+      console.log(result)
       this.setState({
         loading: false,
         reviewers: result.reviewers,
@@ -65,6 +67,24 @@ class ReviewAssignmentComponent extends Component {
       "height": "3rem"
     }
 
+    const columns = [{
+      Header: 'Title',
+      accessor: 'user_title' // String-based value accessors!
+    }, {
+      Header: 'Email',
+      accessor: 'email'
+    }, {
+      id: 'fullName', // Required because our accessor is not a string
+      Header: 'Name',
+      accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
+    }, {
+      Header: '# Allocated',
+      accessor: 'reviews_allocated'
+    },{
+      Header: '# Completed',
+      accessor: 'reviews_completed'
+    }]
+
     if (loading) {
       return (
         <div class="d-flex justify-content-center">
@@ -81,7 +101,10 @@ class ReviewAssignmentComponent extends Component {
 
     return (
       <div className={"event-stats text-center"}>
-        
+      <ReactTable
+          data={reviewers}
+          columns={columns}
+      />        
       </div>
     )
     
