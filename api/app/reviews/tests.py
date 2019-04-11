@@ -45,17 +45,9 @@ class ReviewsApiTest(ApiTestCase):
         candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
         system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
         event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer1.verify()
-        reviewer2.verify()
-        reviewer3.verify()
-        reviewer4.verify()
-        candidate1.verify()
-        candidate2.verify()
-        candidate3.verify()
-        candidate4.verify()
-        system_admin.verify()
-        event_admin.verify()
         users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
+        for user in users:
+            user.verify()
         db.session.add_all(users)
         db.session.commit()
 
@@ -759,7 +751,64 @@ class ReviewsApiTest(ApiTestCase):
         response = Response(1,5,is_submitted=True)
         db.session.add(response)
         db.session.commit()
-    
+
+    def setup_count_reviews_allocated_and_completed(self):
+        responses = [
+            Response(1, 5, True),
+            Response(1, 6, True),
+            Response(1, 7, True),
+            Response(1, 8, True),
+            Response(2, 5, True),
+            Response(2, 6, True)
+        ]
+        db.session.add_all(responses)
+
+        response_reviewers = [
+            ResponseReviewer(1, 2),
+            ResponseReviewer(2, 2),
+            ResponseReviewer(3, 2),
+            ResponseReviewer(4, 2),
+            ResponseReviewer(2, 3),
+            ResponseReviewer(4, 3),
+            ResponseReviewer(3, 4),
+            ResponseReviewer(5, 1),
+            ResponseReviewer(6, 2)
+        ]
+        db.session.add_all(response_reviewers)
+
+        review_responses = [
+            ReviewResponse(1, 3, 2),
+            ReviewResponse(1, 3, 4),
+            ReviewResponse(1, 2, 1),
+            ReviewResponse(1, 2, 3),
+            ReviewResponse(1, 2, 4),
+            ReviewResponse(2, 1, 5),
+            ReviewResponse(2, 2, 6)
+        ]
+        db.session.add_all(review_responses)
+
+        db.session.commit()
+
+    def test_count_reviews_allocated_and_completed(self):
+        self.seed_static_data()
+        self.setup_count_reviews_allocated_and_completed()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/reviewassignment', headers=header, data=params)
+        
+        data = json.loads(response.data)
+        data = sorted(data, key=lambda k: k['email'])
+        self.assertEqual(data[0]['email'], 'r2@r.com')
+        self.assertEqual(data[0]['reviews_allocated'], 4)
+        self.assertEqual(data[0]['reviews_completed'], 3)
+        self.assertEqual(data[1]['email'], 'r3@r.com')
+        self.assertEqual(data[1]['reviews_allocated'], 2)
+        self.assertEqual(data[1]['reviews_completed'], 2)
+        self.assertEqual(data[2]['email'], 'r4@r.com')
+        self.assertEqual(data[2]['reviews_allocated'], 1)
+        self.assertEqual(data[2]['reviews_completed'], 0)
+
     def test_reviewer_is_not_assigned_to_response_more_than_once(self):
         self.seed_static_data()
         self.setup_reviewer_is_not_assigned_to_response_more_than_once()
