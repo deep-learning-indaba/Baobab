@@ -253,7 +253,8 @@ class Section extends React.Component {
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a)
+            this.state.questionModels.map(q => q.answer).filter(a => a), 
+            isValid
           );
         }
       }
@@ -329,46 +330,67 @@ function AnswerValue(props) {
   return "No answer provided.";
 }
 
-function Confirmation(props) {
-  return (
-    <div>
-      <div class="row">
-        <div class="col confirmation-heading">
-          <h2>Confirmation</h2>
-          <p>
-            Please confirm that your responses are correct. Use the previous
-            button to correct them if they are not.
-          </p>
+class Confirmation extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <div>
+        <div class="row">
+          <div class="col confirmation-heading">
+            <h2>Review your Answers</h2>
+            <p>
+              Please confirm that your answers are correct. Use the previous
+              button to correct them if they are not. Click the SUBMIT button when you are happy. 
+            </p>
+
+            <div class="alert alert-warning">
+            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT in order for your application to be considered!
+            </div>
+
+            <div class="text-center">
+              <button
+                className="btn btn-primary submit-application mx-auto"
+                onClick={this.props.submit}
+                disabled={this.props.isSubmitting}
+              >
+                Submit
+              </button>
+            </div>
+
+          </div>
         </div>
+        {this.props.questionModels &&
+          this.props.questionModels.map(qm => {
+            return (
+              qm.question && (
+                <div className={"confirmation answer"}>
+                  <div class="row">
+                    <div class="col">
+                      <h5>{qm.question.headline}</h5>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col">
+                      <p><AnswerValue qm={qm}/></p>
+                    </div>
+                  </div>
+                </div>
+              )
+            );
+          })}
+        <button
+          className="btn btn-primary submit-application mx-auto"
+          onClick={this.props.submit}
+          disabled={this.props.isSubmitting}
+        >
+          Submit
+        </button>
       </div>
-      {props.questionModels &&
-        props.questionModels.map(qm => {
-          return (
-            qm.question && (
-              <div className={"confirmation answer"}>
-                <div class="row">
-                  <div class="col">
-                    <h5>{qm.question.headline}</h5>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col">
-                    <p><AnswerValue qm={qm}/></p>
-                  </div>
-                </div>
-              </div>
-            )
-          );
-        })}
-      <button
-        className="btn btn-primary submit-application mx-auto"
-        onClick={props.submit}
-        disabled={props.isSubmitting}
-      >
-        Submit
-      </button>
-    </div>
-  );
+    );
+  }
 }
 
 class Submitted extends React.Component {
@@ -480,7 +502,7 @@ class ApplicationForm extends Component {
         formSpec: response.formSpec,
         isError: response.formSpec === null,
         errorMessage: response.message,
-        isLoading: false
+        isLoading: false,
       });
     });
     this.loadResponse();
@@ -576,7 +598,8 @@ class ApplicationForm extends Component {
                 submittedTimestamp: resp.submitted_timestamp,
                 new_response: false,
                 unsavedChanges: false,
-                isSaving: false
+                isSaving: false,
+                responseId: resp.response_id
               });
             });
         } else {
@@ -607,7 +630,7 @@ class ApplicationForm extends Component {
     this.props.history.push("/");
   };
 
-  handleAnswerChanged = answers => {
+  handleAnswerChanged = (answers, save) => {
     if (answers) {
       this.setState(prevState => {
         return {
@@ -615,6 +638,10 @@ class ApplicationForm extends Component {
             .filter(a => !answers.map(a=>a.question_id).includes(a.question_id))
             .concat(answers)
         };
+      }, () => {
+        if (save) {
+          this.handleSave([]);
+        }
       });
     }
   };
