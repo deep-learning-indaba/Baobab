@@ -9,6 +9,7 @@ import Application from "./pages/applicationForm";
 import Review from "./pages/review";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
+import ReviewAssignment from "./pages/reviewAssignment";
 import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
@@ -149,6 +150,18 @@ class App extends Component {
                   </NavLink>
                 </li>
                 )}
+                {this.isEventAdmin(this.state.user) && (
+                  <li class="nav-item">
+                  <NavLink
+                    to="/reviewAssignment"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Review Assignment
+                  </NavLink>
+                </li>
+                )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item">
                   <NavLink
@@ -217,6 +230,11 @@ class App extends Component {
                   exact
                   path="/eventStats"
                   component={EventStats}
+                />
+                <PrivateRoute
+                  exact
+                  path="/reviewAssignment"
+                  component={ReviewAssignment}
                 />
                 <PrivateRoute
                   exact
