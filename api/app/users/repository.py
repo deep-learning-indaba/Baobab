@@ -9,6 +9,10 @@ class UserRepository():
         return db.session.query(AppUser).get(user_id)
 
     @staticmethod
+    def get_by_email(email):
+        return db.session.query(AppUser).filter_by(email=email).first()
+
+    @staticmethod
     def get_all_with_unsubmitted_response():
         return db.session.query(AppUser)\
                          .filter_by(active=True, is_deleted=False)\
