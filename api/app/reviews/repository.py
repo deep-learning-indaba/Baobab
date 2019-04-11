@@ -12,7 +12,7 @@ class ReviewRepository():
 
     @staticmethod
     def count_reviews_allocated_and_completed_per_reviewer(event_id):
-        x =  (
+        return (
             db.session.query(
                 AppUser.email, AppUser.user_title, AppUser.firstname, AppUser.lastname, 
                 func.count(ResponseReviewer.response_id).label('reviews_allocated'), 
@@ -34,5 +34,3 @@ class ReviewRepository():
                 AppUser.firstname, AppUser.lastname)
             .all()
         )
-        print(x)
-        return x
