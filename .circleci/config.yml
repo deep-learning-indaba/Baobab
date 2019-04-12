@@ -134,6 +134,7 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd webapp
+            openssl aes256 -md md5 -d -in .env.production.enc -out .env.production -pass pass:$CONFIG_PASSWORD
             yarn
             CI=false yarn build
             gcloud app deploy prod-app.yaml dispatch.yaml
