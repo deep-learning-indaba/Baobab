@@ -11,7 +11,7 @@ import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 
-const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";

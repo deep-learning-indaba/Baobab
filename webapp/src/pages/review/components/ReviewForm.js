@@ -10,7 +10,7 @@ import { createColClassName } from "../../../utils/styling/styling";
 
 import Linkify from 'react-linkify';
 
-const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 const LONG_TEXT = "long-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
