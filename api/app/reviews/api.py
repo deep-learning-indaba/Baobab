@@ -336,60 +336,47 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        reviews = db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)\
-                        .filter(ReviewResponse.reviewer_user_id == user_id)\
-                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)\
-                        .filter(ReviewForm.application_form_id == form_id)\
-                        .join(Response, ReviewResponse.response_id == Response.id)\
-                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)\
-                        .filter(ReviewQuestion.headline == 'Final Verdict')\
-                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))\
-                        .join(AppUser, Response.user_id == AppUser.id)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)
+                        .filter(ReviewResponse.reviewer_user_id == user_id)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.application_form_id == form_id)
+                        .join(Response, ReviewResponse.response_id == Response.id)
+                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
+                        .filter(ReviewQuestion.headline == 'Final Verdict')
+                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
+                        .join(AppUser, Response.user_id == AppUser.id))
 
         if sort_column == 'review_response_id':
-            reviews = reviews\
-                .order_by(ReviewResponse.id)
+            reviews = reviews.order_by(ReviewResponse.id)
         
         if sort_column == 'submitted_timestamp':
-            reviews = reviews\
-                .order_by(ReviewResponse.submitted_timestamp)
+            reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
         
         if sort_column == 'nationality_country':
-            reviews = reviews\
-                .join(Country, AppUser.nationality_country_id == Country.id)\
-                .order_by(Country.name)
+            reviews = reviews.join(Country, AppUser.nationality_country_id == Country.id).order_by(Country.name)
 
         if sort_column == 'residence_country':
-            reviews = reviews\
-                .join(Country, AppUser.residence_country_id == Country.id)\
-                .order_by(Country.name)
+            reviews = reviews.join(Country, AppUser.residence_country_id == Country.id).order_by(Country.name)
 
         if sort_column == 'affiliation':
-            reviews = reviews\
-                .order_by(AppUser.affiliation)
+            reviews = reviews.order_by(AppUser.affiliation)
 
         if sort_column == 'department':
-            reviews = reviews\
-                .order_by(AppUser.department)
+            reviews = reviews.order_by(AppUser.department)
         
         if sort_column == 'user_category':
-            reviews = reviews\
-                .join(UserCategory, AppUser.user_category_id == UserCategory.id)\
-                .order_by(UserCategory.name)
+            reviews = reviews.join(UserCategory, AppUser.user_category_id == UserCategory.id).order_by(UserCategory.name)
   
         if sort_column == 'final_verdict':
-                reviews = reviews\
-                .order_by(ReviewScore.value)
+                reviews = reviews.order_by(ReviewScore.value)
 
-        reviews = reviews\
-                .slice(page_number*limit, page_number*limit + limit)\
-                .all()
+        reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
 
-        num_entries = db.session.query(ReviewResponse)\
-                        .filter(ReviewResponse.reviewer_user_id == user_id)\
-                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)\
-                        .filter(ReviewForm.application_form_id == form_id)\
-                        .count()
+        num_entries = (db.session.query(ReviewResponse)
+                        .filter(ReviewResponse.reviewer_user_id == user_id)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.application_form_id == form_id)
+                        .count())
 
         LOGGER.debug(reviews)
         reviews = [ReviewHistoryModel(review) for review in reviews]
