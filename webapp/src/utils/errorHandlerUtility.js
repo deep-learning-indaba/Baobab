@@ -1,7 +1,7 @@
 import { StackdriverErrorReporter } from "stackdriver-errors-js";
 import * as StackTrace from "stacktrace-js";
 window.StackTrace = StackTrace;
-const api_key = process.env.STACKDRIVER_API_KEY || null;
+const api_key = process.env.REACT_APP_STACKDRIVER_API_KEY || null;
 const environment = process.env.NODE_ENV;
 
 let errorHandler;

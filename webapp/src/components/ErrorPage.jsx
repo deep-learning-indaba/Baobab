@@ -12,7 +12,9 @@ Error Message:
 
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
-  errorHandler.report(error.toString());
+  if (errorHandler){
+    errorHandler.report(error.toString());
+  } 
 
   const bug_mailto =
     "mailto:baobab@deeplearningindaba.com?subject=" +
