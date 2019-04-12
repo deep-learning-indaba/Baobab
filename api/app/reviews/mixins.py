@@ -18,6 +18,9 @@ class PostReviewResponseMixin(object):
     post_req_parser.add_argument('response_id', type=int, required=True)
     post_req_parser.add_argument('scores', type=dict, required=True, action='append')
 
+class GetReviewAssignmentMixin(object):
+    get_req_parser = reqparse.RequestParser()
+    get_req_parser.add_argument('event_id', type=int, required=True)
 
 class PostReviewAssignmentMixin(object):
     post_req_parser = reqparse.RequestParser()
