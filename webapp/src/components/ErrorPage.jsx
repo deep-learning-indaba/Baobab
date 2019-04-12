@@ -1,5 +1,5 @@
 import { ErrorBoundary } from "react-error-boundary";
-import errorHandler from "./errorHandlerUtility";
+import errorHandler from "../utils/errorHandlerUtility";
 import logo from "../images/indaba-logo-dark.png";
 import React from "react";
 
