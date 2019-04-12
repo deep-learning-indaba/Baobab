@@ -8,10 +8,10 @@ from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewAssignmentMixin
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
-from app.users.models import AppUser
+from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
@@ -324,3 +324,94 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                          .all()
         
         return list(map(lambda response: response[0], responses))
+
+review_fields = {
+    'review_response_id' : fields.Integer,
+    'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
+    'nationality_country' : fields.String,
+    'residence_country' : fields.String, 
+    'affiliation' : fields.String, 
+    'department' : fields.String,
+    'user_category' : fields.String, 
+    'final_verdict' : fields.String,
+}
+
+review_histroy_fields = {
+    'reviews' : fields.List(fields.Nested(review_fields)),
+    'num_entries' : fields.Integer
+}
+
+class ReviewHistoryModel:
+    def __init__(self, review):
+        self.review_response_id = review.id
+        self.submitted_timestamp = review.submitted_timestamp
+        self.nationality_country = review.AppUser.nationality_country.name
+        self.residence_country = review.AppUser.residence_country.name
+        self.affiliation = review.AppUser.affiliation
+        self.department = review.AppUser.department
+        self.user_category = review.AppUser.user_category.name
+        self.final_verdict = review.value
+
+class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
+    
+    @auth_required
+    @marshal_with(review_histroy_fields)
+    def get(self):
+        args = self.get_req_parser.parse_args()
+        user_id = g.current_user['id']
+        event_id =args['event_id']
+        page_number = args['page_number']
+        limit = args['limit']
+        sort_column = args['sort_column']
+
+        reviewer = db.session.query(AppUser).get(user_id).is_reviewer(event_id)
+        if not reviewer:
+            return FORBIDDEN
+
+        form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
+
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)
+                        .filter(ReviewResponse.reviewer_user_id == user_id)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.application_form_id == form_id)
+                        .join(Response, ReviewResponse.response_id == Response.id)
+                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
+                        .filter(ReviewQuestion.headline == 'Final Verdict')
+                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
+                        .join(AppUser, Response.user_id == AppUser.id))
+
+        if sort_column == 'review_response_id':
+            reviews = reviews.order_by(ReviewResponse.id)
+        
+        if sort_column == 'submitted_timestamp':
+            reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
+        
+        if sort_column == 'nationality_country':
+            reviews = reviews.join(Country, AppUser.nationality_country_id == Country.id).order_by(Country.name)
+
+        if sort_column == 'residence_country':
+            reviews = reviews.join(Country, AppUser.residence_country_id == Country.id).order_by(Country.name)
+
+        if sort_column == 'affiliation':
+            reviews = reviews.order_by(AppUser.affiliation)
+
+        if sort_column == 'department':
+            reviews = reviews.order_by(AppUser.department)
+        
+        if sort_column == 'user_category':
+            reviews = reviews.join(UserCategory, AppUser.user_category_id == UserCategory.id).order_by(UserCategory.name)
+  
+        if sort_column == 'final_verdict':
+                reviews = reviews.order_by(ReviewScore.value)
+
+        reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
+
+        num_entries = (db.session.query(ReviewResponse)
+                        .filter(ReviewResponse.reviewer_user_id == user_id)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.application_form_id == form_id)
+                        .count())
+
+        LOGGER.debug(reviews)
+        reviews = [ReviewHistoryModel(review) for review in reviews]
+        return {'reviews': reviews, 'num_entries': num_entries}
