@@ -3,7 +3,7 @@ import { Chart } from "react-google-charts";
 import { eventStatsService } from "../../../services/eventStats";
 import { withRouter } from "react-router";
 
-const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class EventStatsComponent extends Component {
   constructor(props) {
