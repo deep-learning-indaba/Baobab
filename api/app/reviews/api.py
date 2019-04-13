@@ -266,7 +266,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
             return FORBIDDEN
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id)[0]
         }
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):

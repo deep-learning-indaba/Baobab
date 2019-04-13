@@ -169,7 +169,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_one_reviewer_one_candidate_review_summary(self):
         self.seed_static_data()
         self.setup_one_reviewer_one_candidate()
-        header = self.get_auth_header_for('r1@r.com')
+        header = self.get_auth_header_for('ea@ea.com')
         params = {'event_id': 1}
 
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
@@ -203,10 +203,15 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_remaining_count'], 0)
         
+    def test_no_response_reviewers_reviews_unallocated(self):
+        self.seed_static_data()
+        self.setup_responses_and_no_reviewers()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}        
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_unallocated'], 2)
+        self.assertEqual(data['reviews_unallocated'], 1)
         
         
     
@@ -772,6 +777,12 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
     def setup_count_reviews_allocated_and_completed(self):
+        db.session.add_all([ 
+            EventRole('reviewer', 2, 1),
+            EventRole('reviewer', 3, 1),
+            EventRole('reviewer', 4, 1)
+        ])
+        
         responses = [
             Response(1, 5, True),
             Response(1, 6, True),
@@ -818,6 +829,8 @@ class ReviewsApiTest(ApiTestCase):
         
         data = json.loads(response.data)
         data = sorted(data, key=lambda k: k['email'])
+        print(data)
+        self.assertEqual(len(data),3)
         self.assertEqual(data[0]['email'], 'r2@r.com')
         self.assertEqual(data[0]['reviews_allocated'], 4)
         self.assertEqual(data[0]['reviews_completed'], 3)
