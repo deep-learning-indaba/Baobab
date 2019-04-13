@@ -31,3 +31,11 @@ class PostReviewAssignmentMixin(object):
     post_req_parser.add_argument('event_id', type=int, required=True)
     post_req_parser.add_argument('reviewer_user_email', type=str, required=True)
     post_req_parser.add_argument('num_reviews', type=int, required=True)
+
+
+class GetReviewHistoryMixin(object):
+    get_req_parser = reqparse.RequestParser()
+    get_req_parser.add_argument('event_id', type = int, required = True)
+    get_req_parser.add_argument('page_number', type = int, required = True)
+    get_req_parser.add_argument('limit', type = int, required = True)
+    get_req_parser.add_argument('sort_column', type = str, required = True)
