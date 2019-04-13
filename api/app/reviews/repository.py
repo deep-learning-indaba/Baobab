@@ -1,6 +1,5 @@
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, exists
 from sqlalchemy import and_
-
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import ResponseReviewer, Response
@@ -39,8 +38,12 @@ class ReviewRepository():
     def count_unassigned_reviews(event_id):
         return (
             db.session.query(func.count(Response.id))
-            .filter(Response.event_id == event_id)
+            .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
             .filter(
-                ~exists.where(ResponseReviewer.response_id == Response.id)
+                and_(
+                    ~db.session.query(ResponseReviewer).filter(ResponseReviewer.response_id == Response.id).exists(),
+                    ApplicationForm.event_id == event_id
+                )
             )
+            .first()
         )

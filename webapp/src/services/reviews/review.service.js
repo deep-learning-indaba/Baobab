@@ -7,7 +7,8 @@ export const reviewService = {
     getReviewForm,
     submit,
     getReviewAssignments,
-    assignReviews
+    assignReviews,
+    getReviewSummary
 }
 
 function getReviewForm(eventId, skip) {
@@ -66,18 +67,19 @@ function getReviewAssignments(eventId) {
 }
 
 function assignReviews(eventId, reviewers) {
-	Promise.all(reviewers.map(review => assignReview(eventId, review.email, review.numNewReviews)))
-	.then(function(response) {
-		return {
-			error: ""
-		}
-	})
-	.catch(function(error) {
-		//TODO: This probably won't work as expected with Promise.all
-		return {
-			error: (error.response && error.response.data) ? error.response.data.message : error.message
-		};
-	});
+	return axios
+		.all(reviewers.map(review => assignReview(eventId, review.email, review.reviews_to_assign)))
+		.then(function(response) {
+			return {
+				error: ""
+			}
+		})
+		.catch(function(error) {
+			//TODO: This probably won't work as expected with
+			return {
+				error: (error.response && error.response.data) ? error.response.data.message : error.message
+			};
+		});
 }
 
 function assignReview(eventId, reviewerUserEmail, numReviews) {
@@ -100,3 +102,21 @@ function assignReview(eventId, reviewerUserEmail, numReviews) {
             };
         });    
 }
+
+function getReviewSummary(eventId) {
+    return axios
+        .get(baseUrl + "/api/v1/reviewassignment/summary?event_id=" + eventId, { 'headers': authHeader() })
+        .then(function(response) {
+            return {
+                reviewSummary: response.data,
+                error: ""
+            };
+        })
+        .catch(function(error) {
+            return {
+                reviewSummary: null,
+                error: (error.response && error.response.data) ? error.response.data.message : error.message
+            };
+        });
+}
+    

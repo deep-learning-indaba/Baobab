@@ -2,7 +2,11 @@ import React, { Component } from "react";
 import { reviewService } from "../../../services/reviews";
 import { withRouter } from "react-router";
 import ReactTable from 'react-table'
+
 import 'react-table/react-table.css'
+
+import FormTextBox from "../../../components/form/FormTextBox";
+
 const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
 
 class ReviewAssignmentComponent extends Component {
@@ -13,31 +17,49 @@ class ReviewAssignmentComponent extends Component {
       loading: true,
       reviewers: null,
       error: "",
-      newReviewerEmail: ""
-      };
+      newReviewerEmail: "",
+      reviewSummary: {}
+    };
+    this.renderEditable = this.renderEditable.bind(this);
   }
+
 
   componentDidMount() {
     reviewService.getReviewAssignments(DEFAULT_EVENT_ID).then(result=>{
-      console.log(result)
       this.setState({
         loading: false,
         reviewers: result.reviewers,
         error: result.error,
         newReviewerEmail: ""
       });
+      return reviewService.getReviewSummary(DEFAULT_EVENT_ID);
+    })
+    .then(result => {
+      this.setState({
+        reviewSummary: result.reviewSummary,
+        error: result.error
+      })
     });
+
   }
 
+  handleChange = event => {
+    const value =  event.target.value;
+    this.setState({newReviewerEmail: value});
+  
+  };
+
   handleSubmit = event => {
-    event.preventDefault(); // TODO: Figure out what this does
+    event.preventDefault();
     this.setState({loading: true});
 
     // If new reviewer is specified, as to list.
-    this.state.reviewers.append({
-      email: this.state.newReviewerEmail,
-      numNewReviews: 0
-    })
+    if (this.state.newReviewerEmail !== "") {
+      this.state.reviewers.push({
+        email: this.state.newReviewerEmail,
+        reviews_to_assign: 0
+      });
+    }
 
     // Assign the reviews
     reviewService.assignReviews(DEFAULT_EVENT_ID, this.state.reviewers).then(
@@ -54,13 +76,43 @@ class ReviewAssignmentComponent extends Component {
           error: result.error,
           newReviewerEmail: ""
         });
+        return reviewService.getReviewSummary(DEFAULT_EVENT_ID);
       },
       error => this.setState({ error, loading: false})
     )
+    .then(
+      result => {
+        this.setState({
+          reviewSummary: result.reviewSummary,
+          error: result.error
+        });
+      },
+      error => this.setState({ error, loading: false})
+    );
+  }
+
+  renderEditable(cellInfo) {
+    return (
+      <div
+        style={{ backgroundColor: "#fafafa" }}
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={e => {
+          const reviewers = [...this.state.reviewers];
+          const reviewSummary = this.state.reviewSummary;
+          reviewers[cellInfo.index][cellInfo.column.id] = parseInt(e.target.innerHTML);
+          reviewSummary.reviews_unallocated -= parseInt(e.target.innerHTML);
+          this.setState({ reviewSummary });
+        }}
+        dangerouslySetInnerHTML={{
+          __html: this.state.reviewers[cellInfo.index][cellInfo.column.id]
+        }}
+      />
+    );
   }
 
   render() {
-    const {loading, reviewers, error, newReviewerEmail} = this.state;
+    const {loading, reviewers, error, newReviewerEmail, reviewSummary} = this.state;
 
     const loadingStyle = {
       "width": "3rem",
@@ -83,6 +135,10 @@ class ReviewAssignmentComponent extends Component {
     },{
       Header: '# Completed',
       accessor: 'reviews_completed'
+    }, {
+      Header: 'No. to Assign',
+      accessor: 'reviews_to_assign',
+      Cell: this.renderEditable
     }]
 
     if (loading) {
@@ -100,12 +156,29 @@ class ReviewAssignmentComponent extends Component {
     }
 
     return (
-      <div className={"event-stats text-center"}>
-      <ReactTable
-          data={reviewers}
-          columns={columns}
-      />        
-      </div>
+      <form   onSubmit={this.handleSubmit}>
+        <div className={"review-padding"}>
+          <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
+          <ReactTable
+              data={reviewers}
+              columns={columns}
+              minRows={0}
+          />  
+          <div>
+          <FormTextBox
+            Id={"newReviewEmail"}
+            name={'newReviewEmail'}
+            label={"Add new reviewer's email"}
+            placeholder={"Review email"}
+            onChange={this.handleChange}
+            value={newReviewerEmail}
+            key={"i_newReviewEmail"}
+          />
+          <button class="btn btn-primary float-right" type="submit">Assign</button>    
+          </div> 
+          
+        </div>
+      </form>
     )
     
   }
