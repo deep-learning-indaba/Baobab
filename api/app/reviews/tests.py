@@ -166,6 +166,18 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_remaining_count'], 1)
 
+    def test_one_reviewer_one_candidate_review_summary(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_one_candidate()
+        header = self.get_auth_header_for('r1@r.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews_unallocated'], 0)
+            
+
     def setup_responses_and_no_reviewers(self):
         responses = [
             Response(1, 5, True)
@@ -190,6 +202,13 @@ class ReviewsApiTest(ApiTestCase):
         data = json.loads(response.data)
 
         self.assertEqual(data['reviews_remaining_count'], 0)
+        
+        response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews_unallocated'], 2)
+        
+        
     
     def setup_one_reviewer_three_candidates(self):
         responses = [

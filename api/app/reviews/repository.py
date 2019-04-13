@@ -34,3 +34,13 @@ class ReviewRepository():
                 AppUser.firstname, AppUser.lastname)
             .all()
         )
+
+    @staticmethod
+    def count_unassigned_reviews(event_id):
+        return (
+            db.session.query(func.count(Response.id))
+            .filter(Response.event_id == event_id)
+            .filter(
+                ~exists.where(ResponseReviewer.response_id == Response.id)
+            )
+        )

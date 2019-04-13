@@ -8,7 +8,7 @@ from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore
 from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser
@@ -254,6 +254,20 @@ class ReviewCountView():
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
 
+class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
+    @auth_required
+    def get(self):
+        args = self.get_req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        return {
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id)
+        }
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
