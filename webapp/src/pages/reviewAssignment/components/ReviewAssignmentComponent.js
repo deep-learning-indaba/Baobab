@@ -7,7 +7,7 @@ import 'react-table/react-table.css'
 
 import FormTextBox from "../../../components/form/FormTextBox";
 
-const DEFAULT_EVENT_ID = process.env.DEFAULT_EVENT_ID || 1;
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class ReviewAssignmentComponent extends Component {
   constructor(props) {
@@ -20,7 +20,6 @@ class ReviewAssignmentComponent extends Component {
       newReviewerEmail: "",
       reviewSummary: {}
     };
-    this.renderEditable = this.renderEditable.bind(this);
   }
 
 
@@ -91,7 +90,7 @@ class ReviewAssignmentComponent extends Component {
     );
   }
 
-  renderEditable(cellInfo) {
+  renderEditable = cellInfo => {
     return (
       <div
         style={{ backgroundColor: "#fafafa" }}
