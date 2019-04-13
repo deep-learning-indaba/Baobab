@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import EventStats from '../ReviewAssignment';
+import ReviewAssignment from '../ReviewAssignment';
 
 test('Check if ReviewAssignment component renders.', () => {
   // Render EventStats main component.
