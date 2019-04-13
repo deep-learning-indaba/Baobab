@@ -130,10 +130,10 @@ class ReviewAssignmentComponent extends Component {
       Header: 'Name',
       accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
     }, {
-      Header: '# Allocated',
+      Header: 'No. Allocated',
       accessor: 'reviews_allocated'
     },{
-      Header: '# Completed',
+      Header: 'No. Completed',
       accessor: 'reviews_completed'
     }, {
       Header: 'No. to Assign',
