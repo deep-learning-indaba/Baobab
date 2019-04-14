@@ -23,7 +23,7 @@ class ReviewRepository():
                     from app_user
                     join event_role on event_role.user_id = app_user.id
                     where event_role.role = 'reviewer'
-                    and event_role.event_id = :event_id
+                    and event_role.event_id = %d
                     and not exists (
                         select 1
                         from response_reviewer
@@ -50,11 +50,11 @@ class ReviewRepository():
                     on review_response.response_id = response.id
                     where 
                         event_role.role = 'reviewer'
-                        and event_role.event_id = :event_id
+                        and event_role.event_id = %d
                     group by app_user.id
 
                 )
-            """, {'event_id': event_id})
+            """ % (event_id, event_id))
 
     @staticmethod
     def count_unassigned_reviews(event_id, required_reviews_per_response):
