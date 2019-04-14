@@ -17,11 +17,12 @@ class ReviewRepository():
                 func.count(ResponseReviewer.response_id).label('reviews_allocated'), 
                 func.count(ReviewResponse.response_id).label('reviews_completed'))
             .join(EventRole, EventRole.user_id==AppUser.id)
+            .filter(EventRole.event_id==event_id)
             .filter(EventRole.role=="reviewer")
-            .join(ApplicationForm, ApplicationForm.event_id==event_id)
-            .filter_by(event_id=event_id)
+            .join(ApplicationForm, ApplicationForm.event_id==EventRole.event_id)
             .outerjoin(ResponseReviewer, ResponseReviewer.reviewer_user_id==AppUser.id)
             .outerjoin(Response, Response.id==ResponseReviewer.response_id)
+            .filter(Response.application_form_id==ApplicationForm.id)
             .outerjoin(
                 ReviewResponse, 
                 and_(
@@ -35,15 +36,20 @@ class ReviewRepository():
         )
 
     @staticmethod
-    def count_unassigned_reviews(event_id):
-        return (
+    def count_unassigned_reviews(event_id, required_reviews_per_response):
+        responses =  (
             db.session.query(func.count(Response.id))
             .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
-            .filter(
-                and_(
-                    ~db.session.query(ResponseReviewer).filter(ResponseReviewer.response_id == Response.id).exists(),
-                    ApplicationForm.event_id == event_id
-                )
-            )
-            .first()
+            .filter(ApplicationForm.event_id == event_id)
+            .filter(Response.is_submitted==True, Response.is_withdrawn==False)
+            .first()[0]
         )
+
+        reviews = (
+            db.session.query(func.count(ResponseReviewer.id))
+            .join(Response, ResponseReviewer.response_id ==Response.id)
+            .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
+            .filter(ApplicationForm.event_id == event_id).first()[0]
+        )
+
+        return responses*required_reviews_per_response - reviews

@@ -78,6 +78,8 @@ review_response_fields = {
     'reviews_remaining_count': fields.Integer
 }
 
+REVIEWS_PER_SUBMISSION = 3
+
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count):
         self.review_form = review_form
@@ -266,7 +268,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
             return FORBIDDEN
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id)[0]
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
         }
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
@@ -329,14 +331,13 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
     
     def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
         responses = db.session.query(Response.id)\
-                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
-                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
-                         .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
-                         .group_by(Response.id)\
-                         .having(func.count(ResponseReviewer.reviewer_user_id) < 3)\
-                         .limit(num_reviews)\
-                         .all()
-        
+                        .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                        .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
+                        .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
+                        .group_by(Response.id)\
+                        .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
+                        .limit(num_reviews)\
+                        .all()
         return list(map(lambda response: response[0], responses))
 
 review_fields = {
