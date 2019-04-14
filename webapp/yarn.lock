@@ -8437,6 +8437,13 @@ react-stepzilla@^5.0.0:
   resolved "https://registry.yarnpkg.com/react-stepzilla/-/react-stepzilla-5.0.0.tgz#b5d7caaf5c914744bf7bd192131d3e348bc15789"
   integrity sha512-cIWvOXsa9yj9Y4az1Rt7q5zt8zK6u6Na9BQIoMLlc2TqtMGjflcQmZ1gLmRf+nCofY+fl/uAEoTyo9OtuSIgHQ==
 
+react-table@^6.9.2:
+  version "6.9.2"
+  resolved "https://registry.yarnpkg.com/react-table/-/react-table-6.9.2.tgz#6a59adfeb8d5deced288241ed1c7847035b5ec5f"
+  integrity sha512-sTbNHU8Um0xRtmCd1js873HXnXaMWeBwZoiljuj0l1d44eaqjKyYPK/3HCBbJg1yeE2O5pQJ3Km0tlm9niNL9w==
+  dependencies:
+    classnames "^2.2.5"
+
 react-test-renderer@^16.0.0-0, react-test-renderer@^16.7.0:
   version "16.8.4"
   resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-16.8.4.tgz#abee4c2c3bf967a8892a7b37f77370c5570d5329"

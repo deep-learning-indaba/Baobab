@@ -8,7 +8,7 @@ from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewAssignmentMixin
+from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser, Country, UserCategory
@@ -77,6 +77,8 @@ review_response_fields = {
     'user': fields.Nested(user_fields),
     'reviews_remaining_count': fields.Integer
 }
+
+REVIEWS_PER_SUBMISSION = 3
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count):
@@ -254,6 +256,20 @@ class ReviewCountView():
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
 
+class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
+    @auth_required
+    def get(self):
+        args = self.get_req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        return {
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
+        }
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
@@ -279,6 +295,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
         views = [ReviewCountView(count) for count in counts]
+        LOGGER.debug(views)
         return views
 
     @auth_required
@@ -315,14 +332,13 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
     
     def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
         responses = db.session.query(Response.id)\
-                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
-                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
-                         .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
-                         .group_by(Response.id)\
-                         .having(func.count(ResponseReviewer.reviewer_user_id) < 3)\
-                         .limit(num_reviews)\
-                         .all()
-        
+                        .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                        .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
+                        .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
+                        .group_by(Response.id)\
+                        .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
+                        .limit(num_reviews)\
+                        .all()
         return list(map(lambda response: response[0], responses))
 
 review_fields = {
