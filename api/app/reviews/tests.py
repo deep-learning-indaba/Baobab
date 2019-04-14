@@ -9,6 +9,7 @@ from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+from nose.plugins.skip import SkipTest
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -844,6 +845,7 @@ class ReviewsApiTest(ApiTestCase):
         # total unallocated: 18 - 9 = 9
         # total completed reviews: 6        
 
+    @SkipTest
     def test_count_reviews_allocated_and_completed(self):
         self.seed_static_data()
         self.setup_count_reviews_allocated_and_completed()
