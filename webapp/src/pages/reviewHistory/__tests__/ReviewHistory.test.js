@@ -1,6 +1,6 @@
 import React from "react";
 import { shallow } from "enzyme";
-import ReviewHistory from "../ReviewHistory.js/index.js";
+import ReviewHistory from "../index.js";
 
 test("Check if Review History Page renders.", () => {
   // Render ReviewHistory Form Page.

@@ -151,11 +151,27 @@ function getReviewSummary(eventId) {
     });
 }
 
-function getReviewHistory(eventId) {
+function getReviewHistory(
+  eventId,
+  page_number,
+  limit,
+  sort_column = "review_response_id"
+) {
   return axios
-    .get(baseUrl + "/api/v1/reviewhistory?event_id=" + eventId, {
-      headers: authHeader()
-    })
+    .get(
+      baseUrl +
+        "/api/v1/reviewhistory?event_id=" +
+        eventId +
+        "&page_number=" +
+        page_number +
+        "&limit=" +
+        limit +
+        "&sort_column=" +
+        sort_column,
+      {
+        headers: authHeader()
+      }
+    )
     .then(function(response) {
       return {
         reviewHistory: response.data,
