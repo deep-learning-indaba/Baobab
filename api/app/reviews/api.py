@@ -3,6 +3,7 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.sql import func
 from sqlalchemy import and_, or_
+from math import ceil
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
@@ -354,7 +355,9 @@ review_fields = {
 
 review_histroy_fields = {
     'reviews' : fields.List(fields.Nested(review_fields)),
-    'num_entries' : fields.Integer
+    'num_entries' : fields.Integer,
+    'current_pagenumber' : fields.Integer,
+    'total_pages' : fields.Integer
 }
 
 class ReviewHistoryModel:
@@ -428,6 +431,8 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
                         .filter(ReviewForm.application_form_id == form_id)
                         .count())
 
+        total_pages = ceil(num_entries/limit)
+
         LOGGER.debug(reviews)
         reviews = [ReviewHistoryModel(review) for review in reviews]
-        return {'reviews': reviews, 'num_entries': num_entries}
+        return {'reviews': reviews, 'num_entries': num_entries, 'current_pagenumber': page_number, 'total_pages': total_pages}
