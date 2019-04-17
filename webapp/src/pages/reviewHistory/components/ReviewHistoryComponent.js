@@ -18,7 +18,8 @@ class ReviewHistoryComponent extends Component {
       reviewHistory: [],
       isError: false,
       currentPage : 0,
-      defaultPageSize : 10
+      defaultPageSize : 10,
+      selected: null
     };
   }
 
@@ -66,7 +67,36 @@ class ReviewHistoryComponent extends Component {
       <div className="ReviewHistory">
         <p className="h5 text-center mb-4">Review History</p>
         <div className={"review-padding"}>
-          <ReactTable  loading={isLoading} defaultPageSize={defaultPageSize} pages={numPages} onFetchData={this.fetchData} manual data={reviewHistory} columns={columns} minRows={0} />;
+          <ReactTable  
+            loading={isLoading} 
+            defaultPageSize={defaultPageSize} 
+            pages={numPages} 
+            onFetchData={this.fetchData} 
+            manual 
+            data={reviewHistory} 
+            columns={columns} 
+            minRows={0}
+            getTrProps={(state, rowInfo) => {
+              if (rowInfo && rowInfo.row) {
+                return {
+                  onClick: (e) => {
+                    this.setState({
+                        selected: rowInfo.index
+                    })
+                    //TODO - click through to ReviewForm
+                   console.log("I have been clicked, review response id: "+rowInfo.original.review_response_id);
+                  },
+                  style: {
+                    background: rowInfo.index === this.state.selected ? '#00afec' : 'white',
+                    color: rowInfo.index === this.state.selected ? 'white' : 'black'
+                  }
+                }
+              }else{
+                return {}
+              }
+              }
+            } 
+             />;
         </div>
       </div>
     );
