@@ -1210,7 +1210,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
         data = json.loads(response.data)
 
-        self.assertEqual(data['totalpages'], 3)
+        self.assertEqual(data['total_pages'], 3)
 
     def test_total_number_of_pages_when_zero(self):
         self.seed_static_data()
