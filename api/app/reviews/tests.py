@@ -1222,5 +1222,5 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
         data = json.loads(response.data)
 
-        self.assertEqual(data['totalpages'], 0)
+        self.assertEqual(data['total_pages'], 0)
     
