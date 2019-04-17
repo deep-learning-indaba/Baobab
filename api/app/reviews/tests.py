@@ -1199,4 +1199,28 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['num_entries'], 5)
         self.assertEqual(data['reviews'][0]['review_response_id'], 7)
 
+    def test_total_number_of_pages_greater_than_zero(self):
+        self.seed_static_data()
+        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
+        self.setup_two_extra_responses_for_reviewer3()
+
+        params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r3@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        data = json.loads(response.data)
+
+        self.assertEqual(data['total_pages'], 3)
+
+    def test_total_number_of_pages_when_zero(self):
+        self.seed_static_data()
+        self.setup_reviewer_with_no_reviewresponses()
+
+        params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        data = json.loads(response.data)
+
+        self.assertEqual(data['total_pages'], 0)
     
