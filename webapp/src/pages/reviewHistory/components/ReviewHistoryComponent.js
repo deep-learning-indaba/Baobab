@@ -15,49 +15,48 @@ class ReviewHistoryComponent extends Component {
     super(props);
     this.state = {
       isLoading: true,
-      reviewHistory: null,
-      isError: false
+      reviewHistory: [],
+      isError: false,
+      currentPage : 0,
+      defaultPageSize : 10
     };
   }
 
   componentDidMount() {
-    this.loadReviewHistory();
+    this.loadReviewHistory(this.state.currentPage,this.state.defaultPageSize);
   }
 
-  loadReviewHistory = () => {
-    let pageNumber = 0;
-    let limit = 20;
+  loadReviewHistory = (pageNumber,pageSize,sortColumn) => {
     reviewService
-      .getReviewHistory(DEFAULT_EVENT_ID, pageNumber, limit)
+      .getReviewHistory(DEFAULT_EVENT_ID, pageNumber, pageSize,sortColumn)
       .then(response => {
         this.setState({
           isLoading: false,
-          reviewHistory: response.reviews,
+          reviewHistory: response.reviewHistory.reviews,
           isError: response.reviews === null,
-          errorMessage: response.message
+          errorMessage: response.message,
+          currentPage: pageNumber,
         });
       });
   };
 
-  submit = () => {};
+  fetchData=(state, instance)=> {
+    this.setState({ isLoading: true });
+    let sortColumn;
+    if(state.sorted && state.sorted.length > 0){
+      sortColumn = state.sorted[0].id
+    }
+    this.loadReviewHistory(state.page,state.pageSize,sortColumn);
+  }
 
   render() {
-    const { error, isLoading, reviewHistory } = this.state;
-
+    const { error, isLoading, reviewHistory,defaultPageSize } = this.state;
+    //Hard Coded for now
+    const numPages = 10;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
     };
-
-    if (isLoading) {
-      return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      );
-    }
 
     if (error) {
       return <div className={"alert alert-danger"}>{error}</div>;
@@ -67,7 +66,7 @@ class ReviewHistoryComponent extends Component {
       <div className="ReviewHistory">
         <p className="h5 text-center mb-4">Review History</p>
         <div className={"review-padding"}>
-          <ReactTable data={reviewHistory} columns={columns} minRows={0} />;
+          <ReactTable  loading={isLoading} defaultPageSize={defaultPageSize} pages={numPages} onFetchData={this.fetchData} manual data={reviewHistory} columns={columns} minRows={0} />;
         </div>
       </div>
     );

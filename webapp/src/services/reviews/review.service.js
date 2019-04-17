@@ -155,7 +155,7 @@ function getReviewHistory(
   eventId,
   page_number,
   limit,
-  sort_column = "review_response_id"
+  sort_column = "submitted_timestamp"
 ) {
   return axios
     .get(
