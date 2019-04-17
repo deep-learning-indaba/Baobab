@@ -52,7 +52,7 @@ class ReviewHistoryComponent extends Component {
   render() {
     const { error, isLoading, reviewHistory,defaultPageSize } = this.state;
     //Hard Coded for now
-    const numPages = 10;
+    const numPages = 1;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
