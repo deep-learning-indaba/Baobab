@@ -19,7 +19,8 @@ class ReviewHistoryComponent extends Component {
       isError: false,
       currentPage : 0,
       defaultPageSize : 10,
-      selected: null
+      selected: null,
+      totalPages: null
     };
   }
 
@@ -34,6 +35,7 @@ class ReviewHistoryComponent extends Component {
         this.setState({
           isLoading: false,
           reviewHistory: response.reviewHistory.reviews,
+          totalPages: response.reviewHistory.total_pages,
           isError: response.reviews === null,
           errorMessage: response.message,
           currentPage: pageNumber,
@@ -51,9 +53,7 @@ class ReviewHistoryComponent extends Component {
   }
 
   render() {
-    const { error, isLoading, reviewHistory,defaultPageSize } = this.state;
-    //Hard Coded for now
-    const numPages = 1;
+    const { error, isLoading, reviewHistory,defaultPageSize,totalPages } = this.state;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -70,7 +70,7 @@ class ReviewHistoryComponent extends Component {
           <ReactTable  
             loading={isLoading} 
             defaultPageSize={defaultPageSize} 
-            pages={numPages} 
+            pages={totalPages} 
             onFetchData={this.fetchData} 
             manual 
             data={reviewHistory} 
