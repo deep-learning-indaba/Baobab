@@ -10,6 +10,7 @@ import Review from "./pages/review";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import ReviewAssignment from "./pages/reviewAssignment";
+import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
@@ -65,15 +66,17 @@ class App extends Component {
     if (!user) {
       return false;
     }
-    return user.is_admin || (user.roles && user.roles.some(r=>r.role === "admin"));
-  }
+    return (
+      user.is_admin || (user.roles && user.roles.some(r => r.role === "admin"))
+    );
+  };
 
   isEventReviewer = user => {
     if (!user) {
       return false;
     }
-    return user.roles && user.roles.some(r=>r.role === "reviewer");
-  }
+    return user.roles && user.roles.some(r => r.role === "reviewer");
+  };
 
   render() {
     const bug_mailto =
@@ -140,39 +143,51 @@ class App extends Component {
                 )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item">
-                  <NavLink
-                    to="/eventStats"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Event Stats
-                  </NavLink>
-                </li>
+                    <NavLink
+                      to="/eventStats"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Event Stats
+                    </NavLink>
+                  </li>
                 )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item">
-                  <NavLink
-                    to="/reviewAssignment"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Review Assignment
-                  </NavLink>
-                </li>
+                    <NavLink
+                      to="/reviewAssignment"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Review Assignment
+                    </NavLink>
+                  </li>
                 )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item">
-                  <NavLink
-                    to="/review"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Review
-                  </NavLink>
-                </li>
+                    <NavLink
+                      to="/review"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Review
+                    </NavLink>
+                  </li>
+                )}
+                {this.isEventReviewer(this.state.user) && (
+                  <li class="nav-item">
+                    <NavLink
+                      to="/reviewHistory"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Review History
+                    </NavLink>
+                  </li>
                 )}
               </ul>
               <UserDropdown
@@ -211,36 +226,20 @@ class App extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
-                <Route 
-                  exact 
-                  path="/verifyEmail" 
-                  component={VerifyEmail} 
-                />
-                <PrivateRoute 
-                  exact 
-                  path="/profile" 
-                  component={Profile} 
-                />
+                <Route exact path="/verifyEmail" component={VerifyEmail} />
+                <PrivateRoute exact path="/profile" component={Profile} />
                 <PrivateRoute
                   exact
                   path="/applicationForm"
                   component={Application}
                 />
-                <PrivateRoute
-                  exact
-                  path="/eventStats"
-                  component={EventStats}
-                />
+                <PrivateRoute exact path="/eventStats" component={EventStats} />
                 <PrivateRoute
                   exact
                   path="/reviewAssignment"
                   component={ReviewAssignment}
                 />
-                <PrivateRoute
-                  exact
-                  path="/review"
-                  component={Review}
-                />
+                <PrivateRoute exact path="/review" component={Review} />
               </Switch>
             </div>
           </div>
@@ -249,9 +248,9 @@ class App extends Component {
               <p>
                 Baobab, © 2019 |{" "}
                 <a href="http://www.deeplearningindaba.com">
-                  Deep Learning Indaba 
-                </a>
-                {" "}|{" "}
+                  Deep Learning Indaba
+                </a>{" "}
+                |{" "}
                 <a href="/PrivacyPolicy.pdf" target="_blank">
                   Privacy Policy
                 </a>
