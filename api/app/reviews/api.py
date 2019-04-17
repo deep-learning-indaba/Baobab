@@ -431,7 +431,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
                         .filter(ReviewForm.application_form_id == form_id)
                         .count())
 
-        total_pages = ceil(num_entries/limit)
+        total_pages = ceil(float(num_entries)/limit)
 
         LOGGER.debug(reviews)
         reviews = [ReviewHistoryModel(review) for review in reviews]
