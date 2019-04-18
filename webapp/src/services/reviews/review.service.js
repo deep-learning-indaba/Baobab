@@ -5,6 +5,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const reviewService = {
   getReviewForm,
+  getReviewResponse,
   submit,
   getReviewAssignments,
   assignReviews,
@@ -34,15 +35,40 @@ function getReviewForm(eventId, skip) {
     });
 }
 
-function submit(responseId, reviewFormId, scores) {
+function getReviewResponse(id) {
+  return axios
+    .get(baseUrl + "/api/v1/reviewresponse?id=" + id, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        form: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        form: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function submit(responseId, reviewFormId, scores, shouldUpdate) {
   let review = {
     response_id: responseId,
     review_form_id: reviewFormId,
     scores: scores
   };
 
-  return axios
-    .post(baseUrl + "/api/v1/reviewresponse", review, { headers: authHeader() })
+  const promise = shouldUpdate 
+      ? axios.put(baseUrl + "/api/v1/reviewresponse", review, { headers: authHeader() })
+      : axios.post(baseUrl + "/api/v1/reviewresponse", review, { headers: authHeader() })
+  
+  return promise
     .then(function(response) {
       return {
         error: ""
