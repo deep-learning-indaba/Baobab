@@ -149,3 +149,24 @@ class UserCategory(db.Model):
         self.name = name
         self.description = description
         self.group = group
+
+
+class UserComment(db.Model):
+
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    comment_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime(), nullable=False)
+    comment = db.Column(db.String(2000))
+
+    event = db.relationship('Event')
+    user = db.relationship('AppUser', foreign_keys=[user_id])
+    comment_by_user = db.relationship('AppUser', foreign_keys=[comment_by_user_id])
+
+    def __init__(self, event_id, user_id, comment_by_user_id, timestamp, comment):
+        self.event_id = event_id
+        self.user_id = user_id
+        self.comment_by_user_id = comment_by_user_id
+        self.timestamp = timestamp
+        self.comment = comment
