@@ -369,7 +369,10 @@ class ReviewHistoryModel:
         self.affiliation = review.AppUser.affiliation
         self.department = review.AppUser.department
         self.user_category = review.AppUser.user_category.name
-        self.final_verdict = review.value
+
+        final_verdict = [o for o in review.options if str(o['value']) == review.value]
+        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
+        self.final_verdict = final_verdict
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
@@ -389,7 +392,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
                         .filter(ReviewResponse.reviewer_user_id == user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == form_id)
