@@ -6,6 +6,8 @@ from app import db
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, PasswordReset, UserCategory, Country
 from app.events.models import Event, EventRole
+from app.applicationModel.models import ApplicationForm
+from app.responses.models import Response
 
 
 class UserApiTest(ApiTestCase):
@@ -47,6 +49,16 @@ class UserApiTest(ApiTestCase):
         self.event2_id = self.event2.id
 
         db.session.flush()
+
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
 
     def test_registration(self):
         self.seed_static_data()
@@ -372,3 +384,52 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.user_dateOfBirth, datetime(1984, 12, 12))
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
+
+    def setup_responses(self):
+        application_forms = [
+            ApplicationForm(1, True, datetime(2019, 4, 12)),
+            ApplicationForm(2, False, datetime(2019, 4, 12))
+        ]
+        db.session.add_all(application_forms)
+
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        users = [candidate1, candidate2, candidate3, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_role = EventRole('admin', 4, 1)
+        db.session.add(event_role)
+
+        responses = [
+            Response(1, 1, True, datetime(2019, 4, 10)),
+            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
+            Response(2, 3, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+    def test_user_profile_list(self):
+        self.seed_static_data()
+        self.setup_responses()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        data = json.loads(response.data)
+        data = sorted(data, key=lambda k: k['user_id'])
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['user_id'], 1)
+        self.assertEqual(data[0]['is_submitted'], True)
+        self.assertEqual(data[0]['submitted_timestamp'], u'2019-04-10T00:00:00')
+        self.assertEqual(data[0]['is_withdrawn'], False)
+        self.assertEqual(data[0]['withdrawn_timestamp'], None)
+        self.assertEqual(data[1]['user_id'], 2)
+        self.assertEqual(data[1]['is_submitted'], True)
+        self.assertEqual(data[1]['submitted_timestamp'], u'2019-04-09T00:00:00')
+        self.assertEqual(data[1]['is_withdrawn'], True)
+        self.assertEqual(data[1]['withdrawn_timestamp'], u'2019-04-11T00:00:00')

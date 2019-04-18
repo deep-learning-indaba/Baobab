@@ -25,3 +25,9 @@ class AuthenticateMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('email', type=str, required=True)
     req_parser.add_argument('password', type=str, required=True)
+
+
+class UserProfileListMixin(object):
+
+    req_parser = reqparse.RequestParser()
+    req_parser.add_argument('event_id', type=int, required=True)
