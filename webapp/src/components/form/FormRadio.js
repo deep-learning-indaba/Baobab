@@ -30,7 +30,7 @@ class FormRadio extends React.Component {
                             }
                             type="radio"
                             value={o.value}
-                            checked={this.props.value == o.value}
+                            checked={this.props.value === o.value}
                             onChange={this.props.onChange}
                             tabIndex={this.props.tabIndex}
                             autoFocus={this.props.autoFocus}
