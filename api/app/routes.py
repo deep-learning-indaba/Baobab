@@ -46,3 +46,4 @@ rest_api.add_resource(reviews_api.ReviewSummaryAPI, '/api/v1/reviewassignment/su
 rest_api.add_resource(events_api.NotSubmittedReminderAPI, '/api/v1/reminder-unsubmitted')
 rest_api.add_resource(events_api.NotStartedReminderAPI, '/api/v1/reminder-not-started')
 rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
+rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
