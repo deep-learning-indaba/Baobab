@@ -245,6 +245,7 @@ class App extends Component {
                   component={ReviewHistory}
                 />
                 <PrivateRoute exact path="/review" component={Review} />
+                <PrivateRoute exact path="/review/:id" component={Review} />
               </Switch>
             </div>
           </div>
