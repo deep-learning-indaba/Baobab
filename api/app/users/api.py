@@ -5,8 +5,8 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
+from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin
-from app.users.models import AppUser, PasswordReset
 from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
 
@@ -60,6 +60,17 @@ user_fields = {
     'user_disability': fields.String,
     'user_category_id': fields.Integer,
     'user_category': fields.String(attribute='user_category.name')
+}
+
+
+user_comment_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'user_id': fields.Integer,
+    'comment_by_user_firstname':  fields.String(attribute='comment_by_user.firstname'),
+    'comment_by_user_lastname':  fields.String(attribute='comment_by_user.lastname'),
+    'timestamp': fields.DateTime('iso8601'),
+    'comment': fields.String
 }
 
 
@@ -403,7 +414,7 @@ class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
         email = request.args.get('email')
 
-        LOGGER.debug("Resending verification email to: ".format(email))
+        LOGGER.debug("Resending verification email to: {}".format(email))
 
         user = db.session.query(AppUser).filter(
             AppUser.email == email).first()
@@ -429,3 +440,40 @@ class AdminOnlyAPI(restful.Resource):
     @admin_required
     def get(self):
         return {}, 200
+
+
+class UserCommentAPI(restful.Resource):
+
+    @auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=False)
+        req_parser.add_argument('user_id', type=int, required=False)
+        req_parser.add_argument('comment', type=str, required=False)
+        args = req_parser.parse_args()
+
+        current_user_id = g.current_user['id']
+        comment = UserComment(args['event_id'], args['user_id'], current_user_id, datetime.now(), args['comment'])
+
+        db.session.add(comment)
+        db.session.commit()
+
+        return {}, 201
+
+    @auth_required
+    @marshal_with(user_comment_fields)
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_id', type=int, required=True)
+        args = req_parser.parse_args()
+        
+        current_user = user_repository.get_by_id(g.current_user['id'])
+        if not current_user.is_event_admin(args['event_id']):
+            return FORBIDDEN
+
+        comments = db.session.query(UserComment).filter(
+            UserComment.event_id == args['event_id'], 
+            UserComment.user_id == args['user_id']).all()
+
+        return comments
