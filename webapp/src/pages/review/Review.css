@@ -25,6 +25,9 @@
 }
 
 .complete-title {
-    font-weight: bold;
-    
+    font-weight: bold;   
+}
+
+.hidden {
+    visibility: hidden;
 }
