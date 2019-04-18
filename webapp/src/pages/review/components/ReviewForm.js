@@ -346,7 +346,8 @@ class ReviewForm extends Component {
                 }
 
                 <div class="buttons">
-                    <button disabled={isSubmitting} type="submit" class="btn btn-primary" onClick={this.submit}>
+                    <button disabled={isSubmitting} class="btn btn-secondary" onClick={this.skip}>Skip</button>
+                    <button disabled={isSubmitting} type="submit" class="btn btn-primary float-right" onClick={this.submit}>
                         {isSubmitting && (
                             <span
                                 class="spinner-grow spinner-grow-sm"
@@ -356,7 +357,6 @@ class ReviewForm extends Component {
                         )}
                         Submit
                     </button>
-                    <button disabled={isSubmitting} class="btn btn-secondary float-right" onClick={this.skip}>Skip</button>
                 </div>
                 
                 {(hasValidated && !validationStale && !isValid) && 
