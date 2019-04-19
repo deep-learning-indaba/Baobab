@@ -48,6 +48,7 @@ class ReviewRepository():
                     on response.id = response_reviewer.response_id
                     left join review_response
                     on review_response.response_id = response.id
+                    and review_response.reviewer_user_id = app_user.id
                     where 
                         event_role.role = 'reviewer'
                         and event_role.event_id = %d
