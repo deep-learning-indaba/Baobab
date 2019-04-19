@@ -117,7 +117,7 @@ class ReviewQuestion extends Component {
             <h4>{this.getHeadline(this.props.model)}</h4>
             <Linkify>
                 {this.formControl(
-                    this.props.key,
+                    this.props.model.question.id,
                     this.props.model.question,
                     this.props.model.answer,
                     this.props.model.score ? this.props.model.score.value : null,
