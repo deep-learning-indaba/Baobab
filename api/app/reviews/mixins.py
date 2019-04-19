@@ -8,8 +8,7 @@ class ReviewMixin(object):
 
 class GetReviewResponseMixin(object):
     get_req_parser = reqparse.RequestParser()
-    get_req_parser.add_argument('review_form_id', type=int, required=True)
-    get_req_parser.add_argument('response_id', type=int, required=True)
+    get_req_parser.add_argument('id', type=int, required=True)
 
 
 class PostReviewResponseMixin(object):
@@ -17,6 +16,10 @@ class PostReviewResponseMixin(object):
     post_req_parser.add_argument('review_form_id', type=int, required=True)
     post_req_parser.add_argument('response_id', type=int, required=True)
     post_req_parser.add_argument('scores', type=dict, required=True, action='append')
+
+class GetReviewSummaryMixin(object):
+    get_req_parser = reqparse.RequestParser()
+    get_req_parser.add_argument('event_id', type=int, required=True)
 
 class GetReviewAssignmentMixin(object):
     get_req_parser = reqparse.RequestParser()

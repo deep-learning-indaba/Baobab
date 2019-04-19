@@ -24,6 +24,7 @@ redis = FlaskRedis(app)
 LOGGER = Logger().get_logger()
 
 
+
 import routes
 
 migrate = Migrate(app, db)

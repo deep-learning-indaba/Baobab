@@ -19,7 +19,7 @@ class FormRadio extends React.Component {
             </div>}
             {this.props.options.map(o=>{
                 return (
-                    <div className={"form-check form-check-inline " + (this.shouldDisplayError() ? "is-invalid" : "")}>
+                    <div className={"form-check form-check-inline " + (this.shouldDisplayError() ? "is-invalid" : "")} key={this.props.Id + "_" + o.value}>
                         <input
                             id={this.props.Id + "_" + o.value}
                             name={this.props.Id}
@@ -30,7 +30,7 @@ class FormRadio extends React.Component {
                             }
                             type="radio"
                             value={o.value}
-                            checked={this.props.value == o.value}
+                            checked={this.props.value === o.value}
                             onChange={this.props.onChange}
                             tabIndex={this.props.tabIndex}
                             autoFocus={this.props.autoFocus}

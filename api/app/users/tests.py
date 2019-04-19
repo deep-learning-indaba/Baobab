@@ -2,15 +2,15 @@ import json
 
 from datetime import datetime, timedelta
 
-from app import db
+from app import app, db
 from app.utils.testing import ApiTestCase
-from app.users.models import AppUser, PasswordReset, UserCategory, Country
+from app.users.models import AppUser, PasswordReset, UserCategory, Country, UserComment
 from app.events.models import Event, EventRole
+from app.applicationModel.models import ApplicationForm
+from app.responses.models import Response
 
 
-class UserApiTest(ApiTestCase):
-
-    user_data = {
+USER_DATA = {
         'email': 'something@email.com',
         'firstname': 'Some',
         'lastname': 'Thing',
@@ -27,10 +27,14 @@ class UserApiTest(ApiTestCase):
         'password': '123456'
     }
 
-    auth_data = {
+AUTH_DATA = {
         'email': 'something@email.com',
         'password': '123456'
     }
+
+class UserApiTest(ApiTestCase):
+
+    
 
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
@@ -48,9 +52,19 @@ class UserApiTest(ApiTestCase):
 
         db.session.flush()
 
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
+
     def test_registration(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
 
         assert data['id'] == 1
@@ -58,15 +72,15 @@ class UserApiTest(ApiTestCase):
 
     def test_duplicate_registration(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 201
 
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 409
 
     def test_get_user(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
 
         headers = {'Authorization': data['token']}
@@ -90,7 +104,7 @@ class UserApiTest(ApiTestCase):
 
     def test_update_user(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -133,7 +147,7 @@ class UserApiTest(ApiTestCase):
 
     def test_authentication_deleted(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -142,20 +156,20 @@ class UserApiTest(ApiTestCase):
         response = self.app.delete('api/v1/user', headers=headers)
         assert response.status_code == 200
 
-        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
         assert response.status_code == 404
 
     def test_authentication_unverified_email(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 201
 
-        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
         assert response.status_code == 422
 
     def test_authentication_wrong_password(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -174,7 +188,7 @@ class UserApiTest(ApiTestCase):
 
     def test_authentication(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -185,12 +199,12 @@ class UserApiTest(ApiTestCase):
             '/api/v1/verify-email?token='+user.verify_token)
         assert response.status_code == 201
 
-        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
         assert response.status_code == 200
 
     def test_authentication_response(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
 
         user = db.session.query(AppUser).filter(
@@ -207,12 +221,12 @@ class UserApiTest(ApiTestCase):
         db.session.commit()
         db.session.flush()
 
-        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
         data = json.loads(response.data)
 
-        self.assertEqual(data['firstname'], self.user_data['firstname'])
-        self.assertEqual(data['lastname'], self.user_data['lastname'])
-        self.assertEqual(data['title'], self.user_data['user_title'])
+        self.assertEqual(data['firstname'], USER_DATA['firstname'])
+        self.assertEqual(data['lastname'], USER_DATA['lastname'])
+        self.assertEqual(data['title'], USER_DATA['user_title'])
         self.assertEqual(data['roles'], [
             {'event_id': self.event1_id, 'role': 'admin'},
             {'event_id': self.event2_id, 'role': 'reviewer'},
@@ -226,7 +240,7 @@ class UserApiTest(ApiTestCase):
 
     def test_password_reset_expired(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -254,7 +268,7 @@ class UserApiTest(ApiTestCase):
 
     def test_password_reset(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
         assert response.status_code == 201
 
@@ -293,7 +307,7 @@ class UserApiTest(ApiTestCase):
 
     def test_deletion(self):
         self.seed_static_data()
-        response = self.app.post('/api/v1/user', data=self.user_data)
+        response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
 
         user_id = data['id']
@@ -307,9 +321,9 @@ class UserApiTest(ApiTestCase):
 
     def test_resend_verification_email(self):
         self.seed_static_data()
-        self.app.post('/api/v1/user', data=self.user_data)
+        self.app.post('/api/v1/user', data=USER_DATA)
         response = self.app.get(
-            '/api/v1/resend-verification-email?email={}'.format(self.user_data['email']))
+            '/api/v1/resend-verification-email?email={}'.format(USER_DATA['email']))
         assert response.status_code == 201
 
     def test_resend_verification_email_no_user(self):
@@ -332,7 +346,7 @@ class UserApiTest(ApiTestCase):
     def test_email_change_gets_new_token_and_is_unverified(self):
         self.seed_static_data()
         self.setup_verified_user()
-        response = self.app.post('/api/v1/authenticate', data=self.auth_data)
+        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
         data = json.loads(response.data)
         headers = {'Authorization': data['token']}
 
@@ -372,3 +386,131 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.user_dateOfBirth, datetime(1984, 12, 12))
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
+
+    def setup_responses(self):
+        application_forms = [
+            ApplicationForm(1, True, datetime(2019, 4, 12)),
+            ApplicationForm(2, False, datetime(2019, 4, 12))
+        ]
+        db.session.add_all(application_forms)
+
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        users = [candidate1, candidate2, candidate3, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_role = EventRole('admin', 4, 1)
+        db.session.add(event_role)
+
+        responses = [
+            Response(1, 1, True, datetime(2019, 4, 10)),
+            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
+            Response(2, 3, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+    def test_user_profile_list(self):
+        self.seed_static_data()
+        self.setup_responses()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        data = json.loads(response.data)
+        data = sorted(data, key=lambda k: k['user_id'])
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['user_id'], 1)
+        self.assertEqual(data[0]['is_submitted'], True)
+        self.assertEqual(data[0]['submitted_timestamp'], u'2019-04-10T00:00:00')
+        self.assertEqual(data[0]['is_withdrawn'], False)
+        self.assertEqual(data[0]['withdrawn_timestamp'], None)
+        self.assertEqual(data[1]['user_id'], 2)
+        self.assertEqual(data[1]['is_submitted'], True)
+        self.assertEqual(data[1]['submitted_timestamp'], u'2019-04-09T00:00:00')
+        self.assertEqual(data[1]['is_withdrawn'], True)
+        self.assertEqual(data[1]['withdrawn_timestamp'], u'2019-04-11T00:00:00')
+
+class UserCommentAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
+        self.event1 = Event('Indaba', 'Indaba Event',
+                            datetime.now(), datetime.now())
+        db.session.add(self.event1)
+        db.session.commit()
+
+        self.event1_id = self.event1.id
+        
+        user_data1 = USER_DATA.copy()
+        response = self.app.post('/api/v1/user', data=user_data1)
+        self.user1 = json.loads(response.data)
+
+        user_data2 = USER_DATA.copy()
+        user_data2['email'] = 'person2@person.com'
+        user_data2['firstname'] = 'Person'
+        user_data2['lastname'] = 'Two'
+        response = self.app.post('/api/v1/user', data=user_data2)
+        self.user2 = json.loads(response.data)
+
+        user2 = db.session.query(AppUser).filter(AppUser.email == 'person2@person.com').first()
+        user2.is_admin = True
+        db.session.flush()
+
+
+    def seed_comments(self):
+        self.comment1 = UserComment(self.event1_id, self.user1['id'], self.user2['id'], datetime.now(), 'Comment 1')
+        self.comment2 = UserComment(self.event1_id, self.user1['id'], self.user2['id'], datetime.now(), 'Comment 2')
+        self.comment3 = UserComment(self.event1_id, self.user2['id'], self.user1['id'], datetime.now(), 'Comment 3')
+
+        db.session.add_all([self.comment1, self.comment2, self.comment3])
+        db.session.flush()
+
+    def test_post_comment(self):
+        with app.app_context():
+            self.seed_static_data()
+
+            params = {'event_id': self.event1_id, 'user_id': self.user2['id'], 'comment': 'Comment1'}
+            print('Sending params: ', params)
+            response = self.app.post('/api/v1/user-comment', headers={'Authorization': self.user1['token']}, data=json.dumps(params), content_type='application/json')
+            data = json.loads(response.data)
+
+            self.assertEqual(response.status_code, 201)
+
+    def test_get_forbidden(self):
+        with app.app_context():
+            self.seed_static_data()
+            self.seed_comments()
+
+            params = {'event_id': self.event1_id, 'user_id': self.user2['id']}
+            response = self.app.get('/api/v1/user-comment', headers={'Authorization': self.user1['token']}, query_string=params)
+
+            self.assertEqual(response.status_code, 403)
+
+    def test_get_comments(self):
+        with app.app_context():
+            self.seed_static_data()
+            self.seed_comments()
+
+            params = {'event_id': self.event1_id, 'user_id': self.user1['id']}
+            response = self.app.get('/api/v1/user-comment', headers={'Authorization': self.user2['token']}, query_string=params)
+            comment_list = json.loads(response.data)
+
+            self.assertEqual(len(comment_list), 2)
+            self.assertEqual(comment_list[0]['event_id'], self.comment1.event_id)
+            self.assertEqual(comment_list[0]['user_id'], self.comment1.user_id)
+            self.assertEqual(comment_list[0]['comment_by_user_firstname'], self.user2['firstname'])
+            self.assertEqual(comment_list[0]['comment_by_user_lastname'], self.user2['lastname'])
+            self.assertEqual(comment_list[0]['comment'], self.comment1.comment)
+
+            self.assertEqual(comment_list[1]['event_id'], self.comment2.event_id)
+            self.assertEqual(comment_list[1]['user_id'], self.comment2.user_id)
+            self.assertEqual(comment_list[1]['comment_by_user_firstname'], self.user2['firstname'])
+            self.assertEqual(comment_list[1]['comment_by_user_lastname'], self.user2['lastname'])
+            self.assertEqual(comment_list[1]['comment'], self.comment2.comment)
