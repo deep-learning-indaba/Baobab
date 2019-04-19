@@ -589,7 +589,6 @@ class UserProfileApiTest(ApiTestCase):
         response = self.app.get('/api/v1/userprofile', headers=header, data=params)
 
         data = json.loads(response.data)
-        LOGGER.debug(data)
         self.assertEqual(data['email'], 'c2@c.com')
 
     def test_get_user_when_event_admin(self):
