@@ -34,8 +34,6 @@ AUTH_DATA = {
 
 class UserApiTest(ApiTestCase):
 
-    
-
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
@@ -514,3 +512,92 @@ class UserCommentAPITest(ApiTestCase):
             self.assertEqual(comment_list[1]['comment_by_user_firstname'], self.user2['firstname'])
             self.assertEqual(comment_list[1]['comment_by_user_lastname'], self.user2['lastname'])
             self.assertEqual(comment_list[1]['comment'], self.comment2.comment)
+
+class UserProfileApiTest(ApiTestCase):
+    def setup_static_data(self):
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
+
+        events = [
+            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now()),
+            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now())
+        ]
+        db.session.add_all(events)
+
+        application_forms = [
+            ApplicationForm(1, True, datetime.now()),
+            ApplicationForm(2, False, datetime.now())
+        ]
+        db.session.add_all(application_forms)
+
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        system_admin = AppUser('system_admin@sa.com', 'system_admin', '1', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', True)
+        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        reviewer = AppUser('reviewer@r.com', 'reviewer', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        users = [candidate1, candidate2, system_admin, event_admin, reviewer]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_roles = [
+            EventRole('admin', 4, 1),
+            EventRole('reviwer', 5, 1)
+        ]
+        db.session.add_all(event_roles)
+        
+        responses = [
+            Response(1, 1, True, datetime(2019, 4, 10)),
+            Response(2, 2, True, datetime(2019, 4, 9))
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+    
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
+
+    def test_user_not_found_when_not_event_admin(self):
+        self.setup_static_data()
+        header = self.get_auth_header_for('reviewer@r.com')
+        params = {'user_id': 1}
+
+        response = self.app.get('/api/v1/userprofile', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 404)
+    
+    def test_user_not_found_when_does_not_exist(self):
+        self.setup_static_data()
+        header = self.get_auth_header_for('system_admin@sa.com')
+        params = {'user_id': 99}
+
+        response = self.app.get('/api/v1/userprofile', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_user_when_system_admin(self):
+        self.setup_static_data()
+        header = self.get_auth_header_for('system_admin@sa.com')
+        params = {'user_id': 2}
+
+        response = self.app.get('/api/v1/userprofile', headers=header, data=params)
+
+        data = json.loads(response.data)
+        LOGGER.debug(data)
+        self.assertEqual(data['email'], 'c2@c.com')
+
+    def test_get_user_when_event_admin(self):
+        self.setup_static_data()
+        header = self.get_auth_header_for('event_admin@ea.com')
+        params = {'user_id': 1}
+
+        response = self.app.get('/api/v1/userprofile', headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(data['email'], 'c1@c.com')

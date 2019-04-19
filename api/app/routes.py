@@ -47,3 +47,4 @@ rest_api.add_resource(events_api.NotSubmittedReminderAPI, '/api/v1/reminder-unsu
 rest_api.add_resource(events_api.NotStartedReminderAPI, '/api/v1/reminder-not-started')
 rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
 rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
+rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')
