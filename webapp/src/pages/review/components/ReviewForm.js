@@ -149,6 +149,10 @@ class ReviewForm extends Component {
 
     processResponse = (response) => {
         let questionModels = null;
+        
+        if (!response.form.review_response || (response.form.review_response.id === 0 && !response.form.review_response.scores)) {
+            response.form.review_response = null;
+        }
 
         if (response.form && (response.form.reviews_remaining_count > 0 || response.form.review_response)) {
             questionModels = response.form.review_form.review_questions.map(q => {
