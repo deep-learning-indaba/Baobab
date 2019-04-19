@@ -41,7 +41,7 @@ class ReviewRepository():
                         count(review_response.id) as reviews_completed
                     from response_reviewer
                     join app_user 
-                    on response_reviewer.reviewer_user_id = response_reviewer.reviewer_user_id
+                    on response_reviewer.reviewer_user_id = app_user.id
                     join event_role 
                         on app_user.id = event_role.user_id 
                     join response 
