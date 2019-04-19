@@ -142,51 +142,49 @@ class App extends Component {
                   </li>
                 )}
                 {this.isEventAdmin(this.state.user) && (
-                  <li class="nav-item">
+                  <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Event Admin
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
                       to="/eventStats"
-                      activeClassName="nav-link active"
-                      className="nav-link"
+                      className="dropdown-item"
                       onClick={this.toggleMenu}
                     >
                       Event Stats
                     </NavLink>
-                  </li>
-                )}
-                {this.isEventAdmin(this.state.user) && (
-                  <li class="nav-item">
                     <NavLink
                       to="/reviewAssignment"
-                      activeClassName="nav-link active"
-                      className="nav-link"
+                      className="dropdown-item"
                       onClick={this.toggleMenu}
                     >
                       Review Assignment
                     </NavLink>
+                  </div>
                   </li>
                 )}
                 {this.isEventReviewer(this.state.user) && (
-                  <li class="nav-item">
-                    <NavLink
-                      to="/review"
-                      activeClassName="nav-link active"
-                      className="nav-link"
-                      onClick={this.toggleMenu}
-                    >
-                      Review
-                    </NavLink>
-                  </li>
-                )}
-                {this.isEventReviewer(this.state.user) && (
-                  <li class="nav-item">
-                    <NavLink
-                      to="/reviewHistory"
-                      activeClassName="nav-link active"
-                      className="nav-link"
-                      onClick={this.toggleMenu}
-                    >
-                      Review History
-                    </NavLink>
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Reviews
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/review"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                        >
+                          Review
+                      </NavLink>
+                      <NavLink
+                        to="/reviewHistory"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Review History
+                      </NavLink>
+                    </div>
                   </li>
                 )}
               </ul>
@@ -245,6 +243,7 @@ class App extends Component {
                   component={ReviewHistory}
                 />
                 <PrivateRoute exact path="/review" component={Review} />
+                <PrivateRoute exact path="/review/:id" component={Review} />
               </Switch>
             </div>
           </div>

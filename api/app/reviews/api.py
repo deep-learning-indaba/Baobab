@@ -72,26 +72,41 @@ user_fields = {
     'user_category': fields.String(attribute='user_category.name')
 }
 
+review_scores_fields = {
+    'review_question_id': fields.Integer,
+    'value': fields.String
+}
+
 review_response_fields = {
+    'id': fields.Integer,
+    'review_form_id': fields.Integer,
+    'response_id': fields.Integer,
+    'reviewer_user_id': fields.Integer,
+    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
+}
+
+review_fields = {
     'review_form': fields.Nested(review_form_fields),
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
-    'reviews_remaining_count': fields.Integer
+    'reviews_remaining_count': fields.Integer,
+    'review_response': fields.Nested(review_response_fields)
 }
 
 REVIEWS_PER_SUBMISSION = 3
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count):
+    def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
+        self.review_response = review_response
 
 class ReviewAPI(ReviewMixin, restful.Resource):
 
     @auth_required
-    @marshal_with(review_response_fields)
+    @marshal_with(review_fields)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -140,36 +155,35 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         return skip
 
 
-review_scores_fields = {
-    'review_question_id': fields.Integer,
-    'value': fields.String
-}
-
-review_response_fields = {
-    'id': fields.Integer,
-    'review_form_id': fields.Integer,
-    'response_id': fields.Integer,
-    'reviewer_user_id': fields.Integer,
-    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
-}
-
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
 
     @auth_required
-    @marshal_with(review_response_fields)
+    @marshal_with(review_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
-        review_form_id = args['review_form_id']
-        response_id = args['response_id']
+        id = args['id']
         reviewer_user_id = g.current_user['id']
 
-        review_response = db.session.query(ReviewResponse)\
-                            .filter_by(review_form_id=review_form_id, response_id=response_id, reviewer_user_id=reviewer_user_id)\
-                            .first()
-        if review_response is None:
+        review_form_response = db.session.query(ReviewForm, ReviewResponse)\
+                                            .join(ReviewResponse)\
+                                            .filter_by(id=id, reviewer_user_id=reviewer_user_id)\
+                                            .first()
+
+        if review_form_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
 
-        return review_response
+
+        review_form, review_response = review_form_response
+
+        response = db.session.query(Response)\
+                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
+                        .join(ResponseReviewer)\
+                        .filter_by(reviewer_user_id=g.current_user['id'])\
+                        .join(ReviewResponse)\
+                        .filter_by(id=id)\
+                        .first()
+
+        return ReviewResponseUser(review_form, response, 0, review_response)
 
     @auth_required
     def post(self):
@@ -369,7 +383,10 @@ class ReviewHistoryModel:
         self.affiliation = review.AppUser.affiliation
         self.department = review.AppUser.department
         self.user_category = review.AppUser.user_category.name
-        self.final_verdict = review.value
+
+        final_verdict = [o for o in review.options if str(o['value']) == review.value]
+        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
+        self.final_verdict = final_verdict
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
@@ -389,7 +406,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
                         .filter(ReviewResponse.reviewer_user_id == user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == form_id)

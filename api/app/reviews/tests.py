@@ -513,7 +513,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_review_response_not_found(self):
         self.seed_static_data()
-        params = {'review_form_id': 55, 'response_id': 432}
+        params = {'id': 55}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
@@ -530,28 +530,31 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(answer)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1)
-        review_response.review_scores.append(ReviewScore(1, 'answer1'))
-        review_response.review_scores.append(ReviewScore(2, 'answer2'))
-        db.session.add(review_response)
+        self.review_response = ReviewResponse(1, 1, 1)
+        self.review_response.review_scores.append(ReviewScore(1, 'answer1'))
+        self.review_response.review_scores.append(ReviewScore(2, 'answer2'))
+        db.session.add(self.review_response)
         db.session.commit()
+
+        db.session.flush()
         
 
     def test_review_response(self):
         self.seed_static_data()
         self.setup_review_response()
-        params = {'review_form_id': 1, 'response_id': 1}
+        params = {'id': self.review_response.id}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['id'], 1)
-        self.assertEqual(data['response_id'], 1)
-        self.assertEqual(data['review_form_id'], 1)
-        self.assertEqual(data['reviewer_user_id'], 1)
-        self.assertEqual(data['scores'][0]['value'], 'answer1')
-        self.assertEqual(data['scores'][1]['value'], 'answer2')
+        print(data)
+
+        self.assertEqual(data['review_form']['id'], 1)
+        self.assertEqual(data['review_response']['reviewer_user_id'], 1)
+        self.assertEqual(data['review_response']['response_id'], 1)
+        self.assertEqual(data['review_response']['scores'][0]['value'], 'answer1')
+        self.assertEqual(data['review_response']['scores'][1]['value'], 'answer2')
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
@@ -893,7 +896,12 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(responses)
         db.session.commit()
 
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, None, True, 3, None, None, 0)
+        final_verdict_options = [
+            {'label': 'Yes', 'value': 2},
+            {'label': 'No', 'value': 0},
+            {'label': 'Maybe', 'value': 1},
+        ]
+        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
         db.session.add(verdict_question)
         db.session.commit()
 
@@ -904,11 +912,11 @@ class ReviewsApiTest(ApiTestCase):
             ReviewResponse(1,2,2),
             ReviewResponse(1,3,3)
         ]
-        review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(5, 'Maybe')]
-        review_responses[1].review_scores = [ReviewScore(1, '55'), ReviewScore(5, 'Yes')]
+        review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(5, '1')]
+        review_responses[1].review_scores = [ReviewScore(1, '55'), ReviewScore(5, '2')]
         review_responses[2].review_scores = [ReviewScore(1, '45'), ReviewScore(2, '67'), ReviewScore(5, 'No')]
-        review_responses[3].review_scores = [ReviewScore(1, '220'), ReviewScore(5, 'Yes')]
-        review_responses[4].review_scores = [ReviewScore(1, '221'), ReviewScore(5, 'Maybe')]
+        review_responses[3].review_scores = [ReviewScore(1, '220'), ReviewScore(5, '2')]
+        review_responses[4].review_scores = [ReviewScore(1, '221'), ReviewScore(5, '1')]
         db.session.add_all(review_responses)
         db.session.commit()
 
@@ -1009,7 +1017,13 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][2]['review_response_id'], 5)
 
     def setup_reviewresponses_with_unordered_timestamps(self):
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, None, True, 3, None, None, 0)
+        final_verdict_options = [
+            {'label': 'Yes', 'value': 2},
+            {'label': 'No', 'value': 0},
+            {'label': 'Maybe', 'value': 1},
+        ]
+
+        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
         db.session.add(verdict_question)
         db.session.commit()
 
