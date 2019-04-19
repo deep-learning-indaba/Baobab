@@ -127,7 +127,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 NOT_SUBMITTED_EMAIL_BODY="""
 Dear {title} {firstname} {lastname},
 
-We noticed that you started applying to attend the {event} but have not completed and submitted your application. This is a reminder that the deadline for applications is {deadline} and any applications not submitted by this date will not be considered. Please complete and submit your application if you would still like to attend this event.
+We noticed that you started applying to attend the {event} but have not completed and submitted your application. This is a final reminder that you have until {deadline} to submit your application in order to be considered. Please complete and submit your application if you would still like to attend this event.
 
 We have noticed that some people were confused about the "check your answers" page and may not have clicked on the Submit button on this page. Please be aware that you must click on the Submit button to confirm your application. If you do not receive an email from us with a copy of your answers, your application will not be considered.
 
@@ -159,7 +159,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             event_name = event.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
             
-            subject = '{} Reminder'.format(event_name)
+            subject = 'FINAL REMINDER to submit you application for {}'.format(event_name)
             body = NOT_SUBMITTED_EMAIL_BODY.format(title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
             
             send_mail(recipient=user.email, subject=subject, body_text=body)
@@ -174,7 +174,7 @@ WE HAVE NOT RECEIVED YOUR APPLICATION TO ATTEND {event}
 We noticed that you have created a Baobab account, but have not yet started an application to attend {event}. 
 
 If you think you have already filled in the form, you may have not clicked on the SUBMIT button on the final page. If this is the case, we DO NOT have your application and unfortunately you will have to re-do it. We sincerely apologise for any confusion and inconvenience in this regard. 
-Since we are aware of a handful of people affected by this, we have decided to extend the deadline to {deadline}
+This is a final reminder that you have until {deadline} to complete and submit your application. 
 
 Please ensure you have submitted your application before this date if you would still like to attend this event.
 
@@ -206,7 +206,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             event_name = event.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
             
-            subject = '{} Reminder'.format(event_name)
+            subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(event_name)
             body = NOT_STARTED_EMAIL_BODY.format(title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
             
             send_mail(recipient=user.email, subject=subject, body_text=body)
