@@ -164,13 +164,16 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         id = args['id']
         reviewer_user_id = g.current_user['id']
 
-        review_form, review_response = db.session.query(ReviewForm, ReviewResponse)\
+        review_form_response = db.session.query(ReviewForm, ReviewResponse)\
                                             .join(ReviewResponse)\
                                             .filter_by(id=id, reviewer_user_id=reviewer_user_id)\
                                             .first()
 
-        if review_form is None or review_response is None:
+        if review_form_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
+
+
+        review_form, review_response = review_form_response
 
         response = db.session.query(Response)\
                         .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
@@ -179,8 +182,6 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
                         .join(ReviewResponse)\
                         .filter_by(id=id)\
                         .first()
-
-        LOGGER.debug('response: {}'.format(response))
 
         return ReviewResponseUser(review_form, response, 0, review_response)
 
