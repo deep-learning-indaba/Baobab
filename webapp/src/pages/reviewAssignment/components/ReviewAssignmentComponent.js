@@ -52,7 +52,7 @@ class ReviewAssignmentComponent extends Component {
     event.preventDefault();
     this.setState({loading: true});
 
-    // If new reviewer is specified, as to list.
+    // If new reviewer is specified, add to list.
     if (this.state.newReviewerEmail !== "") {
       this.state.reviewers.push({
         email: this.state.newReviewerEmail,
