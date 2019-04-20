@@ -45,7 +45,7 @@ class FormTextArea extends React.Component {
             }
             placeholder={this.props.placeholder}
             rows={this.props.rows}
-            value={this.props.value}
+            value={this.props.value || ""}
             onChange={this.props.onChange}
             ref={input => {
               this.nameInput = input;
