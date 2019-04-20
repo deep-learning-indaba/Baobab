@@ -296,6 +296,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
 
 You have been assigned {num_reviews} reviews on Baobab. Please log in to {baobab_host} and visit the review page to begin.
+Note that if you were already logged in to Baobab, you will need to log out and log in again to pick up the changes to your profile. 
 
 Thank you for assisting us review applications for {event}!
 
