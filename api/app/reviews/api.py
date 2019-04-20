@@ -358,15 +358,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add_all(response_reviewers)
         db.session.commit()
         
-        send_mail(recipient=reviewer_user.email,
-                  subject='You have been assigned reviews in Baobab',
-                  body_text=ASSIGNED_BODY.format(
-                      title=reviewer_user.user_title, 
-                      firstname=reviewer_user.firstname, 
-                      lastname=reviewer_user.lastname,
-                      num_reviews=len(response_ids),
-                      baobab_host=get_baobab_host(),
-                      event=event.name))
+        if len(response_ids) > 0:
+            send_mail(recipient=reviewer_user.email,
+                    subject='You have been assigned reviews in Baobab',
+                    body_text=ASSIGNED_BODY.format(
+                        title=reviewer_user.user_title, 
+                        firstname=reviewer_user.firstname, 
+                        lastname=reviewer_user.lastname,
+                        num_reviews=len(response_ids),
+                        baobab_host=get_baobab_host(),
+                        event=event.name))
 
         return {}, 201
 
