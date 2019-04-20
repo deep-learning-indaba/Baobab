@@ -6,7 +6,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
 from app.users.models import AppUser, PasswordReset, UserComment
-from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin
+from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin, UserProfileMixin
 from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
 
@@ -293,6 +293,28 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
         user_responses = user_repository.get_all_with_responses_for(event_id)
         views = [UserProfileView(user_response) for user_response in user_responses]
         return views
+
+
+class UserProfile(UserProfileMixin, restful.Resource):
+
+    @marshal_with(user_fields)
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        user_id = args['user_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if current_user.is_admin:
+            user = user_repository.get_by_id(user_id)
+            if user is None:
+                return USER_NOT_FOUND
+            return user
+
+        user = user_repository.get_by_event_admin(user_id, current_user_id)
+        if user is None:
+            return USER_NOT_FOUND
+        return user
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
