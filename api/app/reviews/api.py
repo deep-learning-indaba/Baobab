@@ -4,10 +4,11 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.sql import func
 from sqlalchemy import and_, or_
 from math import ceil
+import random
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
-from app.events.models import EventRole
+from app.events.models import Event, EventRole
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
@@ -16,6 +17,9 @@ from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+
+from config import BOABAB_HOST
+from app.utils.emailer import send_mail
 
 option_fields = {
     'value': fields.String,
@@ -94,6 +98,9 @@ review_fields = {
 }
 
 REVIEWS_PER_SUBMISSION = 3
+
+def get_baobab_host():
+    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
@@ -286,6 +293,16 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
             'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
         }
 
+ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
+
+You have been assigned {num_reviews} reviews on Baobab. Please log in to {baobab_host} and visit the review page to begin.
+
+Thank you for assisting us review applications for {event}!
+
+Kind Regards,
+The {event} Organisers
+"""
+
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
     reviews_count_fields = {
@@ -321,6 +338,10 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
+        event = db.session.query(Event).filter(Event.id == event_id).first()
+        if not event:
+            return EVENT_NOT_FOUND
+
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
@@ -337,6 +358,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add_all(response_reviewers)
         db.session.commit()
         
+        send_mail(recipient=reviewer_user.email,
+                  subject='You have been assigned reviews in Baobab',
+                  body_text=ASSIGNED_BODY.format(
+                      title=reviewer_user.user_title, 
+                      firstname=reviewer_user.firstname, 
+                      lastname=reviewer_user.lastname,
+                      num_reviews=len(response_ids),
+                      baobab_host=get_baobab_host(),
+                      event=event.name))
+
         return {}, 201
 
     
@@ -346,15 +377,22 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.commit()
     
     def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
-        responses = db.session.query(Response.id)\
+        candidate_responses = db.session.query(Response.id)\
                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
-                        .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
                         .group_by(Response.id)\
                         .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
-                        .limit(num_reviews)\
                         .all()
-        return list(map(lambda response: response[0], responses))
+        candidate_response_ids = set([r.id for r in candidate_responses])
+
+        # Now remove any responses that the reviewer is already assigned to
+        already_assigned = db.session.query(ResponseReviewer.response_id)\
+                        .filter(ResponseReviewer.reviewer_user_id == reviewer_user_id)\
+                        .all()
+        already_assigned_ids = set([r.response_id for r in already_assigned])
+        responses = list(candidate_response_ids - already_assigned_ids)
+
+        return random.sample(responses, min(len(responses), num_reviews))
 
 review_fields = {
     'review_response_id' : fields.Integer,
