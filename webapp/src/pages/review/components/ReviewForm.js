@@ -35,11 +35,11 @@ class ReviewQuestion extends Component {
             return question.description;
         }
 
-        if (answer && answer.value) {
+        if (answer && answer.value && answer.value.trim()) {
             return answer.value;
         }
 
-        return "";
+        return "<No Answer Provided>";
     }
 
     formControl = (key, question, answer, score, validationError) => {
@@ -108,7 +108,7 @@ class ReviewQuestion extends Component {
         if (model.answer) {
             return model.answer.question;
         }
-        return "";
+        return "No Headline";
     }
 
     render() {

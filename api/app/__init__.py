@@ -35,11 +35,12 @@ manager.add_command('db', MigrateCommand)
 # set optional bootswatch theme
 app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 from applicationModel.models import Question, Section
-from responses.models import Response, Answer
-from users.models import UserCategory, AppUser
+from responses.models import Response, Answer, ResponseReviewer
+from users.models import UserCategory, AppUser, UserComment
 from events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
+from reviews.models import ReviewForm, ReviewQuestion
 
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
@@ -135,4 +136,7 @@ admin.add_view(BaobabModelView(EventRole, db.session))
 admin.add_view(BaobabModelView(UserCategory, db.session))
 admin.add_view(BaobabModelView(AppUser, db.session))
 
-
+admin.add_view(BaobabModelView(ResponseReviewer, db.session))
+admin.add_view(BaobabModelView(UserComment, db.session))
+admin.add_view(BaobabModelView(ReviewForm, db.session))
+admin.add_view(BaobabModelView(ReviewQuestion, db.session))
