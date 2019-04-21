@@ -27,3 +27,5 @@ RESET_PASSWORD_CODE_EXPIRED = (
 FILE_SIZE_EXCEEDED = ({'message': 'File size exceeded'}, 400)
 USER_DELETED = ({'message': 'This account has been deleted'}, 404)
 REVIEW_RESPONSE_NOT_FOUND = ({'message': 'No review response found.'}, 404)
+ADD_VERIFY_TOKEN_FAILED = (
+    {'message': 'Unable to add verification token.'}, 500)

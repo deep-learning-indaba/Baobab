@@ -10,12 +10,14 @@ from app.users.models import AppUser, PasswordReset
 from app.events.models import EventRole
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, ADD_VERIFY_TOKEN_FAILED
 
 from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
 
 from config import BOABAB_HOST
+
+from app.utils.misc import make_code
 
 
 VERIFY_EMAIL_BODY = """
@@ -158,14 +160,15 @@ class UserAPI(SignupMixin, restful.Resource):
         department = args['department']
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
-        user_dateOfBirth = datetime.strptime((args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        user_dateOfBirth = datetime.strptime(
+            (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
-            AppUser.id == g.current_user['id']).first() 
-        
+            AppUser.id == g.current_user['id']).first()
+
         if user.email != email:
-            user.update_email(email)            
+            user.update_email(email)
 
         user.firstname = firstname
         user.lastname = lastname
@@ -188,15 +191,16 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if not user.verified_email:
             send_mail(recipient=user.email,
-                    subject='Baobab Email Re-Verification',
-                    body_text=VERIFY_EMAIL_BODY.format(
-                        user_title, firstname, lastname,
-                        get_baobab_host(),
-                        user.verify_token))
+                      subject='Baobab Email Re-Verification',
+                      body_text=VERIFY_EMAIL_BODY.format(
+                          user_title, firstname, lastname,
+                          get_baobab_host(),
+                          user.verify_token))
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
-        roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
+        roles = db.session.query(EventRole).filter(
+            EventRole.user_id == user.id).all()
 
         return user_info(user, roles), 200
 
@@ -213,10 +217,11 @@ class UserAPI(SignupMixin, restful.Resource):
         if user:
             user.is_deleted = True
             db.session.commit()
-            LOGGER.debug("Successfully deleted user {}".format(g.current_user['id']))
+            LOGGER.debug("Successfully deleted user {}".format(
+                g.current_user['id']))
         else:
-            LOGGER.debug("No user for id {}".format(g.current_user['id']))        
-        
+            LOGGER.debug("No user for id {}".format(g.current_user['id']))
+
         return {}, 200
 
 
@@ -232,33 +237,38 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
         if user:
             if user.is_deleted:
-                LOGGER.debug("Failed to authenticate, user {} deleted".format(args['email'])) 
+                LOGGER.debug(
+                    "Failed to authenticate, user {} deleted".format(args['email']))
                 return USER_DELETED
 
             if not user.verified_email:
-                LOGGER.debug("Failed to authenticate, email {} not verified".format(args['email']))
+                LOGGER.debug(
+                    "Failed to authenticate, email {} not verified".format(args['email']))
                 return EMAIL_NOT_VERIFIED
 
             if bcrypt.check_password_hash(user.password, args['password']):
-                LOGGER.debug("Successful authentication for email: {}".format(args['email']))
-                roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
+                LOGGER.debug(
+                    "Successful authentication for email: {}".format(args['email']))
+                roles = db.session.query(EventRole).filter(
+                    EventRole.user_id == user.id).all()
                 return user_info(user, roles)
 
         else:
             LOGGER.debug("User not found for {}".format(args['email']))
-        
+
         return BAD_CREDENTIALS
 
 
 class PasswordResetRequestAPI(restful.Resource):
 
-    def post(self):        
+    def post(self):
 
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('email', type=str, required=True)
         args = req_parser.parse_args()
 
-        LOGGER.debug("Requesting password reset for email {}".format(args['email']))
+        LOGGER.debug(
+            "Requesting password reset for email {}".format(args['email']))
 
         user = db.session.query(AppUser).filter(
             AppUser.email == args['email']).first()
@@ -282,24 +292,27 @@ class PasswordResetRequestAPI(restful.Resource):
 
 class PasswordResetConfirmAPI(restful.Resource):
 
-    def post(self):        
-        
+    def post(self):
+
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('code', type=str, required=True)
         req_parser.add_argument('password', type=str, required=True)
-        args = req_parser.parse_args()        
+        args = req_parser.parse_args()
 
-        LOGGER.debug("Confirming password reset for code: {}".format(args['code']))
+        LOGGER.debug(
+            "Confirming password reset for code: {}".format(args['code']))
 
         password_reset = db.session.query(PasswordReset).filter(
             PasswordReset.code == args['code']).first()
 
         if not password_reset:
-            LOGGER.debug("Reset password code not valid: {}".format(args['code']))
+            LOGGER.debug(
+                "Reset password code not valid: {}".format(args['code']))
             return RESET_PASSWORD_CODE_NOT_VALID
 
         if password_reset.date < datetime.now():
-            LOGGER.debug("Reset code expired for code: {}".format(args['code']))
+            LOGGER.debug(
+                "Reset code expired for code: {}".format(args['code']))
             return RESET_PASSWORD_CODE_EXPIRED
 
         password_reset.user.set_password(args['password'])
@@ -313,8 +326,8 @@ class PasswordResetConfirmAPI(restful.Resource):
 
 class VerifyEmailAPI(restful.Resource):
 
-    def get(self):        
-        
+    def get(self):
+
         token = request.args.get('token')
 
         LOGGER.debug("Verifying email for token: {}".format(token))
@@ -347,6 +360,15 @@ class ResendVerificationEmailAPI(restful.Resource):
         if not user:
             LOGGER.debug("User not found for email: {}".format(email))
             return USER_NOT_FOUND
+
+        if user.verify_token is None:
+            user.verify_token = make_code()
+
+        try:
+            db.session.commit()
+        except IntegrityError:
+            LOGGER.error("Adding verify token for {} failed. ".format(email))
+            return ADD_VERIFY_TOKEN_FAILED
 
         send_mail(recipient=user.email,
                   subject='Baobab Email Verification',
