@@ -378,6 +378,12 @@ class ReviewForm extends Component {
                     <ReviewQuestion model={qm} key={"q_" + qm.question.id} onChange={this.onChange}/>)
                 }
 
+                <br/><hr/>
+                <div>
+                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
+                </div>
+                <hr/>
+
                 <div class="buttons">
                     {currentSkip > 0 && 
                         <button
