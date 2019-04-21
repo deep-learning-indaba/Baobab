@@ -32,7 +32,8 @@ const fieldValidations = [
   ruleRunner(validationFields.department, requiredText),
   ruleRunner(validationFields.disability, requiredText),
   ruleRunner(validationFields.category, requiredDropdown),
-  ruleRunner(validationFields.primaryLanguage, requiredText)
+  ruleRunner(validationFields.primaryLanguage, requiredText),
+  ruleRunner(validationFields.dateOfBirth, isValidDate)
 ];
 
 class ProfileForm extends Component {
@@ -174,7 +175,7 @@ class ProfileForm extends Component {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
-    if (this.state.errors.$set.length > 0) return;
+    if (this.state.errors.$set && this.state.errors.$set.length > 0) return;
 
     this.setState({ loading: true });
 

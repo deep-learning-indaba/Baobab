@@ -15,7 +15,8 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail
+  validEmail,
+  isValidDate
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -33,7 +34,8 @@ const fieldValidations = [
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
   ruleRunner(validationFields.category, requiredDropdown),
-  ruleRunner(validationFields.primaryLanguage, requiredText)
+  ruleRunner(validationFields.primaryLanguage, requiredText),
+  ruleRunner(validationFields.dateOfBirth, isValidDate)
 ];
 
 class CreateAccountForm extends Component {
