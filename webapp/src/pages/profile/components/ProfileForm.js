@@ -16,7 +16,8 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail
+  validEmail,
+  isValidDate
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
