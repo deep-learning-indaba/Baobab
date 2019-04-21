@@ -54,10 +54,6 @@ class ReviewHistoryComponent extends Component {
 
   render() {
     const { error, isLoading, reviewHistory,defaultPageSize,totalPages } = this.state;
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
 
     if (error) {
       return <div className={"alert alert-danger"}>{error}</div>;
@@ -76,27 +72,7 @@ class ReviewHistoryComponent extends Component {
             data={reviewHistory} 
             columns={columns} 
             minRows={0}
-            getTrProps={(state, rowInfo) => {
-              if (rowInfo && rowInfo.row) {
-                return {
-                  onClick: (e) => {
-                    this.setState({
-                        selected: rowInfo.index
-                    })
-                    //TODO - click through to ReviewForm
-                   console.log("I have been clicked, review response id: "+rowInfo.original.review_response_id);
-                  },
-                  style: {
-                    background: rowInfo.index === this.state.selected ? '#00afec' : 'white',
-                    color: rowInfo.index === this.state.selected ? 'white' : 'black'
-                  }
-                }
-              }else{
-                return {}
-              }
-              }
-            } 
-             />;
+          />
         </div>
       </div>
     );

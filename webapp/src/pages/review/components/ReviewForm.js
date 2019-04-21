@@ -35,11 +35,11 @@ class ReviewQuestion extends Component {
             return question.description;
         }
 
-        if (answer && answer.value) {
+        if (answer && answer.value && answer.value.trim()) {
             return answer.value;
         }
 
-        return "";
+        return "<No Answer Provided>";
     }
 
     formControl = (key, question, answer, score, validationError) => {
@@ -108,7 +108,7 @@ class ReviewQuestion extends Component {
         if (model.answer) {
             return model.answer.question;
         }
-        return "";
+        return "No Headline";
     }
 
     render() {
@@ -117,7 +117,7 @@ class ReviewQuestion extends Component {
             <h4>{this.getHeadline(this.props.model)}</h4>
             <Linkify>
                 {this.formControl(
-                    this.props.key,
+                    this.props.model.question.id,
                     this.props.model.question,
                     this.props.model.answer,
                     this.props.model.score ? this.props.model.score.value : null,
@@ -147,38 +147,54 @@ class ReviewForm extends Component {
 
     }
 
-    loadForm = () => {
-        reviewService.getReviewForm(DEFAULT_EVENT_ID, this.state.currentSkip).then(response=> {
-            let questionModels = null;
+    processResponse = (response) => {
+        let questionModels = null;
+        
+        if (!response.form.review_response || (response.form.review_response.id === 0 && !response.form.review_response.scores)) {
+            response.form.review_response = null;
+        }
 
-            if (response.form && response.form.reviews_remaining_count > 0) {
-                questionModels = response.form.review_form.review_questions.map(q => {
-                    return {
-                        question: q,
-                        answer: response.form.response.answers.find(a => a.question_id == q.question_id),
-                        score: null
-                    };
-                }).sort((a, b) => a.question.order - b.question.order);
-            }
+        if (response.form && (response.form.reviews_remaining_count > 0 || response.form.review_response)) {
+            questionModels = response.form.review_form.review_questions.map(q => {
+                let score = null;
+                if (response.form.review_response) {
+                    score = response.form.review_response.scores.find(a => a.review_question_id === q.id)
+                }
+                return {
+                    question: q,
+                    answer: response.form.response.answers.find(a => a.question_id == q.question_id),
+                    score: score
+                };
+            }).sort((a, b) => a.question.order - b.question.order);
+        }
 
-            this.setState({
-                form: response.form,
-                error: response.error,
-                isLoading: false,
-                questionModels: questionModels,
-                error: "",
-                hasValidated: false,
-                validationStale: false,
-                isValid: false,
-                isSubmitting: false
-            }, ()=>{
-                window.scrollTo(0, 0);
-            });
+        this.setState({
+            form: response.form,
+            error: response.error,
+            isLoading: false,
+            questionModels: questionModels,
+            error: "",
+            hasValidated: false,
+            validationStale: false,
+            isValid: false,
+            isSubmitting: false
+        }, ()=>{
+            window.scrollTo(0, 0);
         });
     }
 
+    loadForm = (responseId) => {
+        if (responseId) {
+            reviewService.getReviewResponse(responseId).then(this.processResponse);
+        }
+        else {
+            reviewService.getReviewForm(DEFAULT_EVENT_ID, this.state.currentSkip).then(this.processResponse);
+        }
+    }
+
     componentDidMount() {
-        this.loadForm();
+        const { id } = this.props.match.params
+        this.loadForm(id);
     }
 
     onChange = (model, value) => {
@@ -253,8 +269,9 @@ class ReviewForm extends Component {
             this.setState({
                 isSubmitting: true
             }, ()=> {
+                const shouldUpdate = this.state.form.review_response;
                 reviewService
-                    .submit(this.state.form.response.id, this.state.form.review_form.id, scores)
+                    .submit(this.state.form.response.id, this.state.form.review_form.id, scores, shouldUpdate)
                     .then(response => {
                         if (response.error) {
                             this.setState({
@@ -263,7 +280,12 @@ class ReviewForm extends Component {
                             });
                         }
                         else {
-                            this.loadForm();
+                            if (this.state.form.review_response) {
+                                this.props.history.push(`/reviewHistory`)
+                            }
+                            else {
+                                this.loadForm();
+                            }
                         }
                     });
             })
@@ -311,7 +333,7 @@ class ReviewForm extends Component {
             return <div className={"alert alert-danger"}>{error}</div>;
         }
 
-        if (form.reviews_remaining_count == 0) {
+        if (!form.review_response && form.reviews_remaining_count == 0) {
             return (
                 <div class="review-form-container">
                     <div class="alert alert-success">
@@ -346,7 +368,13 @@ class ReviewForm extends Component {
                 }
 
                 <div class="buttons">
-                    <button disabled={isSubmitting} type="submit" class="btn btn-primary" onClick={this.submit}>
+                    <button 
+                        disabled={form.review_response || isSubmitting} 
+                        className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                        onClick={this.skip}>
+                        Skip
+                    </button>
+                    <button disabled={isSubmitting} type="submit" class="btn btn-primary float-right" onClick={this.submit}>
                         {isSubmitting && (
                             <span
                                 class="spinner-grow spinner-grow-sm"
@@ -356,7 +384,6 @@ class ReviewForm extends Component {
                         )}
                         Submit
                     </button>
-                    <button disabled={isSubmitting} class="btn btn-secondary float-right" onClick={this.skip}>Skip</button>
                 </div>
                 
                 {(hasValidated && !validationStale && !isValid) && 
@@ -365,9 +392,11 @@ class ReviewForm extends Component {
                     </div>
                 }
 
-                <div class="alert alert-info">
-                    <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
-                </div>
+                {!form.review_response &&
+                    <div class="alert alert-info">
+                        <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
+                    </div>
+                }
             </div>
         )
     }

@@ -9,6 +9,7 @@ from reviews import api as reviews_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
+rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
 rest_api.add_resource(users_api.AuthenticationAPI, '/api/v1/authenticate')
 rest_api.add_resource(users_api.PasswordResetRequestAPI,
                       '/api/v1/password-reset/request')
@@ -45,3 +46,5 @@ rest_api.add_resource(reviews_api.ReviewSummaryAPI, '/api/v1/reviewassignment/su
 rest_api.add_resource(events_api.NotSubmittedReminderAPI, '/api/v1/reminder-unsubmitted')
 rest_api.add_resource(events_api.NotStartedReminderAPI, '/api/v1/reminder-not-started')
 rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
+rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
+rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')

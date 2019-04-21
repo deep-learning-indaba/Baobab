@@ -5,12 +5,13 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
 
-from app.users.mixins import SignupMixin, AuthenticateMixin
-from app.users.models import AppUser, PasswordReset
+from app.users.models import AppUser, PasswordReset, UserComment
+from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin, UserProfileMixin
+from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, ADD_VERIFY_TOKEN_FAILED
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED
 
 from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
@@ -61,6 +62,17 @@ user_fields = {
     'user_disability': fields.String,
     'user_category_id': fields.Integer,
     'user_category': fields.String(attribute='user_category.name')
+}
+
+
+user_comment_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'user_id': fields.Integer,
+    'comment_by_user_firstname':  fields.String(attribute='comment_by_user.firstname'),
+    'comment_by_user_lastname':  fields.String(attribute='comment_by_user.lastname'),
+    'timestamp': fields.DateTime('iso8601'),
+    'comment': fields.String
 }
 
 
@@ -224,6 +236,91 @@ class UserAPI(SignupMixin, restful.Resource):
 
         return {}, 200
 
+class UserProfileView():
+    def __init__(self, user_response):
+        self.user_id = user_response.AppUser.id
+        self.email = user_response.AppUser.email
+        self.affiliation = user_response.AppUser.affiliation
+        self.department = user_response.AppUser.department
+        self.firstname = user_response.AppUser.firstname
+        self.lastname = user_response.AppUser.lastname
+        self.nationality_country = user_response.AppUser.nationality_country.name
+        self.residence_country = user_response.AppUser.residence_country.name
+        self.user_category = user_response.AppUser.user_category.name
+        self.user_disability = user_response.AppUser.user_disability
+        self.user_gender = user_response.AppUser.user_gender
+        self.user_title = user_response.AppUser.user_title
+        self.user_dateOfBirth = user_response.AppUser.user_dateOfBirth
+        self.user_primaryLanguage = user_response.AppUser.user_primaryLanguage
+        self.response_id = user_response.Response.id
+        self.is_submitted = user_response.Response.is_submitted
+        self.submitted_timestamp = user_response.Response.submitted_timestamp
+        self.is_withdrawn = user_response.Response.is_withdrawn
+        self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
+        
+
+class UserProfileList(UserProfileListMixin, restful.Resource):
+
+    user_profile_list_fields = {
+        'user_id': fields.Integer,
+        'email': fields.String,
+        'firstname': fields.String,
+        'lastname': fields.String,
+        'user_title': fields.String,
+        'nationality_country': fields.String,
+        'residence_country': fields.String,
+        'user_gender': fields.String,
+        'user_dateOfBirth': fields.DateTime('iso8601'),
+        'user_primaryLanguage': fields.String,
+        'affiliation': fields.String,
+        'department': fields.String,
+        'user_disability': fields.String,
+        'user_category_id': fields.Integer,
+        'user_category': fields.String,
+        'response_id': fields.Integer,
+        'is_submitted': fields.Boolean,
+        'submitted_timestamp': fields.DateTime('iso8601'),
+        'is_withdrawn': fields.Boolean,
+        'withdrawn_timestamp': fields.DateTime('iso8601')
+    }
+
+    @marshal_with(user_profile_list_fields)
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        user_responses = user_repository.get_all_with_responses_for(event_id)
+        views = [UserProfileView(user_response) for user_response in user_responses]
+        return views
+
+
+class UserProfile(UserProfileMixin, restful.Resource):
+
+    @marshal_with(user_fields)
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        user_id = args['user_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if current_user.is_admin:
+            user = user_repository.get_by_id(user_id)
+            if user is None:
+                return USER_NOT_FOUND
+            return user
+
+        user = user_repository.get_by_event_admin(user_id, current_user_id)
+        if user is None:
+            return USER_NOT_FOUND
+        return user
+
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
 
@@ -352,7 +449,7 @@ class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
         email = request.args.get('email')
 
-        LOGGER.debug("Resending verification email to: ".format(email))
+        LOGGER.debug("Resending verification email to: {}".format(email))
 
         user = db.session.query(AppUser).filter(
             AppUser.email == email).first()
@@ -387,3 +484,40 @@ class AdminOnlyAPI(restful.Resource):
     @admin_required
     def get(self):
         return {}, 200
+
+
+class UserCommentAPI(restful.Resource):
+
+    @auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=False)
+        req_parser.add_argument('user_id', type=int, required=False)
+        req_parser.add_argument('comment', type=str, required=False)
+        args = req_parser.parse_args()
+
+        current_user_id = g.current_user['id']
+        comment = UserComment(args['event_id'], args['user_id'], current_user_id, datetime.now(), args['comment'])
+
+        db.session.add(comment)
+        db.session.commit()
+
+        return {}, 201
+
+    @auth_required
+    @marshal_with(user_comment_fields)
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_id', type=int, required=True)
+        args = req_parser.parse_args()
+        
+        current_user = user_repository.get_by_id(g.current_user['id'])
+        if not current_user.is_event_admin(args['event_id']):
+            return FORBIDDEN
+
+        comments = db.session.query(UserComment).filter(
+            UserComment.event_id == args['event_id'], 
+            UserComment.user_id == args['user_id']).all()
+
+        return comments

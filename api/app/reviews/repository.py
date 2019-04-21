@@ -41,13 +41,14 @@ class ReviewRepository():
                         count(review_response.id) as reviews_completed
                     from response_reviewer
                     join app_user 
-                    on response_reviewer.reviewer_user_id = response_reviewer.reviewer_user_id
+                    on response_reviewer.reviewer_user_id = app_user.id
                     join event_role 
                         on app_user.id = event_role.user_id 
                     join response 
                     on response.id = response_reviewer.response_id
                     left join review_response
                     on review_response.response_id = response.id
+                    and review_response.reviewer_user_id = app_user.id
                     where 
                         event_role.role = 'reviewer'
                         and event_role.event_id = %d

@@ -4,10 +4,11 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.sql import func
 from sqlalchemy import and_, or_
 from math import ceil
+import random
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
-from app.events.models import EventRole
+from app.events.models import Event, EventRole
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
@@ -16,6 +17,9 @@ from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+
+from config import BOABAB_HOST
+from app.utils.emailer import send_mail
 
 option_fields = {
     'value': fields.String,
@@ -72,26 +76,44 @@ user_fields = {
     'user_category': fields.String(attribute='user_category.name')
 }
 
+review_scores_fields = {
+    'review_question_id': fields.Integer,
+    'value': fields.String
+}
+
 review_response_fields = {
+    'id': fields.Integer,
+    'review_form_id': fields.Integer,
+    'response_id': fields.Integer,
+    'reviewer_user_id': fields.Integer,
+    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
+}
+
+review_fields = {
     'review_form': fields.Nested(review_form_fields),
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
-    'reviews_remaining_count': fields.Integer
+    'reviews_remaining_count': fields.Integer,
+    'review_response': fields.Nested(review_response_fields)
 }
 
 REVIEWS_PER_SUBMISSION = 3
 
+def get_baobab_host():
+    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
+
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count):
+    def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
+        self.review_response = review_response
 
 class ReviewAPI(ReviewMixin, restful.Resource):
 
     @auth_required
-    @marshal_with(review_response_fields)
+    @marshal_with(review_fields)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -140,36 +162,35 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         return skip
 
 
-review_scores_fields = {
-    'review_question_id': fields.Integer,
-    'value': fields.String
-}
-
-review_response_fields = {
-    'id': fields.Integer,
-    'review_form_id': fields.Integer,
-    'response_id': fields.Integer,
-    'reviewer_user_id': fields.Integer,
-    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
-}
-
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
 
     @auth_required
-    @marshal_with(review_response_fields)
+    @marshal_with(review_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
-        review_form_id = args['review_form_id']
-        response_id = args['response_id']
+        id = args['id']
         reviewer_user_id = g.current_user['id']
 
-        review_response = db.session.query(ReviewResponse)\
-                            .filter_by(review_form_id=review_form_id, response_id=response_id, reviewer_user_id=reviewer_user_id)\
-                            .first()
-        if review_response is None:
+        review_form_response = db.session.query(ReviewForm, ReviewResponse)\
+                                            .join(ReviewResponse)\
+                                            .filter_by(id=id, reviewer_user_id=reviewer_user_id)\
+                                            .first()
+
+        if review_form_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
 
-        return review_response
+
+        review_form, review_response = review_form_response
+
+        response = db.session.query(Response)\
+                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
+                        .join(ResponseReviewer)\
+                        .filter_by(reviewer_user_id=g.current_user['id'])\
+                        .join(ReviewResponse)\
+                        .filter_by(id=id)\
+                        .first()
+
+        return ReviewResponseUser(review_form, response, 0, review_response)
 
     @auth_required
     def post(self):
@@ -272,6 +293,17 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
             'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
         }
 
+ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
+
+You have been assigned {num_reviews} reviews on Baobab. Please log in to {baobab_host} and visit the review page to begin.
+Note that if you were already logged in to Baobab, you will need to log out and log in again to pick up the changes to your profile. 
+
+Thank you for assisting us review applications for {event}!
+
+Kind Regards,
+The {event} Organisers
+"""
+
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
     reviews_count_fields = {
@@ -307,6 +339,10 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
+        event = db.session.query(Event).filter(Event.id == event_id).first()
+        if not event:
+            return EVENT_NOT_FOUND
+
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
@@ -323,6 +359,17 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add_all(response_reviewers)
         db.session.commit()
         
+        if len(response_ids) > 0:
+            send_mail(recipient=reviewer_user.email,
+                    subject='You have been assigned reviews in Baobab',
+                    body_text=ASSIGNED_BODY.format(
+                        title=reviewer_user.user_title, 
+                        firstname=reviewer_user.firstname, 
+                        lastname=reviewer_user.lastname,
+                        num_reviews=len(response_ids),
+                        baobab_host=get_baobab_host(),
+                        event=event.name))
+
         return {}, 201
 
     
@@ -332,15 +379,22 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.commit()
     
     def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
-        responses = db.session.query(Response.id)\
+        candidate_responses = db.session.query(Response.id)\
                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
-                        .filter(or_(ResponseReviewer.reviewer_user_id != reviewer_user_id, ResponseReviewer.id == None))\
                         .group_by(Response.id)\
                         .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
-                        .limit(num_reviews)\
                         .all()
-        return list(map(lambda response: response[0], responses))
+        candidate_response_ids = set([r.id for r in candidate_responses])
+
+        # Now remove any responses that the reviewer is already assigned to
+        already_assigned = db.session.query(ResponseReviewer.response_id)\
+                        .filter(ResponseReviewer.reviewer_user_id == reviewer_user_id)\
+                        .all()
+        already_assigned_ids = set([r.response_id for r in already_assigned])
+        responses = list(candidate_response_ids - already_assigned_ids)
+
+        return random.sample(responses, min(len(responses), num_reviews))
 
 review_fields = {
     'review_response_id' : fields.Integer,
@@ -369,7 +423,10 @@ class ReviewHistoryModel:
         self.affiliation = review.AppUser.affiliation
         self.department = review.AppUser.department
         self.user_category = review.AppUser.user_category.name
-        self.final_verdict = review.value
+
+        final_verdict = [o for o in review.options if str(o['value']) == review.value]
+        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
+        self.final_verdict = final_verdict
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
@@ -389,7 +446,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
                         .filter(ReviewResponse.reviewer_user_id == user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == form_id)
