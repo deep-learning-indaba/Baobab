@@ -15,7 +15,8 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail
+  validEmail,
+  isValidDate
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -33,7 +34,8 @@ const fieldValidations = [
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
   ruleRunner(validationFields.category, requiredDropdown),
-  ruleRunner(validationFields.primaryLanguage, requiredText)
+  ruleRunner(validationFields.primaryLanguage, requiredText),
+  ruleRunner(validationFields.dateOfBirth, isValidDate)
 ];
 
 class CreateAccountForm extends Component {
@@ -139,7 +141,12 @@ class CreateAccountForm extends Component {
     if (this.state.user.password != this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
-    if (this.state.errors.$set.length > 0) return;
+    if (
+      this.state.errors &&
+      this.state.errors.$set &&
+      this.state.errors.$set.length > 0
+    )
+      return;
 
     this.setState({ loading: true });
 
