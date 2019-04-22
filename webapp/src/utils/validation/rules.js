@@ -8,6 +8,13 @@ export const requiredText = text => {
   }
 };
 
+export const isValidDate = d => {
+  let date = new Date(d);
+  if (date instanceof Date && !isNaN(date)) {
+    return null;
+  } else return ErrorMessages.isNotValidDate;
+};
+
 export const requiredDropdown = text => {
   if (text) {
     return null;

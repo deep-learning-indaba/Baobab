@@ -6,9 +6,11 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormRadio from "../../../components/form/FormRadio";
 
 import { reviewService } from "../../../services/reviews";
+import { userService } from "../../../services/user";
 import { createColClassName } from "../../../utils/styling/styling";
 
 import Linkify from 'react-linkify';
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -35,11 +37,11 @@ class ReviewQuestion extends Component {
             return question.description;
         }
 
-        if (answer && answer.value) {
+        if (answer && answer.value && answer.value.trim()) {
             return answer.value;
         }
 
-        return "";
+        return "<No Answer Provided>";
     }
 
     formControl = (key, question, answer, score, validationError) => {
@@ -61,7 +63,7 @@ class ReviewQuestion extends Component {
                 );
             case INFORMATION:
                 return (
-                    <p>{answer && answer.value}</p>
+                    <p>{this.getDescription(question, answer)}</p>
                 )
             case CHECKBOX:
                 return (
@@ -108,7 +110,7 @@ class ReviewQuestion extends Component {
         if (model.answer) {
             return model.answer.question;
         }
-        return "";
+        return "No Headline";
     }
 
     render() {
@@ -142,7 +144,9 @@ class ReviewForm extends Component {
             validationStale: false,
             isValid: false,
             isSubmitting: false,
-            currentSkip: 0
+            currentSkip: 0,
+            flagModalVisible: false,
+            flagValue: ""
         }
 
     }
@@ -177,7 +181,9 @@ class ReviewForm extends Component {
             hasValidated: false,
             validationStale: false,
             isValid: false,
-            isSubmitting: false
+            isSubmitting: false,
+            flagModalVisible: false,
+            flagValue: ""
         }, ()=>{
             window.scrollTo(0, 0);
         });
@@ -299,7 +305,66 @@ class ReviewForm extends Component {
             }
         }, () => {
             this.loadForm();
-        })
+        });
+    }
+
+    goBack = () => {
+        this.setState(prevState => {
+            return {
+                currentSkip: prevState.currentSkip - 1
+            }
+        }, () => {
+            this.loadForm();
+        });
+    }
+
+    handleFlagOk = () => {
+        this.setState({
+            flagSubmitting: true
+        }, ()=> {
+            userService.addComment(DEFAULT_EVENT_ID, this.state.form.user.id, this.state.flagValue)
+                .then(response => {
+                    if (response.error) {
+                        this.setState({
+                            flagError: response.error,
+                            flagSubmitting: false,
+                        });
+                    }
+                    else {
+                        this.setState({
+                            flagError: "",
+                            flagSubmitting: false,
+                            flagModalVisible: false,
+                            flagValue: ""
+                        });
+                    }
+                });
+        });
+    }
+
+    handleFlagCancel = () => {
+        this.setState({
+            flagModalVisible: false,
+            flagValue: ""
+        });
+    }
+
+    flagOnChange = event => {
+        const value = event.target.value;
+        this.setState({
+            flagValue: value
+        });
+    }
+
+    addFlag = event => {
+        event.preventDefault();
+
+        this.setState(prevState => {
+            return {
+                flagValue: "I believe this applicant is not a " +  prevState.form.user.user_category + ", but rather a ...",
+                flagModalVisible: true
+            };
+        });
     }
 
     render() {
@@ -311,7 +376,8 @@ class ReviewForm extends Component {
           hasValidated,
           validationStale,
           isValid,
-          isSubmitting
+          isSubmitting,
+          currentSkip
         } = this.state;
 
         const loadingStyle = {
@@ -348,32 +414,49 @@ class ReviewForm extends Component {
 
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">{form.user.user_category}</h3>
+                <h3 class="text-center mb-4">{form.user.user_category}<small><a href="#" onClick={this.addFlag} className="flag-category"><i className="fa fa-flag"></i></a></small></h3>
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Nationality:</span> {form.user.nationality_country}
+                        <span class="font-weight-bold">Nationality:</span><br/> {form.user.nationality_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Residence:</span> {form.user.residence_country}
+                        <span class="font-weight-bold">Residence:</span><br/> {form.user.residence_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Affiliation:</span> {form.user.affiliation}
+                        <span class="font-weight-bold">Affiliation:</span><br/> {form.user.affiliation}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Department:</span> {form.user.department}
+                        <span class="font-weight-bold">Field of Study / Department:</span><br/> {form.user.department}
                     </div>
                 </div>
                 {questionModels && questionModels.map(qm => 
                     <ReviewQuestion model={qm} key={"q_" + qm.question.id} onChange={this.onChange}/>)
                 }
 
+                <br/><hr/>
+                <div>
+                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
+                </div>
+                <hr/>
+
                 <div class="buttons">
-                    <button 
-                        disabled={form.review_response || isSubmitting} 
-                        className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
-                        onClick={this.skip}>
-                        Skip
-                    </button>
+                    {currentSkip > 0 && 
+                        <button
+                            disabled={form.review_response || isSubmitting} 
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                            style={{marginRight: "1em"}}
+                            onClick={this.goBack}>
+                            Go Back
+                        </button>
+                    }
+                    {currentSkip < form.reviews_remaining_count && 
+                        <button 
+                            disabled={form.review_response || isSubmitting} 
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                            onClick={this.skip}>
+                            Skip
+                        </button>
+                    }
                     <button disabled={isSubmitting} type="submit" class="btn btn-primary float-right" onClick={this.submit}>
                         {isSubmitting && (
                             <span
@@ -397,6 +480,28 @@ class ReviewForm extends Component {
                         <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
                     </div>
                 }
+
+                <ConfirmModal
+                    visible={this.state.flagModalVisible}
+                    onOK={this.handleFlagOk}
+                    onCancel={this.handleFlagCancel}
+                    onClickBackdrop={this.handleFlagCancel}
+                    disableButtons={this.state.flagSubmitting}
+                    okText={"Submit"}
+                    cancelText={"Cancel"}
+                    title="Flag applicant category"
+                    >
+                    <div class="flagModal">
+                        <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
+                        <textarea
+                            className="form-control"
+                            value={this.state.flagValue}
+                            rows="3"
+                            onChange={this.flagOnChange}>
+                        </textarea>
+                        {this.state.flagError && <div class="alert alert-danger">{this.state.flagError}</div>}
+                    </div>
+                </ConfirmModal>
             </div>
         )
     }

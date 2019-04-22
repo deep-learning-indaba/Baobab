@@ -12,3 +12,4 @@ export const maxLength = length => {
 };
 export const isNotValidUsername = fieldName =>
   `Please enter a valid email or cell phone number`;
+export const isNotValidDate = fieldName => `${fieldName} is not a valid date.`;
