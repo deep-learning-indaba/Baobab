@@ -73,7 +73,8 @@ user_fields = {
     'residence_country': fields.String(attribute='residence_country.name'),
     'affiliation': fields.String,
     'department': fields.String,
-    'user_category': fields.String(attribute='user_category.name')
+    'user_category': fields.String(attribute='user_category.name'),
+    'id': fields.Integer
 }
 
 review_scores_fields = {
