@@ -12,7 +12,8 @@ export const userService = {
   requestPasswordReset,
   confirmPasswordReset,
   verifyEmail,
-  resendVerification
+  resendVerification,
+  addComment
 };
 
 function login(email, password) {
@@ -217,6 +218,30 @@ function verifyEmail(token) {
 function resendVerification(email) {
   return axios
     .get(baseUrl + "/api/v1/resend-verification-email?email=" + email)
+    .then(response => {
+      return {
+        error: ""
+      };
+    })
+    .catch(error => {
+      return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function addComment(event_id, user_id, comment) {
+  let data = {
+    event_id: event_id, 
+    user_id: user_id,
+    comment: comment
+  };
+  
+  return axios
+    .post(baseUrl + "/api/v1/user-comment", data, { headers: authHeader() })
     .then(response => {
       return {
         error: ""

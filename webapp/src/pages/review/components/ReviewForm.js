@@ -6,9 +6,11 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormRadio from "../../../components/form/FormRadio";
 
 import { reviewService } from "../../../services/reviews";
+import { userService } from "../../../services/user";
 import { createColClassName } from "../../../utils/styling/styling";
 
 import Linkify from 'react-linkify';
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -142,7 +144,9 @@ class ReviewForm extends Component {
             validationStale: false,
             isValid: false,
             isSubmitting: false,
-            currentSkip: 0
+            currentSkip: 0,
+            flagModalVisible: false,
+            flagValue: ""
         }
 
     }
@@ -177,7 +181,9 @@ class ReviewForm extends Component {
             hasValidated: false,
             validationStale: false,
             isValid: false,
-            isSubmitting: false
+            isSubmitting: false,
+            flagModalVisible: false,
+            flagValue: ""
         }, ()=>{
             window.scrollTo(0, 0);
         });
@@ -312,6 +318,55 @@ class ReviewForm extends Component {
         });
     }
 
+    handleFlagOk = () => {
+        this.setState({
+            flagSubmitting: true
+        }, ()=> {
+            userService.addComment(DEFAULT_EVENT_ID, this.state.form.user.id, this.state.flagValue)
+                .then(response => {
+                    if (response.error) {
+                        this.setState({
+                            flagError: response.error,
+                            flagSubmitting: false,
+                        });
+                    }
+                    else {
+                        this.setState({
+                            flagError: "",
+                            flagSubmitting: false,
+                            flagModalVisible: false,
+                            flagValue: ""
+                        });
+                    }
+                });
+        });
+    }
+
+    handleFlagCancel = () => {
+        this.setState({
+            flagModalVisible: false,
+            flagValue: ""
+        });
+    }
+
+    flagOnChange = event => {
+        const value = event.target.value;
+        this.setState({
+            flagValue: value
+        });
+    }
+
+    addFlag = event => {
+        event.preventDefault();
+
+        this.setState(prevState => {
+            return {
+                flagValue: "I believe this applicant is not a " +  prevState.form.user.user_category + ", but rather a ...",
+                flagModalVisible: true
+            };
+        });
+    }
+
     render() {
         const {
           form,
@@ -359,7 +414,7 @@ class ReviewForm extends Component {
 
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">{form.user.user_category}</h3>
+                <h3 class="text-center mb-4">{form.user.user_category}<small><a href="#" onClick={this.addFlag} className="flag-category"><i className="fa fa-flag"></i></a></small></h3>
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Nationality:</span><br/> {form.user.nationality_country}
@@ -425,6 +480,28 @@ class ReviewForm extends Component {
                         <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
                     </div>
                 }
+
+                <ConfirmModal
+                    visible={this.state.flagModalVisible}
+                    onOK={this.handleFlagOk}
+                    onCancel={this.handleFlagCancel}
+                    onClickBackdrop={this.handleFlagCancel}
+                    disableButtons={this.state.flagSubmitting}
+                    okText={"Submit"}
+                    cancelText={"Cancel"}
+                    title="Flag applicant category"
+                    >
+                    <div class="flagModal">
+                        <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
+                        <textarea
+                            className="form-control"
+                            value={this.state.flagValue}
+                            rows="3"
+                            onChange={this.flagOnChange}>
+                        </textarea>
+                        {this.state.flagError && <div class="alert alert-danger">{this.state.flagError}</div>}
+                    </div>
+                </ConfirmModal>
             </div>
         )
     }
