@@ -61,7 +61,7 @@ class ReviewQuestion extends Component {
                 );
             case INFORMATION:
                 return (
-                    <p>{answer && answer.value}</p>
+                    <p>{this.getDescription(question, answer)}</p>
                 )
             case CHECKBOX:
                 return (
@@ -299,7 +299,17 @@ class ReviewForm extends Component {
             }
         }, () => {
             this.loadForm();
-        })
+        });
+    }
+
+    goBack = () => {
+        this.setState(prevState => {
+            return {
+                currentSkip: prevState.currentSkip - 1
+            }
+        }, () => {
+            this.loadForm();
+        });
     }
 
     render() {
@@ -311,7 +321,8 @@ class ReviewForm extends Component {
           hasValidated,
           validationStale,
           isValid,
-          isSubmitting
+          isSubmitting,
+          currentSkip
         } = this.state;
 
         const loadingStyle = {
@@ -351,29 +362,46 @@ class ReviewForm extends Component {
                 <h3 class="text-center mb-4">{form.user.user_category}</h3>
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Nationality:</span> {form.user.nationality_country}
+                        <span class="font-weight-bold">Nationality:</span><br/> {form.user.nationality_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Residence:</span> {form.user.residence_country}
+                        <span class="font-weight-bold">Residence:</span><br/> {form.user.residence_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Affiliation:</span> {form.user.affiliation}
+                        <span class="font-weight-bold">Affiliation:</span><br/> {form.user.affiliation}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Department:</span> {form.user.department}
+                        <span class="font-weight-bold">Field of Study / Department:</span><br/> {form.user.department}
                     </div>
                 </div>
                 {questionModels && questionModels.map(qm => 
                     <ReviewQuestion model={qm} key={"q_" + qm.question.id} onChange={this.onChange}/>)
                 }
 
+                <br/><hr/>
+                <div>
+                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
+                </div>
+                <hr/>
+
                 <div class="buttons">
-                    <button 
-                        disabled={form.review_response || isSubmitting} 
-                        className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
-                        onClick={this.skip}>
-                        Skip
-                    </button>
+                    {currentSkip > 0 && 
+                        <button
+                            disabled={form.review_response || isSubmitting} 
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                            style={{marginRight: "1em"}}
+                            onClick={this.goBack}>
+                            Go Back
+                        </button>
+                    }
+                    {currentSkip < form.reviews_remaining_count && 
+                        <button 
+                            disabled={form.review_response || isSubmitting} 
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                            onClick={this.skip}>
+                            Skip
+                        </button>
+                    }
                     <button disabled={isSubmitting} type="submit" class="btn btn-primary float-right" onClick={this.submit}>
                         {isSubmitting && (
                             <span
