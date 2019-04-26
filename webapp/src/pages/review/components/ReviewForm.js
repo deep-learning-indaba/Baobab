@@ -117,7 +117,7 @@ class ReviewQuestion extends Component {
         return (
           <div className={"question"}>
             <h4>{this.getHeadline(this.props.model)}</h4>
-            <Linkify>
+            <Linkify properties={{target: '_blank'}}>
                 {this.formControl(
                     this.props.model.question.id,
                     this.props.model.question,
