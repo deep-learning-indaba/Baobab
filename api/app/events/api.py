@@ -10,6 +10,7 @@ from app.events.models import Event, EventRole
 from app.events.mixins import EventsMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventStatsRepository as event_stats_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 
@@ -116,11 +117,18 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         num_responses = db.session.query(Response.id).count()
         num_submitted_respones = db.session.query(Response).filter(Response.is_submitted == True).count()
 
+        gender_counts = event_stats_repository.application_gender_counts(event_id)
+        review_counts = event_stats_repository.review_counts(event_id)
+
         return {
             'event_description': event.description,
-            'num_users': num_users,
-            'num_responses': num_responses,
-            'num_submitted_responses': num_submitted_respones
+            'applications': {
+                'num_users': num_users,
+                'num_responses': num_responses,
+                'num_submitted_responses': num_submitted_respones
+            },
+            'application_genders': gender_counts,
+            'reviews': review_counts
         }, 200
 
 
