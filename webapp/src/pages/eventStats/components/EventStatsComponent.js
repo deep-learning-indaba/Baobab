@@ -69,9 +69,15 @@ class EventStatsComponent extends Component {
         return <div class="alert alert-danger">{error}</div>
       }
       
-      const submitted = stats.num_submitted_responses;
-      const not_submitted = stats.num_responses - submitted;
-      const not_started = stats.num_users - stats.num_responses;
+      const submitted = stats.applications.num_submitted_responses;
+      const not_submitted = stats.applications.num_responses - submitted;
+      const not_started = stats.applications.num_users - stats.applications.num_responses;
+
+      let applicationGenderData = Object.entries(stats.application_genders);
+      applicationGenderData.unshift(['Gender', 'Count']);
+
+      let reviewData = Object.entries(stats.reviews);
+      reviewData.unshift(['Phase', 'Count']);
 
       return (
           <div className={"event-stats text-center"}>
@@ -89,6 +95,25 @@ class EventStatsComponent extends Component {
                 title: 'Number of applications',
               }}
             />
+
+            <Chart 
+              chartType="PieChart" 
+              loader={<div class="spinner-border" role="status"><span class="sr-only">Loading Chart</span></div>}
+              data={applicationGenderData}
+              options={{
+                title: 'Applications by Gender',
+              }}
+            />
+
+            <Chart 
+              chartType="PieChart" 
+              loader={<div class="spinner-border" role="status"><span class="sr-only">Loading Chart</span></div>}
+              data={reviewData}
+              options={{
+                title: 'Review Allocation and Completion',
+              }}
+            />
+
             <form onSubmit={this.handleSubmit}>
               <div class="text-center">
                 <button type="submit" class="event-action btn btn-primary" visible={!emailSendStatus} >
