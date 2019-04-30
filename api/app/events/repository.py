@@ -14,8 +14,8 @@ FROM
 	INNER JOIN response ON app_user.id = response.user_id
 	INNER JOIN application_form ON response.application_form_id = application_form.id
 WHERE 
-	response.is_submitted = true
-	AND response.is_withdrawn = false
+	response.is_submitted IS TRUE
+	AND response.is_withdrawn IS FALSE
 	AND application_form.event_id = {event_id}
 GROUP BY 
 	app_user.user_gender"""
