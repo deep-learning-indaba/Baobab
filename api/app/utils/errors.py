@@ -29,3 +29,7 @@ USER_DELETED = ({'message': 'This account has been deleted'}, 404)
 REVIEW_RESPONSE_NOT_FOUND = ({'message': 'No review response found.'}, 404)
 ADD_VERIFY_TOKEN_FAILED = (
     {'message': 'Unable to add verification token.'}, 500)
+ADD_INVITED_GUEST_FAILED = (
+    {'message': 'Unable to add invited guest.'}, 500)
+INVITED_GUEST_FOR_EVENT_EXISTS = (
+    {'message': 'Invited guest already exists for this event.'}, 409)
