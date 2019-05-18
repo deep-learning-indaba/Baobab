@@ -54,3 +54,7 @@ rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
 rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
 rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')
 rest_api.add_resource(invitedGuest_api.InvitedGuestAPI, '/api/v1/invitedGuest')
+rest_api.add_resource(invitedGuest_api.CreateUser,
+                      '/api/v1/invitedGuest/create')
+rest_api.add_resource(invitedGuest_api.InvitedGuestList,
+                      '/api/v1/invitedGuestList')
