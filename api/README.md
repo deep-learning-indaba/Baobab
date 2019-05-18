@@ -47,6 +47,11 @@ Tests are ran with [nose](https://nose.readthedocs.org/en/latest/) from inside t
 $ docker-compose run web nosetests
 ```
 
+Run Specific tests
+```
+docker-compose run web bash -c 'cd api; nosetests -v [PACKAGE_NAME e.g. app.invitedGuest]'
+```
+
 
 ## Database Migrations
 
