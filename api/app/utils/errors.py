@@ -33,3 +33,7 @@ ADD_INVITED_GUEST_FAILED = (
     {'message': 'Unable to add invited guest.'}, 500)
 INVITED_GUEST_FOR_EVENT_EXISTS = (
     {'message': 'Invited guest already exists for this event.'}, 409)
+VERIFY_EMAIL_INVITED_GUEST = (
+    {'message': 'Unable to verify email of invited guest.'}, 500)
+MISSING_PASSWORD = (
+    {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
