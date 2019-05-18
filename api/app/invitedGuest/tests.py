@@ -108,7 +108,7 @@ class InvitedGuestTest(ApiTestCase):
         assert response.status_code == 201
         assert data['invitedGuest_id'] == 1
 
-    def test_create_invitedGuest_user_not_found(self):
+    def test_create_invitedGuest_duplicate(self):
         self.seed_static_data()
         self.app.post(
             '/api/v1/invitedGuest', data=INVITED_GUEST, headers=self.headers)
@@ -116,7 +116,7 @@ class InvitedGuestTest(ApiTestCase):
             '/api/v1/invitedGuest', data=INVITED_GUEST, headers=self.headers)
         assert response.status_code == 409
 
-    def test_create_invitedGuest_duplicate(self):
+    def test_create_invitedGuest_user_not_found(self):
         self.seed_static_data()
         response = self.app.post(
             '/api/v1/invitedGuest', data=INVITED_GUEST_NEW_USER, headers=self.headers)
