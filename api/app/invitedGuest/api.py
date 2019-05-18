@@ -45,7 +45,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
             return USER_NOT_FOUND
 
         existingInvitedGuest = db.session.query(InvitedGuest).filter(
-            InvitedGuest.event_id == event_id and InvitedGuest.user_id == user.id).first()
+            InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
 
         if existingInvitedGuest:
             return INVITED_GUEST_FOR_EVENT_EXISTS
