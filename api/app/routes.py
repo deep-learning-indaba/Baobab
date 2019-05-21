@@ -6,6 +6,7 @@ from content import api as content_api
 from files import api as files_api
 from events import api as events_api
 from reviews import api as reviews_api
+from invitedGuest import api as invitedGuest_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -41,10 +42,19 @@ rest_api.add_resource(users_api.ResendVerificationEmailAPI,
                       '/api/v1/resend-verification-email'),
 rest_api.add_resource(reviews_api.ReviewAPI, '/api/v1/review')
 rest_api.add_resource(reviews_api.ReviewResponseAPI, '/api/v1/reviewresponse')
-rest_api.add_resource(reviews_api.ReviewAssignmentAPI, '/api/v1/reviewassignment')
-rest_api.add_resource(reviews_api.ReviewSummaryAPI, '/api/v1/reviewassignment/summary')
-rest_api.add_resource(events_api.NotSubmittedReminderAPI, '/api/v1/reminder-unsubmitted')
-rest_api.add_resource(events_api.NotStartedReminderAPI, '/api/v1/reminder-not-started')
+rest_api.add_resource(reviews_api.ReviewAssignmentAPI,
+                      '/api/v1/reviewassignment')
+rest_api.add_resource(reviews_api.ReviewSummaryAPI,
+                      '/api/v1/reviewassignment/summary')
+rest_api.add_resource(events_api.NotSubmittedReminderAPI,
+                      '/api/v1/reminder-unsubmitted')
+rest_api.add_resource(events_api.NotStartedReminderAPI,
+                      '/api/v1/reminder-not-started')
 rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
 rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
 rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')
+rest_api.add_resource(invitedGuest_api.InvitedGuestAPI, '/api/v1/invitedGuest')
+rest_api.add_resource(invitedGuest_api.CreateUser,
+                      '/api/v1/invitedGuest/create')
+rest_api.add_resource(invitedGuest_api.InvitedGuestList,
+                      '/api/v1/invitedGuestList')

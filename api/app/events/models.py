@@ -1,6 +1,7 @@
 
 from app import db
 
+
 class Event(db.Model):
 
     __tablename__ = "event"
@@ -34,13 +35,16 @@ class Event(db.Model):
     def get_application_form(self):
         return self.application_forms[0]
 
+
 class EventRole(db.Model):
 
     __tablename__ = "event_role"
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey(
+        "event.id"), nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey(
+        "app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
@@ -48,13 +52,13 @@ class EventRole(db.Model):
     def __init__(self, role, user_id, event_id):
         self.role = role
         self.user_id = user_id
-        self.event_id = event_id        
+        self.event_id = event_id
 
     def set_user(self, new_user_id):
-       self.user_id = new_user_id
+        self.user_id = new_user_id
 
     def set_event(self, new_event_id):
-       self.event_id = new_event_id
+        self.event_id = new_event_id
 
     def set_role(self, new_role):
-       self.role = new_role
+        self.role = new_role
