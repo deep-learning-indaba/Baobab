@@ -14,6 +14,7 @@ import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import InvitedGuests from "./pages/invitedGuests";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -241,6 +242,11 @@ class App extends Component {
                   exact
                   path="/reviewHistory"
                   component={ReviewHistory}
+                />
+                <PrivateRoute
+                  exact
+                  path="/invitedGuests"
+                  component={InvitedGuests}
                 />
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
