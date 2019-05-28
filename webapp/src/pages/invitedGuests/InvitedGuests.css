@@ -1,0 +1,74 @@
+
+    @media (min-width: 652px) { 
+        .pad-top-30-md{
+            padding-top: 30px;
+        }
+     }
+
+
+.light-gray{
+    background-color: lightgray;
+}
+
+.font-size-12{
+    font-size: 12px;
+}
+
+.white-background{
+    background-color: #ffffff
+}
+
+.box-shadow{
+    box-shadow: 5px 9px 5px -4px rgba(0,0,0,0.21);
+}
+.stretched{
+    width:100%;
+}
+td:first-child {
+    padding-left: 30px;          
+  }
+  th:first-child{
+      padding-left: 30px;
+  }
+  .round-table{
+    border-collapse: collapse;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+ 
+  tbody:nth-child(even) 
+  {
+      background-color: #f2f2f2;
+  }
+  thead tr th{
+      padding-top:15px;
+  }
+  button.margin-top-32{
+    margin-top:32px;
+  }
+  .responsive-table{
+      overflow-x:auto;
+  }
+  .card{
+    margin-top: 30px;
+    background-color: white;
+    margin-top: 30px;
+    border-radius: 5px;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    box-shadow: 5px 9px 5px -4px rgba(0,0,0,0.21);
+  }
+  .card.flat-card{
+      box-shadow:none;
+  }
+  .card.success{
+      background-color: #aaffb6;
+      border-color:#343534;
+  }
+
+  .no-padding-h{
+      padding-left:0;
+      padding-right:0;
+  }
