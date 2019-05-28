@@ -35,9 +35,9 @@ class RegistrationQuestion(db.Model):
     description = db.Column(db.String(), nullable=False)
     headline = db.Column(db.String(), nullable=False)
     placeholder = db.Column(db.String(), nullable=False)
-    validation_regex = db.Column(db.String(), nullable=False)
-    validation_text = db.Column(db.String(), nullable=False)
+    validation_regex = db.Column(db.String(), nullable=True)
+    validation_text = db.Column(db.String(), nullable=True)
     order = db.Column(db.Integer(), nullable=False)
-    options = db.Column(db.JSON(), nullable=False)
+    options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
 
