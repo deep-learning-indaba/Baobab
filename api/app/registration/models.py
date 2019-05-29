@@ -2,6 +2,24 @@
 from app import db
 
 
+
+class Offer(db.Model):
+
+    __tablename__ = "offer"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(),  db.ForeignKey("app_user.id"), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
+    offer_date = db.Column(db.DateTime(), nullable=False)
+    expiry_date = db.Column(db.DateTime(), nullable=False)
+    payment_required = db.Column(db.String(50), nullable=False)
+    travel_award = db.Column(db.String(50), nullable=False)
+    accommodation_award = db.Column(db.String(50), nullable=False)
+    accepted = db.Column(db.String(50), nullable=False)
+    rejected = db.Column(db.String(50), nullable=False)
+    rejected_reason = db.Column(db.String(50), nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False)
+
 class RegistrationForm(db.Model):
 
     __tablename__ = "registration_form"
