@@ -31,7 +31,8 @@ class InvitedGuests extends Component {
       role: "",
       addedSucess: false,
       notFound: false,
-      buttonClicked: false
+      buttonClicked: false,
+      conflict: false
     };
   }
   getGuestList() {
@@ -70,6 +71,12 @@ class InvitedGuests extends Component {
           notFound: true,
         }
         )
+      }
+      else if (response.msg === "409") {
+        this.setState({
+          addedSucess: false,
+          conflict: true
+        });
       }
     })
   }
@@ -131,7 +138,7 @@ class InvitedGuests extends Component {
                 </tr>
               </thead>
               {this.state.guestList.map(user =>
-                <tbody className="white-background">
+                <tbody className="white-background" key={user.email}>
                   <tr className="font-size-12">
                     <td>{user.user.firstname}</td>
                     <td>{user.user.lastname}</td>
@@ -148,7 +155,10 @@ class InvitedGuests extends Component {
 
         {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added <b>{lastGuest.user.firstname} {lastGuest.user.lastname}</b></div>)
           : (this.state.addedSucess === false && this.state.notFound)
-            ? (<div class="alert alert-danger">User does not exist <a href="/invitedGuests/create"> Click here to create</a></div>) : null}
+          ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>) 
+          : (this.state.addedSucess === false && this.state.conflict)
+          ? (<div class="card flat-card conflict">This email is already in use</div>)
+          : null}
         <form>
           <div class="card">
             <p className="h5 text-center mb-4">Add Guest</p>

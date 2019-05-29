@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { userService } from "../../../services/user";
 import { invitedGuestServices } from "../../../services/invitedGuests/invitedGuests.service";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -34,8 +33,6 @@ const fieldValidations = [
     ruleRunner(validationFields.affiliation, requiredText),
     ruleRunner(validationFields.department, requiredText),
     ruleRunner(validationFields.disability, requiredText),
-    ruleRunner(validationFields.password, requiredText),
-    ruleRunner(validationFields.confirmPassword, requiredText),
     ruleRunner(validationFields.category, requiredDropdown),
     ruleRunner(validationFields.primaryLanguage, requiredText),
     ruleRunner(validationFields.dateOfBirth, isValidDate)
@@ -48,8 +45,6 @@ class creatreInvitedGuestComponent extends Component {
         this.state = {
             user: {
                 email: "",
-                password: "",
-                confirmPassword: ""
             },
             showErrors: false,
             submitted: false,
@@ -61,7 +56,7 @@ class creatreInvitedGuestComponent extends Component {
             genderOptions: [],
             disabilityOptions: [],
             error: "",
-            created: false
+            created: false,
         };
     }
 
@@ -99,9 +94,7 @@ class creatreInvitedGuestComponent extends Component {
 
     validateForm() {
         return (
-            this.state.user.email.length > 0 &&
-            this.state.user.password.length > 0 &&
-            this.state.user.confirmPassword.length > 0
+            this.state.user.email.length > 0 
         );
     }
 
@@ -141,9 +134,6 @@ class creatreInvitedGuestComponent extends Component {
         event.preventDefault();
         this.setState({ submitted: true, showErrors: true });
 
-        if (this.state.user.password != this.state.user.confirmPassword) {
-            this.state.errors.$set.push({ passwords: "Passwords do not match" });
-        }
         if (
             this.state.errors &&
             this.state.errors.$set &&
@@ -152,8 +142,8 @@ class creatreInvitedGuestComponent extends Component {
             return;
 
         this.setState({ loading: true });
-
-        invitedGuestServices.createInvitedGuest(this.state.user, DEFAULT_EVENT_ID, ).then(
+        
+        invitedGuestServices.createInvitedGuest(this.state.user, DEFAULT_EVENT_ID).then(
             user => {
                 this.setState({
                     loading: false,
@@ -169,6 +159,10 @@ class creatreInvitedGuestComponent extends Component {
                     loading: false
                 })
         );
+        if(this.state.created === true){
+            invitedGuestServices.addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
+            this.props.history.push("/invitedGuests");
+        }
     };
 
     getErrorMessages = errors => {
@@ -204,20 +198,18 @@ class creatreInvitedGuestComponent extends Component {
             department,
             disability,
             category,
-            password,
-            confirmPassword,
             dateOfBirth,
             primaryLanguage
         } = this.state.user;
 
-        const { loading, errors, showErrors, error} = this.state;
+        const { loading, errors, showErrors, error } = this.state;
         const roleOptions = [
             { value: 'Speaker', label: 'Speaker' },
             { value: 'Guest', label: 'Guest' },
             { value: 'Mentor', label: 'Mentor' },
             { value: 'Friend of the Indaba', label: 'Friend of the Indaba' },
             { value: 'Organiser', label: 'Organiser' }
-          ] 
+        ]
 
         const titleValue = this.getContentValue(this.state.titleOptions, title);
         const nationalityValue = this.getContentValue(
@@ -241,7 +233,7 @@ class creatreInvitedGuestComponent extends Component {
         return (
             <div className="CreateAccount">
                 <form onSubmit={this.handleSubmit}>
-                    <p className="h5 text-center mb-4">Create Account</p>
+                    <p className="h5 text-center mb-4">Create Guest</p>
                     <div class="row">
                         <div class={colClassNameTitle}>
                             <FormSelect
@@ -388,46 +380,19 @@ class creatreInvitedGuestComponent extends Component {
                     </div>
                     <div class="row">
                         <div class={commonColClassName}>
-                            <FormTextBox
-                                id={validationFields.password.name}
-                                type="password"
-                                placeholder={validationFields.password.display}
-                                onChange={this.handleChange(validationFields.password)}
-                                value={password}
-                                label={validationFields.password.display}
+                            <FormSelect
+                                options={roleOptions}
+                                id={"role"}
+                                onChange={this.handleChangeDropdown}
+                                label={"Select role"}
                             />
                         </div>
-                        <div class={commonColClassName}>
-                            <FormTextBox
-                                id={validationFields.confirmPassword.name}
-                                type="password"
-                                placeholder={validationFields.confirmPassword.display}
-                                onChange={this.handleChange(validationFields.confirmPassword)}
-                                value={confirmPassword}
-                                label={validationFields.confirmPassword.display}
-                            />
-                        </div>
-                            <div class={commonColClassName}>
-                                <FormSelect
-                                    options={roleOptions}
-                                    id={"role"}
-                                    onChange={this.handleChangeDropdown}
-                                    label={"Select role"}
-                                />
-                            </div>
                     </div>
                     <button
                         type="submit"
                         class="btn btn-primary"
                         disabled={!this.validateForm() || loading}
                     >
-                        {loading && (
-                            <span
-                                class="spinner-grow spinner-grow-sm"
-                                role="status"
-                                aria-hidden="true"
-                            />
-                        )}
                         Sign Up
           </button>
                     {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
