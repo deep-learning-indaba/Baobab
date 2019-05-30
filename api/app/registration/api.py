@@ -117,6 +117,3 @@ class CreateOfferAPI(SignupMixin, restful.Resource):
     def post(self):
         user_api = UserAPI.UserAPI()
         return user_api.post(True)
-
-
-
