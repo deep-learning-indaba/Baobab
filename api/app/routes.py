@@ -7,6 +7,7 @@ from files import api as files_api
 from events import api as events_api
 from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
+from registration import api as registration_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -58,3 +59,4 @@ rest_api.add_resource(invitedGuest_api.CreateUser,
                       '/api/v1/invitedGuest/create')
 rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
+rest_api.add_resource(registration_api.OfferAPI,'/api/v1/offerAPI')
