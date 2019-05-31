@@ -65,8 +65,7 @@ class OfferAPI(restful.Resources):
         user = db.session.query(AppUser).filter(
                 AppUser.email == email).first()
 
-        offerEntity = OfferEntity(
-            offerEntity = OfferEntity(user_id = user_id,
+        offerEntity = OfferEntity(user_id = user_id,
             event_id = event_d,
             offer_date = offer_date,
             expiry_date = expiry_date,
@@ -82,6 +81,7 @@ class OfferAPI(restful.Resources):
             db.session.commit()
             #send an email confirmation
             self.send_confirmation(user, offer_info(offerEntity))
+
         except IntegrityError:
             LOGGER.error(
                 "Failed to add offer: {}",format(email))
