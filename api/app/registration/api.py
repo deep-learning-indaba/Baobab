@@ -7,7 +7,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
-from app.offer.models import OfferEntity
+from app.registration.models import OfferEntity
 from app.offer.mixins import OfferMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
