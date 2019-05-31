@@ -46,9 +46,7 @@ class creatreInvitedGuestComponent extends Component {
             user: {
                 email: "",
             },
-            showErrors: false,
             submitted: false,
-            loading: false,
             errors: [],
             categoryOptions: [],
             countryOptions: [],
@@ -57,6 +55,7 @@ class creatreInvitedGuestComponent extends Component {
             disabilityOptions: [],
             error: "",
             created: false,
+            conflict: false
         };
     }
 
@@ -94,7 +93,7 @@ class creatreInvitedGuestComponent extends Component {
 
     validateForm() {
         return (
-            this.state.user.email.length > 0 
+            this.state.user.email.length > 0
         );
     }
 
@@ -132,7 +131,7 @@ class creatreInvitedGuestComponent extends Component {
 
     handleSubmit = event => {
         event.preventDefault();
-        this.setState({ submitted: true, showErrors: true });
+        this.setState({ submitted: true });
 
         if (
             this.state.errors &&
@@ -141,42 +140,24 @@ class creatreInvitedGuestComponent extends Component {
         )
             return;
 
-        this.setState({ loading: true });
-        
         invitedGuestServices.createInvitedGuest(this.state.user, DEFAULT_EVENT_ID).then(
             user => {
                 this.setState({
-                    loading: false,
                     created: true
                 });
+                if (user.msg === "409") {
+                    this.setState({
+                        conflict: true
+                    })
+                }
+                else if (this.state.created === true) {
+                    invitedGuestServices.addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
+                    this.props.history.push("/invitedGuests");
+                }
             },
-            error =>
-                this.setState({
-                    error:
-                        error.response && error.response.data
-                            ? error.response.data.message
-                            : error.message,
-                    loading: false
-                })
         );
-        if(this.state.created === true){
-            invitedGuestServices.addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
-            this.props.history.push("/invitedGuests");
-        }
     };
 
-    getErrorMessages = errors => {
-        let errorMessages = [];
-        if (errors.$set === null) return;
-
-        let arr = errors.$set;
-        for (let i = 0; i < arr.length; i++) {
-            errorMessages.push(
-                <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
-            );
-        }
-        return errorMessages;
-    };
     render() {
         const xs = 12;
         const sm = 6;
@@ -202,7 +183,6 @@ class creatreInvitedGuestComponent extends Component {
             primaryLanguage
         } = this.state.user;
 
-        const { loading, errors, showErrors, error } = this.state;
         const roleOptions = [
             { value: 'Speaker', label: 'Speaker' },
             { value: 'Guest', label: 'Guest' },
@@ -384,19 +364,18 @@ class creatreInvitedGuestComponent extends Component {
                                 options={roleOptions}
                                 id={"role"}
                                 onChange={this.handleChangeDropdown}
-                                label={"Select role"}
+                                label={"Role"}
                             />
                         </div>
                     </div>
                     <button
                         type="submit"
                         class="btn btn-primary"
-                        disabled={!this.validateForm() || loading}
+                        disabled={!this.validateForm()}
                     >
-                        Sign Up
-          </button>
-                    {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-                    {error && <div class="alert alert-danger">{error}</div>}
+                        Create guest
+                    </button>
+                    {this.state.conflict && <div class="alert alert-danger">Email is already taken</div>}
                 </form>
             </div>
         );
