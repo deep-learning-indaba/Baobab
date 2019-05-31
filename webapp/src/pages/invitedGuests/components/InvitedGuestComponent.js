@@ -10,13 +10,10 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail,
+  validEmail
 } from "../../../utils/validation/rules.js";
 
-const fieldValidations = [
-  ruleRunner(validationFields.email, validEmail),
-
-];
+const fieldValidations = [ruleRunner(validationFields.email, validEmail)];
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -51,47 +48,41 @@ class InvitedGuests extends Component {
   }
 
   handleChangeDropdown = (name, dropdown) => {
-    this.setState(
-      {
-        [name]: dropdown.value
-      },
-    );
+    this.setState({
+      [name]: dropdown.value
+    });
   };
   buttonSubmit() {
-    invitedGuestServices.addInvitedGuest(this.state.email, DEFAULT_EVENT_ID, this.state.role).then(response => {
-      if (response.msg === "succeeded") {
-        this.getGuestList();
-        this.setState({
-          addedSucess: true,
-          conflict: false,
-          notFound: false
-        });
-      }
-      else if (response.msg === "404") {
-        this.setState({
-          addedSucess: false,
-          notFound: true,
-          conflict: false,
+    invitedGuestServices
+      .addInvitedGuest(this.state.email, DEFAULT_EVENT_ID, this.state.role)
+      .then(response => {
+        if (response.msg === "succeeded") {
+          this.getGuestList();
+          this.setState({
+            addedSucess: true,
+            conflict: false,
+            notFound: false
+          });
+        } else if (response.msg === "404") {
+          this.setState({
+            addedSucess: false,
+            notFound: true,
+            conflict: false
+          });
+        } else if (response.msg === "409") {
+          this.setState({
+            notFound: false,
+            addedSucess: false,
+            conflict: true
+          });
         }
-        )
-      }
-      else if (response.msg === "409") {
-        this.setState({
-          notFound: false,
-          addedSucess: false,
-          conflict: true
-        });
-      }
-    })
+      });
   }
   handleChange = field => {
     return event => {
-      this.setState(
-        {
-          [field.name]: event.target.value
-
-        },
-      );
+      this.setState({
+        [field.name]: event.target.value
+      });
     };
   };
 
@@ -104,12 +95,12 @@ class InvitedGuests extends Component {
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const { loading } = this.state;
     const roleOptions = [
-      { value: 'Speaker', label: 'Speaker' },
-      { value: 'Guest', label: 'Guest' },
-      { value: 'Mentor', label: 'Mentor' },
-      { value: 'Friend of the Indaba', label: 'Friend of the Indaba' },
-      { value: 'Organiser', label: 'Organiser' }
-    ]
+      { value: "Speaker", label: "Speaker" },
+      { value: "Guest", label: "Guest" },
+      { value: "Mentor", label: "Mentor" },
+      { value: "Friend of the Indaba", label: "Friend of the Indaba" },
+      { value: "Organiser", label: "Organiser" }
+    ];
     let lastGuest;
     if (this.state.guestList !== null) {
       lastGuest = this.state.guestList[this.state.guestList.length - 1];
@@ -122,7 +113,7 @@ class InvitedGuests extends Component {
             <span class="sr-only">Loading...</span>
           </div>
         </div>
-      )
+      );
     }
 
     return (
@@ -130,7 +121,8 @@ class InvitedGuests extends Component {
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
           <div class="responsive-table">
-            {this.state.guestList !== null && this.state.guestList.length > 0 ?
+            {this.state.guestList !== null &&
+            this.state.guestList.length > 0 ? (
               <table cellPadding={5} className="stretched round-table">
                 <thead>
                   <tr>
@@ -141,7 +133,7 @@ class InvitedGuests extends Component {
                     <th scope="col">Department</th>
                   </tr>
                 </thead>
-                {this.state.guestList.map(user =>
+                {this.state.guestList.map(user => (
                   <tbody className="white-background" key={user.email}>
                     <tr className="font-size-12">
                       <td>{user.user.firstname}</td>
@@ -150,19 +142,43 @@ class InvitedGuests extends Component {
                       <td>{user.role}</td>
                       <td>{user.user.department}</td>
                     </tr>
-                  </tbody>)
-                }
+                  </tbody>
+                ))}
               </table>
-              : (<div class="alert alert-danger">No invited guests</div>)}
+            ) : (
+              <div class="alert alert-danger">No invited guests</div>
+            )}
           </div>
         </div>
 
-        {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added {lastGuest.user.firstname} {lastGuest.user.lastname}</div>)
-          : (this.state.addedSucess === false && this.state.notFound)
-            ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>)
-            : (this.state.addedSucess === false && this.state.conflict)
-              ? (<div class="card flat-card conflict">This email is already in use</div>)
-              : null}
+        {this.state.addedSucess ? (
+          <div class="card flat-card success">
+            {" "}
+            Successfully added {lastGuest.user.firstname}{" "}
+            {lastGuest.user.lastname}
+          </div>
+        ) : this.state.addedSucess === false && this.state.notFound ? (
+          <div class="alert alert-danger">
+            User does not exist
+            <a
+              href={
+                "/invitedGuests/create?email=" +
+                this.state.email +
+                "&event=" +
+                DEFAULT_EVENT_ID +
+                "&role=" +
+                this.state.role
+              }
+            >
+              {" "}
+              Click here to create
+            </a>
+          </div>
+        ) : this.state.addedSucess === false && this.state.conflict ? (
+          <div class="card flat-card conflict">
+            Invited guest with this email already exists.
+          </div>
+        ) : null}
 
         <form>
           <div class="card">
@@ -187,12 +203,13 @@ class InvitedGuests extends Component {
                 />
               </div>
               <div class={commonColClassName}>
-
                 <button
                   type="button"
                   class="btn btn-primary stretched margin-top-32"
                   onClick={() => this.buttonSubmit()}
-                >Create invited guest</button>
+                >
+                  Create invited guest
+                </button>
               </div>
             </div>
           </div>
