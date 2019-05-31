@@ -104,11 +104,27 @@ class OfferAPI(restful.Resources):
         user_id = g.current_user['id']
         try:
             event = db.session.query(Event).filter(Event.id == args['event_id']).first()
-    //
+            db.session.commit()
+            db.session.flush()
         except:
             LOGGER.error("Response not found for id {}".format(args['id']))
             return errors.RESPONSE_NOT_FOUND, 404
 
+    #@marshall_with()
+    def get(self):
+        args = self.req_paeser.parse_args()
+        event_id = args['event_id']
+
+        user_id = g.current_user['id']
+        try:
+            event = db.session.query(Event).filter(Event.id == args['event_id']).first()
+            if not event:
+                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
+                return errors.EVENT_NOT_FOUND, 404
+            return event
+        except:
+            LOGGER.error("Response not found for id {}".format(args['id']))
+            return errors.RESPONSE_NOT_FOUND, 404
 
 
 class CreateOfferAPI(SignupMixin, restful.Resource):
