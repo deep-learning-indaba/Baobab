@@ -75,9 +75,10 @@ class OfferAPI(restful.Resources):
             accommodation_award = accomodation_award
         )
 
-        db.session.add(offerEntity)
+       # db.session.add(offerEntity)
 
         try:
+            db.session.add(offerEntity)
             db.session.commit()
             #send an email confirmation
             self.send_confirmation(user, offer_info(offerEntity))
@@ -103,8 +104,7 @@ class OfferAPI(restful.Resources):
         user_id = g.current_user['id']
         try:
             event = db.session.query(Event).filter(Event.id == args['event_id']).first()
-            db.session.commit()
-            db.session.flush()
+    //
         except:
             LOGGER.error("Response not found for id {}".format(args['id']))
             return errors.RESPONSE_NOT_FOUND, 404
@@ -117,3 +117,6 @@ class CreateOfferAPI(SignupMixin, restful.Resource):
     def post(self):
         user_api = UserAPI.UserAPI()
         return user_api.post(True)
+
+
+
