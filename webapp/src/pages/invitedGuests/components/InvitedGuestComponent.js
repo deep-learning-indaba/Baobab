@@ -107,7 +107,7 @@ class InvitedGuests extends Component {
       { value: 'Organiser', label: 'Organiser' }
     ]
     let lastGuest;
-    if (this.state.guestList.length > 0) {
+    if (this.state.guestList !==null) {
       lastGuest = this.state.guestList[this.state.guestList.length - 1];
     }
 
@@ -123,11 +123,10 @@ class InvitedGuests extends Component {
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
-
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
           <div class="responsive-table">
-            {this.state.guestList.length > 0 && <table cellPadding={5} className="stretched round-table">
+            {this.state.guestList !== null ? <table cellPadding={5} className="stretched round-table">
               <thead>
                 <tr>
                   <th scope="col">Name</th>
@@ -149,16 +148,17 @@ class InvitedGuests extends Component {
                 </tbody>)
               }
             </table>
-            }
+            : (<div class="alert alert-danger">No invited guests</div>)}
           </div>
         </div>
 
-        {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added <b>{lastGuest.user.firstname} {lastGuest.user.lastname}</b></div>)
+        {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added {lastGuest.user.firstname} {lastGuest.user.lastname}</div>)
           : (this.state.addedSucess === false && this.state.notFound)
           ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>) 
           : (this.state.addedSucess === false && this.state.conflict)
           ? (<div class="card flat-card conflict">This email is already in use</div>)
           : null}
+
         <form>
           <div class="card">
             <p className="h5 text-center mb-4">Add Guest</p>
