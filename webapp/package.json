@@ -9,6 +9,7 @@
     "enzyme": "^3.8.0",
     "enzyme-adapter-react-16": "^1.7.1",
     "lodash.isequal": "^4.5.0",
+    "query-string": "^6.5.0",
     "react": "^16.7.0",
     "react-app-polyfill": "^0.2.2",
     "react-bootstrap4-modal": "^1.7.0",
