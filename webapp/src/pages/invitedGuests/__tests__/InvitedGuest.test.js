@@ -1,6 +1,6 @@
 import React from 'react';
 import {shallow} from 'enzyme';
-import InvitedGuest from '../InvitedGuest.js';
+import InvitedGuest from '../InvitedGuests.js';
 
 test('Check if InvitedGuest Page renders.', () => {
   // Render InvitedGuest Page.
