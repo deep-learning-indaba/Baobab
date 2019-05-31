@@ -45,6 +45,8 @@ class creatreInvitedGuestComponent extends Component {
         this.state = {
             user: {
                 email: "",
+                role:"",
+                dateOfBirth:""
             },
             submitted: false,
             errors: [],
@@ -73,7 +75,26 @@ class creatreInvitedGuestComponent extends Component {
         } else return [];
     }
 
+     getParameterByName(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[\[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
     componentWillMount() {
+        let email = this.getParameterByName("email");
+        let role = this.getParameterByName("role");
+
+        this.setState({
+            user: {
+                email:email,
+                role:role
+            }
+        });
+
         Promise.all([
             getTitleOptions,
             getGenderOptions,
@@ -93,7 +114,8 @@ class creatreInvitedGuestComponent extends Component {
 
     validateForm() {
         return (
-            this.state.user.email.length > 0
+            this.state.user.email.length > 0 &&
+            this.state.user.dateOfBirth != null
         );
     }
 
@@ -180,7 +202,8 @@ class creatreInvitedGuestComponent extends Component {
             disability,
             category,
             dateOfBirth,
-            primaryLanguage
+            primaryLanguage,
+            role
         } = this.state.user;
 
         const roleOptions = [
@@ -365,6 +388,8 @@ class creatreInvitedGuestComponent extends Component {
                                 id={"role"}
                                 onChange={this.handleChangeDropdown}
                                 label={"Role"}
+                                defaultValue={{ label: role, value: role }}
+                                placeholder={role}
                             />
                         </div>
                     </div>

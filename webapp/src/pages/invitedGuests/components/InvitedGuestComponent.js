@@ -159,7 +159,7 @@ class InvitedGuests extends Component {
 
         {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added {lastGuest.user.firstname} {lastGuest.user.lastname}</div>)
           : (this.state.addedSucess === false && this.state.notFound)
-            ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>)
+            ? (<div class="alert alert-danger">User does not exist<a href={encodeURI("/invitedGuests/create?email="+this.state.email+"&role="+this.state.role)}> Click here to create</a></div>)
             : (this.state.addedSucess === false && this.state.conflict)
               ? (<div class="card flat-card conflict">This email is already in use</div>)
               : null}
