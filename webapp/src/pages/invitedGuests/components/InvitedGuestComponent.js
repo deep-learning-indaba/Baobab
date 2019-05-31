@@ -62,18 +62,22 @@ class InvitedGuests extends Component {
       if (response.msg === "succeeded") {
         this.getGuestList();
         this.setState({
-          addedSucess: true
+          addedSucess: true,
+          conflict: false,
+          notFound: false
         });
       }
       else if (response.msg === "404") {
         this.setState({
           addedSucess: false,
           notFound: true,
+          conflict: false,
         }
         )
       }
       else if (response.msg === "409") {
         this.setState({
+          notFound: false,
           addedSucess: false,
           conflict: true
         });
@@ -107,7 +111,7 @@ class InvitedGuests extends Component {
       { value: 'Organiser', label: 'Organiser' }
     ]
     let lastGuest;
-    if (this.state.guestList !==null) {
+    if (this.state.guestList !== null) {
       lastGuest = this.state.guestList[this.state.guestList.length - 1];
     }
 
@@ -126,38 +130,39 @@ class InvitedGuests extends Component {
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
           <div class="responsive-table">
-            {this.state.guestList !== null ? <table cellPadding={5} className="stretched round-table">
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Lastname</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Role</th>
-                  <th scope="col">Department</th>
-                </tr>
-              </thead>
-              {this.state.guestList.map(user =>
-                <tbody className="white-background" key={user.email}>
-                  <tr className="font-size-12">
-                    <td>{user.user.firstname}</td>
-                    <td>{user.user.lastname}</td>
-                    <td>{user.user.email}</td>
-                    <td>{user.role}</td>
-                    <td>{user.user.department}</td>
+            {this.state.guestList !== null && this.state.guestList.length > 0 ?
+              <table cellPadding={5} className="stretched round-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Lastname</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Department</th>
                   </tr>
-                </tbody>)
-              }
-            </table>
-            : (<div class="alert alert-danger">No invited guests</div>)}
+                </thead>
+                {this.state.guestList.map(user =>
+                  <tbody className="white-background" key={user.email}>
+                    <tr className="font-size-12">
+                      <td>{user.user.firstname}</td>
+                      <td>{user.user.lastname}</td>
+                      <td>{user.user.email}</td>
+                      <td>{user.role}</td>
+                      <td>{user.user.department}</td>
+                    </tr>
+                  </tbody>)
+                }
+              </table>
+              : (<div class="alert alert-danger">No invited guests</div>)}
           </div>
         </div>
 
         {this.state.addedSucess ? (<div class="card flat-card success"> Successfully added {lastGuest.user.firstname} {lastGuest.user.lastname}</div>)
           : (this.state.addedSucess === false && this.state.notFound)
-          ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>) 
-          : (this.state.addedSucess === false && this.state.conflict)
-          ? (<div class="card flat-card conflict">This email is already in use</div>)
-          : null}
+            ? (<div class="alert alert-danger">User does not exist<a href="/invitedGuests/create"> Click here to create</a></div>)
+            : (this.state.addedSucess === false && this.state.conflict)
+              ? (<div class="card flat-card conflict">This email is already in use</div>)
+              : null}
 
         <form>
           <div class="card">
