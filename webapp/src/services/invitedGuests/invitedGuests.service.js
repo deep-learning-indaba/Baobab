@@ -49,7 +49,7 @@ function addInvitedGuest(email_address, event_Id, role) {
       if (error.response.status === 404) {
         return { msg: "404" }
       }
-      else if(error.response.status === 409){
+      else if (error.response.status === 409) {
         return { msg: "409" }
       }
       else {
@@ -90,9 +90,13 @@ function createInvitedGuest(user, event_Id, role) {
       }
     })
     .catch(function (error) {
+      if (error.response.status === 409) {
+        return { msg: "409" }
+      } else {
         return {
           msg: "Failed",
           error: (error.response && error.response.data) ? error.response.data.message : error.message,
         }
+      }
     })
 }
