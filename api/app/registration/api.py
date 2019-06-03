@@ -45,14 +45,17 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         offer_id = args['offer_id']
 
         try:
-
             offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
-            LOGGER.error("Offer object {}".format(offer))
             if offer and offer.expiry_date >= datetime.now():
-                registration_form = db.session.query(RegistrationForm).filter(RegistrationForm.event_id == event_id).\
-                    first()
+                results = db.session.query(RegistrationForm).first().event_id
+
+                LOGGER.debug(results)
+                registration_form = db.session.query(RegistrationForm).filter(
+                    RegistrationForm.event_id == event_id).first()
+
                 if not registration_form:
                     return errors.REGISTRATION_FORM_NOT_FOUND
+
 
                 return registration_form
             else:

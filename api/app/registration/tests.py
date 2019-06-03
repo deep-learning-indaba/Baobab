@@ -94,17 +94,7 @@ class RegistrationFormTest(ApiTestCase):
 
         db.session.add(test_user2)
         db.session.add(Event('Cmt', 'Cmt Event', datetime.now(), datetime.now()))
-        #
-        # offer = Offer(
-        #     user_id=1,
-        #     event_id=1,
-        #     offer_date=datetime.now(),
-        #     expiry_date=datetime.now() + timedelta(days=15),
-        #     payment_required='yes',
-        #     travel_award='no award',
-        #     updated_at=datetime.now())
-        # db.session.add(offer)
-
+    
         event = Event(
             name="Tech Talk",
             description="tech talking",
@@ -116,6 +106,17 @@ class RegistrationFormTest(ApiTestCase):
 
         event_ = db.session.query(Event).filter(
             Event.name == "Tech Talk").first()
+
+        offer = Offer(
+             user_id=1,
+             event_id=4,
+             offer_date=datetime.now(),
+             expiry_date=datetime.now() + timedelta(days=15),
+             payment_required='yes',
+             travel_award='no award',
+             updated_at=datetime.now())
+        db.session.add(offer)
+
 
         form = RegistrationForm(
             event_id=event_.id
@@ -183,9 +184,10 @@ class RegistrationFormTest(ApiTestCase):
 
     def test_get_form(self):
         self.seed_static_data()
-        event_id = 1
+        event_id = 4
         offer_id = 1
         url = "/api/v1/registration-form?offer_id=%d&event_id=%d" % (offer_id, event_id)
+        LOGGER.debug(url)
         response = self.app.get(url, headers=self.headers)
         LOGGER.debug(
             "form: {}".format(json.loads(response.data)))
