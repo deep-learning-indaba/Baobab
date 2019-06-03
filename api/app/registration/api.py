@@ -8,7 +8,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
 from app.registration.models import Offer
-from app.offer.mixins import OfferMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
