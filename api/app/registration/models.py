@@ -18,12 +18,15 @@ class Offer(db.Model):
     rejected_reason = db.Column(db.String(50), nullable=True)
     updated_at = db.Column(db.DateTime, nullable=False)
 
+
 class RegistrationForm(db.Model):
 
     __tablename__ = "registration_form"
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
+
+    sections = db.relationship('RegistrationSection')
 
 
 class RegistrationSection(db.Model):
@@ -38,6 +41,8 @@ class RegistrationSection(db.Model):
     show_for_travel_award = db.Column(db.Boolean(), nullable=False)
     show_for_accommodation_award = db.Column(db.Boolean(), nullable=False)
     show_for_payment_required = db.Column(db.Boolean(), nullable=False)
+
+    questions = db.relationship('RegistrationQuestion')
 
 
 class RegistrationQuestion(db.Model):
