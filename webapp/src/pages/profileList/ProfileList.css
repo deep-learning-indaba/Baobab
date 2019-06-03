@@ -1,0 +1,70 @@
+.profile-row{
+    margin:auto;
+}
+
+.review-padding .review-padding {
+    padding-top: 3em;
+}
+
+.table-header {
+    text-align: -webkit-center;
+    font-size: 16px;
+    background-color: #343a40;
+    color: rgba(255,255,255,.5);
+    border-color: rgba(255,255,255,.5);
+}
+
+.list-number{
+    font-size: 25px;
+    font-weight: 600;
+}
+.list-fullname{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-affiliation{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-user-category{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-department{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-nationality{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-disability{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+.list-language{
+    font-size: larger;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.list-container {
+    text-align: -webkit-center;
+    padding: 5px;
+    margin: auto;
+}
+
+.error-message-empty-list{
+    height: auto;
+    border: 1px transparent;
+    text-align: center;
+    margin: auto;
+    padding-top: 30px;
+    width: 70%;
+}

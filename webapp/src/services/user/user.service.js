@@ -126,7 +126,7 @@ function logout() {
 
 function get() {
   return axios
-    .get(baseUrl + `/api/v1/user`, { headers: authHeader() })
+    .get(baseUrl + `/api/v1/user`, { headers: authHeader()})
     .then(function(response) {
       // handle success
       return response.data;

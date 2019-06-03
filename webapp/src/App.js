@@ -12,6 +12,7 @@ import Profile from "./pages/profile";
 import ReviewAssignment from "./pages/reviewAssignment";
 import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
+import ProfileList from "./pages/profileList";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import InvitedGuests from "./pages/invitedGuests";
@@ -171,13 +172,13 @@ class App extends Component {
                       >
                         Review Assignment
                       </NavLink>
-                      <NavLink
-                        to="/invitedGuests"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Invited Guests
-                      </NavLink>
+                    <NavLink
+                      to="/profile-list"
+                      className="dropdown-item"
+                      onClick={this.toggleMenu}
+                    >
+                      Profiles Lists
+                    </NavLink>
                     </div>
                   </li>
                 )}
@@ -279,6 +280,7 @@ class App extends Component {
                 />
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
+                <PrivateRoute exact path="/profile-list" component={ProfileList} />
               </Switch>
             </div>
           </div>
