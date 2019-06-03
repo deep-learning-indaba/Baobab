@@ -65,7 +65,7 @@ class OfferAPI(restful.Resources):
         user = db.session.query(AppUser).filter(
                 AppUser.email == email).first()
 
-        offerEntity = Offer bbb(user_id = user_id,
+        offerEntity = Offer(user_id = user_id,
             event_id = event_d,
             offer_date = offer_date,
             expiry_date = expiry_date,
