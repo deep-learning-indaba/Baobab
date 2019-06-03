@@ -37,6 +37,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         'sections': RegistrationSection
     }
 
+    @auth_required
     @marshal_with(registration_form_fields)
     def get(self):
         args = self.req_parser.parse_args()
@@ -128,10 +129,10 @@ class RegistrationSectionAPI(restful.Resource):
                 return registration_section
 
         except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
+            # LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            # LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -167,8 +168,8 @@ class RegistrationSectionAPI(restful.Resource):
         try:
             db.session.commit()
         except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration section with form id : {}".format(registration_form_id))
+            # LOGGER.error(
+            #     "Failed to add registration section with form id : {}".format(registration_form_id))
             return errors.ADD_REGISTRATION_SECTION_FAILED
 
         return registration_section_info(registration_section), 201
