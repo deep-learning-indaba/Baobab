@@ -179,14 +179,14 @@ class RegistrationFormTest(ApiTestCase):
         LOGGER.debug(
             "Reg-form: {}".format(data))
         assert response.status_code == 201
-        assert data['registration_form_id'] == 1
+        assert data['registration_form_id'] == 2
 
     def test_get_form(self):
         self.seed_static_data()
         event_id = 1
         offer_id = 1
-        response = self.app.get(
-            '/api/v1/registration-form?offer_id='+str(offer_id)+'&event_id='+str(event_id), headers=self.headers)
+        url = "/api/v1/registration-form?offer_id=%d&event_id=%d" % (offer_id, event_id)
+        response = self.app.get(url, headers=self.headers)
         LOGGER.debug(
             "form: {}".format(json.loads(response.data)))
         assert response.status_code == 201
