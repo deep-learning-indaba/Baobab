@@ -177,7 +177,7 @@ class App extends Component {
                       className="dropdown-item"
                       onClick={this.toggleMenu}
                     >
-                      Profiles Lists
+                      Applicant Profiles
                     </NavLink>
                     </div>
                   </li>

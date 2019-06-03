@@ -15,6 +15,9 @@ function getProfilesList(event_id){
          })
         .catch((error)=>{
             //handling an error, then assign an empty / null array
-            return [], { error:error.message }
+            return {List:[], 
+                     error: error.response && error.response.data
+                      ? error.response.data.message :
+                         error.message }
         });
 }

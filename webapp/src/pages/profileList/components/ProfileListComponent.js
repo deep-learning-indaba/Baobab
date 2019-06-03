@@ -16,21 +16,22 @@ class ProfileListComponent extends Component{
         }
 }
 
- isListEmpty(){
+ isListEmpty(list){
 
-    return this.state.List.length === 0;
+    return list === 0;
  }
 
  componentDidMount(){ 
-    this.setState({List:profileService.getProfilesList(DEFAULT_EVENT_ID)
-                         .then(results => {
-                                this.setState(
-                                    {
-                                        List : results.List,
-                                        isEmpty:this.isListEmpty(),
-                                        loading:false,
-                                        error: results.error});
-                         }),});
+    profileService.getProfilesList(DEFAULT_EVENT_ID)
+                    .then(results => {
+                        this.setState(
+                            {
+                                List: results.List,
+                                isEmpty: this.isListEmpty(results.List),
+                                loading: false,
+                                error: results.error
+                            });
+                    });                
  }
 
  render(){
