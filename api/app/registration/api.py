@@ -2,8 +2,8 @@ from datetime import datetime
 import traceback
 
 from flask import g, request
-import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
+import flask_restful as restful
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
@@ -44,7 +44,7 @@ def offer_info(offerEntity):
     }
 
 
-class OfferAPI(restful.Resources):
+class OfferAPI():
 
     put_offer_fields =  {
         'user_id': fields.user_id,
