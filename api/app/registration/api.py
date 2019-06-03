@@ -7,7 +7,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
-from app.registration.models import OfferEntity
+from app.registration.models import Offer
 from app.offer.mixins import OfferMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
@@ -65,7 +65,7 @@ class OfferAPI(restful.Resources):
         user = db.session.query(AppUser).filter(
                 AppUser.email == email).first()
 
-        offerEntity = OfferEntity(user_id = user_id,
+        offerEntity = Offer bbb(user_id = user_id,
             event_id = event_d,
             offer_date = offer_date,
             expiry_date = expiry_date,
