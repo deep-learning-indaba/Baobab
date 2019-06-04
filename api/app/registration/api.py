@@ -44,13 +44,13 @@ def offer_info(offerEntity):
     }
 
 
-class OfferAPI():
+class OfferAPI(restful.Resource):
 
     put_offer_fields =  {
-        'user_id': fields.user_id,
-        'accepted': fields.accepted,
-        'rejected': fields.rejected,
-        'rejected_reason': fields.rejected_reason
+        'user_id': fields.Integer,
+        'accepted': fields.Boolean,
+        'rejected': fields.Boolean,
+        'rejected_reason': fields.String
     }
 
     @auth_requied
