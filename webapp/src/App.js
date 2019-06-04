@@ -172,6 +172,13 @@ class App extends Component {
                       >
                         Review Assignment
                       </NavLink>
+                      <NavLink 
+                        to="/invitedGuests"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >    
+                       Invited Guests
+                      </NavLink>
                     <NavLink
                       to="/profile-list"
                       className="dropdown-item"
