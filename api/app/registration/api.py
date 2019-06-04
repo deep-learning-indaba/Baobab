@@ -1,25 +1,18 @@
 from datetime import datetime
 import traceback
-
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import fields, marshal_with
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
-from flask import g, request
-
 from sqlalchemy.exc import SQLAlchemyError
-
-from app.utils import errors, emailer, strings
+from app.utils import errors
 from app import LOGGER
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationForm
 from app.registration.models import Offer
-from app.registration.mixins import RegistrationFormMixin
+from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
 from app.events.models import Event
-
-from app.utils.auth import auth_required
-
-from app import db, bcrypt
+from app import db
 
 
 def registration_form_info(registration_form):
@@ -31,13 +24,26 @@ def registration_form_info(registration_form):
 
 class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
-    registration_form_fields = {
-        'eventId': fields.Integer,
-        'isOpen': fields.Boolean,
-        'sections': RegistrationSection
+    registration_question_fields = {
+        'description': fields.String,
+        'type': fields.String,
+        'is_required': fields.Boolean,
+        'order': fields.Integer
     }
 
-    @auth_required
+    registration_section_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'order': fields.Integer,
+        'registration_questions': fields.List(fields.Nested(registration_question_fields))
+    }
+
+    registration_form_fields = {
+        'event_id': fields.Integer,
+        'registration_sections': fields.List(fields.Nested(registration_section_fields))
+    }
+
     @marshal_with(registration_form_fields)
     def get(self):
         args = self.req_parser.parse_args()
@@ -47,17 +53,35 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         try:
             offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
             if offer and offer.expiry_date >= datetime.now():
-                results = db.session.query(RegistrationForm).first().event_id
-
-                LOGGER.debug(results)
                 registration_form = db.session.query(RegistrationForm).filter(
                     RegistrationForm.event_id == event_id).first()
 
                 if not registration_form:
                     return errors.REGISTRATION_FORM_NOT_FOUND
 
+                sections = db.session.query(RegistrationSection).filter(
+                    RegistrationSection.registration_form_id == registration_form.id).all()
 
-                return registration_form
+                if not sections:
+                    LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
+                    return errors.SECTION_NOT_FOUND
+
+                registration_form.registration_sections = sections
+
+                questions = db.session.query(RegistrationQuestion).filter(
+                    RegistrationQuestion.registration_form_id == registration_form.id).all()
+
+                if not questions:
+                    LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
+                    return errors.QUESTION_NOT_FOUND
+
+                for s in registration_form.registration_sections:
+                    s.registration_questions = []
+                    for q in questions:
+                        if q.section_id == s.id:
+                            s.registration_questions.append(q)
+
+                return registration_form, 201
             else:
                 return errors.OFFER_EXPIRED
 
@@ -68,7 +92,6 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -108,7 +131,7 @@ def registration_section_info(registration_section):
     }
 
 
-class RegistrationSectionAPI(restful.Resource):
+class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
     registration_section_fields = {
         'sectionId': fields.Integer,
         'name': fields.Boolean,
@@ -120,7 +143,7 @@ class RegistrationSectionAPI(restful.Resource):
     @marshal_with(registration_section_fields)
     def get(self):
         args = self.req_parser.parse_args()
-        section_id = args['event_id']
+        section_id = args['section_id']
 
         try:
 
@@ -129,16 +152,15 @@ class RegistrationSectionAPI(restful.Resource):
             if not registration_section:
                 return errors.REGISTRATION_SECTION_NOT_FOUND
             else:
-                return registration_section
+                return registration_section, 201
 
         except SQLAlchemyError as e:
-            # LOGGER.error("Database error encountered: {}".format(e))
+            LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except:
-            # LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
         registration_form_id = args['registration_form_id']
@@ -171,30 +193,30 @@ class RegistrationSectionAPI(restful.Resource):
         try:
             db.session.commit()
         except IntegrityError:
-            # LOGGER.error(
-            #     "Failed to add registration section with form id : {}".format(registration_form_id))
+            LOGGER.error(
+                "Failed to add registration section with form id : {}".format(registration_form_id))
             return errors.ADD_REGISTRATION_SECTION_FAILED
 
         return registration_section_info(registration_section), 201
 
 
-def registration_question_info(registration_quesiton):
+def registration_question_info(registration_question):
     return {
-        'registration_form_id': registration_quesiton.registration_form_id,
-        'section_id': registration_quesiton.section_id,
-        'type': registration_quesiton.type,
-        'description': registration_quesiton.description,
-        'headline': registration_quesiton.headline,
-        'placeholder': registration_quesiton.placeholder,
-        'validation_regex': registration_quesiton.validation_regex,
-        'validation_text': registration_quesiton.validation_text,
-        'order': registration_quesiton.order,
-        'options': registration_quesiton.options,
-        'is_required': registration_quesiton.is_required
+        'registration_form_id': registration_question.registration_form_id,
+        'section_id': registration_question.section_id,
+        'type': registration_question.type,
+        'description': registration_question.description,
+        'headline': registration_question.headline,
+        'placeholder': registration_question.placeholder,
+        'validation_regex': registration_question.validation_regex,
+        'validation_text': registration_question.validation_text,
+        'order': registration_question.order,
+        'options': registration_question.options,
+        'is_required': registration_question.is_required
     }
 
 
-class RegistrationQuestionAPI(restful.Resource):
+class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
     registration_section_fields = {
         'description': fields.String,
         'type': fields.String,
@@ -214,7 +236,7 @@ class RegistrationQuestionAPI(restful.Resource):
             if not question:
                 return errors.REGISTRATION_QUESTION_NOT_FOUND
             else:
-                return question
+                return question, 201
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -223,7 +245,6 @@ class RegistrationQuestionAPI(restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
         registration_form_id = args['registration_form_id']
@@ -241,7 +262,7 @@ class RegistrationQuestionAPI(restful.Resource):
         registration_form = db.session.query(RegistrationForm).filter(
             RegistrationForm.id == registration_form_id).first()
 
-        registration_section= db.session.query(RegistrationSection).filter(
+        registration_section = db.session.query(RegistrationSection).filter(
             RegistrationSection.id == section_id).first()
 
         if not registration_form:
