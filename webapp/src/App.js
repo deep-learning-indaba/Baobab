@@ -14,6 +14,8 @@ import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import InvitedGuests from "./pages/invitedGuests";
+import CreateInvitedGuests from "./pages/createInvitedGuest";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -143,30 +145,53 @@ class App extends Component {
                 )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Event Admin
-                  </a>
-                  <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <NavLink
-                      to="/eventStats"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
                     >
-                      Event Stats
-                    </NavLink>
-                    <NavLink
-                      to="/reviewAssignment"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
-                    >
-                      Review Assignment
-                    </NavLink>
-                  </div>
+                      Event Admin
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/eventStats"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Event Stats
+                      </NavLink>
+                      <NavLink
+                        to="/reviewAssignment"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Review Assignment
+                      </NavLink>
+                      <NavLink
+                        to="/invitedGuests"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Invited Guests
+                      </NavLink>
+                    </div>
                   </li>
                 )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
                       Reviews
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -174,8 +199,8 @@ class App extends Component {
                         to="/review"
                         className="dropdown-item"
                         onClick={this.toggleMenu}
-                        >
-                          Review
+                      >
+                        Review
                       </NavLink>
                       <NavLink
                         to="/reviewHistory"
@@ -241,6 +266,16 @@ class App extends Component {
                   exact
                   path="/reviewHistory"
                   component={ReviewHistory}
+                />
+                <PrivateRoute
+                  exact
+                  path="/invitedGuests"
+                  component={InvitedGuests}
+                />
+                <PrivateRoute
+                  exact
+                  path="/invitedGuests/create"
+                  component={CreateInvitedGuests}
                 />
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
