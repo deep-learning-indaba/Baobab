@@ -18,7 +18,7 @@ class ProfileListComponent extends Component{
 
  isListEmpty(list){
 
-    return list === 0;
+    return list.length === 0;
  }
 
  componentDidMount(){ 
