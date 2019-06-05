@@ -53,8 +53,8 @@ class OfferAPI(restful.Resource):
         'rejected_reason': fields.String
     }
 
-    @auth_requied
-    @marshall_with(offer_info)
+    #@auth_requied
+    #@marshall_with(offer_info)
     def post(self):
         args = self.req_parse.pase_args()
         user_id = g.current_user['id']
@@ -89,8 +89,8 @@ class OfferAPI(restful.Resource):
         return offer_info(offerEntity),201
 
 
-    @auth_required
-    @marshall_with(put_offer_fields)
+    #@auth_required
+    #@marshall_with(put_offer_fields)
     def put(self):
         #update existing offer
         req_parser = reqparse.RequestParser()
@@ -128,7 +128,7 @@ class OfferAPI(restful.Resource):
 
 class CreateOfferAPI(SignupMixin, restful.Resource):
 
-    @auth_required
+    #@auth_required
     def post(self):
         user_api = UserAPI.UserAPI()
         return user_api.post(True)
