@@ -85,8 +85,6 @@ class RegistrationTest(ApiTestCase):
         db.session.add(offer)
         db.session.commit()
 
-
-
         form = RegistrationForm(
             event_id=event.id
         )
@@ -189,6 +187,6 @@ class RegistrationTest(ApiTestCase):
         form = json.loads(response.data)
         assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
         assert form['registration_sections'][0]['name'] == 'Section 1'
-        assert response.status_code == 201
+
 
 
