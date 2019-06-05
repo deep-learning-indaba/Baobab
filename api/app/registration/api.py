@@ -12,7 +12,10 @@ from app.registration.models import RegistrationForm
 from app.registration.models import Offer
 from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
 from app.events.models import Event
+from app.users.models import AppUser
 from app import db
+from app.utils.auth import auth_required, admin_required, verify_token
+from flask import g, request
 
 
 def registration_form_info(registration_form):
@@ -44,6 +47,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         'registration_sections': fields.List(fields.Nested(registration_section_fields))
     }
 
+    @auth_required
     @marshal_with(registration_form_fields)
     def get(self):
         args = self.req_parser.parse_args()
@@ -52,7 +56,14 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
         try:
             offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+
+            user_id = verify_token(request.headers.get('Authorization'))['id']
+
+            if offer and (not offer.user_id == user_id):
+                return errors.FORBIDDEN
+
             if offer and offer.expiry_date >= datetime.now():
+
                 registration_form = db.session.query(RegistrationForm).filter(
                     RegistrationForm.event_id == event_id).first()
 
@@ -66,7 +77,20 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                     LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
                     return errors.SECTION_NOT_FOUND
 
-                registration_form.registration_sections = sections
+                included_sections = []
+
+                for section in sections:
+
+                    if (section.show_for_travel_award is None) and (section.show_for_accomodation_award is None) and  \
+                            (section.show_for_payment_required is None):
+                        included_sections.append(section)
+
+                    elif (section.show_for_travel_award and offer.travel_award) or \
+                            (section.show_for_accomodation_award and offer.accomodation_award) or \
+                            (section.show_for_payment_required and offer.payment_required):
+                        included_sections.append(section)
+
+                registration_form.registration_sections = included_sections
 
                 questions = db.session.query(RegistrationQuestion).filter(
                     RegistrationQuestion.registration_form_id == registration_form.id).all()
@@ -92,6 +116,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
+    @admin_required
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -140,6 +165,7 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
         'questions': RegistrationQuestion,
     }
 
+    @auth_required
     @marshal_with(registration_section_fields)
     def get(self):
         args = self.req_parser.parse_args()
@@ -161,6 +187,7 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
+    @admin_required
     def post(self):
         args = self.req_parser.parse_args()
         registration_form_id = args['registration_form_id']
@@ -223,7 +250,7 @@ class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
         'required': fields.Boolean,
         'order': fields.Integer,
     }
-
+    @auth_required
     @marshal_with(registration_section_fields)
     def get(self):
         args = self.req_parser.parse_args()
@@ -245,6 +272,7 @@ class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
+    @admin_required
     def post(self):
         args = self.req_parser.parse_args()
         registration_form_id = args['registration_form_id']
