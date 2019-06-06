@@ -6,21 +6,23 @@ from flask import g, request
 from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from sqlalchemy.exc import SQLAlchemyError
+from wtforms.validators import email
 
 from app.events.models import Event, EventRole
 from app.registration.models import Offer
 from app.registration.mixins import RegistrationMixin
-from app.users.models import AppUser
+from app.users.models import AppUser, expiration_date
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN
+from app.utils import errors
+from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN,FAILED_TO_ADD
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
 
-from app.utils.auth import auth_optional, auth_required
+from app.utils.auth import auth_optional, auth_required, admin_required
 from app.utils.emailer import send_mail
 
 
@@ -49,13 +51,10 @@ class OfferAPI(RegistrationMixin, restful.Resource):
     def put(self):
         #update existing offer
         args = self.req_parser.parse_args()
-        req_parser.add_argument('event_id', type=int, required=True)
-        req_parser.add_argument('accepted', type=bool, required=False)
-        req_parser.add_argument('rejected', type=bool, required=False)
-        req_parser.add_argument('rejected_reason', type=string, required=False)
-        args = req_parser.parse_args()
-
-        user_id = g.current_user['id']
+        event_id = args['event_id']
+        event_id = args['accepted']
+        event_id = args['rejected']
+        event_id = args['rejected_reason']
         try:
             event = db.session.query(Event).filter(Event.id == args['event_id']).first()
             db.session.commit()
@@ -65,42 +64,45 @@ class OfferAPI(RegistrationMixin, restful.Resource):
             return errors.RESPONSE_NOT_FOUND, 404
 
 
-    @auth_required
+    @admin_required
     @marshal_with(offer_info)
     def post(self):
         args = self.req_parser.parse_args()
         user_id = g.current_user['id']
+        email = g.current_user['email']
         event_id = args['event_id']
         offer_date = args['offer_date']
+        expiry_date = args['expiry_date']
+        payment_required = args['payment_required']
+        travel_award = args['travel_award']
+        accommodation_award = args['accommodation_award']
 
-        user = db.session.query(AppUser).filter(
-                AppUser.email == email).first()
+        user = db.session.query(AppUser).filter(AppUser.email == email).first()
 
-        offerEntity = Offer(user_id = user_id,
-            event_id = event_d,
+        offerEntity = Offer(
+            user_id = user_id,
+            event_id = event_id,
             offer_date = offer_date,
             expiry_date = expiry_date,
             payment_required = payment_required,
             travel_award = travel_award,
-            accommodation_award = accomodation_award
+            accommodation_award = accommodation_award
         )
 
-       # db.session.add(offerEntity)
+        db.session.add(offerEntity)
 
         try:
             db.session.add(offerEntity)
             db.session.commit()
             #send an email confirmation
             self.send_confirmation(user, offer_info(offerEntity))
+            return self.offer_info(offerEntity), 201
+        except:
+            LOGGER.error("Failed to add offer: {}",format(email))
+            return FAILED_TO_ADD ,404
 
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add offer: {}",format(email))
-            return ADD_INITED_IFO_FAILED
 
-        return offer_info(offerEntity),201
-
-    #   @marshal_with()
+   #@marshal_with(offer_info)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']

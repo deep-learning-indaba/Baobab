@@ -37,3 +37,5 @@ VERIFY_EMAIL_INVITED_GUEST = (
     {'message': 'Unable to verify email of invited guest.'}, 500)
 MISSING_PASSWORD = (
     {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
+FAILED_TO_ADD = (
+    {'message': 'Unable to add into database'}, 404)
