@@ -18,12 +18,18 @@ class Offer(db.Model):
     rejected_reason = db.Column(db.String(50), nullable=True)
     updated_at = db.Column(db.DateTime, nullable=False)
 
+
 class RegistrationForm(db.Model):
 
     __tablename__ = "registration_form"
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
+
+    event = db.relationship('Event', foreign_keys=[event_id])
+
+    def __init__(self, event_id):
+        self.event_id = event_id
 
 
 class RegistrationSection(db.Model):
@@ -38,6 +44,16 @@ class RegistrationSection(db.Model):
     show_for_travel_award = db.Column(db.Boolean(), nullable=False)
     show_for_accommodation_award = db.Column(db.Boolean(), nullable=False)
     show_for_payment_required = db.Column(db.Boolean(), nullable=False)
+
+    def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award
+                 , show_for_payment_required):
+        self.registration_form_id = registration_form_id
+        self.name = name
+        self.description = description
+        self.order = order
+        self.show_for_payment_required = show_for_payment_required
+        self.show_for_accommodation_award = show_for_accommodation_award
+        self.show_for_travel_award = show_for_travel_award
 
 
 class RegistrationQuestion(db.Model):
@@ -56,6 +72,19 @@ class RegistrationQuestion(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
+
+    def __init__(self, registration_form_id, section_id, headline, placeholder, order, type, validation_regex, validation_text=None, is_required = True, description = None, options = None):
+        self.registration_form_id = registration_form_id
+        self.section_id = section_id
+        self.headline = headline
+        self.placeholder = placeholder
+        self.order = order
+        self.type = type
+        self.description = description
+        self.options = options
+        self.is_required = is_required
+        self.validation_regex = validation_regex
+        self.validation_text = validation_text
 
 # Registration
 
