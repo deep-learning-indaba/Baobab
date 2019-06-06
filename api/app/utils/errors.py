@@ -37,5 +37,16 @@ VERIFY_EMAIL_INVITED_GUEST = (
     {'message': 'Unable to verify email of invited guest.'}, 500)
 MISSING_PASSWORD = (
     {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
-FAILED_TO_ADD = (
-    {'message': 'Unable to add into database'}, 404)
+OFFER_EXPIRED = ({'message': 'This offer has expired'}, 500)
+REGISTRATION_FORM_NOT_FOUND = (
+    {'message': 'No registration form found for the given event and offer'}, 404)
+REGISTRATION_SECTION_NOT_FOUND = (
+    {'message': 'No registration section found for the given id'}, 404)
+REGISTRATION_QUESTION_NOT_FOUND = (
+    {'message': 'No registration question found for the given id'}, 404)
+ADD_REGISTRATION_FORM_FAILED = (
+    {'message': 'Unable to add registration form.'}, 500)
+ADD_REGISTRATION_SECTION_FAILED = (
+    {'message': 'Unable to add registration section.'}, 500)
+ADD_REGISTRATION_QUESTION_FAILED = (
+    {'message': 'Unable to add registration question.'}, 500)
