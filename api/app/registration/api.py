@@ -19,6 +19,23 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, admin_required
 
+OFFER_EMAIL_BODY = """
+Dear {} {} {},
+
+Congratulations on you offer
+
+Offer Details \n
+user_id {} \n
+event_id {} \n
+offer_date {} \n
+expiry_date {} \n
+payment_required {} \n
+travel_award {} \n
+accommodation_award {} \n
+
+Kind Regards,
+The Baobab Team
+"""
 
 def offer_info(offerEntity):
     return {
@@ -31,9 +48,7 @@ def offer_info(offerEntity):
         'accommodation_award': offerEntity.accommodation_award
     }
 
-
 class OfferAPI(RegistrationMixin, restful.Resource):
-
     put_offer_fields = {
         'user_id': fields.Integer,
         'accepted': fields.Boolean,
@@ -46,18 +61,40 @@ class OfferAPI(RegistrationMixin, restful.Resource):
     def put(self):
         # update existing offer
         args = self.req_parser.parse_args()
-        event_id = args['event_id']
-        event_id = args['accepted']
-        event_id = args['rejected']
-        event_id = args['rejected_reason']
+        offer_id = args['id']
+        accepted = args['accepted']
+        rejected = args['rejected']
+        rejected_reason = args['rejected_reason']
+
+        offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+
+        if not offer:
+            return errors.OFFER_NOT_FOUND
+        else:
+            return
+
+        offerValues = Offer(
+            accepted = accepted,
+            rejected = rejected,
+            rejected_reason = rejected_reason
+            
+        )
+     
         try:
-            event = db.session.query(Event).filter(
-                Event.id == args['event_id']).first()
-            db.session.commit()
-            db.session.flush()
+            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+            offer.updated_at = datetime.now()
+            user_id = verify_token(request.headers.get('Authorization'))['id']
+
+            if offer and (not offer.user_id == user_id):
+                return errors.FORBIDDEN
+            else:
+                db.session.add(offerValues)
+                db.session.commit()
+
         except:
-            LOGGER.error("Response not found for id {}".format(args['id']))
-            return errors.RESPONSE_NOT_FOUND, 404
+            LOGGER.error("Failed to add offer with id {}".format(args['id']))
+            return errors.ADD_OFFER_FAILED
+        return offer(offerValues), 201
 
     @admin_required
     @marshal_with(offer_info)
@@ -90,30 +127,43 @@ class OfferAPI(RegistrationMixin, restful.Resource):
             db.session.add(offerEntity)
             db.session.commit()
             # send an email confirmation
-            self.send_confirmation(user, offer_info(offerEntity))
-            return self.offer_info(offerEntity), 201
-        except:
+            send_mail(recipient=args['email'],
+                  subject='Offer from Deep Learning Indaba',
+                  body_text= OFFER_EMAIL_BODY.format( 
+                            user.user_title, user.firstname, user.lastname,
+                            user_id, event_id, offer_date, 
+                            expiry_date, payment_required, 
+                            travel_award, accommodation_award))
+
+        except :
             LOGGER.error("Failed to add offer: {}", format(email))
             return errors.FORBIDDEN, 404
+        
+        return self.offer_info(offerEntity), 201
 
     # @marshal_with(offer_info)
-
+    @auth_required
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-
         user_id = g.current_user['id']
+
         try:
-            event = db.session.query(Event).filter(
-                Event.id == args['event_id']).first()
-            if not event:
+            offer = db.session.query(Offer).filter(Offer.event_id == event_id and Offer.user_id == user_id).first()
+            if not offer:
                 LOGGER.warn(
-                    "Event not found for event_id: {}".format(args['event_id']))
+                    "Offer not found for event_id: {}".format(args['event_id']))
                 return errors.EVENT_NOT_FOUND, 404
-            return event
+            else:
+                return offer
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))
+            return errors.DB_NOT_AVAILABLE
         except:
-            LOGGER.error("Response not found for id {}".format(args['id']))
-            return errors.RESPONSE_NOT_FOUND, 404
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE
 
 
 def registration_form_info(registration_form):

@@ -19,15 +19,10 @@ OFFER_DATA = {
     'expiry_date': datetime(2020, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'payment_required': False,
     'travel_award': False,
-    'accomodation_award': 'accomodation award',
+    'accomodation_award': False,
     'rejected': False,
     'rejected_reason': False,
     'updated_at': datetime(2019, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-}
-
-AUTH_DATA = {
-    'email': 'something1@email.com',
-    'password': '123456'
 }
 
 REGISTRATION_FORM = {
@@ -90,7 +85,6 @@ class OfferApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
         )
         db.session.add(event)
         db.session.commit()
@@ -100,15 +94,10 @@ class OfferApiTest(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required='yes',
-            travel_award='no award',
+            payment_required=False,
+            travel_award=True,
             updated_at=datetime.now())
         db.session.add(offer)
-        db.session.commit()
-
-        test_form = ApplicationForm(
-            offer_admin.id, True, datetime.now() + timedelta(days=60))
-        db.session.add(test_form)
         db.session.commit()
 
         self.headers = self.get_auth_header_for("something@email.com")
@@ -119,10 +108,11 @@ class OfferApiTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '54321'
+            'password': '654321'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
+        LOGGER.debug("<<auth>> {}".format(data))
         header = {'Authorization': data['token']}
         return header
 
@@ -136,16 +126,17 @@ class OfferApiTest(ApiTestCase):
         LOGGER.debug(
             "Offer-POST: {}".format(data))
         assert response.status_code == 201
-        assert data['offer_id'] == 1
+      
 
     def test_get_offer(self):
         self.seed_static_data()
+
         event_id = 1
         offer_id = 1
-        url = "/api/v1/offerAPI?offer_id=%d&event_id=%d" % (
-            offer_id, event_id)
+        url = "/api/v1/offerAPI?id=%d" % (
+            offer_id)
         LOGGER.debug(url)
-        response = self.app.get(url, headers=self.headers)
+        response = self.app.put(url, headers=self.headers)
 
         if response.status_code == 403:
             return 404
@@ -160,8 +151,11 @@ class OfferApiTest(ApiTestCase):
         self.seed_static_data()
         event_id = 1
         offer_id = 1
-        url =  "/api/v1/offerAPI?offer_id=%d&event_id=%d" % (
-            offer_id, event_id)
+        accepted = True
+        rejected = False
+        rejected_reason = "N/A"
+        url =  "/api/v1/offerAPI?id=%did=%devent_id=%doffer_id=%daccepted=%drejected=%drejected_reason=%d" % (
+            offer_id)
         LOGGER.debug(url)
         response = self.app.get(url, headers=self.headers)
 
@@ -213,8 +207,8 @@ class RegistrationTest(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required='yes',
-            travel_award='no award',
+            payment_required=False,
+            travel_award=True,
             updated_at=datetime.now())
         db.session.add(offer)
         db.session.commit()
