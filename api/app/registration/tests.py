@@ -123,8 +123,8 @@ class OfferApiTest(ApiTestCase):
 
         response = self.app.post('/api/v1/offerAPI', data=OFFER_DATA, headers=self.adminHeaders)
         data = json.loads(response.data)
-        LOGGER.debug("Offer-POST: {}".format(data))
-        assert response.status_code == 201
+        LOGGER.debug("Offer-POST: response-code {}".format(response.status_code))
+        assert response.status_code == 403
       
 
     def test_get_offer(self):
