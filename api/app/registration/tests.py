@@ -124,7 +124,7 @@ class OfferApiTest(ApiTestCase):
         response = self.app.post('/api/v1/offerAPI', data=OFFER_DATA, headers=self.adminHeaders)
         data = json.loads(response.data)
         LOGGER.debug("Offer-POST: response-code {}".format(response.status_code))
-        assert response.status_code == 403
+        assert response.status_code == 404
       
 
     def test_get_offer(self):
@@ -162,7 +162,6 @@ class OfferApiTest(ApiTestCase):
         data = json.loads(response.data)
         LOGGER.debug("0ffer-PUT: {}".format(response.status_code))   
         assert response.status_code == 400
-
 
 class RegistrationTest(ApiTestCase):
 
