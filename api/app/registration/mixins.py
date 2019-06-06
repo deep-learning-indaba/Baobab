@@ -5,6 +5,7 @@ class RegistrationMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('id', type=int, required=True)
     req_parser.add_argument('event_id', type=int, required=False)
+    req_parser.add_argument('user_id', type=int, required=False)
     req_parser.add_argument('offer_date', type=str, required=False)
     req_parser.add_argument('expiry_date', type=str, required=False)
     req_parser.add_argument('accepted', type=bool, required=False)
