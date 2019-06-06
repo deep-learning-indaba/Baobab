@@ -12,17 +12,17 @@ from app.applicationModel.models import ApplicationForm
 
 
 OFFER_DATA = {
-    'id': '1',
-    'user_id': '1',
-    'event_id': '1',
-    'offer_date': datetime(2019, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-    'expiry_date': datetime(2020, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+    'id': 1,
+    'user_id': 1,
+    'event_id': 1,
+    'offer_date': datetime(1984, 12, 12),
+    'expiry_date': datetime(1984, 12, 12),
     'payment_required': False,
     'travel_award': False,
     'accomodation_award': False,
     'rejected': False,
-    'rejected_reason': False,
-    'updated_at': datetime(2019, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    'rejected_reason': 'N/A',
+    'updated_at': datetime(1984, 12, 12)
 }
 
 REGISTRATION_FORM = {
@@ -112,7 +112,7 @@ class OfferApiTest(ApiTestCase):
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
-        #LOGGER.debug("<<auth>> {}".format(data))
+        LOGGER.debug("<<auth>> {}".format(data))
         header = {'Authorization': data['token']}
         return header
 
@@ -121,10 +121,9 @@ class OfferApiTest(ApiTestCase):
     def test_create_offer(self):
         self.seed_static_data()
 
-        response = self.app.post('/api/v1/offerAPI', data=OFFER_DATA,  headers=self.adminHeaders)
+        response = self.app.post('/api/v1/offerAPI', data=OFFER_DATA, headers=self.adminHeaders)
         data = json.loads(response.data)
-        LOGGER.debug(
-            "Offer-POST: {}".format(data))
+        LOGGER.debug("Offer-POST: {}".format(data))
         assert response.status_code == 201
       
 
@@ -141,11 +140,9 @@ class OfferApiTest(ApiTestCase):
         if response.status_code == 403:
             return 404
 
-        LOGGER.debug(
-            "0ffer-GET: {}".format(json.loads(response.data)))
-
         data = json.loads(response.data)
-        #assert response.status_code == 201
+        LOGGER.debug("0ffer-GET: {}".format(response.status_code))      
+        assert response.status_code == 200
 
     def test_update_offer(self):
         self.seed_static_data()
@@ -162,11 +159,9 @@ class OfferApiTest(ApiTestCase):
         if response.status_code == 403:
             return 404
 
-        LOGGER.debug(
-            "0ffer-PUT: {}".format(json.loads(response.data)))
-
         data = json.loads(response.data)
-        #assert response.status_code == 201
+        LOGGER.debug("0ffer-PUT: {}".format(response.status_code))   
+        assert response.status_code == 400
 
 
 class RegistrationTest(ApiTestCase):

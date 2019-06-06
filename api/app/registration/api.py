@@ -100,7 +100,7 @@ class OfferAPI(RegistrationMixin, restful.Resource):
     @marshal_with(offer_info)
     def post(self):
         args = self.req_parser.parse_args()
-        user_id = g.current_user['id']
+        user_id = args.current_user['id']
         email = g.current_user['email']
         event_id = args['event_id']
         offer_date = args['offer_date']
