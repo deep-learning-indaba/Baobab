@@ -127,23 +127,23 @@ class OfferAPI(RegistrationMixin, restful.Resource):
             db.session.add(offerEntity)
             db.session.commit()
             # send an email confirmation
-            send_mail(recipient=user.email,
-                  subject='Offer from Deep Learning Indaba',
-                  body_text= OFFER_EMAIL_BODY.format( 
-                            user.user_title, user.firstname, user.lastname,
-                            user_id, event_id, offer_date, 
-                            expiry_date, payment_required, 
-                            travel_award, accommodation_award))
+            if is user.email:
+                send_mail(recipient=user.email,
+                    subject='Offer from Deep Learning Indaba',
+                    body_text= OFFER_EMAIL_BODY.format( 
+                                user.user_title, user.firstname, user.lastname,
+                                user_id, event_id, offer_date, 
+                                expiry_date, payment_required, 
+                                travel_award, accommodation_award))
 
-            LOGGER.debug("Sent verification email to {}".format(user.email))
-        else:
-            user.verified_email = True
-            try:
-                db.session.commit()
-            except IntegrityError:
-                LOGGER.error("Unable to verify email: {}".format(email))
-                return VERIFY_EMAIL_OFFER
-
+                LOGGER.debug("Sent verification email to {}".format(user.email))
+            else:
+                user.verified_email = True
+                try:
+                    db.session.commit()
+                except IntegrityError:
+                    LOGGER.error("Unable to verify email: {}".format(email))
+                    return VERIFY_EMAIL_OFFER
 
         except :
             LOGGER.error("Failed to add offer")
