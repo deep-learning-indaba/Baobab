@@ -127,7 +127,7 @@ class OfferAPI(RegistrationMixin, restful.Resource):
             db.session.add(offerEntity)
             db.session.commit()
             # send an email confirmation
-            if is user.email:
+            if user.email:
                 send_mail(recipient=user.email,
                     subject='Offer from Deep Learning Indaba',
                     body_text= OFFER_EMAIL_BODY.format( 
