@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError

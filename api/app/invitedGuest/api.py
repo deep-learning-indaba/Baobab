@@ -28,6 +28,7 @@ def invitedGuest_info(invitedGuest):
         'role': invitedGuest.role
     }
 
+
 class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
     @auth_required
@@ -66,12 +67,14 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
         return invitedGuest_info(invitedGuest), 201
 
+
 class CreateUser(SignupMixin, restful.Resource):
 
     @auth_required
     def post(self):
         user_api = UserAPI.UserAPI()
         return user_api.post(True)
+
 
 class InvitedGuestView():
     def __init__(self, invitedGuest):
@@ -92,6 +95,7 @@ class InvitedGuestView():
         self.user_title = invitedGuest.AppUser.user_title
         self.user_dateOfBirth = invitedGuest.AppUser.user_dateOfBirth
         self.user_primaryLanguage = invitedGuest.AppUser.user_primaryLanguage
+
 
 class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
 
