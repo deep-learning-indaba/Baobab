@@ -96,7 +96,6 @@ class OfferAPI(RegistrationMixin, restful.Resource):
         return offer(offerValues), 201
 
     @admin_required
-    #@marshal_with(offer_info)
     def post(self):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
@@ -125,7 +124,6 @@ class OfferAPI(RegistrationMixin, restful.Resource):
         try:
             db.session.add(offerEntity)
             db.session.commit()
-            # send an email confirmation
             if user.email:
                 send_mail(recipient=user.email,
                     subject='Offer from Deep Learning Indaba',
@@ -135,7 +133,7 @@ class OfferAPI(RegistrationMixin, restful.Resource):
                                 expiry_date, payment_required, 
                                 travel_award, accommodation_award))
 
-                LOGGER.debug("Sent verification email to {}".format(user.email))
+                LOGGER.debug("Sent an offer email to {}".format(user.email))
             else:
                 user.verified_email = True
                 try:
@@ -150,7 +148,6 @@ class OfferAPI(RegistrationMixin, restful.Resource):
         
         return self.offer_info(offerEntity), 201
 
-    # @marshal_with(offer_info)
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
