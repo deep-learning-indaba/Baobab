@@ -59,8 +59,8 @@ rest_api.add_resource(invitedGuest_api.CreateUser,
                       '/api/v1/invitedGuest/create')
 rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
-rest_api.add_resource(registration_api.RegistrationFormAPI,
-                      '/api/v1/registration-form')
+
+rest_api.add_resource(registration_api.RegistrationApi, '/api/v1/registration')
 rest_api.add_resource(registration_api.RegistrationSectionAPI,
                       '/api/v1/registration-section')
 rest_api.add_resource(registration_api.RegistrationQuestionAPI,

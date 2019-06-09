@@ -1,324 +1,247 @@
-from datetime import datetime
+from datetime import date
 import traceback
-from flask_restful import fields, marshal_with
+import json
+
+from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.exc import SQLAlchemyError
-from app.utils import errors
-from app import LOGGER
-from app.registration.models import RegistrationSection
-from app.registration.models import RegistrationQuestion
-from app.registration.models import RegistrationForm
-from app.registration.models import Offer
-from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
-from app.events.models import Event
-from app.users.models import AppUser
-from app import db
-from app.utils.auth import auth_required, admin_required, verify_token
 from flask import g, request
 
+from sqlalchemy.exc import SQLAlchemyError
 
-def registration_form_info(registration_form):
-    return {
-        'registration_form_id': registration_form.id,
-        'event_id': registration_form.event_id
+from app.registration.mixins import RegistrationMixin
+from app.responses.models import Response, Answer
+from app.users.models import AppUser
+from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion, RegistrationSection
+from app.utils.auth import auth_required
+from app.utils import errors, emailer, strings
+from app import LOGGER
+from app.users.repository import UserRepository as user_repository
+
+
+from app import db, bcrypt
+
+def _get_answer_value(answer, question):
+    if question.type == 'multi-choice' and question.options is not None:
+        value = [o for o in question.options if o['value'] == answer.value]
+        if not value:
+            return answer.value
+        return value[0]['label']
+
+    if question.type == 'file' and answer.value:
+        return 'Uploaded File'
+
+    return answer.value
+
+
+class RegistrationApi(RegistrationMixin, restful.Resource):
+    answer_fields = {
+        'id' : fields.Integer,
+        'registration_id': fields.Integer,
+        'registration_question_id': fields.Integer,
+        'value': fields.String
     }
 
-
-class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
-
-    registration_question_fields = {
-        'description': fields.String,
-        'type': fields.String,
-        'is_required': fields.Boolean,
-        'order': fields.Integer
-    }
-
-    registration_section_fields = {
+    registration_fields = {
         'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'order': fields.Integer,
-        'registration_questions': fields.List(fields.Nested(registration_question_fields))
+        'offer_id': fields.Integer,
+        'registration_form_id': fields.Integer,
+        'confirmed': fields.Boolean,
+        'created_at': fields.DateTime,
+        'confirmation_email_sent_at': fields.DateTime
+
     }
 
-    registration_form_fields = {
-        'event_id': fields.Integer,
-        'registration_sections': fields.List(fields.Nested(registration_section_fields))
+    response_fields = {
+        'registration_id': fields.Integer,
+        'offer_id': fields.Integer,
+        'registration_form_id': fields.Integer,
+        'answers': fields.List(fields.Nested(answer_fields))
     }
 
     @auth_required
-    @marshal_with(registration_form_fields)
     def get(self):
+
+        try:
+            user_id = g.current_user['id']
+
+            dbOffer = db.session.query(Offer).filter(Offer.user_id == user_id).first()
+
+            if dbOffer is None:
+                return 'No offer', 404
+
+            registration = db.session.query(Registration).filter(Registration.offer_id == dbOffer.id).first()
+            if registration is None:
+                return 'no Registration', 404
+
+            registrationForm = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.registration_form_id).first()
+
+            if registrationForm is None :
+                return 'no registration form found', 404
+            dbAnswers = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_id == registration.id).all()
+
+            response = {
+                'registration_id':registration.id,
+                'offer_id': dbOffer.id,
+                'registration_form_id': registrationForm.id,
+                'answers':dbAnswers
+            }
+
+            return json.dumps(response, indent=4)
+
+
+        except Exception as e:
+            return e
+            LOGGER.error("Database error encountered: {}".format(e))
+            return errors.DB_NOT_AVAILABLE
+        except:
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE
+
+    # @auth_required
+    @marshal_with(registration_fields)
+    def post(self):
+        # Save a new response for the logged-in user.
+        req_parser = reqparse.RequestParser()
         args = self.req_parser.parse_args()
-        event_id = args['event_id']
+
         offer_id = args['offer_id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+            dbOffer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
-            user_id = verify_token(request.headers.get('Authorization'))['id']
+            if dbOffer is None:
+                return 'offer not found', 404
 
-            if offer and (not offer.user_id == user_id):
-                return errors.FORBIDDEN
+            current_user = user_repository.get_by_id(dbOffer.user_id)
+            if current_user is None:
+                return 'user not found', 404
 
-            if offer and offer.expiry_date >= datetime.now():
+            registrationForm = db.session.query(RegistrationForm).filter(
+                RegistrationForm.id == args['registration_form_id'])
 
-                registration_form = db.session.query(RegistrationForm).filter(
-                    RegistrationForm.event_id == event_id).first()
+            if not registrationForm.first():
+                dbRegistrationForm = RegistrationForm(
+                    id=args['registration_form_id'],
+                    event_id=1
+                )
+                db.session.add(dbRegistrationForm)
+                db.session.commit()
 
-                if not registration_form:
-                    return errors.REGISTRATION_FORM_NOT_FOUND
+            registration = Registration(
+                offer_id=args['offer_id'],
+                registration_form_id=args['registration_form_id'],
+                confirmed=False,
+                confirmation_email_sent_at=date.today()
+            )
+            db.session.add(registration)
+            db.session.commit()
 
-                sections = db.session.query(RegistrationSection).filter(
-                    RegistrationSection.registration_form_id == registration_form.id).all()
+            for answer_args in args['answers']:
+                if db.session.query(RegistrationQuestion).filter(
+                        RegistrationQuestion.id == answer_args['registration_question_id']).first():
 
-                if not sections:
-                    LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
-                    return errors.SECTION_NOT_FOUND
+                    answer = RegistrationAnswer(registration_id=registration.id,
+                                                registration_question_id=answer_args['registration_question_id'],
+                                                value=answer_args['value'])
 
-                included_sections = []
+                    db.session.add(answer)
+            db.session.commit()
 
-                for section in sections:
+            registrationAnswers = db.session.query(RegistrationAnswer).filter(
+                RegistrationAnswer.registration_id == registration.id).all()
+            registrationQuestions = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-                    if (section.show_for_travel_award is None) and (section.show_for_accomodation_award is None) and  \
-                            (section.show_for_payment_required is None):
-                        included_sections.append(section)
-
-                    elif (section.show_for_travel_award and offer.travel_award) or \
-                            (section.show_for_accomodation_award and offer.accomodation_award) or \
-                            (section.show_for_payment_required and offer.payment_required):
-                        included_sections.append(section)
-
-                registration_form.registration_sections = included_sections
-
-                questions = db.session.query(RegistrationQuestion).filter(
-                    RegistrationQuestion.registration_form_id == registration_form.id).all()
-
-                if not questions:
-                    LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
-                    return errors.QUESTION_NOT_FOUND
-
-                for s in registration_form.registration_sections:
-                    s.registration_questions = []
-                    for q in questions:
-                        if q.section_id == s.id:
-                            s.registration_questions.append(q)
-
-                return registration_form, 201
-            else:
-                return errors.OFFER_EXPIRED
+            self.send_confirmation(current_user, registrationQuestions, registrationAnswers, registration.confirmed)
 
         except SQLAlchemyError as e:
+            return e
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
-        except:
+        except Exception as e:
+            return e
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+        finally:
+            return registration, 201  # 201 is 'CREATED' status code
 
-    @admin_required
-    def post(self):
+    # @auth_required
+    # @marshal_with(response_fields)
+    def put(self):
+        # Update an existing response for the logged-in user.
+        req_parser = reqparse.RequestParser()
         args = self.req_parser.parse_args()
-        event_id = args['event_id']
+        # user_id = g.current_user['id']
 
-        event = db.session.query(Event).filter(
-            Event.id == event_id).first()
+        registration = db.session.query(Registration).filter(Registration.id == args['registration_id']).first()
+        if registration is None:
+            return 'Registration not found', 404
 
-        if not event:
-            return errors.EVENT_NOT_FOUND
+        dbOffer = db.session.query(Offer).filter(Offer.id == registration.offer_id).first()
 
-        registration_form = RegistrationForm(
+        if dbOffer is None:
+            return "Offer not found", 404
 
-            event_id=event_id
-        )
-
-        db.session.add(registration_form)
+        # if dbOffer.user_id != user_id:
+        #     return "Forbidden", 401
 
         try:
+
+            registration.registration_form_id = args['registration_form_id']
             db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration form for event : {}".format(event_id))
-            return errors.ADD_REGISTRATION_FORM_FAILED
 
-        return registration_form_info(registration_form), 201
+            for answer_args in args['answers']:
+                answer = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_question_id
+                                                                     == answer_args['registration_question_id']).first()
+                if answer is not None:
+                    answer.value = answer_args['value']
 
+                elif db.session.query(RegistrationQuestion).filter(
+                        RegistrationQuestion.id == answer_args['registration_question_id']).first():
 
-def registration_section_info(registration_section):
-    return {
-        'registration_form_id': registration_section.registration_form_id,
-        'name': registration_section.name,
-        'description': registration_section.description,
-        'order': registration_section.order,
-        'show_for_accommodation_award': registration_section.show_for_accommodation_award,
-        'show_for_travel_award': registration_section.show_for_travel_award,
-        'show_for_payment_required': registration_section.show_for_payment_required
-    }
+                    answer = RegistrationAnswer(registration_id=registration.id,
+                                                registration_question_id=answer_args['registration_question_id'],
+                                                value=answer_args['value'])
 
-
-class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
-    registration_section_fields = {
-        'sectionId': fields.Integer,
-        'name': fields.Boolean,
-        'description': fields.String,
-        'order': fields.String,
-        'questions': RegistrationQuestion,
-    }
-
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        section_id = args['section_id']
-
-        try:
-
-            registration_section = db.session.query(RegistrationSection).filter(RegistrationSection.id == section_id).first()
-
-            if not registration_section:
-                return errors.REGISTRATION_SECTION_NOT_FOUND
-            else:
-                return registration_section, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
+                    db.session.add(answer)
+            db.session.commit()
         except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+            return 'Could not access DB', 400
+        finally:
+            return 200
 
-    @admin_required
-    def post(self):
-        args = self.req_parser.parse_args()
-        registration_form_id = args['registration_form_id']
-        name = args['name']
-        description = args['description']
-        order = args['order']
-        show_for_travel_award = args['show_for_travel_award']
-        show_for_accommodation_award = args['show_for_accommodation_award']
-        show_for_payment_required = args['show_for_payment_required']
 
-        registration_form = db.session.query(RegistrationForm).filter(
-            RegistrationForm.id == registration_form_id).first()
-
-        if not registration_form:
-            return errors.REGISTRATION_FORM_NOT_FOUND
-
-        registration_section = RegistrationSection(
-
-            registration_form_id=registration_form_id,
-            name=name,
-            description=description,
-            order=order,
-            show_for_accommodation_award=show_for_accommodation_award,
-            show_for_travel_award=show_for_travel_award,
-            show_for_payment_required=show_for_payment_required
-        )
-
-        db.session.add(registration_section)
-
+    def send_confirmation(self, user, questions, answers, confirmed):
+        if answers is None:
+            LOGGER.warn(
+                'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
+        if questions is None:
+            LOGGER.warn(
+                'Found no questions associated with application form with id {form_id}'.format(form_id=user.id))
         try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration section with form id : {}".format(registration_form_id))
-            return errors.ADD_REGISTRATION_SECTION_FAILED
+            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
+            summary = ""
+            for answer in answers:
+                for question in questions:
+                    if answer.registration_question_id == question.id:
+                        summary += "Question heading :" + question.headline + "\nQuestion Description :" + \
+                           question.description + "\nAnswer :" + _get_answer_value(
+                                answer, question) + "\n"
 
-        return registration_section_info(registration_section), 201
+            subject = 'Registration'
+            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
+            if len(summary) <= 0:
+                summary = '\nNo valid questions were answered'
+            body_text = greeting + self.get_confirmed_message(confirmed) + '\n\n' + summary
 
+            emailer.send_mail(user.email, subject, body_text=body_text)
 
-def registration_question_info(registration_question):
-    return {
-        'registration_form_id': registration_question.registration_form_id,
-        'section_id': registration_question.section_id,
-        'type': registration_question.type,
-        'description': registration_question.description,
-        'headline': registration_question.headline,
-        'placeholder': registration_question.placeholder,
-        'validation_regex': registration_question.validation_regex,
-        'validation_text': registration_question.validation_text,
-        'order': registration_question.order,
-        'options': registration_question.options,
-        'is_required': registration_question.is_required
-    }
+        except Exception as e:
+            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
+                response_id=user.id))
 
-
-class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
-    registration_section_fields = {
-        'description': fields.String,
-        'type': fields.String,
-        'required': fields.Boolean,
-        'order': fields.Integer,
-    }
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        question_id = args['question_id']
-
-        try:
-
-            question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.id == question_id).first()
-
-            if not question:
-                return errors.REGISTRATION_QUESTION_NOT_FOUND
-            else:
-                return question, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
-
-    @admin_required
-    def post(self):
-        args = self.req_parser.parse_args()
-        registration_form_id = args['registration_form_id']
-        section_id = args['section_id']
-        type = args['type']
-        description = args['description']
-        headline = args['headline']
-        placeholder = args['placeholder']
-        validation_regex = args['validation_regex']
-        validation_text = args['validation_text']
-        order = args['order']
-        options = args['options']
-        is_required = args['is_required']
-
-        registration_form = db.session.query(RegistrationForm).filter(
-            RegistrationForm.id == registration_form_id).first()
-
-        registration_section = db.session.query(RegistrationSection).filter(
-            RegistrationSection.id == section_id).first()
-
-        if not registration_form:
-            return errors.REGISTRATION_FORM_NOT_FOUND
-        elif not registration_section:
-            return errors.SECTION_NOT_FOUND
-
-        registration_question = RegistrationQuestion(
-            registration_form_id=registration_form_id,
-            section_id=section_id,
-            type=type,
-            description=description,
-            headline=headline,
-            placeholder=placeholder,
-            validation_regex=validation_regex,
-            validation_text=validation_text,
-            order=order,
-            options=options,
-            is_required=is_required
-        )
-
-        db.session.add(registration_question)
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration question with form id : {}".format(section_id))
-            return errors.ADD_REGISTRATION_QUESTION_FAILED
-
-        return registration_question_info(registration_question), 201
+    def get_confirmed_message(self, confirmed):
+        if not confirmed:
+            return '\nregistration is pending confirmation on receipt of payment.\n\n'
+        else:
+            return ''
