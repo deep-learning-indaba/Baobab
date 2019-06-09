@@ -9,9 +9,7 @@ from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.registration.mixins import RegistrationResponseMixin
-from app.responses.models import Response, Answer
-from app.users.models import AppUser
-from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion, RegistrationSection
+from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app import LOGGER
@@ -164,13 +162,13 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         finally:
             return registration, 201  # 201 is 'CREATED' status code
 
-    # @auth_required
-    # @marshal_with(response_fields)
+    @auth_required
+    @marshal_with(response_fields)
     def put(self):
         # Update an existing response for the logged-in user.
         req_parser = reqparse.RequestParser()
         args = self.req_parser.parse_args()
-        # user_id = g.current_user['id']
+        user_id = g.current_user['id']
 
         registration = db.session.query(Registration).filter(Registration.id == args['registration_id']).first()
         if registration is None:
@@ -181,8 +179,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         if dbOffer is None:
             return "Offer not found", 404
 
-        # if dbOffer.user_id != user_id:
-        #     return "Forbidden", 401
+        if dbOffer.user_id != user_id:
+            return "Forbidden", 401
 
         try:
 
