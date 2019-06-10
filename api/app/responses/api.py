@@ -99,10 +99,11 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @auth_required
+
     @marshal_with(response_fields)
     def post(self):
         # Save a new response for the logged-in user.
+        LOGGER.debug("<<<<<< Post: >>>>>>>>>>>>>")
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('is_submitted', type=bool, required=True)
         req_parser.add_argument('application_form_id', type=int, required=True)

@@ -1,13 +1,11 @@
 from datetime import date
 import traceback
 import json
-
 from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from flask import g, request
-
 from sqlalchemy.exc import SQLAlchemyError
-
+from app.utils.auth import verify_token
 from app.registrationResponse.mixins import RegistrationResponseMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.utils.auth import auth_required
@@ -17,6 +15,7 @@ from app.users.repository import UserRepository as user_repository
 
 
 from app import db, bcrypt
+
 
 def _get_answer_value(answer, question):
     if question.type == 'multi-choice' and question.options is not None:
@@ -56,43 +55,44 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         'answers': fields.List(fields.Nested(answer_fields))
     }
 
+    @marshal_with(response_fields)
     @auth_required
     def get(self):
 
-        try:
-            user_id = g.current_user['id']
+        # try:
+        user_id = verify_token(request.headers.get('Authorization'))['id']
 
-            dbOffer = db.session.query(Offer).filter(Offer.user_id == user_id).first()
+        db_offer = db.session.query(Offer).filter(Offer.user_id == user_id).first()
 
-            if dbOffer is None:
-                return 'No offer', 404
-            registration = db.session.query(Registration).filter(Registration.offer_id == dbOffer.id).first()
-            if registration is None:
-                return 'no Registration', 404
+        if db_offer is None:
+            return 'No offer', 404
+        registration = db.session.query(Registration).filter(Registration.offer_id == db_offer.id).first()
+        if registration is None:
+            return 'no Registration', 404
 
-            registrationForm = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.registration_form_id).first()
+        registration_form = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.
+                                                                      registration_form_id).first()
 
-            if registrationForm is None :
-                return 'no registration form found', 404
-            dbAnswers = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_id == registration.id).all()
+        if registration_form is None :
+            return 'no registration form found', 404
+        db_answers = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_id ==
+                                                                 registration.id).all()
 
-            response = {
-                'registration_id': registration.id,
-                'offer_id': dbOffer.id,
-                'registration_form_id': registrationForm.id,
-                'answers': dbAnswers
-            }
+        response = {
+            'registration_id': registration.id,
+            'offer_id': db_offer.id,
+            'registration_form_id': registration_form.id,
+            'answers': db_answers
+        }
 
-            return json.dumps(response, indent=4)
+        return json.dumps(response, indent=4)
 
-
-        except Exception as e:
-            return e
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        # except Exception as e:
+        #     LOGGER.error("Database error encountered: {}".format(e))
+        #     return errors.DB_NOT_AVAILABLE
+        # except:
+        #     LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+        #     return errors.DB_NOT_AVAILABLE
 
     @auth_required
     @marshal_with(registration_fields)
@@ -103,30 +103,25 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         offer_id = args['offer_id']
 
         try:
-            dbOffer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
-            if dbOffer is None:
-                return 'offer not found', 404
+            if not offer:
+                return errors.OFFER_NOT_FOUND
 
-            current_user = user_repository.get_by_id(dbOffer.user_id)
-            if current_user is None:
-                return 'user not found', 404
+            current_user = user_repository.get_by_id(offer.user_id)
+            if not current_user:
+                return errors.USER_NOT_FOUND
 
-            registrationForm = db.session.query(RegistrationForm).filter(
-                RegistrationForm.id == args['registration_form_id'])
+            registration_form = db.session.query(RegistrationForm).filter(
+                RegistrationForm.id == args['registration_form_id']).first()
 
-            if not registrationForm.first():
-                dbRegistrationForm = RegistrationForm(
-                    id=args['registration_form_id'],
-                    event_id=1
-                )
-                db.session.add(dbRegistrationForm)
-                db.session.commit()
+            if not registration_form:
+                return errors.REGISTRATION_FORM_NOT_FOUND
 
             registration = Registration(
                 offer_id=args['offer_id'],
                 registration_form_id=args['registration_form_id'],
-                confirmed=False,
+                confirmed=True if (not offer.payment_required) else False,
                 confirmation_email_sent_at=date.today()
             )
 
@@ -144,23 +139,21 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                     db.session.add(answer)
             db.session.commit()
 
-            registrationAnswers = db.session.query(RegistrationAnswer).filter(
+            registration_answers = db.session.query(RegistrationAnswer).filter(
                 RegistrationAnswer.registration_id == registration.id).all()
-            registrationQuestions = db.session.query(RegistrationQuestion).filter(
+            registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            self.send_confirmation(current_user, registrationQuestions, registrationAnswers, registration.confirmed)
+            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed)
 
         except SQLAlchemyError as e:
-            return e
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except Exception as e:
-            return e
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
         finally:
-            return 201  # 201 is 'CREATED' status code
+            return registration, 201  # 201 is 'CREATED' status code
 
     @auth_required
     @marshal_with(response_fields)
@@ -215,7 +208,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.warn(
                 'Found no questions associated with application form with id {form_id}'.format(form_id=user.id))
         try:
-            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
+            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value
+            # is the relevant answer
             summary = ""
             for answer in answers:
                 for question in questions:
