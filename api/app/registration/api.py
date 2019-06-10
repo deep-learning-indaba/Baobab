@@ -12,11 +12,12 @@ from flask_restful import  fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
 from app.registration.models import Offer
-from app.registration.mixins import RegistrationMixin
+from app.registration.mixins import OfferMixin
 from app.users.models import AppUser
 from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, admin_required
+from app.utils.emailer import send_mail
 
 OFFER_EMAIL_BODY = """
 Dear {} {} {},
@@ -36,132 +37,147 @@ Kind Regards,
 The Baobab Team
 """
 
-def offer_info(offerEntity):
+
+def offer_info(offer_entity):
     return {
-        'user_id': offerEntity.user_id,
-        'event_id': offerEntity.event_id,
-        'offer_date': offerEntity.offer_date,
-        'expiry_date': offerEntity.expiry_date,
-        'payment_required': offerEntity.payment_required,
-        'travel_award': offerEntity.travel_award,
-        'accommodation_award': offerEntity.accommodation_award
+        'user_id': offer_entity.user_id,
+        'event_id': offer_entity.event_id,
+        'offer_date': offer_entity.offer_date,
+        'expiry_date': offer_entity.expiry_date,
+        'payment_required': offer_entity.payment_required,
+        'travel_award': offer_entity.travel_award,
+        'accommodation_award': offer_entity.accommodation_award
     }
 
-class OfferAPI(RegistrationMixin, restful.Resource):
-    put_offer_fields = {
+
+def offer_update_info(offer_entity):
+    return {
+        'user_id': offer_entity.user_id,
+        'event_id': offer_entity.event_id,
+        'offer_date': offer_entity.offer_date,
+        'expiry_date': offer_entity.expiry_date,
+        'payment_required': offer_entity.payment_required,
+        'travel_award': offer_entity.travel_award,
+        'accommodation_award': offer_entity.accommodation_award,
+        'rejected': offer_entity.rejected,
+        'accepted': offer_entity.accepted,
+        'rejected_reason': offer_entity.rejected_reason,
+        'updated_at': offer_entity.updated_at,
+    }
+
+
+class OfferAPI(OfferMixin, restful.Resource):
+    offer_fields = {
         'user_id': fields.Integer,
-        'accepted': fields.Boolean,
+        'event_id': fields.Integer,
+        'offer_date': fields.DateTime,
+        'expiry_date': fields.DateTime,
+        'payment_required': fields.Boolean,
+        'travel_award': fields.Boolean,
+        'accommodation_award': fields.Boolean,
         'rejected': fields.Boolean,
-        'rejected_reason': fields.String
+        'accepted': fields.Boolean,
+        'rejected_reason': fields.String,
+        'updated_at': fields.DateTime,
+
+
     }
 
     @auth_required
-    @marshal_with(put_offer_fields)
+    @marshal_with(offer_fields)
     def put(self):
         # update existing offer
         args = self.req_parser.parse_args()
-        offer_id = args['id']
+        offer_id = args['offer_id']
         accepted = args['accepted']
         rejected = args['rejected']
         rejected_reason = args['rejected_reason']
-
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
         if not offer:
             return errors.OFFER_NOT_FOUND
-        else:
-            return
 
-        offerValues = Offer(
-            accepted = accepted,
-            rejected = rejected,
-            rejected_reason = rejected_reason
-            
-        )
-     
         try:
-            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
-            offer.updated_at = datetime.now()
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
             if offer and (not offer.user_id == user_id):
                 return errors.FORBIDDEN
-            else:
-                db.session.add(offerValues)
-                db.session.commit()
+
+            offer.updated_at = datetime.now()
+            offer.accepted = accepted
+            offer.rejected = rejected
+            offer.rejected_reason = rejected_reason
+
+            db.session.commit()
 
         except:
-            LOGGER.error("Failed to add offer with id {}".format(args['id']))
+            LOGGER.error("Failed to update offer with id {}".format(args['offer_id']))
             return errors.ADD_OFFER_FAILED
-        return offer(offerValues), 201
+        return offer_update_info(offer), 201
 
     @admin_required
+    @marshal_with(offer_fields)
     def post(self):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
         email = g.current_user['email']
         event_id = args['event_id']
-        offer_date = args['offer_date']
-        expiry_date = args['expiry_date']
+        offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
         travel_award = args['travel_award']
         accommodation_award = args['accommodation_award']
-
+        updated_at = datetime.strptime((args['updated_at']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user = db.session.query(AppUser).filter(AppUser.email == email).first()
 
-        offerEntity = Offer(
+        offer_entity = Offer(
             user_id=user_id,
             event_id=event_id,
             offer_date=offer_date,
             expiry_date=expiry_date,
             payment_required=payment_required,
             travel_award=travel_award,
-            accommodation_award=accommodation_award
+            accommodation_award=accommodation_award,
+            updated_at=updated_at
         )
 
-        db.session.add(offerEntity)
+        db.session.add(offer_entity)
+        db.session.commit()
 
-        try:
-            db.session.add(offerEntity)
-            db.session.commit()
-            if user.email:
-                send_mail(recipient=user.email,
-                    subject='Offer from Deep Learning Indaba',
-                    body_text= OFFER_EMAIL_BODY.format( 
-                                user.user_title, user.firstname, user.lastname,
-                                user_id, event_id, offer_date, 
-                                expiry_date, payment_required, 
-                                travel_award, accommodation_award))
+        if user.email:
+            send_mail(recipient=user.email, subject='Offer from Deep Learning Indaba',
+                      body_text=OFFER_EMAIL_BODY.format(
+                            user.user_title, user.firstname, user.lastname,
+                            user_id, event_id, offer_date,
+                            expiry_date, payment_required,
+                            travel_award, accommodation_award))
 
-                LOGGER.debug("Sent an offer email to {}".format(user.email))
-            else:
-                user.verified_email = True
-                try:
-                    db.session.commit()
-                except IntegrityError:
-                    LOGGER.error("Unable to verify email: {}".format(email))
-                    return VERIFY_EMAIL_OFFER
-
-        except :
-            LOGGER.error("Failed to add offer")
-            return errors.FORBIDDEN, 404
+            LOGGER.debug("Sent an offer email to {}".format(user.email))
+        else:
+            user.verified_email = True
+            try:
+                db.session.commit()
+            except IntegrityError:
+                LOGGER.error("Unable to verify email: {}".format(email))
+                return errors.VERIFY_EMAIL_OFFER
         
-        return self.offer_info(offerEntity), 201
+        return offer_info(offer_entity), 201
 
     @auth_required
+    @marshal_with(offer_fields)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.event_id == event_id and Offer.user_id == user_id).first()
+            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
             if not offer:
                 LOGGER.warn(
                     "Offer not found for event_id: {}".format(args['event_id']))
-                return errors.EVENT_NOT_FOUND, 404
+                return errors.EVENT_NOT_FOUND
             else:
-                return offer
+                return offer, 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))

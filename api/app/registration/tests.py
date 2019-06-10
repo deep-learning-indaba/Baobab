@@ -8,21 +8,20 @@ from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
-from app.applicationModel.models import ApplicationForm
 
 
 OFFER_DATA = {
     'id': 1,
     'user_id': 1,
     'event_id': 1,
-    'offer_date': datetime(1984, 12, 12),
-    'expiry_date': datetime(1984, 12, 12),
+    'offer_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+    'expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'payment_required': False,
     'travel_award': False,
-    'accomodation_award': False,
+    'accommodation_award': True,
     'rejected': False,
     'rejected_reason': 'N/A',
-    'updated_at': datetime(1984, 12, 12)
+    'updated_at': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
 }
 
 REGISTRATION_FORM = {
@@ -53,6 +52,7 @@ REGISTRATION_QUESTION = {
     'is_required': True
 }
 
+
 class OfferApiTest(ApiTestCase):
 
     def seed_static_data(self):
@@ -62,16 +62,11 @@ class OfferApiTest(ApiTestCase):
         db.session.commit()
 
         test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                                 'Male', 'University', 'Computer Science', 'None', 1,
-                                 datetime(1984, 12, 12),
-                                 'Zulu',
-                                 '654321')
+                            'Male', 'University', 'Computer Science', 'None', 1,
+                            datetime(1984, 12, 12), 'Zulu', '654321')
         test_user.verified_email = True
         db.session.add(test_user)
         db.session.commit()
-
-        test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
 
         offer_admin = AppUser('offer_admin@ea.com', 'event_admin', '1', 'Ms', 1,
                               1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '654321', True)
@@ -83,8 +78,8 @@ class OfferApiTest(ApiTestCase):
         event = Event(
             name="Tech Talk",
             description="tech talking",
-            start_date=datetime(2019, 12, 12, 10, 10, 10),
-            end_date=datetime(2020, 12, 12, 10, 10, 10),
+            start_date=datetime(2019, 12, 12),
+            end_date=datetime(2020, 12, 12),
         )
         db.session.add(event)
         db.session.commit()
@@ -116,52 +111,48 @@ class OfferApiTest(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
-
-    """ Test post method """
     def test_create_offer(self):
         self.seed_static_data()
 
-        response = self.app.post('/api/v1/offerAPI', data=OFFER_DATA, headers=self.adminHeaders)
+        response = self.app.post('/api/v1/offer', data=OFFER_DATA,
+                                 headers=self.adminHeaders)
         data = json.loads(response.data)
-        LOGGER.debug("Offer-POST: response-code {}".format(response.status_code))
-        assert response.status_code == 404
-      
+
+        assert response.status_code == 201
+        assert data['payment_required']
+        assert data['travel_award']
+        assert data['accommodation_award']
 
     def test_get_offer(self):
         self.seed_static_data()
 
         event_id = 1
-        offer_id = 1
-        url = "/api/v1/offerAPI?id=%d" % (
-            offer_id)
+        url = "/api/v1/offer?event_id=%d" % (
+            event_id)
         LOGGER.debug(url)
-        response = self.app.put(url, headers=self.headers)
+        response = self.app.get(url, headers=self.headers)
 
-        if response.status_code == 403:
-            return 404
-
-        data = json.loads(response.data)
-        LOGGER.debug("0ffer-GET: {}".format(response.status_code))      
         assert response.status_code == 200
 
     def test_update_offer(self):
         self.seed_static_data()
         event_id = 1
         offer_id = 1
-        accepted = True
-        rejected = False
-        rejected_reason = "N/A"
-        url =  "/api/v1/offerAPI?id=%devent_id=%daccepted=%srejected=%srejected_reason=%s" % (
-            offer_id,event_id,accepted,rejected,rejected_reason)
+        accepted = False
+        rejected = True
+        rejected_reason = "the reason for rejection"
+        url = "/api/v1/offer?offer_id=%d&event_id=%d&accepted=%s&rejected=%s&rejected_reason=%s" % (
+            offer_id, event_id, accepted, rejected, rejected_reason)
         LOGGER.debug(url)
-        response = self.app.get(url, headers=self.headers)
-
-        if response.status_code == 403:
-            return 404
+        response = self.app.put(url, headers=self.headers)
 
         data = json.loads(response.data)
-        LOGGER.debug("0ffer-PUT: {}".format(response.status_code))   
-        assert response.status_code == 400
+        LOGGER.debug("Offer-PUT: {}".format(response.data))
+
+        assert response.status_code == 201
+        assert data['accepted']
+        assert data['rejected']
+
 
 class RegistrationTest(ApiTestCase):
 
