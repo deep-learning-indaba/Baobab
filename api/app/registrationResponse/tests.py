@@ -1,15 +1,13 @@
 from app.registration.models import RegistrationForm
-from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationSection
 import json
 from datetime import datetime, timedelta
-from app import db, LOGGER
+from app import  LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.models import RegistrationQuestion
-from app.registration.models import RegistrationAnswer
 from app import app, db
 
 
@@ -131,28 +129,6 @@ class RegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question3)
         db.session.commit()
-        #
-        # registration_data = {
-        #     'offer_id': self.offer.id,
-        #     'registration_form_id': self.form.id,
-        #     'answers': [
-        #         {
-        #             'registration_question_id': self.question.id,
-        #             'value': 'Answer 1'
-        #         },
-        #         {
-        #             'registration_question_id': self.question2.id,
-        #             'value': 'Hello world, this is the 2nd answer.'
-        #         },
-        #         {
-        #             'registration_question_id': self.question3.id,
-        #             'value': 'Hello world, this is the 3rd answer.'
-        #         }
-        #     ]
-        # }
-        #
-        # db.session.add(registration_data)
-        # db.session.commit()
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
@@ -191,14 +167,11 @@ class RegistrationApiTest(ApiTestCase):
                     }
                 ]
             }
-            LOGGER.debug("==================")
             response = self.app.post(
                 '/api/v1/registration-response',
                 data=json.dumps(registration_data),
                 content_type='application/json',
                 headers=self.headers)
-            data = json.loads(response.data)
-            LOGGER.debug("reg-POST: {}".format(data))
             self.assertEqual(response.status_code, 201)
 
     def test_get_registration(self):
@@ -223,19 +196,96 @@ class RegistrationApiTest(ApiTestCase):
                     }
                 ]
             }
-            LOGGER.debug("==================")
-            response = self.app.post(
-                '/api/v1/registration-response',
-                data=json.dumps(registration_data),
-                content_type='application/json',
-                headers=self.headers)
-
             response = self.app.get(
                 '/api/v1/registration-response',
                 content_type='application/json',
                 headers=self.headers)
-            LOGGER.debug("=====/////=============")
+            self.assertEqual(response.status_code, 200)
+
+    def test_update_200(self):
+        """Test if update work"""
+        with app.app_context():
+            self.seed_static_data()
+            registration_data = {
+                'offer_id': self.offer.id,
+                'registration_form_id': self.form.id,
+                'answers': [
+                    {
+                        'registration_question_id': self.question.id,
+                        'value': 'Answer 1'
+                    },
+                    {
+                        'registration_question_id': self.question2.id,
+                        'value': 'Hello world, this is the 2nd answer.'
+                    },
+                    {
+                        'registration_question_id': self.question3.id,
+                        'value': 'Hello world, this is the 3rd answer.'
+                    }
+                ]
+            }
+
+            response = self.app.post(
+                '/api/v1/registration-response',
+                data=json.dumps(registration_data),
+                content_type='application/json',
+                headers=self.headers
+            )
             data = json.loads(response.data)
-            LOGGER.debug("reg-GET: {}".format(data))
-            LOGGER.debug("<<<<<<code: {}".format(response.status_code))
-            self.assertEqual(response.status_code, 201)
+            put_registration_data = {
+                'registration_id': data['id'],
+                'offer_id': self.offer.id,
+                'registration_form_id': self.form.id,
+                'answers': [
+                    {
+                        'registration_question_id': self.question.id,
+                        'value': 'Answer 1'
+                    },
+                    {
+                        'registration_question_id': self.question2.id,
+                        'value': 'Hello world, this is the 2nd answer.'
+                    },
+                    {
+                        'registration_question_id': self.question3.id,
+                        'value': 'Hello world, this is the 3rd answer.'
+                    }
+                ]
+            }
+            post_response = self.app.put(
+                '/api/v1/registration-response',
+                data=json.dumps(put_registration_data),
+                content_type='application/json',
+                headers=self.headers)
+            LOGGER.debug(response)
+            self.assertEqual(post_response.status_code, 200)
+
+    def test_update_missing(self):
+        """Test that 404 is returned if we try to update a registration for a user that doesnt exist"""
+        with app.app_context():
+            self.seed_static_data()
+            registration_data = {
+                'registration_id': 50,
+                'offer_id': self.offer.id,
+                'registration_form_id': self.form.id,
+                'answers': [
+                    {
+                        'registration_question_id': self.question.id,
+                        'value': 'Answer 1'
+                    },
+                    {
+                        'registration_question_id': self.question2.id,
+                        'value': 'Hello world, this is the 2nd answer.'
+                    },
+                    {
+                        'registration_question_id': self.question3.id,
+                        'value': 'Hello world, this is the 3rd answer.'
+                    }
+                ]
+            }
+
+            response = self.app.put(
+                '/api/v1/registration-response',
+                data=json.dumps(registration_data),
+                content_type='application/json',
+                headers=self.headers)
+            self.assertEqual(response.status_code, 404)
