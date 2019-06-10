@@ -110,8 +110,8 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             db.session.commit()
 
-        except IntegrityError:
-            LOGGER.error("Failed to update offer with id {}".format(args['offer_id']))
+        except Exception as e:
+            LOGGER.error("Failed to update offer with id {} due to {}".format(args['offer_id'], e))
             return errors.ADD_OFFER_FAILED
         return offer_update_info(offer), 201
 
