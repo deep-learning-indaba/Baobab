@@ -165,7 +165,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
             if not offer:
-                LOGGER.warn(errors.EVENT_NOT_FOUND)
                 return errors.EVENT_NOT_FOUND
             else:
                 return offer, 200
