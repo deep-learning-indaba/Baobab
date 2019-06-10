@@ -15,7 +15,7 @@ import {
 
 const fieldValidations = [ruleRunner(validationFields.email, validEmail)];
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 2;
 
 class InvitedGuests extends Component {
   constructor(props) {
@@ -31,7 +31,7 @@ class InvitedGuests extends Component {
       buttonClicked: false,
       conflict: false
     };
-  }
+  } 
   getGuestList() {
     this.setState({ loading: true });
     invitedGuestServices.getInvitedGuestList(DEFAULT_EVENT_ID).then(result => {
@@ -69,7 +69,7 @@ class InvitedGuests extends Component {
             notFound: true,
             conflict: false
           });
-        } else if (response.msg === "409") {
+        } else if (response.msg === "500") {
           this.setState({
             notFound: false,
             addedSucess: false,
