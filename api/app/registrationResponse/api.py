@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
 from app.registrationResponse.mixins import RegistrationResponseMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
+from app.users.models import AppUser
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app import LOGGER
@@ -48,6 +49,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
     }
 
     response_fields = {
+
         'registration_id': fields.Integer,
         'offer_id': fields.Integer,
         'registration_form_id': fields.Integer,
@@ -104,9 +106,10 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             if not offer:
                 return errors.OFFER_NOT_FOUND
 
-            current_user = user_repository.get_by_id(offer.user_id)
-            if not current_user:
+            user_id = verify_token(request.headers.get('Authorization'))['id']
+            if not user_id:
                 return errors.USER_NOT_FOUND
+            current_user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.id == args['registration_form_id']).first()
