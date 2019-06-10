@@ -134,6 +134,17 @@ class OfferApiTest(ApiTestCase):
 
         assert response.status_code == 200
 
+    def test_get_offer_not_found(self):
+        self.seed_static_data()
+
+        event_id = 12
+        url = "/api/v1/offer?event_id=%d" % (
+            event_id)
+        LOGGER.debug(url)
+        response = self.app.get(url, headers=self.headers)
+
+        assert response.status_code == 404
+
     def test_update_offer(self):
         self.seed_static_data()
         event_id = 1
