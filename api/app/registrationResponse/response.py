@@ -8,7 +8,7 @@ from flask import g, request
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.registration.mixins import RegistrationResponseMixin
+from app.registrationResponse.mixins import RegistrationResponseMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
@@ -77,10 +77,10 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             dbAnswers = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_id == registration.id).all()
 
             response = {
-                'registration_id':registration.id,
+                'registration_id': registration.id,
                 'offer_id': dbOffer.id,
                 'registration_form_id': registrationForm.id,
-                'answers':dbAnswers
+                'answers': dbAnswers
             }
 
             return json.dumps(response, indent=4)
@@ -123,13 +123,13 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 db.session.add(dbRegistrationForm)
                 db.session.commit()
 
-
             registration = Registration(
                 offer_id=args['offer_id'],
                 registration_form_id=args['registration_form_id'],
                 confirmed=False,
                 confirmation_email_sent_at=date.today()
             )
+
             db.session.add(registration)
             db.session.commit()
 
@@ -160,7 +160,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
         finally:
-            return registration, 201  # 201 is 'CREATED' status code
+            return 201  # 201 is 'CREATED' status code
 
     @auth_required
     @marshal_with(response_fields)
@@ -206,7 +206,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             return 'Could not access DB', 400
         finally:
             return 200
-
 
     def send_confirmation(self, user, questions, answers, confirmed):
         if answers is None:

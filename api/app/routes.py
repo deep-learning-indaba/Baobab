@@ -8,7 +8,7 @@ from events import api as events_api
 from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
 from registration import api as registration_api
-from registration import response as registration_response
+from registrationResponse import response as registration_response
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
