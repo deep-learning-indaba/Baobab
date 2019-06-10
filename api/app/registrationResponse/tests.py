@@ -2,7 +2,6 @@ from app.registration.models import RegistrationForm
 from app.registration.models import RegistrationSection
 import json
 from datetime import datetime, timedelta
-from app import  LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
@@ -196,6 +195,12 @@ class RegistrationApiTest(ApiTestCase):
                     }
                 ]
             }
+            response = self.app.post(
+                '/api/v1/registration-response',
+                data=json.dumps(registration_data),
+                content_type='application/json',
+                headers=self.headers
+            )
             response = self.app.get(
                 '/api/v1/registration-response',
                 content_type='application/json',
@@ -256,7 +261,6 @@ class RegistrationApiTest(ApiTestCase):
                 data=json.dumps(put_registration_data),
                 content_type='application/json',
                 headers=self.headers)
-            LOGGER.debug(response)
             self.assertEqual(post_response.status_code, 200)
 
     def test_update_missing(self):
