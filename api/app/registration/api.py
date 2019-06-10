@@ -70,15 +70,15 @@ class OfferAPI(OfferMixin, restful.Resource):
     offer_fields = {
         'user_id': fields.Integer,
         'event_id': fields.Integer,
-        'offer_date': fields.DateTime,
-        'expiry_date': fields.DateTime,
+        'offer_date': fields.DateTime('iso8601'),
+        'expiry_date': fields.DateTime('iso8601'),
         'payment_required': fields.Boolean,
         'travel_award': fields.Boolean,
         'accommodation_award': fields.Boolean,
         'rejected': fields.Boolean,
         'accepted': fields.Boolean,
         'rejected_reason': fields.String,
-        'updated_at': fields.DateTime,
+        'updated_at': fields.DateTime('iso8601'),
 
 
     }
@@ -100,7 +100,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
-            if offer and (not offer.user_id == user_id):
+            if offer and offer.user_id != user_id:
                 return errors.FORBIDDEN
 
             offer.updated_at = datetime.now()
@@ -110,7 +110,7 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             db.session.commit()
 
-        except:
+        except IntegrityError:
             LOGGER.error("Failed to update offer with id {}".format(args['offer_id']))
             return errors.ADD_OFFER_FAILED
         return offer_update_info(offer), 201
@@ -120,7 +120,6 @@ class OfferAPI(OfferMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
-        email = g.current_user['email']
         event_id = args['event_id']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -128,7 +127,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         travel_award = args['travel_award']
         accommodation_award = args['accommodation_award']
         updated_at = datetime.strptime((args['updated_at']), '%Y-%m-%dT%H:%M:%S.%fZ')
-        user = db.session.query(AppUser).filter(AppUser.email == email).first()
+        user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
         offer_entity = Offer(
             user_id=user_id,
@@ -153,14 +152,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                             travel_award, accommodation_award))
 
             LOGGER.debug("Sent an offer email to {}".format(user.email))
-        else:
-            user.verified_email = True
-            try:
-                db.session.commit()
-            except IntegrityError:
-                LOGGER.error("Unable to verify email: {}".format(email))
-                return errors.VERIFY_EMAIL_OFFER
-        
+
         return offer_info(offer_entity), 201
 
     @auth_required
@@ -173,8 +165,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
             if not offer:
-                LOGGER.warn(
-                    "Offer not found for event_id: {}".format(args['event_id']))
+                LOGGER.warn(errors.EVENT_NOT_FOUND)
                 return errors.EVENT_NOT_FOUND
             else:
                 return offer, 200
