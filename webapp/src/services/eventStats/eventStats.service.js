@@ -65,6 +65,3 @@ function sendReminderToBegin(eventId) {
             }
         })
 }
-
-
-

@@ -10,18 +10,19 @@ export const offerServices = {
 }
 
 function getOfferList(event_id){
-    return axios.get(baseUrl + "/api/v1/offer'?event_id=" + event_id, {
+    let url = "/api/v1/offer?event_id=" + (event_id)
+    return axios.get(baseUrl + url, {
         headers: authHeader()
       })
       .then(function(response){
         return{
-            form: response.data,
+            offerList: response.data,
             error:""
         };
       })
       .catch(function(error){
           return{
-              form:null,
+            offerList:null,
               error:
                 error.response && error.response.data
                 ? error.response.data.message
@@ -33,13 +34,13 @@ function getOfferList(event_id){
 
 function addOfferList(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accomodation_award){
     let data = {
-        user_id:user_id, 
-        event_id:event_id,
-        offer_date:offer_date,
-        expiry_date:expiry_date,
-        payment_required:payment_required,
-        travel_award:travel_award,
-        accomodation_award:accomodation_award
+        "user_id":user_id, 
+        "event_id":event_id,
+        "offer_date":offer_date,
+        "expiry_date":expiry_date,
+        "payment_required":payment_required,
+        "travel_award":travel_award,
+        "accomodation_award":accomodation_award
     }
 
     return axios
@@ -78,7 +79,7 @@ function updateOfferList(offer_id, event_id, accepted, rejected, rejected_reason
     };
 
     return axios
-        .put(baseUrl + "/api/v1/offer?offer_id=%d&event_id=%d&accepted=%s&rejected=%s&rejected_reason=%s" % (
+        .put(baseUrl + "/api/v1/offer?offer_id=&event_id=&accepted=&rejected=&rejected_reason=" % (
             offer_id, event_id, accepted, rejected, rejected_reason),{ headers: authHeader() })
         .then(function(response){
             return{
