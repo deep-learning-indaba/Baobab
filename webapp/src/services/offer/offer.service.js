@@ -34,13 +34,13 @@ function getOfferList(event_id){
 
 function addOfferList(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accomodation_award){
     let data = {
-        "user_id":user_id, 
-        "event_id":event_id,
-        "offer_date":offer_date,
-        "expiry_date":expiry_date,
-        "payment_required":payment_required,
-        "travel_award":travel_award,
-        "accomodation_award":accomodation_award
+        user_id:user_id, 
+        event_id:event_id,
+        offer_date:offer_date,
+        expiry_date:expiry_date,
+        payment_required:payment_required,
+        travel_award:travel_award,
+        accomodation_award:accomodation_award
     }
 
     return axios

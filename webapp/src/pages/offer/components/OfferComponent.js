@@ -3,6 +3,7 @@ import {withRouter} from "react-router";
 import TextArea from "react";
 import {Chart} from "react-google-charts";
 import { offerServices  } from "../../../services/offer/offer.service";
+import { profileService} from "../../../services/profilelist";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -12,6 +13,7 @@ class Offer extends Component {
         super(props);
   
         this.state = {
+          userProfile : [],
           loading: true,
           error: "",
           offer_id: 1,
@@ -65,13 +67,13 @@ class Offer extends Component {
       }
     
     displayOfferContent = (e) => {
-      const {offerList} = this.state;
+      const {offerList,userProfile} = this.state;
      return(   
       <div className="container"  align="center" >
       <p className="h5 pt-5">We are pleased to offer you a place at the Deep Learning Indaba 2019. Please see the details of this offer below </p>
 
       <form class="pt-5 ">
-        <p class="font-weight-bold">You have been accepted as a  {offerList!=null ? this.state.category: "<Category>"} </p>
+        <p class="font-weight-bold">You have been accepted as a  {userProfile!=null ? userProfile.user_category: "<Category>"} </p>
         <p class="font-weight-bold">Your status</p>
         <div class="row">
           <div class="col-8 font-weight-bold">
@@ -145,8 +147,17 @@ class Offer extends Component {
       )}
 
     componentDidMount() {
-      console.log("### - ",this.state.rejected,"%%%%%",this.state.accepted)
-          this.getOfferList();  
+          this.getOfferList();
+          profileService.getProfilesList(DEFAULT_EVENT_ID)
+          .then(results => {
+              this.setState(
+                  {
+                    userProfile: results.List,
+                      isEmpty: this.isListEmpty(results.List),
+                      loading: false,
+                      error: results.error
+                  });
+          });   
           this.setState({
             loading: false,
             buttonLoading: false
@@ -161,13 +172,11 @@ class Offer extends Component {
             offerList:result.data,
             error:result.error
           });
-          console.log("getOfferList",result)
-        });
+          });
       }
       
     render(){
       const {loading, offerList, error} = this.state;
-      console.log("In render",offerList)
       const loadingStyle = {
         "width": "3rem",
         "height": "3rem"
@@ -183,16 +192,14 @@ class Offer extends Component {
         )
       }
 
-      // if (error) 
-      //   return <div class="alert alert-danger" align="center">{error}</div>
-      // else 
+        if (error) 
+         return <div class="alert alert-danger" align="center">{error}</div>
+        else 
         if (offerList===null) 
           return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
         else
           return this.displayOfferContent();
-        
-
-    }
+   }
 }
 
 export default withRouter(Offer);
