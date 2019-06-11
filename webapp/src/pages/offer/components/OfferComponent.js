@@ -7,7 +7,6 @@ import { offerServices  } from "../../../services/offer/offer.service";
 import { profileService} from "../../../services/profilelist/profilelist.service";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-let DEFAULT_USER_ID = process.env.REACT_APP_DEFAULT_USER_ID || 1;
 
 class Offer extends Component {
   
@@ -15,7 +14,7 @@ class Offer extends Component {
         super(props);
   
         this.state = {
-          user: {},
+          user:{user_id:0},
           userProfile : [],
           loading: true,
           error: "",
@@ -129,42 +128,41 @@ class Offer extends Component {
          { this.state.showReasonBox ? 
           <div class="form-group mr-5  ml-5 pt-5" >
           <textarea class="form-control pr-5 pl-10" id="textArea" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
-          <button type="button" class="btn" id="apply" onClick={
-            ()=>{
+          <button type="button" class="btn" id="apply" onClick={ ()=>{
               this.setState({
                 showReasonBox:false
               },
               this.buttonSubmit());
-            }
-            }>apply</button>
+            }}>apply</button>
         </div>
-        :""}
+        :""
+        }
         </div>
       
       </form>
-  </div>
+    </div>
       )}
 
-    componentWillMount(){
+    componentDidMount(){
       userService.get().then(result=> {
         this.setState({
             user:{
-              user_id:result.user_id
+              user_id:result.response.data.app_user_id
             }
         });
-        DEFAULT_USER_ID = result.user_id;
       });
 
     }
 
-    componentDidMount() {
+    componentWillMount() {
+      const {user_id} = this.state.user;
           this.getOffer();
           this.setState({
             user: JSON.parse(localStorage.getItem("user")),
             loading: false,
             buttonLoading: false
           });
-          profileService.getUserProfile(DEFAULT_USER_ID)
+          profileService.getUserProfile(user_id)
           .then(results => {
               this.setState(
                   {
@@ -172,8 +170,7 @@ class Offer extends Component {
                       loading: false,
                       error: results.error
                   });
-          });   
-          
+          });       
       }
    
       getOffer(){
