@@ -64,8 +64,7 @@ class Offer extends Component {
     
     displayOfferContent = (e) => {
       const {offerList,userProfile} = this.state;
-      console.log("<<< List  Function >>>>",offerList," userProfile ",userProfile)
-     return(   
+      return(   
       <div className="container"  align="center" >
       <p className="h5 pt-5">We are pleased to offer you a place at the Deep Learning Indaba 2019. Please see the details of this offer below </p>
 
@@ -134,7 +133,7 @@ class Offer extends Component {
         <div class="form-group">
          { this.state.rejected ? 
           <div class="form-group mr-5  ml-5 pt-5" >
-          <textarea class="form-control pr-5 pl-10" id="exampleFormControlTextarea3" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
+          <textarea class="form-control pr-5 pl-10" id="textArea" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
           <button type="button" class="btn" id="apply" onClick={
             ()=>{
               this.setState({
@@ -153,7 +152,6 @@ class Offer extends Component {
 
     componentDidMount() {
           this.getOfferList();
-          console.log("<<< List >>>>",this.state.offerList)
           profileService.getProfilesList(DEFAULT_EVENT_ID)
           .then(results => {
               this.setState(
