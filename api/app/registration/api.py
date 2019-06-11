@@ -1,21 +1,181 @@
 from datetime import datetime
-import traceback
-from flask_restful import fields, marshal_with
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.exc import SQLAlchemyError
-from app.utils import errors
-from app import LOGGER
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationForm
-from app.registration.models import Offer
 from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
-from app.events.models import Event
-from app.users.models import AppUser
-from app import db
-from app.utils.auth import auth_required, admin_required, verify_token
+from app.utils.auth import verify_token
+import traceback
 from flask import g, request
+from flask_restful import  fields, marshal_with
+from sqlalchemy.exc import SQLAlchemyError
+from app.events.models import Event
+from app.registration.models import Offer
+from app.registration.mixins import OfferMixin
+from app.users.models import AppUser
+from app import db, LOGGER
+from app.utils import errors
+from app.utils.auth import auth_required, admin_required
+from app.utils.emailer import send_mail
+
+OFFER_EMAIL_BODY = """
+Dear {} {} {},
+
+Congratulations on you offer
+
+Offer Details \n
+user_id {} \n
+event_id {} \n
+offer_date {} \n
+expiry_date {} \n
+payment_required {} \n
+travel_award {} \n
+accommodation_award {} \n
+
+Kind Regards,
+The Baobab Team
+"""
+
+
+def offer_info(offer_entity):
+    return {
+        'user_id': offer_entity.user_id,
+        'event_id': offer_entity.event_id,
+        'offer_date': offer_entity.offer_date,
+        'expiry_date': offer_entity.expiry_date,
+        'payment_required': offer_entity.payment_required,
+        'travel_award': offer_entity.travel_award,
+        'accommodation_award': offer_entity.accommodation_award
+    }
+
+
+def offer_update_info(offer_entity):
+    return {
+        'user_id': offer_entity.user_id,
+        'event_id': offer_entity.event_id,
+        'offer_date': offer_entity.offer_date,
+        'expiry_date': offer_entity.expiry_date,
+        'payment_required': offer_entity.payment_required,
+        'travel_award': offer_entity.travel_award,
+        'accommodation_award': offer_entity.accommodation_award,
+        'rejected': offer_entity.rejected,
+        'accepted': offer_entity.accepted,
+        'rejected_reason': offer_entity.rejected_reason,
+        'updated_at': offer_entity.updated_at,
+    }
+
+
+class OfferAPI(OfferMixin, restful.Resource):
+    offer_fields = {
+        'user_id': fields.Integer,
+        'event_id': fields.Integer,
+        'offer_date': fields.DateTime('iso8601'),
+        'expiry_date': fields.DateTime('iso8601'),
+        'payment_required': fields.Boolean,
+        'travel_award': fields.Boolean,
+        'accommodation_award': fields.Boolean,
+        'rejected': fields.Boolean,
+        'accepted': fields.Boolean,
+        'rejected_reason': fields.String,
+        'updated_at': fields.DateTime('iso8601'),
+
+
+    }
+
+    @auth_required
+    @marshal_with(offer_fields)
+    def put(self):
+        # update existing offer
+        args = self.req_parser.parse_args()
+        offer_id = args['offer_id']
+        accepted = args['accepted']
+        rejected = args['rejected']
+        rejected_reason = args['rejected_reason']
+        offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+
+        if not offer:
+            return errors.OFFER_NOT_FOUND
+
+        try:
+            user_id = verify_token(request.headers.get('Authorization'))['id']
+
+            if offer and offer.user_id != user_id:
+                return errors.FORBIDDEN
+
+            offer.updated_at = datetime.now()
+            offer.accepted = accepted
+            offer.rejected = rejected
+            offer.rejected_reason = rejected_reason
+
+            db.session.commit()
+
+        except Exception as e:
+            LOGGER.error("Failed to update offer with id {} due to {}".format(args['offer_id'], e))
+            return errors.ADD_OFFER_FAILED
+        return offer_update_info(offer), 201
+
+    @admin_required
+    @marshal_with(offer_fields)
+    def post(self):
+        args = self.req_parser.parse_args()
+        user_id = args['user_id']
+        event_id = args['event_id']
+        offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        payment_required = args['payment_required']
+        travel_award = args['travel_award']
+        accommodation_award = args['accommodation_award']
+        updated_at = datetime.strptime((args['updated_at']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
+
+        offer_entity = Offer(
+            user_id=user_id,
+            event_id=event_id,
+            offer_date=offer_date,
+            expiry_date=expiry_date,
+            payment_required=payment_required,
+            travel_award=travel_award,
+            accommodation_award=accommodation_award,
+            updated_at=updated_at
+        )
+
+        db.session.add(offer_entity)
+        db.session.commit()
+
+        if user.email:
+            send_mail(recipient=user.email, subject='Offer from Deep Learning Indaba',
+                      body_text=OFFER_EMAIL_BODY.format(
+                            user.user_title, user.firstname, user.lastname,
+                            user_id, event_id, offer_date,
+                            expiry_date, payment_required,
+                            travel_award, accommodation_award))
+
+            LOGGER.debug("Sent an offer email to {}".format(user.email))
+
+        return offer_info(offer_entity), 201
+
+    @auth_required
+    @marshal_with(offer_fields)
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        try:
+            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
+            if not offer:
+                return errors.EVENT_NOT_FOUND
+            else:
+                return offer, 200
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))
+            return errors.DB_NOT_AVAILABLE
+        except:
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE
 
 
 def registration_form_info(registration_form):
@@ -55,7 +215,8 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         offer_id = args['offer_id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+            offer = db.session.query(Offer).filter(
+                Offer.id == offer_id).first()
 
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
@@ -74,7 +235,8 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                     RegistrationSection.registration_form_id == registration_form.id).all()
 
                 if not sections:
-                    LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
+                    LOGGER.warn(
+                        'Sections not found for event_id: {}'.format(args['event_id']))
                     return errors.SECTION_NOT_FOUND
 
                 included_sections = []
@@ -96,7 +258,8 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                     RegistrationQuestion.registration_form_id == registration_form.id).all()
 
                 if not questions:
-                    LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
+                    LOGGER.warn(
+                        'Questions not found for  event_id: {}'.format(args['event_id']))
                     return errors.QUESTION_NOT_FOUND
 
                 for s in registration_form.registration_sections:
@@ -113,7 +276,8 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @admin_required
@@ -173,7 +337,8 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
 
         try:
 
-            registration_section = db.session.query(RegistrationSection).filter(RegistrationSection.id == section_id).first()
+            registration_section = db.session.query(RegistrationSection).filter(
+                RegistrationSection.id == section_id).first()
 
             if not registration_section:
                 return errors.REGISTRATION_SECTION_NOT_FOUND
@@ -184,7 +349,8 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @admin_required
@@ -258,7 +424,8 @@ class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
 
         try:
 
-            question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.id == question_id).first()
+            question = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.id == question_id).first()
 
             if not question:
                 return errors.REGISTRATION_QUESTION_NOT_FOUND
@@ -269,7 +436,8 @@ class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @admin_required
