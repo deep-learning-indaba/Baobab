@@ -172,6 +172,7 @@ class Offer extends Component {
             offerList:result.data,
             error:result.error
           });
+          console.log("Check  offerList get->",result)
           });
       }
       
@@ -192,12 +193,12 @@ class Offer extends Component {
         )
       }
 
-        if (error) 
-         return <div class="alert alert-danger" align="center">{error}</div>
-        else 
-        if (offerList===null) 
-          return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
-        else
+        // if (error) 
+        //  return <div class="alert alert-danger" align="center">{error}</div>
+        // else 
+        // if (offerList===null) 
+        //   return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
+        // else
           return this.displayOfferContent();
    }
 }
