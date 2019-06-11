@@ -19,6 +19,7 @@ class Offer extends Component {
           offer_id: null,
           rejected_reason:"",
           rejected:false,
+          showReasonBox:false,
           accepted: false,
           offerList: [],
           category:""
@@ -100,7 +101,8 @@ class Offer extends Component {
           <button type="button" class="btn btn-danger" id="reject"onClick={
             ()=>{
               this.setState({
-                rejected:true
+                rejected:true,
+                showReasonBox:true
               },
               this.buttonSubmit());
             }
@@ -111,8 +113,7 @@ class Offer extends Component {
           <div class="col">
           <button type="button" class="btn btn-success" id="accept" onClick={()=>{
               this.setState({
-                accepted:true,
-                rejected:false,
+                accepted:true
               });
               this.buttonSubmit();
           }}>
@@ -122,13 +123,13 @@ class Offer extends Component {
         </div> 
 
         <div class="form-group">
-         { this.state.rejected ? 
+         { this.state.showReasonBox ? 
           <div class="form-group mr-5  ml-5 pt-5" >
           <textarea class="form-control pr-5 pl-10" id="textArea" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
           <button type="button" class="btn" id="apply" onClick={
             ()=>{
               this.setState({
-                rejected:false
+                showReasonBox:false
               },
               this.buttonSubmit());
             }
@@ -143,7 +144,7 @@ class Offer extends Component {
 
     componentDidMount() {
           this.getOffer();
-          profileService.getProfilesList(DEFAULT_EVENT_ID)
+          profileService.getUserProfile(DEFAULT_EVENT_ID)
           .then(results => {
               this.setState(
                   {
