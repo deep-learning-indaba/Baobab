@@ -180,18 +180,18 @@ class App extends Component {
                       >    
                        Invited Guests
                       </NavLink>
-                    <NavLink
+                      <NavLink
                       to="/profile-list"
                       className="dropdown-item"
                       onClick={this.toggleMenu}
-                    >
+                     >
                       Applicant Profiles
-                    </NavLink>
-                    <NavLink
+                      </NavLink>
+                      <NavLink
                       to="/offer"
                       className="dropdown-item"
                       onClick={this.toggleMenu}
-                    >
+                     >
                       Offer
                     </NavLink>
                     </div>
