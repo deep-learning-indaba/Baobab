@@ -66,7 +66,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db_offer = db.session.query(Offer).filter(Offer.user_id == user_id).first()
 
             if db_offer is None:
-                return 'No offer', 404
+                return errors.OFFER_NOT_FOUND
             registration = db.session.query(Registration).filter(Registration.offer_id == db_offer.id).first()
 
             if registration is None:
@@ -74,8 +74,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             registration_form = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.
                                                                           registration_form_id).first()
 
-            if registration_form is None :
-                return 'no registration form found', 404
+            if registration_form is None:
+                return errors.REGISTRATION_FORM_NOT_FOUND
             db_answers = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_id ==
                                                                      registration.id).all()
 
