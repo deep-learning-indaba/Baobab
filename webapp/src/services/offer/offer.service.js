@@ -71,8 +71,8 @@ function updateOffer(offer_id, event_id, accepted, rejected, rejected_reason){
     };
 
     return axios
-        .put(baseUrl + "/api/v1/offer?offer_id=&event_id=&accepted=&rejected=&rejected_reason=" % (
-            offer_id, event_id, accepted, rejected, rejected_reason),{ headers: authHeader() })
+        .put(baseUrl + "/api/v1/offer",
+         data,{ headers: authHeader() })
         .then(function(response){
             return{
                 message:"succeeded",

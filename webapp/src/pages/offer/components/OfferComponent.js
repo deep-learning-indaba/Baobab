@@ -16,7 +16,7 @@ class Offer extends Component {
           userProfile : [],
           loading: true,
           error: "",
-          offer_id: 1,
+          offer_id: null,
           rejected_reason:"",
           rejected:false,
           accepted: false,
@@ -40,7 +40,6 @@ class Offer extends Component {
         offerServices.updateOffer(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
         .then(response=>{
           if (response.msg === "succeeded") {
-            this.getoffer();
             this.setState({
               addedSucess: true,
               notFound: false
@@ -102,8 +101,8 @@ class Offer extends Component {
             ()=>{
               this.setState({
                 rejected:true
-              });
-              this.buttonSubmit();
+              },
+              this.buttonSubmit());
             }
           } >
               Reject
@@ -130,8 +129,8 @@ class Offer extends Component {
             ()=>{
               this.setState({
                 rejected:false
-              });
-              this.buttonSubmit();
+              },
+              this.buttonSubmit());
             }
             }>apply</button>
         </div>
