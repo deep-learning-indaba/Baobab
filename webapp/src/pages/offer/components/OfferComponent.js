@@ -13,6 +13,7 @@ class Offer extends Component {
         super(props);
   
         this.state = {
+          user: {},
           userProfile : [],
           loading: true,
           error: "",
@@ -144,7 +145,12 @@ class Offer extends Component {
 
     componentDidMount() {
           this.getOffer();
-          profileService.getUserProfile(DEFAULT_EVENT_ID)
+          this.setState({
+            user: JSON.parse(localStorage.getItem("user")),
+            loading: false,
+            buttonLoading: false
+          });
+          profileService.getUserProfile(user.user_id)
           .then(results => {
               this.setState(
                   {
@@ -153,10 +159,7 @@ class Offer extends Component {
                       error: results.error
                   });
           });   
-          this.setState({
-            loading: false,
-            buttonLoading: false
-          });
+          
       }
    
       getOffer(){
