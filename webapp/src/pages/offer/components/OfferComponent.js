@@ -35,11 +35,8 @@ class Offer extends Component {
       };
 
       buttonSubmit(){
-        let offer_id=0,
-         accepted=false, 
-         rejected=false, 
-         rejected_reason='';
-
+         const {offer_id,accepted,rejected,rejected_reason} = this.state;
+   
         offerServices.updateOfferList(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
         .then(response=>{
           if (response.msg === "succeeded") {
@@ -67,6 +64,7 @@ class Offer extends Component {
     
     displayOfferContent = (e) => {
       const {offerList,userProfile} = this.state;
+      console.log("<<< List  Function >>>>",offerList," userProfile ",userProfile)
      return(   
       <div className="container"  align="center" >
       <p className="h5 pt-5">We are pleased to offer you a place at the Deep Learning Indaba 2019. Please see the details of this offer below </p>
@@ -137,6 +135,14 @@ class Offer extends Component {
          { this.state.rejected ? 
           <div class="form-group mr-5  ml-5 pt-5" >
           <textarea class="form-control pr-5 pl-10" id="exampleFormControlTextarea3" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
+          <button type="button" class="btn" id="apply" onClick={
+            ()=>{
+              this.setState({
+                rejected:false
+              });
+              this.buttonSubmit();
+            }
+            }>apply</button>
         </div>
         :""}
         </div>
@@ -147,12 +153,12 @@ class Offer extends Component {
 
     componentDidMount() {
           this.getOfferList();
+          console.log("<<< List >>>>",this.state.offerList)
           profileService.getProfilesList(DEFAULT_EVENT_ID)
           .then(results => {
               this.setState(
                   {
                     userProfile: results.List,
-                      isEmpty: this.isListEmpty(results.List),
                       loading: false,
                       error: results.error
                   });
