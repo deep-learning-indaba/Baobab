@@ -1,8 +1,5 @@
 import React, {Component} from "react";
 import {withRouter} from "react-router";
-import TextArea from "react";
-import {Chart} from "react-google-charts";
-import { userService } from "../../../services/user";
 import { offerServices  } from "../../../services/offer/offer.service";
 import { profileService} from "../../../services/profilelist/profilelist.service";
 
@@ -14,7 +11,7 @@ class Offer extends Component {
         super(props);
   
         this.state = {
-          user:{user_id:0},
+          user:{},
           userProfile : [],
           loading: true,
           error: "",
@@ -116,8 +113,8 @@ class Offer extends Component {
           <button type="button" class="btn btn-success" id="accept" onClick={()=>{
               this.setState({
                 accepted:true
-              });
-              this.buttonSubmit();
+              },
+              this.buttonSubmit());
           }}>
               Accept
           </button>
@@ -143,26 +140,17 @@ class Offer extends Component {
     </div>
       )}
 
-    componentDidMount(){
-      userService.get().then(result=> {
-        this.setState({
-            user:{
-              user_id:result.response.data.app_user_id
-            }
-        });
-      });
-
-    }
 
     componentWillMount() {
-      const {user_id} = this.state.user;
           this.getOffer();
           this.setState({
-            user: JSON.parse(localStorage.getItem("user")),
+            
             loading: false,
             buttonLoading: false
           });
-          profileService.getUserProfile(user_id)
+
+          let currentUser = JSON.parse(localStorage.getItem("user"));
+          profileService.getUserProfile(currentUser.id)
           .then(results => {
               this.setState(
                   {
