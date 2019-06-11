@@ -3,7 +3,7 @@ import {withRouter} from "react-router";
 import TextArea from "react";
 import {Chart} from "react-google-charts";
 import { offerServices  } from "../../../services/offer/offer.service";
-import { profileService} from "../../../services/profilelist";
+import { profileService} from "../../../services/profilelist/profilelist.service";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -34,8 +34,7 @@ class Offer extends Component {
         };
       };
 
-      buttonSubmit(e){
-        e.preventDefault();;
+      buttonSubmit(){
         let offer_id=0,
          accepted=false, 
          rejected=false, 
@@ -82,7 +81,7 @@ class Offer extends Component {
           <div class="col-2">
           {offerList!=null
           ? offerList.travel_award
-          : "Not avaiable"}
+          : "Not available"}
           </div>
         </div>
 
@@ -93,7 +92,7 @@ class Offer extends Component {
           <div class="col-2">
           {offerList!=null
           ? offerList.accomodation_award
-          : "Not avaiable"}
+          : "Not available"}
           </div>
         </div>
 
@@ -104,13 +103,13 @@ class Offer extends Component {
           <div class="col-2">
           {offerList!=null
           ? offerList.payment_required
-          : "Not avaiable"}
+          : "Not available"}
           </div>
         </div>
-        <p class="font-weight-bold">Please accept or reject this offer by {offerList!=null ? offerList.expiry_date : "<Expirery Date>"} </p>
+        <p class="font-weight-bold">Please accept or reject this offer by {offerList!=null ? offerList.expiry_date : "<Expiry Date>"} </p>
         <div class="row">
          <div class="col">
-          <button class="btn btn-danger" id="reject"onClick={
+          <button type="button" class="btn btn-danger" id="reject"onClick={
             ()=>{
               this.setState({
                 rejected:true
@@ -122,7 +121,7 @@ class Offer extends Component {
           </button>
           </div>
           <div class="col">
-          <button class="btn btn-success" id="accept" onClick={()=>{
+          <button type="button" class="btn btn-success" id="accept" onClick={()=>{
               this.setState({
                 accepted:true,
                 rejected:false,
@@ -192,13 +191,13 @@ class Offer extends Component {
         )
       }
 
-        if (error) 
+        if (error)
          return <div class="alert alert-danger" align="center">{error}</div>
         else 
-        if (offerList===null) 
-          return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
-        else
+        if (offerList!==null) 
           return this.displayOfferContent();
+        else
+          return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
    }
 }
 

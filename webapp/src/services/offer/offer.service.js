@@ -10,8 +10,7 @@ export const offerServices = {
 }
 
 function getOfferList(event_id){
-    let url = "/api/v1/offer?event_id=1" 
-    return axios.get(baseUrl + url, event_id,{
+    return axios.get(baseUrl + "/api/v1/offer?event_id=" +event_id,{
         headers: authHeader()
       })
       .then(function(response){
