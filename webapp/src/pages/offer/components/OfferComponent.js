@@ -2,10 +2,12 @@ import React, {Component} from "react";
 import {withRouter} from "react-router";
 import TextArea from "react";
 import {Chart} from "react-google-charts";
+import { userService } from "../../../services/user";
 import { offerServices  } from "../../../services/offer/offer.service";
 import { profileService} from "../../../services/profilelist/profilelist.service";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+let DEFAULT_USER_ID = process.env.REACT_APP_DEFAULT_USER_ID || 1;
 
 class Offer extends Component {
   
@@ -27,7 +29,7 @@ class Offer extends Component {
         };
       }
     
-
+      
       handleChange = field => {
         return event => {
           this.setState({
@@ -143,6 +145,18 @@ class Offer extends Component {
   </div>
       )}
 
+    componentWillMount(){
+      userService.get().then(result=> {
+        this.setState({
+            user:{
+              user_id:result.user_id
+            }
+        });
+        DEFAULT_USER_ID = result.user_id;
+      });
+
+    }
+
     componentDidMount() {
           this.getOffer();
           this.setState({
@@ -150,7 +164,7 @@ class Offer extends Component {
             loading: false,
             buttonLoading: false
           });
-          profileService.getUserProfile(user.user_id)
+          profileService.getUserProfile(DEFAULT_USER_ID)
           .then(results => {
               this.setState(
                   {
