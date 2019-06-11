@@ -8,6 +8,7 @@ from app.utils.auth import verify_token
 from app.registrationResponse.mixins import RegistrationResponseMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.users.models import AppUser
+from app.events.models import Event
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app import LOGGER
@@ -127,6 +128,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
+            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().name
+
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
@@ -143,7 +146,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed)
+            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
+                                   event_name)
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -198,7 +202,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, confirmed):
+    def send_confirmation(self, user, questions, answers, confirmed, event_name):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -216,7 +220,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                            question.description + "\nAnswer :" + _get_answer_value(
                                 answer, question) + "\n"
 
-            subject = 'Registration'
+            subject = event_name + ' Registration'
             greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
