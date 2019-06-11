@@ -17,10 +17,6 @@ class ViewProfileComponent extends Component {
         }
     }
 
-isUserNull(user){
-    return user === null;
-}
-
 componentDidMount(){
     const { id } = this.props.match.params;
     profileService.getUserProfile(id)
@@ -57,7 +53,7 @@ componentDidMount(){
                                 },
                             loading:false,
                             error: result.error,
-                            isNull: this.isUserNull(result.data)
+                            isNull: result.data === null
                         });
                     });
 }    

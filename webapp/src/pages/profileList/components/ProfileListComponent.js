@@ -33,7 +33,7 @@ class ProfileListComponent extends Component{
                             });
                     });                
  }
-onsub=(user_id)=>{
+onSubmit=(user_id)=>{
     console.log(user_id)
     window.location='/viewprofile/:'+user_id;
 }
@@ -46,7 +46,7 @@ onsub=(user_id)=>{
     const columns = [{Header:<div className="list-number">#</div> ,accessor:"response_id", Cell: props => <span className="number">{props.value}</span>},
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
                       accessor:u => <div className="">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
-                      Cell: props => <span onClick={()=>this.onsub(props.original.user_id)}>{props.value}</span>},
+                      Cell: props => <span onClick={()=>this.onSubmit(props.original.user_id)}>{props.value}</span>},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},
                      {Header:<div className="list-department">Department</div>,accessor:"department"},
