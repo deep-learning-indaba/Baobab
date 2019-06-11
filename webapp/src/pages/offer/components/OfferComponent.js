@@ -148,7 +148,7 @@ class Offer extends Component {
           .then(results => {
               this.setState(
                   {
-                    userProfile: results.List,
+                    userProfile: results,
                       loading: false,
                       error: results.error
                   });
