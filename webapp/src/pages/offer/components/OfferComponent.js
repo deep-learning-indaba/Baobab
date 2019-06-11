@@ -37,26 +37,18 @@ class Offer extends Component {
       buttonSubmit(){
          const {offer_id,accepted,rejected,rejected_reason} = this.state;
    
-        offerServices.updateOfferList(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
+        offerServices.updateOffer(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
         .then(response=>{
           if (response.msg === "succeeded") {
-            this.getofferList();
+            this.getoffer();
             this.setState({
               addedSucess: true,
-              conflict: false,
               notFound: false
             });
-          } else if (response.msg === "404") {
+          } else if (response.error) {
             this.setState({
               addedSucess: false,
-              notFound: true,
-              conflict: false
-            });
-          } else if (response.msg === "409") {
-            this.setState({
-              notFound: false,
-              addedSucess: false,
-              conflict: true
+              notFound: true
             });
           }
         })
@@ -103,7 +95,7 @@ class Offer extends Component {
           : "Not available"}
           </div>
         </div>
-        <p class="font-weight-bold">Please accept or reject this offer by {offerList!=null ? offerList.expiry_date : "<Expiry Date>"} </p>
+        <p class="font-weight-bold">Please accept or reject this offer by {offerList!=null ? offerList.expiry_date : "unable to load expiry date"} </p>
         <div class="row">
          <div class="col">
           <button type="button" class="btn btn-danger" id="reject"onClick={
@@ -151,7 +143,7 @@ class Offer extends Component {
       )}
 
     componentDidMount() {
-          this.getOfferList();
+          this.getOffer();
           profileService.getProfilesList(DEFAULT_EVENT_ID)
           .then(results => {
               this.setState(
@@ -167,9 +159,9 @@ class Offer extends Component {
           });
       }
    
-      getOfferList (){
+      getOffer(){
         this.setState({loading:true});
-        offerServices.getOfferList(DEFAULT_EVENT_ID).then(result => {
+        offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
           this.setState({
             loading:false,
             offerList:result.data,

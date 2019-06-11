@@ -4,24 +4,24 @@ import {authHeader} from '../base.service';
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const offerServices = {
-    getOfferList,
-    addOfferList,
-    updateOfferList
+    getOffer,
+    addOffer,
+    updateOffer
 }
 
-function getOfferList(event_id){
+function getOffer(event_id){
     return axios.get(baseUrl + "/api/v1/offer?event_id=" +event_id,{
         headers: authHeader()
       })
       .then(function(response){
         return{
-            offerList: response.data,
+            offer: response.data,
             error:""
         };
       })
       .catch(function(error){
           return{
-            offerList:null,
+            offer:null,
               error:
                 error.response && error.response.data
                 ? error.response.data.message
@@ -31,7 +31,7 @@ function getOfferList(event_id){
 
 }
 
-function addOfferList(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accomodation_award){
+function addOffer(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accomodation_award){
     let data = {
         user_id:user_id, 
         event_id:event_id,
@@ -50,25 +50,18 @@ function addOfferList(user_id, event_id,offer_date,expiry_date,payment_required,
                 response: response
             }
         })
-        .catch(function(error){
-            if (error.response.status===404){
-                return {message:"404"}
-            }
-            else if (error.response.status===409){
-                return {message: "409"}
-            }
-            else{
-                return{
-                    message: "Failed",
-                    error: (error.response && error.response.data)
-                    ? error.response.data.message
-                    : error.message
-                }
-            }
-        })
+        .catch(function(error) {
+            return {
+              message: null,
+              error:
+                error.response && error.response.data
+                  ? error.response.data.message
+                  : error.message
+            };
+          });
 }
 
-function updateOfferList(offer_id, event_id, accepted, rejected, rejected_reason){
+function updateOffer(offer_id, event_id, accepted, rejected, rejected_reason){
     let data = {
         offer_id:offer_id, 
         event_id:event_id,
@@ -85,17 +78,13 @@ function updateOfferList(offer_id, event_id, accepted, rejected, rejected_reason
                 message:"succeeded",
                 response:response
             }
-        })
-        .catch(function(error){
-            if (error.response.status==="404") {
-                return {message:"404"}
-            }else{
-                return{
-                message:"Failed",
-                    error:(error.response && error.response.data)
-                    ? error.response.data.message
-                    : error.message
-                }
-            }
-        })
+        }).catch(function(error) {
+            return {
+              message: null,
+              error:
+                error.response && error.response.data
+                  ? error.response.data.message
+                  : error.message
+            };
+          });     
 }
