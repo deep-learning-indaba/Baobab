@@ -35,7 +35,7 @@ function getOffer(eventId) {
 
 function getRegistrationForm(eventId, offerId) {
   return axios
-    .get(baseUrl + "/api/v1/registration-form?event_id=" + eventId , + "?offer_id=" + offerId, {
+    .get(baseUrl + "/api/v1/registration-form?event_id=" + eventId + "&offer_id=" + offerId, {
       headers: authHeader()
     })
     .then(function(response) {
