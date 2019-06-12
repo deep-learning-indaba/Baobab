@@ -275,6 +275,7 @@ class ProfileForm extends Component {
             </div>
             <div class={colClassNameSurname}>
               <FormTextBox
+                disabled
                 id={validationFields.firstName.name}
                 type="text"
                 placeholder={validationFields.firstName.display}
@@ -291,6 +292,7 @@ class ProfileForm extends Component {
                 onChange={this.handleChange(validationFields.lastName)}
                 value={lastName}
                 label={validationFields.lastName.display}
+                editable={false}
               />
             </div>
             <div class={colClassNameTitle}>

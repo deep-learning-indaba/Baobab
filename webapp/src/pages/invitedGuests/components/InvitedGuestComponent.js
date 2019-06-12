@@ -31,7 +31,7 @@ class InvitedGuests extends Component {
       buttonClicked: false,
       conflict: false
     };
-  }
+  } 
   getGuestList() {
     this.setState({ loading: true });
     invitedGuestServices.getInvitedGuestList(DEFAULT_EVENT_ID).then(result => {
