@@ -152,12 +152,12 @@ class Offer extends Component {
           let currentUser = JSON.parse(localStorage.getItem("user"));
           profileService.getUserProfile(currentUser.id)
           .then(results => {
-              this.setState(
-                  {
-                    userProfile: results,
-                      loading: false,
-                      error: results.error
-                  });
+            this.setState(
+              {
+                userProfile: results,
+                loading: false,
+                error: results.error
+              });
           });       
       }
    
