@@ -20,7 +20,7 @@ class Offer extends Component {
           rejected:false,
           showReasonBox:false,
           accepted: false,
-          offerList: [],
+          offer: [],
           category:""
         };
       }
@@ -54,7 +54,7 @@ class Offer extends Component {
       }
     
     displayOfferContent = (e) => {
-      const {offerList,userProfile} = this.state;
+      const {offer,userProfile} = this.state;
       return(   
       <div className="container"  align="center" >
       <p className="h5 pt-5">We are pleased to offer you a place at the Deep Learning Indaba 2019. Please see the details of this offer below </p>
@@ -67,9 +67,11 @@ class Offer extends Component {
             Travel Award:
           </div>
           <div class="col-2">
-          {offerList!=null
-          ? offerList.travel_award
-          : "Not available"}
+          {offer != null
+              ? offer.travel_award
+              ? "True"
+              : "not active"
+              : "Not available"}
           </div>
         </div>
 
@@ -78,8 +80,10 @@ class Offer extends Component {
             Accommodation Award:
           </div>
           <div class="col-2">
-          {offerList!=null
-          ? offerList.accomodation_award
+          {offer!=null
+          ? offer.accomodation_award
+          ? "True"
+          : "not active"
           : "Not available"}
           </div>
         </div>
@@ -89,12 +93,14 @@ class Offer extends Component {
             Payment Required:
           </div>
           <div class="col-2">
-          {offerList!=null
-          ? offerList.payment_required
+          {offer!=null
+          ? offer.payment_required
+          ? "True"
+          : "not required"
           : "Not available"}
           </div>
         </div>
-        <p class="font-weight-bold">Please accept or reject this offer by {offerList!=null ? offerList.expiry_date : "unable to load expiry date"} </p>
+        <p class="font-weight-bold">Please accept or reject this offer by {offer!=null ? offer.expiry_date : "unable to load expiry date"} </p>
         <div class="row">
          <div class="col">
           <button type="button" class="btn btn-danger" id="reject"onClick={
@@ -166,14 +172,14 @@ class Offer extends Component {
         offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
           this.setState({
             loading:false,
-            offerList:result.data,
+            offerList:result.offer,
             error:result.error
           });
           });
       }
       
     render(){
-      const {loading, offerList, error} = this.state;
+      const {loading, offer, error} = this.state;
       const loadingStyle = {
         "width": "3rem",
         "height": "3rem"
@@ -192,7 +198,7 @@ class Offer extends Component {
         if (error)
          return <div class="alert alert-danger" align="center">{error}</div>
         else 
-        if (offerList!==null) 
+        if (offer!==null) 
           return this.displayOfferContent();
         else
           return <div className="h5 pt-5" align="center"> You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication</div>
