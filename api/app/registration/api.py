@@ -68,6 +68,7 @@ def offer_update_info(offer_entity):
 
 class OfferAPI(OfferMixin, restful.Resource):
     offer_fields = {
+        'id':fields.Integer,
         'user_id': fields.Integer,
         'event_id': fields.Integer,
         'offer_date': fields.DateTime('iso8601'),
@@ -187,11 +188,18 @@ def registration_form_info(registration_form):
 
 class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
+    option_fields = {
+        'value': fields.String,
+        'label': fields.String
+    }
+
     registration_question_fields = {
+        'id': fields.Integer,
         'description': fields.String,
         'type': fields.String,
         'is_required': fields.Boolean,
-        'order': fields.Integer
+        'order': fields.Integer,
+        'options': fields.List(fields.Nested(option_fields))
     }
 
     registration_section_fields = {
@@ -203,6 +211,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
     }
 
     registration_form_fields = {
+        'id':fields.Integer,
         'event_id': fields.Integer,
         'registration_sections': fields.List(fields.Nested(registration_section_fields))
     }
@@ -213,7 +222,6 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         offer_id = args['offer_id']
-
         try:
             offer = db.session.query(Offer).filter(
                 Offer.id == offer_id).first()
@@ -334,6 +342,8 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         section_id = args['section_id']
+
+
 
         try:
 
