@@ -148,17 +148,14 @@ class Offer extends Component {
 
     componentWillMount() {
           this.getOffer();
-          this.setState({
-            
-            loading: false,
-            buttonLoading: false
+          this.setState({   
+            loading: false
           });
 
           let currentUser = JSON.parse(localStorage.getItem("user"));
           profileService.getUserProfile(currentUser.id)
           .then(results => {
-            this.setState(
-              {
+            this.setState({
                 userProfile: results,
                 loading: false,
                 error: results.error
