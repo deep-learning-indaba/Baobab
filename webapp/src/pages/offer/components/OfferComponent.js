@@ -35,19 +35,17 @@ class Offer extends Component {
       };
 
       buttonSubmit(){
-         const {offer_id,accepted,rejected,rejected_reason} = this.state;
+        const {offer_id,accepted,rejected,rejected_reason} = this.state;
    
         offerServices.updateOffer(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
         .then(response=>{
           if (response.msg === "succeeded") {
             this.setState({
-              addedSucess: true,
-              notFound: false
+              offer:response.data
             });
           } else if (response.error) {
             this.setState({
-              addedSucess: false,
-              notFound: true
+              error:response.error
             });
           }
         })
@@ -56,93 +54,95 @@ class Offer extends Component {
     displayOfferContent = (e) => {
       const {offer,userProfile} = this.state;
       return(   
-      <div className="container"  align="center" >
+      <div className="container" >
       <p className="h5 pt-5">We are pleased to offer you a place at the Deep Learning Indaba 2019. Please see the details of this offer below </p>
 
-      <form class="pt-5 ">
-        <p class="font-weight-bold">You have been accepted as a  {userProfile!=null ? userProfile.user_category: "<Category>"} </p>
+      <form class="form pt-5 " >
+        <p className="card p">You have been accepted as a  {userProfile!=null ? userProfile.user_category: "<Category>"} </p>
+        <div className="white-background card form">
         <p class="font-weight-bold">Your status</p>
-        <div class="row">
-          <div class="col-8 font-weight-bold">
-            Travel Award:
+          <div class="row ">
+            <div class="col-8 font-weight-bold">
+              Travel Award:
+            </div>
+            <div class="col-2">
+            {offer != null
+                ? offer.travel_award
+                ? "Allocated"
+                : "Not Allocated"
+                : "Not available"}
+            </div>
           </div>
-          <div class="col-2">
-          {offer != null
-              ? offer.travel_award
-              ? "Allocated"
-              : "Not Allocated"
-              : "Not available"}
-          </div>
-        </div>
 
-        <div class="row">
-          <div class="col-8 font-weight-bold">
-            Accommodation Award:
+          <div class="row">
+            <div class="col-8 font-weight-bold">
+              Accommodation Award:
+            </div>
+            <div class="col-2">
+            {offer!=null
+            ? offer.accomodation_award
+            ? "Allocated"
+            : "Not Allocated"
+            : "Not available"}
+            </div>
           </div>
-          <div class="col-2">
-          {offer!=null
-          ? offer.accomodation_award
-          ? "Allocated"
-          : "Not Allocated"
-          : "Not available"}
-          </div>
-        </div>
 
-        <div class="row pb-5 ">
-          <div class="col-8 font-weight-bold">
-            Payment Required:
+          <div class="row pb-5 ">
+            <div class="col-8 font-weight-bold">
+              Payment Required:
+            </div>
+            <div class="col-2">
+            {offer!=null
+            ? offer.payment_required
+            ? "Required"
+            : "Not Required"
+            : "Not available"}
+            </div>
           </div>
-          <div class="col-2">
-          {offer!=null
-          ? offer.payment_required
-          ? "Required"
-          : "Not Required"
-          : "Not available"}
-          </div>
-        </div>
-        <p class="font-weight-bold">Please accept or reject this offer by {offer!=null ? offer.expiry_date : "unable to load expiry date"} </p>
-        <div class="row">
-         <div class="col">
-          <button type="button" class="btn btn-danger" id="reject"onClick={
-            ()=>{
-              this.setState({
-                rejected:true,
-                showReasonBox:true
-              },
-              this.buttonSubmit());
-            }
-          } >
-              Reject
-          </button>
-          </div>
+          <p class="font-weight-bold">Please accept or reject this offer by {offer!=null ? offer.expiry_date : "unable to load expiry date"} </p>
+          <div class="row">
           <div class="col">
-          <button type="button" class="btn btn-success" id="accept" onClick={()=>{
-              this.setState({
-                accepted:true
-              },
-              this.buttonSubmit());
-          }}>
-              Accept
-          </button>
-          </div>
-        </div> 
+            <button type="button" class="btn btn-danger" id="reject"onClick={
+              ()=>{
+                this.setState({
+                  rejected:true,
+                  showReasonBox:true
+                },
+                this.buttonSubmit());
+              }
+            } >
+                Reject
+            </button>
+            </div>
+            <div class="col">
+            <button type="button" class="btn btn-success" id="accept" onClick={()=>{
+                this.setState({
+                  accepted:true
+                },
+                this.buttonSubmit());
+            }}>
+                Accept
+            </button>
+            </div>
+          </div> 
 
-        <div class="form-group">
-         { this.state.showReasonBox ? 
-          <div class="form-group mr-5  ml-5 pt-5" >
-          <textarea class="form-control pr-5 pl-10" id="textArea" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
-          <button type="button" class="btn" id="apply" onClick={ ()=>{
-              this.setState({
-                showReasonBox:false
-              },
-              this.buttonSubmit());
-            }}>apply</button>
-        </div>
-        :""
-        }
-        </div>
-      
-      </form>
+          <div class="form-group">
+          { this.state.showReasonBox ? 
+            <div class="form-group mr-5  ml-5 pt-5" >
+            <textarea class="form-control reason-box pr-5 pl-10" onChange={()=>{this.handleChange(this.rejected_reason)}}  placeholder="Enter rejection message"></textarea>
+            <button type="button" class="btn-apply" onClick={ ()=>{
+                this.setState({
+                  showReasonBox:false
+                },
+                this.buttonSubmit());
+              }}>apply</button>
+          </div>
+          :""
+          }
+          </div>
+        
+          </div>
+        </form>
     </div>
       )}
 

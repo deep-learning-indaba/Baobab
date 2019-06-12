@@ -1,0 +1,58 @@
+
+@media (min-width: 652px) { 
+    .pad-top-30-md{
+            padding-top: 30px;
+    }
+}
+
+.white-background{
+    background-color: #ffffff
+}
+
+.form{
+    align-content: center;
+  
+    text-align: center;
+}
+
+.container{
+    text-align: center;
+}
+
+.box-shadow{
+    box-shadow: 5px 9px 5px -4px rgba(0,0,0,0.21);
+}
+
+.stretched{
+    width:100%;
+}
+
+
+.card{
+    margin-top: 30px;
+    background-color: white;
+    margin-top: 30px;
+    border-radius: 5px;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    box-shadow: 5px 9px 5px -4px rgba(0,0,0,0.21);
+}
+
+.card.flat-card{
+    box-shadow:none;
+}
+
+.reason-box{
+    background-color: #393e44  ;
+}
+
+.btn-apply{
+    border:linen;
+    align-content: flex-end;
+}   
+
+.p{
+    font-weight:bold; 
+}
