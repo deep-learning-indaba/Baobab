@@ -33,7 +33,9 @@ class ProfileListComponent extends Component{
                             });
                     });                
  }
-
+onSubmit=(user_id)=>{
+    window.location='/viewprofile/:'+user_id;
+}
  render(){
     const {List, isEmpty,loading,error} = this.state;
     const loadingStyle = {
@@ -41,7 +43,9 @@ class ProfileListComponent extends Component{
         "height": "3rem"
       }
     const columns = [{Header:<div className="list-number">#</div> ,accessor:"response_id", Cell: props => <span className="number">{props.value}</span>},
-                     {id: "user", Header: <div className="list-fullname">Full-Name</div>,accessor:u => u.user_title+" "+ u.firstname+" "+u.lastname},
+                     {id: "user", Header: <div className="list-fullname">Full-Name</div>,
+                      accessor:u => <div className="">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
+                      Cell: props => <span onClick={()=>this.onSubmit(props.original.user_id)}>{props.value}</span>},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},
                      {Header:<div className="list-department">Department</div>,accessor:"department"},
@@ -82,8 +86,6 @@ class ProfileListComponent extends Component{
                             minRows={0}
                         /> </div>)}
                 </div>
-            
-           //
         );
 }
 

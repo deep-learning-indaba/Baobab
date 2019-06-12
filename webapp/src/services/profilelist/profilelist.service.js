@@ -35,6 +35,6 @@ function getUserProfile(user_id){
                 error.response.data.message:
                 error.message }
         });
-    }
+}
 
-    
+

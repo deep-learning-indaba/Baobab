@@ -13,6 +13,7 @@ import ReviewAssignment from "./pages/reviewAssignment";
 import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
 import ProfileList from "./pages/profileList";
+import ViewProfile from "./pages/viewprofile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import InvitedGuests from "./pages/invitedGuests";
@@ -297,6 +298,8 @@ class App extends Component {
                 <PrivateRoute exact path="/review/:id" component={Review} />
                 <PrivateRoute exact path="/profile-list" component={ProfileList} />
                 <PrivateRoute exact path="/offer" component={Offer} />
+                <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile}/>
+
               </Switch>
             </div>
           </div>
