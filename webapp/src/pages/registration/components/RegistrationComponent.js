@@ -279,6 +279,7 @@ class RegistrationComponent extends Component {
                             key={"i_" + key}
                             showError={validationError}
                             errorText={validationError}
+                            required={question.is_required && !answer}
                         />
                     );
                 case SINGLE_CHOICE:
@@ -379,7 +380,7 @@ class RegistrationComponent extends Component {
                         <div>Something went wrong, please try again</div>
                 </div>
                 {this.state.questionSections.length > 0 && !this.state.formSucess ? (
-                    <div>
+                    <form onSubmit={() => this.buttonSubmit()}>
                         {this.state.questionSections.map(section => (
                             <div class="card stretched">
                                 <h3>{section.name}</h3>
@@ -401,13 +402,13 @@ class RegistrationComponent extends Component {
 
                         ))}
                         <button
-                            type="button"
+                            type="submit"
                             class="btn btn-primary stretched margin-top-32"
-                            onClick={() => this.buttonSubmit()}
+                            // onClick={() => this.buttonSubmit()}
                         >
                             Submit reponse
                 </button>
-                    </div>
+                    </form>
                 ) : (
                         <div className={this.state.formSucess != true && this.state.formFailure != true ? "alert alert-danger":"display-none"}>No registration form available</div>
                     )}
