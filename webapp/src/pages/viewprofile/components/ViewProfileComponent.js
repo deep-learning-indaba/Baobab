@@ -19,7 +19,8 @@ class ViewProfileComponent extends Component {
 
 componentDidMount(){
     const { id } = this.props.match.params;
-    profileService.getUserProfile(id)
+    let user_id = parseInt(id.toString().split(":")[1],10);
+    profileService.getUserProfile(user_id)
                     .then((result) => {
                      var date = result.user_dateOfBirth;
                          if(date) date = date.split("T")[0];

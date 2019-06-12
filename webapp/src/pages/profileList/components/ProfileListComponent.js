@@ -34,7 +34,6 @@ class ProfileListComponent extends Component{
                     });                
  }
 onSubmit=(user_id)=>{
-    console.log(user_id)
     window.location='/viewprofile/:'+user_id;
 }
  render(){
