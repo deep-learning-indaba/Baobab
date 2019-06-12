@@ -35,10 +35,20 @@ class RegistrationComponent extends Component {
             uploadPercentComplete: 0,
             answers:[],
             registrationId:false,
-            registrationFormId:false
+            registrationFormId:false,
+            formSucess:false,
+            formFailure:false
         }
 
     }
+
+    resetPage () {
+        this.componentDidMount();
+        this.setState({
+             formSucess:false
+        });
+    }
+
     getDescription = (question) => {
         if (question.description) {
             return question.description;
@@ -203,34 +213,35 @@ class RegistrationComponent extends Component {
             registration_form_id: this.state.registrationFormId,
             answers:this.state.answers
         }
-        
-        registrationService.submitResponse(data,this.state.registrationId ? true : false).then(response => {
-            console.log(response);
-        });
-       
-        
-
-        // let scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
-        // if (this.isValidated()) {
-        //     this.setState({
-        //         isSubmitting: true
-        //     }, () => {
-        //         const shouldUpdate = this.state.form.review_response;
-        //         reviewService
-        //             .submit(this.state.form.response.id, this.state.form.review_form.id, scores, shouldUpdate)
-        //             .then(response => {
-        //                 if (response.error) {
-        //                     this.setState({
-        //                         error: response.error,
-        //                         isSubmitting: false
-        //                     });
-        //                 }
-        //                 else {
-        //                     this.loadForm();
-        //                 }
-        //             });
-        //     })
-        // }
+        {
+            this.setState({
+                isLoading:true
+            }, () => {
+                registrationService.submitResponse(data,this.state.registrationId ? true : false).then(response => {
+                    if(response.error === "" && response.form.status === 200)
+                    {
+                        this.setState({
+                            formFailure:false,
+                            formSucess:true,
+                            isLoading:false
+                        });
+                    }
+                    else{
+                        this.setState({
+                            formFailure:true,
+                            formSucess:false,
+                            isLoading:false
+                        });
+                    }
+                }).catch(error => {
+                    this.setState({
+                        formFailure:true,
+                        formSucess:false,
+                        isLoading:false
+                    });
+                });
+            });
+        }
      }
 
     render() {
@@ -353,12 +364,26 @@ class RegistrationComponent extends Component {
 
         return (
             <div className="registration container-fluid pad-top-30-md">
-                {this.state.questionSections.length > 0 ? (
+                <div className={this.state.formSucess ? "display-none":"stretched"}>
+                    <h2>Registration</h2>
+                </div>
+                <div className={this.state.formSucess ? "card flat-card success stretched":"display-none"}>
+                        <div >Sucesfully submitted</div>
+                        <div className="col-12">
+                        <button type="button"
+                                class="btn btn-primary pull-right"
+                                onClick={() => this.resetPage()}>Change your answers</button>
+                        </div>
+                </div>
+                <div className={this.state.formFailure ? "alert alert-danger stretched":"display-none"}>
+                        <div>Something went wrong, please try again</div>
+                </div>
+                {this.state.questionSections.length > 0 && !this.state.formSucess ? (
                     <div>
                         {this.state.questionSections.map(section => (
-                            <div class="card">
-                                <div>{section.name}</div>
-                                <div>{section.description}</div>
+                            <div class="card stretched">
+                                <h3>{section.name}</h3>
+                                <div className="padding-v-15">{section.description}</div>
                                 
                                 {section.registration_questions.map(question => (
                                     
@@ -384,7 +409,7 @@ class RegistrationComponent extends Component {
                 </button>
                     </div>
                 ) : (
-                        <div class="alert alert-danger">No registration form available</div>
+                        <div className={this.state.formSucess != true && this.state.formFailure != true ? "alert alert-danger":"display-none"}>No registration form available</div>
                     )}
             </div>
         )
