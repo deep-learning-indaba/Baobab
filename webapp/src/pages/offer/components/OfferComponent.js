@@ -69,8 +69,8 @@ class Offer extends Component {
           <div class="col-2">
           {offer != null
               ? offer.travel_award
-              ? "True"
-              : "not active"
+              ? "Allocated"
+              : "Not Allocated"
               : "Not available"}
           </div>
         </div>
@@ -82,8 +82,8 @@ class Offer extends Component {
           <div class="col-2">
           {offer!=null
           ? offer.accomodation_award
-          ? "True"
-          : "not active"
+          ? "Allocated"
+          : "Not Allocated"
           : "Not available"}
           </div>
         </div>
@@ -95,8 +95,8 @@ class Offer extends Component {
           <div class="col-2">
           {offer!=null
           ? offer.payment_required
-          ? "True"
-          : "not required"
+          ? "Required"
+          : "Not Required"
           : "Not available"}
           </div>
         </div>
@@ -172,7 +172,7 @@ class Offer extends Component {
         offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
           this.setState({
             loading:false,
-            offerList:result.offer,
+            offer:result.offer,
             error:result.error
           });
           });
