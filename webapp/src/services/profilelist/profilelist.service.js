@@ -4,7 +4,8 @@ import { authHeader } from "../base.service";
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const profileService = {
-    getProfilesList
+    getProfilesList,
+    getUserProfile
 }
 
 function getProfilesList(event_id){
@@ -20,4 +21,18 @@ function getProfilesList(event_id){
                       ? error.response.data.message :
                          error.message }
         });
+}
+
+function getUserProfile(user_id){
+    return axios
+            .get(baseUrl+"/api/v1/userprofile?user_id="+user_id,{headers: authHeader()})
+            .then((response)=>{ 
+                return  response.data;
+                })
+            .catch((error)=>{
+                return { user:{},
+                         error: error.response && error.response.data ?
+                                error.response.data.message:
+                                error.message }
+            });
 }
