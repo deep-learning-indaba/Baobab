@@ -57,7 +57,7 @@ function getRegistrationForm(eventId, offerId) {
 
 function getRegistrationResponse(id) {
   return axios
-    .get(baseUrl + "/api/v1/registration-response?id=" + id, {
+    .get(baseUrl + "/api/v1/registration-response", {
       headers: authHeader()
     })
     .then(function(response) {
@@ -77,21 +77,17 @@ function getRegistrationResponse(id) {
     });
 }
 
-function submitResponse(responseId, reviewFormId, scores, shouldUpdate) {
-  let review = {
-    response_id: responseId,
-    review_form_id: reviewFormId,
-    scores: scores
-  };
+function submitResponse(data,shouldUpdate) {
+  
 
   const promise = shouldUpdate 
-      ? axios.put(baseUrl + "/api/v1/registartion-response", review, { headers: authHeader() })
-      : axios.post(baseUrl + "/api/v1/registration-response", review, { headers: authHeader() })
-  
+      ? axios.put(baseUrl + "/api/v1/registration-response", data, { headers: authHeader() })
+      : axios.post(baseUrl + "/api/v1/registration-response", data, { headers: authHeader() })
   return promise
     .then(function(response) {
       return {
-        error: ""
+        error: "",
+        form:response
       };
     })
     .catch(function(error) {
