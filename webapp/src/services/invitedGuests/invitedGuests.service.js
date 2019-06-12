@@ -13,7 +13,7 @@ function getInvitedGuestList(eventId) {
   return axios
     .get(baseUrl + "/api/v1/invitedGuestList?event_id=" + eventId, {
       headers: authHeader()
-    })
+    })  
     .then(function (response) {
       return {
         form: response.data,

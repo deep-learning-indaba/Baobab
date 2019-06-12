@@ -25,14 +25,16 @@ function getProfilesList(event_id){
 
 function getUserProfile(user_id){
     return axios
-            .get(baseUrl+"/api/v1/userprofile?user_id="+user_id,{headers: authHeader()})
-            .then((response)=>{ 
-                return  response.data;
-                })
-            .catch((error)=>{
-                return { user:{},
-                         error: error.response && error.response.data ?
-                                error.response.data.message:
-                                error.message }
-            });
+        .get(baseUrl+"/api/v1/userprofile?user_id="+user_id,{headers: authHeader()})
+        .then((response)=>{
+            return response.data;
+        })
+        .catch((error)=>{
+            return { user:{},
+                error: error.response && error.response.data ?
+                error.response.data.message:
+                error.message }
+        });
 }
+
+

@@ -18,6 +18,7 @@ import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import InvitedGuests from "./pages/invitedGuests";
 import CreateInvitedGuests from "./pages/createInvitedGuest";
+import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -180,12 +181,19 @@ class App extends Component {
                       >    
                        Invited Guests
                       </NavLink>
-                    <NavLink
+                      <NavLink
                       to="/profile-list"
                       className="dropdown-item"
                       onClick={this.toggleMenu}
-                    >
+                     >
                       Applicant Profiles
+                      </NavLink>
+                      <NavLink
+                      to="/offer"
+                      className="dropdown-item"
+                      onClick={this.toggleMenu}
+                     >
+                      Offer
                     </NavLink>
                     </div>
                   </li>
@@ -289,7 +297,9 @@ class App extends Component {
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
                 <PrivateRoute exact path="/profile-list" component={ProfileList} />
+                <PrivateRoute exact path="/offer" component={Offer} />
                 <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile}/>
+
               </Switch>
             </div>
           </div>

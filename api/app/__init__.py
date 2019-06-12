@@ -41,6 +41,7 @@ from events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
 from reviews.models import ReviewForm, ReviewQuestion
+from registration.models import Offer, RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
 
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
@@ -140,3 +141,9 @@ admin.add_view(BaobabModelView(ResponseReviewer, db.session))
 admin.add_view(BaobabModelView(UserComment, db.session))
 admin.add_view(BaobabModelView(ReviewForm, db.session))
 admin.add_view(BaobabModelView(ReviewQuestion, db.session))
+admin.add_view(BaobabModelView(Offer, db.session))
+admin.add_view(BaobabModelView(RegistrationForm, db.session))
+admin.add_view(BaobabModelView(RegistrationSection, db.session))
+admin.add_view(BaobabModelView(RegistrationQuestion, db.session))
+admin.add_view(BaobabModelView(Registration, db.session))
+admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
