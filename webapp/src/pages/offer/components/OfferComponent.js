@@ -12,15 +12,14 @@ class Offer extends Component {
   
         this.state = {
           user:{},
-          userProfile : [],
+          userProfile : {},
           loading: true,
           error: "",
-          offer_id: null,
           rejected_reason:"",
           rejected:false,
           showReasonBox:false,
           accepted: false,
-          offer: [],
+          offer: {},
           category:""
         };
       }
@@ -35,9 +34,9 @@ class Offer extends Component {
       };
 
       buttonSubmit(){
-        const {offer_id,accepted,rejected,rejected_reason} = this.state;
+        const {offer,accepted,rejected,rejected_reason} = this.state;
    
-        offerServices.updateOffer(offer_id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
+        offerServices.updateOffer(offer.id, DEFAULT_EVENT_ID, accepted, rejected, rejected_reason)
         .then(response=>{
           if (response.msg === "succeeded") {
             this.setState({
@@ -175,7 +174,7 @@ class Offer extends Component {
             offer:result.offer,
             error:result.error
           });
-          });
+        });
       }
       
     render(){
