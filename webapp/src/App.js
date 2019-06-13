@@ -145,19 +145,28 @@ class App extends Component {
                     >
                       Apply
                     </NavLink>
-                  </li>
-                )}
-                
-                <li class="nav-item"> 
                     <NavLink
-                      to="/offer"
+                      to="/registration"
                       activeClassName="nav-link active"
                       className="nav-link"
                       onClick={this.toggleMenu}
-                     >
-                      Offer
+                    >
+                      Registration
                     </NavLink>
                   </li>
+
+                )}
+
+                <li class="nav-item">
+                  <NavLink
+                    to="/offer"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Offer
+                    </NavLink>
+                </li>
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
                     <a
@@ -186,26 +195,26 @@ class App extends Component {
                       >
                         Review Assignment
                       </NavLink>
-                      <NavLink 
+                      <NavLink
                         to="/invitedGuests"
                         className="dropdown-item"
                         onClick={this.toggleMenu}
-                      >    
-                       Invited Guests
+                      >
+                        Invited Guests
                       </NavLink>
-		      <NavLink
-                      to="/offer"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
-                     >
-                      Offer
+                      <NavLink
+                        to="/offer"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Offer
                     </NavLink>
                       <NavLink
-                      to="/profile-list"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
-                     >
-                      Applicant Profiles
+                        to="/profile-list"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Applicant Profiles
                       </NavLink>
                     </div>
                   </li>
@@ -311,7 +320,7 @@ class App extends Component {
                 <PrivateRoute exact path="/profile-list" component={ProfileList} />
                 <PrivateRoute exact path="/offer" component={Offer} />
                 <PrivateRoute exact path="/registration" component={Registration} />
-                <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile}/>
+                <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile} />
 
               </Switch>
             </div>

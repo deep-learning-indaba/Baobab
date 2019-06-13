@@ -106,6 +106,8 @@ class RegistrationComponent extends Component {
 
     componentDidMount() {
         registrationService.getOffer(DEFAULT_EVENT_ID).then(result => {
+            if(result.error == "" && result.form != null)
+            {
             this.setState({
                 offer: result.form,
                 error: result.error
@@ -136,6 +138,12 @@ class RegistrationComponent extends Component {
                     }
                 });
             });
+        }
+            else{
+                this.setState({
+                    isLoading: false
+                });
+            }
         })
     }
 
