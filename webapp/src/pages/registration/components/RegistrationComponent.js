@@ -127,7 +127,7 @@ class RegistrationComponent extends Component {
                                 });
                             }
 
-                        })
+                        }).catch(error => {})
                         this.setState({
                             questionSections: questionSections,
                             registrationFormId: result.form.id,
@@ -142,6 +142,7 @@ class RegistrationComponent extends Component {
 
 
     handleUploadFile = (file) => {
+        console.log(file);
         this.setState({
             uploading: true
         }, () => {
@@ -154,6 +155,7 @@ class RegistrationComponent extends Component {
                 if (response.fileId && this.props.onChange) {
                     this.props.onChange(this.props.question, response.fileId);
                 }
+                console.log(response);
                 this.setState({
                     uploaded: response.fileId !== "",
                     uploadError: response.error,
@@ -287,7 +289,7 @@ class RegistrationComponent extends Component {
                             key={"i_" + key}
                             showError={validationError}
                             errorText={validationError}
-                            required={question.is_required && !answer}
+                            required={question.is_required}
                         />
                     );
                 case LONG_TEXT[0]:
