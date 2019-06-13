@@ -165,41 +165,6 @@ class RegistrationComponent extends Component {
         })
     }
 
-    // validate() {
-    //     let errors = [];
-    //     let answers = this.state.answers;
-    //     let id = event.target.id;
-    //     let answer = answers.find(a => a.registration_question_id === id);
-
-    //     if (question.is_required && (!answer || !answer.value)) {
-    //         errors.push("An answer is required.");
-    //     }
-    //     return errors;
-    // }
-
-
-    // isValidated = () => {
-    //     const validatedModels = this.state.questionModels.map(q => {
-    //         return {
-    //             ...q,
-    //             validationError: this.validate(q)
-    //         };
-    //     });
-
-    //     const isValid = !validatedModels.some(v => v.validationError);
-
-    //     this.setState(
-    //         {
-    //             questionModels: validatedModels,
-    //             hasValidated: true,
-    //             validationStale: false,
-    //             isValid: isValid
-    //         }
-    //     );
-
-    //     return isValid;
-    // };
-
     buttonSubmit = () => {
 
         let data = {
@@ -268,7 +233,8 @@ class RegistrationComponent extends Component {
                             name={this.id}
                             type="text"
                             label={question.description}
-                            placeholder={answer ? answer.value : question.placeholder}
+                            value={answer ? answer.value : answer}
+                            placeholder = {question.placeholder}
                             onChange={this.handleChange}
                             key={"i_" + key}
                             showError={validationError}
