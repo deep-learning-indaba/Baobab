@@ -146,6 +146,17 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                
+                <li class="nav-item"> 
+                    <NavLink
+                      to="/offer"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                     >
+                      Offer
+                    </NavLink>
+                  </li>
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
                     <a
@@ -188,13 +199,6 @@ class App extends Component {
                      >
                       Applicant Profiles
                       </NavLink>
-                      <NavLink
-                      to="/offer"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
-                     >
-                      Offer
-                    </NavLink>
                     </div>
                   </li>
                 )}
