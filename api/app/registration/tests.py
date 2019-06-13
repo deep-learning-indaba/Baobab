@@ -323,20 +323,22 @@ class RegistrationTest(ApiTestCase):
         assert response.status_code == 201
         assert data['registration_form_id'] == 1
 
-    # def test_get_section(self):
-    #     self.seed_static_data()
-    #     section_id = 1
-    #     url = "/api/v1/registration-section?section_id=%d" % (
-    #         section_id)
-    #     LOGGER.debug(url)
-    #     response = self.app.get(url, headers=self.headers)
-    #
-    #     if response.status_code == 403:
-    #         return
-    #
-    #     LOGGER.debug(
-    #         "form: {}".format(json.loads(response.data)))
-    #
-    #     form = json.loads(response.data)
-    #     assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
-    #     assert form['registration_sections'][0]['name'] == 'Section 1'
+    def test_get_section(self):
+        self.seed_static_data()
+        section_id = 1
+        url = "/api/v1/registration-section?section_id=%d" % (
+            section_id)
+        LOGGER.debug(url)
+        response = self.app.get(url, headers=self.headers)
+
+        if response.status_code == 403:
+            return
+
+        LOGGER.debug(
+            "form: {}".format(json.loads(response.data)))
+
+        section = json.loads(response.data)
+        LOGGER.debug(
+            "section: {}".format(json.loads(section)))
+
+        assert response.status_code == 201

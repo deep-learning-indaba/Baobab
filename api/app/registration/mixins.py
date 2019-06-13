@@ -38,7 +38,7 @@ class RegistrationSectionMixin(object):
 
 class RegistrationQuestionMixin(object):
     req_parser = reqparse.RequestParser()
-    req_parser.add_argument('question_id', type=int, required=False)
+    req_parser.add_argument('question_id', type=int, required=False, )
     req_parser.add_argument('section_id', type=int, required=False)
     req_parser.add_argument('registration_form_id', type=int, required=False)
     req_parser.add_argument('headline', type=str, required=False)
