@@ -24,9 +24,7 @@ class Offer extends Component {
   }
 
   handleChange = field => {
-    console.log(field);
     return event => {
-      console.log(event);
       this.setState({
         rejected_reason: event.target.value
       });
