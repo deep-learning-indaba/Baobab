@@ -40,6 +40,7 @@ The Baobab Team
 
 def offer_info(offer_entity):
     return {
+        'id': offer_entity.id,
         'user_id': offer_entity.user_id,
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date,
@@ -52,6 +53,7 @@ def offer_info(offer_entity):
 
 def offer_update_info(offer_entity):
     return {
+        'id': offer_entity.id,
         'user_id': offer_entity.user_id,
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date,
@@ -68,6 +70,7 @@ def offer_update_info(offer_entity):
 
 class OfferAPI(OfferMixin, restful.Resource):
     offer_fields = {
+        'id': fields.Integer,
         'user_id': fields.Integer,
         'event_id': fields.Integer,
         'offer_date': fields.DateTime('iso8601'),
@@ -79,8 +82,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         'accepted': fields.Boolean,
         'rejected_reason': fields.String,
         'updated_at': fields.DateTime('iso8601'),
-
-
     }
 
     @auth_required
