@@ -20,6 +20,11 @@
     font-size: 25px;
     font-weight: 600;
 }
+
+.profile-fullname{
+    cursor: pointer;
+}
+
 .list-fullname{
     font-size: larger;
     font-style: normal;
