@@ -15,9 +15,9 @@ class Offer extends Component {
       loading: true,
       error: "",
       rejected_reason: "",
-      rejected: false,
+      rejected: null,
       showReasonBox: false,
-      accepted: false,
+      accepted: null,
       offer: {},
       category: ""
     };
@@ -47,6 +47,7 @@ class Offer extends Component {
           this.setState({
             offer: response.data
           });
+          this.displayOfferResponse();
         } else if (response.error) {
           this.setState({
             error: response.error
@@ -54,7 +55,20 @@ class Offer extends Component {
         }
       });
   }
-
+  
+  displayOfferResponse = e =>{
+       const { offer } = this.state;
+       return (<div className="container">
+           <div className="white-background card form">
+              {offer.accepted?
+              "Accepted an offer"
+              :
+              "Rejected an offer : "+offer.rejected_reason
+              }
+           </div>
+       </div>);
+  }
+  
   displayOfferContent = e => {
     const { offer, userProfile, rejected_reason } = this.state;
     return (
@@ -116,7 +130,6 @@ class Offer extends Component {
                   onClick={() => {
                     this.setState(
                       {
-                        rejected: true,
                         showReasonBox: true
                       },
                       this.buttonSubmit()
@@ -134,7 +147,8 @@ class Offer extends Component {
                   onClick={() => {
                     this.setState(
                       {
-                        accepted: true
+                        accepted: true,
+                        rejected: false
                       },
                       this.buttonSubmit()
                     );
@@ -156,9 +170,12 @@ class Offer extends Component {
                   <button
                     type="button"
                     class="btn-apply"
+                    align="center"
                     onClick={() => {
                       this.setState(
                         {
+                          rejected: true,
+                          accepted: false,
                           showReasonBox: false
                         },
                         this.buttonSubmit()
@@ -181,7 +198,7 @@ class Offer extends Component {
   componentWillMount() {
     this.getOffer();
     this.setState({
-      loading: false
+      loading: false 
     });
 
     let currentUser = JSON.parse(localStorage.getItem("user"));
