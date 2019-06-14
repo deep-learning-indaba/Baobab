@@ -6,7 +6,24 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const invitedGuestServices = {
   getInvitedGuestList,
   addInvitedGuest,
-  createInvitedGuest
+  createInvitedGuest,
+  getRoles
+}
+
+const roleOptions = [
+  { value: "Speaker", label: "Speaker" },
+  { value: "Guest", label: "Guest" },
+  { value: "Mentor", label: "Mentor" },
+  { value: "Friend of the Indaba", label: "Friend of the Indaba" },
+  { value: "Organiser", label: "Organiser" },
+  { value: "Dignitary", label: "Dignitary" },
+  { value: "Indaba X", label: "Indaba X" },
+  { value: "Sponsor", label: "Sponsor" },
+  { value: "Press", label: "Press" }
+];
+
+function getRoles() {
+  return roleOptions;
 }
 
 function getInvitedGuestList(eventId) {
