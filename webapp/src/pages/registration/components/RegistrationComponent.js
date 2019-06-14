@@ -7,12 +7,11 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
+import { offerServices } from "../../../services/offer";
 import { fileService } from "../../../services/file/file.service";
 
-import { ConfirmModal } from "react-bootstrap4-modal";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -37,8 +36,9 @@ class RegistrationComponent extends Component {
             answers: [],
             registrationId: false,
             registrationFormId: false,
-            formSucess: false,
-            formFailure: false
+            formSuccess: false,
+            formFailure: false,
+            formError: ""
         }
 
     }
@@ -46,7 +46,7 @@ class RegistrationComponent extends Component {
     resetPage() {
         this.componentDidMount();
         this.setState({
-            formSucess: false
+            formSuccess: false
         });
     }
 
@@ -75,7 +75,7 @@ class RegistrationComponent extends Component {
         }
         this.setState({
             answers: answers
-        }, );
+        });
 
     };
 
@@ -101,10 +101,10 @@ class RegistrationComponent extends Component {
 
 
     componentDidMount() {
-        registrationService.getOffer(DEFAULT_EVENT_ID).then(result => {
-            if (result.error == "" && result.form != null) {
+        offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
+            if (result.error == "" && result.offer != null) {
                 this.setState({
-                    offer: result.form,
+                    offer: result.offer,
                     error: result.error
                 }, () => {
                     registrationService.getRegistrationForm(DEFAULT_EVENT_ID, this.state.offer.id).then(result => {
@@ -180,22 +180,23 @@ class RegistrationComponent extends Component {
                     if (response.error === "" && response.form.status === 200) {
                         this.setState({
                             formFailure: false,
-                            formSucess: true,
+                            formSuccess: true,
                             isLoading: false
                         });
                     }
                     else {
                         this.setState({
                             formFailure: true,
-                            formSucess: false,
+                            formSuccess: false,
                             isLoading: false
                         });
                     }
                 }).catch(error => {
                     this.setState({
                         formFailure: true,
-                        formSucess: false,
-                        isLoading: false
+                        formSuccess: false,
+                        isLoading: false,
+                        formError: error.response
                     });
                 });
             });
@@ -214,7 +215,6 @@ class RegistrationComponent extends Component {
         }
 
         this.getDropdownDescription = (options, answer) => {
-
             return options.map(item => {
                 if (item.value == answer.value)
                     return item.label;
@@ -327,10 +327,7 @@ class RegistrationComponent extends Component {
 
         return (
             <div className="registration container-fluid pad-top-30-md">
-                <div className={this.state.formSucess ? "display-none" : "stretched"}>
-                    <h2>Registration</h2>
-                </div>
-                <div className={this.state.formSucess ? "card flat-card success stretched" : "display-none"}>
+                {this.state.formSuccess ? <div className="card flat-card success stretched">
                     <div >Successfully submitted</div>
                     <div className="col-12">
                         <button type="button"
@@ -338,10 +335,16 @@ class RegistrationComponent extends Component {
                             onClick={() => this.resetPage()}>Change your answers</button>
                     </div>
                 </div>
-                <div className={this.state.formFailure ? "alert alert-danger stretched" : "display-none"}>
-                    <div>Something went wrong, please try again</div>
+                    :
+                    (<div className={this.state.formSuccess ? "display-none" : "stretched"}>
+                        <h2>Registration</h2>
+                    </div>)
+                }
+                {this.state.formFailure && <div className="alert alert-danger stretched" >
+                    <div>{this.state.f}, please try again</div>
                 </div>
-                {this.state.questionSections.length > 0 && !this.state.formSucess ? (
+                }
+                {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
                     <form onSubmit={() => this.buttonSubmit()}>
                         {this.state.questionSections.map(section => (
                             <div class="card stretched">
@@ -349,7 +352,6 @@ class RegistrationComponent extends Component {
                                 <div className="padding-v-15">{section.description}</div>
 
                                 {section.registration_questions.map(question => (
-
                                     <div>
                                         {
                                             this.formControl(
@@ -371,7 +373,9 @@ class RegistrationComponent extends Component {
                 </button>
                     </form>
                 ) : (
-                        <div className={this.state.formSucess != true && this.state.formFailure != true ? "alert alert-danger" : "display-none"}>No registration form available</div>
+                <div>
+                    {this.state.formSuccess !== true && this.state.formFailure !== true && <div className="alert alert-danger">No registration form available</div>}
+                </div>
                     )}
             </div>
         )
