@@ -41,9 +41,11 @@ class Offer extends Component {
         candidate_response? "" : rejected_reason
       )
       .then(response => {
-        if (response.msg === "succeeded") {
+      console.log(response)
+        if (response.status === 201) {
           this.setState({
-            offer: response.data
+            offer: response.data,
+            
           });
           this.displayOfferResponse();
         } else if (response.error) {
@@ -54,22 +56,45 @@ class Offer extends Component {
       });
   }
   
-  displayOfferResponse = e =>{
-       const { offer } = this.state;
-       return (<div className="container">
-           <div className="white-background card form">
-              {offer.candidate_response?
-              "Accepted an offer"
-              :
-              "Rejected an offer : "+offer.rejected_reason
-              }
-           </div>
-       </div>);
+  row = ( col1, col2)=>{
+    return <div className="row">
+              <div class="col-6 font-weight-bold pr-4" align="right">{col1}:</div>
+              <div class="col-6 pl-4" align="left">{col2}</div>
+            </div>
   }
   
+  displayOfferResponse = e =>{
+       const { offer } = this.state;
+       console.log(offer)
+       return (
+         <div className="container">
+            <p className="h5 pt-5">
+                {offer.candidate_response=== true?
+                "You have accepted the following offer on  "
+                :
+                "You have rejected the following offer on "
+                }
+                {offer.responded_at !== undefined ?offer.responded_at.substring(0,10): "-date-"}.
+            </p>
+
+           <div className="white-background card form mt-5">
+              {this.row( "Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0,10): "-date-")}
+              {this.row("Offer expiry date",offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-")}
+              {this.row("Payment", offer.payment_required? "Required": "No payment required")}
+              {this.row( "Travel award", offer.travel_award? "Allocated": "Not allocated")}
+              {this.row( "Accommodation", offer.accommodation_award? "Allocated": "Not allocated")}
+              {!(offer.candidate_response) && <div>{this.row( "Rejection reason", offer.rejected_reason)}</div>}
+           </div>
+        </div>);
+  }
+
   displayOfferContent = e => {
     const { offer, userProfile, rejected_reason } = this.state;
     return (
+    <div>
+      { offer.candidate_response !== null ?
+        this.displayOfferResponse()
+      :
       <div className="container">
         <p className="h5 pt-5">
           We are pleased to offer you a place at the Deep Learning Indaba 2019.
@@ -84,8 +109,8 @@ class Offer extends Component {
           <div className="white-background card form">
             <p class="font-weight-bold">Your status</p>
             <div class="row ">
-              <div class="col-8 font-weight-bold">Travel Award:</div>
-              <div class="col-2">
+              <div class="col-6 font-weight-bold pr-4"  align="right">Travel Award:</div>
+              <div class="col-6 pl-4"  align="left">
                 {offer != null
                   ? offer.travel_award
                     ? "Allocated"
@@ -95,10 +120,10 @@ class Offer extends Component {
             </div>
 
             <div class="row">
-              <div class="col-8 font-weight-bold">Accommodation Award:</div>
-              <div class="col-2">
+              <div class="col-6 font-weight-bold pr-4"  align="right">Accommodation Award:</div>
+              <div class="col-6 pl-4"  align="left">
                 {offer != null
-                  ? offer.accomodation_award
+                  ? offer.accommodation_award
                     ? "Allocated"
                     : "Not Allocated"
                   : "Not available"}
@@ -106,8 +131,8 @@ class Offer extends Component {
             </div>
 
             <div class="row pb-5 ">
-              <div class="col-8 font-weight-bold">Payment Required:</div>
-              <div class="col-2">
+              <div class="col-6 font-weight-bold pr-4"  align="right">Payment Required:</div>
+              <div class="col-6 pl-4"  align="left">
                 {offer != null
                   ? offer.payment_required
                     ? "Required"
@@ -117,7 +142,7 @@ class Offer extends Component {
             </div>
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
-              {offer != null ? offer.expiry_date : "unable to load expiry date"}{" "}
+              {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
             </p>
             <div class="row">
               <div class="col">
@@ -186,6 +211,8 @@ class Offer extends Component {
           </div>
         </form>
       </div>
+      }
+    </div>
     );
   };
 
