@@ -50,7 +50,7 @@ class RegistrationApiTest(ApiTestCase):
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
             travel_award=True,
-            updated_at=datetime.now())
+            responded_at=datetime.now())
         db.session.add(self.offer)
         db.session.commit()
 
