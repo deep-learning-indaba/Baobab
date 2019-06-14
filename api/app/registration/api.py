@@ -61,10 +61,9 @@ def offer_update_info(offer_entity):
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
         'accommodation_award': offer_entity.accommodation_award,
-        'rejected': offer_entity.rejected,
-        'accepted': offer_entity.accepted,
         'rejected_reason': offer_entity.rejected_reason,
-        'updated_at': offer_entity.updated_at,
+        'candidate_response': offer_entity.candidate_response,
+        'responded_at': offer_entity.responded_at
     }
 
 
@@ -78,10 +77,9 @@ class OfferAPI(OfferMixin, restful.Resource):
         'payment_required': fields.Boolean,
         'travel_award': fields.Boolean,
         'accommodation_award': fields.Boolean,
-        'rejected': fields.Boolean,
-        'accepted': fields.Boolean,
         'rejected_reason': fields.String,
-        'updated_at': fields.DateTime('iso8601'),
+        'candidate_response': fields.Boolean,
+        'responded_at': fields.DateTime('iso8601')
     }
 
     @auth_required
@@ -90,8 +88,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         # update existing offer
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
-        accepted = args['accepted']
-        rejected = args['rejected']
+        candidate_response = args['candidate_response']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
@@ -104,9 +101,8 @@ class OfferAPI(OfferMixin, restful.Resource):
             if offer and offer.user_id != user_id:
                 return errors.FORBIDDEN
 
-            offer.updated_at = datetime.now()
-            offer.accepted = accepted
-            offer.rejected = rejected
+            offer.responded_at = datetime.now()
+            offer.candidate_response = candidate_response
             offer.rejected_reason = rejected_reason
 
             db.session.commit()
@@ -127,7 +123,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         payment_required = args['payment_required']
         travel_award = args['travel_award']
         accommodation_award = args['accommodation_award']
-        updated_at = datetime.strptime((args['updated_at']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
         offer_entity = Offer(
@@ -138,7 +133,6 @@ class OfferAPI(OfferMixin, restful.Resource):
             payment_required=payment_required,
             travel_award=travel_award,
             accommodation_award=accommodation_award,
-            updated_at=updated_at
         )
 
         db.session.add(offer_entity)
@@ -244,12 +238,12 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
                 for section in sections:
 
-                    if (section.show_for_travel_award is None) and (section.show_for_accomodation_award is None) and  \
+                    if (section.show_for_travel_award is None) and (section.show_for_accommodation_award is None) and  \
                             (section.show_for_payment_required is None):
                         included_sections.append(section)
 
                     elif (section.show_for_travel_award and offer.travel_award) or \
-                            (section.show_for_accomodation_award and offer.accomodation_award) or \
+                            (section.show_for_accommodation_award and offer.show_for_accommodation_award) or \
                             (section.show_for_payment_required and offer.payment_required):
                         included_sections.append(section)
 

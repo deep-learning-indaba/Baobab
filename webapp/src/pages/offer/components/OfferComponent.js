@@ -15,9 +15,8 @@ class Offer extends Component {
       loading: true,
       error: "",
       rejected_reason: "",
-      rejected: false,
       showReasonBox: false,
-      accepted: false,
+      candidate_response: null,
       offer: {},
       category: ""
     };
@@ -31,22 +30,22 @@ class Offer extends Component {
     };
   };
 
-  buttonSubmit() {
-    const { offer, accepted, rejected, rejected_reason } = this.state;
+  buttonSubmit(candidate_response) {
+    const { offer, rejected_reason } = this.state;
 
     offerServices
       .updateOffer(
         offer.id,
         DEFAULT_EVENT_ID,
-        accepted,
-        rejected,
-        rejected_reason
+        candidate_response,
+        candidate_response? "" : rejected_reason
       )
       .then(response => {
         if (response.msg === "succeeded") {
           this.setState({
             offer: response.data
           });
+          this.displayOfferResponse();
         } else if (response.error) {
           this.setState({
             error: response.error
@@ -54,7 +53,20 @@ class Offer extends Component {
         }
       });
   }
-
+  
+  displayOfferResponse = e =>{
+       const { offer } = this.state;
+       return (<div className="container">
+           <div className="white-background card form">
+              {offer.candidate_response?
+              "Accepted an offer"
+              :
+              "Rejected an offer : "+offer.rejected_reason
+              }
+           </div>
+       </div>);
+  }
+  
   displayOfferContent = e => {
     const { offer, userProfile, rejected_reason } = this.state;
     return (
@@ -116,11 +128,8 @@ class Offer extends Component {
                   onClick={() => {
                     this.setState(
                       {
-                        rejected: true,
                         showReasonBox: true
-                      },
-                      this.buttonSubmit()
-                    );
+                      });
                   }}
                 >
                   Reject
@@ -134,10 +143,10 @@ class Offer extends Component {
                   onClick={() => {
                     this.setState(
                       {
-                        accepted: true
-                      },
-                      this.buttonSubmit()
+                        candidate_response: true
+                      }
                     );
+                    this.buttonSubmit(true)
                   }}
                 >
                   Accept
@@ -156,12 +165,14 @@ class Offer extends Component {
                   <button
                     type="button"
                     class="btn-apply"
+                    align="center"
                     onClick={() => {
                       this.setState(
                         {
+                          candidate_response: false,
                           showReasonBox: false
                         },
-                        this.buttonSubmit()
+                        this.buttonSubmit(false)
                       );
                     }}
                   >
@@ -181,7 +192,7 @@ class Offer extends Component {
   componentWillMount() {
     this.getOffer();
     this.setState({
-      loading: false
+      loading: false 
     });
 
     let currentUser = JSON.parse(localStorage.getItem("user"));

@@ -19,9 +19,7 @@ OFFER_DATA = {
     'payment_required': False,
     'travel_award': False,
     'accommodation_award': True,
-    'rejected': False,
     'rejected_reason': 'N/A',
-    'updated_at': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
 }
 
 REGISTRATION_FORM = {
@@ -90,8 +88,7 @@ class OfferApiTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
-            travel_award=True,
-            updated_at=datetime.now())
+            travel_award=True)
         db.session.add(offer)
         db.session.commit()
 
@@ -149,11 +146,10 @@ class OfferApiTest(ApiTestCase):
         self.seed_static_data()
         event_id = 1
         offer_id = 1
-        accepted = False
-        rejected = True
+        candidate_response = True
         rejected_reason = "the reason for rejection"
-        url = "/api/v1/offer?offer_id=%d&event_id=%d&accepted=%s&rejected=%s&rejected_reason=%s" % (
-            offer_id, event_id, accepted, rejected, rejected_reason)
+        url = "/api/v1/offer?offer_id=%d&event_id=%d&candidate_response=%s&rejected_reason=%s" % (
+            offer_id, event_id, candidate_response, rejected_reason)
         LOGGER.debug(url)
         response = self.app.put(url, headers=self.headers)
 
@@ -161,8 +157,7 @@ class OfferApiTest(ApiTestCase):
         LOGGER.debug("Offer-PUT: {}".format(response.data))
 
         assert response.status_code == 201
-        assert data['accepted']
-        assert data['rejected']
+        assert data['candidate_response']
 
 
 class RegistrationTest(ApiTestCase):
@@ -204,8 +199,7 @@ class RegistrationTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
-            travel_award=True,
-            updated_at=datetime.now())
+            travel_award=True)
         db.session.add(offer)
         db.session.commit()
 
