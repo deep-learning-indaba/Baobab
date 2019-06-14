@@ -157,6 +157,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         event_id = args['event_id']
         user_id = g.current_user['id']
 
+
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
             if not offer:
@@ -323,39 +324,6 @@ def registration_section_info(registration_section):
 
 
 class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
-    registration_section_fields = {
-        'sectionId': fields.Integer,
-        'name': fields.Boolean,
-        'description': fields.String,
-        'order': fields.String,
-        'questions': RegistrationQuestion,
-    }
-
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        section_id = args['section_id']
-
-
-
-        try:
-
-            registration_section = db.session.query(RegistrationSection).filter(
-                RegistrationSection.id == section_id).first()
-
-            if not registration_section:
-                return errors.REGISTRATION_SECTION_NOT_FOUND
-            else:
-                return registration_section, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(
-                traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
 
     @admin_required
     def post(self):
@@ -414,35 +382,6 @@ def registration_question_info(registration_question):
 
 
 class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
-    registration_section_fields = {
-        'description': fields.String,
-        'type': fields.String,
-        'required': fields.Boolean,
-        'order': fields.Integer,
-    }
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        question_id = args['question_id']
-
-        try:
-
-            question = db.session.query(RegistrationQuestion).filter(
-                RegistrationQuestion.id == question_id).first()
-
-            if not question:
-                return errors.REGISTRATION_QUESTION_NOT_FOUND
-            else:
-                return question, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(
-                traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
 
     @admin_required
     def post(self):
