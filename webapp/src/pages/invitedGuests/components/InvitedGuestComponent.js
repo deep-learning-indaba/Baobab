@@ -29,7 +29,8 @@ class InvitedGuests extends Component {
       addedSucess: false,
       notFound: false,
       buttonClicked: false,
-      conflict: false
+      conflict: false,
+      error: ""
     };
   } 
   getGuestList() {
@@ -75,6 +76,10 @@ class InvitedGuests extends Component {
             addedSucess: false,
             conflict: true
           });
+        } else {
+          this.setState({
+            error: response.error
+          });
         }
       });
   }
@@ -93,7 +98,7 @@ class InvitedGuests extends Component {
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
-    const { loading } = this.state;
+    const { loading, error } = this.state;
     const roleOptions = [
       { value: "Speaker", label: "Speaker" },
       { value: "Guest", label: "Guest" },
@@ -122,8 +127,11 @@ class InvitedGuests extends Component {
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
+        {error && <div className={"alert alert-danger"}>{error}</div>}
+
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
+
           <div class="responsive-table">
             {this.state.guestList !== null &&
             this.state.guestList.length > 0 ? (
