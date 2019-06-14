@@ -41,7 +41,6 @@ class Offer extends Component {
         candidate_response? "" : rejected_reason
       )
       .then(response => {
-      console.log(response)
         if (response.status === 201) {
           this.setState({
             offer: response.data,
@@ -65,7 +64,6 @@ class Offer extends Component {
   
   displayOfferResponse = e =>{
        const { offer } = this.state;
-       console.log(offer)
        return (
          <div className="container">
             <p className="h5 pt-5">
