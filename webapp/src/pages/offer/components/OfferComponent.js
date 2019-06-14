@@ -38,7 +38,7 @@ class Offer extends Component {
         offer.id,
         DEFAULT_EVENT_ID,
         candidate_response,
-        rejected_reason
+        candidate_response? "" : rejected_reason
       )
       .then(response => {
         if (response.msg === "succeeded") {
@@ -144,7 +144,7 @@ class Offer extends Component {
                     this.setState(
                       {
                         candidate_response: true
-                      }                      
+                      }
                     );
                     this.buttonSubmit(true)
                   }}
