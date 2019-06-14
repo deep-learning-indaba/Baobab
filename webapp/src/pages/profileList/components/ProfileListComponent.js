@@ -44,7 +44,7 @@ onSubmit=(user_id)=>{
       }
     const columns = [{Header:<div className="list-number">#</div> ,accessor:"response_id", Cell: props => <span className="number">{props.value}</span>},
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
-                      accessor:u => <div className="">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
+                      accessor:u => <div className="list-profile-fullname">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
                       Cell: props => <span onClick={()=>this.onSubmit(props.original.user_id)}>{props.value}</span>},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},
