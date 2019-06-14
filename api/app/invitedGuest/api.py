@@ -132,7 +132,7 @@ class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
         current_user_id = g.current_user['id']
 
         current_user = user_repository.get_by_id(current_user_id)
-        if not current_user.is_event_admin(event_id):
+        if not (current_user.is_event_admin(event_id) or current_user.is_admin):
             return FORBIDDEN
 
         invited_guests = db.session.query(InvitedGuest, AppUser).filter_by(event_id=event_id).join(
