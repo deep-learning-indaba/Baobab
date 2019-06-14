@@ -12,8 +12,13 @@ import Profile from "./pages/profile";
 import ReviewAssignment from "./pages/reviewAssignment";
 import ReviewHistory from "./pages/reviewHistory";
 import EventStats from "./pages/eventStats";
+import ProfileList from "./pages/profileList";
+import ViewProfile from "./pages/viewprofile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import InvitedGuests from "./pages/invitedGuests";
+import CreateInvitedGuests from "./pages/createInvitedGuest";
+import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -141,32 +146,73 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                
+                <li class="nav-item"> 
+                    <NavLink
+                      to="/offer"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                     >
+                      Offer
+                    </NavLink>
+                  </li>
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Event Admin
-                  </a>
-                  <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <NavLink
-                      to="/eventStats"
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
+                      Event Admin
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/eventStats"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Event Stats
+                      </NavLink>
+                      <NavLink
+                        to="/reviewAssignment"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Review Assignment
+                      </NavLink>
+                      <NavLink 
+                        to="/invitedGuests"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >    
+                       Invited Guests
+                      </NavLink>
+                      <NavLink
+                      to="/profile-list"
                       className="dropdown-item"
                       onClick={this.toggleMenu}
-                    >
-                      Event Stats
-                    </NavLink>
-                    <NavLink
-                      to="/reviewAssignment"
-                      className="dropdown-item"
-                      onClick={this.toggleMenu}
-                    >
-                      Review Assignment
-                    </NavLink>
-                  </div>
+                     >
+                      Applicant Profiles
+                      </NavLink>
+                    </div>
                   </li>
                 )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
                       Reviews
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -174,8 +220,8 @@ class App extends Component {
                         to="/review"
                         className="dropdown-item"
                         onClick={this.toggleMenu}
-                        >
-                          Review
+                      >
+                        Review
                       </NavLink>
                       <NavLink
                         to="/reviewHistory"
@@ -242,8 +288,22 @@ class App extends Component {
                   path="/reviewHistory"
                   component={ReviewHistory}
                 />
+                <PrivateRoute
+                  exact
+                  path="/invitedGuests"
+                  component={InvitedGuests}
+                />
+                <PrivateRoute
+                  exact
+                  path="/invitedGuests/create"
+                  component={CreateInvitedGuests}
+                />
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
+                <PrivateRoute exact path="/profile-list" component={ProfileList} />
+                <PrivateRoute exact path="/offer" component={Offer} />
+                <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile}/>
+
               </Switch>
             </div>
           </div>

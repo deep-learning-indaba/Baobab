@@ -1,9 +1,8 @@
 import React, { Component } from "react";
-import { userService } from "../../../services/user";
+import { invitedGuestServices } from "../../../services/invitedGuests/invitedGuests.service";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
-import { ConfirmModal } from "react-bootstrap4-modal";
 import validationFields from "../../../utils/validation/validationFields";
 import {
   getTitleOptions,
@@ -21,6 +20,8 @@ import {
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
@@ -37,23 +38,40 @@ const fieldValidations = [
   ruleRunner(validationFields.dateOfBirth, isValidDate)
 ];
 
-class ProfileForm extends Component {
+class creatreInvitedGuestComponent extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      user: {},
-      showErrors: false,
+      user: {
+        email: props.email || null,
+        role: props.role || null
+      },
       submitted: false,
-      loading: false,
       errors: [],
       categoryOptions: [],
       countryOptions: [],
       titleOptions: [],
       genderOptions: [],
       disabilityOptions: [],
-      confirmResetVisible: false
+      error: "",
+      created: false,
+      conflict: false
     };
+  }
+
+  getContentValue(options, value) {
+    if (options && options.filter) {
+      return options.filter(option => {
+        return option.value === value;
+      });
+    } else return null;
+  }
+
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
   }
 
   componentWillMount() {
@@ -72,42 +90,10 @@ class ProfileForm extends Component {
         disabilityOptions: this.checkOptionsList(result[4])
       });
     });
-
-    userService.get().then(result => {
-      var date = result.user_dateOfBirth;
-      if (date) date = date.split("T")[0];
-      this.setState({
-        user: {
-          title: result.user_title,
-          firstName: result.firstname,
-          lastName: result.lastname,
-          email: result.email,
-          nationality: result.nationality_country_id,
-          residence: result.residence_country_id,
-          gender: result.user_gender,
-          disability: result.user_disability,
-          affiliation: result.affiliation,
-          department: result.department,
-          category: result.user_category_id,
-          dateOfBirth: date,
-          primaryLanguage: result.user_primaryLanguage
-        }
-      });
-    });
   }
 
-  getContentValue(options, value) {
-    if (options && options.filter) {
-      return options.filter(option => {
-        return option.value === value;
-      });
-    } else return null;
-  }
-
-  checkOptionsList(optionsList) {
-    if (Array.isArray(optionsList)) {
-      return optionsList;
-    } else return [];
+  validateForm() {
+    return this.state.user.email.length > 0;
   }
 
   handleChangeDropdown = (name, dropdown) => {
@@ -123,36 +109,6 @@ class ProfileForm extends Component {
         this.setState({ errors: { $set: errorsForm } });
       }
     );
-  };
-
-  deleteAccount = () => {
-    userService.deleteAccount().then(
-      response => {
-        const { from } = this.props.location.state || {
-          from: { pathname: "/" }
-        };
-        this.props.history.push(from);
-      },
-      error => this.setState({ error, loading: false })
-    );
-    if (this.props.logout) {
-      this.props.logout();
-    }
-  };
-
-  resetPassword = () => {
-    userService.requestPasswordReset(this.state.user.email).then(response => {
-      if (response.status === 201) {
-        const { from } = { from: { pathname: "/" } };
-        this.props.history.push(from);
-      } else {
-        this.setState({
-          error: response.messsage,
-          loading: false,
-          confirmResetVisible: false
-        });
-      }
-    });
   };
 
   handleChange = field => {
@@ -174,7 +130,7 @@ class ProfileForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true, showErrors: true });
+    this.setState({ submitted: true });
 
     if (
       this.state.errors &&
@@ -183,33 +139,25 @@ class ProfileForm extends Component {
     )
       return;
 
-    this.setState({ loading: true });
-
-    userService.update(this.state.user).then(
-      user => {
-        if (this.props.loggedIn) {
-          this.props.loggedIn(user);
+    invitedGuestServices
+      .createInvitedGuest(this.state.user, DEFAULT_EVENT_ID)
+      .then(user => {
+        this.setState({
+          created: true
+        });
+        if (user.msg === "409") {
+          this.setState({
+            conflict: true
+          });
+        } else if (this.state.created === true) {
+          invitedGuestServices.addInvitedGuest(
+            this.state.user.email,
+            DEFAULT_EVENT_ID,
+            this.state.user.role
+          );
+          this.props.history.push("/invitedGuests");
         }
-        const { from } = this.props.location.state || {
-          from: { pathname: "/" }
-        };
-        this.props.history.push(from);
-      },
-      error => this.setState({ error, loading: false })
-    );
-  };
-
-  getErrorMessages = errors => {
-    let errorMessages = [];
-    if (errors.$set === null) return;
-
-    let arr = errors.$set;
-    for (let i = 0; i < arr.length; i++) {
-      errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
-      );
-    }
-    return errorMessages;
+      });
   };
 
   render() {
@@ -218,8 +166,8 @@ class ProfileForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassNameTitle = createColClassName(12, 4, 2, 2);
-    const colClassNameSurname = createColClassName(12, 4, 4, 4);
+    const colClassNameTitle = createColClassName(12, 3, 2, 2);
+    const colClassNameSurname = createColClassName(12, 3, 4, 4);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
@@ -236,6 +184,14 @@ class ProfileForm extends Component {
       dateOfBirth,
       primaryLanguage
     } = this.state.user;
+
+    const roleOptions = [
+      { value: "Speaker", label: "Speaker" },
+      { value: "Guest", label: "Guest" },
+      { value: "Mentor", label: "Mentor" },
+      { value: "Friend of the Indaba", label: "Friend of the Indaba" },
+      { value: "Organiser", label: "Organiser" }
+    ];
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
     const nationalityValue = this.getContentValue(
@@ -256,12 +212,10 @@ class ProfileForm extends Component {
       disability
     );
 
-    const { loading, errors, showErrors } = this.state;
-
     return (
-      <div className="Profile">
+      <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Profile</p>
+          <p className="h5 text-center mb-4">Create Guest</p>
           <div class="row">
             <div class={colClassNameTitle}>
               <FormSelect
@@ -275,7 +229,6 @@ class ProfileForm extends Component {
             </div>
             <div class={colClassNameSurname}>
               <FormTextBox
-                disabled
                 id={validationFields.firstName.name}
                 type="text"
                 placeholder={validationFields.firstName.display}
@@ -292,7 +245,6 @@ class ProfileForm extends Component {
                 onChange={this.handleChange(validationFields.lastName)}
                 value={lastName}
                 label={validationFields.lastName.display}
-                editable={false}
               />
             </div>
             <div class={colClassNameTitle}>
@@ -337,7 +289,7 @@ class ProfileForm extends Component {
                 label={validationFields.primaryLanguage.display}
               />
             </div>
-          </div>{" "}
+          </div>
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
@@ -410,49 +362,29 @@ class ProfileForm extends Component {
           </div>
           <div class="row">
             <div class={commonColClassName}>
-              <button
-                type="button"
-                class="btn btn-primary Button"
-                disabled={loading}
-                onClick={() => this.setState({ confirmResetVisible: true })}
-              >
-                Reset password
-              </button>
-            </div>
-            <div class={commonColClassName}>
-              <button
-                type="submit"
-                class="btn btn-primary Button"
-                disabled={loading}
-              >
-                {loading && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                )}
-                Save profile
-              </button>
+              <FormSelect
+                defaultValue={this.state.user.role}
+                options={roleOptions}
+                id={"role"}
+                onChange={this.handleChangeDropdown}
+                label={"Role"}
+              />
             </div>
           </div>
-          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
+          <button
+            type="submit"
+            class="btn btn-primary"
+            disabled={!this.validateForm()}
+          >
+            Create guest
+          </button>
+          {this.state.conflict && (
+            <div class="alert alert-danger">Email is already taken</div>
+          )}
         </form>
-        <ConfirmModal
-          visible={this.state.confirmResetVisible}
-          onOK={this.resetPassword}
-          onCancel={() => this.setState({ confirmResetVisible: false })}
-          okText={"Reset Password"}
-          cancelText={"Cancel"}
-        >
-          <p>
-            Are you sure? Click "Reset Password" to receive an email with a link
-            to reset your password.
-          </p>
-        </ConfirmModal>
       </div>
     );
   }
 }
 
-export default withRouter(ProfileForm);
+export default withRouter(creatreInvitedGuestComponent);
