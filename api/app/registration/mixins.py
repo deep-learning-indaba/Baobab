@@ -3,6 +3,7 @@ from flask_restful import reqparse
 
 class OfferMixin(object):
     req_parser = reqparse.RequestParser()
+    req_parser.add_argument('id', type=int, required=False)
     req_parser.add_argument('event_id', type=int, required=False)
     req_parser.add_argument('offer_id', type=int, required=False)
     req_parser.add_argument('user_id', type=int, required=False)

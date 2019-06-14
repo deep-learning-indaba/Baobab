@@ -182,11 +182,18 @@ def registration_form_info(registration_form):
 
 class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
+    option_fields = {
+        'value': fields.String,
+        'label': fields.String
+    }
+
     registration_question_fields = {
+        'id': fields.Integer,
         'description': fields.String,
         'type': fields.String,
         'is_required': fields.Boolean,
-        'order': fields.Integer
+        'order': fields.Integer,
+        'options': fields.List(fields.Nested(option_fields))
     }
 
     registration_section_fields = {
@@ -198,6 +205,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
     }
 
     registration_form_fields = {
+        'id':fields.Integer,
         'event_id': fields.Integer,
         'registration_sections': fields.List(fields.Nested(registration_section_fields))
     }
@@ -208,7 +216,6 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         offer_id = args['offer_id']
-
         try:
             offer = db.session.query(Offer).filter(
                 Offer.id == offer_id).first()
@@ -243,7 +250,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                         included_sections.append(section)
 
                     elif (section.show_for_travel_award and offer.travel_award) or \
-                            (section.show_for_accommodation_award and offer.show_for_accommodation_award) or \
+                            (section.show_for_accommodation_award and offer.accommodation_award) or \
                             (section.show_for_payment_required and offer.payment_required):
                         included_sections.append(section)
 
@@ -329,6 +336,8 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         section_id = args['section_id']
+
+
 
         try:
 
