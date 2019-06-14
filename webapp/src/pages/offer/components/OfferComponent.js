@@ -21,6 +21,12 @@ class Offer extends Component {
       category: ""
     };
   }
+  
+  resetPage =()=>{
+  
+      this.componentWillMount()
+      
+  }
 
   handleChange = field => {
     return event => {
@@ -41,18 +47,20 @@ class Offer extends Component {
         candidate_response? "" : rejected_reason
       )
       .then(response => {
-        if (response.status === 201) {
+      
+        if (response.response.status === 201) {
           this.setState({
-            offer: response.data,
-            
-          });
+            offer: response.response.data, 
+          }, () => this.displayOfferResponse()
+          );
           this.displayOfferResponse();
-        } else if (response.error) {
+        } else if (response.response.error) {
           this.setState({
-            error: response.error
+            error: response.response.error
           });
         }
       });
+      
   }
   
   row = ( col1, col2)=>{
@@ -62,7 +70,7 @@ class Offer extends Component {
             </div>
   }
   
-  displayOfferResponse = e =>{
+  displayOfferResponse = ()=>{
        const { offer } = this.state;
        return (
          <div className="container">
@@ -142,68 +150,67 @@ class Offer extends Component {
               Please accept or reject this offer by{" "}
               {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
             </p>
-            <div class="row">
-              <div class="col">
-                <button
-                  type="button"
-                  class="btn btn-danger"
-                  id="reject"
-                  onClick={() => {
-                    this.setState(
-                      {
-                        showReasonBox: true
-                      });
-                  }}
-                >
-                  Reject
-                </button>
-              </div>
-              <div class="col">
-                <button
-                  type="button"
-                  class="btn btn-success"
-                  id="accept"
-                  onClick={() => {
-                    this.setState(
-                      {
-                        candidate_response: true
-                      }
-                    );
-                    this.buttonSubmit(true)
-                  }}
-                >
-                  Accept
-                </button>
-              </div>
-            </div>
-
+           
             <div class="form-group">
               {this.state.showReasonBox ? (
                 <div class="form-group mr-5  ml-5 pt-5">
                   <textarea
-                    class="form-control reason-box pr-5 pl-10"
+                    class="form-control reason-box pr-5 pl-10 pb-5"
                     onChange={this.handleChange(rejected_reason)}
                     placeholder="Enter rejection message"
                   />
                   <button
                     type="button"
-                    class="btn-apply"
+                    class="btn btn-outline-danger mt-2"
                     align="center"
                     onClick={() => {
                       this.setState(
                         {
-                          candidate_response: false,
-                          showReasonBox: false
+                          candidate_response: false
+                         
                         },
                         this.buttonSubmit(false)
                       );
                     }}
                   >
-                    apply
+                    Submit
                   </button>
                 </div>
               ) : (
-                ""
+                 <div class="row">
+                  <div class="col" align="center">
+                    <button
+                      type="button"
+                      class="btn btn-danger"
+                      id="reject"
+                      onClick={() => {
+                        this.setState(
+                          {
+                            showReasonBox: true
+                          });
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                  <div class="col" align="center">
+                    <button
+                      type="button"
+                      class="btn btn-success"
+                      id="accept"
+                      onClick={() => {
+                        this.setState(
+                          {
+                            candidate_response: true
+                          }
+                        );
+                        this.buttonSubmit(true)
+                      }}
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -242,6 +249,7 @@ class Offer extends Component {
   }
 
   render() {
+  
     const { loading, offer, error } = this.state;
     const loadingStyle = {
       width: "3rem",
