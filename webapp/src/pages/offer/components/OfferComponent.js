@@ -15,9 +15,8 @@ class Offer extends Component {
       loading: true,
       error: "",
       rejected_reason: "",
-      rejected: null,
       showReasonBox: false,
-      accepted: null,
+      candidate_response: null,
       offer: {},
       category: ""
     };
@@ -32,14 +31,13 @@ class Offer extends Component {
   };
 
   buttonSubmit() {
-    const { offer, accepted, rejected, rejected_reason } = this.state;
+    const { offer, candidate_response, rejected_reason } = this.state;
 
     offerServices
       .updateOffer(
         offer.id,
         DEFAULT_EVENT_ID,
-        accepted,
-        rejected,
+        candidate_response,
         rejected_reason
       )
       .then(response => {
@@ -60,7 +58,7 @@ class Offer extends Component {
        const { offer } = this.state;
        return (<div className="container">
            <div className="white-background card form">
-              {offer.accepted?
+              {offer.candidate_response?
               "Accepted an offer"
               :
               "Rejected an offer : "+offer.rejected_reason
@@ -147,8 +145,7 @@ class Offer extends Component {
                   onClick={() => {
                     this.setState(
                       {
-                        accepted: true,
-                        rejected: false
+                        candidate_response: true
                       },
                       this.buttonSubmit()
                     );
@@ -174,8 +171,7 @@ class Offer extends Component {
                     onClick={() => {
                       this.setState(
                         {
-                          rejected: true,
-                          accepted: false,
+                          candidate_response: false,
                           showReasonBox: false
                         },
                         this.buttonSubmit()
