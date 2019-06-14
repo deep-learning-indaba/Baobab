@@ -75,9 +75,7 @@ class RegistrationComponent extends Component {
         }
         this.setState({
             answers: answers
-        }, () => {
-            console.log(this.state.answers);
-        });
+        }, );
 
     };
 
@@ -98,48 +96,45 @@ class RegistrationComponent extends Component {
         }
         this.setState({
             answers: answers
-        }, () => {
-            console.log(this.state.answers);
         });
     };
 
 
     componentDidMount() {
         registrationService.getOffer(DEFAULT_EVENT_ID).then(result => {
-            if(result.error == "" && result.form != null)
-            {
-            this.setState({
-                offer: result.form,
-                error: result.error
-            }, () => {
-                registrationService.getRegistrationForm(DEFAULT_EVENT_ID, this.state.offer.id).then(result => {
-                    if (result.error == "" && result.form.registration_sections.length > 0) {
-                        let questionSections = [];
-                        for (var i = 0; i < result.form.registration_sections.length; i++) {
-                            if (result.form.registration_sections[i].registration_questions.length > 0) {
-                                questionSections.push(result.form.registration_sections[i]);
+            if (result.error == "" && result.form != null) {
+                this.setState({
+                    offer: result.form,
+                    error: result.error
+                }, () => {
+                    registrationService.getRegistrationForm(DEFAULT_EVENT_ID, this.state.offer.id).then(result => {
+                        if (result.error == "" && result.form.registration_sections.length > 0) {
+                            let questionSections = [];
+                            for (var i = 0; i < result.form.registration_sections.length; i++) {
+                                if (result.form.registration_sections[i].registration_questions.length > 0) {
+                                    questionSections.push(result.form.registration_sections[i]);
+                                }
                             }
-                        }
-                        registrationService.getRegistrationResponse().then(result => {
-                            if (result.error === "") {
-                                this.setState({
-                                    isLoading: false,
-                                    answers: result.form.answers,
-                                    registrationId: result.form.registration_id
-                                });
-                            }
+                            registrationService.getRegistrationResponse().then(result => {
+                                if (result.error === "") {
+                                    this.setState({
+                                        isLoading: false,
+                                        answers: result.form.answers,
+                                        registrationId: result.form.registration_id
+                                    });
+                                }
 
-                        }).catch(error => {})
-                        this.setState({
-                            questionSections: questionSections,
-                            registrationFormId: result.form.id,
-                            isLoading: false
-                        });
-                    }
+                            }).catch(error => { })
+                            this.setState({
+                                questionSections: questionSections,
+                                registrationFormId: result.form.id,
+                                isLoading: false
+                            });
+                        }
+                    });
                 });
-            });
-        }
-            else{
+            }
+            else {
                 this.setState({
                     isLoading: false
                 });
@@ -147,10 +142,7 @@ class RegistrationComponent extends Component {
         })
     }
 
-
-
     handleUploadFile = (file) => {
-        console.log(file);
         this.setState({
             uploading: true
         }, () => {
@@ -163,7 +155,6 @@ class RegistrationComponent extends Component {
                 if (response.fileId && this.props.onChange) {
                     this.props.onChange(this.props.question, response.fileId);
                 }
-                console.log(response);
                 this.setState({
                     uploaded: response.fileId !== "",
                     uploadError: response.error,
@@ -242,7 +233,7 @@ class RegistrationComponent extends Component {
                             type="text"
                             label={question.description}
                             value={answer ? answer.value : answer}
-                            placeholder = {question.placeholder}
+                            placeholder={question.placeholder}
                             onChange={this.handleChange}
                             key={"i_" + key}
                             showError={validationError}
@@ -275,7 +266,7 @@ class RegistrationComponent extends Component {
                             label={question.description}
                             onChange={this.handleChange}
                             placeholder={answer ? answer.value : question.placeholder}
-                            value={answer? answer.value : answer}
+                            value={answer ? answer.value : answer}
                             rows={5}
                             key={"i_" + key}
                             showError={validationError}
