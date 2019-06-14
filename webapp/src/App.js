@@ -145,18 +145,19 @@ class App extends Component {
                     >
                       Apply
                     </NavLink>
-                    <NavLink
-                      to="/registration"
-                      activeClassName="nav-link active"
-                      className="nav-link"
-                      onClick={this.toggleMenu}
-                    >
-                      Registration
-                    </NavLink>
                   </li>
 
                 )}
-
+                <li class="nav-item">
+                  <NavLink
+                    to="/registration"
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.toggleMenu}
+                  >
+                    Registration
+                    </NavLink>
+                </li>
                 <li class="nav-item">
                   <NavLink
                     to="/offer"
