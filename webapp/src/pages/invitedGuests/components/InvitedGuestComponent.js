@@ -142,7 +142,7 @@ class InvitedGuests extends Component {
                     <th scope="col">Lastname</th>
                     <th scope="col">Email</th>
                     <th scope="col">Role</th>
-                    <th scope="col">Department</th>
+                    <th scope="col">Affiliation</th>
                   </tr>
                 </thead>
                 {this.state.guestList.map(user => (
@@ -152,7 +152,7 @@ class InvitedGuests extends Component {
                       <td>{user.user.lastname}</td>
                       <td>{user.user.email}</td>
                       <td>{user.role}</td>
-                      <td>{user.user.department}</td>
+                      <td>{user.user.affiliation}</td>
                     </tr>
                   </tbody>
                 ))}
