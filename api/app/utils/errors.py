@@ -10,9 +10,9 @@ RESET_PASSWORD_CODE_NOT_VALID = (
     {'message': 'Valid code is required to reset a password'}, 418)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
-SECTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
-QUESTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
-FORM_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
+SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
+QUESTION_NOT_FOUND = ({'message': 'No question exists with that Event ID'}, 404)
+FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
 UPDATE_CONFLICT = (
