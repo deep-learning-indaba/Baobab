@@ -185,13 +185,7 @@ class creatreInvitedGuestComponent extends Component {
       primaryLanguage
     } = this.state.user;
 
-    const roleOptions = [
-      { value: "Speaker", label: "Speaker" },
-      { value: "Guest", label: "Guest" },
-      { value: "Mentor", label: "Mentor" },
-      { value: "Friend of the Indaba", label: "Friend of the Indaba" },
-      { value: "Organiser", label: "Organiser" }
-    ];
+    const roleOptions = invitedGuestServices.getRoles();
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
     const nationalityValue = this.getContentValue(

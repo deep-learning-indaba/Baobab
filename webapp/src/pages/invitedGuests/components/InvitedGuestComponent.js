@@ -99,17 +99,7 @@ class InvitedGuests extends Component {
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const { loading, error } = this.state;
-    const roleOptions = [
-      { value: "Speaker", label: "Speaker" },
-      { value: "Guest", label: "Guest" },
-      { value: "Mentor", label: "Mentor" },
-      { value: "Friend of the Indaba", label: "Friend of the Indaba" },
-      { value: "Organiser", label: "Organiser" },
-      { value: "Dignitary", label: "Dignitary" },
-      { value: "Indaba X", label: "Indaba X" },
-      { value: "Sponsor", label: "Sponsor" },
-      { value: "Press", label: "Press" }
-    ];
+    const roleOptions = invitedGuestServices.getRoles();
     let lastGuest;
     if (this.state.guestList !== null) {
       lastGuest = this.state.guestList[this.state.guestList.length - 1];
