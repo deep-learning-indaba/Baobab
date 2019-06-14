@@ -30,8 +30,8 @@ class Offer extends Component {
     };
   };
 
-  buttonSubmit() {
-    const { offer, candidate_response, rejected_reason } = this.state;
+  buttonSubmit(candidate_response) {
+    const { offer, rejected_reason } = this.state;
 
     offerServices
       .updateOffer(
@@ -129,9 +129,7 @@ class Offer extends Component {
                     this.setState(
                       {
                         showReasonBox: true
-                      },
-                      this.buttonSubmit()
-                    );
+                      });
                   }}
                 >
                   Reject
@@ -146,9 +144,9 @@ class Offer extends Component {
                     this.setState(
                       {
                         candidate_response: true
-                      },
-                      this.buttonSubmit()
+                      }                      
                     );
+                    this.buttonSubmit(true)
                   }}
                 >
                   Accept
@@ -174,7 +172,7 @@ class Offer extends Component {
                           candidate_response: false,
                           showReasonBox: false
                         },
-                        this.buttonSubmit()
+                        this.buttonSubmit(false)
                       );
                     }}
                   >
