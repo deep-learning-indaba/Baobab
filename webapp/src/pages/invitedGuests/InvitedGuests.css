@@ -87,3 +87,8 @@ button.margin-top-32{
     padding-left:0;
     padding-right:0;
 }
+
+span.not-found {
+    margin-top: 25px;
+    display: block;
+}

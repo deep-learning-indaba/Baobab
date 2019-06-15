@@ -7,13 +7,21 @@ import { createColClassName } from "../../../utils/styling/styling";
 import "react-table/react-table.css";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
+
 import {
   requiredText,
   requiredDropdown,
   validEmail
 } from "../../../utils/validation/rules.js";
+import {
+  getTitleOptions,
+  getGenderOptions,
+} from "../../../utils/validation/contentHelpers";
 
-const fieldValidations = [ruleRunner(validationFields.email, validEmail)];
+const fieldValidations = [
+  ruleRunner(validationFields.email, validEmail),
+  ruleRunner(validationFields.role, requiredDropdown)
+];
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -23,14 +31,14 @@ class InvitedGuests extends Component {
     this.state = {
       isLoading: true,
       isError: false,
-      email: "",
       guestList: [],
-      role: "",
+      user: {},
       addedSucess: false,
       notFound: false,
       buttonClicked: false,
       conflict: false,
-      error: ""
+      error: "",
+      errors: null
     };
   } 
   getGuestList() {
@@ -44,18 +52,61 @@ class InvitedGuests extends Component {
     });
   }
 
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
+  }
+
   componentDidMount() {
     this.getGuestList();
+    Promise.all([
+      getTitleOptions,
+      getGenderOptions,
+    ]).then(result => {
+      this.setState({
+        titleOptions: this.checkOptionsList(result[0]),
+        genderOptions: this.checkOptionsList(result[1]),
+      });
+    });
   }
 
   handleChangeDropdown = (name, dropdown) => {
-    this.setState({
-      [name]: dropdown.value
-    });
+    this.setState(
+      {
+        user: {
+          ...this.state.user,
+          [name]: dropdown.value
+        }
+      },
+      function() {
+        let errorsForm = run(this.state.user, fieldValidations);
+        this.setState({ errors: { $set: errorsForm } });
+      }
+    );
   };
+
+  handleChange = field => {
+    return event => {
+      this.setState(
+        {
+          user: {
+            ...this.state.user,
+            [field.name]: event.target.value
+          }
+        },
+        function() {
+          let errorsForm = run(this.state.user, fieldValidations);
+          this.setState({ errors: { $set: errorsForm } });
+        }
+      );
+    };
+  };
+
+
   buttonSubmit() {
     invitedGuestServices
-      .addInvitedGuest(this.state.email, DEFAULT_EVENT_ID, this.state.role)
+      .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
       .then(response => {
         if (response.msg === "succeeded") {
           this.getGuestList();
@@ -83,21 +134,14 @@ class InvitedGuests extends Component {
         }
       });
   }
-  handleChange = field => {
-    return event => {
-      this.setState({
-        [field.name]: event.target.value
-      });
-    };
-  };
+
+  submitCreate = () => {
+
+  }
 
   render() {
-    const xs = 12;
-    const sm = 4;
-    const md = 4;
-    const lg = 4;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
+    const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
+
     const { loading, error } = this.state;
     const roleOptions = invitedGuestServices.getRoles();
     let lastGuest;
@@ -117,7 +161,7 @@ class InvitedGuests extends Component {
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
+        {error && <div className={"alert alert-danger"}>{JSON.stringify(error)}</div>}
 
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
@@ -153,40 +197,25 @@ class InvitedGuests extends Component {
           </div>
         </div>
 
-        {this.state.addedSucess ? (
+        {this.state.addedSucess && (
           <div class="card flat-card success">
             {" "}
             Successfully added {lastGuest.user.firstname}{" "}
             {lastGuest.user.lastname}
           </div>
-        ) : this.state.addedSucess === false && this.state.notFound ? (
-          <div class="alert alert-danger">
-            User does not exist
-            <a
-              href={
-                "/invitedGuests/create?email=" +
-                this.state.email +
-                "&event=" +
-                DEFAULT_EVENT_ID +
-                "&role=" +
-                this.state.role
-              }
-            >
-              {" "}
-              Click here to create
-            </a>
-          </div>
-        ) : this.state.addedSucess === false && this.state.conflict ? (
+        )}
+        
+        {this.state.addedSucess === false && this.state.conflict && (
           <div class="card flat-card conflict">
             Invited guest with this email already exists.
           </div>
-        ) : null}
+        )}
 
         <form>
           <div class="card">
             <p className="h5 text-center mb-4">Add Guest</p>
             <div class="row">
-              <div class={colClassEmailLanguageDob}>
+              <div class={threeColClassName}>
                 <FormTextBox
                   id={validationFields.email.name}
                   type="email"
@@ -196,24 +225,96 @@ class InvitedGuests extends Component {
                 />
               </div>
 
-              <div class={commonColClassName}>
+              <div class={threeColClassName}>
                 <FormSelect
                   options={roleOptions}
-                  id={"role"}
+                  id={validationFields.role.name}
+                  placeholder={validationFields.role.display}
                   onChange={this.handleChangeDropdown}
-                  label={"Select role"}
+                  label={validationFields.role.display}
                 />
               </div>
-              <div class={commonColClassName}>
-                <button
-                  type="button"
-                  class="btn btn-primary stretched margin-top-32"
-                  onClick={() => this.buttonSubmit()}
-                >
-                  Create invited guest
-                </button>
+              <div class={threeColClassName}>
+                {!this.state.notFound &&
+                  <button
+                    type="button"
+                    class="btn btn-primary stretched margin-top-32"
+                    onClick={() => this.buttonSubmit()}
+                  >
+                    Add
+                  </button>
+                }
+                {!this.state.addedSucess && this.state.notFound && 
+                  <span className="text-warning not-found">
+                    User does not exist in Baobab, please add these details:
+                  </span>
+                }
               </div>
             </div>
+            
+            {!this.state.addedSucess && this.state.notFound && 
+              <div>
+                <div class="row">
+                  <div className={threeColClassName}>
+                    <FormSelect
+                      options={this.state.titleOptions}
+                      id={validationFields.title.name}
+                      placeholder={validationFields.title.display}
+                      onChange={this.handleChangeDropdown}
+                      label={validationFields.title.display}
+                    />
+                  </div>
+                  <div className={threeColClassName}>
+                    <FormTextBox
+                      id={validationFields.firstName.name}
+                      type="text"
+                      placeholder={validationFields.firstName.display}
+                      onChange={this.handleChange(validationFields.firstName)}
+                      label={validationFields.firstName.display}
+                    />
+                  </div>
+                  <div className={threeColClassName}>
+                    <FormTextBox
+                      id={validationFields.lastName.name}
+                      type="text"
+                      placeholder={validationFields.lastName.display}
+                      onChange={this.handleChange(validationFields.lastName)}
+                      label={validationFields.lastName.display}
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div className={threeColClassName}>
+                    <FormSelect
+                      options={this.state.genderOptions}
+                      id={validationFields.gender.name}
+                      placeholder={validationFields.gender.display}
+                      onChange={this.handleChangeDropdown}
+                      label={validationFields.gender.display}
+                    />
+                  </div>
+                  <div className={threeColClassName}>
+                    <FormTextBox
+                      id={validationFields.affiliation.name}
+                      type="text"
+                      placeholder={validationFields.affiliation.display}
+                      onChange={this.handleChange(validationFields.affiliation)}
+                      label={validationFields.affiliation.display}
+                    />
+                  </div>
+                  <div className={threeColClassName}>
+                    <button
+                      type="button"
+                      class="btn btn-primary stretched margin-top-32"
+                      onClick={() => this.submitCreate()}
+                    >
+                      Create Invited Guest
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
           </div>
         </form>
       </div>
