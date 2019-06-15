@@ -35,7 +35,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        email = args['email_address']
+        email = args['email']
         role = args['role']
 
         user = db.session.query(AppUser).filter(
@@ -72,8 +72,15 @@ class CreateUser(SignupMixin, restful.Resource):
 
     @auth_required
     def post(self):
+        args = self.req_parser.parse_args()
+
         user_api = UserAPI.UserAPI()
-        return user_api.post(True)
+        user, status = user_api.post(True)
+        if status != 201:
+            return user, status
+
+        invited_guest_api = InvitedGuestAPI()
+        return invited_guest_api.post()
 
 
 class InvitedGuestView():

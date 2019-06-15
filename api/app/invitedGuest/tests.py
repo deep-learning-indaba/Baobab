@@ -12,19 +12,19 @@ from app.responses.models import Response
 
 INVITED_GUEST = {
     'event_id': 1,
-    'email_address': 'something@email.com',
+    'email': 'something@email.com',
     'role': 'jedi'
 }
 
 INVITED_GUEST_2 = {
     'event_id': 1,
-    'email_address': 'something2@email.com',
+    'email': 'something2@email.com',
     'role': 'jedi'
 }
 
 INVITED_GUEST_NEW_USER = {
     'event_id': 1,
-    'email_address': 'new@email.com',
+    'email': 'new@email.com',
     'role': 'jedi'
 }
 USER_DATA = {
