@@ -38,29 +38,30 @@ class Offer extends Component {
 
   buttonSubmit(candidate_response) {
     const { offer, rejected_reason } = this.state;
+      
+      if(candidate_response !== null){
+        offerServices
+          .updateOffer(
+            offer.id,
+            DEFAULT_EVENT_ID,
+            candidate_response,
+            candidate_response? "" : rejected_reason
+          )
+          .then(response => {
 
-    offerServices
-      .updateOffer(
-        offer.id,
-        DEFAULT_EVENT_ID,
-        candidate_response,
-        candidate_response? "" : rejected_reason
-      )
-      .then(response => {
-      
-        if (response.response.status === 201) {
-          this.setState({
-            offer: response.response.data, 
-          }, () => this.displayOfferResponse()
-          );
-          this.displayOfferResponse();
-        } else if (response.response.error) {
-          this.setState({
-            error: response.response.error
+            if (response.response.status === 201) {
+              this.setState({
+                offer: response.response.data, 
+              }, () => this.displayOfferResponse()
+              );
+              this.displayOfferResponse();
+            } else if (response.response.error) {
+              this.setState({
+                error: response.response.error
+              });
+            }
           });
-        }
-      });
-      
+    }
   }
   
   row = ( col1, col2)=>{
