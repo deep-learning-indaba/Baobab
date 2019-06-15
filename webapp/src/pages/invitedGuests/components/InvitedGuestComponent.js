@@ -389,7 +389,6 @@ class InvitedGuests extends Component {
 
           </div>
         </form>
-        {JSON.stringify(this.state.errors)}
       </div>
     );
   }
