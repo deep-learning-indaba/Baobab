@@ -112,7 +112,7 @@ class InvitedGuests extends Component {
         addedSucess: true,
         conflict: false,
         notFound: false,
-        successMessage: "Added " + response.response.fullname + " to the guest list",
+        successMessage: "Added " + response.response.data.fullname + " to the guest list",
         user: {}
       });
     } else if (response.msg === "404") {
