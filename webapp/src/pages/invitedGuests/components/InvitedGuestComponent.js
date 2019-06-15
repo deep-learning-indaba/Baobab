@@ -18,10 +18,18 @@ import {
   getGenderOptions,
 } from "../../../utils/validation/contentHelpers";
 
-const fieldValidations = [
+const baseFieldValidations = [
   ruleRunner(validationFields.email, validEmail),
   ruleRunner(validationFields.role, requiredDropdown)
 ];
+
+const extraFieldValidations = [
+  ruleRunner(validationFields.title, requiredDropdown),
+  ruleRunner(validationFields.firstName, requiredText),
+  ruleRunner(validationFields.lastName, requiredText),
+  ruleRunner(validationFields.gender, requiredDropdown),
+  ruleRunner(validationFields.affiliation, requiredText)
+]
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const MENTOR_ATTENDEE_CATEGORY_ID = 8;
@@ -39,7 +47,7 @@ class InvitedGuests extends Component {
       buttonClicked: false,
       conflict: false,
       error: "",
-      errors: null,
+      errors: {},
       successMessage: ""
     };
   } 
@@ -73,6 +81,18 @@ class InvitedGuests extends Component {
     });
   }
 
+  runValidations = callback => {
+    let fieldValidations = baseFieldValidations;
+    if(this.state.notFound) {
+      fieldValidations = fieldValidations.concat(extraFieldValidations);
+    }
+    let errorsForm = run(this.state.user, fieldValidations);
+    if(!callback) {
+      callback = () => {}
+    }
+    this.setState({ errors: { $set: errorsForm } }, callback);
+  }
+
   handleChangeDropdown = (name, dropdown) => {
     this.setState(
       {
@@ -81,10 +101,7 @@ class InvitedGuests extends Component {
           [name]: dropdown.value
         }
       },
-      function() {
-        let errorsForm = run(this.state.user, fieldValidations);
-        this.setState({ errors: { $set: errorsForm } });
-      }
+      this.runValidations
     );
   };
 
@@ -97,10 +114,7 @@ class InvitedGuests extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
-          let errorsForm = run(this.state.user, fieldValidations);
-          this.setState({ errors: { $set: errorsForm } });
-        }
+        this.runValidations
       );
     };
   };
@@ -113,7 +127,8 @@ class InvitedGuests extends Component {
         conflict: false,
         notFound: false,
         successMessage: "Added " + response.response.data.fullname + " to the guest list",
-        user: {}
+        user: {},
+        showErrors: false
       });
     } else if (response.msg === "404") {
       this.setState({
@@ -128,7 +143,8 @@ class InvitedGuests extends Component {
         addedSucess: false,
         conflict: true,
         user: {},
-        successMessage: ""
+        successMessage: "",
+        showErrors: false
       });
     } else {
       this.setState({
@@ -138,20 +154,49 @@ class InvitedGuests extends Component {
   }
 
   buttonSubmit() {
-    invitedGuestServices
-      .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
-      .then(this.handleResponse);
+    this.runValidations(()=>{
+      let errors = this.state.errors;
+      if (errors && errors.$set && errors.$set.length > 0) {
+        this.setState({showErrors: true});
+        return;
+      }
+      invitedGuestServices
+        .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
+        .then(this.handleResponse);
+    });
   }
 
   submitCreate = () => {
-    const user = {
-      ...this.state.user,
-      category: MENTOR_ATTENDEE_CATEGORY_ID
-    };
+    this.runValidations(()=>{
+      let errors = this.state.errors;
+      if (errors && errors.$set && errors.$set.length > 0) {
+        this.setState({showErrors: true});
+        return;
+      }
+      const user = {
+        ...this.state.user,
+        category: MENTOR_ATTENDEE_CATEGORY_ID
+      };
+  
+      invitedGuestServices
+        .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
+        .then(this.handleResponse);
+    });
+  }
 
-    invitedGuestServices
-      .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
-      .then(this.handleResponse);
+  getError = id => {
+    if (!this.state.showErrors) {
+      return "";
+    }
+
+    if (this.state.errors && this.state.errors.$set && this.state.errors.$set.length > 0) {
+      let errorMessage = this.state.errors.$set.find(e=>e[id]);
+      if (errorMessage) {
+        return Object.values(errorMessage)[0];
+      }
+      return "";
+    }
+    return "";
   }
 
   render() {
@@ -235,6 +280,8 @@ class InvitedGuests extends Component {
                   placeholder={validationFields.email.display}
                   onChange={this.handleChange(validationFields.email)}
                   label={validationFields.email.display}
+                  showError={this.getError(validationFields.email.name)}
+                  errorText={this.getError(validationFields.email.name)}
                 />
               </div>
 
@@ -245,6 +292,8 @@ class InvitedGuests extends Component {
                   placeholder={validationFields.role.display}
                   onChange={this.handleChangeDropdown}
                   label={validationFields.role.display}
+                  showError={this.getError(validationFields.role.name)}
+                  errorText={this.getError(validationFields.role.name)}
                 />
               </div>
               <div class={threeColClassName}>
@@ -275,6 +324,8 @@ class InvitedGuests extends Component {
                       placeholder={validationFields.title.display}
                       onChange={this.handleChangeDropdown}
                       label={validationFields.title.display}
+                      showError={this.getError(validationFields.title.name)}
+                      errorText={this.getError(validationFields.title.name)}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -284,6 +335,8 @@ class InvitedGuests extends Component {
                       placeholder={validationFields.firstName.display}
                       onChange={this.handleChange(validationFields.firstName)}
                       label={validationFields.firstName.display}
+                      showError={this.getError(validationFields.firstName.name)}
+                      errorText={this.getError(validationFields.firstName.name)}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -293,6 +346,8 @@ class InvitedGuests extends Component {
                       placeholder={validationFields.lastName.display}
                       onChange={this.handleChange(validationFields.lastName)}
                       label={validationFields.lastName.display}
+                      showError={this.getError(validationFields.lastName.name)}
+                      errorText={this.getError(validationFields.lastName.name)}
                     />
                   </div>
                 </div>
@@ -304,6 +359,8 @@ class InvitedGuests extends Component {
                       placeholder={validationFields.gender.display}
                       onChange={this.handleChangeDropdown}
                       label={validationFields.gender.display}
+                      showError={this.getError(validationFields.gender.name)}
+                      errorText={this.getError(validationFields.gender.name)}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -313,6 +370,8 @@ class InvitedGuests extends Component {
                       placeholder={validationFields.affiliation.display}
                       onChange={this.handleChange(validationFields.affiliation)}
                       label={validationFields.affiliation.display}
+                      showError={this.getError(validationFields.affiliation.name)}
+                      errorText={this.getError(validationFields.affiliation.name)}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -330,6 +389,7 @@ class InvitedGuests extends Component {
 
           </div>
         </form>
+        {JSON.stringify(this.state.errors)}
       </div>
     );
   }
