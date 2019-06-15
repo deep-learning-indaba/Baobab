@@ -24,6 +24,7 @@ const fieldValidations = [
 ];
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+const MENTOR_ATTENDEE_CATEGORY_ID = 8;
 
 class InvitedGuests extends Component {
   constructor(props) {
@@ -103,40 +104,50 @@ class InvitedGuests extends Component {
     };
   };
 
+  handleResponse = response => {
+    if (response.msg === "succeeded") {
+      this.getGuestList();
+      this.setState({
+        addedSucess: true,
+        conflict: false,
+        notFound: false,
+        user: {}
+      });
+    } else if (response.msg === "404") {
+      this.setState({
+        addedSucess: false,
+        notFound: true,
+        conflict: false
+      });
+    } else if (response.msg === "409") {
+      this.setState({
+        notFound: false,
+        addedSucess: false,
+        conflict: true,
+        user: {}
+      });
+    } else {
+      this.setState({
+        error: response.error
+      });
+    }
+  }
 
   buttonSubmit() {
     invitedGuestServices
       .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
-      .then(response => {
-        if (response.msg === "succeeded") {
-          this.getGuestList();
-          this.setState({
-            addedSucess: true,
-            conflict: false,
-            notFound: false
-          });
-        } else if (response.msg === "404") {
-          this.setState({
-            addedSucess: false,
-            notFound: true,
-            conflict: false
-          });
-        } else if (response.msg === "409") {
-          this.setState({
-            notFound: false,
-            addedSucess: false,
-            conflict: true
-          });
-        } else {
-          this.setState({
-            error: response.error
-          });
-        }
-      });
+      .then(this.handleResponse);
   }
 
   submitCreate = () => {
+    const user = {
+      ...this.state.user,
+      category: MENTOR_ATTENDEE_CATEGORY_ID
+    };
 
+    invitedGuestServices
+      .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
+      .then(this.handleResponse);
   }
 
   render() {
@@ -179,17 +190,17 @@ class InvitedGuests extends Component {
                     <th scope="col">Affiliation</th>
                   </tr>
                 </thead>
-                {this.state.guestList.map(user => (
-                  <tbody className="white-background" key={user.email}>
-                    <tr className="font-size-12">
+                <tbody className="white-background">
+                  {this.state.guestList.map(user => (
+                    <tr className="font-size-12" key={user.email}>
                       <td>{user.user.firstname}</td>
                       <td>{user.user.lastname}</td>
                       <td>{user.user.email}</td>
                       <td>{user.role}</td>
                       <td>{user.user.affiliation}</td>
                     </tr>
-                  </tbody>
-                ))}
+                  ))}
+                </tbody>
               </table>
             ) : (
               <div class="alert alert-danger">No invited guests</div>
