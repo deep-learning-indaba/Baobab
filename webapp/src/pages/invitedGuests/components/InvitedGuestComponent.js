@@ -39,7 +39,8 @@ class InvitedGuests extends Component {
       buttonClicked: false,
       conflict: false,
       error: "",
-      errors: null
+      errors: null,
+      successMessage: ""
     };
   } 
   getGuestList() {
@@ -111,20 +112,23 @@ class InvitedGuests extends Component {
         addedSucess: true,
         conflict: false,
         notFound: false,
+        successMessage: "Added " + response.response.fullname + " to the guest list",
         user: {}
       });
     } else if (response.msg === "404") {
       this.setState({
         addedSucess: false,
         notFound: true,
-        conflict: false
+        conflict: false,
+        successMessage: ""
       });
     } else if (response.msg === "409") {
       this.setState({
         notFound: false,
         addedSucess: false,
         conflict: true,
-        user: {}
+        user: {},
+        successMessage: ""
       });
     } else {
       this.setState({
@@ -210,9 +214,7 @@ class InvitedGuests extends Component {
 
         {this.state.addedSucess && (
           <div class="card flat-card success">
-            {" "}
-            Successfully added {lastGuest.user.firstname}{" "}
-            {lastGuest.user.lastname}
+            {this.state.successMessage}
           </div>
         )}
         
