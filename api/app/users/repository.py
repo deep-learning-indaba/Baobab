@@ -11,6 +11,13 @@ class UserRepository():
         return db.session.query(AppUser).get(user_id)
 
     @staticmethod
+    def get_by_id_with_response(user_id):
+        return db.session.query(AppUser, Response)\
+                         .filter_by(id=user_id)\
+                         .join(Response, Response.user_id==AppUser.id)\
+                         .first()
+
+    @staticmethod
     def get_by_email(email):
         return db.session.query(AppUser).filter_by(email=email).first()
 
