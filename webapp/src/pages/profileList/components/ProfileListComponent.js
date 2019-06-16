@@ -42,16 +42,15 @@ onSubmit=(user_id)=>{
         "width": "3rem",
         "height": "3rem"
       }
-    const columns = [{Header:<div className="list-number">#</div> ,accessor:"response_id", Cell: props => <span className="number">{props.value}</span>},
+    const columns = [
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
                       accessor:u => <div className="list-profile-fullname">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
-                      Cell: props => <span onClick={()=>this.onSubmit(props.original.user_id)}>{props.value}</span>},
+                      Cell: props => <a href="#" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</a>,
+                      minWidth: 150},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},
                      {Header:<div className="list-department">Department</div>,accessor:"department"},
-                     {Header:<div className="list-nationality">Nationality</div>,accessor:"nationality_country"},
-                     {Header:<div className="list-disability">Disability</div>,accessor:"user_disability"},
-                     {Header:<div className="list-language">Language</div>,accessor:"user_primaryLanguage"},];
+                     {Header:<div className="list-nationality">Nationality</div>,accessor:"nationality_country"}];
     
     if(loading){
         return (
