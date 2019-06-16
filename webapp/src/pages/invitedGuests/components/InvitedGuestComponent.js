@@ -29,7 +29,8 @@ class InvitedGuests extends Component {
       addedSucess: false,
       notFound: false,
       buttonClicked: false,
-      conflict: false
+      conflict: false,
+      error: ""
     };
   } 
   getGuestList() {
@@ -75,6 +76,10 @@ class InvitedGuests extends Component {
             addedSucess: false,
             conflict: true
           });
+        } else {
+          this.setState({
+            error: response.error
+          });
         }
       });
   }
@@ -93,14 +98,8 @@ class InvitedGuests extends Component {
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
-    const { loading } = this.state;
-    const roleOptions = [
-      { value: "Speaker", label: "Speaker" },
-      { value: "Guest", label: "Guest" },
-      { value: "Mentor", label: "Mentor" },
-      { value: "Friend of the Indaba", label: "Friend of the Indaba" },
-      { value: "Organiser", label: "Organiser" }
-    ];
+    const { loading, error } = this.state;
+    const roleOptions = invitedGuestServices.getRoles();
     let lastGuest;
     if (this.state.guestList !== null) {
       lastGuest = this.state.guestList[this.state.guestList.length - 1];
@@ -118,8 +117,11 @@ class InvitedGuests extends Component {
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
+        {error && <div className={"alert alert-danger"}>{error}</div>}
+
         <div class="card no-padding-h">
           <p className="h5 text-center mb-1 ">Invited Guests</p>
+
           <div class="responsive-table">
             {this.state.guestList !== null &&
             this.state.guestList.length > 0 ? (
@@ -130,7 +132,7 @@ class InvitedGuests extends Component {
                     <th scope="col">Lastname</th>
                     <th scope="col">Email</th>
                     <th scope="col">Role</th>
-                    <th scope="col">Department</th>
+                    <th scope="col">Affiliation</th>
                   </tr>
                 </thead>
                 {this.state.guestList.map(user => (
@@ -140,7 +142,7 @@ class InvitedGuests extends Component {
                       <td>{user.user.lastname}</td>
                       <td>{user.user.email}</td>
                       <td>{user.role}</td>
-                      <td>{user.user.department}</td>
+                      <td>{user.user.affiliation}</td>
                     </tr>
                   </tbody>
                 ))}
