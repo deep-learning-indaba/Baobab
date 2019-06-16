@@ -171,12 +171,6 @@ componentDidMount(){
                                         </div>
                                     </div>
                                         
-                            </fieldset>
-                        </div>
-
-                        <div class="row">
-                            <fieldset class="fieldset">
-                                <legend class="legend">Nationality Info. </legend>
                                     <div class="row">
                                         <div class={colClassNameSurname}>
                                             <div class="form-group">
