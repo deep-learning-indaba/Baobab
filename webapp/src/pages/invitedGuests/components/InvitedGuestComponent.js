@@ -7,6 +7,7 @@ import { createColClassName } from "../../../utils/styling/styling";
 import "react-table/react-table.css";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
+import ReactTable from 'react-table';
 
 import {
   requiredText,
@@ -219,42 +220,47 @@ class InvitedGuests extends Component {
       );
     }
 
+    const columns = [
+      {
+        id: "user", 
+        Header: <div className="invitedguest-fullname">Full-Name</div>,
+        accessor: u => <div className="invitedguest-fullname">{u.user.user_title+" "+ u.user.firstname+" "+u.user.lastname}</div>,
+        minWidth: 150
+      },
+      {
+        id: "email",
+        Header:<div className="invitedguest-email">Email</div>,
+        accessor: u=>u.user.email
+      },
+      {
+        id: "affiliation",
+        Header:<div className="invitedguest-affiliation">Affiliation</div>,
+        accessor: u=>u.user.affiliation
+      },
+      {
+        id: "role",
+        Header:<div className="invitedguest-role">Role</div>,
+        accessor: u=>u.role
+      },
+    ];
+
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
         {error && <div className={"alert alert-danger"}>{JSON.stringify(error)}</div>}
 
         <div class="card no-padding-h">
-          <p className="h5 text-center mb-1 ">Invited Guests</p>
+          <p className="h5 text-center mb-4 ">Invited Guests</p>
 
-          <div class="responsive-table">
-            {this.state.guestList !== null &&
-            this.state.guestList.length > 0 ? (
-              <table cellPadding={5} className="stretched round-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Lastname</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Affiliation</th>
-                  </tr>
-                </thead>
-                <tbody className="white-background">
-                  {this.state.guestList.map(user => (
-                    <tr className="font-size-12" key={user.email}>
-                      <td>{user.user.firstname}</td>
-                      <td>{user.user.lastname}</td>
-                      <td>{user.user.email}</td>
-                      <td>{user.role}</td>
-                      <td>{user.user.affiliation}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div class="alert alert-danger">No invited guests</div>
-            )}
-          </div>
+          {
+            this.state.guestList && this.state.guestList.length > 0 &&
+            <ReactTable data={this.state.guestList} columns={columns} minRows={0}/>
+          }
+
+          {
+            (!this.state.guestList || this.state.guestList.length == 0) && 
+            <div class="alert alert-danger">No invited guests</div>
+          }
+
         </div>
 
         {this.state.addedSucess && (

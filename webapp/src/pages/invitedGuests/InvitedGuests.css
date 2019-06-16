@@ -92,3 +92,13 @@ span.not-found {
     margin-top: 25px;
     display: block;
 }
+
+.ReactTable {
+    font-size: small;
+    text-align: left;
+}
+
+.ReactTable .rt-th {
+    text-align: left;
+    font-weight: bold;
+}
