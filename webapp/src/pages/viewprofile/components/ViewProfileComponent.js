@@ -218,56 +218,20 @@ componentDidMount(){
                             <fieldset class="fieldset">
                                 <legend class="legend">User Application Info. </legend>
                                     <div class="row">
-                                        <div class={colClassNameSurname}>
-                                          {is_Submitted ?  
-                                                 <div class="form-group">
-                                                    <label class="label-display col-form-label" htmlFor="application_date" >Application Date:</label>
-                                                    <input class="form-control" type="text" id="application_date" value={Date_Submitted} readOnly/>
-                                                 </div> :
-                                                 null }
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class={colClassNameSurname}>
-                                        <div class="form-group">
-                                               <label class="label-display col-form-label" htmlFor="isSubmitted" >Submitted ?:</label>
-                                                    {is_Submitted ? 
-                                                        <div class="alert alert-success yes-submitted-alert" role="alert">YES</div> : 
-                                                        <div class="alert alert-danger no-submitted-alert" role="alert">NO</div>
-                                                    }
-                                           </div>
-                                        </div>
-                                        <div class={colClassNameSurname}>
-                                            { is_Submitted ?
-                                                     <div class="form-group">
-                                                        <label class="label-display col-form-label" htmlFor="submission_date" >Submission Date:</label>
-                                                        <input class="form-control" type="text" id="submision_date" value={Date_Submitted} readOnly/>
-                                                    </div> :
-                                                    null
-                                            }
-
-                                        </div>
-                                    </div> 
-                                    <div class="row">
-                                        <div class={colClassNameSurname}>
-                                            { is_Submitted ?
-                                                 <div class="form-group">
-                                                    <label class="label-display col-form-label" htmlFor="isWithdrawn" >Withdrawn ?:</label>
-                                                    {   is_Withdrawn ? 
-                                                            <div class="alert alert-success yes-submitted-alert" role="alert">NO</div> : 
-                                                            <div class="alert alert-danger no-submitted-alert" role="alert">YES</div>
-                                                    }
-                                                 </div> :
-                                              null}      
-                                        </div>
-                                        <div class={colClassNameSurname}>
-                                           { is_Submitted && !is_Withdrawn ? 
+                                        {is_Submitted &&
+                                            <div class={colClassNameSurname}>
                                                 <div class="form-group">
-                                                    <label class="label-display col-form-label" htmlFor="submission_date" >Withdrawn Date:</label>
-                                                    <input class="form-control" type="text" id="submision_date" value={Date_Withdrawn} readOnly/>
-                                                </div> :
-                                                null}
+                                                    <div class="alert alert-success yes-submitted-alert" role="alert">Submitted on {Date_Submitted}</div>
+                                                </div>
+                                            </div>
+                                        }
+                                        {is_Withdrawn && 
+                                        <div class={colClassNameSurname}>
+                                             <div class="form-group">
+                                                <div class="alert alert-danger no-submitted-alert" role="alert">Withdrawn on {Date_Withdrawn}</div>
+                                             </div>
                                         </div>
+                                        }
                                     </div>  
                             </fieldset>
                         </div>
