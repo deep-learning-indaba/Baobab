@@ -25,6 +25,11 @@
     font-style: normal;
     font-weight: 600;
 }
+
+.list-profile-fullname {
+    cursor: pointer;
+}
+
 .list-affiliation{
     font-size: larger;
     font-style: normal;

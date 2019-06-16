@@ -280,10 +280,7 @@ class UserProfileView():
         self.is_withdrawn = user_response.Response.is_withdrawn
         self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
 
-
-class UserProfileList(UserProfileListMixin, restful.Resource):
-
-    user_profile_list_fields = {
+user_profile_list_fields = {
         'user_id': fields.Integer,
         'email': fields.String,
         'firstname': fields.String,
@@ -306,6 +303,8 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
         'withdrawn_timestamp': fields.DateTime('iso8601')
     }
 
+class UserProfileList(UserProfileListMixin, restful.Resource):
+
     @marshal_with(user_profile_list_fields)
     @auth_required
     def get(self):
@@ -325,7 +324,7 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
 
 class UserProfile(UserProfileMixin, restful.Resource):
 
-    @marshal_with(user_fields)
+    @marshal_with(user_profile_list_fields)
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
@@ -333,16 +332,17 @@ class UserProfile(UserProfileMixin, restful.Resource):
         current_user_id = g.current_user['id']
 
         current_user = user_repository.get_by_id(current_user_id)
+
         if current_user.is_admin:
-            user = user_repository.get_by_id(user_id)
+            user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
-            return user
+            return UserProfileView(user)
 
         user = user_repository.get_by_event_admin(user_id, current_user_id)
         if user is None:
             return USER_NOT_FOUND
-        return user
+        return UserProfileView(user)
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
