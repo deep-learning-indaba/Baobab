@@ -41,7 +41,10 @@ function getRegistrationResponse(id) {
         form: response.data,
         error: ""
       };
-    })
+      
+    },
+    
+    )
     .catch(function(error) {
       return {
         form: null,
@@ -54,7 +57,6 @@ function getRegistrationResponse(id) {
 }
 
 function submitResponse(data,shouldUpdate) {
-  
 
   const promise = shouldUpdate 
       ? axios.put(baseUrl + "/api/v1/registration-response", data, { headers: authHeader() })
@@ -65,11 +67,12 @@ function submitResponse(data,shouldUpdate) {
         error: "",
         form:response
       };
-    })
+    },
+    )
     .catch(function(error) {
       return {
         error:
-          error.response && error.response.data
+          error.response && error.response.data && error.respose.data.message
             ? error.response.data.message
             : error.message
       };

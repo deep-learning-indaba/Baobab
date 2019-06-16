@@ -159,7 +159,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             return registration, 201  # 201 is 'CREATED' status code
 
     @auth_required
-    @marshal_with(response_fields)
     def put(self):
         # Update an existing response for the logged-in user.
         req_parser = reqparse.RequestParser()

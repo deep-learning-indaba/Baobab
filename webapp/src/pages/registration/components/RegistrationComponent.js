@@ -38,9 +38,7 @@ class RegistrationComponent extends Component {
             registrationFormId: false,
             formSuccess: false,
             formFailure: false,
-            formError: ""
         }
-
     }
 
     resetPage() {
@@ -81,6 +79,8 @@ class RegistrationComponent extends Component {
 
     handleChangeDropdown = (id, dropdown) => {
         var answers = this.state.answers;
+
+        id = parseInt(id);
 
         var answer = answers.find(a => a.registration_question_id === id);
         if (answer) {
@@ -136,7 +136,8 @@ class RegistrationComponent extends Component {
             }
             else {
                 this.setState({
-                    isLoading: false
+                    isLoading: false,
+                    error:result.error
                 });
             }
         })
@@ -188,15 +189,15 @@ class RegistrationComponent extends Component {
                         this.setState({
                             formFailure: true,
                             formSuccess: false,
-                            isLoading: false
+                            isLoading: false,
+                            error:response.error
                         });
                     }
                 }).catch(error => {
                     this.setState({
                         formFailure: true,
                         formSuccess: false,
-                        isLoading: false,
-                        formError: error.response
+                        isLoading: false
                     });
                 });
             });
@@ -341,11 +342,11 @@ class RegistrationComponent extends Component {
                     </div>)
                 }
                 {this.state.formFailure && <div className="alert alert-danger stretched" >
-                    <div>{this.state.f}, please try again</div>
+                    <div>{this.state.error}, please try again</div>
                 </div>
                 }
                 {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
-                    <form onSubmit={() => this.buttonSubmit()}>
+                    <form onSubmit={() =>  this.buttonSubmit()}>
                         {this.state.questionSections.map(section => (
                             <div class="card stretched">
                                 <h3>{section.name}</h3>
