@@ -13,7 +13,6 @@
     "query-string": "^6.5.0",
     "react": "^16.7.0",
     "react-app-polyfill": "^0.2.2",
-    "react-bootstrap": "^1.0.0-beta.9",
     "react-bootstrap4-modal": "^1.7.0",
     "react-dom": "^16.7.0",
     "react-error-boundary": "^1.2.3",
