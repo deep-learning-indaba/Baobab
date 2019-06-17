@@ -20,12 +20,13 @@ from app.users.mixins import SignupMixin
 from app.users.repository import UserRepository as user_repository
 
 
-def invitedGuest_info(invitedGuest):
+def invitedGuest_info(invitedGuest, user):
     return {
         'invitedGuest_id': invitedGuest.id,
         'event_id': invitedGuest.event_id,
         'user_id': invitedGuest.user_id,
-        'role': invitedGuest.role
+        'role': invitedGuest.role,
+        'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
 
 
@@ -35,7 +36,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        email = args['email_address']
+        email = args['email']
         role = args['role']
 
         user = db.session.query(AppUser).filter(
@@ -65,15 +66,22 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
                 "Failed to add invited guest: {}".format(email))
             return ADD_INVITED_GUEST_FAILED
 
-        return invitedGuest_info(invitedGuest), 201
+        return invitedGuest_info(invitedGuest, user), 201
 
 
 class CreateUser(SignupMixin, restful.Resource):
 
     @auth_required
     def post(self):
+        args = self.req_parser.parse_args()
+
         user_api = UserAPI.UserAPI()
-        return user_api.post(True)
+        user, status = user_api.post(True)
+        if status != 201:
+            return user, status
+
+        invited_guest_api = InvitedGuestAPI()
+        return invited_guest_api.post()
 
 
 class InvitedGuestView():

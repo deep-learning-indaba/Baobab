@@ -12,19 +12,19 @@ from app.responses.models import Response
 
 INVITED_GUEST = {
     'event_id': 1,
-    'email_address': 'something@email.com',
+    'email': 'something@email.com',
     'role': 'jedi'
 }
 
 INVITED_GUEST_2 = {
     'event_id': 1,
-    'email_address': 'something2@email.com',
+    'email': 'something2@email.com',
     'role': 'jedi'
 }
 
 INVITED_GUEST_NEW_USER = {
     'event_id': 1,
-    'email_address': 'new@email.com',
+    'email': 'new@email.com',
     'role': 'jedi'
 }
 USER_DATA = {
@@ -41,6 +41,8 @@ USER_DATA = {
     'user_category_id': 1,
     'user_primaryLanguage': 'Zulu',
     'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+    'role': 'mentor',
+    'event_id': 1
 }
 
 
@@ -128,7 +130,7 @@ class InvitedGuestTest(ApiTestCase):
             '/api/v1/invitedGuest/create', data=USER_DATA, headers=self.headers)
         data = json.loads(response.data)
         assert response.status_code == 201
-        assert data['firstname'] == USER_DATA["firstname"]
+        assert data['fullname'] == '{} {} {}'.format(USER_DATA["user_title"], USER_DATA["firstname"], USER_DATA["lastname"])
 
     def test_create_invitedGuest_list(self):
         self.seed_static_data()
@@ -145,6 +147,6 @@ class InvitedGuestTest(ApiTestCase):
         data = sorted(data, key=lambda k: k['invited_guest_id'])
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['user']['email'],
-                         INVITED_GUEST['email_address'])
+                         INVITED_GUEST['email'])
         self.assertEqual(data[1]['user']['email'],
-                         INVITED_GUEST_2['email_address'])
+                         INVITED_GUEST_2['email'])

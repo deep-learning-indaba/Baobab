@@ -2,6 +2,7 @@ import axios from "axios";
 import { authHeader } from '../base.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
+const UNKNOWN_COUNTRY = 260;
 
 export const invitedGuestServices = {
   getInvitedGuestList,
@@ -51,7 +52,7 @@ function getInvitedGuestList(eventId) {
 function addInvitedGuest(email_address, event_Id, role) {
   let data = {
     event_id: event_Id,
-    email_address: email_address,
+    email: email_address,
     role: role,
   };
   return axios
@@ -86,16 +87,16 @@ function createInvitedGuest(user, event_Id, role) {
     firstname: user.firstName,
     lastname: user.lastName,
     user_title: user.title,
-    nationality_country_id: user.nationality,
-    residence_country_id: user.residence,
+    nationality_country_id: user.nationality || UNKNOWN_COUNTRY,  
+    residence_country_id: user.residence || UNKNOWN_COUNTRY, 
     user_gender: user.gender,
     affiliation: user.affiliation,
-    department: user.department,
-    user_disability: user.disability,
+    department: user.department || " ",
+    user_disability: user.disability || "none",
     user_category_id: user.category,
-    user_primaryLanguage: user.primaryLanguage,
-    user_dateOfBirth: new Date(user.dateOfBirth).toISOString(),
-    role: user.role,
+    user_primaryLanguage: user.primaryLanguage || null,
+    user_dateOfBirth: new Date(user.dateOfBirth ? user.dateOfBirth : "1900-01-01").toISOString(),
+    role: role,
   };
   return axios
     .post(baseUrl + "/api/v1/invitedGuest/create", data, { headers: authHeader() })
@@ -107,7 +108,7 @@ function createInvitedGuest(user, event_Id, role) {
       }
     })
     .catch(function (error) {
-      if (error.response.status === 409) {
+      if (error.response && error.response.status === 409) {
         return { msg: "409" }
       } else {
         return {
