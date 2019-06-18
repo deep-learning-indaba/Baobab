@@ -204,13 +204,6 @@ class App extends Component {
                         Invited Guests
                       </NavLink>
                       <NavLink
-                        to="/offer"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Offer
-                    </NavLink>
-                      <NavLink
                         to="/profile-list"
                         className="dropdown-item"
                         onClick={this.toggleMenu}

@@ -3,6 +3,7 @@ import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
 import { getEvents } from "../../services/events";
 import { applicationFormService } from "../../services/applicationForm";
+import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
@@ -12,14 +13,14 @@ const fieldNames = ["description", "start_date", "end_date", "status"];
 
 class Home extends Component {
 
-
   constructor(props) {
     super(props);
 
     this.state = {
       headings: headings,
       rows: [],
-      applicationStatus: null
+      applicationStatus: null,
+      offer:null
     }
   }
 
@@ -56,6 +57,13 @@ class Home extends Component {
         });
       }
     });
+    
+    offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
+      this.setState({
+        offer: result.offer
+      });
+    });
+  
   }
 
   render() {
@@ -116,10 +124,15 @@ class Home extends Component {
                 <h4 className={this.state.applicationStatus == "Submitted" ? "text-success" : "text-danger"}>
                   {this.state.applicationStatus}
                 </h4>
-                
-                {this.state.applicationStatus == "Submitted" && <p>
-                  Thank you! Your application has been received and is under review. You can expect to hear our decision mid-June.
-                </p>}
+
+                {this.state.applicationStatus == "Submitted" &&
+                <div>
+                  <p>
+                    Thank you! Your application has been received and is under review. You can expect to hear our decision mid-June.
+                  </p>
+                  {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
+                  : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
+                </div>}
                 {this.state.applicationStatus == "Withdrawn" && <p>
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
@@ -127,15 +140,15 @@ class Home extends Component {
                   You have NOT submitted your application! <NavLink to="/applicationForm">Complete and submit</NavLink> it before 26 May to be considered for a place at the Indaba.
                 </p>}
                 {this.state.applicationStatus == "Not Started" && <p>
-                  We have not recieved an application from you. <NavLink to="/applicationForm">Complete it</NavLink> before 26 May to be considered for a place at the Indaba.
+                  We have not received an application from you. <NavLink to="/applicationForm">Complete it</NavLink> before 26 May to be considered for a place at the Indaba.
                 </p>}
-                
+
               </div>
             </div>
           </div>
         }
 
-        {!this.props.user && 
+        {!this.props.user &&
           <p class="text-center"><NavLink to="/createAccount">Sign up</NavLink> for an account in order to apply for an Indaba event, or <NavLink to="/login">login</NavLink> if you already have one.</p>}
         {
           //Temporarily removed during campaign to get people to complete their applications
