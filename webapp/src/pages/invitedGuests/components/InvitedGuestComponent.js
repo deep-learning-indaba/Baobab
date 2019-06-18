@@ -49,11 +49,11 @@ class InvitedGuests extends Component {
       conflict: false,
       error: "",
       errors: {},
-      successMessage: ""
+      successMessage: "",
+      adding: false
     };
   } 
   getGuestList() {
-    this.setState({ loading: true });
     invitedGuestServices.getInvitedGuestList(DEFAULT_EVENT_ID).then(result => {
       this.setState({
         loading: false,
@@ -70,7 +70,7 @@ class InvitedGuests extends Component {
   }
 
   componentDidMount() {
-    this.getGuestList();
+    this.setState({ loading: true }, ()=>this.getGuestList());
     Promise.all([
       getTitleOptions,
       getGenderOptions,
@@ -122,22 +122,23 @@ class InvitedGuests extends Component {
 
   handleResponse = response => {
     if (response.msg === "succeeded") {
-      this.getGuestList();
       this.setState({
         addedSucess: true,
         conflict: false,
         notFound: false,
         successMessage: "Added " + response.response.data.fullname + " to the guest list",
         user: {},
-        showErrors: false
-      });
+        showErrors: false,
+        adding: false
+      }, this.getGuestList);
     } else if (response.msg === "404") {
       this.setState({
         addedSucess: false,
         notFound: true,
         conflict: false,
-        successMessage: ""
-      });
+        successMessage: "",
+        adding: false
+      }, this.getGuestList);
     } else if (response.msg === "409") {
       this.setState({
         notFound: false,
@@ -145,11 +146,13 @@ class InvitedGuests extends Component {
         conflict: true,
         user: {},
         successMessage: "",
-        showErrors: false
-      });
+        showErrors: false,
+        adding: false
+      }, this.getGuestList);
     } else {
       this.setState({
-        error: response.error
+        error: response.error,
+        adding: false
       });
     }
   }
@@ -161,9 +164,11 @@ class InvitedGuests extends Component {
         this.setState({showErrors: true});
         return;
       }
+
+      this.setState({adding: true});
       invitedGuestServices
         .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
-        .then(this.handleResponse);
+        .then(resp=>this.handleResponse(resp));
     });
   }
 
@@ -178,10 +183,11 @@ class InvitedGuests extends Component {
         ...this.state.user,
         category: MENTOR_ATTENDEE_CATEGORY_ID
       };
-  
+      
+      this.setState({adding: true});
       invitedGuestServices
         .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
-        .then(this.handleResponse);
+        .then(resp=>this.handleResponse(resp));
     });
   }
 
@@ -288,6 +294,7 @@ class InvitedGuests extends Component {
                   label={validationFields.email.display}
                   showError={this.getError(validationFields.email.name)}
                   errorText={this.getError(validationFields.email.name)}
+                  value={this.state.user[validationFields.email.name] || ""}
                 />
               </div>
 
@@ -300,6 +307,8 @@ class InvitedGuests extends Component {
                   label={validationFields.role.display}
                   showError={this.getError(validationFields.role.name)}
                   errorText={this.getError(validationFields.role.name)}
+                  defaultValue={this.state.user[validationFields.role.name] || ""}
+                  value={this.state.user[validationFields.role.name] || ""}
                 />
               </div>
               <div class={threeColClassName}>
@@ -308,7 +317,15 @@ class InvitedGuests extends Component {
                     type="button"
                     class="btn btn-primary stretched margin-top-32"
                     onClick={() => this.buttonSubmit()}
+                    disabled={this.state.adding}
                   >
+                    {this.state.adding && (
+                            <span
+                                class="spinner-grow spinner-grow-sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                        )}
                     Add
                   </button>
                 }
@@ -332,6 +349,7 @@ class InvitedGuests extends Component {
                       label={validationFields.title.display}
                       showError={this.getError(validationFields.title.name)}
                       errorText={this.getError(validationFields.title.name)}
+                      value={this.state.user[validationFields.title.name] || ""}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -343,6 +361,7 @@ class InvitedGuests extends Component {
                       label={validationFields.firstName.display}
                       showError={this.getError(validationFields.firstName.name)}
                       errorText={this.getError(validationFields.firstName.name)}
+                      value={this.state.user[validationFields.firstName.name] || ""}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -354,6 +373,7 @@ class InvitedGuests extends Component {
                       label={validationFields.lastName.display}
                       showError={this.getError(validationFields.lastName.name)}
                       errorText={this.getError(validationFields.lastName.name)}
+                      value={this.state.user[validationFields.lastName.name] || ""}
                     />
                   </div>
                 </div>
@@ -367,6 +387,8 @@ class InvitedGuests extends Component {
                       label={validationFields.gender.display}
                       showError={this.getError(validationFields.gender.name)}
                       errorText={this.getError(validationFields.gender.name)}
+                      defaultValue={this.state.user[validationFields.gender.name] || ""}
+                      value={this.state.user[validationFields.gender.name] || ""}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -378,6 +400,7 @@ class InvitedGuests extends Component {
                       label={validationFields.affiliation.display}
                       showError={this.getError(validationFields.affiliation.name)}
                       errorText={this.getError(validationFields.affiliation.name)}
+                      value={this.state.user[validationFields.affiliation.name] || ""}
                     />
                   </div>
                   <div className={threeColClassName}>
@@ -385,7 +408,15 @@ class InvitedGuests extends Component {
                       type="button"
                       class="btn btn-primary stretched margin-top-32"
                       onClick={() => this.submitCreate()}
+                      disabled={this.state.adding}
                     >
+                      {this.state.adding && (
+                            <span
+                                class="spinner-grow spinner-grow-sm"
+                                role="status"
+                                aria-hidden="true"
+                            />
+                        )}
                       Create Invited Guest
                     </button>
                   </div>
