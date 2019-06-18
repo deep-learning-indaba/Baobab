@@ -127,9 +127,6 @@ class Home extends Component {
 
                 {this.state.applicationStatus == "Submitted" &&
                 <div>
-                  <p>
-                    Thank you! Your application has been received and is under review. You can expect to hear our decision mid-June.
-                  </p>
                   {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
                   : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
                 </div>}
@@ -137,10 +134,10 @@ class Home extends Component {
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
                 {this.state.applicationStatus == "NOT Submitted" && <p>
-                  You have NOT submitted your application! <NavLink to="/applicationForm">Complete and submit</NavLink> it before 26 May to be considered for a place at the Indaba.
+                  You have NOT submitted your application! 
                 </p>}
                 {this.state.applicationStatus == "Not Started" && <p>
-                  We have not received an application from you. <NavLink to="/applicationForm">Complete it</NavLink> before 26 May to be considered for a place at the Indaba.
+                  We have not received an application from you.
                 </p>}
 
               </div>
