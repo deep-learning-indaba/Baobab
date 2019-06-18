@@ -10,9 +10,9 @@ RESET_PASSWORD_CODE_NOT_VALID = (
     {'message': 'Valid code is required to reset a password'}, 418)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
-SECTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
-QUESTION_NOT_FOUND = ({'message': 'No event exists with that ID'}, 409)
-FORM_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
+SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
+QUESTION_NOT_FOUND = ({'message': 'No question exists with that Event ID'}, 404)
+FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
 UPDATE_CONFLICT = (
@@ -29,3 +29,31 @@ USER_DELETED = ({'message': 'This account has been deleted'}, 404)
 REVIEW_RESPONSE_NOT_FOUND = ({'message': 'No review response found.'}, 404)
 ADD_VERIFY_TOKEN_FAILED = (
     {'message': 'Unable to add verification token.'}, 500)
+ADD_INVITED_GUEST_FAILED = (
+    {'message': 'Unable to add invited guest.'}, 500)
+INVITED_GUEST_FOR_EVENT_EXISTS = (
+    {'message': 'Invited guest already exists for this event.'}, 409)
+VERIFY_EMAIL_INVITED_GUEST = (
+    {'message': 'Unable to verify email of invited guest.'}, 500)
+
+VERIFY_EMAIL_OFFER = (
+    {'message': 'Unable to verify email of an offer.'}, 500)
+MISSING_PASSWORD = (
+    {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
+OFFER_EXPIRED = ({'message': 'This offer has expired'}, 500)
+ADD_OFFER_FAILED = (
+    {'message': 'Unable to add an offer.'}, 500)
+OFFER_NOT_FOUND = (
+    {'message': 'No offer found for the given id'}, 404)
+REGISTRATION_FORM_NOT_FOUND = (
+    {'message': 'No registration form found for the given event and offer'}, 404)
+REGISTRATION_SECTION_NOT_FOUND = (
+    {'message': 'No registration section found for the given id'}, 404)
+REGISTRATION_QUESTION_NOT_FOUND = (
+    {'message': 'No registration question found for the given id'}, 404)
+ADD_REGISTRATION_FORM_FAILED = (
+    {'message': 'Unable to add registration form.'}, 500)
+ADD_REGISTRATION_SECTION_FAILED = (
+    {'message': 'Unable to add registration section.'}, 500)
+ADD_REGISTRATION_QUESTION_FAILED = (
+    {'message': 'Unable to add registration question.'}, 500)

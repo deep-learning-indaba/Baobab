@@ -1,0 +1,10 @@
+.pull-right{
+    float:right;
+}
+.padding-v-15{
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+.display-none{
+    display: none;
+}

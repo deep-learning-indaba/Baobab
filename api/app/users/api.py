@@ -11,7 +11,7 @@ from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD
 
 from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
@@ -19,6 +19,8 @@ from app.utils.emailer import send_mail
 from config import BOABAB_HOST
 
 from app.utils.misc import make_code
+import random
+import string
 
 
 VERIFY_EMAIL_BODY = """
@@ -94,6 +96,10 @@ def get_baobab_host():
 
 class UserAPI(SignupMixin, restful.Resource):
 
+    def randomPassword(self, stringLength=10):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(stringLength))
+
     @auth_required
     @marshal_with(user_fields)
     def get(self):
@@ -101,9 +107,8 @@ class UserAPI(SignupMixin, restful.Resource):
             AppUser.id == g.current_user['id']).first()
         return user
 
-    def post(self):
+    def post(self, invitedGuest=False):
         args = self.req_parser.parse_args()
-
         email = args['email']
         firstname = args['firstname']
         lastname = args['lastname']
@@ -115,7 +120,15 @@ class UserAPI(SignupMixin, restful.Resource):
         department = args['department']
         user_disability = args['user_disability']
         user_category_id = args['user_category_id']
-        password = args['password']
+
+        if(invitedGuest):
+            password = self.randomPassword()
+        else:
+            password = args['password']
+
+        if(password is None):
+            return MISSING_PASSWORD
+
         user_dateOfBirth = datetime.strptime(
             (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
         user_primaryLanguage = args['user_primaryLanguage']
@@ -146,14 +159,22 @@ class UserAPI(SignupMixin, restful.Resource):
             LOGGER.error("email: {} already in use".format(email))
             return EMAIL_IN_USE
 
-        send_mail(recipient=user.email,
-                  subject='Baobab Email Verification',
-                  body_text=VERIFY_EMAIL_BODY.format(
-                      user_title, firstname, lastname,
-                      get_baobab_host(),
-                      user.verify_token))
+        if(not invitedGuest):
+            send_mail(recipient=user.email,
+                      subject='Baobab Email Verification',
+                      body_text=VERIFY_EMAIL_BODY.format(
+                          user_title, firstname, lastname,
+                          get_baobab_host(),
+                          user.verify_token))
 
-        LOGGER.debug("Sent verification email to {}".format(user.email))
+            LOGGER.debug("Sent verification email to {}".format(user.email))
+        else:
+            user.verified_email = True
+            try:
+                db.session.commit()
+            except IntegrityError:
+                LOGGER.error("Unable to verify email: {}".format(email))
+                return VERIFY_EMAIL_INVITED_GUEST
 
         return user_info(user, []), 201
 
@@ -236,6 +257,7 @@ class UserAPI(SignupMixin, restful.Resource):
 
         return {}, 200
 
+
 class UserProfileView():
     def __init__(self, user_response):
         self.user_id = user_response.AppUser.id
@@ -257,11 +279,8 @@ class UserProfileView():
         self.submitted_timestamp = user_response.Response.submitted_timestamp
         self.is_withdrawn = user_response.Response.is_withdrawn
         self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
-        
 
-class UserProfileList(UserProfileListMixin, restful.Resource):
-
-    user_profile_list_fields = {
+user_profile_list_fields = {
         'user_id': fields.Integer,
         'email': fields.String,
         'firstname': fields.String,
@@ -284,6 +303,8 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
         'withdrawn_timestamp': fields.DateTime('iso8601')
     }
 
+class UserProfileList(UserProfileListMixin, restful.Resource):
+
     @marshal_with(user_profile_list_fields)
     @auth_required
     def get(self):
@@ -296,13 +317,14 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
             return FORBIDDEN
 
         user_responses = user_repository.get_all_with_responses_for(event_id)
-        views = [UserProfileView(user_response) for user_response in user_responses]
+        views = [UserProfileView(user_response)
+                 for user_response in user_responses]
         return views
 
 
 class UserProfile(UserProfileMixin, restful.Resource):
 
-    @marshal_with(user_fields)
+    @marshal_with(user_profile_list_fields)
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
@@ -310,16 +332,17 @@ class UserProfile(UserProfileMixin, restful.Resource):
         current_user_id = g.current_user['id']
 
         current_user = user_repository.get_by_id(current_user_id)
+
         if current_user.is_admin:
-            user = user_repository.get_by_id(user_id)
+            user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
-            return user
+            return UserProfileView(user)
 
         user = user_repository.get_by_event_admin(user_id, current_user_id)
         if user is None:
             return USER_NOT_FOUND
-        return user
+        return UserProfileView(user)
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
@@ -497,7 +520,8 @@ class UserCommentAPI(restful.Resource):
         args = req_parser.parse_args()
 
         current_user_id = g.current_user['id']
-        comment = UserComment(args['event_id'], args['user_id'], current_user_id, datetime.now(), args['comment'])
+        comment = UserComment(args['event_id'], args['user_id'],
+                              current_user_id, datetime.now(), args['comment'])
 
         db.session.add(comment)
         db.session.commit()
@@ -511,13 +535,13 @@ class UserCommentAPI(restful.Resource):
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
         args = req_parser.parse_args()
-        
+
         current_user = user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
 
         comments = db.session.query(UserComment).filter(
-            UserComment.event_id == args['event_id'], 
+            UserComment.event_id == args['event_id'],
             UserComment.user_id == args['user_id']).all()
 
         return comments

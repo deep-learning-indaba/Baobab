@@ -76,5 +76,5 @@ test('Check if Home component renders.', () => {
 });
 ```
 ## Styling
-We use react-bootstrap as a component library, details and components can be found [here](https://react-bootstrap.github.io/).
+We use [Bootstrap 4](https://getbootstrap.com/docs/4.0/components/forms/) as a CSS framework.
 
