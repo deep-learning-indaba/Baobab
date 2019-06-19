@@ -18,25 +18,24 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, admin_required
 from app.utils.emailer import send_mail
+from config import BOABAB_HOST
 
 OFFER_EMAIL_BODY = """
-Dear {} {} {},
+Dear {user_title} {first_name} {last_name},
 
-Congratulations on you offer
+Congratulations! You've been selected to attend the {event_name}!
 
-Offer Details \n
-user_id {} \n
-event_id {} \n
-offer_date {} \n
-expiry_date {} \n
-payment_required {} \n
-travel_award {} \n
-accommodation_award {} \n
+Please follow the link below to see details and accept your offer: {host}/offer
+You have up until the {expiry_date} to accept the offer
+
+If you have any queries, please forward them to info@deeplearningindaba.com  
 
 Kind Regards,
-The Baobab Team
+The Deep Learning Indaba Team
 """
 
+def get_baobab_host():
+    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 def offer_info(offer_entity):
     return {
@@ -125,6 +124,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
+        event_name = db.session.query(Event).filter(Event.id == event_id).first().name
+
         offer_entity = Offer(
             user_id=user_id,
             event_id=event_id,
@@ -141,10 +142,9 @@ class OfferAPI(OfferMixin, restful.Resource):
         if user.email:
             send_mail(recipient=user.email, subject='Offer from Deep Learning Indaba',
                       body_text=OFFER_EMAIL_BODY.format(
-                            user.user_title, user.firstname, user.lastname,
-                            user_id, event_id, offer_date,
-                            expiry_date, payment_required,
-                            travel_award, accommodation_award))
+                            user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
+                            event_name=event_name, host=get_baobab_host(),
+                            expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d")))
 
             LOGGER.debug("Sent an offer email to {}".format(user.email))
 
