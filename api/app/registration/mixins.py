@@ -12,6 +12,8 @@ class OfferMixin(object):
     req_parser.add_argument('payment_required', type=bool, required=False)
     req_parser.add_argument('travel_award', type=bool, required=False)
     req_parser.add_argument('accommodation_award', type=bool, required=False)
+    req_parser.add_argument('accepted_accommodation_award', type=bool, required=False)
+    req_parser.add_argument('accepted_travel_award', type=bool, required=False)
     req_parser.add_argument('rejected_reason', type=str, required=False)
     req_parser.add_argument('candidate_response', type=bool, required=False)
     req_parser.add_argument('responded_at', type=str, required=False)

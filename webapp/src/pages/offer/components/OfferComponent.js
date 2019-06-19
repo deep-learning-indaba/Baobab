@@ -18,7 +18,9 @@ class Offer extends Component {
       showReasonBox: false,
       candidate_response: null,
       offer: {},
-      category: ""
+      category: "",
+      accepted_accommodation_award: false,
+      accepted_travel_award:false
     };
   }
   
@@ -37,7 +39,7 @@ class Offer extends Component {
   };
 
   buttonSubmit(candidate_response) {
-    const { offer, rejected_reason } = this.state;
+    const { offer, rejected_reason,accepted_accommodation_award,accepted_travel_award } = this.state;
       
       if(candidate_response !== null){
         offerServices
@@ -45,7 +47,9 @@ class Offer extends Component {
             offer.id,
             DEFAULT_EVENT_ID,
             candidate_response,
-            candidate_response? "" : rejected_reason
+            candidate_response? "" : rejected_reason,
+            accepted_accommodation_award,
+            accepted_travel_award
           )
           .then(response => {
 
@@ -70,6 +74,13 @@ class Offer extends Component {
               <div class="col-6 pl-4" align="left">{col2}</div>
             </div>
   }
+
+  onChangeAccommodation=()=>{
+      this.setState({accepted_accommodation_award:!this.state.accepted_accommodation_award})
+  }
+  onChangeTravel=()=>{
+    this.setState({accepted_travel_award:!this.accepted_travel_award});
+  }
   
   displayOfferResponse = ()=>{
        const { offer } = this.state;
@@ -90,13 +101,19 @@ class Offer extends Component {
               {this.row("Payment", offer.payment_required? "Required": "No payment required")}
               {this.row( "Travel award", offer.travel_award? "Allocated": "Not allocated")}
               {this.row( "Accommodation", offer.accommodation_award? "Allocated": "Not allocated")}
+              {this.row("Accepted Accommodation Award",offer.accepted_accommodation_award ? "YES":"NO")}
+              {this.row("Accepted Travelling Award", offer.accepted_travel_award ? "YES":"NO")}
               {!(offer.candidate_response) && <div>{this.row( "Rejection reason", offer.rejected_reason)}</div>}
+
+
            </div>
         </div>);
   }
 
+
+
   displayOfferContent = e => {
-    const { offer, userProfile, rejected_reason } = this.state;
+    const { offer, userProfile, rejected_reason,accepted_accommodation_award,accepted_travel_award } = this.state;
     return (
     <div>
       { offer.candidate_response !== null ?
@@ -137,7 +154,7 @@ class Offer extends Component {
               </div>
             </div>
 
-            <div class="row pb-5 ">
+            <div class="row ">
               <div class="col-6 font-weight-bold pr-4"  align="right">Payment Required:</div>
               <div class="col-6 pl-4"  align="left">
                 {offer != null
@@ -147,6 +164,28 @@ class Offer extends Component {
                   : "Not available"}
               </div>
             </div>
+
+            <div class="row pb-5 ">
+              <div class="col-6 font-weight-bold pr-4"  align="right">
+                <div class="form-check accommodation-container">
+                <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
+                          id="CheckAccommodation" />
+                <label class="form-check-label" for="CheckAccommodation">I accept the award of accommodation</label>
+                </div>
+              </div>
+
+              <div class="col-6 pl-4 font-weight-bold"  align="left">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
+                id="CheckTravel" />
+                <label class="form-check-label" for="CheckTravel">I accept the award of travel</label>
+                </div>
+              </div>
+            </div>
+                   
+
+
+
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
               {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}

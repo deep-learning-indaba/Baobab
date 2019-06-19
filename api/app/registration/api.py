@@ -46,7 +46,9 @@ def offer_info(offer_entity):
         'expiry_date': offer_entity.expiry_date,
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award
+        'accommodation_award': offer_entity.accommodation_award,
+        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
+        'accepted_travel_award': offer_entity.accepted_travel_award
     }
 
 
@@ -60,6 +62,8 @@ def offer_update_info(offer_entity):
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
         'accommodation_award': offer_entity.accommodation_award,
+        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
+        'accepted_travel_award': offer_entity.accepted_travel_award,
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at
@@ -76,6 +80,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         'payment_required': fields.Boolean,
         'travel_award': fields.Boolean,
         'accommodation_award': fields.Boolean,
+        'accepted_accommodation_award': fields.Boolean,
+        'accepted_travel_award': fields.Boolean,
         'rejected_reason': fields.String,
         'candidate_response': fields.Boolean,
         'responded_at': fields.DateTime('iso8601')
@@ -88,6 +94,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
+        accepted_accommodation_award = args['accepted_accommodation_award']
+        accepted_travel_award = args['accepted_travel_award']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
@@ -102,6 +110,8 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
+            offer.accepted_accommodation_award = accepted_accommodation_award
+            offer.accepted_travel_award_award = accepted_travel_award
             offer.rejected_reason = rejected_reason
 
             db.session.commit()
@@ -121,6 +131,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
         travel_award = args['travel_award']
+        accepted_accommodation_award = args['accepted_accommodation_award']
+        accepted_travel_award = args['accepted_travel_award']
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
@@ -134,6 +146,8 @@ class OfferAPI(OfferMixin, restful.Resource):
             payment_required=payment_required,
             travel_award=travel_award,
             accommodation_award=accommodation_award,
+            accepted_accommodation_award=accepted_accommodation_award,
+            accepted_travel_award=accepted_travel_award
         )
 
         db.session.add(offer_entity)
