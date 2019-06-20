@@ -20,14 +20,12 @@ class Offer extends Component {
       offer: {},
       category: "",
       accepted_accommodation_award: false,
-      accepted_travel_award:false
+      accepted_travel_award: false
     };
   }
   
   resetPage =()=>{
-  
       this.componentWillMount()
-      
   }
 
   handleChange = field => {
@@ -76,37 +74,33 @@ class Offer extends Component {
   }
 
   onChangeAccommodation=()=>{
-      this.setState({accepted_accommodation_award:!this.state.accepted_accommodation_award})
+      this.setState({
+        accepted_accommodation_award: !this.state.accepted_accommodation_award
+      });
   }
   onChangeTravel=()=>{
-    this.setState({accepted_travel_award:!this.accepted_travel_award});
+    this.setState({
+      accepted_travel_award: !this.state.accepted_travel_award
+    });
   }
   
   displayOfferResponse = ()=>{
        const { offer } = this.state;
+       let responded_date = offer.responded_at !== undefined ?offer.responded_at.substring(0,10): "-date-"
        return (
          <div className="container">
             <p className="h5 pt-5">
-                {offer.candidate_response=== true?
-                "You have accepted the following offer on  "
-                :
-                "You have rejected the following offer on "
-                }
-                {offer.responded_at !== undefined ?offer.responded_at.substring(0,10): "-date-"}.
+                {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
+                {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at the Indaba on following offer on {responded_date} for the following reason:<br/><br/>{offer.rejected_reason}</span>}
             </p>
 
-           <div className="white-background card form mt-5">
-              {this.row( "Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0,10): "-date-")}
+           {offer.candidate_response && <div className="white-background card form mt-5">
+              {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0,10): "-date-")}
               {this.row("Offer expiry date",offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-")}
-              {this.row("Payment", offer.payment_required? "Required": "No payment required")}
-              {this.row( "Travel award", offer.travel_award? "Allocated": "Not allocated")}
-              {this.row( "Accommodation", offer.accommodation_award? "Allocated": "Not allocated")}
-              {this.row("Accepted Accommodation Award",offer.accepted_accommodation_award ? "YES":"NO")}
-              {this.row("Accepted Travelling Award", offer.accepted_travel_award ? "YES":"NO")}
-              {!(offer.candidate_response) && <div>{this.row( "Rejection reason", offer.rejected_reason)}</div>}
-
-
-           </div>
+              {this.row("Registration fee", offer.payment_required? "Payment of 350 USD Required to confirm your place": "Fee Waived")}
+              {this.row("Travel", offer.accepted_travel_award? "Your travel to and from Nairobi will be arranged by the Indaba": "You are responsible for your own travel to and from Nairobi.")}
+              {this.row("Accommodation", offer.accepted_accommodation_award? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August": "You are responsible for your own accommodation in Nairobi.")}
+           </div>}
         </div>);
   }
 
@@ -131,60 +125,64 @@ class Offer extends Component {
             {userProfile != null ? userProfile.user_category : "<Category>"}{" "}
           </p>
           <div className="white-background card form">
-            <p class="font-weight-bold">Your status</p>
-            <div class="row ">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Travel Award:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.travel_award
-                    ? "Allocated"
-                    : "Not Allocated"
-                  : "Not available"}
+            <p class="font-weight-bold">Offer Details</p>
+            <div class="row mb-2">
+              <div class="col-3 font-weight-bold pr-2"  align="right">Travel:</div>
+              <div class="col-6"  align="left">
+                {offer && offer.travel_award && accepted_travel_award &&
+                  "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
+                {offer && offer.travel_award && !accepted_travel_award && 
+                  <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Nairobi!</span>
+                }
+                {offer && offer.requested_travel && !offer.travel_award && 
+                  "Unfortunately we are unable to grant you the travel award you requested in your application."}
+                {offer && !offer.requested_travel && !offer.travel_award &&
+                  "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
+                
               </div>
-            </div>
-
-            <div class="row">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Accommodation Award:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.accommodation_award
-                    ? "Allocated"
-                    : "Not Allocated"
-                  : "Not available"}
-              </div>
-            </div>
-
-            <div class="row ">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Payment Required:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.payment_required
-                    ? "Required"
-                    : "Not Required"
-                  : "Not available"}
-              </div>
-            </div>
-
-            <div class="row pb-5 ">
-              {offer.accommodation_award ? 
-                <div class="col-6 font-weight-bold pr-4"  align="right">
-                  <div class="form-check accommodation-container">
-                    <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
-                          id="CheckAccommodation" />
-                    <label class="form-check-label" for="CheckAccommodation">I accept the award of accommodation</label>
-                  </div>
-                </div> : null}
-
-              {offer.travel_award ?   <div class="col-6 pl-4 font-weight-bold"  align="left">
-                    <div class="form-check">
+              <div class="col-3">
+                  {offer.travel_award && <div class="form-check">
                       <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
                         id="CheckTravel" />
-                      <label class="form-check-label" for="CheckTravel">I accept the award of travel</label>
-                    </div>
-                </div> : null}
+                      <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
+                    </div>}
+              </div>
             </div>
-                   
 
+            <div class="row mb-2">
+              <div class="col-3 font-weight-bold pr-2"  align="right">Accommodation:</div>
+              <div class="col-6"  align="left">
+                {offer && offer.accommodation_award && accepted_accommodation_award &&
+                  "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
+                {offer && offer.accommodation_award && !accepted_accommodation_award && 
+                  <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Nairobi during the Indaba!</span>
+                }
+                {offer && offer.requested_accommodation && !offer.accommodation_award && 
+                  <span>Unfortunately we are unable to grant you the accomodation award you requested in your application. 
+                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/accommodation-2019">here</a> for more details
+                  </span>}
+                {offer && !offer.requested_accommodation && !offer.accommodation_award &&
+                  "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
+              </div>
+              <div class="col-3">
+                {offer.accommodation_award && <div class="form-check accommodation-container">
+                  <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
+                    id="CheckAccommodation" />
+                  <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
+                </div>}
+              </div>
+              
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-3 font-weight-bold pr-2"  align="right">Registration Fee:</div>
+              <div class="col-6" align="left">
+                {offer && offer.payment_required && "In order to confirm your place, you will be liable for a 350 USD registration fee."}
+                {offer && !offer.payment_required && "Your registration fee has been waived."}
+              </div>
+            </div>
+
+                   
 
 
             <p class="font-weight-bold">
@@ -284,7 +282,9 @@ class Offer extends Component {
       this.setState({
         loading: false,
         offer: result.offer,
-        error: result.error
+        error: result.error,
+        accepted_travel_award: result.offer.accommodation_award,
+        accepted_travel_award: result.offer.travel_award
       });
     });
   }
