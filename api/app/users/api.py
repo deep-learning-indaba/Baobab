@@ -9,7 +9,7 @@ from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin, UserProfileMixin
 from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
-from app.review.models import ReviewScore, ReviewResponse
+from app.reviews.models import ReviewScore, ReviewResponse
 
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD
@@ -575,13 +575,10 @@ class UserApplicationCommentReviewAPI(restful.Resource):
         review_by_user_firstname = user_repository.get_by_id(args['user_id']).firstname
         
         reviewer_id = db.session.query(ReviewResponse).filter(
-            ReviewResponse.reviewer_user_id == args['event_id']).id
+            ReviewResponse.reviewer_user_id == args['user_id'])
         
         verdicts = db.session.query(ReviewScore).filter(
             ReviewScore.review_response_id == reviewer_id,
             ReviewResponse.reviewer_user_id == args['user_id']).value
 
-        return user_comment_review_fields(
-            review_by_user_firstname=review_by_user_firstname,
-            verdicts=verdicts,
-            comments=comments)
+        return comments,200
