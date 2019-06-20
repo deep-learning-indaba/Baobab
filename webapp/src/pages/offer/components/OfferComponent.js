@@ -166,21 +166,22 @@ class Offer extends Component {
             </div>
 
             <div class="row pb-5 ">
-              <div class="col-6 font-weight-bold pr-4"  align="right">
-                <div class="form-check accommodation-container">
-                <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
+              {offer.accommodation_award ? 
+                <div class="col-6 font-weight-bold pr-4"  align="right">
+                  <div class="form-check accommodation-container">
+                    <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
                           id="CheckAccommodation" />
-                <label class="form-check-label" for="CheckAccommodation">I accept the award of accommodation</label>
-                </div>
-              </div>
+                    <label class="form-check-label" for="CheckAccommodation">I accept the award of accommodation</label>
+                  </div>
+                </div> : null}
 
-              <div class="col-6 pl-4 font-weight-bold"  align="left">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
-                id="CheckTravel" />
-                <label class="form-check-label" for="CheckTravel">I accept the award of travel</label>
-                </div>
-              </div>
+              {offer.travel_award ?   <div class="col-6 pl-4 font-weight-bold"  align="left">
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
+                        id="CheckTravel" />
+                      <label class="form-check-label" for="CheckTravel">I accept the award of travel</label>
+                    </div>
+                </div> : null}
             </div>
                    
 
