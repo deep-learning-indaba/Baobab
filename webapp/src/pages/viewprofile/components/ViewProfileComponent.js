@@ -48,7 +48,7 @@ class ViewProfileComponent extends Component {
           Nationality: result.nationality_country,
           Residence: result.residence_country,
           Category: result.user_category_id,
-          Disability: result.user_disability,
+          Disability: result.user_disability
         },
         loading: false,
         error: result.error,

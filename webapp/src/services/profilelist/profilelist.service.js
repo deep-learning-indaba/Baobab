@@ -45,7 +45,7 @@ function getApplicationCommentReview(user_id) {
             return response.data;
         })
         .catch((error)=>{
-            return { user:{},
+            return { commentReview:{},
                 error: error.response && error.response.data ?
                 error.response.data.message:
                 error.message }
