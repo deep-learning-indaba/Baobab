@@ -48,12 +48,22 @@ class ViewProfileComponent extends Component {
           Nationality: result.nationality_country,
           Residence: result.residence_country,
           Category: result.user_category_id,
-          Disability: result.user_disability
+          Disability: result.user_disability,
         },
         loading: false,
         error: result.error,
         isNull: result.data === null
       });
+    });
+
+    profileService.getApplicationCommentReview(user_id).then(result => {
+        this.setState({
+              appCommentReview:{
+                ReviewerName:result.ReviewerName,
+                Comments:result.Comments,
+                Verdict:result.Verdict
+              }
+          });
     });
   }
   render() {
@@ -88,6 +98,7 @@ class ViewProfileComponent extends Component {
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
+    const {ReviewerName, Comments, Verdict} = this.state.appCommentReview;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -353,6 +364,69 @@ class ViewProfileComponent extends Component {
                         />
                       </div>
                     </div>
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="row">
+                <fieldset class="fieldset">
+                  <legend class="legend">Application Comment Review </legend>
+                  <div class="row">
+                      <div class={colClassNameSurname}>
+                        <div class="form-group">
+                          <label
+                            class="label-display col-form-label"
+                            htmlFor="reviewername"
+                          >
+                            Reviewer's Name:
+                          </label>
+                          <input
+                            class="form-control"
+                            type="text"
+                            id="reviewername"
+                            value={ReviewerName}
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class={colClassNameSurname}>
+                        <div class="form-group">
+                        <label
+                            class="label-display col-form-label"
+                            htmlFor="comment"
+                          >
+                            Comments:
+                          </label>
+                          <input
+                            class="form-control"
+                            type="text"
+                            id="comment"
+                            value={Comments}
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class={colClassNameSurname}>
+                        <div class="form-group">
+                        <label
+                            class="label-display col-form-label"
+                            htmlFor="verdict"
+                          >
+                            Verdict:
+                          </label>
+                          <input
+                            class="form-control"
+                            type="text"
+                            id="verdict"
+                            value={Verdict}
+                            readOnly
+                          />
+                        </div>
+                      </div>
                   </div>
                 </fieldset>
               </div>
