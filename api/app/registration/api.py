@@ -133,7 +133,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         return offer_update_info(offer), 201
 
     @admin_required
-    @marshal_with(offer_fields)
     def post(self):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
