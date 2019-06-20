@@ -54,7 +54,8 @@ def offer_info(offer_entity, requested_travel=None):
         'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
         'accepted_travel_award': offer_entity.accepted_travel_award,
         'requested_travel': requested_travel and (requested_travel.value == 'transport' or requested_travel.value == 'transport-accommodation'),
-        'requested_accommodation': requested_travel and (requested_travel.value == 'accommodation' or requested_travel.value == 'transport-accommodation')
+        'requested_accommodation': requested_travel and (requested_travel.value == 'accommodation' or requested_travel.value == 'transport-accommodation'),
+        'rejected_reason': offer_entity.rejected_reason
     }
 
 
@@ -105,6 +106,10 @@ class OfferAPI(OfferMixin, restful.Resource):
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
+        LOGGER.info('Updating offer {} with values: candidate response: {}, Accepted accommodation: {}, '
+        'Accepted travel: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_accommodation_award,
+        accepted_travel_award, rejected_reason))
+
         if not offer:
             return errors.OFFER_NOT_FOUND
 
@@ -117,7 +122,7 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
             offer.accepted_accommodation_award = accepted_accommodation_award
-            offer.accepted_travel_award_award = accepted_travel_award
+            offer.accepted_travel_award = accepted_travel_award
             offer.rejected_reason = rejected_reason
 
             db.session.commit()
