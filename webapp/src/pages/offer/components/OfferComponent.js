@@ -91,7 +91,7 @@ class Offer extends Component {
          <div className="container">
             <p className="h5 pt-5">
                 {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-                {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at the Indaba on following offer on {responded_date} for the following reason:<br/><br/>{offer.rejected_reason}</span>}
+                {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at the Indaba on {responded_date} for the following reason:<br/><br/>{offer.rejected_reason}</span>}
             </p>
 
            {offer.candidate_response && <div className="white-background card form mt-5">
@@ -119,16 +119,16 @@ class Offer extends Component {
           Please see the details of this offer below{" "}
         </p>
 
-        <form class="form pt-5 ">
+        <form class="form pt-2 ">
           <p className="card p">
             You have been accepted as a{" "}
             {userProfile != null ? userProfile.user_category : "<Category>"}{" "}
           </p>
           <div className="white-background card form">
             <p class="font-weight-bold">Offer Details</p>
-            <div class="row mb-2">
-              <div class="col-3 font-weight-bold pr-2"  align="right">Travel:</div>
-              <div class="col-6"  align="left">
+            <div class="row mb-4">
+              <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
+              <div class="col-md-6" align="left">
                 {offer && offer.travel_award && accepted_travel_award &&
                   "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
                 {offer && offer.travel_award && !accepted_travel_award && 
@@ -140,7 +140,7 @@ class Offer extends Component {
                   "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
                 
               </div>
-              <div class="col-3">
+              <div class="col-md-3">
                   {offer.travel_award && <div class="form-check">
                       <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
                         id="CheckTravel" />
@@ -150,8 +150,8 @@ class Offer extends Component {
             </div>
 
             <div class="row mb-2">
-              <div class="col-3 font-weight-bold pr-2"  align="right">Accommodation:</div>
-              <div class="col-6"  align="left">
+              <div class="col-md-3 font-weight-bold pr-2"  align="center">Accommodation:</div>
+              <div class="col-md-6"  align="left">
                 {offer && offer.accommodation_award && accepted_accommodation_award &&
                   "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
                 {offer && offer.accommodation_award && !accepted_accommodation_award && 
@@ -164,7 +164,7 @@ class Offer extends Component {
                 {offer && !offer.requested_accommodation && !offer.accommodation_award &&
                   "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
               </div>
-              <div class="col-3">
+              <div class="col-md-3">
                 {offer.accommodation_award && <div class="form-check accommodation-container">
                   <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
                     id="CheckAccommodation" />
@@ -175,15 +175,12 @@ class Offer extends Component {
             </div>
 
             <div class="row mb-3">
-              <div class="col-3 font-weight-bold pr-2"  align="right">Registration Fee:</div>
-              <div class="col-6" align="left">
+              <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
+              <div class="col-md-6" align="left">
                 {offer && offer.payment_required && "In order to confirm your place, you will be liable for a 350 USD registration fee."}
                 {offer && !offer.payment_required && "Your registration fee has been waived."}
               </div>
             </div>
-
-                   
-
 
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
