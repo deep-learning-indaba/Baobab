@@ -51,7 +51,8 @@ class InvitedGuests extends Component {
       errors: {},
       successMessage: "",
       adding: false,
-      roleSearch:null
+      roleSearch: "all",
+      searchTerm:""
     };
   }
   getGuestList() {
@@ -152,34 +153,53 @@ class InvitedGuests extends Component {
   };
 
   filterByName = field => {
-    let searchList = this.state.filteredList.length != this.state.guestList.length && this.state.filteredList.length > 0 ?
-      this.state.filteredList : this.state.guestList;
+    let searchList = this.state.guestList;
 
     let value = field.target.value.toLowerCase();
-    let tempList = searchList.filter(function (guest) {
+    var roleSearch = this.state.roleSearch;
+    let tempList = searchList.filter(  (guest) =>  {
       let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
+
       if (fullname.toLowerCase().indexOf(value) > -1)
-        return guest;
+        if(roleSearch != "all" )
+        {
+          if( guest.role === roleSearch)
+          {
+            return guest;
+          }
+        }
+        else{
+          return guest;
+        }
     })
     this.setState({
       filteredList: tempList,
+      searchTerm:value
     })
   };
 
   filterByRole = (name, dropdown) => {
-    let searchList = this.state.filteredList.length != this.state.guestList.length && this.state.filteredList.length > 0  ?
-      this.state.filteredList : this.state.guestList;
+    let searchList = this.state.guestList
     let tempList = searchList;
+    var searchTerm = this.state.searchTerm;
     this.setState({
-      roleSearch:dropdown.value
+      roleSearch: dropdown.value
     });
-    if (dropdown.value !== "all") {
+    
       tempList = searchList.filter(function (guest) {
-        if (guest.role === dropdown.value)
-          return guest;
+        let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
+        if (guest.role === dropdown.value || dropdown.value === "all")
+          if(searchTerm != "" )
+          {
+            if(fullname.toLowerCase().indexOf(searchTerm) > -1)
+            {
+              return guest;
+            }
+          }
+          else{
+            return guest;
+          }
       })
-    }
-
     this.setState({
       filteredList: tempList,
     })
