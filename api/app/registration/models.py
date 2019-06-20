@@ -74,6 +74,9 @@ class RegistrationQuestion(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
+    required_value = db.Column(db.String(), nullable=True)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey("registration_question.id"), nullable=True)
+    hide_for_dependent_value = db.Column(db.String(), nullable=True)
 
     def __init__(self, registration_form_id, section_id, headline, placeholder, order, type, validation_regex, validation_text=None, is_required = True, description = None, options = None):
         self.registration_form_id = registration_form_id
