@@ -10,7 +10,7 @@ from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMi
 from app.utils.auth import verify_token
 import traceback
 from flask import g, request
-from flask_restful import  fields, marshal_with
+from flask_restful import fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
 from app.registration.models import Offer
