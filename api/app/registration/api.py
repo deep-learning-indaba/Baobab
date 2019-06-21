@@ -1,6 +1,8 @@
 from datetime import datetime
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
+from app.applicationModel.models import Question
+from app.responses.models import Answer, Response
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationForm
@@ -37,16 +39,23 @@ The Deep Learning Indaba Team
 def get_baobab_host():
     return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
-def offer_info(offer_entity):
+def offer_info(offer_entity, requested_travel=None):
     return {
         'id': offer_entity.id,
         'user_id': offer_entity.user_id,
         'event_id': offer_entity.event_id,
-        'offer_date': offer_entity.offer_date,
-        'expiry_date': offer_entity.expiry_date,
+        'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
+        'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
+        'responded_at': offer_entity.responded_at and offer_entity.responded_at.strftime('%Y-%m-%d'),
+        'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award
+        'accommodation_award': offer_entity.accommodation_award,
+        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
+        'accepted_travel_award': offer_entity.accepted_travel_award,
+        'requested_travel': requested_travel and (requested_travel.value == 'transport' or requested_travel.value == 'transport-accommodation'),
+        'requested_accommodation': requested_travel and (requested_travel.value == 'accommodation' or requested_travel.value == 'transport-accommodation'),
+        'rejected_reason': offer_entity.rejected_reason
     }
 
 
@@ -60,6 +69,8 @@ def offer_update_info(offer_entity):
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
         'accommodation_award': offer_entity.accommodation_award,
+        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
+        'accepted_travel_award': offer_entity.accepted_travel_award,
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at
@@ -76,6 +87,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         'payment_required': fields.Boolean,
         'travel_award': fields.Boolean,
         'accommodation_award': fields.Boolean,
+        'accepted_accommodation_award': fields.Boolean,
+        'accepted_travel_award': fields.Boolean,
         'rejected_reason': fields.String,
         'candidate_response': fields.Boolean,
         'responded_at': fields.DateTime('iso8601')
@@ -88,8 +101,14 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
+        accepted_accommodation_award = args['accepted_accommodation_award']
+        accepted_travel_award = args['accepted_travel_award']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+
+        LOGGER.info('Updating offer {} with values: candidate response: {}, Accepted accommodation: {}, '
+        'Accepted travel: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_accommodation_award,
+        accepted_travel_award, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -102,6 +121,8 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
+            offer.accepted_accommodation_award = accepted_accommodation_award
+            offer.accepted_travel_award = accepted_travel_award
             offer.rejected_reason = rejected_reason
 
             db.session.commit()
@@ -112,7 +133,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         return offer_update_info(offer), 201
 
     @admin_required
-    @marshal_with(offer_fields)
     def post(self):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
@@ -121,6 +141,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
         travel_award = args['travel_award']
+        accepted_accommodation_award = args['accepted_accommodation_award']
+        accepted_travel_award = args['accepted_travel_award']
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
 
@@ -134,6 +156,8 @@ class OfferAPI(OfferMixin, restful.Resource):
             payment_required=payment_required,
             travel_award=travel_award,
             accommodation_award=accommodation_award,
+            accepted_accommodation_award=accepted_accommodation_award,
+            accepted_travel_award=accepted_travel_award
         )
 
         db.session.add(offer_entity)
@@ -151,18 +175,26 @@ class OfferAPI(OfferMixin, restful.Resource):
         return offer_info(offer_entity), 201
 
     @auth_required
-    @marshal_with(offer_fields)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
+            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).filter().first()
+
+            request_travel = db.session.query(Answer).join(
+                Question, Question.id == Answer.question_id
+            ).filter(
+                Question.headline == 'Would you like to be considered for a travel award?'
+            ).join(Response, Answer.response_id == Response.id).filter(
+                Response.user_id == user_id, Response.is_submitted == True
+            )
+
             if not offer:
                 return errors.EVENT_NOT_FOUND
             else:
-                return offer, 200
+                return offer_info(offer, request_travel), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))

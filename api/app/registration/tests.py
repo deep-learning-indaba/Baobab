@@ -19,6 +19,8 @@ OFFER_DATA = {
     'payment_required': False,
     'travel_award': False,
     'accommodation_award': True,
+    'accepted_accommodation_award': None,
+    'accepted_travel_award': None,
     'rejected_reason': 'N/A',
 }
 
