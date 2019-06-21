@@ -59,7 +59,7 @@ class ViewProfileComponent extends Component {
     profileService.getApplicationCommentReview(user_id).then(result => {
         this.setState({
               appCommentReview:{
-                ReviewerName:result.ReviewerName,
+                review_by_user_firstname:result.review_by_user_firstname,
                 Comments:result.Comments,
                 Verdict:result.Verdict
               }
@@ -98,7 +98,7 @@ class ViewProfileComponent extends Component {
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
-    const {ReviewerName, Comments, Verdict} = this.state.appCommentReview;
+    const {review_by_user_firstname, Comments, Verdict} = this.state.appCommentReview;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -384,7 +384,7 @@ class ViewProfileComponent extends Component {
                             class="form-control"
                             type="text"
                             id="reviewername"
-                            value={ReviewerName}
+                            value={review_by_user_firstname}
                             readOnly
                           />
                         </div>
