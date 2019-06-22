@@ -43,7 +43,7 @@ class FileUploadComponent extends Component {
                 });
             }).then(response => {
                 if (response.fileId && this.props.onChange) {
-                    this.props.onChange(this.props.question, response.fileId);
+                    this.props.onChange(this.props.question.id, response.fileId);
                 }
                 this.setState({
                     uploaded: response.fileId !== "",
@@ -61,7 +61,7 @@ class FileUploadComponent extends Component {
                 name={this.id}
                 label={this.props.question.description}
                 key={"i_" + this.props.key}
-                value={this.props.answer}
+                value={this.props.answer && this.props.answer.value || ""}
                 showError={this.props.validationError || this.state.uploadError}
                 errorText={this.props.validationError || this.state.uploadError}
                 uploading={this.state.uploading}
@@ -132,7 +132,9 @@ class RegistrationComponent extends Component {
         this.setState({
             answers: answers
         }, () => {
-            this.isValidated();
+            if (this.state.hasValidated) {
+                this.isValidated();
+            }
         });
     }
 
@@ -210,12 +212,11 @@ class RegistrationComponent extends Component {
             return this.validate(question, answer);
         }));
 
-        const isValid = !validationErrors.some(v => v);
+        const isValid = !validationErrors.some(v => v.error);
 
         this.setState(
             {
                 validationErrors: validationErrors,
-                hasValidated: true,
                 validationStale: false,
                 isValid: isValid
             }
@@ -233,6 +234,10 @@ class RegistrationComponent extends Component {
             registration_form_id: this.state.registrationFormId,
             answers: this.state.answers
         }
+        
+        this.setState({
+            hasValidated: true
+        });
 
         if (this.isValidated()) {
             this.setState({
@@ -352,6 +357,8 @@ class RegistrationComponent extends Component {
                             label={question.description}
                             required={question.is_required && !answer}
                             key={"i_" + key}
+                            showError={validationError}
+                            errorText={validationError}
                         />
                     );
                 case FILE:
@@ -360,7 +367,7 @@ class RegistrationComponent extends Component {
                             question={question}
                             answer={answer}
                             validationError={validationError}
-                            onChange={this.handleChange}   
+                            onChange={this.onChange}   
                             key={"i_" + key}
                         />
                     )
