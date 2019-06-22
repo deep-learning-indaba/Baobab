@@ -80,7 +80,7 @@ user_comment_fields = {
 
 user_comment_review_fields = {
     'id': fields.Integer,
-    'review_by_user_firstname':  fields.String(attribute='comment_by_user.firstname'),
+    'review_by_user_firstname_list':  fields.String(attribute='reviewer_user.firstname'),
     'comment': fields.String,
     'verdicts':fields.Integer
 }
@@ -572,13 +572,17 @@ class UserApplicationCommentReviewAPI(restful.Resource):
             UserComment.event_id == args['event_id'],
             UserComment.user_id == args['user_id']).all()
         
-        review_by_user_firstname = user_repository.get_by_id(args['user_id']).firstname
+        reviewers_id_list = []
+        if comments:
+            for comment in comments:
+                reviewers_id_list.append(comment.comment_by_user_id)
         
-        reviewer_id = db.session.query(ReviewResponse).filter(
-            ReviewResponse.reviewer_user_id == args['user_id'])
-        
-        verdicts = db.session.query(ReviewScore).filter(
-            ReviewScore.review_response_id == reviewer_id,
-            ReviewResponse.reviewer_user_id == args['user_id']).value
+        reviewers_list = []
+        review_by_user_firstname_list = []
+        verdicts = 0
+        for rev_id in reviewers_id_list:
+            reviewers_list.append(db.session.query(ReviewResponse).filter(ReviewResponse.reviewer_user_id == rev_id).all())
+            review_by_user_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
+            verdicts = db.session.query(ReviewScore).filter( ReviewScore.review_response_id == rev_id,ReviewResponse.reviewer_user_id == rev_id).value
 
         return comments,200

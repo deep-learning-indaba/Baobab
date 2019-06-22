@@ -60,7 +60,7 @@ class ViewProfileComponent extends Component {
     profileService.getApplicationCommentReview(user_id).then(result => {
         this.setState({
               appCommentReview:{
-                review_by_user_firstname:result.review_by_user_firstname,
+                review_by_user_firstname_list:result.review_by_user_firstname_list,
                 Comments:result.Comments,
                 Verdict:result.Verdict
               }
@@ -100,7 +100,7 @@ class ViewProfileComponent extends Component {
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
-    const {review_by_user_firstname, Comments, Verdict} = this.state.appCommentReview;
+    const {review_by_user_firstname_list, Comments, Verdict} = this.state.appCommentReview;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -383,7 +383,10 @@ class ViewProfileComponent extends Component {
                           >
                             Reviewer's Name:
                           </label>
-                          <div>{review_by_user_firstname?review_by_user_firstname:"No one has reviewed yet"}</div>
+                          <div>{revw_by_user_firstname_list?
+                            review_by_user_firstname_list.map((reviewer)=>
+                            <li>{reviewer}</li>)
+                            :"No one has reviewed yet"}</div>
                         </div>
                       </div>
                   </div>
