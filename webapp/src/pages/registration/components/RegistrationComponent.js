@@ -20,6 +20,59 @@ const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
 const DATE = "date";
 
+class FileUploadComponent extends Component {
+    //TODO: Move to central place and share with application form
+    constructor(props) {
+        super(props);
+        this.state = {
+            uploadPercentComplete: 0,
+            uploading: false,
+            uploaded: false,
+            uploadError: ""
+        }
+    }
+
+    handleUploadFile = (file) => {
+        this.setState({
+            uploading: true
+        }, () => {
+            fileService.uploadFile(file, progressEvent => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                this.setState({
+                    uploadPercentComplete: percentCompleted
+                });
+            }).then(response => {
+                if (response.fileId && this.props.onChange) {
+                    this.props.onChange(this.props.question, response.fileId);
+                }
+                this.setState({
+                    uploaded: response.fileId !== "",
+                    uploadError: response.error,
+                    uploading: false
+                });
+            })
+        })
+    }
+
+    render() {
+        return (
+            <FormFileUpload
+                Id={this.props.question.id}
+                name={this.id}
+                label={this.props.question.description}
+                key={"i_" + this.props.key}
+                value={this.props.answer}
+                showError={this.props.validationError || this.state.uploadError}
+                errorText={this.props.validationError || this.state.uploadError}
+                uploading={this.state.uploading}
+                uploadPercentComplete={this.state.uploadPercentComplete}
+                uploadFile={this.handleUploadFile}
+                uploaded={this.state.uploaded}
+            />
+        );
+    }
+}
+
 class RegistrationComponent extends Component {
     constructor(props) {
         super(props);
@@ -171,28 +224,6 @@ class RegistrationComponent extends Component {
         return isValid;
     };
 
-    handleUploadFile = (file) => {
-        this.setState({
-            uploading: true
-        }, () => {
-            fileService.uploadFile(file, progressEvent => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                this.setState({
-                    uploadPercentComplete: percentCompleted
-                });
-            }).then(response => {
-                if (response.fileId && this.props.onChange) {
-                    this.props.onChange(this.props.question, response.fileId);
-                }
-                this.setState({
-                    uploaded: response.fileId !== "",
-                    uploadError: response.error,
-                    uploading: false
-                });
-            })
-        })
-    }
-
     buttonSubmit = e => {
         e.preventDefault();
 
@@ -202,24 +233,24 @@ class RegistrationComponent extends Component {
             registration_form_id: this.state.registrationFormId,
             answers: this.state.answers
         }
-        
+
         if (this.isValidated()) {
             this.setState({
-                isLoading: true
+                isSubmitting: true
             }, () => {
                 registrationService.submitResponse(data, this.state.registrationId ? true : false).then(response => {
                     if (response.error === "" && (response.form.status === 201 || response.form.status === 200)) {
                         this.setState({
                             formFailure: false,
                             formSuccess: true,
-                            isLoading: false
+                            isSubmitting: false
                         });
                     }
                     else {
                         this.setState({
                             formFailure: true,
                             formSuccess: false,
-                            isLoading: false,
+                            isSubmitting: false,
                             error:response.error
                         });
                     }
@@ -227,7 +258,7 @@ class RegistrationComponent extends Component {
                     this.setState({
                         formFailure: true,
                         formSuccess: false,
-                        isLoading: false
+                        isSubmitting: false
                     });
                 });
             });
@@ -240,7 +271,8 @@ class RegistrationComponent extends Component {
             isLoading,
             hasValidated,
             validationStale,
-            isValid
+            isValid,
+            isSubmitting
         } = this.state;
 
         const loadingStyle = {
@@ -319,24 +351,19 @@ class RegistrationComponent extends Component {
                             placeholder={question.placeholder}
                             label={question.description}
                             required={question.is_required && !answer}
+                            key={"i_" + key}
                         />
                     );
                 case FILE:
                     return (
-                        <FormFileUpload
-                            Id={question.id}
-                            name={this.id}
-                            label={question.description}
+                        <FileUploadComponent
+                            question={question}
+                            answer={answer}
+                            validationError={validationError}
+                            onChange={this.handleChange}   
                             key={"i_" + key}
-                            value={answer}
-                            showError={validationError || this.state.uploadError}
-                            errorText={validationError || this.state.uploadError}
-                            uploading={this.state.uploading}
-                            uploadPercentComplete={this.state.uploadPercentComplete}
-                            uploadFile={this.handleUploadFile}
-                            uploaded={this.state.uploaded}
                         />
-                    );
+                    )
                 case DATE:
                     return (
                         <FormTextBox
@@ -402,8 +429,14 @@ class RegistrationComponent extends Component {
                                 <h3>{section.name}</h3>
                                 <div className="padding-v-15 mb-4 text-left">{section.description}</div>
 
-                                {section.registration_questions.sort((a, b) => a.order - b.order).map(question => (
-                                    <div className="text-left" key={"question_"+question.id}>
+                                {section.registration_questions.sort((a, b) => a.order - b.order).map(question => {
+                                    if (question.depends_on_question_id) {
+                                        let answer = this.state.answers.find(a=>a.registration_question_id==question.depends_on_question_id);
+                                        if (!answer || answer.value == question.hide_for_dependent_value) {
+                                            return;
+                                        }
+                                    }
+                                    return <div className="text-left" key={"question_"+question.id}>
                                         <h5>{question.headline}</h5>
                                         {
                                             this.formControl(
@@ -413,7 +446,8 @@ class RegistrationComponent extends Component {
                                                 this.state.validationErrors && this.state.validationErrors.find(v => v.registration_question_id === question.id)
                                             )}
                                     </div>
-                                ))}
+                                    }
+                                )}
                             </div>
 
                         ))}
@@ -422,6 +456,13 @@ class RegistrationComponent extends Component {
                             class="btn btn-primary margin-top-32"
                             onClick={this.buttonSubmit}
                         >
+                            {isSubmitting && (
+                                <span
+                                    class="spinner-grow spinner-grow-sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            )}
                             Submit reponse
                         </button>
                         {(hasValidated && !validationStale && !isValid) && 
