@@ -222,6 +222,12 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
     registration_question_fields = {
         'id': fields.Integer,
         'description': fields.String,
+        'headline': fields.String,
+        'placeholder': fields.String,
+        'validation_regex': fields.String,
+        'validation_text': fields.String,
+        'depends_on_question_id': fields.String,
+        'hide_for_dependent_value': fields.String,
         'type': fields.String,
         'is_required': fields.Boolean,
         'order': fields.Integer,
@@ -257,54 +263,50 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             if offer and (not offer.user_id == user_id):
                 return errors.FORBIDDEN
 
-            if offer and offer.expiry_date >= datetime.now():
+            registration_form = db.session.query(RegistrationForm).filter(
+                RegistrationForm.event_id == event_id).first()
 
-                registration_form = db.session.query(RegistrationForm).filter(
-                    RegistrationForm.event_id == event_id).first()
+            if not registration_form:
+                return errors.REGISTRATION_FORM_NOT_FOUND
 
-                if not registration_form:
-                    return errors.REGISTRATION_FORM_NOT_FOUND
+            sections = db.session.query(RegistrationSection).filter(
+                RegistrationSection.registration_form_id == registration_form.id).all()
 
-                sections = db.session.query(RegistrationSection).filter(
-                    RegistrationSection.registration_form_id == registration_form.id).all()
+            if not sections:
+                LOGGER.warn(
+                    'Sections not found for event_id: {}'.format(args['event_id']))
+                return errors.SECTION_NOT_FOUND
 
-                if not sections:
-                    LOGGER.warn(
-                        'Sections not found for event_id: {}'.format(args['event_id']))
-                    return errors.SECTION_NOT_FOUND
+            included_sections = []
 
-                included_sections = []
+            for section in sections:
 
-                for section in sections:
+                if (section.show_for_travel_award is None) and (section.show_for_accommodation_award is None) and  \
+                        (section.show_for_payment_required is None):
+                    included_sections.append(section)
 
-                    if (section.show_for_travel_award is None) and (section.show_for_accommodation_award is None) and  \
-                            (section.show_for_payment_required is None):
-                        included_sections.append(section)
+                elif (section.show_for_travel_award and offer.travel_award) or \
+                        (section.show_for_accommodation_award and offer.accommodation_award) or \
+                        (section.show_for_payment_required and offer.payment_required):
+                    included_sections.append(section)
 
-                    elif (section.show_for_travel_award and offer.travel_award) or \
-                            (section.show_for_accommodation_award and offer.accommodation_award) or \
-                            (section.show_for_payment_required and offer.payment_required):
-                        included_sections.append(section)
+            registration_form.registration_sections = included_sections
 
-                registration_form.registration_sections = included_sections
+            questions = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.registration_form_id == registration_form.id).all()
 
-                questions = db.session.query(RegistrationQuestion).filter(
-                    RegistrationQuestion.registration_form_id == registration_form.id).all()
+            if not questions:
+                LOGGER.warn(
+                    'Questions not found for  event_id: {}'.format(args['event_id']))
+                return errors.QUESTION_NOT_FOUND
 
-                if not questions:
-                    LOGGER.warn(
-                        'Questions not found for  event_id: {}'.format(args['event_id']))
-                    return errors.QUESTION_NOT_FOUND
+            for s in registration_form.registration_sections:
+                s.registration_questions = []
+                for q in questions:
+                    if q.section_id == s.id:
+                        s.registration_questions.append(q)
 
-                for s in registration_form.registration_sections:
-                    s.registration_questions = []
-                    for q in questions:
-                        if q.section_id == s.id:
-                            s.registration_questions.append(q)
-
-                return registration_form, 201
-            else:
-                return errors.OFFER_EXPIRED
+            return registration_form, 201
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
