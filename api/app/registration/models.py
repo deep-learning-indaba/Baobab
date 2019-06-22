@@ -43,9 +43,9 @@ class RegistrationSection(db.Model):
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    show_for_travel_award = db.Column(db.Boolean(), nullable=False)
-    show_for_accommodation_award = db.Column(db.Boolean(), nullable=False)
-    show_for_payment_required = db.Column(db.Boolean(), nullable=False)
+    show_for_travel_award = db.Column(db.Boolean(), nullable=True)
+    show_for_accommodation_award = db.Column(db.Boolean(), nullable=True)
+    show_for_payment_required = db.Column(db.Boolean(), nullable=True)
 
     def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award
                  , show_for_payment_required):
