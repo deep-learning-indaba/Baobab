@@ -5,7 +5,8 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const profileService = {
     getProfilesList,
-    getUserProfile
+    getUserProfile,
+    getApplicationCommentReview
 }
 
 function getProfilesList(event_id){
@@ -36,7 +37,6 @@ function getUserProfile(user_id){
                 error.message }
         });
 }
-
 
 function getApplicationCommentReview(user_id) {
     return axios

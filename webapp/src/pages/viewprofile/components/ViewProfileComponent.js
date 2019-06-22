@@ -12,7 +12,8 @@ class ViewProfileComponent extends Component {
       user: {},
       loading: true,
       error: "",
-      isNull: true
+      isNull: true,
+       appCommentReview:{}
     };
   }
 
@@ -66,6 +67,7 @@ class ViewProfileComponent extends Component {
           });
     });
   }
+  
   render() {
     const xs = 12;
     const sm = 6;
@@ -371,6 +373,7 @@ class ViewProfileComponent extends Component {
               <div class="row">
                 <fieldset class="fieldset">
                   <legend class="legend">Application Comment Review </legend>
+                  
                   <div class="row">
                       <div class={colClassNameSurname}>
                         <div class="form-group">
@@ -380,13 +383,7 @@ class ViewProfileComponent extends Component {
                           >
                             Reviewer's Name:
                           </label>
-                          <input
-                            class="form-control"
-                            type="text"
-                            id="reviewername"
-                            value={review_by_user_firstname}
-                            readOnly
-                          />
+                          <div>{review_by_user_firstname?review_by_user_firstname:"No one has reviewed yet"}</div>
                         </div>
                       </div>
                   </div>
@@ -399,13 +396,7 @@ class ViewProfileComponent extends Component {
                           >
                             Comments:
                           </label>
-                          <input
-                            class="form-control"
-                            type="text"
-                            id="comment"
-                            value={Comments}
-                            readOnly
-                          />
+                          <div>{Comments?Comments:"No comments to show"}</div>
                         </div>
                       </div>
                   </div>
@@ -418,13 +409,7 @@ class ViewProfileComponent extends Component {
                           >
                             Verdict:
                           </label>
-                          <input
-                            class="form-control"
-                            type="text"
-                            id="verdict"
-                            value={Verdict}
-                            readOnly
-                          />
+                          <div>{Verdict?Verdict:"0"}</div>
                         </div>
                       </div>
                   </div>
