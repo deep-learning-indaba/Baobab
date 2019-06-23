@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
-import { profileService } from "../../../services/profilelist/profilelist.service";
+import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
@@ -73,7 +73,7 @@ class Offer extends Component {
   }
   
   row = ( col1, col2)=>{
-    return <div className="row">
+    return <div className="row mb-2">
               <div class="col-6 font-weight-bold pr-4" align="right">{col1}:</div>
               <div class="col-6 pl-4" align="left">{col2}</div>
             </div>
@@ -312,9 +312,8 @@ class Offer extends Component {
     );
   };
 
-  componentWillMount = () => {
-    let currentUser = JSON.parse(localStorage.getItem("user"));
-    profileService.getUserProfile(currentUser.id).then(results => {
+  componentWillMount() {
+    userService.get().then(results => {
       this.setState({
         userProfile: results,
         error: results.error
@@ -342,7 +341,7 @@ class Offer extends Component {
           loading: false,
           offer: result.offer,
           error: result.error,
-          accepted_travel_award: result.offer.accommodation_award,
+          accepted_accommodation_award: result.offer.accommodation_award,
           accepted_travel_award: result.offer.travel_award
         });
       }
