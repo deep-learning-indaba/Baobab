@@ -418,7 +418,8 @@ class RegistrationComponent extends Component {
         return (
             <div className="registration container-fluid pad-top-30-md">
                 {this.state.formSuccess ? <div className="card flat-card success stretched">
-                    <div >Successfully submitted</div>
+                    <h5>Successfully Registered</h5>
+                    <p>We look forward to welcoming you at the Indaba!</p>
                     <div className="col-12">
                         <button type="button"
                             class="btn btn-primary pull-right"
@@ -434,6 +435,9 @@ class RegistrationComponent extends Component {
                     <div>{this.state.error}, please try again</div>
                 </div>
                 }
+                {this.state.registrationId && !this.state.formSuccess && 
+                    <div class="alert alert-success">You have already registered, but feel free to update your answers below if they've changed!</div>
+                } 
                 {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
                     <div>
                         {this.state.questionSections.map(section => (
