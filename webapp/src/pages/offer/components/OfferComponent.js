@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
 import { profileService } from "../../../services/profilelist/profilelist.service";
+import { NavLink } from "react-router-dom";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -17,7 +18,8 @@ class Offer extends Component {
       rejected_reason: "",
       showReasonBox: false,
       candidate_response: null,
-      offer: {},
+      offer: null,
+      noOffer: null,
       category: "",
       accepted_accommodation_award: false,
       accepted_travel_award: false
@@ -54,9 +56,12 @@ class Offer extends Component {
             if (response.response.status === 201) {
               this.setState({
                 offer: response.response.data, 
-              }, () => this.displayOfferResponse()
-              );
-              this.displayOfferResponse();
+              }, () => {
+                this.displayOfferResponse();
+                if (candidate_response) {
+                  this.props.history.push("/registration");
+                }
+              });
             } else if (response.response.error) {
               this.setState({
                 error: response.response.error
@@ -101,6 +106,54 @@ class Offer extends Component {
               {this.row("Travel", offer.accepted_travel_award? "Your travel to and from Nairobi will be arranged by the Indaba": "You are responsible for your own travel to and from Nairobi.")}
               {this.row("Accommodation", offer.accepted_accommodation_award? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August": "You are responsible for your own accommodation in Nairobi.")}
            </div>}
+          
+            <div className="row">
+              <div className="col">
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  id="reject"
+                  onClick={() => {
+                    this.setState(
+                      {
+                        showReasonBox: true
+                      });
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="col">
+              <NavLink className="btn btn-primary">
+                  Proceed to Registration >
+              </NavLink>
+              </div>
+            </div>
+            {this.state.showReasonBox &&
+                <div className="row">
+                  <textarea
+                    class="form-control reason-box pr-5 pl-10 pb-5"
+                    onChange={this.handleChange(this.state.rejected_reason)}
+                    placeholder="Enter rejection message"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger mt-2"
+                    align="center"
+                    onClick={() => {
+                      this.setState(
+                        {
+                          candidate_response: false
+                         
+                        },
+                        this.buttonSubmit(false)
+                      );
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+            }
         </div>);
   }
 
@@ -276,13 +329,27 @@ class Offer extends Component {
   getOffer() {
     this.setState({ loading: true });
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
-      this.setState({
-        loading: false,
-        offer: result.offer,
-        error: result.error,
-        accepted_travel_award: result.offer.accommodation_award,
-        accepted_travel_award: result.offer.travel_award
-      });
+      if (result.error && result.statusCode === 404) {
+        this.setState({
+          noOffer: true,
+          loading: false
+        });
+      }
+      else if (result.error) {
+        this.setState({
+          error: result.error,
+          loading: false
+        });
+      }
+      else {
+        this.setState({
+          loading: false,
+          offer: result.offer,
+          error: result.error,
+          accepted_travel_award: result.offer.accommodation_award,
+          accepted_travel_award: result.offer.travel_award
+        });
+      }
     });
   }
 
