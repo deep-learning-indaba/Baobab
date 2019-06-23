@@ -10,7 +10,7 @@ from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMi
 from app.utils.auth import verify_token
 import traceback
 from flask import g, request
-from flask_restful import  fields, marshal_with
+from flask_restful import  fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
 from app.registration.models import Offer
@@ -28,7 +28,10 @@ Dear {user_title} {first_name} {last_name},
 Congratulations! You've been selected to attend the {event_name}!
 
 Please follow the link below to see details and accept your offer: {host}/offer
-You have up until the {expiry_date} to accept the offer
+You have up until the {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
+
+If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
+We will read all of these and if there is anything we can do to accommodate you (for example if more funding for travel becomes available), we may extend you a new offer in a subsequent round.
 
 If you have any queries, please forward them to info@deeplearningindaba.com  
 
@@ -95,7 +98,6 @@ class OfferAPI(OfferMixin, restful.Resource):
     }
 
     @auth_required
-    @marshal_with(offer_fields)
     def put(self):
         # update existing offer
         args = self.req_parser.parse_args()
@@ -192,7 +194,7 @@ class OfferAPI(OfferMixin, restful.Resource):
             )
 
             if not offer:
-                return errors.EVENT_NOT_FOUND
+                return errors.OFFER_NOT_FOUND
             else:
                 return offer_info(offer, request_travel), 200
 
@@ -249,7 +251,6 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
     }
 
     @auth_required
-    @marshal_with(registration_form_fields)
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -262,6 +263,9 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
             if offer and (not offer.user_id == user_id):
                 return errors.FORBIDDEN
+            
+            if not offer.candidate_response:
+                return errors.OFFER_NOT_ACCEPTED
 
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.event_id == event_id).first()
@@ -285,8 +289,8 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                         (section.show_for_payment_required is None):
                     included_sections.append(section)
 
-                elif (section.show_for_travel_award and offer.travel_award) or \
-                        (section.show_for_accommodation_award and offer.accommodation_award) or \
+                elif (section.show_for_travel_award and offer.travel_award and offer.accepted_travel_award) or \
+                        (section.show_for_accommodation_award and offer.accommodation_award and offer.accepted_accommodation_award) or \
                         (section.show_for_payment_required and offer.payment_required):
                     included_sections.append(section)
 
@@ -306,7 +310,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                     if q.section_id == s.id:
                         s.registration_questions.append(q)
 
-            return registration_form, 201
+            return marshal(registration_form, self.registration_form_fields), 201
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -370,8 +374,6 @@ class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         section_id = args['section_id']
-
-
 
         try:
 
