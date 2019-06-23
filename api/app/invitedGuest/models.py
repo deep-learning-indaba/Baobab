@@ -11,3 +11,22 @@ class InvitedGuest(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey(
         "app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
+
+
+class GuestRegistration(db.Model):
+    __tablename__ = "guest_registration"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
+    registration_form_id = db.Column(db.Integer(), db.ForeignKey("registration_form.id"), nullable=False)
+    confirmed = db.Column(db.Boolean(), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=True)
+    confirmation_email_sent_at = db.Column(db.DateTime(), nullable=True)
+
+class GuestRegistrationAnswer(db.Model):
+    __tablename__ = "guest_registration_answer"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    registration_id = db.Column(db.Integer(), db.ForeignKey('guest_registration.id'), nullable=False)
+    registration_question_id = db.Column(db.Integer(), db.ForeignKey('registration_question.id'), nullable=False)
+    value = db.Column(db.String(), nullable=False)

@@ -9,7 +9,7 @@ from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
-
+from guestRegistration import api as guest_registration
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -69,3 +69,5 @@ rest_api.add_resource(registration_api.RegistrationQuestionAPI,
                       '/api/v1/registration-question')
 rest_api.add_resource(registration_response.RegistrationApi,
                       '/api/v1/registration-response')
+rest_api.add_resource(guest_registration.GuestRegistrationApi,
+                      '/api/v1/guest-registration')
