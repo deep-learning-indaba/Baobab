@@ -336,12 +336,12 @@ class UserProfile(UserProfileMixin, restful.Resource):
             user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
-            return marshal(UserProfileView(user), self.user_profile_list_fields)
+            return marshal(UserProfileView(user), user_profile_list_fields)
 
         user = user_repository.get_by_event_admin(user_id, current_user_id)
         if user is None:
             return USER_NOT_FOUND
-        return marshal(UserProfileView(user), self.user_profile_list_fields)
+        return marshal(UserProfileView(user), user_profile_list_fields)
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
