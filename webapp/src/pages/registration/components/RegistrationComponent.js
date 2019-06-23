@@ -174,6 +174,11 @@ class RegistrationComponent extends Component {
                                 isLoading: false
                             });
                         }
+                        else {
+                            if (result.statusCode === 409) {
+                                this.props.history.push("/offer");
+                            }
+                        }
                     });
                 });
             }
