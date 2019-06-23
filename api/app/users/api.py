@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import g, request
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import IntegrityError
 
 from app.users.models import AppUser, PasswordReset, UserComment
@@ -324,7 +324,6 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
 
 class UserProfile(UserProfileMixin, restful.Resource):
 
-    @marshal_with(user_profile_list_fields)
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
@@ -337,12 +336,12 @@ class UserProfile(UserProfileMixin, restful.Resource):
             user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
-            return UserProfileView(user)
+            return marshal(UserProfileView(user), self.user_profile_list_fields)
 
         user = user_repository.get_by_event_admin(user_id, current_user_id)
         if user is None:
             return USER_NOT_FOUND
-        return UserProfileView(user)
+        return marshal(UserProfileView(user), self.user_profile_list_fields)
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):
