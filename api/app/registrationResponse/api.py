@@ -1,6 +1,6 @@
 from datetime import date
 import traceback
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
@@ -16,6 +16,9 @@ from app.users.repository import UserRepository as user_repository
 
 
 from app import db
+
+
+REGISTRATION_MESSAGE = 'Thank you for completing our registration form.'
 
 
 def _get_answer_value(answer, question):
@@ -57,7 +60,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         'answers': fields.List(fields.Nested(answer_fields))
     }
 
-    @marshal_with(response_fields)
     @auth_required
     def get(self):
 
@@ -87,14 +89,13 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 'answers': db_answers
             }
 
-            return response
+            return marshal(response, self.response_fields)
 
         except Exception as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
-    @marshal_with(registration_fields)
     def post(self):
         # Save a new response for the logged-in user.
         req_parser = reqparse.RequestParser()
@@ -156,7 +157,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
         finally:
-            return registration, 201  # 201 is 'CREATED' status code
+            return marshal(registration, self.registration_fields), 201  # 201 is 'CREATED' status code
 
     @auth_required
     def put(self):
@@ -222,7 +223,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
-            body_text = greeting + self.get_confirmed_message(confirmed) + '\n\n' + summary
+            body_text = greeting + '\n\n' + REGISTRATION_MESSAGE + self.get_confirmed_message(confirmed) + '\n\nHere is a copy of your responses:\n\n' + summary
 
             emailer.send_mail(user.email, subject, body_text=body_text)
 
@@ -232,6 +233,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
     def get_confirmed_message(self, confirmed):
         if not confirmed:
-            return '\nregistration is pending confirmation on receipt of payment.\n\n'
+            return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
         else:
-            return ''
+            return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
