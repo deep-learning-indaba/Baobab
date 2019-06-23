@@ -13,7 +13,7 @@ class Offer(db.Model):
     expiry_date = db.Column(db.DateTime(), nullable=False)
     payment_required = db.Column(db.Boolean(), nullable=False)
     travel_award = db.Column(db.Boolean(), nullable=False)
-    accommodation_award = db.Column(db.Boolean(), nullable=True)
+    accommodation_award = db.Column(db.Boolean(), nullable=False)
     accepted_accommodation_award = db.Column(db.Boolean(), nullable=True)
     accepted_travel_award = db.Column(db.Boolean(), nullable=True)
     rejected_reason = db.Column(db.String(50), nullable=True)
