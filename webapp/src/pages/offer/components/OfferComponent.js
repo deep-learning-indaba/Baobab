@@ -38,7 +38,7 @@ class Offer extends Component {
     };
   };
 
-  buttonSubmit(candidate_response) {
+  buttonSubmit = (candidate_response) => {
     const { offer, rejected_reason,accepted_accommodation_award,accepted_travel_award } = this.state;
       
       if(candidate_response !== null){
@@ -52,19 +52,20 @@ class Offer extends Component {
             accepted_travel_award
           )
           .then(response => {
-
-            if (response.response.status === 201) {
+            if (response.response && response.response.status === 201) {
               this.setState({
                 offer: response.response.data, 
+                showReasonBox: false
               }, () => {
                 this.displayOfferResponse();
                 if (candidate_response) {
                   this.props.history.push("/registration");
                 }
               });
-            } else if (response.response.error) {
+            } else if (response.error) {
               this.setState({
-                error: response.response.error
+                error: response.error,
+                showReasonBox: false
               });
             }
           });
@@ -107,7 +108,7 @@ class Offer extends Component {
               {this.row("Accommodation", offer.accepted_accommodation_award? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August": "You are responsible for your own accommodation in Nairobi.")}
            </div>}
           
-            <div className="row">
+            {offer.candidate_response && <div className="row mt-4">
               <div className="col">
                 <button
                   type="button"
@@ -124,11 +125,12 @@ class Offer extends Component {
                 </button>
               </div>
               <div className="col">
-              <NavLink className="btn btn-primary">
+              <NavLink className="btn btn-primary" to="/registration">
                   Proceed to Registration >
               </NavLink>
               </div>
             </div>
+            }
             {this.state.showReasonBox &&
                 <div className="row">
                   <textarea
@@ -310,23 +312,17 @@ class Offer extends Component {
     );
   };
 
-  componentWillMount() {
-    this.getOffer();
-    this.setState({
-      loading: false 
-    });
-
+  componentWillMount = () => {
     let currentUser = JSON.parse(localStorage.getItem("user"));
     profileService.getUserProfile(currentUser.id).then(results => {
       this.setState({
         userProfile: results,
-        loading: false,
         error: results.error
-      });
+      }, this.getOffer);
     });
   }
 
-  getOffer() {
+  getOffer = () => {
     this.setState({ loading: true });
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
       if (result.error && result.statusCode === 404) {

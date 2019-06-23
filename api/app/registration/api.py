@@ -67,8 +67,8 @@ def offer_update_info(offer_entity):
         'id': offer_entity.id,
         'user_id': offer_entity.user_id,
         'event_id': offer_entity.event_id,
-        'offer_date': offer_entity.offer_date,
-        'expiry_date': offer_entity.expiry_date,
+        'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
+        'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
         'payment_required': offer_entity.payment_required,
         'travel_award': offer_entity.travel_award,
         'accommodation_award': offer_entity.accommodation_award,
@@ -76,7 +76,7 @@ def offer_update_info(offer_entity):
         'accepted_travel_award': offer_entity.accepted_travel_award,
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
-        'responded_at': offer_entity.responded_at
+        'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d')
     }
 
 
