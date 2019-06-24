@@ -5,7 +5,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const registrationService = {
   getRegistrationForm,
-  getRegistrationResponse,
+  getRegistrationResponse,  
   submitResponse
 };
 
@@ -26,7 +26,8 @@ function getRegistrationForm(eventId, offerId) {
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
+        statusCode: error.response && error.response.status
       };
     });
 }

@@ -109,6 +109,10 @@ class Home extends Component {
       ) : (<div></div>)
     }
 
+    let statusClass = this.state.applicationStatus == "Submitted" 
+      ? this.state.offer === null ? "text-warning" : "text-success" 
+      : "text-danger"
+
     return (
       <div >
         <div>
@@ -121,9 +125,15 @@ class Home extends Component {
           <div>
             <div class="status2019 row text-center">
               <div className="col-sm">
-                <h4 className={this.state.applicationStatus == "Submitted" ? "text-success" : "text-danger"}>
-                  {this.state.applicationStatus}
-                </h4>
+                <h5 className={statusClass}>
+                  {this.state.applicationStatus === "Submitted" && this.state.offer && <span>
+                    Your application was successful! 
+                  </span>}
+                  {this.state.applicationStatus === "Submitted" && !this.state.offer && <span>
+                    Waiting List
+                  </span>}
+                  {this.state.applicationStatus !== "Submitted" && this.state.applicationStatus}
+                </h5>
 
                 {this.state.applicationStatus == "Submitted" &&
                 <div>
@@ -134,10 +144,10 @@ class Home extends Component {
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
                 {this.state.applicationStatus == "NOT Submitted" && <p>
-                  You have NOT submitted your application! 
+                  You did not submit an application to attend the Deep Learning Indaba 2019!
                 </p>}
                 {this.state.applicationStatus == "Not Started" && <p>
-                  We have not received an application from you.
+                  You did not apply to attend the Deep Learning Indaba 2019.
                 </p>}
 
               </div>

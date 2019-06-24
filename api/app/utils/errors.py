@@ -57,3 +57,7 @@ ADD_REGISTRATION_SECTION_FAILED = (
     {'message': 'Unable to add registration section.'}, 500)
 ADD_REGISTRATION_QUESTION_FAILED = (
     {'message': 'Unable to add registration question.'}, 500)
+OFFER_NOT_ACCEPTED = (
+    {'message': 'Offer has not been accepted'}, 409)
+APPLICATIONS_CLOSED = (
+    {'message': 'Applications are now closed'}, 403)
