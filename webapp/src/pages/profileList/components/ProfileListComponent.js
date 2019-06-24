@@ -12,15 +12,18 @@ class ProfileListComponent extends Component{
             List:[],
             isEmpty:true,
             loading:true,
-            error: ""
+            error: "",
+            Desc_Asc:true
         }
 }
 
  isListEmpty(list){
-
     return list.length === 0;
  }
 
+ onChangeSorting = ()=>{
+    this.setState({Desc_Asc:!this.state.Desc_Asc});
+ }
  componentDidMount(){ 
     profileService.getProfilesList(DEFAULT_EVENT_ID)
                     .then(results => {
@@ -37,14 +40,14 @@ onSubmit=(user_id)=>{
     window.location='/viewprofile/:'+user_id;
 }
  render(){
-    const {List, isEmpty,loading,error} = this.state;
+    const {List, isEmpty,loading,error,Desc_Asc} = this.state;
     const loadingStyle = {
         "width": "3rem",
         "height": "3rem"
       }
     const columns = [
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
-                      accessor:u => <div className="list-profile-fullname">{u.user_title+" "+ u.firstname+" "+u.lastname}</div>,
+                      accessor:u=>u.lastname+" "+u.firstname+", "+u.user_title,
                       Cell: props => <a href="#" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</a>,
                       minWidth: 150},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
@@ -83,6 +86,7 @@ onSubmit=(user_id)=>{
                             data={List}
                             columns={columns}
                             minRows={0}
+                            multiSort={true}
                         /> </div>)}
                 </div>
         );

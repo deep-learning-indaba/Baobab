@@ -13,7 +13,9 @@ class Offer(db.Model):
     expiry_date = db.Column(db.DateTime(), nullable=False)
     payment_required = db.Column(db.Boolean(), nullable=False)
     travel_award = db.Column(db.Boolean(), nullable=False)
-    accommodation_award = db.Column(db.Boolean(), nullable=True)
+    accommodation_award = db.Column(db.Boolean(), nullable=False)
+    accepted_accommodation_award = db.Column(db.Boolean(), nullable=True)
+    accepted_travel_award = db.Column(db.Boolean(), nullable=True)
     rejected_reason = db.Column(db.String(50), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
@@ -41,9 +43,9 @@ class RegistrationSection(db.Model):
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    show_for_travel_award = db.Column(db.Boolean(), nullable=False)
-    show_for_accommodation_award = db.Column(db.Boolean(), nullable=False)
-    show_for_payment_required = db.Column(db.Boolean(), nullable=False)
+    show_for_travel_award = db.Column(db.Boolean(), nullable=True)
+    show_for_accommodation_award = db.Column(db.Boolean(), nullable=True)
+    show_for_payment_required = db.Column(db.Boolean(), nullable=True)
 
     def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award
                  , show_for_payment_required):
@@ -72,6 +74,9 @@ class RegistrationQuestion(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
+    required_value = db.Column(db.String(), nullable=True)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey("registration_question.id"), nullable=True)
+    hide_for_dependent_value = db.Column(db.String(), nullable=True)
 
     def __init__(self, registration_form_id, section_id, headline, placeholder, order, type, validation_regex, validation_text=None, is_required = True, description = None, options = None):
         self.registration_form_id = registration_form_id

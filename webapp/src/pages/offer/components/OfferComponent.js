@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
-import { profileService } from "../../../services/profilelist/profilelist.service";
+import { userService } from "../../../services/user/user.service";
+import { NavLink } from "react-router-dom";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -17,15 +18,16 @@ class Offer extends Component {
       rejected_reason: "",
       showReasonBox: false,
       candidate_response: null,
-      offer: {},
-      category: ""
+      offer: null,
+      noOffer: null,
+      category: "",
+      accepted_accommodation_award: false,
+      accepted_travel_award: false
     };
   }
   
   resetPage =()=>{
-  
       this.componentWillMount()
-      
   }
 
   handleChange = field => {
@@ -36,8 +38,8 @@ class Offer extends Component {
     };
   };
 
-  buttonSubmit(candidate_response) {
-    const { offer, rejected_reason } = this.state;
+  buttonSubmit = (candidate_response) => {
+    const { offer, rejected_reason,accepted_accommodation_award,accepted_travel_award } = this.state;
       
       if(candidate_response !== null){
         offerServices
@@ -45,19 +47,25 @@ class Offer extends Component {
             offer.id,
             DEFAULT_EVENT_ID,
             candidate_response,
-            candidate_response? "" : rejected_reason
+            candidate_response? "" : rejected_reason,
+            accepted_accommodation_award,
+            accepted_travel_award
           )
           .then(response => {
-
-            if (response.response.status === 201) {
+            if (response.response && response.response.status === 201) {
               this.setState({
                 offer: response.response.data, 
-              }, () => this.displayOfferResponse()
-              );
-              this.displayOfferResponse();
-            } else if (response.response.error) {
+                showReasonBox: false
+              }, () => {
+                this.displayOfferResponse();
+                if (candidate_response) {
+                  this.props.history.push("/registration");
+                }
+              });
+            } else if (response.error) {
               this.setState({
-                error: response.response.error
+                error: response.error,
+                showReasonBox: false
               });
             }
           });
@@ -65,38 +73,96 @@ class Offer extends Component {
   }
   
   row = ( col1, col2)=>{
-    return <div className="row">
+    return <div className="row mb-2">
               <div class="col-6 font-weight-bold pr-4" align="right">{col1}:</div>
               <div class="col-6 pl-4" align="left">{col2}</div>
             </div>
   }
+
+  onChangeAccommodation=()=>{
+      this.setState({
+        accepted_accommodation_award: !this.state.accepted_accommodation_award
+      });
+  }
+  onChangeTravel=()=>{
+    this.setState({
+      accepted_travel_award: !this.state.accepted_travel_award
+    });
+  }
   
   displayOfferResponse = ()=>{
        const { offer } = this.state;
+       let responded_date = offer.responded_at !== undefined ?offer.responded_at.substring(0,10): "-date-"
        return (
          <div className="container">
             <p className="h5 pt-5">
-                {offer.candidate_response=== true?
-                "You have accepted the following offer on  "
-                :
-                "You have rejected the following offer on "
-                }
-                {offer.responded_at !== undefined ?offer.responded_at.substring(0,10): "-date-"}.
+                {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
+                {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at the Indaba on {responded_date} for the following reason:<br/><br/>{offer.rejected_reason}</span>}
             </p>
 
-           <div className="white-background card form mt-5">
-              {this.row( "Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0,10): "-date-")}
+           {offer.candidate_response && <div className="white-background card form mt-5">
+              {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0,10): "-date-")}
               {this.row("Offer expiry date",offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-")}
-              {this.row("Payment", offer.payment_required? "Required": "No payment required")}
-              {this.row( "Travel award", offer.travel_award? "Allocated": "Not allocated")}
-              {this.row( "Accommodation", offer.accommodation_award? "Allocated": "Not allocated")}
-              {!(offer.candidate_response) && <div>{this.row( "Rejection reason", offer.rejected_reason)}</div>}
-           </div>
+              {this.row("Registration fee", offer.payment_required? "Payment of 350 USD Required to confirm your place": "Fee Waived")}
+              {this.row("Travel", offer.accepted_travel_award? "Your travel to and from Nairobi will be arranged by the Indaba": "You are responsible for your own travel to and from Nairobi.")}
+              {this.row("Accommodation", offer.accepted_accommodation_award? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August": "You are responsible for your own accommodation in Nairobi.")}
+           </div>}
+          
+            {offer.candidate_response && <div className="row mt-4">
+              <div className="col">
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  id="reject"
+                  onClick={() => {
+                    this.setState(
+                      {
+                        showReasonBox: true
+                      });
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+              <div className="col">
+              <NavLink className="btn btn-primary" to="/registration">
+                  Proceed to Registration >
+              </NavLink>
+              </div>
+            </div>
+            }
+            {this.state.showReasonBox &&
+                <div className="row">
+                  <textarea
+                    class="form-control reason-box pr-5 pl-10 pb-5"
+                    onChange={this.handleChange(this.state.rejected_reason)}
+                    placeholder="Enter rejection message"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger mt-2"
+                    align="center"
+                    onClick={() => {
+                      this.setState(
+                        {
+                          candidate_response: false
+                         
+                        },
+                        this.buttonSubmit(false)
+                      );
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+            }
         </div>);
   }
 
+
+
   displayOfferContent = e => {
-    const { offer, userProfile, rejected_reason } = this.state;
+    const { offer, userProfile, rejected_reason,accepted_accommodation_award,accepted_travel_award } = this.state;
     return (
     <div>
       { offer.candidate_response !== null ?
@@ -108,45 +174,69 @@ class Offer extends Component {
           Please see the details of this offer below{" "}
         </p>
 
-        <form class="form pt-5 ">
+        <form class="form pt-2 ">
           <p className="card p">
             You have been accepted as a{" "}
             {userProfile != null ? userProfile.user_category : "<Category>"}{" "}
           </p>
           <div className="white-background card form">
-            <p class="font-weight-bold">Your status</p>
-            <div class="row ">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Travel Award:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.travel_award
-                    ? "Allocated"
-                    : "Not Allocated"
-                  : "Not available"}
+            <p class="font-weight-bold">Offer Details</p>
+            <div class="row mb-4">
+              <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
+              <div class="col-md-6" align="left">
+                {offer && offer.travel_award && accepted_travel_award &&
+                  "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
+                {offer && offer.travel_award && !accepted_travel_award && 
+                  <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Nairobi!</span>
+                }
+                {offer && offer.requested_travel && !offer.travel_award && 
+                  "Unfortunately we are unable to grant you the travel award you requested in your application."}
+                {offer && !offer.requested_travel && !offer.travel_award &&
+                  "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
+                
+              </div>
+              <div class="col-md-3">
+                  {offer.travel_award && <div class="form-check">
+                      <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
+                        id="CheckTravel" />
+                      <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
+                    </div>}
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Accommodation Award:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.accommodation_award
-                    ? "Allocated"
-                    : "Not Allocated"
-                  : "Not available"}
+            <div class="row mb-2">
+              <div class="col-md-3 font-weight-bold pr-2"  align="center">Accommodation:</div>
+              <div class="col-md-6"  align="left">
+                {offer && offer.accommodation_award && accepted_accommodation_award &&
+                  "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
+                {offer && offer.accommodation_award && !accepted_accommodation_award && 
+                  <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Nairobi during the Indaba!</span>
+                }
+                {offer && offer.requested_accommodation && !offer.accommodation_award && 
+                  <span>Unfortunately we are unable to grant you the accomodation award you requested in your application. 
+                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/accommodation-2019">here</a> for more details
+                  </span>}
+                {offer && !offer.requested_accommodation && !offer.accommodation_award &&
+                  "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
+              </div>
+              <div class="col-md-3">
+                {offer.accommodation_award && <div class="form-check accommodation-container">
+                  <input type="checkbox" class="form-check-input" checked={accepted_accommodation_award} onChange={this.onChangeAccommodation} 
+                    id="CheckAccommodation" />
+                  <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
+                </div>}
+              </div>
+              
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
+              <div class="col-md-6" align="left">
+                {offer && offer.payment_required && "In order to confirm your place, you will be liable for a 350 USD registration fee."}
+                {offer && !offer.payment_required && "Your registration fee has been waived."}
               </div>
             </div>
 
-            <div class="row pb-5 ">
-              <div class="col-6 font-weight-bold pr-4"  align="right">Payment Required:</div>
-              <div class="col-6 pl-4"  align="left">
-                {offer != null
-                  ? offer.payment_required
-                    ? "Required"
-                    : "Not Required"
-                  : "Not available"}
-              </div>
-            </div>
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
               {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
@@ -223,29 +313,38 @@ class Offer extends Component {
   };
 
   componentWillMount() {
-    this.getOffer();
-    this.setState({
-      loading: false 
-    });
-
-    let currentUser = JSON.parse(localStorage.getItem("user"));
-    profileService.getUserProfile(currentUser.id).then(results => {
+    userService.get().then(results => {
       this.setState({
         userProfile: results,
-        loading: false,
         error: results.error
-      });
+      }, this.getOffer);
     });
   }
 
-  getOffer() {
+  getOffer = () => {
     this.setState({ loading: true });
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
-      this.setState({
-        loading: false,
-        offer: result.offer,
-        error: result.error
-      });
+      if (result.error && result.statusCode === 404) {
+        this.setState({
+          noOffer: true,
+          loading: false
+        });
+      }
+      else if (result.error) {
+        this.setState({
+          error: result.error,
+          loading: false
+        });
+      }
+      else {
+        this.setState({
+          loading: false,
+          offer: result.offer,
+          error: result.error,
+          accepted_accommodation_award: result.offer.accepted_accommodation_award === null ? result.offer.accommodation_award : result.offer.accepted_accommodation_award,
+          accepted_travel_award: result.offer.accepted_travel_award  === null ? result.offer.travel_award : result.offer.accepted_travel_award
+        });
+      }
     });
   }
 
