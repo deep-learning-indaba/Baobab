@@ -25,7 +25,8 @@ class ViewProfileComponent extends Component {
     };
   }
 
-  displayReviewersTable() {
+  displayReviewersTable =()=> {
+
     const rows = this.state.applicationReviewList.map( (rowData) => <Row {...rowData} />);
 
     return (
@@ -128,7 +129,7 @@ class ViewProfileComponent extends Component {
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
-    const {review_by_user_firstname_list, Comments, Verdict} = this.state.appCommentReview;
+    const {review_by_user_firstname_list, Comments, Verdict} = this.state.applicationReviewList;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -397,11 +398,11 @@ class ViewProfileComponent extends Component {
                   </div>
                 </fieldset>
               </div>
-
+            
               <div class="row">
                 <fieldset class="fieldset">
                   <legend class="legend">Application Comment Review </legend>
-                    {displayReviewersTable()}
+                    {this.displayReviewersTable}
                 </fieldset>
               </div>
 
