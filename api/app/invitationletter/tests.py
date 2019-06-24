@@ -1,6 +1,4 @@
 from app.registration.models import RegistrationForm
-from app.registration.models import RegistrationQuestion
-from app.registration.models import RegistrationSection
 import json
 from datetime import datetime, timedelta
 from app import db, LOGGER
@@ -8,6 +6,8 @@ from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
+from app.registration.models import Registration
+from app.invitationletter.models import InvitationTemplate
 
 INVITATION_LETTER = {
    'registration_id': 1,
@@ -23,7 +23,7 @@ INVITATION_LETTER = {
 }
 
 
-class RegistrationTest(ApiTestCase):
+class InvitationLetterTests(ApiTestCase):
 
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
@@ -55,12 +55,34 @@ class RegistrationTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
+            accommodation_award=True,
             travel_award=True)
         db.session.add(offer)
         db.session.commit()
 
+        form = RegistrationForm(
+            event_id=event.id
+        )
+        db.session.add(form)
+        db.session.commit()
+
+        registration = Registration(
+            offer_id=event.id,
+            registration_form_id=form.id,
+            confirmed=True)
+        db.session.add(registration)
+        db.session.commit()
+
+        template = InvitationTemplate(
+            event_id=event.id,
+            template_path="https://wwww.template.com/blah ",
+            send_for_travel_award_only=False,
+            send_for_accommodation_award_only=False,
+            send_for_both_travel_accommodation=True)
+        db.session.add(template)
+        db.session.commit()
+
         self.headers = self.get_auth_header_for("something@email.com")
-        self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
         db.session.flush()
 
@@ -77,10 +99,10 @@ class RegistrationTest(ApiTestCase):
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
         response = self.app.post(
-                '/api/v1/registration-form', data=INVITATION_LETTER, headers=self.adminHeaders)
+                '/api/v1/invitation-letter', data=INVITATION_LETTER, headers=self.headers)
         data = json.loads(response.data)
         LOGGER.debug(
-            "Reg-form: {}".format(data))
+            "invitation letter: {}".format(data))
         assert response.status_code == 201
-        assert data['registration_form_id'] == 2
+
 

@@ -57,3 +57,7 @@ ADD_REGISTRATION_SECTION_FAILED = (
     {'message': 'Unable to add registration section.'}, 500)
 ADD_REGISTRATION_QUESTION_FAILED = (
     {'message': 'Unable to add registration question.'}, 500)
+ADD_INVITATION_REQUEST_FAILED = (
+    {'message': 'Unable to add invitation letter request.'}, 500)
+TEMPLATE_NOT_FOUND = (
+    {'message': 'No template found for the given parameters'}, 404)
