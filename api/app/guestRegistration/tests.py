@@ -189,6 +189,7 @@ class RegistrationApiTest(ApiTestCase):
                 content_type='application/json',
                 headers=self.headers
             )
+            LOGGER.debug("hi: {}".format(response.data))
             response = self.app.get(
                 '/api/v1/guest-registration',
                 content_type='application/json',
@@ -227,7 +228,7 @@ class RegistrationApiTest(ApiTestCase):
             LOGGER.debug(
                 "Reg-form: {}".format(data))
             put_registration_data = {
-                'registration_id': data['id'],
+                'guest_registration_id': data['id'],
                 'registration_form_id': self.form.id,
                 'answers': [
                     {
@@ -245,9 +246,12 @@ class RegistrationApiTest(ApiTestCase):
                 ]
             }
             post_response = self.app.put(
-                '/api/v1/guest-registration,',
+                '/api/v1/guest-registration',
                 data=json.dumps(put_registration_data),
                 content_type='application/json',
                 headers=self.headers)
+
+            LOGGER.debug(
+                "put response: {}".format(post_response))
             self.assertEqual(post_response.status_code, 200)
 

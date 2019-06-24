@@ -35,23 +35,30 @@ def _get_answer_value(answer, question):
 class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     answer_fields = {
         'id': fields.Integer,
-        'registration_id': fields.Integer,
+        'guest_registration_id': fields.Integer,
         'registration_question_id': fields.Integer,
         'value': fields.String
     }
 
     registration_fields = {
-        'id':fields.Integer,
+        'id': fields.Integer,
         'registration_form_id': fields.Integer,
         'confirmed': fields.Boolean,
         'created_at': fields.DateTime,
         'confirmation_email_sent_at': fields.DateTime
 
     }
+    update_registration_fields = {
+        'guest_registration_id': fields.Integer,
+        'registration_form_id': fields.Integer,
+        'confirmed': fields.Boolean,
+        'created_at': fields.DateTime,
+        'confirmation_email_sent_at': fields.DateTime
 
+    }
     response_fields = {
         'id': fields.Integer,
-        'registration_id': fields.Integer,
+        'guest_registration_id': fields.Integer,
         'registration_form_id': fields.Integer,
         'answers': fields.List(fields.Nested(answer_fields))
     }
@@ -72,11 +79,11 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
             if registration_form is None:
                 return errors.REGISTRATION_FORM_NOT_FOUND
-            db_answers = db.session.query(GuestRegistrationAnswer).filter(GuestRegistrationAnswer.registration_id ==
+            db_answers = db.session.query(GuestRegistrationAnswer).filter(GuestRegistrationAnswer.guest_registration_id ==
                                                                      registration.id).all()
 
             response = {
-                'registration_id': registration.id,
+                'guest_registration_id': registration.id,
                 'registration_form_id': registration_form.id,
                 'answers': db_answers
             }
@@ -123,7 +130,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
 
-                    answer = GuestRegistrationAnswer(registration_id=registration.id,
+                    answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                     registration_question_id=answer_args['registration_question_id'],
                                                     value=answer_args['value'])
 
@@ -131,7 +138,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             db.session.commit()
 
             registration_answers = db.session.query(GuestRegistrationAnswer).filter(
-                GuestRegistrationAnswer.registration_id == registration.id).all()
+                GuestRegistrationAnswer.guest_registration_id == registration.id).all()
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
@@ -154,14 +161,9 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         args = self.req_parser.parse_args()
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
-
-            registration = db.session.query(GuestRegistration).filter(GuestRegistration.id == args['registration_id']).first()
-            registration = db.session.query(GuestRegistration).all()
+            registration = db.session.query(GuestRegistration).filter(GuestRegistration.id == args['guest_registration_id']).first()
             if registration is None:
                 return 'Registration not found', 404
-            else:
-                return len(registration),200
-
             registration.registration_form_id = args['registration_form_id']
             db.session.commit()
 
@@ -174,7 +176,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 elif db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
 
-                    answer = GuestRegistrationAnswer(registration_id=registration.id,
+                    answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                         registration_question_id=answer_args['registration_question_id'],
                                                         value=answer_args['value'])
 

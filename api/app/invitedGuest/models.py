@@ -27,6 +27,6 @@ class GuestRegistrationAnswer(db.Model):
     __tablename__ = "guest_registration_answer"
 
     id = db.Column(db.Integer(), primary_key=True)
-    registration_id = db.Column(db.Integer(), db.ForeignKey('guest_registration.id'), nullable=False)
+    guest_registration_id = db.Column(db.Integer(), db.ForeignKey('guest_registration.id'), nullable=False)
     registration_question_id = db.Column(db.Integer(), db.ForeignKey('registration_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
