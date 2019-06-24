@@ -143,12 +143,13 @@ class OfferAPI(OfferMixin, restful.Resource):
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
         travel_award = args['travel_award']
-        accepted_accommodation_award = args['accepted_accommodation_award']
-        accepted_travel_award = args['accepted_travel_award']
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
-
         event_name = db.session.query(Event).filter(Event.id == event_id).first().name
+
+        existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
+        if existing_offer:
+            return errors.DUPLICATE_OFFER
 
         offer_entity = Offer(
             user_id=user_id,
@@ -157,16 +158,14 @@ class OfferAPI(OfferMixin, restful.Resource):
             expiry_date=expiry_date,
             payment_required=payment_required,
             travel_award=travel_award,
-            accommodation_award=accommodation_award,
-            accepted_accommodation_award=accepted_accommodation_award,
-            accepted_travel_award=accepted_travel_award
+            accommodation_award=accommodation_award
         )
 
         db.session.add(offer_entity)
         db.session.commit()
 
         if user.email:
-            send_mail(recipient=user.email, subject='Offer from Deep Learning Indaba',
+            send_mail(recipient=user.email, subject='Deep Learning Indaba 2019 Application Status Update',
                       body_text=OFFER_EMAIL_BODY.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
                             event_name=event_name, host=get_baobab_host(),
