@@ -6,7 +6,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const profileService = {
     getProfilesList,
     getUserProfile,
-    getApplicationCommentReview
+    getUserReview
 }
 
 function getProfilesList(event_id){
@@ -17,7 +17,7 @@ function getProfilesList(event_id){
          })
         .catch((error)=>{
             //handling an error, then assign an empty / null array
-            return {List:[], 
+            return {List:[],
                      error: error.response && error.response.data
                       ? error.response.data.message :
                          error.message }
@@ -38,14 +38,14 @@ function getUserProfile(user_id){
         });
 }
 
-function getApplicationCommentReview(user_id) {
+function getUserReview(user_id) {
     return axios
       .post(baseUrl + "/api/v1/user-comment-review?user_id="+user_id,{ headers: authHeader() })
       .then(response => {
             return response.data;
         })
         .catch((error)=>{
-            return { commentReview:{},
+            return { applicationReviewList:{},
                 error: error.response && error.response.data ?
                 error.response.data.message:
                 error.message }

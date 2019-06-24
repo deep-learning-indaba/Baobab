@@ -5,6 +5,14 @@ import { createColClassName } from "../../../utils/styling/styling";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
+const Row = ({RevieweName, ReviewerComments, ReviewerFinalVerdict}) => (
+  <div className="row">
+    <div>{RevieweName}</div>
+    <div>{ReviewerComments}</div>
+    <div>{ReviewerFinalVerdict}</div>
+  </div>
+);
+
 class ViewProfileComponent extends Component {
   constructor(props) {
     super(props);
@@ -13,8 +21,28 @@ class ViewProfileComponent extends Component {
       loading: true,
       error: "",
       isNull: true,
-       appCommentReview:{}
+       applicationReviewList:{}
     };
+  }
+
+  displayReviewersTable() {
+    const rows = this.state.applicationReviewList.map( (rowData) => <Row {...rowData} />);
+
+    return (
+      <div className="table">
+        <div className="header">
+          <div>
+            Reviewer Name</div>
+          <div >
+            Reviewer Comments</div>
+          <div>
+            Reviewer Final Verdict</div>
+        </div>
+        <div className="body">
+          {rows}
+        </div>
+      </div>
+    );
   }
 
   componentDidMount() {
@@ -57,9 +85,9 @@ class ViewProfileComponent extends Component {
       });
     });
 
-    profileService.getApplicationCommentReview(user_id).then(result => {
+    profileService.getUserReview(user_id).then(result => {
         this.setState({
-              appCommentReview:{
+          applicationReviewList:{
                 review_by_user_firstname_list:result.review_by_user_firstname_list,
                 Comments:result.Comments,
                 Verdict:result.Verdict
@@ -373,49 +401,7 @@ class ViewProfileComponent extends Component {
               <div class="row">
                 <fieldset class="fieldset">
                   <legend class="legend">Application Comment Review </legend>
-                  
-                  <div class="row">
-                      <div class={colClassNameSurname}>
-                        <div class="form-group">
-                          <label
-                            class="label-display col-form-label"
-                            htmlFor="reviewername"
-                          >
-                            Reviewer's Name:
-                          </label>
-                          <div>{revw_by_user_firstname_list?
-                            review_by_user_firstname_list.map((reviewer)=>
-                            <li>{reviewer}</li>)
-                            :"No one has reviewed yet"}</div>
-                        </div>
-                      </div>
-                  </div>
-                  <div class="row">
-                      <div class={colClassNameSurname}>
-                        <div class="form-group">
-                        <label
-                            class="label-display col-form-label"
-                            htmlFor="comment"
-                          >
-                            Comments:
-                          </label>
-                          <div>{Comments?Comments:"No comments to show"}</div>
-                        </div>
-                      </div>
-                  </div>
-                  <div class="row">
-                      <div class={colClassNameSurname}>
-                        <div class="form-group">
-                        <label
-                            class="label-display col-form-label"
-                            htmlFor="verdict"
-                          >
-                            Verdict:
-                          </label>
-                          <div>{Verdict?Verdict:"0"}</div>
-                        </div>
-                      </div>
-                  </div>
+                    {displayReviewersTable()}
                 </fieldset>
               </div>
 
