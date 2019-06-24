@@ -513,13 +513,13 @@ class UserCommentAPITest(ApiTestCase):
             self.assertEqual(comment_list[1]['comment_by_user_lastname'], self.user2['lastname'])
             self.assertEqual(comment_list[1]['comment'], self.comment2.comment)
 
-    def test_get_application_review_comments(self):
+    def test_get_application_review(self):
         with app.app_context():
             self.seed_static_data()
             self.seed_comments()
 
             params = {'event_id': self.event1_id, 'user_id': self.user1['id']}
-            response = self.app.get('/api/v1/user-comment-review', headers={'Authorization': self.user2['token']}, query_string=params)
+            response = self.app.get('/api/v1/user-review', headers={'Authorization': self.user2['token']}, query_string=params)
             LOGGER.debug("<< REVIEW-COMMENT >>: {}".format(response.data))
             comment_list = json.loads(response.data)        
 

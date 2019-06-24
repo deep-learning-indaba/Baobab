@@ -13,7 +13,7 @@ from registrationResponse import api as registration_response
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
-rest_api.add_resource(users_api.UserApplicationCommentReviewAPI, '/api/v1/user-comment-review')
+rest_api.add_resource(users_api.UserReviewAPI, '/api/v1/user-review')
 rest_api.add_resource(users_api.AuthenticationAPI, '/api/v1/authenticate')
 rest_api.add_resource(users_api.PasswordResetRequestAPI,
                       '/api/v1/password-reset/request')

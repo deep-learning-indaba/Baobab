@@ -14,7 +14,7 @@ from app.reviews.models import ReviewScore, ReviewResponse
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD
 
-from app import db, bcrypt, LOGGER
+from app import app, db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
 
 from config import BOABAB_HOST
@@ -552,10 +552,10 @@ class UserCommentAPI(restful.Resource):
         comments = db.session.query(UserComment).filter(
             UserComment.event_id == args['event_id'],
             UserComment.user_id == args['user_id']).all()
-
+        
         return comments
 
-class UserApplicationCommentReviewAPI(restful.Resource):
+class UserReviewAPI(restful.Resource):
     @auth_required
     @marshal_with(user_comment_review_fields)
     def get(self):
@@ -567,10 +567,8 @@ class UserApplicationCommentReviewAPI(restful.Resource):
         current_user = user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
-
-        comments = db.session.query(UserComment).filter(
-            UserComment.event_id == args['event_id'],
-            UserComment.user_id == args['user_id']).all()
+        
+        comments = db.session.query(UserComment).filter(UserComment.event_id == args['event_id'], UserComment.user_id == args['user_id']).all()        
         
         reviewers_id_list = []
         if comments:
@@ -579,10 +577,17 @@ class UserApplicationCommentReviewAPI(restful.Resource):
         
         reviewers_list = []
         review_by_user_firstname_list = []
-        verdicts = 0
+        verdicts = []
         for rev_id in reviewers_id_list:
             reviewers_list.append(db.session.query(ReviewResponse).filter(ReviewResponse.reviewer_user_id == rev_id).all())
             review_by_user_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
-            verdicts = db.session.query(ReviewScore).filter( ReviewScore.review_response_id == rev_id,ReviewResponse.reviewer_user_id == rev_id).value
-
+            valueScore = db.session.query(ReviewScore).filter( ReviewScore.review_response_id == rev_id
+                                                            , ReviewResponse.reviewer_user_id == rev_id).value
+            if valueScore == 0:
+                verdicts.append("No")
+            elif valueScore == 1:
+                verdicts.append("Maybe")
+            else:
+                verdicts.append("Yes")
+     
         return comments,200

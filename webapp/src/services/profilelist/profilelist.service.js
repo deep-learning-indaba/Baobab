@@ -40,7 +40,7 @@ function getUserProfile(user_id){
 
 function getUserReview(user_id) {
     return axios
-      .post(baseUrl + "/api/v1/user-comment-review?user_id="+user_id,{ headers: authHeader() })
+      .post(baseUrl + "/api/v1/user-review?user_id="+user_id,{ headers: authHeader() })
       .then(response => {
             return response.data;
         })
