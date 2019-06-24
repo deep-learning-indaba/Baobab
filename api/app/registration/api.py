@@ -165,7 +165,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.commit()
 
         if user.email:
-            send_mail(recipient=user.email, subject='Deep Learning Indaba 2019 Application Status Update',
+            send_mail(recipient=user.email, subject='{} Application Status Update'.format(event_name),
                       body_text=OFFER_EMAIL_BODY.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
                             event_name=event_name, host=get_baobab_host(),
