@@ -55,7 +55,7 @@ REGISTRATION_QUESTION = {
 
 class OfferApiTest(ApiTestCase):
 
-    def seed_static_data(self):
+    def seed_static_data(self, add_offer=True):
         db.session.add(UserCategory('Offer Category'))
         db.session.add(Country('Suid Afrika'))
         db.session.commit()
@@ -84,16 +84,17 @@ class OfferApiTest(ApiTestCase):
         db.session.add(event)
         db.session.commit()
 
-        offer = Offer(
-            user_id=test_user.id,
-            event_id=event.id,
-            offer_date=datetime.now(),
-            expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            travel_award=True,
-            accommodation_award=False)
-        db.session.add(offer)
-        db.session.commit()
+        if add_offer:
+            offer = Offer(
+                user_id=test_user.id,
+                event_id=event.id,
+                offer_date=datetime.now(),
+                expiry_date=datetime.now() + timedelta(days=15),
+                payment_required=False,
+                travel_award=True,
+                accommodation_award=False)
+            db.session.add(offer)
+            db.session.commit()
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
@@ -112,7 +113,7 @@ class OfferApiTest(ApiTestCase):
         return header
 
     def test_create_offer(self):
-        self.seed_static_data()
+        self.seed_static_data(add_offer=False)
 
         response = self.app.post('/api/v1/offer', data=OFFER_DATA,
                                  headers=self.adminHeaders)
@@ -122,6 +123,15 @@ class OfferApiTest(ApiTestCase):
         assert data['payment_required']
         assert data['travel_award']
         assert data['accommodation_award']
+
+    def test_create_duplicate_offer(self):
+        self.seed_static_data(add_offer=True)
+
+        response = self.app.post('/api/v1/offer', data=OFFER_DATA,
+                                 headers=self.adminHeaders)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 409)
 
     def test_get_offer(self):
         self.seed_static_data()
