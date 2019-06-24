@@ -61,3 +61,7 @@ ADD_INVITATION_REQUEST_FAILED = (
     {'message': 'Unable to add invitation letter request.'}, 500)
 TEMPLATE_NOT_FOUND = (
     {'message': 'No template found for the given parameters'}, 404)
+OFFER_NOT_ACCEPTED = (
+    {'message': 'Offer has not been accepted'}, 409)
+APPLICATIONS_CLOSED = (
+    {'message': 'Applications are now closed'}, 403)
