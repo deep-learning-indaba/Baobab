@@ -90,7 +90,8 @@ class OfferApiTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
-            travel_award=True)
+            travel_award=True,
+            accommodation_award=False)
         db.session.add(offer)
         db.session.commit()
 
@@ -195,15 +196,23 @@ class RegistrationTest(ApiTestCase):
         db.session.add(event)
         db.session.commit()
 
+        self.event_id = event.id
+
         offer = Offer(
             user_id=test_user.id,
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
-            travel_award=True)
+            travel_award=True,
+            accommodation_award=False)
+
+        offer.candidate_response = True
+        offer.accepted_travel_award = True
+
         db.session.add(offer)
         db.session.commit()
+        self.offer_id = offer.id
 
         form = RegistrationForm(
             event_id=event.id
@@ -292,10 +301,8 @@ class RegistrationTest(ApiTestCase):
 
     def test_get_form(self):
         self.seed_static_data()
-        event_id = 1
-        offer_id = 1
         url = "/api/v1/registration-form?offer_id=%d&event_id=%d" % (
-            offer_id, event_id)
+            self.offer_id, self.event_id)
         LOGGER.debug(url)
         response = self.app.get(url, headers=self.headers)
 

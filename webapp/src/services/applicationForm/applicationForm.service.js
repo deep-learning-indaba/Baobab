@@ -24,22 +24,16 @@ function getForEvent(eventId) {
             message: response.statusText
         }
     })
-    .catch(error => {
-      if (error.response) {
-        return {
-            formSpec: null,
-            status: error.response.status,
-            message: error.response.statusText
-        };
-      } else {
-        // The request was made but no response was received
-        return {
-          formSpec: null,
-          status: null,
-          message: error.message
-        };
-      }
-    });
+    .catch(function(error){
+      return{
+        formSpec:null,
+        error:
+          error.response && error.response.data
+          ? error.response.data.message
+          : error.message,
+        status: error.response && error.response.status
+      };
+  });
 }
 
 function getResponse(eventId) {

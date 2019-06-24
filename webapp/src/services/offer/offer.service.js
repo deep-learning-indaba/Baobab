@@ -16,16 +16,18 @@ function getOffer(event_id){
       .then(function(response){
         return{
             offer: response.data,
-            error:""
+            error:"",
+            statusCode: response.status
         };
       })
       .catch(function(error){
           return{
             offer:null,
-              error:
-                error.response && error.response.data
-                ? error.response.data.message
-                : error.message
+            error:
+              error.response && error.response.data
+              ? error.response.data.message
+              : error.message,
+            statusCode: error.response && error.response.status
           };
       });
 

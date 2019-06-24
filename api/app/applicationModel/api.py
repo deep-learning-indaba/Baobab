@@ -2,13 +2,13 @@ from datetime import datetime
 import traceback
 
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
 
-from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
 from app import db, bcrypt
 from app import LOGGER
@@ -50,7 +50,6 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'sections': fields.List(fields.Nested(section_fields)) 
     }
 
-    @marshal_with(form_fields)
     def get(self):
         LOGGER.debug('Received get request for application form')
         args = self.req_parser.parse_args()
@@ -61,6 +60,9 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             if(not form):
                 LOGGER.warn('Form not found for event_id: {}'.format(args['event_id']))
                 return FORM_NOT_FOUND
+
+            if not form.is_open:
+                return APPLICATIONS_CLOSED
 
             sections = db.session.query(Section).filter(Section.application_form_id == form.id).all()   #All sections in our form
             if(not sections):
@@ -81,7 +83,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                         s.questions.append(q)
 
             if (form): 
-                return form
+                return marshal(form, self.form_fields)
             else:
                 LOGGER.warn("Event not found for event_id: {}".format(args['event_id'])) 
                 return EVENT_NOT_FOUND

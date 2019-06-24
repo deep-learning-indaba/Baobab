@@ -18,6 +18,60 @@ const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
+const DATE = "date";
+
+class FileUploadComponent extends Component {
+    //TODO: Move to central place and share with application form
+    constructor(props) {
+        super(props);
+        this.state = {
+            uploadPercentComplete: 0,
+            uploading: false,
+            uploaded: false,
+            uploadError: ""
+        }
+    }
+
+    handleUploadFile = (file) => {
+        this.setState({
+            uploading: true
+        }, () => {
+            fileService.uploadFile(file, progressEvent => {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                this.setState({
+                    uploadPercentComplete: percentCompleted
+                });
+            }).then(response => {
+                if (response.fileId && this.props.onChange) {
+                    this.props.onChange(this.props.question.id, response.fileId);
+                }
+                this.setState({
+                    uploaded: response.fileId !== "",
+                    uploadError: response.error,
+                    uploading: false
+                });
+            })
+        })
+    }
+
+    render() {
+        return (
+            <FormFileUpload
+                Id={this.props.question.id}
+                name={this.id}
+                label={this.props.question.description}
+                key={"i_" + this.props.key}
+                value={this.props.answer && this.props.answer.value || ""}
+                showError={this.props.validationError || this.state.uploadError}
+                errorText={this.props.validationError || this.state.uploadError}
+                uploading={this.state.uploading}
+                uploadPercentComplete={this.state.uploadPercentComplete}
+                uploadFile={this.handleUploadFile}
+                uploaded={this.state.uploaded}
+            />
+        );
+    }
+}
 
 class RegistrationComponent extends Component {
     constructor(props) {
@@ -29,6 +83,7 @@ class RegistrationComponent extends Component {
             error: "",
             hasValidated: false,
             isValid: false,
+            validationStale: false,
             isSubmitting: false,
             offer: [],
             questionSections: [],
@@ -56,10 +111,13 @@ class RegistrationComponent extends Component {
 
     handleChange = event => {
         const value = event.target.type === 'checkbox' ? (event.target.checked | 0) : event.target.value;
-        let answers = this.state.answers;
         let id = parseInt(event.target.id);
+        this.onChange(id, value);
+    };
 
-        let answer = answers.find(a => a.registration_question_id === id);
+    onChange = (id, value) => {
+        let answer = this.state.answers.find(a => a.registration_question_id === id);
+        let answers = this.state.answers;
         if (answer) {
             answer.value = value.toString();
             answers = answers.map(function (item) { return item.registration_question_id == id ? answer : item; });
@@ -73,32 +131,17 @@ class RegistrationComponent extends Component {
         }
         this.setState({
             answers: answers
+        }, () => {
+            if (this.state.hasValidated) {
+                this.isValidated();
+            }
         });
-
-    };
+    }
 
     handleChangeDropdown = (id, dropdown) => {
-        var answers = this.state.answers;
-
-        id = parseInt(id);
-
-        var answer = answers.find(a => a.registration_question_id === id);
-        if (answer) {
-            answer.value = dropdown.value.toString();
-            answers = answers.map(function (item) { return item.registration_question_id == id ? answer : item; });
-        }
-        else {
-            answer = {
-                registration_question_id: id.toString(),
-                value: dropdown.value.toString()
-            }
-            answers.push(answer);
-        }
-        this.setState({
-            answers: answers
-        });
+        let value = dropdown.value.toString();
+        this.onChange(id, value);
     };
-
 
     componentDidMount() {
         offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
@@ -126,10 +169,15 @@ class RegistrationComponent extends Component {
 
                             }).catch(error => { })
                             this.setState({
-                                questionSections: questionSections,
+                                questionSections: questionSections.sort((a, b)=>a.order-b.order),
                                 registrationFormId: result.form.id,
                                 isLoading: false
                             });
+                        }
+                        else {
+                            if (result.statusCode === 409) {
+                                this.props.history.push("/offer");
+                            }
                         }
                     });
                 });
@@ -143,29 +191,47 @@ class RegistrationComponent extends Component {
         })
     }
 
-    handleUploadFile = (file) => {
-        this.setState({
-            uploading: true
-        }, () => {
-            fileService.uploadFile(file, progressEvent => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                this.setState({
-                    uploadPercentComplete: percentCompleted
-                });
-            }).then(response => {
-                if (response.fileId && this.props.onChange) {
-                    this.props.onChange(this.props.question, response.fileId);
-                }
-                this.setState({
-                    uploaded: response.fileId !== "",
-                    uploadError: response.error,
-                    uploading: false
-                });
-            })
-        })
-    }
+    validate = (question, answer) => {
+        let errors = [];
+    
+        if (question.is_required && (!answer || !answer.value)) {
+          errors.push(question.validation_text || "An answer is required.");
+        }
+        if (
+          answer &&
+          question.validation_regex &&
+          !answer.value.match(question.validation_regex)
+        ) {
+          errors.push(question.validation_text);
+        }
+    
+        return {
+            registration_question_id: question.id,
+            error: errors.join("; ")
+        };
+    };
 
-    buttonSubmit = () => {
+    isValidated = () => {
+        const validationErrors = this.state.questionSections.flatMap(section=>section.registration_questions.map(question=>{
+            let answer = this.state.answers.find(a=>a.registration_question_id === question.id);
+            return this.validate(question, answer);
+        }));
+
+        const isValid = !validationErrors.some(v => v.error);
+
+        this.setState(
+            {
+                validationErrors: validationErrors,
+                validationStale: false,
+                isValid: isValid
+            }
+        );
+
+        return isValid;
+    };
+
+    buttonSubmit = e => {
+        e.preventDefault();
 
         let data = {
             registration_id: this.state.registrationId,
@@ -173,23 +239,28 @@ class RegistrationComponent extends Component {
             registration_form_id: this.state.registrationFormId,
             answers: this.state.answers
         }
-        {
+        
+        this.setState({
+            hasValidated: true
+        });
+
+        if (this.isValidated()) {
             this.setState({
-                isLoading: true
+                isSubmitting: true
             }, () => {
                 registrationService.submitResponse(data, this.state.registrationId ? true : false).then(response => {
-                    if (response.error === "" && response.form.status === 200) {
+                    if (response.error === "" && (response.form.status === 201 || response.form.status === 200)) {
                         this.setState({
                             formFailure: false,
                             formSuccess: true,
-                            isLoading: false
+                            isSubmitting: false
                         });
                     }
                     else {
                         this.setState({
                             formFailure: true,
                             formSuccess: false,
-                            isLoading: false,
+                            isSubmitting: false,
                             error:response.error
                         });
                     }
@@ -197,7 +268,7 @@ class RegistrationComponent extends Component {
                     this.setState({
                         formFailure: true,
                         formSuccess: false,
-                        isLoading: false
+                        isSubmitting: false
                     });
                 });
             });
@@ -208,6 +279,10 @@ class RegistrationComponent extends Component {
         const {
             error,
             isLoading,
+            hasValidated,
+            validationStale,
+            isValid,
+            isSubmitting
         } = this.state;
 
         const loadingStyle = {
@@ -224,7 +299,8 @@ class RegistrationComponent extends Component {
 
         }
 
-        this.formControl = (key, question, answer, validationError) => {
+        this.formControl = (key, question, answer, validError) => {
+            let validationError = validError ? validError.error : "";
             switch (question.type) {
                 case SHORT_TEXT:
                     return (
@@ -281,26 +357,39 @@ class RegistrationComponent extends Component {
                             options={question.options}
                             id={question.id}
                             onChange={this.handleChangeDropdown}
-                            defaultValue={answer ? answer.label : ""}
-                            placeholder={answer ? this.getDropdownDescription(question.options, answer) : question.placeholder}
+                            defaultValue={answer && answer.value || ""}
+                            placeholder={question.placeholder}
                             label={question.description}
                             required={question.is_required && !answer}
+                            key={"i_" + key}
+                            showError={validationError}
+                            errorText={validationError}
                         />
                     );
                 case FILE:
                     return (
-                        <FormFileUpload
+                        <FileUploadComponent
+                            question={question}
+                            answer={answer}
+                            validationError={validationError}
+                            onChange={this.onChange}   
+                            key={"i_" + key}
+                        />
+                    )
+                case DATE:
+                    return (
+                        <FormTextBox
                             Id={question.id}
                             name={this.id}
+                            type="date"
                             label={question.description}
+                            value={answer ? answer.value : answer}
+                            placeholder={question.placeholder}
+                            onChange={this.handleChange}
                             key={"i_" + key}
-                            value={answer}
-                            showError={validationError || this.state.uploadError}
-                            errorText={validationError || this.state.uploadError}
-                            uploading={this.state.uploading}
-                            uploadPercentComplete={this.state.uploadPercentComplete}
-                            uploadFile={this.handleUploadFile}
-                            uploaded={this.state.uploaded}
+                            showError={validationError}
+                            errorText={validationError}
+                            required={question.is_required}
                         />
                     );
                 default:
@@ -329,7 +418,8 @@ class RegistrationComponent extends Component {
         return (
             <div className="registration container-fluid pad-top-30-md">
                 {this.state.formSuccess ? <div className="card flat-card success stretched">
-                    <div >Successfully submitted</div>
+                    <h5>Successfully Registered</h5>
+                    <p>We look forward to welcoming you at the Indaba!</p>
                     <div className="col-12">
                         <button type="button"
                             class="btn btn-primary pull-right"
@@ -345,34 +435,58 @@ class RegistrationComponent extends Component {
                     <div>{this.state.error}, please try again</div>
                 </div>
                 }
+                {this.state.registrationId && !this.state.formSuccess && 
+                    <div class="alert alert-success">You have already registered, but feel free to update your answers below if they've changed!</div>
+                } 
                 {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
-                    <form onSubmit={() =>  this.buttonSubmit()}>
+                    <div>
                         {this.state.questionSections.map(section => (
-                            <div class="card stretched">
+                            <div class="card stretched" key={"section_" + section.id}>
                                 <h3>{section.name}</h3>
-                                <div className="padding-v-15">{section.description}</div>
+                                <div className="padding-v-15 mb-4 text-left">{section.description}</div>
 
-                                {section.registration_questions.map(question => (
-                                    <div>
+                                {section.registration_questions.sort((a, b) => a.order - b.order).map(question => {
+                                    if (question.depends_on_question_id) {
+                                        let answer = this.state.answers.find(a=>a.registration_question_id==question.depends_on_question_id);
+                                        if (!answer || answer.value == question.hide_for_dependent_value) {
+                                            return;
+                                        }
+                                    }
+                                    return <div className="text-left" key={"question_"+question.id}>
+                                        <h5>{question.headline}</h5>
                                         {
                                             this.formControl(
                                                 question.id,
                                                 question,
-                                                this.state.registrationId ? this.state.answers.find(a => a.registration_question_id === question.id) : null,
-                                                ""
+                                                this.state.answers && this.state.answers.find(a => a.registration_question_id === question.id),
+                                                this.state.validationErrors && this.state.validationErrors.find(v => v.registration_question_id === question.id)
                                             )}
                                     </div>
-                                ))}
+                                    }
+                                )}
                             </div>
 
                         ))}
                         <button
                             type="submit"
-                            class="btn btn-primary stretched margin-top-32"
+                            class="btn btn-primary margin-top-32"
+                            onClick={this.buttonSubmit}
                         >
+                            {isSubmitting && (
+                                <span
+                                    class="spinner-grow spinner-grow-sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            )}
                             Submit reponse
-                </button>
-                    </form>
+                        </button>
+                        {(hasValidated && !validationStale && !isValid) && 
+                            <div class="alert alert-danger">
+                                There are one or more validation errors, please correct before submitting.
+                            </div>
+                        }
+                    </div>
                 ) : (
                 <div>
                     {this.state.formSuccess !== true && this.state.formFailure !== true && <div className="alert alert-danger">No registration form available</div>}

@@ -501,7 +501,7 @@ class ApplicationForm extends Component {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
-        errorMessage: response.message,
+        errorMessage: response.error,
         isLoading: false,
       });
     });
