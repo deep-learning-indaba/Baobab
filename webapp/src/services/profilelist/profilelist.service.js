@@ -38,9 +38,13 @@ function getUserProfile(user_id){
         });
 }
 
-function getUserReview(user_id) {
+function getUserReview(event_id,user_id) {
+    let data = {
+        event_id:event_id,
+        user_id: user_id
+    }
     return axios
-      .post(baseUrl + "/api/v1/user-review?user_id="+user_id,{ headers: authHeader() })
+      .get(baseUrl + "/api/v1/user-review?event_id="+event_id+"&user_id="+user_id,{ headers: authHeader() })
       .then(response => {
             return response.data;
         })

@@ -86,7 +86,7 @@ class ViewProfileComponent extends Component {
       });
     });
 
-    profileService.getUserReview(user_id).then(result => {
+    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).then(result => {
         this.setState({
           applicationReviewList:{
                 review_by_user_firstname_list:result.review_by_user_firstname_list,
