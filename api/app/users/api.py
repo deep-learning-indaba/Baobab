@@ -1,8 +1,9 @@
 from datetime import datetime
-
+ 
+import json
 from flask import g, request
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import IntegrityError
 
 from app.users.models import AppUser, PasswordReset, UserComment
@@ -80,12 +81,10 @@ user_comment_fields = {
 
 user_comment_review_fields = {
     'id': fields.Integer,
-    'review_by_user_firstname_list':  fields.String(attribute='reviewer_user.firstname'),
-    'comment': fields.String,
-    'verdicts':fields.Integer
+    'review_by_user_firstname_list': fields.String,
+    'comments': fields.String,
+    'verdicts':fields.String
 }
-
-
 
 def user_info(user, roles):
     return {
@@ -567,27 +566,36 @@ class UserReviewAPI(restful.Resource):
         current_user = user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
-        
+
         comments = db.session.query(UserComment).filter(UserComment.event_id == args['event_id'], UserComment.user_id == args['user_id']).all()        
-        
+
         reviewers_id_list = []
         if comments:
             for comment in comments:
                 reviewers_id_list.append(comment.comment_by_user_id)
-        
+                LOGGER.debug("comment>> {}".format(comment))
+                LOGGER.debug("Reviewer-List>> {}".format(reviewers_id_list))
+
         reviewers_list = []
         review_by_user_firstname_list = []
         verdicts = []
         for rev_id in reviewers_id_list:
             reviewers_list.append(db.session.query(ReviewResponse).filter(ReviewResponse.reviewer_user_id == rev_id).all())
             review_by_user_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
+            LOGGER.debug("Reviewer-Name>> {}".format(user_repository.get_by_id(rev_id).firstname))
             valueScore = db.session.query(ReviewScore).filter( ReviewScore.review_response_id == rev_id
                                                             , ReviewResponse.reviewer_user_id == rev_id).value
+            
+            LOGGER.debug("Reviewer-Score>> {}".format(valueScore))
+           
             if valueScore == 0:
                 verdicts.append("No")
             elif valueScore == 1:
                 verdicts.append("Maybe")
             else:
                 verdicts.append("Yes")
-     
-        return comments,200
+                
+            LOGGER.debug("Reviewer-verdicts>> {}".format(verdicts))
+            data = {'review_by_user_firstname_list': review_by_user_firstname_list ,'comments': [str(comments[v].comment) for v in range(len(comments))],'verdicts':verdicts}
+            
+        return data,200

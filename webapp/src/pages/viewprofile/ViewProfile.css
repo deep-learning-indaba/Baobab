@@ -99,12 +99,12 @@
 
 .headerReview, .rowReview {
     display: flex;
-    
+
 }
 
 .headerReview-div {
     background-color: rgb(218, 208, 208));
-    
+
 }
 
 .divReview {

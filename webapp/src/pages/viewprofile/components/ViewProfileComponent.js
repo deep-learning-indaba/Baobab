@@ -5,10 +5,11 @@ import { createColClassName } from "../../../utils/styling/styling";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
-const Row = ({review_by_user_firstname_list, comment, verdicts}) => (
+const Row = ({review_by_user_firstname_list, comments, verdicts}) => (
+
   <div className="rowReview rowReview-div">
     <div className="divReview" >{review_by_user_firstname_list}</div>
-    <div className="divReview">{comment}</div>
+    <div className="divReview">{comments}</div>
     <div className="divReview">{verdicts}</div>
   </div>
 );
@@ -21,34 +22,14 @@ class ViewProfileComponent extends Component {
       loading: true,
       error: "",
       isNull: true,
-       applicationReviewList:{}
+      applicationReviewList: []
     };
-    profileService.getUserReview(DEFAULT_EVENT_ID, 1).then(result => {
+
+    profileService.getUserReview(DEFAULT_EVENT_ID, 1).then(results => {
       this.setState({
-        applicationReviewList:result
-        });
+        applicationReviewList:results
+      });
     });
-  }
-
-  displayReviewersTable =()=> {
-
-    const rows = this.state.applicationReviewList.map( (rowData) => <Row {...rowData} />);
-
-    return (
-      <div className="tableReview headerReview-div">
-        <div className="headerReview  h-color font-weight-bold">
-          <div className="divReview">
-            Reviewer Name</div>
-          <div className="divReview">
-            Reviewer Comments</div>
-          <div className="divReview">
-            Reviewer Final Verdict</div>
-        </div>
-        <div className="body">
-          {rows}
-        </div>
-      </div>
-    );
   }
 
   componentDidMount() {
@@ -91,14 +72,36 @@ class ViewProfileComponent extends Component {
       });
     });
 
-    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).then(result => {
+    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).then(results => {
         this.setState({
-          applicationReviewList:result
-          });
-        console.log("User-Review => ",result)
+          applicationReviewList: results
+        });
     });
   }
-  
+
+  displayReviewersTable =()=> {
+    const {applicationReviewList} = this.state;
+    console.log("BEFORE ASSIGNMENT  >> ",applicationReviewList.comments)
+    const rows = Array.from(Object.keys(applicationReviewList).map(function(key) { return String(key),applicationReviewList[key];}));
+    console.log("AFTER AN ASSIGNMENT >> >> ",rows," --- ",rows[0])
+    
+    return (
+      <div className="tableReview headerReview-div">
+        <div className="headerReview  h-color font-weight-bold">
+          <div className="divReview">
+            Reviewer Name</div>
+          <div className="divReview">
+            Reviewer Comments</div>
+          <div className="divReview">
+            Reviewer Final Verdict</div>
+        </div>
+        <div className="body">
+          {rows}
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const xs = 12;
     const sm = 6;
