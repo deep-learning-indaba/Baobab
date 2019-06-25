@@ -19,6 +19,7 @@ import UserDropdown from "./components/User";
 import InvitedGuests from "./pages/invitedGuests";
 import CreateInvitedGuests from "./pages/createInvitedGuest";
 import Registration from "./pages/registration";
+import InvitedLetter from "./pages/invitationLetter";
 import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
@@ -283,6 +284,7 @@ class App extends Component {
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <PrivateRoute exact path="/profile" component={Profile} />
+                <Route exact path="/invitationLetter" component={InvitedLetter} />
                 <PrivateRoute
                   exact
                   path="/applicationForm"

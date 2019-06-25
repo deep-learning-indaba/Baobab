@@ -21,7 +21,11 @@ const validationFields = {
   confirmPassword: { name: "confirmPassword", display: "Confirm Password" },
   dateOfBirth: { name: "dateOfBirth", display: "Date of Birth" },
   primaryLanguage: {name: "primaryLanguage", display: "Primary Language"},
-  role: {name: "role", display: "Role"}
+  role: {name: "role", display: "Role"},
+  passportNumber: {name:"passportNumber" , display:"Passport Number"},
+  fullNameOnPassport: {name:"fullNameOnPassport" , display:"Full name",description:"Full name as it appears on Passport."},
+  passportIssuedByDate: {name:"passportIssuedByDate" , display:"Passport Date of Issue"},
+  passportIssuedByAuthority: {name:"passportIssuedByAuthority" , display:"Authority that issued Passport"},
 };
 
 export default validationFields;
