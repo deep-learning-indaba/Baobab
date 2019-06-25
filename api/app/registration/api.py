@@ -190,7 +190,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                 Question.headline == 'Would you like to be considered for a travel award?'
             ).join(Response, Answer.response_id == Response.id).filter(
                 Response.user_id == user_id, Response.is_submitted == True
-            )
+            ).first()
 
             if not offer:
                 return errors.OFFER_NOT_FOUND
