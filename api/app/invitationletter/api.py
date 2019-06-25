@@ -99,7 +99,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                country_of_residence=country_of_residence,
                                nationality=nationality,
                                date_of_birth=date_of_birth,
-                               email=user.email)
+                               email=user.email,
+                               firstname=user.firstname,
+                               lastname=user.lastname)
 
             if is_sent:
                 try:
