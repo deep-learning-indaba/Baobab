@@ -81,10 +81,7 @@ class ViewProfileComponent extends Component {
 
   displayReviewersTable =()=> {
     const {applicationReviewList} = this.state;
-    console.log("BEFORE ASSIGNMENT  >> ",applicationReviewList.comments)
     const rows = Array.from(Object.keys(applicationReviewList).map(function(key) { return String(key),applicationReviewList[key];}));
-    console.log("AFTER AN ASSIGNMENT >> >> ",rows," --- ",rows[0])
-    
     return (
       <div className="tableReview headerReview-div">
         <div className="headerReview  h-color font-weight-bold">
