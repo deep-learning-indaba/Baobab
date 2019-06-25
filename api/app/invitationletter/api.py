@@ -66,11 +66,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         elif offer.travel_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.send_for_travel_award_only).first()
         elif offer.accommodation_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.send_for_accommodation_award_only).first()
 
         if invitation_template:
             template_url = invitation_template.template_path
