@@ -24,12 +24,6 @@ class ViewProfileComponent extends Component {
       isNull: true,
       applicationReviewList: []
     };
-
-    profileService.getUserReview(DEFAULT_EVENT_ID, 1).then(results => {
-      this.setState({
-        applicationReviewList:results
-      });
-    });
   }
 
   componentDidMount() {
@@ -81,7 +75,8 @@ class ViewProfileComponent extends Component {
 
   displayReviewersTable =()=> {
     const {applicationReviewList} = this.state;
-    const rows = Array.from(Object.keys(applicationReviewList).map(function(key) { return String(key),applicationReviewList[key];}));
+    const rows = Array.from(Object.keys(applicationReviewList).map(function(key) {return <Row {...applicationReviewList} />}));
+
     return (
       <div className="tableReview headerReview-div">
         <div className="headerReview  h-color font-weight-bold">
