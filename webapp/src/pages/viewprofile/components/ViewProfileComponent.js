@@ -5,11 +5,11 @@ import { createColClassName } from "../../../utils/styling/styling";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
-const Row = ({RevieweName, ReviewerComments, ReviewerFinalVerdict}) => (
-  <div className="row">
-    <div>{RevieweName}</div>
-    <div>{ReviewerComments}</div>
-    <div>{ReviewerFinalVerdict}</div>
+const Row = ({review_by_user_firstname_list, comment, verdicts}) => (
+  <div className="rowReview rowReview-div">
+    <div className="divReview" >{review_by_user_firstname_list}</div>
+    <div className="divReview">{comment}</div>
+    <div className="divReview">{verdicts}</div>
   </div>
 );
 
@@ -23,6 +23,11 @@ class ViewProfileComponent extends Component {
       isNull: true,
        applicationReviewList:{}
     };
+    profileService.getUserReview(DEFAULT_EVENT_ID, 1).then(result => {
+      this.setState({
+        applicationReviewList:result
+        });
+    });
   }
 
   displayReviewersTable =()=> {
@@ -30,13 +35,13 @@ class ViewProfileComponent extends Component {
     const rows = this.state.applicationReviewList.map( (rowData) => <Row {...rowData} />);
 
     return (
-      <div className="table">
-        <div className="header">
-          <div>
+      <div className="tableReview headerReview-div">
+        <div className="headerReview  h-color font-weight-bold">
+          <div className="divReview">
             Reviewer Name</div>
-          <div >
+          <div className="divReview">
             Reviewer Comments</div>
-          <div>
+          <div className="divReview">
             Reviewer Final Verdict</div>
         </div>
         <div className="body">
@@ -88,12 +93,9 @@ class ViewProfileComponent extends Component {
 
     profileService.getUserReview(DEFAULT_EVENT_ID, user_id).then(result => {
         this.setState({
-          applicationReviewList:{
-                review_by_user_firstname_list:result.review_by_user_firstname_list,
-                Comments:result.Comments,
-                Verdict:result.Verdict
-              }
+          applicationReviewList:result
           });
+        console.log("User-Review => ",result)
     });
   }
   
@@ -129,7 +131,6 @@ class ViewProfileComponent extends Component {
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
-    const {review_by_user_firstname_list, Comments, Verdict} = this.state.applicationReviewList;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -398,11 +399,11 @@ class ViewProfileComponent extends Component {
                   </div>
                 </fieldset>
               </div>
-            
+
               <div class="row">
                 <fieldset class="fieldset">
                   <legend class="legend">Application Comment Review </legend>
-                    {this.displayReviewersTable}
+                     {this.displayReviewersTable()}
                 </fieldset>
               </div>
 
