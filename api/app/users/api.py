@@ -3,14 +3,17 @@ from datetime import datetime
 import json
 from flask import g, request
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with, marshal
+from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_, or_
 
 from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin, UserProfileMixin
 from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
-from app.reviews.models import ReviewScore, ReviewResponse
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
+from app.applicationModel.models import ApplicationForm
+from app.responses.models import Response, ResponseReviewer
 
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD
@@ -555,7 +558,9 @@ class UserReviewAPI(restful.Resource):
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
         args = req_parser.parse_args()
-
+        user_id = args['user_id']
+        event_id =args['event_id']
+        
         current_user = user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
@@ -563,32 +568,35 @@ class UserReviewAPI(restful.Resource):
         comments = db.session.query(UserComment).filter(UserComment.event_id == args['event_id'], UserComment.user_id == args['user_id']).all()        
 
         reviewers_id_list = []
+        form_id = None
         if comments:
             for comment in comments:
                 reviewers_id_list.append(comment.comment_by_user_id)
-                LOGGER.debug("comment>> {}".format(comment))
-                LOGGER.debug("Reviewer-List>> {}".format(reviewers_id_list))
-
+               
+        form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()
+        form_id = form_id[0] if form_id else 1
+        
         reviewers_list = []
-        review_by_user_firstname_list = []
-        verdicts = []
+        reviewer_firstname_list = []
+        final_verdict = []
         for rev_id in reviewers_id_list:
             reviewers_list.append(db.session.query(ReviewResponse).filter(ReviewResponse.reviewer_user_id == rev_id).all())
-            review_by_user_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
+            reviewer_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
             LOGGER.debug("Reviewer-Name>> {}".format(user_repository.get_by_id(rev_id).firstname))
-            valueScore = db.session.query(ReviewScore,ReviewResponse).join( ReviewScore.review_response_id == ReviewResponse.reviewer_user_id
-                                                            , ReviewResponse.reviewer_user_id == rev_id).all()
-            
-            LOGGER.debug("Reviewer-Score>> {}".format(valueScore))
-           
-            if valueScore == 0:
-                verdicts.append("No")
-            elif valueScore == 1:
-                verdicts.append("Maybe")
-            else:
-                verdicts.append("Yes")
-                
-            LOGGER.debug("Reviewer-verdicts>> {}".format(verdicts))
-            data = {'review_by_user_firstname_list': review_by_user_firstname_list ,'comments': [str(comments[v].comment) for v in range(len(comments))],'verdicts':verdicts}
+            review = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
+                        .filter(ReviewResponse.reviewer_user_id == args['user_id'])
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.application_form_id == form_id)
+                        .join(Response, ReviewResponse.response_id == Response.id)
+                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
+                        .filter(ReviewQuestion.headline == 'Final Verdict')
+                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
+                        .join(AppUser, Response.user_id == AppUser.id)).all()
+
+            verdict = [o for o in review.options if str(o['value']) == review.value] if review else []
+            verdict = verdict[0]['label'] if verdict else "Unknown"
+            final_verdict.append(verdict)
+
+            data = {'reviewer_firstname_list': reviewer_firstname_list ,'comments': [str(comments[v].comment) for v in range(len(comments))],'final_verdict':final_verdict}
             
         return data,200
