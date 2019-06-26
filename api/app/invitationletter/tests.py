@@ -104,5 +104,9 @@ class InvitationLetterTests(ApiTestCase):
         LOGGER.debug(
             "invitation letter: {}".format(data))
         assert response.status_code == 201
+        assert data['invitation_letter_request_id'] == 1
+       
+
+
 
 
