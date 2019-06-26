@@ -79,11 +79,13 @@ user_comment_fields = {
     'comment': fields.String
 }
 
-user_comment_review_fields = {
+
+
+user_review_fields = {
     'id': fields.Integer,
-    'review_by_user_firstname_list': fields.String,
-    'comments': fields.String,
-    'verdicts':fields.String
+    'review_by_user_firstname_list': fields.List(fields.Nested([])),
+    'comments': fields.List(fields.Nested([])),
+    'verdicts':fields.List(fields.Nested([]))
 }
 
 def user_info(user, roles):
@@ -556,7 +558,6 @@ class UserCommentAPI(restful.Resource):
 
 class UserReviewAPI(restful.Resource):
     @auth_required
-    @marshal_with(user_comment_review_fields)
     def get(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)

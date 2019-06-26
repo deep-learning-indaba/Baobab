@@ -2,15 +2,16 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
+import { reviewService } from "../../../services/reviews";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
-const Row = ({review_by_user_firstname_list, comments, verdicts}) => (
+let list_index=0
+const Row = ({id, review_by_user_firstname_list, comments, verdicts}) => (
 
   <div className="rowReview rowReview-div">
-    <div className="divReview" >{review_by_user_firstname_list}</div>
-    <div className="divReview">{comments}</div>
-    <div className="divReview">{verdicts}</div>
+    <div className="divReview" >{review_by_user_firstname_list[list_index]}</div>
+    <div className="divReview">{comments[list_index]}</div>
+    <div className="divReview">{verdicts[list_index]}</div>
   </div>
 );
 
@@ -22,11 +23,15 @@ class ViewProfileComponent extends Component {
       loading: true,
       error: "",
       isNull: true,
-      applicationReviewList: []
+      applicationReviewList: [],
+      reviewHistory: [],
+      totalPages: 10,
+      currentPage: 0
     };
   }
 
   componentDidMount() {
+    const {reviewHistory,totalPages,currentPage} = this.state;
     const { id } = this.props.match.params;
     let user_id = parseInt(id.toString().split(":")[1], 10);
     profileService.getUserProfile(user_id).then(result => {
@@ -65,18 +70,29 @@ class ViewProfileComponent extends Component {
         isNull: result.data === null
       });
     });
+    reviewService.getReviewHistory(DEFAULT_EVENT_ID, currentPage,totalPages).
+    then(response => {
+      this.setState({
+        reviewHistory: response.reviewHistory.reviews,
+        totalPages: response.reviewHistory.total_pages,
+        currentPage: currentPage
+      });
+    });
 
-    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).then(results => {
+    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).
+    then(results => {
         this.setState({
           applicationReviewList: results
         });
     });
   }
+  //Array.from(Object.keys(obj), k=>[`${k}`, obj[k]]);
 
   displayReviewersTable =()=> {
-    const {applicationReviewList} = this.state;
-    const rows = Array.from(Object.keys(applicationReviewList).map(function(key) {return <Row {...applicationReviewList} />}));
-
+    const {applicationReviewList, reviewHistory} = this.state;
+    const rows = Array.from(Object.keys(applicationReviewList), k =>  [<Row {...applicationReviewList}/>]);
+    console.log(" 1) => ",applicationReviewList)
+    console.log(" 2) ID => ",rows)
     return (
       <div className="tableReview headerReview-div">
         <div className="headerReview  h-color font-weight-bold">
