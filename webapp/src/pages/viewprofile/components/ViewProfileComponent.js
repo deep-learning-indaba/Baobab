@@ -7,12 +7,12 @@ import { reviewService } from "../../../services/reviews";
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 let list_index=0
-const Row = ({review_by_user_firstname_list, comments, verdicts}) => (
+const Row = ({reviewer_firstname_list, comments, final_verdict}) => (
 
   <div className="rowReview rowReview-div">
-    <div className="divReview" >{review_by_user_firstname_list[list_index]}</div>
+    <div className="divReview" >{reviewer_firstname_list[list_index]}</div>
     <div className="divReview">{comments[list_index]}</div>
-    <div className="divReview">{verdicts[list_index++]}</div>
+    <div className="divReview">{final_verdict[list_index++]}</div>
   </div>
 );
 
