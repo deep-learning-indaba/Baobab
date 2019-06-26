@@ -5,13 +5,14 @@ import { createColClassName } from "../../../utils/styling/styling";
 import { reviewService } from "../../../services/reviews";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+
 let list_index=0
-const Row = ({id, review_by_user_firstname_list, comments, verdicts}) => (
+const Row = ({review_by_user_firstname_list, comments, verdicts}) => (
 
   <div className="rowReview rowReview-div">
     <div className="divReview" >{review_by_user_firstname_list[list_index]}</div>
     <div className="divReview">{comments[list_index]}</div>
-    <div className="divReview">{verdicts[list_index]}</div>
+    <div className="divReview">{verdicts[list_index++]}</div>
   </div>
 );
 
@@ -86,13 +87,11 @@ class ViewProfileComponent extends Component {
         });
     });
   }
-  //Array.from(Object.keys(obj), k=>[`${k}`, obj[k]]);
 
   displayReviewersTable =()=> {
     const {applicationReviewList, reviewHistory} = this.state;
     const rows = Array.from(Object.keys(applicationReviewList), k =>  [<Row {...applicationReviewList}/>]);
-    console.log(" 1) => ",applicationReviewList)
-    console.log(" 2) ID => ",rows)
+
     return (
       <div className="tableReview headerReview-div">
         <div className="headerReview  h-color font-weight-bold">

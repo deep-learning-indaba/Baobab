@@ -80,14 +80,6 @@ user_comment_fields = {
 }
 
 
-
-user_review_fields = {
-    'id': fields.Integer,
-    'review_by_user_firstname_list': fields.List(fields.Nested([])),
-    'comments': fields.List(fields.Nested([])),
-    'verdicts':fields.List(fields.Nested([]))
-}
-
 def user_info(user, roles):
     return {
         'id': user.id,
@@ -584,8 +576,8 @@ class UserReviewAPI(restful.Resource):
             reviewers_list.append(db.session.query(ReviewResponse).filter(ReviewResponse.reviewer_user_id == rev_id).all())
             review_by_user_firstname_list.append(user_repository.get_by_id(rev_id).firstname)
             LOGGER.debug("Reviewer-Name>> {}".format(user_repository.get_by_id(rev_id).firstname))
-            valueScore = db.session.query(ReviewScore).filter( ReviewScore.review_response_id == rev_id
-                                                            , ReviewResponse.reviewer_user_id == rev_id).value
+            valueScore = db.session.query(ReviewScore,ReviewResponse).join( ReviewScore.review_response_id == ReviewResponse.reviewer_user_id
+                                                            , ReviewResponse.reviewer_user_id == rev_id).all()
             
             LOGGER.debug("Reviewer-Score>> {}".format(valueScore))
            
