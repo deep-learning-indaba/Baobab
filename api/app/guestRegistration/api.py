@@ -48,7 +48,8 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         'registration_form_id': fields.Integer,
         'confirmed': fields.Boolean,
         'created_at': fields.DateTime,
-        'confirmation_email_sent_at': fields.DateTime
+        'confirmation_email_sent_at': fields.DateTime,
+        'user_id':fields.Integer
 
     }
     update_registration_fields = {
@@ -122,6 +123,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 registration_form_id=args['registration_form_id'],
                 user_id=user_id,
                 confirmed=True,
+                created_at=date.today(),
                 confirmation_email_sent_at=date.today()
             )
 
@@ -129,14 +131,12 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             db.session.commit()
 
             event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().name
-
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                      registration_question_id=answer_args['registration_question_id'],
                                                      value=answer_args['value'])
-
                     db.session.add(answer)
             db.session.commit()
 
@@ -148,14 +148,14 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
                                    event_name)
 
+            return registration, 201  # 201 is 'CREATED' status code
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except Exception as e:
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
-        finally:
-            return registration, 201  # 201 is 'CREATED' status code
+
 
     @auth_required
     def put(self):
