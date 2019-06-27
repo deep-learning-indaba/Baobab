@@ -2,13 +2,16 @@ import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import FormSelect from "../../../components/form/FormSelect";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import { requiredText } from "../../../utils/validation/rules.js";
+import { requiredText, isValidDate } from "../../../utils/validation/rules.js";
+import Address from "./Address.js";
 
 const fieldValidations = [
   ruleRunner(validationFields.passportNumber, requiredText),
   ruleRunner(validationFields.fullNameOnPassport, requiredText),
-  ruleRunner(validationFields.passportIssuedByAuthority, requiredText)
+  ruleRunner(validationFields.passportIssuedByAuthority, requiredText),
+  ruleRunner(validationFields.passportIssuedByDate, isValidDate)
 ];
 class InvitationLetterForm extends Component {
   constructor(props) {
@@ -21,10 +24,12 @@ class InvitationLetterForm extends Component {
         dateOfBirth: null,
         passportNumber: "",
         fullNameOnPassport: "",
-        passportIssuedByAuthority: ""
+        passportIssuedByAuthority: "",
+        bringingAPoster: false
       },
       submitted: false,
       loading: false,
+      showWorkAddress: false,
       errors: []
     };
   }
@@ -42,6 +47,7 @@ class InvitationLetterForm extends Component {
           this.setState({ errors: { $set: errorsForm } });
         }
       );
+      console.log(this.state);
     };
   };
   validateForm() {
@@ -55,17 +61,41 @@ class InvitationLetterForm extends Component {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
   };
+  toggleWork = () => {
+    let currentShowAddressState = this.state.showWorkAddress;
+    this.setState({ showWorkAddress: !currentShowAddressState });
+  };
+  toggleBringingAPoster = () => {
+    let currentBringingAPoster = this.state.user.bringingAPoster;
+    this.setState({
+      user: { ...this.state.user, bringingAPoster: !currentBringingAPoster }
+    });
+  };
   render() {
     const {
       passportNumber,
       fullNameOnPassport,
       passportIssuedByDate,
-      passportIssuedByAuthority
+      passportIssuedByAuthority,
+      nationality,
+      countryOfResidence,
+      dateOfBirth,
+      workStreet1,
+      workStreet2,
+      workCity,
+      workPostalCode,
+      residentialStreet1,
+      residentialStreet2,
+      residentialCity,
+      residentialPostalCode,
+      bringingAPoster
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created } = this.state;
+    const { loading, errors, showErrors, error, showWorkAddress } = this.state;
 
     const passportDetailsStyle = createColClassName(12, 2, 3, 3);
+    const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
+    const checkboxStyle = createColClassName(12, 4, 6, 6);
     return (
       <div className="InvitationLetter">
         <form onSubmit={this.handleSubmit}>
@@ -117,6 +147,94 @@ class InvitationLetterForm extends Component {
                 )}
                 value={passportIssuedByAuthority}
                 label={validationFields.passportIssuedByAuthority.display}
+              />
+            </div>
+          </div>
+          <div class="row">
+            <div class={checkboxStyle}>
+              <label>
+                {"Will you be presenting a poster ? "}
+                <input
+                  name="bringingPoster"
+                  type="checkbox"
+                  checked={bringingAPoster}
+                  onChange={this.toggleBringingAPoster}
+                />
+              </label>
+            </div>
+            <div class={checkboxStyle}>
+              <label>
+                {"Are you currently employed ? "}
+                <input
+                  name="showWorkAddress"
+                  type="checkbox"
+                  checked={showWorkAddress}
+                  onChange={this.toggleWork}
+                />
+              </label>
+            </div>
+          </div>
+          <div class="row">
+            <Address
+              onChange={this.handleChange}
+              streetAddress1={validationFields.residentialStreet1}
+              streetAddress2={validationFields.residentialStreet2}
+              city={validationFields.residentialCity}
+              postalCode={validationFields.residentialPostalCode}
+              streetAddress1Value={residentialStreet1}
+              streetAddress2Value={residentialStreet2}
+              cityValue={residentialCity}
+              postalCodeValue={residentialPostalCode}
+            />
+            {showWorkAddress && (
+              <Address
+                onChange={this.handleChange}
+                streetAddress1={validationFields.workStreet1}
+                streetAddress2={validationFields.workStreet2}
+                city={validationFields.workCity}
+                postalCode={validationFields.workPostalCode}
+                streetAddress1Value={workStreet1}
+                streetAddress2Value={workStreet2}
+                cityValue={workCity}
+                postalCodeValue={workPostalCode}
+              />
+            )}
+          </div>
+
+          <p>
+            We have the following values required for your invitation from your
+            user profile. Please go to the user page if you need to update them.
+          </p>
+          <div class="row">
+            <div class={nationResidenceDetailsStyle}>
+              <FormSelect
+                options={this.state.countryOptions}
+                id={validationFields.nationality.name}
+                placeholder={validationFields.nationality.display}
+                onChange={this.handleChangeDropdown}
+                value={nationality}
+                label={validationFields.nationality.display}
+              />
+            </div>
+            <div class={nationResidenceDetailsStyle}>
+              <FormSelect
+                options={this.state.countryOptions}
+                id={validationFields.residence.name}
+                placeholder={validationFields.residence.display}
+                onChange={this.handleChangeDropdown}
+                value={countryOfResidence}
+                label={validationFields.residence.display}
+              />
+            </div>
+
+            <div class={nationResidenceDetailsStyle}>
+              <FormTextBox
+                id={validationFields.dateOfBirth.name}
+                type="date"
+                placeholder={validationFields.dateOfBirth.display}
+                onChange={this.handleChange(validationFields.dateOfBirth)}
+                value={dateOfBirth}
+                label={validationFields.dateOfBirth.display}
               />
             </div>
           </div>

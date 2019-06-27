@@ -26,6 +26,14 @@ const validationFields = {
   fullNameOnPassport: {name:"fullNameOnPassport" , display:"Full name",description:"Full name as it appears on Passport."},
   passportIssuedByDate: {name:"passportIssuedByDate" , display:"Passport Date of Issue"},
   passportIssuedByAuthority: {name:"passportIssuedByAuthority" , display:"Authority that issued Passport"},
+  workStreet1 : {name:"workStreet1",display:"Work Street Address 1"},
+  workStreet2 : {name:"workStreet2",display:"Work Street Address 2"},
+  workCity : {name:"workCity",display:"Work City"},
+  workPostalCode : {name:"workPostalCode",display:"Work Postal Code"},
+  residentialStreet1 : {name:"residentialStreet1",display:"Residential Street Address 1"},
+  residentialStreet2 : {name:"residentialStreet2",display:"Residential Street Address 2"},
+  residentialCity : {name:"residentialCity",display:"Residential City"},
+  residentialPostalCode : {name:"residentialPostalCode",display:"Residential Postal Code"},
 };
 
 export default validationFields;
