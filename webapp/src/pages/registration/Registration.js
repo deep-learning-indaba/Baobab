@@ -5,39 +5,35 @@ import GuestRegistrationComponent from "./components/GuestRegistrationComponent"
 import { registrationService } from "../../services/registration";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-let GuestRegistration = false;
 
 export default class Registration extends Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      GuestRegistration:null
+      GuestRegistration: null
     }
-}
+  }
 
-  componentDidMount(){
+  componentDidMount() {
     registrationService.determineIfGuest(DEFAULT_EVENT_ID).then(response => {
-      if(response !== "404")
-      {
+      if (response !== "404") {
         this.setState({
-          GuestRegistration:true
+          GuestRegistration: true
         });
       }
-      else{
+      else {
         this.setState({
-          GuestRegistration:false
+          GuestRegistration: false
         });
       }
     })
   }
-    render() {
-      return (
-        <div>
-          {this.state.GuestRegistration == true ? <GuestRegistrationComponent></GuestRegistrationComponent> : this.state.GuestRegistration == true ?<RegistrationComponent></RegistrationComponent>: "" }
-
-        </div>
-      
-      );
-    }
+  render() {
+    return (
+      <div>
+        {this.state.GuestRegistration == true ? <GuestRegistrationComponent></GuestRegistrationComponent> : this.state.GuestRegistration == true ? <RegistrationComponent></RegistrationComponent> : ""}
+      </div>
+    );
   }
+}
