@@ -30,10 +30,12 @@ const validationFields = {
   workStreet2 : {name:"workStreet2",display:"Work Street Address 2"},
   workCity : {name:"workCity",display:"Work City"},
   workPostalCode : {name:"workPostalCode",display:"Work Postal Code"},
+  workCountry : {name:"workCountry",display:"Work Country"},
   residentialStreet1 : {name:"residentialStreet1",display:"Residential Street Address 1"},
   residentialStreet2 : {name:"residentialStreet2",display:"Residential Street Address 2"},
   residentialCity : {name:"residentialCity",display:"Residential City"},
   residentialPostalCode : {name:"residentialPostalCode",display:"Residential Postal Code"},
+  residentialCountry : {name:"residentialCountry",display:"Residential Country"},
 };
 
 export default validationFields;

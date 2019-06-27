@@ -84,10 +84,12 @@ class InvitationLetterForm extends Component {
       workStreet2,
       workCity,
       workPostalCode,
+      workCountry,
       residentialStreet1,
       residentialStreet2,
       residentialCity,
       residentialPostalCode,
+      residentialCountry,
       bringingAPoster
     } = this.state.user;
 
@@ -181,10 +183,12 @@ class InvitationLetterForm extends Component {
               streetAddress2={validationFields.residentialStreet2}
               city={validationFields.residentialCity}
               postalCode={validationFields.residentialPostalCode}
+              country={validationFields.residentialCountry}
               streetAddress1Value={residentialStreet1}
               streetAddress2Value={residentialStreet2}
               cityValue={residentialCity}
               postalCodeValue={residentialPostalCode}
+              countryValue={residentialCountry}
             />
             {showWorkAddress && (
               <Address
@@ -193,10 +197,12 @@ class InvitationLetterForm extends Component {
                 streetAddress2={validationFields.workStreet2}
                 city={validationFields.workCity}
                 postalCode={validationFields.workPostalCode}
+                country={validationFields.workCountry}
                 streetAddress1Value={workStreet1}
                 streetAddress2Value={workStreet2}
                 cityValue={workCity}
                 postalCodeValue={workPostalCode}
+                countryValue={workCountry}
               />
             )}
           </div>

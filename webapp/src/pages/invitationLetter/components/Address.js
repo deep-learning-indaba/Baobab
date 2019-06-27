@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import FormTextBox from "../../../components/form/FormTextBox";
+import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 class Address extends Component {
@@ -11,21 +12,29 @@ class Address extends Component {
       streetAddress2: props.streetAddress2,
       city: props.city,
       postalCode: props.postalCode,
+      country: props.country,
       addressText: {
         streetAddress1Value: props.streetAddress1Value,
         streetAddress2Value: props.streetAddress2Value,
         cityValue: props.cityValue,
-        postalCodeValue: props.postalCodeValue
+        postalCodeValue: props.postalCodeValue,
+        countryValue : props.countryValue
       }
     };
   }
+  handleChangeDropdown = (name, dropdown) => {
+    if (this.props.onChange) {
+      this.props.onChange(this.props.question, dropdown.value);
+    }
+  };
   render() {
-    const { streetAddress1, streetAddress2, city, postalCode } = this.state;
+    const { streetAddress1, streetAddress2, city, postalCode,country } = this.state;
     const {
       streetAddress1Value,
       streetAddress2Value,
       cityValue,
-      postalCodeValue
+      postalCodeValue,
+      countryValue
     } = this.state.addressText;
     const addressStyle = createColClassName(12, 4, 6, 6);
     return (
@@ -70,6 +79,14 @@ class Address extends Component {
             label={postalCode.display}
           />
         </div>
+        <FormSelect
+                options={this.state.countryOptions}
+                id={country.name}
+                placeholder={country.display}
+                onChange={this.handleChangeDropdown}
+                value={countryValue}
+                label={country.display}
+              />
       </div>
     );
   }
