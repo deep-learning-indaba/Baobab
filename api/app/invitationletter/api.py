@@ -114,11 +114,14 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 try:
                     db.session.add(invitation_letter_request)
                     db.session.commit()
+                    return invitation_info(invitation_letter_request), 201
+
                 except Exception as e:
                     LOGGER.error(
                         "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
                     return errors.ADD_INVITATION_REQUEST_FAILED
 
-            return invitation_info(invitation_letter_request), 201
+            else:
+                return errors.SENDING_INVITATION_FAILED
 
         return errors.TEMPLATE_NOT_FOUND
