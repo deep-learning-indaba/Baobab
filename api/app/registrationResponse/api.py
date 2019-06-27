@@ -167,11 +167,12 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
-            registration = db.session.query(Registration).filter(Registration.id == args['registration_id']).first()
+            registration = db.session.query(Registration).filter(
+                Registration.id == args['registration_id']).one_or_none()
             if registration is None:
                 return 'Registration not found', 404
 
-            db_offer = db.session.query(Offer).filter(Offer.id == registration.offer_id).first()
+            db_offer = db.session.query(Offer).filter(Offer.id == registration.offer_id).one_or_none()
 
             if db_offer is None:
                 return errors.OFFER_NOT_FOUND
@@ -183,13 +184,14 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.commit()
 
             for answer_args in args['answers']:
-                answer = db.session.query(RegistrationAnswer).filter(RegistrationAnswer.registration_question_id
-                                                                     == answer_args['registration_question_id']).first()
+                answer = db.session.query(RegistrationAnswer).filter(
+                    RegistrationAnswer.registration_question_id == answer_args['registration_question_id'],
+                    RegistrationAnswer.registration_id == args['registration_id']).one_or_none()
                 if answer is not None:
                     answer.value = answer_args['value']
 
                 elif db.session.query(RegistrationQuestion).filter(
-                        RegistrationQuestion.id == answer_args['registration_question_id']).first():
+                        RegistrationQuestion.id == answer_args['registration_question_id']).one():
 
                     answer = RegistrationAnswer(registration_id=registration.id,
                                                 registration_question_id=answer_args['registration_question_id'],
