@@ -18,6 +18,7 @@ from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
 from app.users.repository import UserRepository as user_repository
+from sqlalchemy import func
 
 
 def invitedGuest_info(invitedGuest, user):
@@ -40,7 +41,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         role = args['role']
 
         user = db.session.query(AppUser).filter(
-            AppUser.email == email).first()
+            func.lower(AppUser.email) == func.lower(email)).first()
 
         if not user:
             return USER_NOT_FOUND
