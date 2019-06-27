@@ -1,12 +1,11 @@
 from datetime import date
 import traceback
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse
 import flask_restful as restful
-from flask import g, request
+from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
-from app.guestRegistration.mixins import GuestRegistrationMixin, GuestRegistrationFormMixin
-from app.registration.models import RegistrationForm, RegistrationQuestion
+from app.guestRegistrations.mixins import GuestRegistrationMixin, GuestRegistrationFormMixin
 from app.invitedGuest.models import GuestRegistration, GuestRegistrationAnswer
 from flask_restful import fields, marshal_with, marshal
 from app.registration.models import RegistrationSection
@@ -17,7 +16,6 @@ from app.events.models import Event
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app import LOGGER
-from app.users.repository import UserRepository as user_repository
 
 from app import db
 
