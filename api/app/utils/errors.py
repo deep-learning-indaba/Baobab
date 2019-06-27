@@ -65,5 +65,3 @@ OFFER_NOT_ACCEPTED = (
     {'message': 'Offer has not been accepted'}, 409)
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
-NO_ACCOMMODATION_TRAVEL_AWARD = (
-    {'message': 'No template found because your offer has neither accommodation nor travel award allocation'}, 404)

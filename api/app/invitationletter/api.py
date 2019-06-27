@@ -76,7 +76,10 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 InvitationTemplate.send_for_accommodation_award_only).first()
 
         elif (not offer.accommodation_award) and (not offer.travel_award):
-            return errors.NO_ACCOMMODATION_TRAVEL_AWARD
+            invitation_template = db.session.query(InvitationTemplate)\
+                .filter(not InvitationTemplate.send_for_both_travel_accommodation)\
+                .filter(not InvitationTemplate.send_for_travel_award_only)\
+                .filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
         if invitation_template:
             template_url = invitation_template.template_path

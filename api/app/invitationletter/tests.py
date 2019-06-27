@@ -7,7 +7,9 @@ from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.models import Registration
+from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.models import InvitationTemplate
+
 
 INVITATION_LETTER = {
    'registration_id': 1,
@@ -104,10 +106,25 @@ class InvitationLetterTests(ApiTestCase):
         response = self.app.post(
                 '/api/v1/invitation-letter', data=INVITATION_LETTER, headers=self.headers)
         data = json.loads(response.data)
-        LOGGER.debug(
-            "invitation letter: {}".format(data))
+        LOGGER.debug("invitation letter: {}".format(data))
+
+        letter = db.session.query(InvitationLetterRequest).filter(
+            InvitationLetterRequest.id == data['invitation_letter_request_id']).first()
+
         assert response.status_code == 201
         assert data['invitation_letter_request_id'] == 1
+        assert letter.event_id == 1
+        assert letter.work_address == "Somewhere over the rainbow"
+        assert letter.addressed_to == "Sir"
+        assert letter.residential_address == "Way up high"
+        assert letter.passport_name == "Jane Doe"
+        assert letter.passport_no == "23456565"
+        assert letter.passport_issued_by == "Neverland"
+        assert letter.to_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')\
+            == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        assert letter.from_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')\
+            == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
        
 
 
