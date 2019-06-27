@@ -21,7 +21,7 @@ from config import BOABAB_HOST
 from app.utils.misc import make_code
 import random
 import string
-
+from sqlalchemy import func
 
 VERIFY_EMAIL_BODY = """
 Dear {} {} {},
@@ -280,6 +280,7 @@ class UserProfileView():
         self.is_withdrawn = user_response.Response.is_withdrawn
         self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
 
+
 user_profile_list_fields = {
         'user_id': fields.Integer,
         'email': fields.String,
@@ -302,6 +303,7 @@ user_profile_list_fields = {
         'is_withdrawn': fields.Boolean,
         'withdrawn_timestamp': fields.DateTime('iso8601')
     }
+
 
 class UserProfileList(UserProfileListMixin, restful.Resource):
 
@@ -350,7 +352,7 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
         args = self.req_parser.parse_args()
 
         user = db.session.query(AppUser).filter(
-            AppUser.email == args['email']).first()
+            func.lower(AppUser.email) == func.lower(args['email'])).first()
 
         LOGGER.debug("Authenticating user: {}".format(args['email']))
 
@@ -368,7 +370,7 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
             if bcrypt.check_password_hash(user.password, args['password']):
                 LOGGER.debug(
                     "Successful authentication for email: {}".format(args['email']))
-                roles = db.session.query(EventRole).filter(
+                roles=db.session.query(EventRole).filter(
                     EventRole.user_id == user.id).all()
                 return user_info(user, roles)
 
@@ -382,21 +384,21 @@ class PasswordResetRequestAPI(restful.Resource):
 
     def post(self):
 
-        req_parser = reqparse.RequestParser()
+        req_parser=reqparse.RequestParser()
         req_parser.add_argument('email', type=str, required=True)
-        args = req_parser.parse_args()
+        args=req_parser.parse_args()
 
         LOGGER.debug(
             "Requesting password reset for email {}".format(args['email']))
 
-        user = db.session.query(AppUser).filter(
+        user=db.session.query(AppUser).filter(
             AppUser.email == args['email']).first()
 
         if not user:
             LOGGER.debug("No user found for email {}".format(args['email']))
             return USER_NOT_FOUND
 
-        password_reset = PasswordReset(user=user)
+        password_reset=PasswordReset(user=user)
         db.session.add(password_reset)
         db.session.commit()
 
@@ -413,15 +415,15 @@ class PasswordResetConfirmAPI(restful.Resource):
 
     def post(self):
 
-        req_parser = reqparse.RequestParser()
+        req_parser=reqparse.RequestParser()
         req_parser.add_argument('code', type=str, required=True)
         req_parser.add_argument('password', type=str, required=True)
-        args = req_parser.parse_args()
+        args=req_parser.parse_args()
 
         LOGGER.debug(
             "Confirming password reset for code: {}".format(args['code']))
 
-        password_reset = db.session.query(PasswordReset).filter(
+        password_reset=db.session.query(PasswordReset).filter(
             PasswordReset.code == args['code']).first()
 
         if not password_reset:
@@ -447,11 +449,11 @@ class VerifyEmailAPI(restful.Resource):
 
     def get(self):
 
-        token = request.args.get('token')
+        token=request.args.get('token')
 
         LOGGER.debug("Verifying email for token: {}".format(token))
 
-        user = db.session.query(AppUser).filter(
+        user=db.session.query(AppUser).filter(
             AppUser.verify_token == token).first()
 
         if not user:
@@ -469,11 +471,11 @@ class VerifyEmailAPI(restful.Resource):
 
 class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
-        email = request.args.get('email')
+        email=request.args.get('email')
 
         LOGGER.debug("Resending verification email to: {}".format(email))
 
-        user = db.session.query(AppUser).filter(
+        user=db.session.query(AppUser).filter(
             AppUser.email == email).first()
 
         if not user:
@@ -481,7 +483,7 @@ class ResendVerificationEmailAPI(restful.Resource):
             return USER_NOT_FOUND
 
         if user.verify_token is None:
-            user.verify_token = make_code()
+            user.verify_token=make_code()
 
         try:
             db.session.commit()
@@ -512,14 +514,14 @@ class UserCommentAPI(restful.Resource):
 
     @auth_required
     def post(self):
-        req_parser = reqparse.RequestParser()
+        req_parser=reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=False)
         req_parser.add_argument('user_id', type=int, required=False)
         req_parser.add_argument('comment', type=str, required=False)
-        args = req_parser.parse_args()
+        args=req_parser.parse_args()
 
-        current_user_id = g.current_user['id']
-        comment = UserComment(args['event_id'], args['user_id'],
+        current_user_id=g.current_user['id']
+        comment=UserComment(args['event_id'], args['user_id'],
                               current_user_id, datetime.now(), args['comment'])
 
         db.session.add(comment)
@@ -530,16 +532,16 @@ class UserCommentAPI(restful.Resource):
     @auth_required
     @marshal_with(user_comment_fields)
     def get(self):
-        req_parser = reqparse.RequestParser()
+        req_parser=reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
-        args = req_parser.parse_args()
+        args=req_parser.parse_args()
 
-        current_user = user_repository.get_by_id(g.current_user['id'])
+        current_user=user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
 
-        comments = db.session.query(UserComment).filter(
+        comments=db.session.query(UserComment).filter(
             UserComment.event_id == args['event_id'],
             UserComment.user_id == args['user_id']).all()
 
