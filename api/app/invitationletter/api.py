@@ -57,20 +57,26 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         if not offer:
             return errors.OFFER_NOT_FOUND
 
-        global invitation_template
+        invitation_template = None
 
-        if offer.accommodation_award and offer.travel_award:
+        if offer.accommodation_award and offer.accepted_accommodation_award \
+                and offer.travel_award and offer.accepted_travel_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_both_travel_accommodation).first()
-        elif offer.travel_award:
+
+        elif offer.travel_award and offer.accepted_travel_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_travel_award_only).first()
-        elif offer.accommodation_award:
+
+        elif offer.accommodation_award and offer.accepted_accommodation_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_accommodation_award_only).first()
+
+        elif (not offer.accommodation_award) and (not offer.travel_award):
+            return errors.NO_ACCOMMODATION_TRAVEL_AWARD
 
         if invitation_template:
             template_url = invitation_template.template_path

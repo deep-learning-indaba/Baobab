@@ -56,7 +56,10 @@ class InvitationLetterTests(ApiTestCase):
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
             accommodation_award=True,
-            travel_award=True)
+            travel_award=True,
+            accepted_accommodation_award=True,
+            accepted_travel_award=True
+        )
         db.session.add(offer)
         db.session.commit()
 
