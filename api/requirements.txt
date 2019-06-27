@@ -32,3 +32,4 @@ enum34
 psycopg2-binary
 docx-mailmerge
 requests
+comtypes
