@@ -300,7 +300,7 @@ class GuestRegistrationComponent extends Component {
                             key={"i_" + key}
                             showError={validationError}
                             errorText={validationError}
-                        // required={question.is_required}
+                            required={question.is_required}
                         />
                     );
                 case SINGLE_CHOICE:
