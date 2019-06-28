@@ -356,11 +356,12 @@ class GuestRegistrationComponent extends Component {
                         <FileUploadComponent
                             question={question}
                             answer={answer}
-                            // validationError={validationError}
+                            validationError={validationError}
                             onChange={this.onChange}
                             key={"i_" + key}
                         />
                     )
+                    
                 case DATE:
                     return (
                         <FormTextBox
