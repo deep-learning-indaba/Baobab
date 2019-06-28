@@ -272,3 +272,33 @@ class RegistrationApiTest(ApiTestCase):
         form = json.loads(response.data)
         assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
         assert form['registration_sections'][0]['name'] == 'Section 1'
+
+    def test_if_user_is_guest(self):
+        self.seed_static_data()
+        USER_DATA = {
+            'email': 'something@email.com',
+            'role': 'mentor',
+            'event_id': 1
+        }
+        response = self.app.post(
+            '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
+        response_guest = self.app.get(
+            '/api/v1/checkIfInvitedGuest?event_id=%d' % self.event_id, headers=self.headers)
+        LOGGER.debug(
+            "guest response: {}".format(response_guest))
+        self.assertEqual(response_guest.status_code, 200)
+
+    def test_if_user_is_not_guest(self):
+        self.seed_static_data()
+        USER_DATA = {
+            'email': 'some@email.com',
+            'role': 'mentor',
+            'event_id': 1
+        }
+        response = self.app.post(
+            '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
+        response_guest = self.app.get(
+            '/api/v1/checkIfInvitedGuest?event_id=%d' % self.event_id, headers=self.headers)
+        LOGGER.debug(
+            "guest response: {}".format(response_guest))
+        self.assertEqual(response_guest.status_code, 404)
