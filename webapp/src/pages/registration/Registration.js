@@ -32,7 +32,7 @@ export default class Registration extends Component {
   render() {
     return (
       <div>
-        {this.state.GuestRegistration == true ? <GuestRegistrationComponent></GuestRegistrationComponent> : this.state.GuestRegistration == true ? <RegistrationComponent></RegistrationComponent> : ""}
+        {this.state.GuestRegistration == true ? <GuestRegistrationComponent></GuestRegistrationComponent> : this.state.GuestRegistration == false ? <RegistrationComponent></RegistrationComponent> : ""}
       </div>
     );
   }

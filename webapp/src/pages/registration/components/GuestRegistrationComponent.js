@@ -144,52 +144,52 @@ class GuestRegistrationComponent extends Component {
     };
 
     componentDidMount() {
-                    registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
-                        if (result.error == "" && result.form.registration_sections.length > 0) {
-                            let questionSections = [];
-                            for (var i = 0; i < result.form.registration_sections.length; i++) {
-                                if (result.form.registration_sections[i].registration_questions.length > 0) {
-                                    questionSections.push(result.form.registration_sections[i]);
-                                }
-                            }
-                            registrationService.getGuestRegistrationResponse().then(result => {
-                                if (result.error === "") {
-                                    this.setState({
-                                        isLoading: false,
-                                        answers: result.form.answers,
-                                        registrationId: result.form.guest_registration_id
-                                    });
-                                }
-
-                            }).catch(error => { })
-                            this.setState({
-                                questionSections: questionSections.sort((a, b)=>a.order-b.order),
-                                registrationFormId: result.form.id,
-                                isLoading: false
-                            });
-                        }
-                        else {
-                            if (result.statusCode === 409) {
-                                this.props.history.push("/offer");
-                            }
-                        }
-                    })
+        registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
+            if (result.error == "" && result.form.registration_sections.length > 0) {
+                let questionSections = [];
+                for (var i = 0; i < result.form.registration_sections.length; i++) {
+                    if (result.form.registration_sections[i].registration_questions.length > 0) {
+                        questionSections.push(result.form.registration_sections[i]);
+                    }
                 }
+                registrationService.getGuestRegistrationResponse().then(result => {
+                    if (result.error === "") {
+                        this.setState({
+                            isLoading: false,
+                            answers: result.form.answers,
+                            registrationId: result.form.guest_registration_id
+                        });
+                    }
+
+                }).catch(error => { })
+                this.setState({
+                    questionSections: questionSections.sort((a, b) => a.order - b.order),
+                    registrationFormId: result.form.id,
+                    isLoading: false
+                });
+            }
+            else {
+                if (result.statusCode === 409) {
+                    this.props.history.push("/offer");
+                }
+            }
+        })
+    }
 
     validate = (question, answer) => {
         let errors = [];
-    
+
         if (question.is_required && (!answer || !answer.value)) {
-          errors.push(question.validation_text || "An answer is required.");
+            errors.push(question.validation_text || "An answer is required.");
         }
         if (
-          answer &&
-          question.validation_regex &&
-          !answer.value.match(question.validation_regex)
+            answer &&
+            question.validation_regex &&
+            !answer.value.match(question.validation_regex)
         ) {
-          errors.push(question.validation_text);
+            errors.push(question.validation_text);
         }
-    
+
         return {
             registration_question_id: question.id,
             error: errors.join("; ")
@@ -197,8 +197,8 @@ class GuestRegistrationComponent extends Component {
     };
 
     isValidated = () => {
-        const validationErrors = this.state.questionSections.flatMap(section=>section.registration_questions.map(question=>{
-            let answer = this.state.answers.find(a=>a.registration_question_id === question.id);
+        const validationErrors = this.state.questionSections.flatMap(section => section.registration_questions.map(question => {
+            let answer = this.state.answers.find(a => a.registration_question_id === question.id);
             return this.validate(question, answer);
         }));
 
@@ -224,7 +224,7 @@ class GuestRegistrationComponent extends Component {
             registration_form_id: this.state.registrationFormId,
             answers: this.state.answers
         }
-        
+
         this.setState({
             hasValidated: true
         });
@@ -246,7 +246,7 @@ class GuestRegistrationComponent extends Component {
                             formFailure: true,
                             formSuccess: false,
                             isSubmitting: false,
-                            error:response.error
+                            error: response.error
                         });
                     }
                 }).catch(error => {
@@ -300,7 +300,7 @@ class GuestRegistrationComponent extends Component {
                             key={"i_" + key}
                             showError={validationError}
                             errorText={validationError}
-                            // required={question.is_required}
+                        // required={question.is_required}
                         />
                     );
                 case SINGLE_CHOICE:
@@ -357,7 +357,7 @@ class GuestRegistrationComponent extends Component {
                             question={question}
                             answer={answer}
                             // validationError={validationError}
-                            onChange={this.onChange}   
+                            onChange={this.onChange}
                             key={"i_" + key}
                         />
                     )
@@ -420,9 +420,9 @@ class GuestRegistrationComponent extends Component {
                     <div>{this.state.error}, please try again</div>
                 </div>
                 }
-                {this.state.registrationId && !this.state.formSuccess && 
+                {this.state.registrationId && !this.state.formSuccess &&
                     <div class="alert alert-success">You have already registered, but feel free to update your answers below if they've changed!</div>
-                } 
+                }
                 {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
                     <div>
                         {this.state.questionSections.map(section => (
@@ -432,12 +432,12 @@ class GuestRegistrationComponent extends Component {
 
                                 {section.registration_questions.sort((a, b) => a.order - b.order).map(question => {
                                     if (question.depends_on_question_id) {
-                                        let answer = this.state.answers.find(a=>a.registration_question_id==question.depends_on_question_id);
+                                        let answer = this.state.answers.find(a => a.registration_question_id == question.depends_on_question_id);
                                         if (!answer || answer.value == question.hide_for_dependent_value) {
                                             return;
                                         }
                                     }
-                                    return <div className="text-left" key={"question_"+question.id}>
+                                    return <div className="text-left" key={"question_" + question.id}>
                                         <h5>{question.headline}</h5>
                                         {
                                             this.formControl(
@@ -447,7 +447,7 @@ class GuestRegistrationComponent extends Component {
                                                 this.state.validationErrors && this.state.validationErrors.find(v => v.registration_question_id === question.id)
                                             )}
                                     </div>
-                                    }
+                                }
                                 )}
                             </div>
 
@@ -466,16 +466,16 @@ class GuestRegistrationComponent extends Component {
                             )}
                             Submit reponse
                         </button>
-                        {(hasValidated && !validationStale && !isValid) && 
+                        {(hasValidated && !validationStale && !isValid) &&
                             <div class="alert alert-danger">
                                 There are one or more validation errors, please correct before submitting.
                             </div>
                         }
                     </div>
                 ) : (
-                <div>
-                    {this.state.formSuccess !== true && this.state.formFailure !== true && <div className="alert alert-danger">No registration form available</div>}
-                </div>
+                        <div>
+                            {this.state.formSuccess !== true && this.state.formFailure !== true && <div className="alert alert-danger">No registration form available</div>}
+                        </div>
                     )}
             </div>
         )
