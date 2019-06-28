@@ -33,9 +33,7 @@ class LoginForm extends Component {
 
     userService.login(this.state.email, this.state.password).then(
       user => {
-        console.log("Response from user service: ", user);
-
-        if (this.props.loggedIn) {
+           if (this.props.loggedIn) {
           this.props.loggedIn(user);
         }
 

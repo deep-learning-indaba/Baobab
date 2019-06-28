@@ -25,14 +25,83 @@ class ViewProfileComponent extends Component {
       error: "",
       isNull: true,
       applicationReviewList: [],
-      reviewHistory: [],
-      totalPages: 10,
-      currentPage: 0
+      questionModels: null,
+      isLoading: true,
+      form: null,
+      error: "",
+      currentSkip: 0
     };
+    this.loadForm(0);
+  }
+
+  componentWillMount(){
+    this.loadForm(0);
+  }
+
+  processResponse = (response) => {
+    let questionModels = null;
+
+    if (!response.form.review_response || (response.form.review_response.id === 0 && !response.form.review_response.scores)) {
+        response.form.review_response = null;
+    }
+
+    if (response.form && (response.form.reviews_remaining_count > 0 || response.form.review_response)) {
+        questionModels = response.form.review_form.review_questions.map(q => {
+            let score = null;
+            if (response.form.review_response) {
+                score = response.form.review_response.scores.find(a => a.review_question_id === q.id)
+            }
+            return {
+                question: q,
+                answer: response.form.response.answers.find(a => a.question_id == q.question_id),
+                score: score
+            };
+        }).sort((a, b) => a.question.order - b.question.order);
+    }
+
+    this.setState({
+        form: response.form,
+        error: response.error,
+        isLoading: false,
+        questionModels: questionModels,
+        error: "",
+        hasValidated: false,
+        validationStale: false,
+        isValid: false,
+        isSubmitting: false,
+        flagModalVisible: false,
+        flagValue: ""
+    }, ()=>{
+        window.scrollTo(0, 0);
+    });
+  }
+
+  loadForm = (responseId) => {
+    if (responseId) {
+        reviewService.getReviewResponse(responseId).then(this.processResponse);
+    }
+    else {
+        reviewService.getReviewForm(DEFAULT_EVENT_ID, this.state.currentSkip).then(this.processResponse);
+    }
+  }
+
+  formatReviewObject= () => {
+    const {form} = this.state;
+    let reviewer_firstname_list=[], comments=[], final_verdict =[], verdict, data;
+    if (!form) return data = {'reviewer_firstname_list': reviewer_firstname_list,'comments': comments,'final_verdict':final_verdict}
+    
+    profileService.getUserProfile(form? form.response.user_id : 1)
+    .then(reviewDetails => {
+      reviewer_firstname_list.push(reviewDetails.firstname);
+    });
+    comments.push(form ? (form.response.answers!==null? form.response.answers: "no comments") : "no comments");
+    verdict = (form.review_response!==null) ? form.review_response.options[0]['label'] : "Unknown";
+    final_verdict.push(verdict);
+    return data = {'reviewer_firstname_list': reviewer_firstname_list ,'comments': comments,'final_verdict':final_verdict}
   }
 
   componentDidMount() {
-    const {reviewHistory,totalPages,currentPage} = this.state;
+    const {Response_id, form} = this.state;
     const { id } = this.props.match.params;
     let user_id = parseInt(id.toString().split(":")[1], 10);
     profileService.getUserProfile(user_id).then(result => {
@@ -71,28 +140,15 @@ class ViewProfileComponent extends Component {
         isNull: result.data === null
       });
     });
-    reviewService.getReviewHistory(DEFAULT_EVENT_ID, currentPage,totalPages).
-    then(response => {
-      this.setState({
-        reviewHistory: response.reviewHistory.reviews,
-        totalPages: response.reviewHistory.total_pages,
-        currentPage: currentPage
-      });
-    });
-
-    profileService.getUserReview(DEFAULT_EVENT_ID, user_id).
-    then(results => {
-        this.setState({
-          applicationReviewList: results
-        });
-    });
   }
 
   displayReviewersTable =()=> {
-    const {applicationReviewList, reviewHistory} = this.state;
+    let {applicationReviewList} = this.state;
+    applicationReviewList = this.formatReviewObject();
     const rows = Array.from(Object.keys(applicationReviewList), k =>  [<Row {...applicationReviewList}/>]);
-
-    return (
+    console.log(applicationReviewList)
+    console.log(rows)
+      return (
       <div className="tableReview headerReview-div">
         <div className="headerReview  h-color font-weight-bold">
           <div className="divReview">
