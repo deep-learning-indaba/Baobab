@@ -4,18 +4,24 @@ import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import { requiredText, isValidDate } from "../../../utils/validation/rules.js";
-import { userService } from "../../../services/user";
 import {
-  getCounties,
-} from "../../../utils/validation/contentHelpers"
+  requiredText,
+  isValidDate,
+  requiredDropdown
+} from "../../../utils/validation/rules.js";
+import { userService } from "../../../services/user";
+import { getCounties } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 
 const fieldValidations = [
   ruleRunner(validationFields.passportNumber, requiredText),
   ruleRunner(validationFields.fullNameOnPassport, requiredText),
   ruleRunner(validationFields.passportIssuedByAuthority, requiredText),
-  ruleRunner(validationFields.passportIssuedByDate, isValidDate)
+  ruleRunner(validationFields.passportIssuedByDate, isValidDate),
+  ruleRunner(validationFields.residentialStreet1, requiredText),
+  ruleRunner(validationFields.residentialCity, requiredText),
+  ruleRunner(validationFields.residentialPostalCode, requiredText),
+  ruleRunner(validationFields.residentialCountry, requiredDropdown)
 ];
 class InvitationLetterForm extends Component {
   constructor(props) {
@@ -38,10 +44,23 @@ class InvitationLetterForm extends Component {
     };
   }
 
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
+  }
+  getContentValue(options, value) {
+    if (options && options.filter) {
+      let optionsObject = options.filter(option => {
+        return option.value === value;
+      });
+      if (optionsObject && optionsObject[0]) return optionsObject[0].label;
+    } else return null;
+  }
   componentWillMount() {
     getCounties.then(result => {
       this.setState({
-        countryOptions: this.checkOptionsList(result[2]),
+        countryOptions: this.checkOptionsList(result)
       });
     });
 
@@ -50,13 +69,28 @@ class InvitationLetterForm extends Component {
       if (date) date = date.split("T")[0];
       this.setState({
         user: {
+          ...this.state.user,
           nationality: result.nationality_country_id,
           residence: result.residence_country_id,
-          dateOfBirth: date,
+          dateOfBirth: date
         }
       });
     });
   }
+  handleChangeDropdown = (name, dropdown) => {
+    this.setState(
+      {
+        user: {
+          ...this.state.user,
+          [name]: dropdown.value
+        }
+      },
+      function() {
+        let errorsForm = run(this.state.user, fieldValidations);
+        this.setState({ errors: { $set: errorsForm } });
+      }
+    );
+  };
   handleChange = field => {
     return event => {
       this.setState(
@@ -66,7 +100,7 @@ class InvitationLetterForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function () {
+        function() {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -77,7 +111,15 @@ class InvitationLetterForm extends Component {
     return (
       this.state.user.passportNumber.length > 0 &&
       this.state.user.fullNameOnPassport.length > 0 &&
-      this.state.user.passportIssuedByAuthority.length > 0
+      this.state.user.passportIssuedByAuthority.length > 0 &&
+      this.state.user.residentialStreet1 &&
+      this.state.user.residentialStreet1.length > 0 &&
+      this.state.user.residentialCity &&
+      this.state.user.residentialCity.length > 0 &&
+      this.state.user.residentialPostalCode &&
+      this.state.user.residentialPostalCode.length > 0 &&
+      this.state.user.residentialCountry &&
+      this.state.user.residentialCountry > 0
     );
   }
   handleSubmit = event => {
@@ -93,6 +135,18 @@ class InvitationLetterForm extends Component {
     this.setState({
       user: { ...this.state.user, bringingAPoster: !currentBringingAPoster }
     });
+  };
+  getErrorMessages = errors => {
+    let errorMessages = [];
+    if (errors.$set === null) return;
+
+    let arr = errors.$set;
+    for (let i = 0; i < arr.length; i++) {
+      errorMessages.push(
+        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+      );
+    }
+    return errorMessages;
   };
   render() {
     const {
@@ -116,7 +170,23 @@ class InvitationLetterForm extends Component {
       bringingAPoster
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, showWorkAddress } = this.state;
+    const {
+      loading,
+      errors,
+      showErrors,
+      error,
+      showWorkAddress,
+      countryOptions
+    } = this.state;
+
+    const nationalityValue = this.getContentValue(
+      this.state.countryOptions,
+      nationality
+    );
+    const residenceValue = this.getContentValue(
+      this.state.countryOptions,
+      residence
+    );
 
     const passportDetailsStyle = createColClassName(12, 2, 3, 3);
     const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
@@ -202,6 +272,7 @@ class InvitationLetterForm extends Component {
           <div class="row">
             <Address
               onChange={this.handleChange}
+              handleChangeDropdown={this.handleChangeDropdown}
               streetAddress1={validationFields.residentialStreet1}
               streetAddress2={validationFields.residentialStreet2}
               city={validationFields.residentialCity}
@@ -212,10 +283,12 @@ class InvitationLetterForm extends Component {
               cityValue={residentialCity}
               postalCodeValue={residentialPostalCode}
               countryValue={residentialCountry}
+              countryOptions={countryOptions}
             />
             {showWorkAddress && (
               <Address
                 onChange={this.handleChange}
+                handleChangeDropdown={this.handleChangeDropdown}
                 streetAddress1={validationFields.workStreet1}
                 streetAddress2={validationFields.workStreet2}
                 city={validationFields.workCity}
@@ -226,6 +299,7 @@ class InvitationLetterForm extends Component {
                 cityValue={workCity}
                 postalCodeValue={workPostalCode}
                 countryValue={workCountry}
+                countryOptions={countryOptions}
               />
             )}
           </div>
@@ -236,22 +310,20 @@ class InvitationLetterForm extends Component {
           </p>
           <div class="row">
             <div class={nationResidenceDetailsStyle}>
-              <FormSelect
-                options={this.state.countryOptions}
+              <FormTextBox
+                type="text"
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
-                onChange={this.handleChangeDropdown}
-                value={nationality}
+                value={nationalityValue}
                 label={validationFields.nationality.display}
               />
             </div>
             <div class={nationResidenceDetailsStyle}>
-              <FormSelect
-                options={this.state.countryOptions}
+              <FormTextBox
+                type="text"
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
-                onChange={this.handleChangeDropdown}
-                value={residence}
+                value={residenceValue}
                 label={validationFields.residence.display}
               />
             </div>
@@ -261,7 +333,6 @@ class InvitationLetterForm extends Component {
                 id={validationFields.dateOfBirth.name}
                 type="date"
                 placeholder={validationFields.dateOfBirth.display}
-                onChange={this.handleChange(validationFields.dateOfBirth)}
                 value={dateOfBirth}
                 label={validationFields.dateOfBirth.display}
               />

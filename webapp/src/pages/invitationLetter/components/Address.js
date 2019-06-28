@@ -3,6 +3,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
+import { getCounties } from "../../../utils/validation/contentHelpers";
 class Address extends Component {
   constructor(props) {
     super(props);
@@ -13,22 +14,38 @@ class Address extends Component {
       city: props.city,
       postalCode: props.postalCode,
       country: props.country,
+      countryOptions: [],
       addressText: {
         streetAddress1Value: props.streetAddress1Value,
         streetAddress2Value: props.streetAddress2Value,
         cityValue: props.cityValue,
         postalCodeValue: props.postalCodeValue,
-        countryValue : props.countryValue
+        countryValue: props.countryValue
       }
     };
   }
-  handleChangeDropdown = (name, dropdown) => {
-    if (this.props.onChange) {
-      this.props.onChange(this.props.question, dropdown.value);
-    }
-  };
+
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
+  }
+  componentWillMount() {
+    getCounties.then(result => {
+      this.setState({
+        countryOptions: this.checkOptionsList(result)
+      });
+    });
+  }
+
   render() {
-    const { streetAddress1, streetAddress2, city, postalCode,country } = this.state;
+    const {
+      streetAddress1,
+      streetAddress2,
+      city,
+      postalCode,
+      country
+    } = this.state;
     const {
       streetAddress1Value,
       streetAddress2Value,
@@ -80,13 +97,13 @@ class Address extends Component {
           />
         </div>
         <FormSelect
-                options={this.state.countryOptions}
-                id={country.name}
-                placeholder={country.display}
-                onChange={this.handleChangeDropdown}
-                value={countryValue}
-                label={country.display}
-              />
+          options={this.state.countryOptions}
+          id={country.name}
+          placeholder={country.display}
+          onChange={this.props.handleChangeDropdown}
+          value={countryValue}
+          label={country.display}
+        />
       </div>
     );
   }
