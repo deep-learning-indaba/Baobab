@@ -5,6 +5,10 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import { requiredText, isValidDate } from "../../../utils/validation/rules.js";
+import { userService } from "../../../services/user";
+import {
+  getCounties,
+} from "../../../utils/validation/contentHelpers"
 import Address from "./Address.js";
 
 const fieldValidations = [
@@ -19,7 +23,7 @@ class InvitationLetterForm extends Component {
 
     this.state = {
       user: {
-        countryOfResidence: null,
+        residence: null,
         nationality: null,
         dateOfBirth: null,
         passportNumber: "",
@@ -33,6 +37,26 @@ class InvitationLetterForm extends Component {
       errors: []
     };
   }
+
+  componentWillMount() {
+    getCounties.then(result => {
+      this.setState({
+        countryOptions: this.checkOptionsList(result[2]),
+      });
+    });
+
+    userService.get().then(result => {
+      var date = result.user_dateOfBirth;
+      if (date) date = date.split("T")[0];
+      this.setState({
+        user: {
+          nationality: result.nationality_country_id,
+          residence: result.residence_country_id,
+          dateOfBirth: date,
+        }
+      });
+    });
+  }
   handleChange = field => {
     return event => {
       this.setState(
@@ -42,12 +66,11 @@ class InvitationLetterForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
       );
-      console.log(this.state);
     };
   };
   validateForm() {
@@ -78,7 +101,7 @@ class InvitationLetterForm extends Component {
       passportIssuedByDate,
       passportIssuedByAuthority,
       nationality,
-      countryOfResidence,
+      residence,
       dateOfBirth,
       workStreet1,
       workStreet2,
@@ -228,7 +251,7 @@ class InvitationLetterForm extends Component {
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 onChange={this.handleChangeDropdown}
-                value={countryOfResidence}
+                value={residence}
                 label={validationFields.residence.display}
               />
             </div>
