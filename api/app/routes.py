@@ -10,6 +10,7 @@ from invitedGuest import api as invitedGuest_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
 from guestRegistrations import api as guest_registration
+from invitationletter import api as invitation_letter_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -76,3 +77,5 @@ rest_api.add_resource(guest_registration.GuestRegistrationApi,
 rest_api.add_resource(guest_registration.GuestRegistrationFormAPI,
                       '/api/v1/guest-registration-form')
 
+rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
+                      '/api/v1/invitation-letter')

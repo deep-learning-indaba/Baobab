@@ -42,7 +42,7 @@ from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
 from reviews.models import ReviewForm, ReviewQuestion
 from registration.models import Offer, RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
-
+from invitationletter.models import InvitationTemplate, InvitationLetterRequest
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])
@@ -147,3 +147,7 @@ admin.add_view(BaobabModelView(RegistrationSection, db.session))
 admin.add_view(BaobabModelView(RegistrationQuestion, db.session))
 admin.add_view(BaobabModelView(Registration, db.session))
 admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
+
+admin.add_view(BaobabModelView(InvitationTemplate, db.session))
+admin.add_view(BaobabModelView(InvitationLetterRequest, db.session))
+
