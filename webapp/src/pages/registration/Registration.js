@@ -17,12 +17,12 @@ export default class Registration extends Component {
 
   componentDidMount() {
     registrationService.determineIfGuest(DEFAULT_EVENT_ID).then(response => {
-      if (response !== "404") {
+      if (response === "200") {
         this.setState({
           GuestRegistration: true
         });
       }
-      else {
+      else if (response ==="404"){
         this.setState({
           GuestRegistration: false
         });
