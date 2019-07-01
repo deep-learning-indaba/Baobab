@@ -3,9 +3,24 @@ from mailmerge import MailMerge
 from app import LOGGER
 import sys
 import os
-import comtypes.client
 import requests
+from app.utils import emailer
+from app.utils import pdfconvertor
+from app.events.models import Event
+from app import db
 
+OFFER_EMAIL_BODY = """
+Dear {user_title} {first_name} {last_name},
+
+Congratulations! You've been selected to attend the {event_name}!
+
+Please see the attached document below for your acceptance of offer: {host}/offer
+
+If you have any queries, please forward them to info@deeplearningindaba.com  
+
+Kind Regards,
+The Deep Learning Indaba Team
+"""
 
 def get_template(template_path):
     LOGGER.debug("Downloading template......")
@@ -56,6 +71,21 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
 
     document.write(invitation_letter)
 
-    # Todo: Send Email
+    # Todo: converting a generated letter into a pdf
+    pdfconvertor.convert_to(folder='app/invitationletter/letter', source=invitation_letter)
 
-    return True
+    event = db.session.query(Event).get(event_id)
+    if not event:
+        subject = 'See Attachment'
+    else:
+        subject = "Invitation to " + event.name
+    # Todo: sending an email with the attachment for the event
+    try:
+        emailer.send_mail(recipient=email, subject=subject, body_html=OFFER_EMAIL_BODY, charset='UTF-8', mail_type='AMZ',
+                          file_name=file_name, file_path=invitation_letter)
+
+        LOGGER.debug('successfully sent emeil...')
+        return True
+    except ValueError:
+        LOGGER.debug('Did no send email...')
+        return False
