@@ -122,7 +122,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 user_id=user_id,
                 confirmed=True,
                 created_at=date.today(),
-                confirmation_email_sent_at=date.today()
+                confirmation_email_sent_at=date.today() #None
             )
 
             db.session.add(registration)
@@ -143,8 +143,11 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
                                    event_name)
+            # if email_sent:
+            #     registration.confirmation_email_sent_at = date.today();
+            #     db.session.commit()
 
             return registration, 201  # 201 is 'CREATED' status code
         except SQLAlchemyError as e:
@@ -214,10 +217,12 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             body_text = greeting + self.get_confirmed_message(confirmed) + '\n\n' + summary
 
             emailer.send_mail(user.email, subject, body_text=body_text)
+            return True
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
                 response_id=user.id))
+            return False
 
     def get_confirmed_message(self, confirmed):
         if not confirmed:

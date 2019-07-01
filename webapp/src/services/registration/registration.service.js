@@ -89,13 +89,16 @@ function determineIfGuest(event_id) {
     .get(baseUrl + "/api/v1/checkIfInvitedGuest?event_id="+event_id, { headers: authHeader() })
     .then(function (response) {
       return {
-        msg: "succeeded",
-        response: response
+        msg: "Guest Found",
+        statusCode: "200"
       }
     })
     .catch(function (error) {
       if (error.response && error.response.status === 404) {
-        return { msg: "404" }
+        return {
+          msg: "Guest Not Found",
+          statusCode: "404"
+        }
       } else {
         return {
           msg: "Failed",

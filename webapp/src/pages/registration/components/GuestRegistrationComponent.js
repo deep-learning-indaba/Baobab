@@ -229,7 +229,7 @@ class GuestRegistrationComponent extends Component {
             hasValidated: true
         });
 
-        if (this.isValidated()) {
+        if (true) {
             this.setState({
                 isSubmitting: true
             }, () => {
