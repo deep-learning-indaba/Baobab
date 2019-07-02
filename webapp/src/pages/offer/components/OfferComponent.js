@@ -341,8 +341,8 @@ class Offer extends Component {
           loading: false,
           offer: result.offer,
           error: result.error,
-          accepted_accommodation_award: result.offer.accommodation_award,
-          accepted_travel_award: result.offer.travel_award
+          accepted_accommodation_award: result.offer.accepted_accommodation_award === null ? result.offer.accommodation_award : result.offer.accepted_accommodation_award,
+          accepted_travel_award: result.offer.accepted_travel_award  === null ? result.offer.travel_award : result.offer.accepted_travel_award
         });
       }
     });

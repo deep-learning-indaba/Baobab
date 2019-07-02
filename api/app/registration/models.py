@@ -16,7 +16,7 @@ class Offer(db.Model):
     accommodation_award = db.Column(db.Boolean(), nullable=False)
     accepted_accommodation_award = db.Column(db.Boolean(), nullable=True)
     accepted_travel_award = db.Column(db.Boolean(), nullable=True)
-    rejected_reason = db.Column(db.String(50), nullable=True)
+    rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
 

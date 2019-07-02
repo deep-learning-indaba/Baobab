@@ -57,20 +57,29 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         if not offer:
             return errors.OFFER_NOT_FOUND
 
-        global invitation_template
+        invitation_template = None
 
-        if offer.accommodation_award and offer.travel_award:
+        if offer.accommodation_award and offer.accepted_accommodation_award \
+                and offer.travel_award and offer.accepted_travel_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_both_travel_accommodation).first()
-        elif offer.travel_award:
+
+        elif offer.travel_award and offer.accepted_travel_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
-        elif offer.accommodation_award:
+                InvitationTemplate.send_for_travel_award_only).first()
+
+        elif offer.accommodation_award and offer.accepted_accommodation_award:
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.send_for_accommodation_award_only).first()
+
+        elif (not offer.accommodation_award) and (not offer.travel_award):
+            invitation_template = db.session.query(InvitationTemplate)\
+                .filter(not InvitationTemplate.send_for_both_travel_accommodation)\
+                .filter(not InvitationTemplate.send_for_travel_award_only)\
+                .filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
         if invitation_template:
             template_url = invitation_template.template_path
@@ -108,11 +117,14 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 try:
                     db.session.add(invitation_letter_request)
                     db.session.commit()
+                    return invitation_info(invitation_letter_request), 201
+
                 except Exception as e:
                     LOGGER.error(
                         "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
                     return errors.ADD_INVITATION_REQUEST_FAILED
 
-            return invitation_info(invitation_letter_request), 201
+            else:
+                return errors.SENDING_INVITATION_FAILED
 
         return errors.TEMPLATE_NOT_FOUND
