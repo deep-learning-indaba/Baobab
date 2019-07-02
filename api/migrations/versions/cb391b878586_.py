@@ -89,8 +89,8 @@ def upgrade():
         send_for_accommodation_award_only=False,
         send_for_both_travel_accommodation=False)
 
-    db.session.add(general_template)
-    db.session.commit()
+    session.add(general_template)
+    session.commit()
 
     both_template = InvitationTemplate(
         event_id=1,
@@ -99,8 +99,8 @@ def upgrade():
         send_for_accommodation_award_only=False,
         send_for_both_travel_accommodation=True)
 
-    db.session.add(both_template)
-    db.session.commit()
+    session.add(both_template)
+    session.commit()
 
     travel_only_template = InvitationTemplate(
         event_id=1,
@@ -109,8 +109,8 @@ def upgrade():
         send_for_accommodation_award_only=False,
         send_for_both_travel_accommodation=False)
 
-    db.session.add(travel_only_template)
-    db.session.commit()
+    session.add(travel_only_template)
+    session.commit()
 
     accommodation_only_template = InvitationTemplate(
         event_id=1,
@@ -119,8 +119,8 @@ def upgrade():
         send_for_accommodation_award_only=True,
         send_for_both_travel_accommodation=False)
 
-    db.session.add(accommodation_only_template)
-    db.session.commit()
+    session.add(accommodation_only_template)
+    session.commit()
 
 
 def downgrade():
