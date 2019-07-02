@@ -1,3 +1,5 @@
+import abc
+from abc import ABCMeta
 from datetime import date
 import traceback
 from flask_restful import reqparse, fields, marshal_with, marshal
@@ -5,14 +7,15 @@ import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
-from app.registrationResponse.mixins import RegistrationResponseMixin
+from app.registrationResponse.mixins import RegistrationResponseMixin, RegistrationAdminMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.users.models import AppUser
 from app.events.models import Event
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, admin_required
 from app.utils import errors, emailer, strings
 from app import LOGGER
 from app.users.repository import UserRepository as user_repository
+from app.registrationResponse.repository import RegistrationRepository
 
 
 from app import db
@@ -53,7 +56,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
     }
 
     response_fields = {
-
         'registration_id': fields.Integer,
         'offer_id': fields.Integer,
         'registration_form_id': fields.Integer,
@@ -238,3 +240,63 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
         else:
             return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
+
+
+def map_registration_info(registration_info):
+    return {
+        'registration_id': registration_info.Registration.id,
+        'user_id': registration_info.AppUser.id,
+        'firstname': registration_info.AppUser.firstname,
+        'lastname': registration_info.AppUser.lastname,
+        'email': registration_info.AppUser.email,
+        'user_category': registration_info.AppUser.user_category.name,
+        'affiliation': registration_info.AppUser.affiliation,
+        'created_at': registration_info.Registration.created_at
+    }
+
+registration_admin_fields = {
+    'registration_id': fields.Integer(),
+    'user_id': fields.Integer(),
+    'firstname': fields.String(),
+    'lastname': fields.String(),
+    'email': fields.String(),
+    'user_category': fields.String(),
+    'affiliation': fields.String(),
+    'created_at': fields.DateTime('iso8601')
+}
+
+
+def _get_registrations(event_id, user_id, confirmed):
+    try:
+        current_user = db.session.query(AppUser).filter(AppUser.id == user_id).one()
+        if not current_user.is_event_admin(event_id):
+            return errors.FORBIDDEN
+
+        registrations = RegistrationRepository.get_confirmed_for_event(event_id, confirmed=confirmed)
+        registrations = [map_registration_info(info) for info in registrations]
+        return marshal(registrations, registration_admin_fields)
+    except Exception as e:
+        LOGGER.error('Error occured while retrieving unconfirmed registrations: {}'.format(e))
+        return errors.DB_NOT_AVAILABLE
+
+
+class RegistrationUnconfirmedAPI(RegistrationAdminMixin, restful.Resource):
+
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        return _get_registrations(event_id, user_id, confirmed=False)
+
+
+class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
+    
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        return _get_registrations(event_id, user_id, confirmed=True)

@@ -1,4 +1,4 @@
-from app.registration.models import RegistrationForm
+from app.registration.models import RegistrationForm, Registration
 from app.registration.models import RegistrationSection
 import json
 from datetime import datetime, timedelta
@@ -12,7 +12,7 @@ from app import app, db
 
 class RegistrationApiTest(ApiTestCase):
 
-    def seed_static_data(self):
+    def seed_static_data(self, create_registration=False):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
@@ -24,6 +24,15 @@ class RegistrationApiTest(ApiTestCase):
                             '123456')
         test_user.verified_email = True
         db.session.add(test_user)
+        db.session.commit()
+
+        test_user2 = AppUser('something2@email.com', 'Something2', 'Thing2', 'Mrs', 1, 1,
+                            'Female', 'University of Indaba', 'Machine Learning', 'None', 1,
+                            datetime(1985, 2, 3),
+                            'Zulu',
+                            '123456')
+        test_user2.verified_email = True
+        db.session.add(test_user2)
         db.session.commit()
 
         event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
@@ -55,6 +64,30 @@ class RegistrationApiTest(ApiTestCase):
         self.offer.candidate_response = True
         self.offer.accepted_travel_award = True
         db.session.add(self.offer)
+        db.session.commit()
+
+        self.offer2 = Offer(
+            user_id=test_user2.id,
+            event_id=event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=True,
+            travel_award=True,
+            accommodation_award=False,
+            responded_at=datetime.now())
+        db.session.add(self.offer2)
+        db.session.commit()
+
+        self.offer3 = Offer(
+            user_id=event_admin.id,
+            event_id=event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=True,
+            travel_award=False,
+            accommodation_award=True,
+            responded_at=datetime.now())
+        db.session.add(self.offer3)
         db.session.commit()
 
         self.form = RegistrationForm(
@@ -133,7 +166,19 @@ class RegistrationApiTest(ApiTestCase):
         db.session.commit()
 
         self.headers = self.get_auth_header_for("something@email.com")
+        self.headers2 = self.get_auth_header_for("something2@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
+
+        if create_registration:
+            self.registration1 = Registration(self.offer.id, self.form.id, confirmed=False)
+            db.session.add(self.registration1)
+            db.session.commit()
+            self.registration2 = Registration(self.offer2.id, self.form.id, confirmed=True)
+            db.session.add(self.registration2)
+            db.session.commit()
+            self.registration3 = Registration(self.offer3.id, self.form.id, confirmed=False)
+            db.session.add(self.registration3)
+            db.session.commit()
 
         db.session.flush()
 
@@ -150,7 +195,7 @@ class RegistrationApiTest(ApiTestCase):
 
     def test_create_registration(self):
         with app.app_context():
-            self.seed_static_data()
+            self.seed_static_data(create_registration=False)
             registration_data = {
                 'offer_id': self.offer.id,
                 'registration_form_id': self.form.id,
@@ -296,3 +341,65 @@ class RegistrationApiTest(ApiTestCase):
                 content_type='application/json',
                 headers=self.headers)
             self.assertEqual(response.status_code, 404)
+
+
+    def test_get_unconfirmed_not_event_admin(self):
+        with app.app_context():
+            self.seed_static_data()
+            response = self.app.get('/api/v1/registration/unconfirmed?event_id=1',
+                    headers=self.headers)
+            self.assertEqual(response.status_code, 403)
+
+    def test_get_unconfirmed(self):
+        with app.app_context():
+            self.seed_static_data(create_registration=True)
+            response = self.app.get('/api/v1/registration/unconfirmed?event_id=1',
+                    headers=self.adminHeaders)
+            responses = json.loads(response.data)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(responses), 2)
+
+            self.assertEqual(responses[0]['registration_id'], self.registration1.id)
+            self.assertEqual(responses[0]['user_id'], self.offer.user_id)
+            self.assertEqual(responses[0]['firstname'], 'Some')
+            self.assertEqual(responses[0]['lastname'], 'Thing')
+            self.assertEqual(responses[0]['email'], 'something@email.com')
+            self.assertEqual(responses[0]['user_category'], 'Postdoc')
+            self.assertEqual(responses[0]['affiliation'], 'University')
+            self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
+
+            self.assertEqual(responses[1]['registration_id'], self.registration3.id)
+            self.assertEqual(responses[1]['user_id'], self.offer3.user_id)
+            self.assertEqual(responses[1]['firstname'], 'event_admin')
+            self.assertEqual(responses[1]['lastname'], '1')
+            self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
+            self.assertEqual(responses[1]['user_category'], 'Postdoc')
+            self.assertEqual(responses[1]['affiliation'], 'NWU')
+            self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
+
+    def test_get_confirmed_not_event_admin(self):
+        with app.app_context():
+            self.seed_static_data()
+            response = self.app.get('/api/v1/registration/confirmed?event_id=1',
+                    headers=self.headers)
+            print('Response:', response)
+            self.assertEqual(response.status_code, 403)
+
+    
+    def test_get_confirmed(self):
+        with app.app_context():
+            self.seed_static_data(create_registration=True)
+            response = self.app.get('/api/v1/registration/confirmed?event_id=1',
+                    headers=self.adminHeaders)
+            responses = json.loads(response.data)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(responses), 1)
+
+            self.assertEqual(responses[0]['registration_id'], self.registration2.id)
+            self.assertEqual(responses[0]['user_id'], self.offer2.user_id)
+            self.assertEqual(responses[0]['firstname'], 'Something2')
+            self.assertEqual(responses[0]['lastname'], 'Thing2')
+            self.assertEqual(responses[0]['email'], 'something2@email.com')
+            self.assertEqual(responses[0]['user_category'], 'Postdoc')
+            self.assertEqual(responses[0]['affiliation'], 'University of Indaba')
+            self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
