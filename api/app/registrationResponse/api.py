@@ -269,7 +269,7 @@ registration_admin_fields = {
 def _get_registrations(event_id, user_id, confirmed):
     try:
         current_user = db.session.query(AppUser).filter(AppUser.id == user_id).one()
-        if not current_user.is_event_admin(event_id):
+        if not current_user.is_registration_admin(event_id):
             return errors.FORBIDDEN
 
         registrations = RegistrationRepository.get_confirmed_for_event(event_id, confirmed=confirmed)
