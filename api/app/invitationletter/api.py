@@ -86,7 +86,6 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(not InvitationTemplate.send_for_travel_award_only)\
                 .filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
-        # Todo: populate bringing poster value
 
         if invitation_template:
             template_url = invitation_template.template_path
@@ -100,6 +99,23 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
             nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
+
+
+            poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
+            poster_answer = (
+                db.session.query(RegistrationAnswer)
+                .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                .filter(Registration.user_id == user_id)
+                .filter(RegistrationAnswer.registration_question_id = poster_registration_question.id)
+                .first()
+            )
+
+            if poster_answer is not None and poster_answer.value == "yes":
+                # Get whether they submitted a poster in registration
+                bringing_poster = "The candidate will be presenting an academic poster on their research."
+            else:
+                bringing_poster = ""
+
 
             is_sent = generate(template_path=template_url,
                                event_id=event_id,
@@ -120,7 +136,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                user_title=user.user_title,
                                firstname=user.firstname,
                                lastname=user.lastname,
-                               bringing_poster='todo'
+                               bringing_poster=bringing_poster
                                )
 
             if is_sent:

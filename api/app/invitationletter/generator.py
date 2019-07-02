@@ -11,6 +11,7 @@ from app.events.models import Event
 from app import db
 from app.utils import errors
 
+# This is a strange way of doing it, but given the time constraints, I'll let it through
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
 
 
@@ -45,6 +46,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
              nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
 
+    # Path to store the template locally of merged and unmerged
     template = 'app/invitationletter/template/template.docx'
     template_merged = 'app/invitationletter/letter/template.docx'
 
@@ -58,7 +60,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         document.merge(
             TITLE=user_title,
             FIRSTNAME=firstname,
-            SURNAME=lastname,
+            LASTNAME=lastname,
             WORK_ADDRESS=work_address,
             ADDRESSED_TO=addressed_to,
             RESIDENTIAL_ADDRESS=residential_address,
