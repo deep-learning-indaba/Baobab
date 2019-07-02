@@ -12,9 +12,7 @@ from app import db
 OFFER_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
 
-Congratulations! You've been selected to attend the {event_name}!
-
-Please see the attached document below for your acceptance of offer: {host}/offer
+Your official invitation letter is attached!
 
 If you have any queries, please forward them to info@deeplearningindaba.com  
 
