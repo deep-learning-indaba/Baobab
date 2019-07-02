@@ -5,7 +5,6 @@ from config import GCP_BUCKET_NAME
 import json
 from google.cloud import storage
 import os
-import requests
 from app.utils import emailer
 from app.utils import pdfconvertor
 from app.events.models import Event
@@ -45,9 +44,10 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-             nationality, date_of_birth, email, user_title, firstname, lastname):
+             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
 
     template = 'app/invitationletter/template/template.docx'
+    template_merged = 'app/invitationletter/letter/template.docx'
 
     download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
                   destination_file_name=template)
@@ -66,33 +66,39 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
             PASSPORT_NAME=passport_name,
             PASSPORT_NO=passport_no,
             ISSUED_BY=passport_issued_by,
-            EXPIRY_DATE=to_date,
-            FROM_DATE=from_date,
+            EXPIRY_DATE=expiry_date,
+            ACCOMODATION_END_DATE=to_date,
+            ACCOMODATION_START_DATE=from_date,
             COUNTRY_OF_RESIDENCE=country_of_residence,
             NATIONALITY=nationality,
             DATE_OF_BIRTH=date_of_birth,
-            INVITATION_LETTER_SENT_AT=invitation_letter_sent_at
+            INVITATION_LETTER_SENT_AT=invitation_letter_sent_at,
+            BRINGING_POSTER=bringing_poster
         )
 
-        document.write('app/invitationletter/letter/template_sample.docx')
+        document.write(template_merged)
 
-    # Todo: Convert docx to pdf
-
-    # Todo: converting a generated letter into a pdf
-    pdfconvertor.convert_to(folder='app/invitationletter/letter', source=invitation_letter)
+    # Conversion
+    pdfconvertor.convert_to(folder='app/invitationletter/letter', source=template_merged)
+    template_pdf = 'app/invitationletter/letter/template.pdf'
 
     event = db.session.query(Event).get(event_id)
     if not event:
         subject = 'See Attachment'
     else:
         subject = "Invitation to " + event.name
-    # Todo: sending an email with the attachment for the event
-    try:
-        emailer.send_mail(recipient=email, subject=subject, body_html=OFFER_EMAIL_BODY, charset='UTF-8', mail_type='AMZ',
-                          file_name=file_name, file_path=invitation_letter)
 
-        LOGGER.debug('successfully sent emeil...')
+    try:
+        emailer.send_mail(recipient=email, subject=subject, body_html=OFFER_EMAIL_BODY, charset='UTF-8', mail_type='AMZ'
+                          , file_name=template_path, file_path=template_pdf)
+
+        LOGGER.debug('successfully sent email...')
         return True
     except ValueError:
         LOGGER.debug('Did no send email...')
         return False
+    finally:
+        # delete files
+        os.remove(template)
+        os.remove(template_pdf)
+        os.remove(template_merged)

@@ -33,8 +33,12 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         passport_name = args['passport_name']
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
-        to_date = datetime.strptime((args['to_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
-        from_date = datetime.strptime((args['from_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        passport_expiry_date = datetime.strptime((args['passport_expiry_date']),
+                                                 '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+        to_date = datetime.strptime((args['to_date']),
+                                    '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+        from_date = datetime.strptime((args['from_date']),
+                                      '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
         user_id = verify_token(request.headers.get('Authorization'))['id']
 
         invitation_letter_request = InvitationLetterRequest(
@@ -46,6 +50,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             passport_name=passport_name,
             passport_no=passport_no,
             passport_issued_by=passport_issued_by,
+            passport_expiry_date=passport_expiry_date,
             invitation_letter_sent_at=datetime.now().strftime("%Y-%m-%d"),
             to_date=to_date,
             from_date=from_date,
@@ -81,6 +86,8 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(not InvitationTemplate.send_for_travel_award_only)\
                 .filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
+        # Todo: populate bringing poster value
+
         if invitation_template:
             template_url = invitation_template.template_path
 
@@ -103,6 +110,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                passport_no=passport_no,
                                passport_issued_by=passport_issued_by,
                                invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at,
+                               expiry_date=passport_expiry_date,
                                to_date=to_date,
                                from_date=from_date,
                                country_of_residence=country_of_residence,
@@ -111,7 +119,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                email=user.email,
                                user_title=user.user_title,
                                firstname=user.firstname,
-                               lastname=user.lastname)
+                               lastname=user.lastname,
+                               bringing_poster='todo'
+                               )
 
             if is_sent:
                 try:

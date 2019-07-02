@@ -12,5 +12,6 @@ class InvitationMixin(object):
     req_parser.add_argument('passport_name', type=str, required=False)
     req_parser.add_argument('passport_no', type=str, required=False)
     req_parser.add_argument('passport_issued_by', type=str, required=False)
+    req_parser.add_argument('passport_expiry_date', type=str, required=False)
     req_parser.add_argument('to_date', type=str, required=False)
     req_parser.add_argument('from_date', type=str, required=False)
