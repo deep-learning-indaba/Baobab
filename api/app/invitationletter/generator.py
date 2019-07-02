@@ -1,6 +1,6 @@
 from mailmerge import MailMerge
 from app import LOGGER
-from config import GCP_CREDENTIALS_DICT
+from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME, GCP_BUCKET_NAME, FILE_SIZE_LIMIT
 from config import GCP_BUCKET_NAME
 import json
 from google.cloud import storage
@@ -29,7 +29,16 @@ The Deep Learning Indaba Team
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
-    storage_client = storage.Client()
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        LOGGER.debug('Setting dummy storage client')
+        storage_client = storage.Client(project=GCP_PROJECT_NAME)
+    else:
+        LOGGER.debug('Setting GCP storage client')
+        credentials = service_account.Credentials.from_service_account_info(
+            GCP_CREDENTIALS_DICT
+        )
+        storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
+
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(source_blob_name)
 
