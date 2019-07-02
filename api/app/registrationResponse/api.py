@@ -238,3 +238,105 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
         else:
             return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
+
+
+def map_registration_info(registration_info):
+    return {
+        'registration_id': registration_info.Registration.id,
+        'user_id': registration_info.AppUser.id,
+        'firstname': registration_info.AppUser.firstname,
+        'lastname': registration_info.AppUser.lastname,
+        'email': registration_info.AppUser.email,
+        'user_category': registration_info.AppUser.user_category.name,
+        'affiliation': registration_info.AppUser.affiliation,
+        'created_at': registration_info.Registration.created_at
+    }
+
+registration_admin_fields = {
+    'registration_id': fields.Integer(),
+    'user_id': fields.Integer(),
+    'firstname': fields.String(),
+    'lastname': fields.String(),
+    'email': fields.String(),
+    'user_category': fields.String(),
+    'affiliation': fields.String(),
+    'created_at': fields.DateTime('iso8601')
+}
+
+
+def _get_registrations(event_id, user_id, confirmed):
+    try:
+        current_user = UserRepository.get_by_id(user_id)
+        if not current_user.is_registration_admin(event_id):
+            return errors.FORBIDDEN
+
+        registrations = RegistrationRepository.get_confirmed_for_event(event_id, confirmed=confirmed)
+        registrations = [map_registration_info(info) for info in registrations]
+        return marshal(registrations, registration_admin_fields)
+    except Exception as e:
+        LOGGER.error('Error occured while retrieving unconfirmed registrations: {}'.format(e))
+        return errors.DB_NOT_AVAILABLE
+
+
+class RegistrationUnconfirmedAPI(RegistrationAdminMixin, restful.Resource):
+
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        return _get_registrations(event_id, user_id, confirmed=False)
+
+
+class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
+    
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        return _get_registrations(event_id, user_id, confirmed=True)
+
+
+def _send_registration_confirmation_mail(user, event_name):
+    subject = event_name + ' Registration Confirmation'
+    greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
+    body_text = greeting + '\n\n' + REGISTRATION_CONFIRMED_MESSAGE.format(event_name=event_name)
+    
+    try:
+        emailer.send_mail(user.email, subject, body_text=body_text)
+        return True
+    except Exception as e:
+        LOGGER.error('Error occured while sending email to {}: {}'.format(user.email, e))
+        return False
+
+
+class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
+
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+        registration_id = args['registration_id']
+        user_id = g.current_user['id']
+
+        try:
+            current_user = UserRepository.get_by_id(user_id)
+            registration, offer = RegistrationRepository.get_by_id_with_offer(registration_id)
+            if not current_user.is_registration_admin(offer.event_id):
+                return errors.FORBIDDEN
+
+            registration.confirm()
+
+            registration_user = UserRepository.get_by_id(offer.user_id)
+            registration_event = EventRepository.get_by_id(offer.event_id)
+            if _send_registration_confirmation_mail(registration_user, registration_event.name):
+                registration.confirmation_email_sent_at = datetime.now()
+
+            db.session.commit()
+            return 'Confirmed Registration for {} {}'.format(registration_user.firstname, registration_user.lastname), 200
+
+        except Exception as e:
+            LOGGER.error('Error occured while confirming registration with id {}: {}'.format(registration_id, e))
+            return errors.DB_NOT_AVAILABLE
