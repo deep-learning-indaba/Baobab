@@ -1,24 +1,36 @@
-from datetime import date
+import abc
+from abc import ABCMeta
+from datetime import date, datetime
 import traceback
 from flask_restful import reqparse, fields, marshal_with, marshal
 import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
-from app.registrationResponse.mixins import RegistrationResponseMixin
+from app.registrationResponse.mixins import RegistrationResponseMixin, RegistrationAdminMixin, RegistrationConfirmMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.users.models import AppUser
 from app.events.models import Event
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, admin_required
+from app.users.repository import UserRepository
+from app.events.repository import EventRepository
 from app.utils import errors, emailer, strings
 from app import LOGGER
 from app.users.repository import UserRepository as user_repository
+from app.registrationResponse.repository import RegistrationRepository
 
 
 from app import db
 
 
 REGISTRATION_MESSAGE = 'Thank you for completing our registration form.'
+REGISTRATION_CONFIRMED_MESSAGE = """Your registration to {event_name} has been confirmed! This means that all required payment has been completed. 
+
+We look forward to seeing you at the event!
+
+Kind Regards,
+The {event_name} Organisers
+"""
 
 
 def _get_answer_value(answer, question):
@@ -53,7 +65,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
     }
 
     response_fields = {
-
         'registration_id': fields.Integer,
         'offer_id': fields.Integer,
         'registration_form_id': fields.Integer,
@@ -328,7 +339,7 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
                 return errors.FORBIDDEN
 
             registration.confirm()
-
+            
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
             if _send_registration_confirmation_mail(registration_user, registration_event.name):

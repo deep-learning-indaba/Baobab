@@ -91,7 +91,7 @@ class AppUser(db.Model, UserMixin):
         self.is_deleted = True
         self.deleted_datetime_utc = datetime.now()
     
-    def is_event_admin(self, event_id):
+    def _has_admin_role(self, event_id, admin_role_name):
         if self.is_admin:
             return True
         
@@ -99,10 +99,17 @@ class AppUser(db.Model, UserMixin):
             return False
 
         for event_role in self.event_roles:
-            if event_role.event_id == event_id and event_role.role == 'admin':
+            if event_role.event_id == event_id and event_role.role == admin_role_name:
                 return True
         
         return False
+
+    def is_event_admin(self, event_id):
+        return self._has_admin_role(event_id, 'admin')
+
+    def is_registration_admin(self, event_id):
+        # An event admin is also a registration admin
+        return self._has_admin_role(event_id, 'registration-admin') or self._has_admin_role(event_id, 'admin')
     
     def is_reviewer(self, event_id):
         if self.event_roles is None:
