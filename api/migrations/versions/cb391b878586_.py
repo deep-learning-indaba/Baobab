@@ -20,6 +20,7 @@ Base = declarative_base()
 
 class InvitationTemplate(Base):
     __tablename__ = "invitation_template"
+    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
@@ -31,7 +32,7 @@ class InvitationTemplate(Base):
 class Event(Base):
 
     __tablename__ = "event"
-
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(255), nullable=False)
