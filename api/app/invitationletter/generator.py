@@ -9,6 +9,7 @@ from app.utils import emailer
 from app.utils import pdfconvertor
 from app.events.models import Event
 from app import db
+from app.utils import errors
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
 
@@ -84,9 +85,9 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
 
     event = db.session.query(Event).get(event_id)
     if not event:
-        subject = 'See Attachment'
-    else:
-        subject = "Invitation to " + event.name
+        return errors.EVENT_NOT_FOUND
+
+    subject = "Invitation Letter for " + event.name
 
     try:
         emailer.send_mail(recipient=email, subject=subject, body_html=OFFER_EMAIL_BODY, charset='UTF-8', mail_type='AMZ'

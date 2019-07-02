@@ -19,7 +19,6 @@ def convert_to(folder, source):
 
 
 def libreoffice_exec():
-    # TODO: Provide support for more platforms
     if sys.platform == 'linux':
         return '/lib/libreoffice/program/soffice'
     return 'libreoffice'
