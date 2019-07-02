@@ -106,7 +106,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 db.session.query(RegistrationAnswer)
                 .join(Registration, RegistrationAnswer.registration_id == Registration.id)
                 .filter(Registration.user_id == user_id)
-                .filter(RegistrationAnswer.registration_question_id = poster_registration_question.id)
+                .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
                 .first()
             )
 

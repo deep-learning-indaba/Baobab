@@ -33,4 +33,3 @@ psycopg2-binary
 docx-mailmerge
 requests
 google
-libreoffice
