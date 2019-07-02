@@ -13,6 +13,7 @@ down_revision = 'f349debf9e15'
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import orm
 from app import db
 
 Base = declarative_base()
@@ -77,6 +78,9 @@ class ApplicationForm(Base):
 
 
 def upgrade():
+    Base.metadata.bind = op.get_bind()
+    session = orm.Session(bind=Base.metadata.bind)
+
     # Insert the invitation templates
     general_template = InvitationTemplate(
         event_id=1,
