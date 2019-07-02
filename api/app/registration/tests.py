@@ -124,6 +124,28 @@ class OfferApiTest(ApiTestCase):
         assert data['travel_award']
         assert data['accommodation_award']
 
+    def test_create_offer_with_template(self):
+        self.seed_static_data(add_offer=False)
+        
+        offer_data = OFFER_DATA.copy()
+        offer_data['email_template'] = """Dear {user_title} {first_name} {last_name},
+
+        This is a custom email notifying you about your place at the {event_name}.
+
+        Visit {host}/offer to accept it, you have until {expiry_date} to do so!
+
+        kthanksbye!    
+        """
+
+        response = self.app.post('/api/v1/offer', data=offer_data,
+                                 headers=self.adminHeaders)
+        data = json.loads(response.data)
+
+        assert response.status_code == 201
+        assert data['payment_required']
+        assert data['travel_award']
+        assert data['accommodation_award']
+
     def test_create_duplicate_offer(self):
         self.seed_static_data(add_offer=True)
 
