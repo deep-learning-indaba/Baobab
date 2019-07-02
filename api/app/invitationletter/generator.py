@@ -5,15 +5,14 @@ from config import GCP_BUCKET_NAME
 import json
 from google.cloud import storage
 import os
-<<<<<<< HEAD
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
-=======
 import requests
 from app.utils import emailer
 from app.utils import pdfconvertor
 from app.events.models import Event
 from app import db
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
+
 
 OFFER_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
@@ -27,7 +26,6 @@ If you have any queries, please forward them to info@deeplearningindaba.com
 Kind Regards,
 The Deep Learning Indaba Team
 """
->>>>>>> 635ac640feabbe20761406986e83fe9c69978477
 
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
@@ -80,10 +78,6 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
 
     # Todo: Convert docx to pdf
 
-<<<<<<< HEAD
-    # Todo: Send Email
-    return True
-=======
     # Todo: converting a generated letter into a pdf
     pdfconvertor.convert_to(folder='app/invitationletter/letter', source=invitation_letter)
 
@@ -102,4 +96,3 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     except ValueError:
         LOGGER.debug('Did no send email...')
         return False
->>>>>>> 635ac640feabbe20761406986e83fe9c69978477

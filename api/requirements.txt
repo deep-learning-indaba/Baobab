@@ -32,9 +32,5 @@ enum34
 psycopg2-binary
 docx-mailmerge
 requests
-<<<<<<< HEAD
 google
-=======
-comtypes
 libreoffice
->>>>>>> 635ac640feabbe20761406986e83fe9c69978477
