@@ -9,6 +9,7 @@ from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
+from invitationletter import api as invitation_letter_api
 
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
@@ -75,3 +76,5 @@ rest_api.add_resource(registration_response.RegistrationConfirmedAPI,
                       '/api/v1/registration/confirmed')
 rest_api.add_resource(registration_response.RegistrationConfirmAPI,
                       '/api/v1/registration/confirm')
+rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
+                      '/api/v1/invitation-letter')
