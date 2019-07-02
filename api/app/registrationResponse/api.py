@@ -31,7 +31,6 @@ We look forward to seeing you at the event!
 Kind Regards,
 The {event_name} Organisers
 """
-# TODO: Add event location to Event model and replace hard-coded "Nairobi" with this.
 
 
 def _get_answer_value(answer, question):
