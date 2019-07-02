@@ -11,6 +11,8 @@ from app.events.models import Event
 from app import db
 from app.utils import errors
 
+from google.oauth2 import service_account
+
 # This is a strange way of doing it, but given the time constraints, I'll let it through
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
 
