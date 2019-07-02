@@ -100,6 +100,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                nationality=nationality,
                                date_of_birth=date_of_birth,
                                email=user.email,
+                               user_title=user.user_title,
                                firstname=user.firstname,
                                lastname=user.lastname)
 

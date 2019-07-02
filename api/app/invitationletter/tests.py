@@ -75,7 +75,7 @@ class InvitationLetterTests(ApiTestCase):
 
         template = InvitationTemplate(
             event_id=event.id,
-            template_path="https://wwww.template.com/blah ",
+            template_path="invitation_template.docx",
             send_for_travel_award_only=False,
             send_for_accommodation_award_only=False,
             send_for_both_travel_accommodation=True)
