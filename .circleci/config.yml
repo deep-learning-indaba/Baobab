@@ -6,7 +6,9 @@ jobs:
       - checkout
       - run:
           name: Start container
-          command: docker-compose up -d
+          command: |
+            openssl aes256 -md md5 -d -in docker-compose.circleci.yaml.enc -out docker-compose.yaml -pass pass:$CONFIG_PASSWORD
+            docker-compose up -d
       - run:
           name: Run migrations
           command: |
