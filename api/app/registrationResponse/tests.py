@@ -382,7 +382,6 @@ class RegistrationApiTest(ApiTestCase):
             self.seed_static_data()
             response = self.app.get('/api/v1/registration/confirmed?event_id=1',
                     headers=self.headers)
-            print('Response:', response)
             self.assertEqual(response.status_code, 403)
 
     
@@ -403,3 +402,22 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[0]['user_category'], 'Postdoc')
             self.assertEqual(responses[0]['affiliation'], 'University of Indaba')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
+
+    def test_confirm_admin(self):
+        with app.app_context():
+            self.seed_static_data(create_registration=True)
+            response = self.app.post('/api/v1/registration/confirm',
+                    data={'registration_id': self.registration1.id},
+                    headers=self.headers)
+            self.assertEqual(response.status_code, 403)
+
+    def test_confirm(self):
+        with app.app_context():
+            self.seed_static_data(create_registration=True)
+            response = self.app.post('/api/v1/registration/confirm',
+                    data={'registration_id': self.registration1.id},
+                    headers=self.adminHeaders)
+            self.assertEqual(response.status_code, 200)
+
+            updated_registration = db.session.query(Registration).filter(Registration.id == self.registration1.id).one()
+            self.assertTrue(updated_registration.confirmed)

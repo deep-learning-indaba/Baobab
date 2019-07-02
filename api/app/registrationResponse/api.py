@@ -1,17 +1,19 @@
 import abc
 from abc import ABCMeta
-from datetime import date
+from datetime import date, datetime
 import traceback
 from flask_restful import reqparse, fields, marshal_with, marshal
 import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
-from app.registrationResponse.mixins import RegistrationResponseMixin, RegistrationAdminMixin
+from app.registrationResponse.mixins import RegistrationResponseMixin, RegistrationAdminMixin, RegistrationConfirmMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.users.models import AppUser
 from app.events.models import Event
 from app.utils.auth import auth_required, admin_required
+from app.users.repository import UserRepository
+from app.events.repository import EventRepository
 from app.utils import errors, emailer, strings
 from app import LOGGER
 from app.users.repository import UserRepository as user_repository
@@ -22,6 +24,14 @@ from app import db
 
 
 REGISTRATION_MESSAGE = 'Thank you for completing our registration form.'
+REGISTRATION_CONFIRMED_MESSAGE = """Your registration to {event_name} has been confirmed! This means that all required payment has been completed. 
+
+We look forward to seeing you at the event!
+
+Kind Regards,
+The {event_name} Organisers
+"""
+# TODO: Add event location to Event model and replace hard-coded "Nairobi" with this.
 
 
 def _get_answer_value(answer, question):
@@ -268,7 +278,7 @@ registration_admin_fields = {
 
 def _get_registrations(event_id, user_id, confirmed):
     try:
-        current_user = db.session.query(AppUser).filter(AppUser.id == user_id).one()
+        current_user = UserRepository.get_by_id(user_id)
         if not current_user.is_registration_admin(event_id):
             return errors.FORBIDDEN
 
@@ -300,3 +310,45 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
         user_id = g.current_user['id']
 
         return _get_registrations(event_id, user_id, confirmed=True)
+
+
+def _send_registration_confirmation_mail(user, event_name):
+    subject = event_name + ' Registration Confirmation'
+    greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
+    body_text = greeting + '\n\n' + REGISTRATION_CONFIRMED_MESSAGE.format(event_name=event_name)
+    
+    try:
+        emailer.send_mail(user.email, subject, body_text=body_text)
+        return True
+    except Exception as e:
+        LOGGER.error('Error occured while sending email to {}: {}'.format(user.email, e))
+        return False
+
+
+class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
+
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+        registration_id = args['registration_id']
+        user_id = g.current_user['id']
+
+        try:
+            current_user = UserRepository.get_by_id(user_id)
+            registration, offer = RegistrationRepository.get_by_id_with_offer(registration_id)
+            if not current_user.is_registration_admin(offer.event_id):
+                return errors.FORBIDDEN
+
+            registration.confirm()
+            
+
+            registration_user = UserRepository.get_by_id(offer.user_id)
+            registration_event = EventRepository.get_by_id(offer.event_id)
+            if _send_registration_confirmation_mail(registration_user, registration_event.name):
+                registration.confirmation_email_sent_at = datetime.now()
+
+            db.session.commit()
+
+        except Exception as e:
+            LOGGER.error('Error occured while confirming registration with id {}: {}'.format(registration_id, e))
+            return errors.DB_NOT_AVAILABLE
