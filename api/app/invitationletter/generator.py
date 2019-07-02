@@ -14,12 +14,10 @@ from app.utils import errors
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = json.dumps(GCP_CREDENTIALS_DICT)
 
 
-OFFER_EMAIL_BODY = """
+INVITATION_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
 
-Congratulations! You've been selected to attend the {event_name}!
-
-Please see the attached document below for your acceptance of offer: {host}/offer
+Your official invitation letter is attached!
 
 If you have any queries, please forward them to info@deeplearningindaba.com  
 
@@ -90,8 +88,12 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     subject = "Invitation Letter for " + event.name
 
     try:
-        emailer.send_mail(recipient=email, subject=subject, body_html=OFFER_EMAIL_BODY, charset='UTF-8', mail_type='AMZ'
-                          , file_name=template_path, file_path=template_pdf)
+        emailer.send_mail(recipient=email,
+                          subject=subject,
+                          body_html=INVITATION_EMAIL_BODY.format(
+                            user_title=user_title, first_name=firstname, last_name=lastname),
+                          file_name=template_path,
+                          file_path=template_pdf)
 
         LOGGER.debug('successfully sent email...')
         return True
