@@ -79,7 +79,7 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
-            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
+            mv Dockerfile.deploy Dockerfile # It doesn't like deploying to flex:python with Dockerfile
             gcloud app deploy --version=v1
 
 
