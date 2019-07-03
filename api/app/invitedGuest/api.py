@@ -150,3 +150,23 @@ class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
         views = [InvitedGuestView(invited_guest)
                  for invited_guest in invited_guests]
         return views
+
+
+class CheckIfInvitedGuest(InvitedGuestListMixin, restful.Resource):
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
+
+        existing_invited_guest = db.session.query(InvitedGuest).filter(
+            InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == current_user_id).first()
+
+        try:
+
+            if existing_invited_guest is None:
+                return "Not an invited guest", 404
+            else:
+                return "Invited Guest", 200
+        except Exception as e:
+            return 'Could not access DB', 400

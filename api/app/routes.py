@@ -9,8 +9,8 @@ from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
+from guestRegistrations import api as guest_registration
 from invitationletter import api as invitation_letter_api
-
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -61,6 +61,8 @@ rest_api.add_resource(invitedGuest_api.CreateUser,
                       '/api/v1/invitedGuest/create')
 rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
+rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
+                      '/api/v1/checkIfInvitedGuest')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
@@ -70,6 +72,10 @@ rest_api.add_resource(registration_api.RegistrationQuestionAPI,
                       '/api/v1/registration-question')
 rest_api.add_resource(registration_response.RegistrationApi,
                       '/api/v1/registration-response')
+rest_api.add_resource(guest_registration.GuestRegistrationApi,
+                      '/api/v1/guest-registration')
+rest_api.add_resource(guest_registration.GuestRegistrationFormAPI,
+                      '/api/v1/guest-registration-form')
 rest_api.add_resource(registration_response.RegistrationUnconfirmedAPI,
                       '/api/v1/registration/unconfirmed')
 rest_api.add_resource(registration_response.RegistrationConfirmedAPI,
