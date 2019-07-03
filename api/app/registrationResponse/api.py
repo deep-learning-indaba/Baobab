@@ -338,13 +338,13 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
 
             registration.confirm()
             
-
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
             if _send_registration_confirmation_mail(registration_user, registration_event.name):
                 registration.confirmation_email_sent_at = datetime.now()
 
             db.session.commit()
+            return 'Confirmed Registration for {} {}'.format(registration_user.firstname, registration_user.lastname), 200
 
         except Exception as e:
             LOGGER.error('Error occured while confirming registration with id {}: {}'.format(registration_id, e))
