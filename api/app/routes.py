@@ -70,5 +70,11 @@ rest_api.add_resource(registration_api.RegistrationQuestionAPI,
                       '/api/v1/registration-question')
 rest_api.add_resource(registration_response.RegistrationApi,
                       '/api/v1/registration-response')
+rest_api.add_resource(registration_response.RegistrationUnconfirmedAPI,
+                      '/api/v1/registration/unconfirmed')
+rest_api.add_resource(registration_response.RegistrationConfirmedAPI,
+                      '/api/v1/registration/confirmed')
+rest_api.add_resource(registration_response.RegistrationConfirmAPI,
+                      '/api/v1/registration/confirm')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
