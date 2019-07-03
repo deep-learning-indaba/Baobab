@@ -203,7 +203,10 @@ class InvitationLetterForm extends Component {
             response => {
               this.setState({
                 loading: false,
-                inivitationLetterId: response.invitationLetterId,
+                invitationLetterId:
+                  response && response.data
+                    ? response.data.invitation_letter_request_id
+                    : null,
                 error: response.error
               });
             },
@@ -448,6 +451,13 @@ class InvitationLetterForm extends Component {
           </button>
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
           {error && <div class="alert alert-danger">{error}</div>}
+          {this.state.invitationLetterId && (
+            <div className={"alert alert-success"}>
+              Invitation Letter request has been received. Invitation Letter
+              Request ID : {this.state.invitationLetterId}, for future
+              enquiries.
+            </div>
+          )}
         </form>
       </div>
     );
