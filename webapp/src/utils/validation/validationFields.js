@@ -49,9 +49,9 @@ const validationFields = {
     description: "Full Name as it appears on Passport."
   },
 
-  passportIssuedByDate: {
-    name: "passportIssuedByDate",
-    display: "Passport Date of Issue"
+  passportExpiryDate: {
+    name: "passportExpiryDate",
+    display: "Passport Date of Expiry."
   },
   passportIssuedByAuthority: {
     name: "passportIssuedByAuthority",

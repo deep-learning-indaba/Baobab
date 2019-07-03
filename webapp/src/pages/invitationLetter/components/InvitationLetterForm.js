@@ -18,12 +18,14 @@ const fieldValidations = [
   ruleRunner(validationFields.passportNumber, requiredText),
   ruleRunner(validationFields.fullNameOnPassport, requiredText),
   ruleRunner(validationFields.passportIssuedByAuthority, requiredText),
-  ruleRunner(validationFields.passportIssuedByDate, isValidDate),
+  ruleRunner(validationFields.passportExpiryDate, isValidDate),
   ruleRunner(validationFields.residentialStreet1, requiredText),
   ruleRunner(validationFields.residentialCity, requiredText),
   ruleRunner(validationFields.residentialPostalCode, requiredText),
   ruleRunner(validationFields.residentialCountry, requiredDropdown)
 ];
+
+const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 class InvitationLetterForm extends Component {
   constructor(props) {
     super(props);
@@ -38,7 +40,6 @@ class InvitationLetterForm extends Component {
         passportIssuedByAuthority: "",
         bringingAPoster: false
       },
-      submitted: false,
       loading: false,
       showWorkAddress: false,
       errors: []
@@ -145,6 +146,7 @@ class InvitationLetterForm extends Component {
       this.state.errors.$set.length > 0
     )
       return;
+
     event.preventDefault();
     const {
       workStreet1,
@@ -159,13 +161,21 @@ class InvitationLetterForm extends Component {
       residentialCountry
     } = this.state.user;
     let workFullAddress = null;
-    if (this.state.showWorkAddress) {
+    const residentialCountryValue = this.getContentValue(
+      this.state.countryOptions,
+      residentialCountry
+    );
+    if (this.state.showWorkAddress === true) {
+      const workCountryValue = this.getContentValue(
+        this.state.countryOptions,
+        workCountry
+      );
       workFullAddress = this.convertAddressField(
         workStreet1,
         workStreet2,
         workCity,
         workPostalCode,
-        workCountry
+        workCountryValue
       );
     }
 
@@ -174,7 +184,7 @@ class InvitationLetterForm extends Component {
       residentialStreet2,
       residentialCity,
       residentialPostalCode,
-      residentialCountry
+      residentialCountryValue
     );
 
     this.setState(
@@ -187,24 +197,26 @@ class InvitationLetterForm extends Component {
       },
       () => {
         this.setState({ loading: true });
-        registrationService.requestInvitationLetter(this.state.user).then(
-          response => {
-            this.setState({
-              loading: false,
-              created: true,
-              inivitationLetterId: response.invitationLetterId
-            });
-          },
-          error =>
-            this.setState({
-              error:
-                error.response && error.response.data
-                  ? error.response.data.message
-                  : error.message,
-              loading: false
-            })
-        );
-        this.setState({ submitted: true, showErrors: true });
+        registrationService
+          .requestInvitationLetter(this.state.user, DEFAULT_EVENT_ID)
+          .then(
+            response => {
+              this.setState({
+                loading: false,
+                inivitationLetterId: response.invitationLetterId,
+                error: response.error
+              });
+            },
+            error =>
+              this.setState({
+                error:
+                  error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                loading: false
+              })
+          );
+        this.setState({ showErrors: true });
       }
     );
   };
@@ -234,7 +246,7 @@ class InvitationLetterForm extends Component {
     const {
       passportNumber,
       fullNameOnPassport,
-      passportIssuedByDate,
+      passportExpiryDate,
       passportIssuedByAuthority,
       nationality,
       residence,
@@ -304,14 +316,14 @@ class InvitationLetterForm extends Component {
             </div>
             <div class={passportDetailsStyleLine1}>
               <FormTextBox
-                id={validationFields.passportIssuedByDate.name}
+                id={validationFields.passportExpiryDate.name}
                 type="date"
-                placeholder={validationFields.passportIssuedByDate.display}
+                placeholder={validationFields.passportExpiryDate.display}
                 onChange={this.handleChange(
-                  validationFields.passportIssuedByDate
+                  validationFields.passportExpiryDate
                 )}
-                value={passportIssuedByDate}
-                label={validationFields.passportIssuedByDate.display}
+                value={passportExpiryDate}
+                label={validationFields.passportExpiryDate.display}
               />
             </div>
           </div>
