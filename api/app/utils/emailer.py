@@ -5,9 +5,12 @@ import smtplib
 import email.utils
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 
-def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ'):
+def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
+              file_path=''):
     '''[summary]
 
     Arguments:
@@ -33,6 +36,16 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
 
                 body_part1 = MIMEText(body_text, 'plain', _charset=charset)
                 body_part2 = MIMEText(body_html, 'html', _charset=charset)
+
+                if file_name != "" and file_path != "":
+                    attachment = open(file_path, "rb")
+
+                    part = MIMEBase('application', 'octet-stream')
+                    part.set_payload(attachment.read())
+                    encoders.encode_base64(part)
+
+                    part.add_header('Content-Disposition', "attachment; filename= %s" % file_name)
+                    msg.attach(part)
 
                 msg.attach(body_part1)
                 msg.attach(body_part2)

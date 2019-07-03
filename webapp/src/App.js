@@ -20,6 +20,7 @@ import InvitedGuests from "./pages/invitedGuests";
 import CreateInvitedGuests from "./pages/createInvitedGuest";
 import Registration from "./pages/registration";
 import InvitedLetter from "./pages/invitationLetter";
+import RegistrationAdmin from "./pages/registrationAdmin";
 import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
@@ -77,6 +78,15 @@ class App extends Component {
       user.is_admin || (user.roles && user.roles.some(r => r.role === "admin"))
     );
   };
+
+  isRegistrationAdmin = user => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin || (user.roles && user.roles.some(r => (r.role === "admin" || r.role === 'registration-admin')))
+    );
+  }
 
   isEventReviewer = user => {
     if (!user) {
@@ -245,6 +255,30 @@ class App extends Component {
                     </div>
                   </li>
                 )}
+                {this.isRegistrationAdmin(this.state.user) && (
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
+                      Registration Admin
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/registrationAdmin"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Unconfirmed Registrations
+                      </NavLink>
+                    </div>
+                  </li>
+                )}
               </ul>
               <UserDropdown
                 logout={this.refreshUser}
@@ -317,6 +351,7 @@ class App extends Component {
                 <PrivateRoute exact path="/offer" component={Offer} />
                 <PrivateRoute exact path="/registration" component={Registration} />
                 <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile} />
+                <PrivateRoute exact path="/registrationAdmin" component={RegistrationAdmin} />
 
               </Switch>
             </div>

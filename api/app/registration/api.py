@@ -139,6 +139,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
         event_id = args['event_id']
+        email_template = args['email_template']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
@@ -165,8 +166,9 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.commit()
 
         if user.email:
+            email_body_template = email_template or OFFER_EMAIL_BODY
             send_mail(recipient=user.email, subject='{} Application Status Update'.format(event_name),
-                      body_text=OFFER_EMAIL_BODY.format(
+                      body_text=email_body_template.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
                             event_name=event_name, host=get_baobab_host(),
                             expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d")))
@@ -190,7 +192,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                 Question.headline == 'Would you like to be considered for a travel award?'
             ).join(Response, Answer.response_id == Response.id).filter(
                 Response.user_id == user_id, Response.is_submitted == True
-            )
+            ).first()
 
             if not offer:
                 return errors.OFFER_NOT_FOUND
