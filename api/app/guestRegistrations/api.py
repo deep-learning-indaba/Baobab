@@ -145,9 +145,9 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
             email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
                                    event_name)
-            # if email_sent:
-            #     registration.confirmation_email_sent_at = date.today();
-            #     db.session.commit()
+            if email_sent:
+                registration.confirmation_email_sent_at = date.today();
+                db.session.commit()
 
             return registration, 201  # 201 is 'CREATED' status code
         except SQLAlchemyError as e:
