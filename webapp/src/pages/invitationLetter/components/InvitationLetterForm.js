@@ -399,7 +399,8 @@ class InvitationLetterForm extends Component {
 
           <p>
             We have the following values required for your invitation from your
-            user profile. Please go to the user page if you need to update them.
+            user profile. Please go to the user profile page if you need to
+            update them.
           </p>
           <div class="row">
             <div class={nationResidenceDetailsStyle}>
