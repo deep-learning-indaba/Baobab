@@ -81,7 +81,7 @@ const validationFields = {
   },
   letterAddressedTo: {
     name: "letterAddressedTo",
-    display: "Addressed to: ",
+    display: "Addressed to ",
     description:
       "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy"
   }
