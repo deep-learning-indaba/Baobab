@@ -202,7 +202,7 @@ function requestInvitationLetter(user, event_id) {
     residential_address: user.residentialFullAddress,
     passport_name: user.fullNameOnPassport,
     passport_no: user.passportNumber,
-    passport_issued_by: user.passportIssuedBy,
+    passport_issued_by: user.passportIssuedByAuthority,
     passport_expiry_date: user.passportExpiryDate
   };
   return axios
