@@ -27,15 +27,12 @@ The Deep Learning Indaba Team
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
-    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
-        LOGGER.debug('Setting dummy storage client')
-        storage_client = storage.Client(project=GCP_PROJECT_NAME)
-    else:
-        LOGGER.debug('Setting GCP storage client')
-        credentials = service_account.Credentials.from_service_account_info(
-            GCP_CREDENTIALS_DICT
-        )
-        storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
+
+    LOGGER.debug('Setting GCP storage client')
+    credentials = service_account.Credentials.from_service_account_info(
+        GCP_CREDENTIALS_DICT
+    )
+    storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
 
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(source_blob_name)

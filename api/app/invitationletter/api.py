@@ -100,21 +100,24 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
 
+            bringing_poster = ""
 
             poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
-            poster_answer = (
-                db.session.query(RegistrationAnswer)
-                .join(Registration, RegistrationAnswer.registration_id == Registration.id)
-                .filter(Registration.user_id == user_id)
-                .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
-                .first()
-            )
+            if poster_registration_question is not None:
+                poster_answer = (
+                    db.session.query(RegistrationAnswer)
+                    .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                    .join(Offer, Offer.id == Registration.offer_id)
+                    .filter(Offer.user_id == user_id)
+                    .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
+                    .first()
+                )
 
-            if poster_answer is not None and poster_answer.value == "yes":
-                # Get whether they submitted a poster in registration
-                bringing_poster = "The candidate will be presenting an academic poster on their research."
-            else:
-                bringing_poster = ""
+                if poster_answer is not None and poster_answer.value == "yes":
+                    # Get whether they submitted a poster in registration
+                    bringing_poster = "The candidate will be presenting an academic poster on their research."
+
+                
 
 
             is_sent = generate(template_path=template_url,
