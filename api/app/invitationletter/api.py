@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from app.utils.auth import verify_token
 from flask import g, request
 from app.invitationletter.models import InvitationTemplate
-from app.registration.models import Offer
+from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationQuestion
 from app.invitationletter.mixins import InvitationMixin
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.generator import generate
