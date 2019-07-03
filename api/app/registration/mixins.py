@@ -17,6 +17,7 @@ class OfferMixin(object):
     req_parser.add_argument('rejected_reason', type=str, required=False)
     req_parser.add_argument('candidate_response', type=bool, required=False)
     req_parser.add_argument('responded_at', type=str, required=False)
+    req_parser.add_argument('email_template', type=str, required=False)
 
 
 class RegistrationFormMixin(object):

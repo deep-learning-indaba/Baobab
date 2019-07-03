@@ -113,7 +113,6 @@ class Registration(db.Model):
 
     def confirm(self):
         self.confirmed = True
-        self.confirmation_email_sent_at = date.today()
 
 
 class RegistrationAnswer(db.Model):

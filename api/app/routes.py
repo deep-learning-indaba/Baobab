@@ -76,6 +76,11 @@ rest_api.add_resource(guest_registration.GuestRegistrationApi,
                       '/api/v1/guest-registration')
 rest_api.add_resource(guest_registration.GuestRegistrationFormAPI,
                       '/api/v1/guest-registration-form')
-
+rest_api.add_resource(registration_response.RegistrationUnconfirmedAPI,
+                      '/api/v1/registration/unconfirmed')
+rest_api.add_resource(registration_response.RegistrationConfirmedAPI,
+                      '/api/v1/registration/confirmed')
+rest_api.add_resource(registration_response.RegistrationConfirmAPI,
+                      '/api/v1/registration/confirm')
 rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
