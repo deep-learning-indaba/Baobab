@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from app.utils.auth import verify_token
 from flask import g, request
 from app.invitationletter.models import InvitationTemplate
-from app.registration.models import Offer
+from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationQuestion
 from app.invitationletter.mixins import InvitationMixin
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.generator import generate
@@ -33,8 +33,12 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         passport_name = args['passport_name']
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
-        to_date = datetime.strptime((args['to_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
-        from_date = datetime.strptime((args['from_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        passport_expiry_date = datetime.strptime((args['passport_expiry_date']),
+                                                 '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+        to_date = datetime.strptime((args['to_date']),
+                                    '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+        from_date = datetime.strptime((args['from_date']),
+                                      '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
         user_id = verify_token(request.headers.get('Authorization'))['id']
 
         invitation_letter_request = InvitationLetterRequest(
@@ -46,6 +50,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             passport_name=passport_name,
             passport_no=passport_no,
             passport_issued_by=passport_issued_by,
+            passport_expiry_date=passport_expiry_date,
             invitation_letter_sent_at=datetime.now().strftime("%Y-%m-%d"),
             to_date=to_date,
             from_date=from_date,
@@ -81,6 +86,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(not InvitationTemplate.send_for_travel_award_only)\
                 .filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
+
         if invitation_template:
             template_url = invitation_template.template_path
 
@@ -94,6 +100,26 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
 
+            bringing_poster = ""
+
+            poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
+            if poster_registration_question is not None:
+                poster_answer = (
+                    db.session.query(RegistrationAnswer)
+                    .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                    .join(Offer, Offer.id == Registration.offer_id)
+                    .filter(Offer.user_id == user_id)
+                    .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
+                    .first()
+                )
+
+                if poster_answer is not None and poster_answer.value == "yes":
+                    # Get whether they submitted a poster in registration
+                    bringing_poster = "The candidate will be presenting an academic poster on their research."
+
+                
+
+
             is_sent = generate(template_path=template_url,
                                event_id=event_id,
                                work_address=work_address,
@@ -103,12 +129,18 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                passport_no=passport_no,
                                passport_issued_by=passport_issued_by,
                                invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at,
+                               expiry_date=passport_expiry_date,
                                to_date=to_date,
                                from_date=from_date,
                                country_of_residence=country_of_residence,
                                nationality=nationality,
                                date_of_birth=date_of_birth,
-                               email=user.email)
+                               email=user.email,
+                               user_title=user.user_title,
+                               firstname=user.firstname,
+                               lastname=user.lastname,
+                               bringing_poster=bringing_poster
+                               )
 
             if is_sent:
                 try:

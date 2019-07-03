@@ -6,6 +6,10 @@ RUN apt-get install -y socat git software-properties-common postgresql-client po
 RUN apt-get update -qq
 RUN apt-get install -y python-pip python-psycopg2 libpq-dev python2.7-dev gunicorn libmagic1 libffi-dev
 
+RUN add-apt-repository ppa:libreoffice/ppa
+RUN apt-get update -qq
+RUN apt-get install -y libreoffice
+
 RUN mkdir /code
 ADD . /code/
 WORKDIR /code

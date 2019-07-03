@@ -9,6 +9,9 @@ from app.registration.models import Offer
 from app.registration.models import Registration
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.models import InvitationTemplate
+from app.utils.pdfconvertor import convert_to
+from app.invitationletter.generator import generate
+from nose.tools import nottest
 
 
 INVITATION_LETTER = {
@@ -20,6 +23,7 @@ INVITATION_LETTER = {
    'passport_name': "Jane Doe",
    'passport_no': "23456565",
    'passport_issued_by': "Neverland",
+   'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
    'to_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
    'from_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 }
@@ -80,10 +84,11 @@ class InvitationLetterTests(ApiTestCase):
 
         template = InvitationTemplate(
             event_id=event.id,
-            template_path="https://wwww.template.com/blah ",
+            template_path="invitation_template.docx",
             send_for_travel_award_only=False,
             send_for_accommodation_award_only=False,
             send_for_both_travel_accommodation=True)
+            
         db.session.add(template)
         db.session.commit()
 
@@ -101,6 +106,7 @@ class InvitationLetterTests(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
+    @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
         response = self.app.post(
@@ -124,6 +130,34 @@ class InvitationLetterTests(ApiTestCase):
             == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         assert letter.from_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')\
             == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+
+
+class PDFConverterTest(ApiTestCase):
+
+    @nottest # Need to figure out how to test properly with docker
+    def test_generator(self):
+        self.assertEqual(generate(template_path='app/invitationletter/letter/testsample.docx',
+                                  event_id=1,
+                                  work_address='my-work-address',
+                                  addressed_to='Mr.',
+                                  residential_address='PTA',
+                                  passport_name='mypassport',
+                                  passport_no='098765',
+                                  passport_issued_by='RSA',
+                                  invitation_letter_sent_at='',
+                                  to_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  from_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  country_of_residence='South Africa',
+                                  nationality='South African',
+                                  date_of_birth=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  email='info@gmail.com',
+                                  user_title='Mr',
+                                  firstname='Lindani',
+                                  lastname='Mabaso',
+                                  bringing_poster='No',
+                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')), True)
+
+
 
        
 
