@@ -283,15 +283,14 @@ class InvitationLetterForm extends Component {
       residence
     );
 
-    const passportDetailsStyleLine1 = createColClassName(12, 3, 4, 4);
-    const passportDetailsStyleLine2 = createColClassName(12, 2, 3, 3);
+    const passportDetailsStyleLine = createColClassName(12, 3, 4, 4);
     const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
     return (
       <div className="InvitationLetter">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
           <div class="row">
-            <div class={passportDetailsStyleLine1}>
+            <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -304,7 +303,7 @@ class InvitationLetterForm extends Component {
                 description={validationFields.fullNameOnPassport.description}
               />
             </div>
-            <div class={passportDetailsStyleLine1}>
+            <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -314,7 +313,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportNumber.display}
               />
             </div>
-            <div class={passportDetailsStyleLine1}>
+            <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportExpiryDate.name}
                 type="date"
@@ -328,7 +327,7 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
           <div class="row">
-            <div class={passportDetailsStyleLine2}>
+            <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -340,7 +339,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportIssuedByAuthority.display}
               />
             </div>
-            <div class={passportDetailsStyleLine2}>
+            <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
                 type="text"
@@ -351,18 +350,7 @@ class InvitationLetterForm extends Component {
                 description={validationFields.letterAddressedTo.description}
               />
             </div>
-            <div class={passportDetailsStyleLine2}>
-              <label>
-                {"Will you be presenting a poster ? "}
-                <input
-                  name="bringingPoster"
-                  type="checkbox"
-                  checked={bringingAPoster}
-                  onChange={this.toggleBringingAPoster}
-                />
-              </label>
-            </div>
-            <div class={passportDetailsStyleLine2}>
+            <div class={passportDetailsStyleLine}>
               <label>
                 {"Are you currently employed ? "}
                 <input
