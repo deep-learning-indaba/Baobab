@@ -12,6 +12,7 @@ import {
 import { userService } from "../../../services/user";
 import { getCounties } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
+import { registrationService } from "../../../services/registration";
 
 const fieldValidations = [
   ruleRunner(validationFields.passportNumber, requiredText),
@@ -122,9 +123,90 @@ class InvitationLetterForm extends Component {
       this.state.user.residentialCountry > 0
     );
   }
+  convertAddressField = (street1, street2, city, postalCode, country) => {
+    let newline = "\n";
+    let fullAddress = "".concat(
+      street1,
+      newline,
+      street2,
+      newline,
+      city,
+      newline,
+      postalCode,
+      newline,
+      country
+    );
+    return fullAddress;
+  };
   handleSubmit = event => {
+    if (
+      this.state.errors &&
+      this.state.errors.$set &&
+      this.state.errors.$set.length > 0
+    )
+      return;
     event.preventDefault();
-    this.setState({ submitted: true, showErrors: true });
+    const {
+      workStreet1,
+      workStreet2,
+      workCity,
+      workPostalCode,
+      workCountry,
+      residentialStreet1,
+      residentialStreet2,
+      residentialCity,
+      residentialPostalCode,
+      residentialCountry
+    } = this.state.user;
+    let workFullAddress = null;
+    if (this.state.showWorkAddress) {
+      workFullAddress = this.convertAddressField(
+        workStreet1,
+        workStreet2,
+        workCity,
+        workPostalCode,
+        workCountry
+      );
+    }
+
+    let residentialFullAddress = this.convertAddressField(
+      residentialStreet1,
+      residentialStreet2,
+      residentialCity,
+      residentialPostalCode,
+      residentialCountry
+    );
+
+    this.setState(
+      {
+        user: {
+          ...this.state.user,
+          workFullAddress: workFullAddress,
+          residentialFullAddress: residentialFullAddress
+        }
+      },
+      () => {
+        this.setState({ loading: true });
+        registrationService.requestInvitationLetter(this.state.user).then(
+          response => {
+            this.setState({
+              loading: false,
+              created: true,
+              inivitationLetterId: response.invitationLetterId
+            });
+          },
+          error =>
+            this.setState({
+              error:
+                error.response && error.response.data
+                  ? error.response.data.message
+                  : error.message,
+              loading: false
+            })
+        );
+        this.setState({ submitted: true, showErrors: true });
+      }
+    );
   };
   toggleWork = () => {
     let currentShowAddressState = this.state.showWorkAddress;
@@ -167,7 +249,8 @@ class InvitationLetterForm extends Component {
       residentialCity,
       residentialPostalCode,
       residentialCountry,
-      bringingAPoster
+      bringingAPoster,
+      letterAddressedTo
     } = this.state.user;
 
     const {
@@ -188,15 +271,15 @@ class InvitationLetterForm extends Component {
       residence
     );
 
-    const passportDetailsStyle = createColClassName(12, 2, 3, 3);
+    const passportDetailsStyleLine1 = createColClassName(12, 3, 4, 4);
+    const passportDetailsStyleLine2 = createColClassName(12, 2, 3, 3);
     const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
-    const checkboxStyle = createColClassName(12, 4, 6, 6);
     return (
       <div className="InvitationLetter">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
           <div class="row">
-            <div class={passportDetailsStyle}>
+            <div class={passportDetailsStyleLine1}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -209,7 +292,7 @@ class InvitationLetterForm extends Component {
                 description={validationFields.fullNameOnPassport.description}
               />
             </div>
-            <div class={passportDetailsStyle}>
+            <div class={passportDetailsStyleLine1}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -219,8 +302,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportNumber.display}
               />
             </div>
-
-            <div class={passportDetailsStyle}>
+            <div class={passportDetailsStyleLine1}>
               <FormTextBox
                 id={validationFields.passportIssuedByDate.name}
                 type="date"
@@ -232,7 +314,9 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportIssuedByDate.display}
               />
             </div>
-            <div class={passportDetailsStyle}>
+          </div>
+          <div class="row">
+            <div class={passportDetailsStyleLine2}>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -244,9 +328,18 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportIssuedByAuthority.display}
               />
             </div>
-          </div>
-          <div class="row">
-            <div class={checkboxStyle}>
+            <div class={passportDetailsStyleLine2}>
+              <FormTextBox
+                id={validationFields.letterAddressedTo.name}
+                type="text"
+                placeholder={validationFields.letterAddressedTo.display}
+                onChange={this.handleChange(validationFields.letterAddressedTo)}
+                value={letterAddressedTo}
+                label={validationFields.letterAddressedTo.display}
+                description={validationFields.letterAddressedTo.description}
+              />
+            </div>
+            <div class={passportDetailsStyleLine2}>
               <label>
                 {"Will you be presenting a poster ? "}
                 <input
@@ -257,7 +350,7 @@ class InvitationLetterForm extends Component {
                 />
               </label>
             </div>
-            <div class={checkboxStyle}>
+            <div class={passportDetailsStyleLine2}>
               <label>
                 {"Are you currently employed ? "}
                 <input
