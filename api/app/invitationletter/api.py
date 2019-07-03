@@ -115,7 +115,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
                 if poster_answer is not None and poster_answer.value == "yes":
                     # Get whether they submitted a poster in registration
-                    bringing_poster = "The candidate will be presenting an academic poster on their research."
+                    bringing_poster = "The participant will be presenting an academic poster on their research."
 
                 
 
