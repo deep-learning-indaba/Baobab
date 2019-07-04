@@ -190,6 +190,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
+    @nottest
     def test_create_create_invitation_letter_correct_template(self):
         self.seed_static_data()
         INVITATION_LETTER_2 = {
