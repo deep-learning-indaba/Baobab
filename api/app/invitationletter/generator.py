@@ -49,11 +49,39 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
 
     return source_blob_name
 
+def check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
+        passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
+    assert template_path is not None and isinstance(template_path, basestring) 
+    assert event_id is not None and isinstance(event_id, int) 
+    assert work_address is not None and isinstance(work_address, basestring) 
+    assert addressed_to is not None and isinstance(addressed_to, basestring) 
+    assert residential_address is not None and isinstance(residential_address, basestring) 
+    assert passport_name is not None and isinstance(passport_name, basestring) 
+    assert passport_no is not None and isinstance(passport_no, basestring) 
+    assert passport_issued_by is not None and isinstance(passport_issued_by, basestring) 
+    assert invitation_letter_sent_at is not None and isinstance(invitation_letter_sent_at, basestring) 
+    assert to_date is not None and isinstance(to_date, basestring) 
+    assert from_date is not None and isinstance(from_date, basestring) 
+    assert country_of_residence is not None and isinstance(country_of_residence, basestring) 
+    assert nationality is not None and isinstance(nationality, basestring) 
+    assert date_of_birth is not None and isinstance(date_of_birth, basestring) 
+    assert email is not None and isinstance(email, basestring) 
+    assert user_title is not None and isinstance(user_title, basestring) 
+    assert firstname is not None and isinstance(firstname, basestring) 
+    assert lastname is not None and isinstance(lastname, basestring) 
+    assert bringing_poster is not None and isinstance(bringing_poster, basestring) 
+    assert expiry_date is not None and isinstance(expiry_date, basestring) 
+
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
              nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
 
+    check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
+        passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date)
+    
     # Path to store the template locally of merged and unmerged
     template = 'app/invitationletter/template/template.docx'
     template_merged = 'app/invitationletter/letter/template.docx'
@@ -64,7 +92,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     if os.path.exists(template):
         document = MailMerge(template)
         LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
-
+        print(bringing_poster)
         document.merge(
             TITLE=user_title,
             FIRSTNAME=firstname,
@@ -88,8 +116,12 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         document.write(template_merged)
 
     # Conversion
-    pdfconvertor.convert_to(folder='app/invitationletter/letter', source=template_merged)
     template_pdf = 'app/invitationletter/letter/template.pdf'
+    if os.path.exists(template_pdf):
+        os.remove(template_pdf)
+    success = pdfconvertor.convert_to(folder='app/invitationletter/letter', source=template_merged, output=template_pdf)
+    if not success:
+        raise False
 
     event = db.session.query(Event).get(event_id)
     if not event:
@@ -108,10 +140,5 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         LOGGER.debug('successfully sent email...')
         return True
     except ValueError:
-        LOGGER.debug('Did no send email...')
+        LOGGER.debug('Did not send email...')
         return False
-    finally:
-        # delete files
-        os.remove(template)
-        os.remove(template_pdf)
-        os.remove(template_merged)

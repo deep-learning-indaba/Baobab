@@ -69,3 +69,4 @@ DUPLICATE_OFFER = (
     {'message': 'An offer already exists for the user_id and event_id'}, 409)
 SENDING_INVITATION_FAILED = (
     {'message': 'Invitation Letter failed to send'}, 502)
+    

@@ -27,6 +27,6 @@ class InvitationLetterRequest(db.Model):
     passport_no = db.Column(db.String(), nullable=False)
     passport_issued_by = db.Column(db.String(), nullable=False)
     passport_expiry_date = db.Column(db.DateTime(), nullable=False)
-    invitation_letter_sent_at = db.Column(db.String(), nullable=False)
+    invitation_letter_sent_at = db.Column(db.DateTime(), nullable=True)
     to_date = db.Column(db.DateTime(), nullable=False)
     from_date = db.Column(db.DateTime(), nullable=False)

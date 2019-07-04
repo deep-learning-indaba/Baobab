@@ -34,11 +34,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
         passport_expiry_date = datetime.strptime((args['passport_expiry_date']),
-                                                 '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+                                                 '%Y-%m-%dT%H:%M:%S.%fZ')
         to_date = datetime.strptime((args['to_date']),
-                                    '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+                                    '%Y-%m-%dT%H:%M:%S.%fZ')
         from_date = datetime.strptime((args['from_date']),
-                                      '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d")
+                                      '%Y-%m-%dT%H:%M:%S.%fZ')
         user_id = verify_token(request.headers.get('Authorization'))['id']
 
         invitation_letter_request = InvitationLetterRequest(
@@ -51,10 +51,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             passport_no=passport_no,
             passport_issued_by=passport_issued_by,
             passport_expiry_date=passport_expiry_date,
-            invitation_letter_sent_at=datetime.now().strftime("%Y-%m-%d"),
             to_date=to_date,
             from_date=from_date,
         )
+        db.session.add(invitation_letter_request)
+        db.session.commit()
 
         offer = db.session.query(Offer).filter(
             Offer.user_id == user_id).first()
@@ -98,7 +99,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
             country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
             nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
-            date_of_birth = user.user_dateOfBirth
+            date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
 
             bringing_poster = ""
 
@@ -117,8 +118,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                     # Get whether they submitted a poster in registration
                     bringing_poster = "The participant will be presenting an academic poster on their research."
 
-                
-
+            invitation_letter_request.invitation_letter_sent_at=datetime.now()
 
             is_sent = generate(template_path=template_url,
                                event_id=event_id,
@@ -128,12 +128,12 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                                passport_name=passport_name,
                                passport_no=passport_no,
                                passport_issued_by=passport_issued_by,
-                               invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at,
-                               expiry_date=passport_expiry_date,
-                               to_date=to_date,
-                               from_date=from_date,
-                               country_of_residence=country_of_residence,
-                               nationality=nationality,
+                               invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at.strftime("%Y-%m-%d"),
+                               expiry_date=passport_expiry_date.strftime("%Y-%m-%d"),
+                               to_date=to_date.strftime("%Y-%m-%d"),
+                               from_date=from_date.strftime("%Y-%m-%d"),
+                               country_of_residence=country_of_residence.name,
+                               nationality=nationality.name,
                                date_of_birth=date_of_birth,
                                email=user.email,
                                user_title=user.user_title,
