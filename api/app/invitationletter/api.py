@@ -35,7 +35,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         passport_name = args['passport_name']
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
-        passport_expiry_date = datetime.strptime((args['passport_expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        passport_expiry_date = datetime.strptime((args['passport_expiry_date']), '%Y-%m-%d')
 
         registration_event = EventRepository.get_by_id(event_id)
         if(registration_event is not None):
