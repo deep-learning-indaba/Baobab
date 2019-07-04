@@ -105,13 +105,14 @@ class InvitationLetterTests(ApiTestCase):
         data = json.loads(response.data)
         header = {'Authorization': data['token']}
         return header
-
+        
     @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
         response = self.app.post(
                 '/api/v1/invitation-letter', data=INVITATION_LETTER, headers=self.headers)
         data = json.loads(response.data)
+        print(data)
         LOGGER.debug("invitation letter: {}".format(data))
 
         letter = db.session.query(InvitationLetterRequest).filter(
@@ -126,11 +127,6 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.passport_name == "Jane Doe"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
-        assert letter.to_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')\
-            == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        assert letter.from_date.strftime('%Y-%m-%dT%H:%M:%S.%fZ')\
-            == datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-
 
 class PDFConverterTest(ApiTestCase):
 
