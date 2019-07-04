@@ -107,8 +107,10 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 not InvitationTemplate.send_for_both_travel_accommodation).filter(not InvitationTemplate.send_for_travel_award_only).filter(not InvitationTemplate.send_for_accommodation_award_only).first()
 
-        if invitation_template:
-            template_url = invitation_template.template_path
+        if not invitation_template:
+            return errors.TEMPLATE_NOT_FOUND
+        
+        template_url = invitation_template.template_path
 
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
         country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
