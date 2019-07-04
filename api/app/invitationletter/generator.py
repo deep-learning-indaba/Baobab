@@ -89,31 +89,32 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
                   destination_file_name=template)
 
-    if os.path.exists(template):
-        document = MailMerge(template)
-        LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
-        print(bringing_poster)
-        document.merge(
-            TITLE=user_title,
-            FIRSTNAME=firstname,
-            LASTNAME=lastname,
-            WORK_ADDRESS=work_address,
-            ADDRESSED_TO=addressed_to,
-            RESIDENTIAL_ADDRESS=residential_address,
-            PASSPORT_NAME=passport_name,
-            PASSPORT_NO=passport_no,
-            ISSUED_BY=passport_issued_by,
-            EXPIRY_DATE=expiry_date,
-            ACCOMODATION_END_DATE=to_date,
-            ACCOMODATION_START_DATE=from_date,
-            COUNTRY_OF_RESIDENCE=country_of_residence,
-            NATIONALITY=nationality,
-            DATE_OF_BIRTH=date_of_birth,
-            INVITATION_LETTER_SENT_AT=invitation_letter_sent_at,
-            BRINGING_POSTER=bringing_poster
-        )
+    if not os.path.exists(template):
+        return errors.TEMPLATE_NOT_FOUND
+        
+    document = MailMerge(template)
+    LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
+    document.merge(
+        TITLE=user_title,
+        FIRSTNAME=firstname,
+        LASTNAME=lastname,
+        WORK_ADDRESS=work_address,
+        ADDRESSED_TO=addressed_to,
+        RESIDENTIAL_ADDRESS=residential_address,
+        PASSPORT_NAME=passport_name,
+        PASSPORT_NO=passport_no,
+        ISSUED_BY=passport_issued_by,
+        EXPIRY_DATE=expiry_date,
+        ACCOMODATION_END_DATE=to_date,
+        ACCOMODATION_START_DATE=from_date,
+        COUNTRY_OF_RESIDENCE=country_of_residence,
+        NATIONALITY=nationality,
+        DATE_OF_BIRTH=date_of_birth,
+        INVITATION_LETTER_SENT_AT=invitation_letter_sent_at,
+        BRINGING_POSTER=bringing_poster
+    )
 
-        document.write(template_merged)
+    document.write(template_merged)
 
     # Conversion
     template_pdf = 'app/invitationletter/letter/template.pdf'
