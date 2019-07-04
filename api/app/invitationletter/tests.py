@@ -106,7 +106,6 @@ class InvitationLetterTests(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
-    @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
         response = self.app.post(
@@ -160,7 +159,6 @@ class PDFConverterTest(ApiTestCase):
         db.session.commit()
         self.event = event
 
-    @nottest
     def test_generator(self):
         self.seed_static_data()
         self.assertEqual(generate(template_path='Indaba 2019  - Invitation Letter - General.docx',
