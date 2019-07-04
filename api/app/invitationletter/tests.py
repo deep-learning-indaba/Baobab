@@ -105,10 +105,32 @@ class InvitationLetterTests(ApiTestCase):
         data = json.loads(response.data)
         header = {'Authorization': data['token']}
         return header
-        
+
     @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
+        response = self.app.post(
+                '/api/v1/invitation-letter', data=INVITATION_LETTER, headers=self.headers)
+        data = json.loads(response.data)
+        LOGGER.debug("invitation letter: {}".format(data))
+
+        letter = db.session.query(InvitationLetterRequest).filter(
+            InvitationLetterRequest.id == data['invitation_letter_request_id']).first()
+
+        assert response.status_code == 201
+        assert data['invitation_letter_request_id'] == 1
+        assert letter.event_id == 1
+        assert letter.work_address == "Somewhere over the rainbow"
+        assert letter.addressed_to == "Sir"
+        assert letter.residential_address == "Way up high"
+        assert letter.passport_name == "Jane Doe"
+        assert letter.passport_no == "23456565"
+        assert letter.passport_issued_by == "Neverland"
+
+    @nottest
+    def test_create_create_invitation_letter_no_work(self):
+        self.seed_static_data()
+        INVITATION_LETTER['work_address'] = None
         response = self.app.post(
                 '/api/v1/invitation-letter', data=INVITATION_LETTER, headers=self.headers)
         data = json.loads(response.data)
@@ -121,7 +143,7 @@ class InvitationLetterTests(ApiTestCase):
         assert response.status_code == 201
         assert data['invitation_letter_request_id'] == 1
         assert letter.event_id == 1
-        assert letter.work_address == "Somewhere over the rainbow"
+        assert letter.work_address == " "
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
         assert letter.passport_name == "Jane Doe"
