@@ -29,18 +29,18 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         # Process arguments
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        work_address = args['work_address']
+        work_address = args['work_address'] if args['work_address'] is not None else ' '
         addressed_to = args['addressed_to']
         residential_address = args['residential_address']
         passport_name = args['passport_name']
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
-        passport_expiry_date = args['passport_expiry_date']
+        passport_expiry_date = datetime.strptime((args['passport_expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
 
         registration_event = EventRepository.get_by_id(event_id)
         if(registration_event is not None):
-            to_date = registration_event.end_date.strftime("%Y-%m-%d")
-            from_date = registration_event.start_date.strftime("%Y-%m-%d")
+            to_date = registration_event.end_date
+            from_date = registration_event.start_date
         else:
             return errors.EVENT_ID_NOT_FOUND
 
@@ -110,6 +110,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         if invitation_template:
             template_url = invitation_template.template_path
 
+        user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
         country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
         nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
         date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
@@ -159,54 +160,13 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         if not is_sent:
             return errors.SENDING_INVITATION_FAILED
 
-            poster_registration_question = db.session.query(RegistrationQuestion).filter(
-                RegistrationQuestion.headline == "Will you be bringing a poster?").first()
-            if poster_registration_question is not None:
-                poster_answer = (
-                    db.session.query(RegistrationAnswer)
-                    .join(Registration, RegistrationAnswer.registration_id == Registration.id)
-                    .join(Offer, Offer.id == Registration.offer_id)
-                    .filter(Offer.user_id == user_id)
-                    .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
-                    .first()
-                )
+        try:
+            db.session.add(invitation_letter_request)
+            db.session.commit()
+            return invitation_info(invitation_letter_request), 201
 
-        
+        except Exception as e:
+            LOGGER.error(
+                "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
+            return errors.ADD_INVITATION_REQUEST_FAILED
 
-            is_sent = generate(template_path=template_url,
-                               event_id=event_id,
-                               work_address=work_address,
-                               addressed_to=addressed_to,
-                               residential_address=residential_address,
-                               passport_name=passport_name,
-                               passport_no=passport_no,
-                               passport_issued_by=passport_issued_by,
-                               invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at,
-                               expiry_date=passport_expiry_date,
-                               to_date=to_date,
-                               from_date=from_date,
-                               country_of_residence=country_of_residence,
-                               nationality=nationality,
-                               date_of_birth=date_of_birth,
-                               email=user.email,
-                               user_title=user.user_title,
-                               firstname=user.firstname,
-                               lastname=user.lastname,
-                               bringing_poster=bringing_poster
-                               )
-
-            if is_sent:
-                try:
-                    db.session.add(invitation_letter_request)
-                    db.session.commit()
-                    return invitation_info(invitation_letter_request), 201
-
-                except Exception as e:
-                    LOGGER.error(
-                        "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
-                    return errors.ADD_INVITATION_REQUEST_FAILED
-
-            else:
-                return errors.SENDING_INVITATION_FAILED
-
-        return errors.TEMPLATE_NOT_FOUND
