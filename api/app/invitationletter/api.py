@@ -152,7 +152,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             from_date=from_date.strftime("%Y-%m-%d"),
                             country_of_residence=country_of_residence.name,
                             nationality=nationality.name,
-                            date_of_birth=date_of_birth,
+                            date_of_birth=date_of_birth.strftime("%Y-%m-%d"),
                             email=user.email,
                             user_title=user.user_title,
                             firstname=user.firstname,
