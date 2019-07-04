@@ -3,4 +3,5 @@
       padding: 60px 0;
     }
   }
-  
+ 
+  #labelWorkAddress {  font-size: 20px;   margin: auto;   border: 1px solid #212529; padding: 20px;}

@@ -354,7 +354,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
             <div class={passportDetailsStyleLine}>
-              <label>
+              <div id="labelWorkAddress">
                 {"Are you currently employed ? "}
                 <input
                   name="showWorkAddress"
@@ -362,7 +362,7 @@ class InvitationLetterForm extends Component {
                   checked={showWorkAddress}
                   onChange={this.toggleWork}
                 />
-              </label>
+              </div>
             </div>
           </div>
           <div class="row">
