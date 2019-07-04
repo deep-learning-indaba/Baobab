@@ -60,6 +60,7 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
             except Exception as e:
                 LOGGER.error("Exception {} while trying to send email: {}, {}".format(e, traceback.format_exc()))
                 raise e
+
     else:
         LOGGER.debug('Recipient : {recipient}'.format(recipient=recipient))
         LOGGER.debug('Subject : {subject}'.format(subject=subject))

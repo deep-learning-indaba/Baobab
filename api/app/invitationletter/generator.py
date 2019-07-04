@@ -16,9 +16,12 @@ from google.oauth2 import service_account
 INVITATION_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
 
+
 Your official invitation letter is attached!
 
+
 If you have any queries, please forward them to info@deeplearningindaba.com  
+
 
 Kind Regards,
 The Deep Learning Indaba Team
@@ -132,11 +135,11 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
 
     try:
         emailer.send_mail(recipient=email,
-                          subject=subject,
-                          body_html=INVITATION_EMAIL_BODY.format(
-                            user_title=user_title, first_name=firstname, last_name=lastname),
-                          file_name=template_path,
-                          file_path=template_pdf)
+                        subject=subject,
+                        body_text=INVITATION_EMAIL_BODY.format(
+                        user_title=user_title, first_name=firstname, last_name=lastname),
+                        file_name="InvitationLetter.pdf",
+                        file_path=template_pdf)
 
         LOGGER.debug('successfully sent email...')
         return True
