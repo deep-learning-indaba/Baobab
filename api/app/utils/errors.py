@@ -66,7 +66,9 @@ OFFER_NOT_ACCEPTED = (
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
-    {'message': 'An offer already exists for the user_id and event_id'}, 409)
+    {'message': 'An offer already exists for the user_id and event_id'}, 409) 
+CREATING_INVITATION_FAILED = (
+    {'message': 'Invitation Letter creation failed'}, 502)
 SENDING_INVITATION_FAILED = (
     {'message': 'Invitation Letter failed to send'}, 502)
     

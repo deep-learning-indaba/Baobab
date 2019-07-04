@@ -91,7 +91,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
 
     if not os.path.exists(template):
         return errors.TEMPLATE_NOT_FOUND
-        
+
     document = MailMerge(template)
     LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
     document.merge(
@@ -122,7 +122,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         os.remove(template_pdf)
     success = pdfconvertor.convert_to(folder='app/invitationletter/letter', source=template_merged, output=template_pdf)
     if not success:
-        raise False
+        return errors.CREATING_INVITATION_FAILED
 
     event = db.session.query(Event).get(event_id)
     if not event:
