@@ -61,9 +61,12 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             if not registration:
                 return errors.OFFER_NOT_FOUND
         else:
-            # Normal registration
+            # Normal registratRegistrationion
             registration = db.session.query(Registration).filter(
                 Registration.offer_id == offer.id).first()
+            
+            if not registration:
+                return errors.REGISTRATION_NOT_FOUND
 
         # TODO save invitation letter requests, even if emails don't get sent. These can be resend later.
         invitation_letter_request = InvitationLetterRequest(
@@ -84,31 +87,42 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
         invitation_template = None
         # No offer, but a registration = guest registration - Defaulting to general Invitation Template for Guests.
-        if(not offer and registration):
-            invitation_template = db.session.query(InvitationTemplate).filter(
-                InvitationTemplate.event_id == event_id).filter(InvitationTemplate.template_path.like("%General%")).first()
+        if (not offer and registration):
+            invitation_template = (
+                db.session.query(InvitationTemplate)
+                .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
+                .filter(InvitationTemplate.send_for_travel_award_only == False)
+                .filter(InvitationTemplate.send_for_accommodation_award_only == False)
+                .first()
+            )
         elif (offer.accommodation_award and offer.accepted_accommodation_award
                 and offer.travel_award and offer.accepted_travel_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.send_for_both_travel_accommodation == True).first()
 
         elif (offer.travel_award and offer.accepted_travel_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_travel_award_only).first()
+                InvitationTemplate.send_for_travel_award_only == True).first()
 
         elif (offer.accommodation_award and offer.accepted_accommodation_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_accommodation_award_only).first()
+                InvitationTemplate.send_for_accommodation_award_only == True).first()
 
         elif ((not offer.accommodation_award) and (not offer.travel_award)):
-            invitation_template = db.session.query(InvitationTemplate).filter(
-                not InvitationTemplate.send_for_both_travel_accommodation).filter(not InvitationTemplate.send_for_travel_award_only).filter(not InvitationTemplate.send_for_accommodation_award_only).first()
-
-        if invitation_template:
-            template_url = invitation_template.template_path
+            invitation_template = (
+                db.session.query(InvitationTemplate)
+                .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
+                .filter(InvitationTemplate.send_for_travel_award_only == False)
+                .filter(InvitationTemplate.send_for_accommodation_award_only == False)
+                .first()
+            )
+        if not invitation_template:
+            return errors.TEMPLATE_NOT_FOUND
+        
+        template_url = invitation_template.template_path
 
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
         country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
@@ -133,6 +147,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             nationality = db.session.query(Country).filter(
                 Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
+
+        if not date_of_birth:
+            return errors.MISSING_DATE_OF_BIRTH
 
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()

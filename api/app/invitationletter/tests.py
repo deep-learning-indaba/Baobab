@@ -23,7 +23,7 @@ INVITATION_LETTER = {
    'passport_name': "Jane Doe",
    'passport_no': "23456565",
    'passport_issued_by': "Neverland",
-   'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+   'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
    'to_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
    'from_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 }
@@ -44,6 +44,16 @@ class InvitationLetterTests(ApiTestCase):
         test_user.verified_email = True
         db.session.add(test_user)
         db.session.commit()
+
+        test_user_2 = AppUser('somethingelse@email.com', 'Some', 'Thing', 'Mr', 1, 1,
+                            'Female', 'University', 'Computer Science', 'None', 1,
+                            datetime(1984, 12, 12),
+                            'Zulu',
+                            '123456')
+        test_user_2.verified_email = True
+        db.session.add(test_user_2)
+        db.session.commit()
+
 
         event = Event(
             name="Tech Talk",
@@ -69,6 +79,21 @@ class InvitationLetterTests(ApiTestCase):
         db.session.add(offer)
         db.session.commit()
 
+
+        offer_2 = Offer(
+            user_id=test_user_2.id,
+            event_id=event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=True,
+            accommodation_award=False,
+            travel_award=False,
+            accepted_accommodation_award=False,
+            accepted_travel_award=False,
+        )
+        db.session.add(offer_2)
+        db.session.commit()
+
         form = RegistrationForm(
             event_id=event.id
         )
@@ -76,10 +101,17 @@ class InvitationLetterTests(ApiTestCase):
         db.session.commit()
 
         registration = Registration(
-            offer_id=event.id,
+            offer_id=offer.id,
             registration_form_id=form.id,
             confirmed=True)
         db.session.add(registration)
+        db.session.commit()
+
+        registration_2 = Registration(
+            offer_id=offer_2.id,
+            registration_form_id=form.id,
+            confirmed=True)
+        db.session.add(registration_2)
         db.session.commit()
 
         template = InvitationTemplate(
@@ -88,11 +120,19 @@ class InvitationLetterTests(ApiTestCase):
             send_for_travel_award_only=False,
             send_for_accommodation_award_only=False,
             send_for_both_travel_accommodation=True)
-            
         db.session.add(template)
+
+        template_2 = InvitationTemplate(
+            event_id=event.id,
+            template_path="Indaba 2019 - Invitation Letter - Travel & Accomodation.docx",
+            send_for_travel_award_only=False,
+            send_for_accommodation_award_only=False,
+            send_for_both_travel_accommodation=False)
+        db.session.add(template_2)
         db.session.commit()
 
         self.headers = self.get_auth_header_for("something@email.com")
+        self.headers_2 = self.get_auth_header_for("somethingelse@email.com")
 
         db.session.flush()
 
@@ -105,7 +145,7 @@ class InvitationLetterTests(ApiTestCase):
         data = json.loads(response.data)
         header = {'Authorization': data['token']}
         return header
-
+    
     @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()
@@ -149,6 +189,43 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.passport_name == "Jane Doe"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
+
+    @nottest
+    def test_create_create_invitation_letter_correct_template(self):
+        self.seed_static_data()
+        INVITATION_LETTER_2 = {
+            'registration_id': 2,
+            'event_id': 1,
+            'work_address': "Somewhere over the rainbow",
+            'addressed_to': "Sir",
+            'residential_address': "Way up high",
+            'passport_name': "Jane Doe",
+            'passport_no': "23456565",
+            'passport_issued_by': "Neverland",
+            'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
+            'to_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+            'from_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        response = self.app.post(
+                '/api/v1/invitation-letter', data=INVITATION_LETTER_2, headers=self.headers_2)
+        data = json.loads(response.data)
+        print(data)
+        LOGGER.debug("invitation letter: {}".format(data))
+
+        letter = db.session.query(InvitationLetterRequest).filter(
+            InvitationLetterRequest.id == data['invitation_letter_request_id']).first()
+
+        assert response.status_code == 201
+        assert data['invitation_letter_request_id'] == 1
+        assert letter.event_id == 1
+        assert letter.work_address == " "
+        assert letter.addressed_to == "Sir"
+        assert letter.residential_address == "Way up high"
+        assert letter.passport_name == "Jane Doe"
+        assert letter.passport_no == "23456565"
+        assert letter.passport_issued_by == "Neverland"
+
+    
 
 class PDFConverterTest(ApiTestCase):
 
