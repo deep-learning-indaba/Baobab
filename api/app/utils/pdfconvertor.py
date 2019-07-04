@@ -2,21 +2,18 @@ import sys
 import subprocess
 import re
 from app import LOGGER
+import os
 
-
-def convert_to(folder, source):
+def convert_to(folder, source, output):
     LOGGER.debug('...beginning conversion to pdf...')
     args = [libreoffice_exec(), '--headless', '--convert-to', 'pdf', '--outdir', folder, source]
 
     process = subprocess.call(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    filename = re.search('-> (.*?) using filter', process.stdout.decode())
-
-    LOGGER.debug('successfully converted to pdf...')
-    if filename is None:
-        raise LibreOfficeError(process.stdout.decode())
-    else:
-        return filename.group(1)
-
+    if os.path.exists(output):
+        LOGGER.debug('Successfully converted to pdf...')
+        return True
+    LOGGER.debug('Did not successfully convert to pdf...')
+    return False
 
 def libreoffice_exec():
     if sys.platform == 'linux':

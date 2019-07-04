@@ -26,6 +26,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
     @auth_required
     def post(self):
+        # Process arguments
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         work_address = args['work_address']
@@ -75,10 +76,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             passport_no=passport_no,
             passport_issued_by=passport_issued_by,
             passport_expiry_date=passport_expiry_date,
-            invitation_letter_sent_at=datetime.now().strftime("%Y-%m-%d"),
             to_date=to_date,
             from_date=from_date
         )
+        db.session.add(invitation_letter_request)
+        db.session.commit()
 
         invitation_template = None
         # No offer, but a registration = guest registration - Defaulting to general Invitation Template for Guests.
@@ -108,11 +110,22 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         if invitation_template:
             template_url = invitation_template.template_path
 
-            user = db.session.query(AppUser).filter(
-                AppUser.id == user_id).first()
+        country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
+        nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
+        date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
 
-            if not user:
-                return errors.USER_NOT_FOUND
+        # Poster registration
+        bringing_poster = ""
+        poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
+        if poster_registration_question is not None:
+            poster_answer = (
+                db.session.query(RegistrationAnswer)
+                .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                .join(Offer, Offer.id == Registration.offer_id)
+                .filter(Offer.user_id == user_id)
+                .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
+                .first()
+            )
 
             country_of_residence = db.session.query(Country).filter(
                 Country.id == user.residence_country_id).first()
@@ -120,7 +133,31 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
 
-            bringing_poster = ""
+        # Handling fields
+        invitation_letter_request.invitation_letter_sent_at=datetime.now()
+        is_sent = generate(template_path=template_url,
+                            event_id=event_id,
+                            work_address=work_address,
+                            addressed_to=addressed_to,
+                            residential_address=residential_address,
+                            passport_name=passport_name,
+                            passport_no=passport_no,
+                            passport_issued_by=passport_issued_by,
+                            invitation_letter_sent_at=invitation_letter_request.invitation_letter_sent_at.strftime("%Y-%m-%d"),
+                            expiry_date=passport_expiry_date.strftime("%Y-%m-%d"),
+                            to_date=to_date.strftime("%Y-%m-%d"),
+                            from_date=from_date.strftime("%Y-%m-%d"),
+                            country_of_residence=country_of_residence.name,
+                            nationality=nationality.name,
+                            date_of_birth=date_of_birth,
+                            email=user.email,
+                            user_title=user.user_title,
+                            firstname=user.firstname,
+                            lastname=user.lastname,
+                            bringing_poster=bringing_poster
+                            )
+        if not is_sent:
+            return errors.SENDING_INVITATION_FAILED
 
             poster_registration_question = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.headline == "Will you be bringing a poster?").first()
@@ -134,9 +171,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                     .first()
                 )
 
-                if poster_answer is not None and poster_answer.value == "yes":
-                    # Get whether they submitted a poster in registration
-                    bringing_poster = "The participant will be presenting an academic poster on their research."
+        
 
             is_sent = generate(template_path=template_url,
                                event_id=event_id,

@@ -84,7 +84,7 @@ class InvitationLetterTests(ApiTestCase):
 
         template = InvitationTemplate(
             event_id=event.id,
-            template_path="invitation_template.docx",
+            template_path="Indaba 2019  - Invitation Letter - General.docx",
             send_for_travel_award_only=False,
             send_for_accommodation_award_only=False,
             send_for_both_travel_accommodation=True)
@@ -134,28 +134,55 @@ class InvitationLetterTests(ApiTestCase):
 
 class PDFConverterTest(ApiTestCase):
 
-    @nottest # Need to figure out how to test properly with docker
+    def seed_static_data(self):
+        
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
+        db.session.commit()
+
+        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
+                            'Male', 'University', 'Computer Science', 'None', 1,
+                            datetime(1984, 12, 12),
+                            'Zulu',
+                            '123456')
+        test_user.verified_email = True
+        db.session.add(test_user)
+        db.session.commit()
+
+        event = Event(
+            name="Tech Talk",
+            description="tech talking",
+            start_date=datetime(2019, 12, 12, 10, 10, 10),
+            end_date=datetime(2020, 12, 12, 10, 10, 10),
+
+        )
+        db.session.add(event)
+        db.session.commit()
+        self.event = event
+
+    @nottest
     def test_generator(self):
-        self.assertEqual(generate(template_path='app/invitationletter/letter/testsample.docx',
-                                  event_id=1,
-                                  work_address='my-work-address',
-                                  addressed_to='Mr.',
-                                  residential_address='PTA',
-                                  passport_name='mypassport',
-                                  passport_no='098765',
+        self.seed_static_data()
+        self.assertEqual(generate(template_path='Indaba 2019  - Invitation Letter - General.docx',
+                                  event_id=self.event.id,
+                                  work_address='19 Melle Steet\nRetro Rabbit\nSouth Africa\n1000',
+                                  addressed_to='Man with the Visa Power',
+                                  residential_address='123 Magic Street\nDance\nMore Dance\n1000',
+                                  passport_name='Jeff Jeffdejeff',
+                                  passport_no='09876512344',
                                   passport_issued_by='RSA',
-                                  invitation_letter_sent_at='',
-                                  to_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-                                  from_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  invitation_letter_sent_at=datetime(1984, 12, 12).strftime('%Y-%m-%d'),
+                                  to_date=datetime(1984, 12, 12).strftime('%Y-%m-%d'),
+                                  from_date=datetime(1984, 12, 12).strftime('%Y-%m-%d'),
                                   country_of_residence='South Africa',
                                   nationality='South African',
-                                  date_of_birth=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+                                  date_of_birth=datetime(1984, 12, 12).strftime('%Y-%m-%d'),
                                   email='info@gmail.com',
                                   user_title='Mr',
-                                  firstname='Lindani',
-                                  lastname='Mabaso',
-                                  bringing_poster='No',
-                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')), True)
+                                  firstname='Jeff',
+                                  lastname='Jeffdejeff',
+                                  bringing_poster='',
+                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True)
 
 
 
