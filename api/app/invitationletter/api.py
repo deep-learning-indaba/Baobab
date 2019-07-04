@@ -141,12 +141,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
                 .first()
             )
-
-            country_of_residence = db.session.query(Country).filter(
-                Country.id == user.residence_country_id).first()
-            nationality = db.session.query(Country).filter(
-                Country.id == user.nationality_country_id).first()
-            date_of_birth = user.user_dateOfBirth
+            bringing_poster = "The participant will be presenting a poster of their research."
 
         if not date_of_birth:
             return errors.MISSING_DATE_OF_BIRTH
