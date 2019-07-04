@@ -6,7 +6,9 @@ jobs:
       - checkout
       - run:
           name: Start container
-          command: docker-compose up -d
+          command: |
+            openssl aes256 -md md5 -d -in docker-compose.circleci.yaml.enc -out docker-compose.yml -pass pass:$CONFIG_PASSWORD
+            docker-compose up -d
       - run:
           name: Run migrations
           command: |
@@ -15,7 +17,7 @@ jobs:
             docker-compose run web python api/run.py db upgrade --directory api/migrations
       - run:
           name: Run tests
-          command: docker-compose run web nosetests -v
+          command: docker-compose run  web nosetests -v 
 
   frontEndTests:
     machine: true
@@ -77,7 +79,7 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
-            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
+            mv Dockerfile.deploy Dockerfile # It doesn't like deploying to flex:python with Dockerfile
             gcloud app deploy --version=v1
 
 

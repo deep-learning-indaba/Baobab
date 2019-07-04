@@ -30,3 +30,6 @@ google-cloud-storage>=1.13.0
 oauth2client>=4.1.3
 enum34
 psycopg2-binary
+docx-mailmerge
+requests
+google
