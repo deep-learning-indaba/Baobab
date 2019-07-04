@@ -23,7 +23,7 @@ INVITATION_LETTER = {
    'passport_name': "Jane Doe",
    'passport_no': "23456565",
    'passport_issued_by': "Neverland",
-   'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+   'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
    'to_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
    'from_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 }
@@ -105,7 +105,7 @@ class InvitationLetterTests(ApiTestCase):
         data = json.loads(response.data)
         header = {'Authorization': data['token']}
         return header
-
+    
     @nottest
     def test_create_create_invitation_letter(self):
         self.seed_static_data()

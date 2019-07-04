@@ -136,6 +136,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 Country.id == user.nationality_country_id).first()
             date_of_birth = user.user_dateOfBirth
 
+        if not date_of_birth:
+            return errors.MISSING_DATE_OF_BIRTH
+            
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
         is_sent = generate(template_path=template_url,
@@ -152,7 +155,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             from_date=from_date.strftime("%Y-%m-%d"),
                             country_of_residence=country_of_residence.name,
                             nationality=nationality.name,
-                            date_of_birth=date_of_birth.strftime("%Y-%m-%d"),
+                            date_of_birth=date_of_birth,
                             email=user.email,
                             user_title=user.user_title,
                             firstname=user.firstname,

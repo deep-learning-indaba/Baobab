@@ -74,3 +74,5 @@ SENDING_INVITATION_FAILED = (
     {'message': 'Invitation Letter failed to send'}, 502)
 EVENT_ID_NOT_FOUND = (
     {'message': 'Event ID not found.'}, 404)
+MISSING_DATE_OF_BIRTH = (
+    {'message': 'Missing date of birth. Please update in profile'}, 400)
