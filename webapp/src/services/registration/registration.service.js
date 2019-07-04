@@ -213,20 +213,12 @@ function requestInvitationLetter(user, event_id) {
       return response;
     })
     .catch(error => {
-      if (error.response) {
         return {
           invitationLetterId: null,
-          status: error.response.status,
-          message: error.response.statusText,
-          is_submitted: false
+          status: error.response ? error.response.status : null,
+          error: error.response && error.response.data
+          ? error.response.data.message
+          : error.message
         };
-      } else {
-        return {
-          error:
-            error.response && error.response.data
-              ? error.response.data.message
-              : error.message
-        };
-      }
     });
 }
