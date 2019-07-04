@@ -81,11 +81,10 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         )
 
         invitation_template = None
-        # No offer, but a registration = guest registration - TODO check travel and accom assumed for Invited Guests.
+        # No offer, but a registration = guest registration - Defaulting to general Invitation Template for Guests.
         if(not offer and registration):
             invitation_template = db.session.query(InvitationTemplate).filter(
-                InvitationTemplate.event_id == event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.event_id == event_id).filter(InvitationTemplate.template_path.like("%General%")).first()
         elif (offer.accommodation_award and offer.accepted_accommodation_award
                 and offer.travel_award and offer.accepted_travel_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
