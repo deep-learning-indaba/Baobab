@@ -1,4 +1,4 @@
-from app.registration.models import RegistrationForm
+from app.registration.models import RegistrationForm, RegistrationQuestion, RegistrationAnswer, RegistrationSection
 import json
 from datetime import datetime, timedelta
 from app import db, LOGGER
@@ -100,6 +100,34 @@ class InvitationLetterTests(ApiTestCase):
         db.session.add(form)
         db.session.commit()
 
+        section = RegistrationSection(
+            registration_form_id=form.id,
+            name="Section 1",
+            description="the section description",
+            order=1,
+            show_for_travel_award=True,
+            show_for_accommodation_award=False,
+            show_for_payment_required=False,
+        )
+        db.session.add(section)
+        db.session.commit()
+
+        rq = RegistrationQuestion(
+            section_id=section.id,
+            registration_form_id=form.id,
+            description="Will you be bringing a poster?",
+            type="short-text",
+            is_required=True,
+            order=1,
+            placeholder="the placeholder",
+            headline="Will you be bringing a poster?",
+            validation_regex="[]/",
+            validation_text=" text"
+        )
+        db.session.add(rq)
+        db.session.commit()
+
+
         registration = Registration(
             offer_id=offer.id,
             registration_form_id=form.id,
@@ -112,6 +140,15 @@ class InvitationLetterTests(ApiTestCase):
             registration_form_id=form.id,
             confirmed=True)
         db.session.add(registration_2)
+        db.session.commit()
+
+
+        ra = RegistrationAnswer(
+            registration_id=registration_2.id,
+            registration_question_id=rq.id,
+            value="yes"
+        )
+        db.session.add(ra)
         db.session.commit()
 
         template = InvitationTemplate(
@@ -190,7 +227,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
-    @nottest
+    
     def test_create_create_invitation_letter_correct_template(self):
         self.seed_static_data()
         INVITATION_LETTER_2 = {
@@ -219,6 +256,42 @@ class InvitationLetterTests(ApiTestCase):
         assert data['invitation_letter_request_id'] == 1
         assert letter.event_id == 1
         assert letter.work_address == " "
+        assert letter.addressed_to == "Sir"
+        assert letter.residential_address == "Way up high"
+        assert letter.passport_name == "Jane Doe"
+        assert letter.passport_no == "23456565"
+        assert letter.passport_issued_by == "Neverland"
+
+
+
+    @nottest
+    def test_create_create_invitation_letter_correct_template(self):
+        self.seed_static_data()
+        INVITATION_LETTER_2 = {
+            'registration_id': 2,
+            'event_id': 1,
+            'work_address': "Somewhere over the rainbow",
+            'addressed_to': "Sir",
+            'residential_address': "Way up high",
+            'passport_name': "Jane Doe",
+            'passport_no': "23456565",
+            'passport_issued_by': "Neverland",
+            'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
+            'to_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+            'from_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        }
+        response = self.app.post(
+                '/api/v1/invitation-letter', data=INVITATION_LETTER_2, headers=self.headers_2)
+        data = json.loads(response.data)
+        print(data)
+        LOGGER.debug("invitation letter: {}".format(data))
+
+        letter = db.session.query(InvitationLetterRequest).filter(
+            InvitationLetterRequest.id == data['invitation_letter_request_id']).first()
+
+        assert response.status_code == 201
+        assert data['invitation_letter_request_id'] == 1
+        assert letter.event_id == 1
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
         assert letter.passport_name == "Jane Doe"
