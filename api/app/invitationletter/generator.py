@@ -143,3 +143,5 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     except ValueError:
         LOGGER.debug('Did not send email...')
         return False
+
+    return False
