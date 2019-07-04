@@ -99,17 +99,17 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 and offer.travel_award and offer.accepted_travel_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation).first()
+                InvitationTemplate.send_for_both_travel_accommodation == True).first()
 
         elif (offer.travel_award and offer.accepted_travel_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_travel_award_only).first()
+                InvitationTemplate.send_for_travel_award_only == True).first()
 
         elif (offer.accommodation_award and offer.accepted_accommodation_award):
             invitation_template = db.session.query(InvitationTemplate).filter(
                 InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_accommodation_award_only).first()
+                InvitationTemplate.send_for_accommodation_award_only == True).first()
 
         elif ((not offer.accommodation_award) and (not offer.travel_award)):
             invitation_template = (
