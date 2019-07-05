@@ -636,7 +636,7 @@ class EmailerAPITest(ApiTestCase):
             'email_body': 'Hello world, this is a test email.'
         }
 
-        response = self.app.get('/api/v1/admin/emailer', headers=header, data=params)
+        response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
 
         self.assertEqual(response.status_code, 403)
     
@@ -649,6 +649,6 @@ class EmailerAPITest(ApiTestCase):
             'email_body': 'Hello world, this is a test email.'
         }
 
-        response = self.app.get('/api/v1/admin/emailer', headers=header, data=params)
+        response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
 
         self.assertEqual(response.status_code, 200)
