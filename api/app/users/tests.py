@@ -615,7 +615,7 @@ class EmailerAPITest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
 
-    db.session.commit()
+        db.session.commit()
     
     def get_auth_header_for(self, email):
         body = {
