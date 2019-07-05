@@ -19,6 +19,7 @@ import UserDropdown from "./components/User";
 import InvitedGuests from "./pages/invitedGuests";
 import CreateInvitedGuests from "./pages/createInvitedGuest";
 import Registration from "./pages/registration";
+import InvitedLetter from "./pages/invitationLetter";
 import RegistrationAdmin from "./pages/registrationAdmin";
 import Offer from "./pages/offer";
 import ReactGA from "react-ga";
@@ -83,9 +84,13 @@ class App extends Component {
       return false;
     }
     return (
-      user.is_admin || (user.roles && user.roles.some(r => (r.role === "admin" || r.role === 'registration-admin')))
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "admin" || r.role === "registration-admin"
+        ))
     );
-  }
+  };
 
   isEventReviewer = user => {
     if (!user) {
@@ -156,18 +161,7 @@ class App extends Component {
                       Apply
                     </NavLink>
                   </li>
-
                 )}
-                <li class="nav-item">
-                  <NavLink
-                    to="/registration"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Registration
-                    </NavLink>
-                </li>
                 <li class="nav-item">
                   <NavLink
                     to="/offer"
@@ -176,8 +170,39 @@ class App extends Component {
                     onClick={this.toggleMenu}
                   >
                     Offer
-                    </NavLink>
+                  </NavLink>
                 </li>
+                {this.state.user && (
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
+                      Registration
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/registration"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Registration Form
+                      </NavLink>
+                      <NavLink
+                        to="/invitationLetter"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Invitation Letter
+                      </NavLink>
+                    </div>
+                  </li>
+                )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
                     <a
@@ -319,6 +344,11 @@ class App extends Component {
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <PrivateRoute
                   exact
+                  path="/invitationLetter"
+                  component={InvitedLetter}
+                />
+                <PrivateRoute
+                  exact
                   path="/applicationForm"
                   component={Application}
                 />
@@ -345,12 +375,27 @@ class App extends Component {
                 />
                 <PrivateRoute exact path="/review" component={Review} />
                 <PrivateRoute exact path="/review/:id" component={Review} />
-                <PrivateRoute exact path="/profile-list" component={ProfileList} />
+                <PrivateRoute
+                  exact
+                  path="/profile-list"
+                  component={ProfileList}
+                />
                 <PrivateRoute exact path="/offer" component={Offer} />
-                <PrivateRoute exact path="/registration" component={Registration} />
-                <PrivateRoute exact path="/viewprofile/:id" component={ViewProfile} />
-                <PrivateRoute exact path="/registrationAdmin" component={RegistrationAdmin} />
-
+                <PrivateRoute
+                  exact
+                  path="/registration"
+                  component={Registration}
+                />
+                <PrivateRoute
+                  exact
+                  path="/viewprofile/:id"
+                  component={ViewProfile}
+                />
+                <PrivateRoute
+                  exact
+                  path="/registrationAdmin"
+                  component={RegistrationAdmin}
+                />
               </Switch>
             </div>
           </div>

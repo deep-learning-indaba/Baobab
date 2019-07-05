@@ -11,7 +11,8 @@ RESET_PASSWORD_CODE_NOT_VALID = (
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
-QUESTION_NOT_FOUND = ({'message': 'No question exists with that Event ID'}, 404)
+QUESTION_NOT_FOUND = (
+    {'message': 'No question exists with that Event ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
@@ -66,6 +67,14 @@ OFFER_NOT_ACCEPTED = (
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
-    {'message': 'An offer already exists for the user_id and event_id'}, 409)
+    {'message': 'An offer already exists for the user_id and event_id'}, 409) 
+CREATING_INVITATION_FAILED = (
+    {'message': 'Invitation Letter creation failed'}, 502)
 SENDING_INVITATION_FAILED = (
     {'message': 'Invitation Letter failed to send'}, 502)
+EVENT_ID_NOT_FOUND = (
+    {'message': 'Event ID not found.'}, 404)
+MISSING_DATE_OF_BIRTH = (
+    {'message': 'Missing date of birth. Please update in profile'}, 400)
+REGISTRATION_NOT_FOUND = (
+    {'message': 'Registration not found. Please register before trying to get Invitation Letter'}, 404)
