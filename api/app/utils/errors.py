@@ -78,3 +78,5 @@ MISSING_DATE_OF_BIRTH = (
     {'message': 'Missing date of birth. Please update in profile'}, 400)
 REGISTRATION_NOT_FOUND = (
     {'message': 'Registration not found. Please register before trying to get Invitation Letter'}, 404)
+EMAIL_NOT_SENT = (
+    {'message': 'Email failed to send'}, 500)

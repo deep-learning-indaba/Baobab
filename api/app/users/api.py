@@ -23,6 +23,8 @@ import random
 import string
 from sqlalchemy import func
 
+from app.utils import errors
+
 VERIFY_EMAIL_BODY = """
 Dear {} {} {},
 
@@ -546,3 +548,37 @@ class UserCommentAPI(restful.Resource):
             UserComment.user_id == args['user_id']).all()
 
         return comments
+
+
+GENERIC_EMAIL_TEMPLATE = """Dear {user_title} {user_firstname} {user_lastname},
+
+{body}
+"""
+
+class EmailerAPI(restful.Resource):
+
+    @admin_required
+    def post(self):
+        req_parser=reqparse.RequestParser()
+        req_parser.add_argument('user_id', type=int, required=True)
+        req_parser.add_argument('email_subject', type=str, required=True)
+        req_parser.add_argument('email_body', type=str, required=True)
+        args=req_parser.parse_args()
+
+        user = user_repository.get_by_id(args['user_id'])
+        if user is None:
+            return errors.USER_NOT_FOUND
+        try:
+            send_mail(recipient=user.email,
+                    subject='Baobab Email Verification',
+                    body_text=GENERIC_EMAIL_TEMPLATE.format(
+                        user_title=user.user_title, 
+                        user_firstname=user.firstname, 
+                        user_lastname=user.lastname,
+                        body=args['email_body'],
+                    )
+            )
+        except Exception as e:
+            LOGGER.error('Error sending email: {}'.format(e))
+            return errors.EMAIL_NOT_SENT
+            

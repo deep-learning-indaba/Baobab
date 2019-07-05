@@ -600,3 +600,56 @@ class UserProfileApiTest(ApiTestCase):
 
         data = json.loads(response.data)
         self.assertEqual(data['email'], 'c1@c.com')
+
+class EmailerAPITest(ApiTestCase):
+    def setup_static_data(self):
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
+
+        self.candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        self.candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        self.system_admin = AppUser('system_admin@sa.com', 'system_admin', '1', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', True)
+
+        users = [self.candidate1, self.candidate2, self.system_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        db.session.commit()
+    
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
+
+    def test_forbidden_when_not_admin(self):
+        with app.app_context():
+            self.setup_static_data()
+            header = self.get_auth_header_for('c1@c.com')
+            params = {
+                'user_id': self.candidate2.id,
+                'email_subject': 'This is a test email',
+                'email_body': 'Hello world, this is a test email.'
+            }
+
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+
+            self.assertEqual(response.status_code, 403)
+    
+    def test_email(self):
+        with app.app_context():
+            self.setup_static_data()
+            header = self.get_auth_header_for('system_admin@sa.com')
+            params = {
+                'user_id': self.candidate2.id,
+                'email_subject': 'This is a test email',
+                'email_body': 'Hello world, this is a test email.'
+            }
+
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+            self.assertEqual(response.status_code, 200)
