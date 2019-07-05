@@ -628,27 +628,30 @@ class EmailerAPITest(ApiTestCase):
         return header
 
     def test_forbidden_when_not_admin(self):
-        self.setup_static_data()
-        header = self.get_auth_header_for('c1@c.com')
-        params = {
-            'user_id': self.candidate2.id,
-            'email_subject': 'This is a test email',
-            'email_body': 'Hello world, this is a test email.'
-        }
+        with app.app_context():
+            self.setup_static_data()
+            header = self.get_auth_header_for('c1@c.com')
+            params = {
+                'user_id': self.candidate2.id,
+                'email_subject': 'This is a test email',
+                'email_body': 'Hello world, this is a test email.'
+            }
 
-        response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
 
-        self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 403)
     
     def test_email(self):
-        self.setup_static_data()
-        header = self.get_auth_header_for('system_admin@sa.com')
-        params = {
-            'user_id': self.candidate2.id,
-            'email_subject': 'This is a test email',
-            'email_body': 'Hello world, this is a test email.'
-        }
+        with app.app_context():
+            self.setup_static_data()
+            header = self.get_auth_header_for('system_admin@sa.com')
+            params = {
+                'user_id': self.candidate2.id,
+                'email_subject': 'This is a test email',
+                'email_body': 'Hello world, this is a test email.'
+            }
 
-        response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
-
-        self.assertEqual(response.status_code, 200)
+            response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
+            print(response)
+            print(response.data)
+            self.assertEqual(response.status_code, 200)
