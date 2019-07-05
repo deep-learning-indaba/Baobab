@@ -630,7 +630,11 @@ class EmailerAPITest(ApiTestCase):
     def test_forbidden_when_not_admin(self):
         self.setup_static_data()
         header = self.get_auth_header_for('c1@c.com')
-        params = {'user_id': self.candidate2.id}
+        params = {
+            'user_id': self.candidate2.id,
+            'email_subject': 'This is a test email',
+            'email_body': 'Hello world, this is a test email.'
+        }
 
         response = self.app.get('/api/v1/admin/emailer', headers=header, data=params)
 
@@ -639,7 +643,11 @@ class EmailerAPITest(ApiTestCase):
     def test_email(self):
         self.setup_static_data()
         header = self.get_auth_header_for('system_admin@sa.com')
-        params = {'user_id': self.candidate2.id}
+        params = {
+            'user_id': self.candidate2.id,
+            'email_subject': 'This is a test email',
+            'email_body': 'Hello world, this is a test email.'
+        }
 
         response = self.app.get('/api/v1/admin/emailer', headers=header, data=params)
 
