@@ -570,7 +570,7 @@ class EmailerAPI(restful.Resource):
             return errors.USER_NOT_FOUND
         try:
             send_mail(recipient=user.email,
-                    subject='Baobab Email Verification',
+                    subject=args['email_subject'],
                     body_text=GENERIC_EMAIL_TEMPLATE.format(
                         user_title=user.user_title, 
                         user_firstname=user.firstname, 
