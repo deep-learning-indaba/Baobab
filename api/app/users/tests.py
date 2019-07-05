@@ -652,6 +652,4 @@ class EmailerAPITest(ApiTestCase):
             }
 
             response = self.app.post('/api/v1/admin/emailer', headers=header, data=params)
-            print(response)
-            print(response.data)
             self.assertEqual(response.status_code, 200)
