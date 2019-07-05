@@ -68,26 +68,41 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             if not registration:
                 return errors.REGISTRATION_NOT_FOUND
 
-        # TODO save invitation letter requests, even if emails don't get sent. These can be resend later.
-        invitation_letter_request = InvitationLetterRequest(
-            registration_id=registration.id,
-            event_id=event_id,
-            work_address=work_address,
-            addressed_to=addressed_to,
-            residential_address=residential_address,
-            passport_name=passport_name,
-            passport_no=passport_no,
-            passport_issued_by=passport_issued_by,
-            passport_expiry_date=passport_expiry_date,
-            to_date=to_date,
-            from_date=from_date
-        )
+        is_guest_registration = (not offer and registration)
+
+        if(is_guest_registration):
+            invitation_letter_request = InvitationLetterRequest(
+                guest_registration_id=registration.id,
+                event_id=event_id,
+                work_address=work_address,
+                addressed_to=addressed_to,
+                residential_address=residential_address,
+                passport_name=passport_name,
+                passport_no=passport_no,
+                passport_issued_by=passport_issued_by,
+                passport_expiry_date=passport_expiry_date,
+                to_date=to_date,
+                from_date=from_date
+            )
+        else:
+            invitation_letter_request = InvitationLetterRequest(
+                registration_id=registration.id,
+                event_id=event_id,
+                work_address=work_address,
+                addressed_to=addressed_to,
+                residential_address=residential_address,
+                passport_name=passport_name,
+                passport_no=passport_no,
+                passport_issued_by=passport_issued_by,
+                passport_expiry_date=passport_expiry_date,
+                to_date=to_date,
+                from_date=from_date
+            )
         db.session.add(invitation_letter_request)
         db.session.commit()
 
         invitation_template = None
-        # No offer, but a registration = guest registration - Defaulting to general Invitation Template for Guests.
-        if (not offer and registration):
+        if (is_guest_registration):
             invitation_template = (
                 db.session.query(InvitationTemplate)
                 .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
