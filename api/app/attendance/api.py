@@ -2,7 +2,6 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 
-from app import LOGGER
 from app.attendance.emails import ATTENDANCE_EMAIL_BODY
 from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
