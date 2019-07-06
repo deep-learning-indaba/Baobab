@@ -126,17 +126,30 @@ class InvitationLetterForm extends Component {
   }
   convertAddressField = (street1, street2, city, postalCode, country) => {
     let newline = "\n";
-    let fullAddress = "".concat(
-      street1,
-      newline,
-      street2,
-      newline,
-      city,
-      newline,
-      postalCode,
-      newline,
-      country
-    );
+    let fullAddress = "";
+    if (street2)
+      fullAddress = fullAddress.concat(
+        street1,
+        newline,
+        street2,
+        newline,
+        city,
+        newline,
+        postalCode,
+        newline,
+        country
+      );
+    else
+      fullAddress = fullAddress.concat(
+        street1,
+        newline,
+        city,
+        newline,
+        postalCode,
+        newline,
+        country
+      );
+
     return fullAddress;
   };
   handleSubmit = event => {
