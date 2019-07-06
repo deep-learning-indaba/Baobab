@@ -2,15 +2,15 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 
-from app.attendance.mixins import PostAttendanceMixin
 from app.attendance.emails import ATTENDANCE_EMAIL_BODY
+from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import send_mail
-from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 attendance_fields = {
     'id': fields.Integer,
@@ -20,12 +20,12 @@ attendance_fields = {
     'updated_by_user_id': fields.Integer
 }
 
-class AttendanceAPI(PostAttendanceMixin, restful.Resource):
+class AttendanceAPI(AttendanceMixin, restful.Resource):
 
     @auth_required
     @marshal_with(attendance_fields)
     def post(self):
-        args = self.post_req_parser.parse_args()
+        args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = args['user_id']
         registration_user_id = g.current_user['id']
@@ -59,3 +59,30 @@ class AttendanceAPI(PostAttendanceMixin, restful.Resource):
         )
 
         return attendance, 201
+
+    @auth_required
+    def delete(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user_id = args['user_id']
+        registration_user_id = g.current_user['id']
+
+        event = event_repository.get_by_id(event_id)
+        if event is None:
+            return EVENT_NOT_FOUND
+        
+        user = user_repository.get_by_id(user_id)
+        if user is None:
+            return USER_NOT_FOUND
+
+        registration_user = user_repository.get_by_id(registration_user_id)
+        if not registration_user.is_registration_admin(event_id):
+            return FORBIDDEN
+
+        attendance = attendance_repository.get(event_id, user_id)
+        if attendance is None:
+            return ATTENDANCE_NOT_FOUND
+        
+        attendance_repository.delete(attendance)
+
+        return 200
