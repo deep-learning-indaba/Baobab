@@ -68,26 +68,45 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             if not registration:
                 return errors.REGISTRATION_NOT_FOUND
 
-        # TODO save invitation letter requests, even if emails don't get sent. These can be resend later.
-        invitation_letter_request = InvitationLetterRequest(
-            registration_id=registration.id,
-            event_id=event_id,
-            work_address=work_address,
-            addressed_to=addressed_to,
-            residential_address=residential_address,
-            passport_name=passport_name,
-            passport_no=passport_no,
-            passport_issued_by=passport_issued_by,
-            passport_expiry_date=passport_expiry_date,
-            to_date=to_date,
-            from_date=from_date
-        )
-        db.session.add(invitation_letter_request)
-        db.session.commit()
+        is_guest_registration = (not offer and registration)
+
+        try:
+            if(is_guest_registration):
+                invitation_letter_request = InvitationLetterRequest(
+                    guest_registration_id=registration.id,
+                    event_id=event_id,
+                    work_address=work_address,
+                    addressed_to=addressed_to,
+                    residential_address=residential_address,
+                    passport_name=passport_name,
+                    passport_no=passport_no,
+                    passport_issued_by=passport_issued_by,
+                    passport_expiry_date=passport_expiry_date,
+                    to_date=to_date,
+                    from_date=from_date
+                )
+            else:
+                invitation_letter_request = InvitationLetterRequest(
+                    registration_id=registration.id,
+                    event_id=event_id,
+                    work_address=work_address,
+                    addressed_to=addressed_to,
+                    residential_address=residential_address,
+                    passport_name=passport_name,
+                    passport_no=passport_no,
+                    passport_issued_by=passport_issued_by,
+                    passport_expiry_date=passport_expiry_date,
+                    to_date=to_date,
+                    from_date=from_date
+                )
+            db.session.add(invitation_letter_request)
+            db.session.commit()
+        except Exception as e:
+            LOGGER.error('Failed to add invitation letter request for user id {} due to: {}'.format(user_id, e))
+            return errors.ADD_INVITATION_REQUEST_FAILED
 
         invitation_template = None
-        # No offer, but a registration = guest registration - Defaulting to general Invitation Template for Guests.
-        if (not offer and registration):
+        if (is_guest_registration):
             invitation_template = (
                 db.session.query(InvitationTemplate)
                 .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
@@ -127,7 +146,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
         country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
         nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
-        date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
+
+        if user.user_dateOfBirth is not None:
+            date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
+        else:
+            return errors.MISSING_DATE_OF_BIRTH
 
         # Poster registration
         bringing_poster = ""
@@ -141,10 +164,8 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
                 .first()
             )
-            bringing_poster = "The participant will be presenting a poster of their research."
-
-        if not date_of_birth:
-            return errors.MISSING_DATE_OF_BIRTH
+            if poster_answer is not None and poster_answer.value == 'yes':
+                bringing_poster = "The participant will be presenting a poster of their research."
 
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
@@ -173,7 +194,6 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             return errors.SENDING_INVITATION_FAILED
 
         try:
-            db.session.add(invitation_letter_request)
             db.session.commit()
             return invitation_info(invitation_letter_request), 201
 
