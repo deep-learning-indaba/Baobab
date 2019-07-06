@@ -43,6 +43,9 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             return FORBIDDEN
 
         attendance = attendance_repository.get(event_id, user_id)
+        if attendance is None:
+            return ATTENDANCE_NOT_FOUND
+
         return attendance, 200
 
 
