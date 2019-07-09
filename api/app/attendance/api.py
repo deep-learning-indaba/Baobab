@@ -69,7 +69,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         if user is None:
             return USER_NOT_FOUND
 
-        if attendance_repository.is_exists(event_id, user_id):
+        if attendance_repository.exists(event_id, user_id):
             return ATTENDANCE_ALREADY_CONFIRMED
 
         attendance = Attendance(event_id, user_id, registration_user_id)
