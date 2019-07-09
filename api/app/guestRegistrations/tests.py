@@ -57,9 +57,9 @@ class RegistrationApiTest(ApiTestCase):
             name="Section 1",
             description="the section description",
             order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            show_for_travel_award=None,
+            show_for_accommodation_award=None,
+            show_for_payment_required=None,
         )
         db.session.add(section)
         db.session.commit()
@@ -69,9 +69,9 @@ class RegistrationApiTest(ApiTestCase):
             name="Section 2",
             description="the section 2 description",
             order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            show_for_travel_award=None,
+            show_for_accommodation_award=None,
+            show_for_payment_required=None,
         )
         db.session.add(section2)
         db.session.commit()
