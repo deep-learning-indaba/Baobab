@@ -159,6 +159,8 @@ class GuestRegistrationComponent extends Component {
   };
 
   componentDidMount() {
+    this.setState({isLoading: true});
+
     registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
       if (result.error == "" && result.form.registration_sections.length > 0) {
         let questionSections = [];
@@ -180,16 +182,26 @@ class GuestRegistrationComponent extends Component {
                 registrationId: result.form.guest_registration_id
               });
             }
+            else {
+              this.setState({
+                isLoading: false
+              });
+            }
           })
           .catch(error => {});
         this.setState({
           questionSections: questionSections.sort((a, b) => a.order - b.order),
           registrationFormId: result.form.id,
-          isLoading: false
         });
       } else {
         if (result.statusCode === 409) {
           this.props.history.push("/offer");
+        }
+        else {
+          this.setState({
+            isLoading: false,
+            error: result.error
+          });
         }
       }
     });
