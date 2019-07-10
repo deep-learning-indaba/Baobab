@@ -82,3 +82,8 @@ EMAIL_NOT_SENT = (
     {'message': 'Email failed to send'}, 500)
 INVITED_GUEST_EMAIL_FAILED = (
     {'message': 'The invited guest was added added to the database, but the email failed to send. You may want to contact them manually.'}, 500)
+ATTENDANCE_ALREADY_CONFIRMED = (
+    {'message': 'Attendance has already been confirmed for this user and event.'}, 400)
+ATTENDANCE_NOT_FOUND = (
+    {'message': 'Attendance not found.'}, 404)
+
