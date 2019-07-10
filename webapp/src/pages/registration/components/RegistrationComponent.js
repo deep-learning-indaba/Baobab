@@ -159,6 +159,8 @@ class RegistrationComponent extends Component {
   };
 
   componentDidMount() {
+    this.setState({isLoading: true});
+
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
       if (result.error == "" && result.offer != null) {
         this.setState(
@@ -199,6 +201,11 @@ class RegistrationComponent extends Component {
                           registrationId: result.form.registration_id
                         });
                       }
+                      else {
+                        this.setState({
+                          isLoading: false
+                        });
+                      }
                     })
                     .catch(error => {});
                   this.setState({
@@ -206,7 +213,6 @@ class RegistrationComponent extends Component {
                       (a, b) => a.order - b.order
                     ),
                     registrationFormId: result.form.id,
-                    isLoading: false
                   });
                 } else {
                   if (result.statusCode === 409) {
