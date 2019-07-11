@@ -143,7 +143,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers,
                                    event_name)
             if email_sent:
                 registration.confirmation_email_sent_at = date.today();
@@ -192,7 +192,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, confirmed, event_name):
+    def send_confirmation(self, user, questions, answers, event_name):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -214,7 +214,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
-            body_text = greeting + self.get_confirmed_message(confirmed) + '\n\n' + summary
+            body_text = greeting + '\n\n' + 'Thank you for completing your guest registration. Please find a copy of your answers below for future reference.' + '\n\n' + summary + '\n\nKind Regards, The Deep Learning Indaba Team'
 
             emailer.send_mail(user.email, subject, body_text=body_text)
             return True
@@ -223,12 +223,6 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
                 response_id=user.id))
             return False
-
-    def get_confirmed_message(self, confirmed):
-        if not confirmed:
-            return '\nregistration is pending confirmation on receipt of payment.\n\n'
-        else:
-            return ''
 
 
 class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
