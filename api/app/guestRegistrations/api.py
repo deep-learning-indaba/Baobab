@@ -277,8 +277,12 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
             if not registration_form:
                 return errors.REGISTRATION_FORM_NOT_FOUND
 
-            sections = db.session.query(RegistrationSection).filter(
-                RegistrationSection.registration_form_id == registration_form.id).all()
+            sections = (db.session.query(RegistrationSection)
+                        .filter(RegistrationSection.registration_form_id == registration_form.id)
+                        .filter(RegistrationSection.show_for_travel_award == None)
+                        .filter(RegistrationSection.show_for_accommodation_award == None)
+                        .filter(RegistrationSection.show_for_payment_required == None)
+                        .all())
 
             if not sections:
                 LOGGER.warn(
