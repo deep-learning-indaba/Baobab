@@ -1,5 +1,5 @@
 from app import db
-from datetime import date
+from datetime import datetime, date, time
 
 
 class Offer(db.Model):
@@ -19,6 +19,10 @@ class Offer(db.Model):
     rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
+
+    def is_expired(self):
+        end_of_today = datetime.combine(date.today(), time())
+        return (self.candidate_response is None) and (self.expiry_date < end_of_today)
 
 
 class RegistrationForm(db.Model):
