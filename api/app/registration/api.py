@@ -184,7 +184,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         user_id = g.current_user['id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).filter().first()
+            offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
 
             request_travel = db.session.query(Answer).join(
                 Question, Question.id == Answer.question_id
@@ -196,6 +196,8 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             if not offer:
                 return errors.OFFER_NOT_FOUND
+            elif offer.is_expired():
+                return errors.OFFER_EXPIRED
             else:
                 return offer_info(offer, request_travel), 200
 
