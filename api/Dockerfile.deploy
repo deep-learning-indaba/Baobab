@@ -12,7 +12,7 @@ ENV PATH /env/bin:$PATH
 
 # Install libreoffice
 RUN apt-get update -qq
-RUN apt-get install -y locales locales-all
+RUN apt-get install -y software-properties-common locales locales-all
 RUN add-apt-repository -y ppa:libreoffice/ppa
 RUN apt-get update -qq
 RUN apt-get install -y libreoffice
