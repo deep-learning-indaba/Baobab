@@ -9,6 +9,8 @@ RUN virtualenv /env
 # source /env/bin/activate.
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 # Install libreoffice
 RUN apt-get update -qq
