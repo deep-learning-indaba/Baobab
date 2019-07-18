@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from app.registration.models import RegistrationForm, RegistrationQuestion, RegistrationAnswer, RegistrationSection
 import json
 from datetime import datetime, timedelta
