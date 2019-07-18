@@ -17,7 +17,9 @@ ADD requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
 # Add the application source code.
-ADD . /app
+RUN mkdir /code
+ADD . /code/
+WORKDIR /code
 
 RUN pip install -r requirements.txt
 RUN locale -a
