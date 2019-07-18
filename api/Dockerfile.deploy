@@ -27,9 +27,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en  
 ENV LC_ALL en_US.UTF-8     
 
-# verify modified configuration
-RUN dpkg-reconfigure --frontend noninteractive locales
-
 # Copy the application's requirements.txt and run pip to install all
 # dependencies into the virtualenv.
 ADD requirements.txt /app/requirements.txt
