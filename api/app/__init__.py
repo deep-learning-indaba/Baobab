@@ -13,6 +13,7 @@ import flask_login as login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
