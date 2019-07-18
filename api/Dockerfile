@@ -8,7 +8,7 @@ ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
 RUN apt-get update -qq
-RUN apt-get install -y software-properties-common
+RUN apt-get install -y software-properties-common locales locales-all
 RUN apt-get install -y libreoffice 
 
 # Locales
