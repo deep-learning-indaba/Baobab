@@ -12,5 +12,5 @@ RUN mkdir /code
 ADD . /code/
 WORKDIR /code
 RUN pip install -r requirements.txt
-
+RUN locale -a
 EXPOSE 5000
