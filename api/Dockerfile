@@ -8,18 +8,9 @@ ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
 RUN apt-get update -qq
-RUN apt-get install -y software-properties-common locales locales-all
+RUN apt-get install -y software-properties-common
 RUN apt-get install -y libreoffice 
 
-# Locales
-RUN locale-gen en_US.UTF-8
-RUN update-locale LANG=en_US.UTF-8
-RUN update-locale LANGUAGE=en_US.UTF-8
-RUN update-locale LC_ALL=en_US.UTF-8
-
-ENV LANG en_US.UTF-8  
-ENV LANGUAGE en_US:en  
-ENV LC_ALL en_US.UTF-8     
 
 # Add the application source code.
 RUN mkdir /code
