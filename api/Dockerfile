@@ -11,11 +11,6 @@ RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
 RUN apt-get install -y libreoffice 
 
-# Copy the application's requirements.txt and run pip to install all
-# dependencies into the virtualenv.
-ADD requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
-
 # Add the application source code.
 RUN mkdir /code
 ADD . /code/
