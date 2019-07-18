@@ -1,4 +1,4 @@
-FROM google/cloud-sdk:latest
+FROM gcr.io/google-appengine/python
 
 RUN apt-get update -qq
 RUN apt-get install -y socat git software-properties-common postgresql-client postgresql-client-common
