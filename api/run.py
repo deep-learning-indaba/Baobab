@@ -12,6 +12,6 @@ def create_app():
 
 # Remove encoding if upgrading to python 3.
 if __name__ == '__main__':
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
+    #reload(sys)
+    #sys.setdefaultencoding('utf-8')
     create_app().run()
