@@ -1,16 +1,22 @@
-FROM google/cloud-sdk:latest
+FROM gcr.io/google-appengine/python
+
+RUN virtualenv /env
+
+# Setting these environment variables are the same as running
+# source /env/bin/activate.
+ENV VIRTUAL_ENV /env
+ENV PATH /env/bin:$PATH
 
 RUN apt-get update -qq
-RUN apt-get install -y socat git software-properties-common postgresql-client postgresql-client-common
-
-RUN apt-get update -qq
-RUN apt-get install -y python-pip python-psycopg2 libpq-dev python2.7-dev gunicorn libmagic1 libffi-dev
-
+RUN apt-get install -y software-properties-common
 RUN apt-get install -y libreoffice 
 
+
+# Add the application source code.
 RUN mkdir /code
 ADD . /code/
 WORKDIR /code
-RUN pip install -r requirements.txt
 
+RUN pip install -r requirements.txt
+RUN locale -a
 EXPOSE 5000

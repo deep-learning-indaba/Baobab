@@ -86,8 +86,8 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date)
     
     # Path to store the template locally of merged and unmerged
-    template = 'app/invitationletter/template/template.docx'
-    template_merged = 'app/invitationletter/letter/template.docx'
+    template = 'app/invitationletter/template/tmp.docx'
+    template_merged = 'app/invitationletter/template/template.docx'
 
     download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
                   destination_file_name=template)
@@ -101,16 +101,16 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         TITLE=user_title,
         FIRSTNAME=firstname,
         LASTNAME=lastname,
-        WORK_ADDRESS=work_address,
-        ADDRESSED_TO=addressed_to,
-        RESIDENTIAL_ADDRESS=residential_address,
-        PASSPORT_NAME=passport_name,
-        PASSPORT_NO=passport_no,
-        ISSUED_BY=passport_issued_by,
+        WORK_ADDRESS=work_address.decode('utf-8'),
+        ADDRESSED_TO=addressed_to.decode('utf-8'),
+        RESIDENTIAL_ADDRESS=residential_address.decode('utf-8'),
+        PASSPORT_NAME=passport_name.decode('utf-8'),
+        PASSPORT_NO=passport_no.decode('utf-8'),
+        ISSUED_BY=passport_issued_by.decode('utf-8'),
         EXPIRY_DATE=expiry_date,
         ACCOMODATION_END_DATE=to_date,
         ACCOMODATION_START_DATE=from_date,
-        COUNTRY_OF_RESIDENCE=country_of_residence,
+        COUNTRY_OF_RESIDENCE=country_of_residence.decode('utf-8'),
         NATIONALITY=nationality,
         DATE_OF_BIRTH=date_of_birth,
         INVITATION_LETTER_SENT_AT=invitation_letter_sent_at,
