@@ -7,7 +7,6 @@ export const registrationService = {
   getRegistrationForm,
   getRegistrationResponse,
   submitResponse,
-  determineIfGuest,
   getGuestRegistration,
   submitGuestResponse,
   getGuestRegistrationResponse,
@@ -91,34 +90,6 @@ function submitResponse(data, shouldUpdate) {
     });
 }
 
-function determineIfGuest(event_id) {
-  return axios
-    .get(baseUrl + "/api/v1/checkIfInvitedGuest?event_id=" + event_id, {
-      headers: authHeader()
-    })
-    .then(function(response) {
-      return {
-        msg: "Guest Found",
-        statusCode: "200"
-      };
-    })
-    .catch(function(error) {
-      if (error.response && error.response.status === 404) {
-        return {
-          msg: "Guest Not Found",
-          statusCode: "404"
-        };
-      } else {
-        return {
-          msg: "Failed",
-          error:
-            error.response && error.response.data
-              ? error.response.data.message
-              : error.message
-        };
-      }
-    });
-}
 function getGuestRegistration(event_id) {
   return axios
     .get(baseUrl + "/api/v1/guest-registration-form?event_id=" + event_id, {

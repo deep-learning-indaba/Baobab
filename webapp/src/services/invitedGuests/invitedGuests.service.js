@@ -8,7 +8,8 @@ export const invitedGuestServices = {
   getInvitedGuestList,
   addInvitedGuest,
   createInvitedGuest,
-  getRoles
+  getRoles,
+  determineIfInvitedGuest
 }
 
 const roleOptions = [
@@ -77,6 +78,35 @@ function addInvitedGuest(email_address, event_Id, role) {
         }
       }
     })
+}
+
+function determineIfInvitedGuest(event_id) {
+  return axios
+    .get(baseUrl + "/api/v1/checkIfInvitedGuest?event_id=" + event_id, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        msg: "Guest Found",
+        statusCode: "200"
+      };
+    })
+    .catch(function(error) {
+      if (error.response && error.response.status === 404) {
+        return {
+          msg: "Guest Not Found",
+          statusCode: "404"
+        };
+      } else {
+        return {
+          msg: "Failed",
+          error:
+            error.response && error.response.data
+              ? error.response.data.message
+              : error.message
+        };
+      }
+    });
 }
 
 
