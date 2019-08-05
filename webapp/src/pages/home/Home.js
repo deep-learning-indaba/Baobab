@@ -145,7 +145,7 @@ class Home extends Component {
                     Your application was successful! 
                   </span>}
 
-                  {this.state.applicationStatus === "Submitted" && !this.state.offer &&  this.state.invitedGuest !== true <span>
+                  {this.state.applicationStatus === "Submitted" && !this.state.offer &&  this.state.invitedGuest !== true && <span>
                     Waiting List
                   </span>}
 
