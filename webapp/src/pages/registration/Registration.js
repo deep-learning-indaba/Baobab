@@ -3,6 +3,7 @@ import "./Registration.css";
 import RegistrationComponent from "./components/RegistrationComponent"
 import GuestRegistrationComponent from "./components/GuestRegistrationComponent"
 import { registrationService } from "../../services/registration";
+import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests.service';
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -16,7 +17,7 @@ export default class Registration extends Component {
   }
 
   componentDidMount() {
-    registrationService.determineIfGuest(DEFAULT_EVENT_ID).then(response => {
+    invitedGuestServices.determineIfInvitedGuest(DEFAULT_EVENT_ID).then(response => {
       if (response.statusCode === "200") {
         this.setState({
           GuestRegistration: true
