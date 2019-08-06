@@ -11,7 +11,7 @@ from app import app, db
 from app import db, LOGGER
 
 
-class RegistrationApiTest(ApiTestCase):
+class GuestRegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
@@ -235,7 +235,7 @@ class RegistrationApiTest(ApiTestCase):
                 'answers': [
                     {
                         'registration_question_id': self.question.id,
-                        'value': 'Answer 1'
+                        'value': 'Answer Other'
                     },
                     {
                         'registration_question_id': self.question2.id,
@@ -256,6 +256,13 @@ class RegistrationApiTest(ApiTestCase):
             LOGGER.debug(
                 "put response: {}".format(post_response))
             self.assertEqual(post_response.status_code, 200)
+
+            response = self.app.get(
+                '/api/v1/guest-registration',
+                content_type='application/json',
+                headers=self.headers)
+            updated_data = json.loads(response.data)
+            self.assertEqual(updated_data['answers'][0]['value'], "Answer Other")
 
     def test_get_form(self):
         self.seed_static_data()

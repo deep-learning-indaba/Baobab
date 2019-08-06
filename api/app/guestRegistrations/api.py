@@ -166,7 +166,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
             registration = db.session.query(GuestRegistration).filter(
-                GuestRegistration.id == args['guest_registration_id']).first()
+                GuestRegistration.id == args['guest_registration_id']).one_or_none()
             if registration is None:
                 return 'Registration not found', 404
             registration.registration_form_id = args['registration_form_id']
@@ -174,13 +174,13 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
             for answer_args in args['answers']:
                 answer = db.session.query(GuestRegistrationAnswer).filter(
-                    GuestRegistrationAnswer.registration_question_id
-                    == answer_args['registration_question_id']).first()
+                    GuestRegistrationAnswer.registration_question_id == answer_args['registration_question_id'],
+                    GuestRegistrationAnswer.guest_registration_id == args['guest_registration_id']).one_or_none()
                 if answer is not None:
                     answer.value = answer_args['value']
 
                 elif db.session.query(RegistrationQuestion).filter(
-                        RegistrationQuestion.id == answer_args['registration_question_id']).first():
+                        RegistrationQuestion.id == answer_args['registration_question_id']).one():
 
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                      registration_question_id=answer_args['registration_question_id'],
