@@ -5,6 +5,7 @@ import { getEvents } from "../../services/events";
 import { applicationFormService } from "../../services/applicationForm";
 import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
+import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests.service';
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -63,6 +64,19 @@ class Home extends Component {
         offer: result.offer
       });
     });
+
+    invitedGuestServices.determineIfInvitedGuest(DEFAULT_EVENT_ID).then(response => {
+      if (response.statusCode === "200") {
+        this.setState({
+          invitedGuest: true
+        });
+      }
+      else if (response.statusCode ==="404"){
+        this.setState({
+          invitedGuest: false
+        });
+      }
+    })
   
   }
 
@@ -126,27 +140,41 @@ class Home extends Component {
             <div class="status2019 row text-center">
               <div className="col-sm">
                 <h5 className={statusClass}>
+
                   {this.state.applicationStatus === "Submitted" && this.state.offer && <span>
                     Your application was successful! 
                   </span>}
-                  {this.state.applicationStatus === "Submitted" && !this.state.offer && <span>
+
+                  {this.state.applicationStatus === "Submitted" && !this.state.offer &&  this.state.invitedGuest !== true && <span>
                     Waiting List
                   </span>}
-                  {this.state.applicationStatus !== "Submitted" && this.state.applicationStatus}
+
+                  {this.state.applicationStatus !== "Submitted" && this.state.invitedGuest === true && <span>
+                    You've been invited as a guest!
+                  </span>}
+
+                  {this.state.applicationStatus !== "Submitted" && this.state.invitedGuest !== true && this.state.applicationStatus}
                 </h5>
+
+                { this.state.invitedGuest === true && <div>  
+                <p>You've been invited to the Indaba as a guest! Please proceed to registration <NavLink to="/registration">here</NavLink>.</p>
+                </div>}
 
                 {this.state.applicationStatus == "Submitted" &&
                 <div>
                   {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
                   : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
                 </div>}
+
                 {this.state.applicationStatus == "Withdrawn" && <p>
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
+
                 {this.state.applicationStatus == "NOT Submitted" && <p>
                   You did not submit an application to attend the Deep Learning Indaba 2019!
                 </p>}
-                {this.state.applicationStatus == "Not Started" && <p>
+
+                {this.state.applicationStatus == "Not Started" && this.state.invitedGuest !== true  && <p>
                   You did not apply to attend the Deep Learning Indaba 2019.
                 </p>}
 
