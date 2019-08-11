@@ -61,6 +61,8 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
         if registration:
             is_guest_registration = True
+        else:
+            is_guest_registration = False
 
         # Normal Registration
         if (not registration) and offer:
