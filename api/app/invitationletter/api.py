@@ -30,7 +30,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         work_address = args['work_address'] if args['work_address'] is not None else ' '
-        addressed_to = args['addressed_to']
+        addressed_to = args['addressed_to'] or 'To Whom it May Concern'
         residential_address = args['residential_address']
         passport_name = args['passport_name']
         passport_no = args['passport_no']
