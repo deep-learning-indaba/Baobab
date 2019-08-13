@@ -132,7 +132,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_accommodation_award_only == True).first()
 
-        elif ((not offer.accommodation_award) and (not offer.travel_award)):
+        else:
             invitation_template = (
                 db.session.query(InvitationTemplate)
                 .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
@@ -140,8 +140,6 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(InvitationTemplate.send_for_accommodation_award_only == False)
                 .first()
             )
-        if not invitation_template:
-            return errors.TEMPLATE_NOT_FOUND
         
         template_url = invitation_template.template_path
 
