@@ -67,7 +67,7 @@ OFFER_NOT_ACCEPTED = (
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
-    {'message': 'An offer already exists for the user_id and event_id'}, 409) 
+    {'message': 'An offer already exists for the user_id and event_id'}, 409)
 CREATING_INVITATION_FAILED = (
     {'message': 'Invitation Letter creation failed'}, 502)
 SENDING_INVITATION_FAILED = (
@@ -77,7 +77,7 @@ EVENT_ID_NOT_FOUND = (
 MISSING_DATE_OF_BIRTH = (
     {'message': 'Missing date of birth. Please update your user profile.'}, 400)
 REGISTRATION_NOT_FOUND = (
-    {'message': 'Registration not found. Please register before trying to get Invitation Letter'}, 404)
+    {'message': 'Registration not found. Please register first.'}, 404)
 EMAIL_NOT_SENT = (
     {'message': 'Email failed to send'}, 500)
 INVITED_GUEST_EMAIL_FAILED = (
@@ -86,4 +86,3 @@ ATTENDANCE_ALREADY_CONFIRMED = (
     {'message': 'Attendance has already been confirmed for this user and event.'}, 400)
 ATTENDANCE_NOT_FOUND = (
     {'message': 'Attendance not found.'}, 404)
-
