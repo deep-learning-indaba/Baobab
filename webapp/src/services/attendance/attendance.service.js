@@ -11,9 +11,16 @@ export const attendanceService = {
 
 function getAttendanceList(eventId) {
   return axios
-    .get(baseUrl + "/api/v1/registration/confirmed?event_id=" + eventId, {
-      headers: authHeader()
-    })
+    .get(
+      baseUrl +
+        "/api/v1/registration/confirmed?event_id=" +
+        eventId +
+        "&exclude_already_registered=" +
+        true,
+      {
+        headers: authHeader()
+      }
+    )
     .then(function(response) {
       return {
         data: response.data,

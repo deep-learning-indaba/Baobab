@@ -324,7 +324,6 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
         event_id = args['event_id']
         user_id = g.current_user['id']
         exclude_already_registered = args['exclude_already_registered'] or False
-        LOGGER.debug(exclude_already_registered)
         return _get_registrations(event_id, user_id, confirmed=True, exclude_already_registered=exclude_already_registered)
 
 
