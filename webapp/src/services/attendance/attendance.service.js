@@ -3,14 +3,15 @@ import { authHeader } from "../base.service";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
-export const registrationAdminService = {
-  getUnconfirmed,
-  confirm
+export const attendanceService = {
+  getAttendanceList,
+  confirm,
+  undoConfirmation
 };
 
-function getUnconfirmed(eventId) {
+function getAttendanceList(eventId) {
   return axios
-    .get(baseUrl + "/api/v1/registration/unconfirmed?event_id=" + eventId, {
+    .get(baseUrl + "/api/v1/registration/confirmed?event_id=" + eventId, {
       headers: authHeader()
     })
     .then(function(response) {
@@ -31,15 +32,42 @@ function getUnconfirmed(eventId) {
     });
 }
 
-function confirm(registrationId) {
+function confirm(eventId, userId) {
   const data = {
-    registration_id: registrationId
+    user_id: userId,
+    event_id: eventId
   };
 
   return axios
-    .post(baseUrl + "/api/v1/registration/confirm", data, {
+    .post(baseUrl + "/api/v1/attendance", data, {
       headers: authHeader()
     })
+    .then(function(response) {
+      return {
+        data: response.data,
+        error: "",
+        statusCode: response.status
+      };
+    })
+    .catch(function(error) {
+      return {
+        data: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
+    });
+}
+
+function undoConfirmation(eventId, userId) {
+  const data = {
+    user_id: userId,
+    event_id: eventId
+  };
+  return axios
+    .delete(baseUrl + `/api/v1/attendance`, { headers: authHeader(), data })
     .then(function(response) {
       return {
         data: response.data,
