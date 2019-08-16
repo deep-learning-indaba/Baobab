@@ -30,7 +30,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         work_address = args['work_address'] if args['work_address'] is not None else ' '
-        addressed_to = args['addressed_to']
+        addressed_to = args['addressed_to'] or 'Whom it May Concern'
         residential_address = args['residential_address']
         passport_name = args['passport_name']
         passport_no = args['passport_no']
@@ -48,27 +48,29 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         user_id = verify_token(request.headers.get('Authorization'))['id']
         offer = db.session.query(Offer).filter(
             Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
+        registration_form = db.session.query(RegistrationForm).filter(
+            RegistrationForm.event_id == event_id).first()
 
-        if not offer:
-            # Check if Guest Registration
-            registration = None
-            registration_form = db.session.query(RegistrationForm).filter(
-                RegistrationForm.event_id == event_id).first()
-            if(registration_form):
-                registration = db.session.query(GuestRegistration).filter(
-                    GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
+        if not registration_form:
+            return errors.REGISTRATION_FORM_NOT_FOUND
+            
+        # Check if Guest Registration
+        registration = None
 
-            if not registration:
-                return errors.OFFER_NOT_FOUND
+        registration = db.session.query(GuestRegistration).filter(
+            GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
+        if registration:
+            is_guest_registration = True
         else:
-            # Normal registratRegistrationion
+            is_guest_registration = False
+
+        # Normal Registration
+        if (not registration) and offer:
             registration = db.session.query(Registration).filter(
                 Registration.offer_id == offer.id).first()
-            
-            if not registration:
-                return errors.REGISTRATION_NOT_FOUND
 
-        is_guest_registration = (not offer and registration)
+        if not registration:
+            return errors.REGISTRATION_NOT_FOUND
 
         try:
             if(is_guest_registration):
@@ -130,7 +132,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 InvitationTemplate.event_id == offer.event_id).filter(
                 InvitationTemplate.send_for_accommodation_award_only == True).first()
 
-        elif ((not offer.accommodation_award) and (not offer.travel_award)):
+        else:
             invitation_template = (
                 db.session.query(InvitationTemplate)
                 .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
@@ -138,8 +140,6 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .filter(InvitationTemplate.send_for_accommodation_award_only == False)
                 .first()
             )
-        if not invitation_template:
-            return errors.TEMPLATE_NOT_FOUND
         
         template_url = invitation_template.template_path
 
