@@ -11,8 +11,15 @@ class AttendanceTable extends React.Component {
       originalAttendanceList: [],
       filteredList: [],
       showDetailsModal: false,
-      selectedUserId: null
+      selectedUserId: null,
+      confirmResult: null,
+      undoResult: null,
+      confirming: false,
+      undoing: false
     };
+  }
+  componentDidMount() {
+    this.setState({ loading: true }, () => this.getAttendanceList());
   }
   getAttendanceList() {
     attendanceService.getAttendanceList(this.state.eventId).then(result => {
@@ -24,37 +31,55 @@ class AttendanceTable extends React.Component {
       });
     });
   }
-
-  handleContinue = event => {
-    this.setState({ showDetailsModal: false }, () => this.getAttendanceList());
+  onConfirm = userId => {
+    const { eventId } = this.state;
+    this.setState({ selectedUserId: userId, confirming: true }, () => {
+      attendanceService.confirm(eventId, userId).then(result => {
+        let success =
+          (result.error == null || result.error == "") &&
+          result.statusCode === 201;
+        this.setState({
+          showDetailsModal: success,
+          confirming: false,
+          confirmResult: {
+            confirmed: result.data,
+            confirmError: result.error,
+            statusCode: result.statusCode,
+            success: success
+          }
+        });
+      });
+    });
   };
 
-  handleUndo = event => {
+  handleUndo = () => {
     const { eventId, selectedUserId } = this.state;
-    this.setState({ confirming: true }, () => {
+    this.setState({ undoing: true }, () => {
       attendanceService
         .undoConfirmation(eventId, selectedUserId)
         .then(response => {
-          this.setState(
-            {
-              confirmed: response.data,
-              confirmError: response.error,
-              confirming: false
-            },
-            () => {
-              this.getAttendanceList();
-              this.setState({
-                showDetailsModal: false
-              });
+          this.setState({
+            undoResult: {
+              undo: response.data,
+              undoError: response.error,
+              undoing: false
             }
-          );
+          });
         });
     });
   };
 
-  componentDidMount() {
-    this.setState({ loading: true }, () => this.getAttendanceList());
-  }
+  handleContinue = () => {
+    this.setState(
+      {
+        showDetailsModal: false,
+        loading: true,
+        confirmResult: null,
+        undoResult: null
+      },
+      () => this.getAttendanceList()
+    );
+  };
 
   onSearchChange = field => {
     let value = field.target.value.toLowerCase();
@@ -77,27 +102,78 @@ class AttendanceTable extends React.Component {
     this.setState({ filteredList: filteredList });
   };
 
-  onConfirm = userId => {
-    const { eventId } = this.state;
-    this.setState({ selectedUserId: userId, confirming: true }, () => {
-      attendanceService.confirm(eventId, userId).then(response => {
-        this.setState(
-          {
-            confirmed: response.data,
-            confirmError: response.error,
-            confirming: false
-          },
-          () => {
-            this.getAttendanceList();
-            this.setState({
-              showDetailsModal: true
-            });
-          }
-        );
-      });
-    });
-  };
   render() {
+    const {
+      filteredList,
+      loading,
+      error,
+      confirming,
+      undoing,
+      confirmResult,
+      undoResult,
+      searchTerm,
+      selectedUserId,
+      originalAttendanceList
+    } = this.state;
+
+    const loadingStyle = {
+      width: "3rem",
+      height: "3rem"
+    };
+
+    let confirmResultDiv = null;
+    if (confirmResult) {
+      if (confirmResult.success) {
+        confirmResultDiv = (
+          <div class="alert alert-success">
+            Success - Attendance Confirmation.
+          </div>
+        );
+      } else {
+        confirmResultDiv = (
+          <div class="alert alert-danger">
+            {" "}
+            Failure - Attendance Confirmation. Http Code:
+            {confirmResult.statusCode} Message:
+            {confirmResult.confirmError}
+          </div>
+        );
+      }
+    }
+
+    let undoResultDiv = null;
+    if (undoResult) {
+      if (undoResult.undo && !undoResult.undoError) {
+        undoResultDiv = (
+          <div class="alert alert-success">
+            Success - Undo Attendance Confirmation.
+          </div>
+        );
+      } else {
+        undoResultDiv = (
+          <div class="alert alert-danger">
+            {" "}
+            Failure - Undo Attendance Confirmation. Message :
+            {undoResult.undoError}
+          </div>
+        );
+      }
+    }
+
+    let userInfoDiv = null;
+    if (confirmResult && confirmResult.data) {
+      userInfoDiv = (
+        <div>
+          'event_id': {confirmResult.data.event_id}
+          'user_id': : {confirmResult.data.user_id}
+          'timestamp': {confirmResult.data.timestamp}
+          'updated_by_user_id': {confirmResult.data.updated_by_user_id}
+          'accommodation_award' : {confirmResult.data.accommodation_award}
+          'shirt_size' = {confirmResult.data.shirt_size}
+          'is_invitedguest' = {confirmResult.data.is_invitedguest}
+        </div>
+      );
+    }
     const columns = [
       {
         id: "user",
@@ -140,17 +216,16 @@ class AttendanceTable extends React.Component {
       }
     ];
 
-    const {
-      filteredList,
-      loading,
-      error,
-      confirming,
-      confirmError,
-      confirmed,
-      searchTerm,
-      selectedUserId,
-      originalAttendanceList
-    } = this.state;
+    if (loading) {
+      return (
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border" style={loadingStyle} role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="container-fluid pad-top-30-md">
         {error && (
@@ -163,11 +238,10 @@ class AttendanceTable extends React.Component {
           okText={"Continue"}
           cancelText={"Undo"}
         >
-          <p>
-            Are you SURE you want to withdraw your application to the Deep
-            Learning Indaba 2019? You will NOT be considered for a place at the
-            Indaba if you continue.
-          </p>
+          {userInfoDiv}
+          {/* If we have an undo result - show it, otherwise show confirmed result. */}
+          {undoResultDiv ||
+            (confirmResult && confirmResult.success && confirmResultDiv)}
         </ConfirmModal>
         <div class="card no-padding-h">
           <p className="h5 text-center mb-4 ">Attendance Registration</p>
@@ -186,14 +260,7 @@ class AttendanceTable extends React.Component {
                 <ReactTable data={filteredList} columns={columns} minRows={0} />
               )}
 
-              {confirmed && !confirmError && (
-                <div class="alert alert-success">
-                  Success for userId: {selectedUserId}
-                </div>
-              )}
-              {confirmError && (
-                <div class="alert alert-danger">{confirmError}</div>
-              )}
+              {confirmResult && !confirmResult.success && confirmResultDiv}
 
               {(!originalAttendanceList ||
                 originalAttendanceList.length == 0) && (
