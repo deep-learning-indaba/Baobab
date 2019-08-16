@@ -193,7 +193,8 @@ class AttendanceTable extends React.Component {
         id: "user",
         Header: <div>Full-Name</div>,
         accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
-        minWidth: 150
+        minWidth: 150,
+        sort: "asc"
       },
       {
         id: "email",
