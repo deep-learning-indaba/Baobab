@@ -11,7 +11,7 @@ class AttendanceTable extends React.Component {
       originalAttendanceList: [],
       filteredList: [],
       showDetailsModal: false,
-      selectedUserId: null,
+      selectedUser: null,
       confirmResult: null,
       undoResult: null,
       confirming: false,
@@ -31,10 +31,10 @@ class AttendanceTable extends React.Component {
       });
     });
   }
-  onConfirm = userId => {
+  onConfirm = user => {
     const { eventId } = this.state;
-    this.setState({ selectedUserId: userId, confirming: true }, () => {
-      attendanceService.confirm(eventId, userId).then(result => {
+    this.setState({ selectedUser: user, confirming: true }, () => {
+      attendanceService.confirm(eventId, user.user_id).then(result => {
         let success =
           (result.error == null || result.error == "") &&
           result.statusCode === 201;
@@ -53,10 +53,10 @@ class AttendanceTable extends React.Component {
   };
 
   handleUndo = () => {
-    const { eventId, selectedUserId } = this.state;
+    const { eventId, selectedUser } = this.state;
     this.setState({ undoing: true }, () => {
       attendanceService
-        .undoConfirmation(eventId, selectedUserId)
+        .undoConfirmation(eventId, selectedUser.user_id)
         .then(response => {
           this.setState({
             undoResult: {
@@ -112,7 +112,7 @@ class AttendanceTable extends React.Component {
       confirmResult,
       undoResult,
       searchTerm,
-      selectedUserId,
+      selectedUser,
       originalAttendanceList
     } = this.state;
 
@@ -134,8 +134,7 @@ class AttendanceTable extends React.Component {
           <div class="alert alert-danger">
             {" "}
             Failure - Attendance Confirmation. Http Code:
-            {confirmResult.statusCode} Message:
-            {confirmResult.confirmError}
+            {confirmResult.statusCode} Message: {confirmResult.confirmError}
           </div>
         );
       }
@@ -153,7 +152,7 @@ class AttendanceTable extends React.Component {
         undoResultDiv = (
           <div class="alert alert-danger">
             {" "}
-            Failure - Undo Attendance Confirmation. Message :
+            Failure - Undo Attendance Confirmation. Message :{" "}
             {undoResult.undoError}
           </div>
         );
@@ -161,16 +160,31 @@ class AttendanceTable extends React.Component {
     }
 
     let userInfoDiv = null;
-    if (confirmResult && confirmResult.data) {
+    if (confirmResult && confirmResult.confirmed) {
       userInfoDiv = (
         <div>
-          'event_id': {confirmResult.data.event_id}
-          'user_id': : {confirmResult.data.user_id}
-          'timestamp': {confirmResult.data.timestamp}
-          'updated_by_user_id': {confirmResult.data.updated_by_user_id}
-          'accommodation_award' : {confirmResult.data.accommodation_award}
-          'shirt_size' = {confirmResult.data.shirt_size}
-          'is_invitedguest' = {confirmResult.data.is_invitedguest}
+          <h1>
+            {selectedUser.firstname} {selectedUser.lastname}
+          </h1>
+          Category: {selectedUser.user_category} <br />
+          Email: {selectedUser.email} <br />
+          Event_id: {confirmResult.confirmed.event_id} <br />
+          User_id: {confirmResult.confirmed.user_id} <br />
+          Timestamp: {confirmResult.confirmed.timestamp} <br />
+          Updated_by_user_id: {confirmResult.confirmed.updated_by_user_id}{" "}
+          <br />
+          Accommodation_award :{" "}
+          {confirmResult.confirmed.accommodation_award !== null &&
+            confirmResult.confirmed.accommodation_award.toString()}{" "}
+          <br />
+          Shirt_size :{" "}
+          {confirmResult.confirmed.shirt_size !== null &&
+            confirmResult.confirmed.shirt_size.toString()}{" "}
+          <br />
+          Is_Invitedguest :{" "}
+          {confirmResult.confirmed.is_invitedguest !== null &&
+            confirmResult.confirmed.is_invitedguest.toString()}{" "}
+          <br />
         </div>
       );
     }
@@ -201,12 +215,12 @@ class AttendanceTable extends React.Component {
         Header: (
           <div className="registration-admin-confirm">Mark attendance</div>
         ),
-        accessor: u => u.registration_id,
+        accessor: u => u.user_id,
         Cell: props => (
           <button
             className="btn btn-success btn-sm"
             onClick={e => {
-              this.onConfirm(props.value);
+              this.onConfirm(props.original);
             }}
             disabled={confirming}
           >
