@@ -150,7 +150,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             bringing_poster = True
 
         attendance_user = AttendanceUser(
-            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, poster_answer)
+            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster)
         return attendance_user, 201
 
     @auth_required
