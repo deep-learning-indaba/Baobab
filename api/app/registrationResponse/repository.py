@@ -2,16 +2,20 @@ from app import db
 from app.registration.models import Offer, Registration
 from app.users.models import AppUser
 from app.events.models import Event
+from app.attendance.models import Attendance
+from sqlalchemy.sql import exists
+from app import LOGGER
+
 
 class RegistrationRepository():
-    
+
     @staticmethod
     def get_by_id_with_offer(registration_id):
         """Get a registration by its id."""
         return db.session.query(Registration, Offer).filter(
             Registration.id == registration_id).join(
                 Offer, Offer.id == Registration.offer_id
-            ).one_or_none()
+        ).one_or_none()
 
     @staticmethod
     def get_by_user_id(user_id):
@@ -45,3 +49,18 @@ class RegistrationRepository():
         ).filter(
             Offer.event_id == event_id
         ).all()
+
+    @staticmethod
+    def get_confirmed_for_event_exclude_completed_registrations(event_id, confirmed):
+        """Get registrations for an event according to confirmed status, excluding those who have already registered."""
+        stmt = ~ exists().where(Attendance.user_id == AppUser.id)
+        reg = db.session.query(Registration, Offer, AppUser).filter(
+            Registration.confirmed == confirmed
+        ).join(
+            Offer, Registration.offer_id == Offer.id
+        ).join(
+            AppUser, Offer.user_id == AppUser.id
+        ).filter(
+            Offer.event_id == event_id
+        ).filter(stmt).all()
+        return reg

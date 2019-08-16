@@ -75,11 +75,13 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
-            db_offer = db.session.query(Offer).filter(Offer.user_id == user_id).first()
+            db_offer = db.session.query(Offer).filter(
+                Offer.user_id == user_id).first()
 
             if db_offer is None:
                 return errors.OFFER_NOT_FOUND
-            registration = db.session.query(Registration).filter(Registration.offer_id == db_offer.id).first()
+            registration = db.session.query(Registration).filter(
+                Registration.offer_id == db_offer.id).first()
 
             if registration is None:
                 return 'no Registration', 404
@@ -112,7 +114,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         offer_id = args['offer_id']
 
         try:
-            offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
+            offer = db.session.query(Offer).filter(
+                Offer.id == offer_id).first()
 
             if not offer:
                 return errors.OFFER_NOT_FOUND
@@ -120,7 +123,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             user_id = verify_token(request.headers.get('Authorization'))['id']
             if not user_id:
                 return errors.USER_NOT_FOUND
-            current_user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
+            current_user = db.session.query(AppUser).filter(
+                AppUser.id == user_id).first()
 
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.id == args['registration_form_id']).first()
@@ -138,7 +142,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().name
+            event_name = db.session.query(Event).filter(
+                Event.id == registration_form.event_id).first().name
 
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
@@ -163,10 +168,12 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
         except Exception as e:
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
         finally:
-            return marshal(registration, self.registration_fields), 201  # 201 is 'CREATED' status code
+            # 201 is 'CREATED' status code
+            return marshal(registration, self.registration_fields), 201
 
     @auth_required
     def put(self):
@@ -181,7 +188,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             if registration is None:
                 return 'Registration not found', 404
 
-            db_offer = db.session.query(Offer).filter(Offer.id == registration.offer_id).one_or_none()
+            db_offer = db.session.query(Offer).filter(
+                Offer.id == registration.offer_id).one_or_none()
 
             if db_offer is None:
                 return errors.OFFER_NOT_FOUND
@@ -194,7 +202,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
             for answer_args in args['answers']:
                 answer = db.session.query(RegistrationAnswer).filter(
-                    RegistrationAnswer.registration_question_id == answer_args['registration_question_id'],
+                    RegistrationAnswer.registration_question_id == answer_args[
+                        'registration_question_id'],
                     RegistrationAnswer.registration_id == args['registration_id']).one_or_none()
                 if answer is not None:
                     answer.value = answer_args['value']
@@ -227,14 +236,17 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 for question in questions:
                     if answer.registration_question_id == question.id:
                         summary += "Question heading :" + question.headline + "\nQuestion Description :" + \
-                           question.description + "\nAnswer :" + _get_answer_value(
+                            question.description + "\nAnswer :" + _get_answer_value(
                                 answer, question) + "\n"
 
             subject = event_name + ' Registration'
-            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
+            greeting = strings.build_response_email_greeting(
+                user.user_title, user.firstname, user.lastname)
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
-            body_text = greeting + '\n\n' + REGISTRATION_MESSAGE + self.get_confirmed_message(confirmed) + '\n\nHere is a copy of your responses:\n\n' + summary
+            body_text = greeting + '\n\n' + REGISTRATION_MESSAGE + \
+                self.get_confirmed_message(
+                    confirmed) + '\n\nHere is a copy of your responses:\n\n' + summary
 
             emailer.send_mail(user.email, subject, body_text=body_text)
 
@@ -261,6 +273,7 @@ def map_registration_info(registration_info):
         'created_at': registration_info.Registration.created_at
     }
 
+
 registration_admin_fields = {
     'registration_id': fields.Integer(),
     'user_id': fields.Integer(),
@@ -273,17 +286,22 @@ registration_admin_fields = {
 }
 
 
-def _get_registrations(event_id, user_id, confirmed):
+def _get_registrations(event_id, user_id, confirmed, exclude_already_registered=False):
     try:
         current_user = UserRepository.get_by_id(user_id)
         if not current_user.is_registration_admin(event_id):
             return errors.FORBIDDEN
-
-        registrations = RegistrationRepository.get_confirmed_for_event(event_id, confirmed=confirmed)
+        if(exclude_already_registered == True):
+            registrations = RegistrationRepository.get_confirmed_for_event_exclude_completed_registrations(
+                event_id, confirmed=confirmed)
+        else:
+            registrations = RegistrationRepository.get_confirmed_for_event(
+                event_id, confirmed=confirmed)
         registrations = [map_registration_info(info) for info in registrations]
         return marshal(registrations, registration_admin_fields)
     except Exception as e:
-        LOGGER.error('Error occured while retrieving unconfirmed registrations: {}'.format(e))
+        LOGGER.error(
+            'Error occured while retrieving unconfirmed registrations: {}'.format(e))
         return errors.DB_NOT_AVAILABLE
 
 
@@ -299,26 +317,30 @@ class RegistrationUnconfirmedAPI(RegistrationAdminMixin, restful.Resource):
 
 
 class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
-    
+
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
-
-        return _get_registrations(event_id, user_id, confirmed=True)
+        exclude_already_registered = args['exclude_already_registered'] or False
+        LOGGER.debug(exclude_already_registered)
+        return _get_registrations(event_id, user_id, confirmed=True, exclude_already_registered=exclude_already_registered)
 
 
 def _send_registration_confirmation_mail(user, event_name):
     subject = event_name + ' Registration Confirmation'
-    greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
-    body_text = greeting + '\n\n' + REGISTRATION_CONFIRMED_MESSAGE.format(event_name=event_name)
-    
+    greeting = strings.build_response_email_greeting(
+        user.user_title, user.firstname, user.lastname)
+    body_text = greeting + '\n\n' + \
+        REGISTRATION_CONFIRMED_MESSAGE.format(event_name=event_name)
+
     try:
         emailer.send_mail(user.email, subject, body_text=body_text)
         return True
     except Exception as e:
-        LOGGER.error('Error occured while sending email to {}: {}'.format(user.email, e))
+        LOGGER.error(
+            'Error occured while sending email to {}: {}'.format(user.email, e))
         return False
 
 
@@ -332,12 +354,13 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
 
         try:
             current_user = UserRepository.get_by_id(user_id)
-            registration, offer = RegistrationRepository.get_by_id_with_offer(registration_id)
+            registration, offer = RegistrationRepository.get_by_id_with_offer(
+                registration_id)
             if not current_user.is_registration_admin(offer.event_id):
                 return errors.FORBIDDEN
 
             registration.confirm()
-            
+
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
             if _send_registration_confirmation_mail(registration_user, registration_event.name):
@@ -347,5 +370,6 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
             return 'Confirmed Registration for {} {}'.format(registration_user.firstname, registration_user.lastname), 200
 
         except Exception as e:
-            LOGGER.error('Error occured while confirming registration with id {}: {}'.format(registration_id, e))
+            LOGGER.error('Error occured while confirming registration with id {}: {}'.format(
+                registration_id, e))
             return errors.DB_NOT_AVAILABLE
