@@ -18,6 +18,7 @@ from app.invitedGuest.models import GuestRegistration
 from app.registration.models import RegistrationForm
 from app.registration.models import Registration
 from app.registration.models import get_registration_answer_based_headline
+from app.events.models import EventRole
 
 attendance_fields = {
     'id': fields.Integer,
@@ -137,7 +138,11 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             role = unavilable_response
         else:
             is_guest_registration = (not offer and registration)
-            role = registration.role
+            event_role = db.session.query(EventRole).filter_by(
+                user_id=user_id, event_id=event_id).first()
+            if(event_role):
+                role = event_role.role
+            role = unavilable_response
             has_accepted_accom_award = (
                 offer.accommodation_award and offer.accepted_accommodation_award)
 
