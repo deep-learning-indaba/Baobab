@@ -166,25 +166,57 @@ class AttendanceTable extends React.Component {
           <h1>
             {selectedUser.firstname} {selectedUser.lastname}
           </h1>
-          Category: {selectedUser.user_category} <br />
-          Email: {selectedUser.email} <br />
-          Event_id: {confirmResult.confirmed.event_id} <br />
-          User_id: {confirmResult.confirmed.user_id} <br />
-          Timestamp: {confirmResult.confirmed.timestamp} <br />
-          Updated_by_user_id: {confirmResult.confirmed.updated_by_user_id}{" "}
-          <br />
-          Accommodation_award :{" "}
-          {confirmResult.confirmed.accommodation_award !== null &&
-            confirmResult.confirmed.accommodation_award.toString()}{" "}
-          <br />
-          Shirt_size :{" "}
-          {confirmResult.confirmed.shirt_size !== null &&
-            confirmResult.confirmed.shirt_size.toString()}{" "}
-          <br />
-          Is_Invitedguest :{" "}
-          {confirmResult.confirmed.is_invitedguest !== null &&
-            confirmResult.confirmed.is_invitedguest.toString()}{" "}
-          <br />
+          {confirmResult.confirmed.role !== null && (
+            <h5>
+              Role:
+              <div className="badge badge-primary">
+                {confirmResult.confirmed.role.toString()}
+              </div>{" "}
+            </h5>
+          )}
+          {confirmResult.confirmed.is_invitedguest !== null && (
+            <h5>
+              Is Invited Guest:
+              <div className="badge badge-success">
+                {confirmResult.confirmed.is_invitedguest.toString()}
+              </div>{" "}
+            </h5>
+          )}
+          {confirmResult.confirmed.bringing_poster !== null && (
+            <h5>
+              Bringing a Poster:
+              <div className="badge badge-success">
+                {confirmResult.confirmed.bringing_poster.toString()}
+              </div>
+            </h5>
+          )}
+          <div>
+            <h5>
+              Category:
+              <div
+                style={{ display: "inline-block" }}
+                className="badge badge-info"
+              >
+                {selectedUser.user_category} <br />
+              </div>
+            </h5>
+          </div>
+          {confirmResult.confirmed.accommodation_award !== null && (
+            <h5>
+              Accommodation Award :
+              <div className="badge badge-info">
+                {confirmResult.confirmed.accommodation_award.toString()}
+              </div>{" "}
+            </h5>
+          )}
+          {confirmResult.confirmed.shirt_size !== null && (
+            <h5>
+              Shirt Size :
+              <div className="badge badge-info">
+                {confirmResult.confirmed.shirt_size.toString()}
+              </div>
+            </h5>
+          )}
         </div>
       );
     }
@@ -280,7 +312,7 @@ class AttendanceTable extends React.Component {
               {(!originalAttendanceList ||
                 originalAttendanceList.length == 0) && (
                 <div class="alert alert-success">
-                  There are no unconfirmed attendances.
+                  All attendances are confirmed.
                 </div>
               )}
             </div>
