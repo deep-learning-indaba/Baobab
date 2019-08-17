@@ -29,12 +29,13 @@ attendance_fields = {
     'shirt_size': fields.String,
     'is_invitedguest': fields.Boolean,
     'bringing_poster': fields.Boolean,
-    'message': fields.String
+    'message': fields.String,
+    'role': fields.String
 }
 
 
 class AttendanceUser():
-    def __init__(self, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster):
+    def __init__(self, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, role):
         self.id = attendance.id
         self.event_id = attendance.event_id
         self.user_id = attendance.user_id
@@ -44,6 +45,7 @@ class AttendanceUser():
         self.shirt_size = shirt_size
         self.is_invitedguest = is_invitedguest
         self.bringing_poster = bringing_poster
+        self.role = role
 
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
@@ -128,12 +130,14 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             registration = db.session.query(Registration).filter(
                 Registration.offer_id == offer.id).first()
 
-        unavilable_response = "N/A"
+        unavilable_response = None
         if(registration is None):
             is_guest_registration = unavilable_response
             has_accepted_accom_award = unavilable_response
+            role = unavilable_response
         else:
             is_guest_registration = (not offer and registration)
+            role = registration.role
             has_accepted_accom_award = (
                 offer.accommodation_award and offer.accepted_accommodation_award)
 
@@ -149,7 +153,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             bringing_poster = True
 
         attendance_user = AttendanceUser(
-            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster)
+            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster, role)
         return attendance_user, 201
 
     @auth_required

@@ -292,7 +292,7 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_registered=
         if not current_user.is_registration_admin(event_id):
             return errors.FORBIDDEN
         if(exclude_already_registered == True):
-            registrations = RegistrationRepository.get_unsigned_in_users(
+            registrations = RegistrationRepository.get_unsigned_in_attendees(
                 event_id, confirmed=confirmed)
         else:
             registrations = RegistrationRepository.get_confirmed_for_event(
