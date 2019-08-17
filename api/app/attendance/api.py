@@ -111,37 +111,36 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         )
 
         # Other Fields
+        registration = None
         offer = db.session.query(Offer).filter(
             Offer.user_id == 1).filter(Offer.event_id == event_id).first()
 
         if not offer:
             # Check if Guest Registration
-            registration = None
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.event_id == event_id).first()
             if(registration_form):
                 registration = db.session.query(GuestRegistration).filter(
                     GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
 
-            if not registration:
-                return OFFER_NOT_FOUND
         else:
             # Normal registration
             registration = db.session.query(Registration).filter(
                 Registration.offer_id == offer.id).first()
 
-            if not registration:
-                return REGISTRATION_NOT_FOUND
-
-        is_guest_registration = (not offer and registration)
-
-        # Accom award
-        has_accepted_accom_award = (
-            offer.accommodation_award and offer.accepted_accommodation_award)
+        unavilable_response = "N/A"
+        if(registration is None):
+            is_guest_registration = unavilable_response
+            has_accepted_accom_award = unavilable_response
+        else:
+            is_guest_registration = (not offer and registration)
+            has_accepted_accom_award = (
+                offer.accommodation_award and offer.accepted_accommodation_award)
 
         # Shirt Size
         shirt_answer = get_registration_answer_based_headline(
-            user_id, "T-Shirt Size") or "N\A"
+            user_id, "T-Shirt Size") or unavilable_response
+
         # Poster registration
         bringing_poster = False
         poster_answer = get_registration_answer_based_headline(
