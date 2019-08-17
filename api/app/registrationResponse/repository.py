@@ -51,8 +51,8 @@ class RegistrationRepository():
         ).all()
 
     @staticmethod
-    def get_confirmed_for_event_exclude_completed_registrations(event_id, confirmed):
-        """Get registrations for an event according to confirmed status, excluding those who have already registered."""
+    def get_unsigned_in_attendees(event_id, confirmed):
+        """Get attendees who have confirmed they will attend and have not already signed in."""
         stmt = ~ exists().where(Attendance.user_id == AppUser.id)
         reg = db.session.query(Registration, Offer, AppUser).filter(
             Registration.confirmed == confirmed
