@@ -166,11 +166,11 @@ class AttendanceTable extends React.Component {
           <h1>
             {selectedUser.firstname} {selectedUser.lastname}
           </h1>
-          {confirmResult.confirmed.role !== null && (
+          {confirmResult.confirmed.invitedguest_role !== null && (
             <h5>
-              Role:
+              Invited Guest Role:
               <div className="badge badge-primary">
-                {confirmResult.confirmed.role.toString()}
+                {confirmResult.confirmed.invitedguest_role.toString()}
               </div>{" "}
             </h5>
           )}

@@ -19,6 +19,7 @@ from app.registration.models import RegistrationForm
 from app.registration.models import Registration
 from app.registration.models import get_registration_answer_based_headline
 from app.events.models import EventRole
+from app.invitedGuest.models import InvitedGuest
 
 attendance_fields = {
     'id': fields.Integer,
@@ -31,12 +32,12 @@ attendance_fields = {
     'is_invitedguest': fields.Boolean,
     'bringing_poster': fields.Boolean,
     'message': fields.String,
-    'role': fields.String
+    'invitedguest_role': fields.String
 }
 
 
 class AttendanceUser():
-    def __init__(self, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, role):
+    def __init__(self, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, invitedguest_role):
         self.id = attendance.id
         self.event_id = attendance.event_id
         self.user_id = attendance.user_id
@@ -46,7 +47,7 @@ class AttendanceUser():
         self.shirt_size = shirt_size
         self.is_invitedguest = is_invitedguest
         self.bringing_poster = bringing_poster
-        self.role = role
+        self.invitedguest_role = invitedguest_role
 
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
@@ -114,6 +115,11 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         )
 
         # Other Fields
+        unavilable_response = None
+        invitedguest_role = unavilable_response
+        is_guest_registration = unavilable_response
+        has_accepted_accom_award = unavilable_response
+
         registration = None
         offer = db.session.query(Offer).filter(
             Offer.user_id == 1).filter(Offer.event_id == event_id).first()
@@ -127,24 +133,19 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
                     GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
 
         else:
+            has_accepted_accom_award = (
+                offer.accommodation_award and offer.accepted_accommodation_award)
             # Normal registration
             registration = db.session.query(Registration).filter(
                 Registration.offer_id == offer.id).first()
 
-        unavilable_response = None
-        if(registration is None):
-            is_guest_registration = unavilable_response
-            has_accepted_accom_award = unavilable_response
-            role = unavilable_response
-        else:
+        if(registration is not None):
             is_guest_registration = (not offer and registration)
-            event_role = db.session.query(EventRole).filter_by(
-                user_id=user_id, event_id=event_id).first()
-            if(event_role):
-                role = event_role.role
-            role = unavilable_response
-            has_accepted_accom_award = (
-                offer.accommodation_award and offer.accepted_accommodation_award)
+            if(is_guest_registration):
+                invited_guest = db.session.query(InvitedGuest).filter(
+                    InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
+                if(invited_guest):
+                    invitedguest_role = invited_guest.role
 
         # Shirt Size
         shirt_answer = get_registration_answer_based_headline(
@@ -158,7 +159,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             bringing_poster = True
 
         attendance_user = AttendanceUser(
-            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster, role)
+            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster, invitedguest_role)
         return attendance_user, 201
 
     @auth_required
