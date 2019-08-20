@@ -7,7 +7,7 @@ export default class Attendance extends Component {
     return (
       <AttendanceTable
         eventId={DEFAULT_EVENT_ID}
-        location={this.props.location.search}
+        location={this.props.location && this.props.location.search}
       />
     );
   }
