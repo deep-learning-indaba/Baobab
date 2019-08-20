@@ -3,6 +3,7 @@ import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import FormTextBox from "../../../components/form/FormTextBox";
 import { ConfirmModal } from "react-bootstrap4-modal";
+import queryString from "query-string";
 class AttendanceTable extends React.Component {
   constructor(props) {
     super(props);
@@ -15,39 +16,81 @@ class AttendanceTable extends React.Component {
       confirmResult: null,
       undoResult: null,
       confirming: false,
-      undoing: false
+      undoing: false,
+      exclude_already_signed_in: null,
+      location: props.location,
+      userAlreadyExists: null
     };
   }
   componentDidMount() {
-    this.setState({ loading: true }, () => this.getAttendanceList());
+    let url = this.props.location;
+    // Default only show people who haven't signed in.
+    let exclude_already_signed_in = true;
+    if (url) {
+      let params = queryString.parse(url);
+      if (
+        params &&
+        params.exclude_already_signed_in &&
+        params.exclude_already_signed_in.toLowerCase() === "false"
+      ) {
+        exclude_already_signed_in = false;
+      }
+    }
+    this.setState(
+      { loading: true, exclude_already_signed_in: exclude_already_signed_in },
+      () => this.getAttendanceList()
+    );
   }
   getAttendanceList() {
-    attendanceService.getAttendanceList(this.state.eventId).then(result => {
-      this.setState({
-        loading: false,
-        originalAttendanceList: result.data,
-        error: result.error,
-        filteredList: result.data
+    const { exclude_already_signed_in } = this.state;
+    attendanceService
+      .getAttendanceList(this.state.eventId, exclude_already_signed_in)
+      .then(result => {
+        this.setState({
+          loading: false,
+          originalAttendanceList: result.data,
+          error: result.error,
+          filteredList: result.data
+        });
       });
-    });
   }
   onConfirm = user => {
     const { eventId } = this.state;
     this.setState({ selectedUser: user, confirming: true }, () => {
       attendanceService.confirm(eventId, user.user_id).then(result => {
-        let success =
-          (result.error == null || result.error == "") &&
-          result.statusCode === 201;
-        this.setState({
-          showDetailsModal: success,
-          confirming: false,
-          confirmResult: {
-            confirmed: result.data,
-            confirmError: result.error,
-            statusCode: result.statusCode,
-            success: success
-          }
-        });
+        if (
+          result.statusCode === 400 &&
+          result.error &&
+          result.error.toLowerCase() ===
+            "Attendance has already been confirmed for this user and event.".toLowerCase()
+        ) {
+          // Still Allow Undo if user exists
+          this.setState({
+            showDetailsModal: true,
+            confirming: false,
+            userAlreadyExists: true,
+            confirmResult: {
+              confirmed: result.data,
+              confirmError: result.error,
+              statusCode: result.statusCode,
+              success: false
+            }
+          });
+        } else {
+          let success =
+            (result.error == null || result.error == "") &&
+            result.statusCode === 201;
+          this.setState({
+            showDetailsModal: success,
+            confirming: false,
+            confirmResult: {
+              confirmed: result.data,
+              confirmError: result.error,
+              statusCode: result.statusCode,
+              success: success
+            }
+          });
+        }
       });
     });
   };
@@ -113,7 +156,8 @@ class AttendanceTable extends React.Component {
       undoResult,
       searchTerm,
       selectedUser,
-      originalAttendanceList
+      originalAttendanceList,
+      userAlreadyExists
     } = this.state;
 
     const loadingStyle = {
@@ -219,7 +263,17 @@ class AttendanceTable extends React.Component {
           )}
         </div>
       );
+    } else if (userAlreadyExists === true) {
+      userInfoDiv = (
+        <div>
+          <h4>
+            User {selectedUser.firstname} {selectedUser.lastname} has already
+            signed in, but you can undo this.
+          </h4>
+        </div>
+      );
     }
+
     const columns = [
       {
         id: "user",
