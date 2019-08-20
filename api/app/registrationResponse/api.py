@@ -286,7 +286,7 @@ registration_admin_fields = {
 }
 
 
-def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=True):
+def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=False):
     try:
         current_user = UserRepository.get_by_id(user_id)
         if not current_user.is_registration_admin(event_id):
