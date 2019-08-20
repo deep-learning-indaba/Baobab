@@ -148,8 +148,9 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
                     invitedguest_role = invited_guest.role
 
         # Shirt Size
-        shirt_answer = get_registration_answer_based_headline(
-            user_id, "T-Shirt Size") or unavilable_response
+        shirt_answer = (get_registration_answer_based_headline(
+            user_id, "T-Shirt Size") and get_registration_answer_based_headline(
+            user_id, "T-Shirt Size").value) or unavilable_response
 
         # Poster registration
         bringing_poster = False

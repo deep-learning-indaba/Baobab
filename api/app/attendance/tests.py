@@ -176,7 +176,7 @@ class AttendanceApiTest(ApiTestCase):
                       headers=header, data=params)
 
         params = {'user_id': 1, 'event_id': 1,
-                  'exclude_already_registered': True}
+                  'exclude_already_signed_in': True}
 
         result2 = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)

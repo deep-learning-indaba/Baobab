@@ -13,7 +13,7 @@ class RegistrationResponseMixin(object):
 class RegistrationAdminMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('event_id', type=int, required=True)
-    req_parser.add_argument('exclude_already_registered',
+    req_parser.add_argument('exclude_already_signed_in',
                             type=bool, required=False)
 
 

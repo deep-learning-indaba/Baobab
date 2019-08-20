@@ -9,14 +9,14 @@ export const attendanceService = {
   undoConfirmation
 };
 
-function getAttendanceList(eventId) {
+function getAttendanceList(eventId, exclude_already_signed_in) {
   return axios
     .get(
       baseUrl +
         "/api/v1/registration/confirmed?event_id=" +
         eventId +
-        "&exclude_already_registered=" +
-        true,
+        "&exclude_already_signed_in=" +
+        exclude_already_signed_in,
       {
         headers: authHeader()
       }
