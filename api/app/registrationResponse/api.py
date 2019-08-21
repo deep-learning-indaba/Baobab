@@ -16,6 +16,7 @@ from app.utils import errors, emailer, strings
 from app import LOGGER
 from app.users.repository import UserRepository as user_repository
 from app.registrationResponse.repository import RegistrationRepository
+from app.guestRegistrations.repository import GuestRegistrationRepository
 
 
 from app import db
@@ -273,6 +274,18 @@ def map_registration_info(registration_info):
         'created_at': registration_info.Registration.created_at
     }
 
+def map_registration_info_guests(registration_info):
+    return {
+        'registration_id': registration_info.GuestRegistration.id,
+        'user_id': registration_info.AppUser.id,
+        'firstname': registration_info.AppUser.firstname,
+        'lastname': registration_info.AppUser.lastname,
+        'email': registration_info.AppUser.email,
+        'user_category': registration_info.AppUser.user_category.name,
+        'affiliation': registration_info.AppUser.affiliation,
+        'created_at': registration_info.Registration.created_at
+    }
+
 
 registration_admin_fields = {
     'registration_id': fields.Integer(),
@@ -294,10 +307,14 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
         if(exclude_already_signed_in == True):
             registrations = RegistrationRepository.get_unsigned_in_attendees(
                 event_id, confirmed=confirmed)
+            guest_registrations = GuestRegistrationRepository.get_unsigned_in_guest_attendees(event_id,confirmed=confirmed)
         else:
             registrations = RegistrationRepository.get_confirmed_for_event(
                 event_id, confirmed=confirmed)
+            guest_registrations = GuestRegistrationRepository.get_confirmed_guest_for_event(event_id,confirmed=confirmed)
         registrations = [map_registration_info(info) for info in registrations]
+        guest_registrations = [map_registration_info_guests(info) for info in guest_registrations]
+        registrations.append(guest_registrations)
         return marshal(registrations, registration_admin_fields)
     except Exception as e:
         LOGGER.error(
