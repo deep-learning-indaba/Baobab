@@ -167,6 +167,7 @@ class AttendanceApiTest(ApiTestCase):
         self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
+        self.assertEqual(data['accommodation_award'], True)
 
     # Normal Attendance
     def test_get_attendance_list(self):
