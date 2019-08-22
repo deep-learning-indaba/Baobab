@@ -11,20 +11,24 @@ class GuestRegistrationRepository():
     @staticmethod
     def get_all_unsigned_guests(event_id):
         """Get all guests who have not signed in"""
-        stmt = ~ exists().where(Attendance.user_id == AppUser.user_id)
-        return db.session.query(InvitedGuest, AppUser).join(
+        stmt = ~ exists().where(Attendance.user_id == AppUser.id)
+        return db.session.query(InvitedGuest, AppUser,GuestRegistration).join(
             AppUser, InvitedGuest.user_id == AppUser.id
         ).filter(
             InvitedGuest.event_id == event_id
+        ).outerjoin(
+            GuestRegistration, InvitedGuest.user_id == GuestRegistration.user_id
         ).filter(stmt).all()
 
     @staticmethod
     def get_all_guests(event_id):
         """Get all guests."""
-        return db.session.query(InvitedGuest, AppUser).join(
+        return db.session.query(InvitedGuest, AppUser,GuestRegistration).join(
             AppUser, InvitedGuest.user_id == AppUser.id
         ).filter(
             InvitedGuest.event_id == event_id
+        ).outerjoin(
+            GuestRegistration, InvitedGuest.user_id == GuestRegistration.user_id
         ).all()
 
     @staticmethod

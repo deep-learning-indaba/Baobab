@@ -17,6 +17,7 @@ from app import LOGGER
 from app.users.repository import UserRepository as user_repository
 from app.registrationResponse.repository import RegistrationRepository
 from app.guestRegistrations.repository import GuestRegistrationRepository
+import itertools
 
 
 from app import db
@@ -276,10 +277,12 @@ def map_registration_info(registration_info):
 
 
 def map_registration_info_guests(registration_info):
-    # if(registration_info and registration_info.GuestRegistration):
-    #     reg_id = registration_info.GuestRegistration.id
-    # else:
-    reg_id = None
+    if(registration_info and registration_info.GuestRegistration and registration_info.GuestRegistration.id):
+        reg_id = registration_info.GuestRegistration.id
+        created_at = registration_info.GuestRegistration.created_at
+    else:
+        reg_id = None
+        created_at = None
     return {
         'registration_id': reg_id,
         'user_id': registration_info.AppUser.id,
@@ -288,7 +291,7 @@ def map_registration_info_guests(registration_info):
         'email': registration_info.AppUser.email,
         'user_category': registration_info.AppUser.user_category.name,
         'affiliation': registration_info.AppUser.affiliation,
-        'created_at': registration_info.GuestRegistration.created_at
+        'created_at': created_at
     }
 
 
@@ -312,19 +315,23 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
         if(exclude_already_signed_in == True):
             registrations = RegistrationRepository.get_unsigned_in_attendees(
                 event_id, confirmed=confirmed)
-            guest_registrations = GuestRegistrationRepository.get_all_unsigned_guests(
+            guest_registration = GuestRegistrationRepository.get_all_unsigned_guests(
                 event_id)
         else:
             registrations = RegistrationRepository.get_confirmed_for_event(
                 event_id, confirmed=confirmed)
-            guest_registrations = GuestRegistrationRepository.get_all_guests(
+            guest_registration = GuestRegistrationRepository.get_all_guests(
                 event_id)
         registrations = [map_registration_info(info) for info in registrations]
-        LOGGER.debug(guest_registrations)
         guest_registrations = [map_registration_info_guests(
-            info) for info in guest_registrations]
-        # registrations.append(guest_registrations)
-        return marshal(registrations, registration_admin_fields)
+            info) for info in guest_registration]
+        all_registrations = registrations + guest_registrations
+        # remove duplicates  
+        all_registrations_no_duplicates = list()
+        for name, group in itertools.groupby(sorted(all_registrations, key=lambda d : d['user_id']), key=lambda d : d['user_id']):
+            all_registrations_no_duplicates.append(next(group))
+        
+        return marshal(all_registrations_no_duplicates, registration_admin_fields)
     except Exception as e:
         LOGGER.error(
             'Error occured while retrieving unconfirmed registrations: {}'.format(e))

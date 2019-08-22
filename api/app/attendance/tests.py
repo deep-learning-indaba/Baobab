@@ -31,6 +31,7 @@ class AttendanceApiTest(ApiTestCase):
 
         attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
                            1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        self.attendee = attendee
         registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
                                      1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
         users = [attendee, registration_admin]
@@ -113,128 +114,164 @@ class AttendanceApiTest(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
-    # def test_non_admin_cannot_get_post_delete(self):
-    #     self.seed_static_data()
-    #     header = self.get_auth_header_for('attendee@mail.com')
-    #     params = {'user_id': 2, 'event_id': 1}
-
-    #     response_get = self.app.get(
-    #         '/api/v1/attendance', headers=header, data=params)
-    #     response_post = self.app.post(
-    #         '/api/v1/attendance', headers=header, data=params)
-    #     response_delete = self.app.delete(
-    #         '/api/v1/attendance', headers=header, data=params)
-
-    #     self.assertEqual(response_get.status_code, FORBIDDEN[1])
-    #     self.assertEqual(response_post.status_code, FORBIDDEN[1])
-    #     self.assertEqual(response_delete.status_code, FORBIDDEN[1])
-
-    # def setup_get_attendance(self):
-    #     attendance = Attendance(1, 1, 2)
-    #     attendance_repository.create(attendance)
-
-    # def test_get_attendance(self):
-    #     self.seed_static_data()
-    #     self.setup_get_attendance()
-    #     header = self.get_auth_header_for('ra@ra.com')
-    #     params = {'user_id': 1, 'event_id': 1}
-
-    #     response = self.app.get('/api/v1/attendance',
-    #                             headers=header, data=params)
-
-    #     data = json.loads(response.data)
-    #     self.assertEqual(data['user_id'], 1)
-    #     self.assertEqual(data['event_id'], 1)
-    #     self.assertEqual(data['updated_by_user_id'], 2)
-
-    # def test_post_attendance(self):
-    #     self.seed_static_data()
-    #     header = self.get_auth_header_for('ra@ra.com')
-    #     params = {'user_id': 1, 'event_id': 1}
-
-    #     response = self.app.post('/api/v1/attendance',
-    #                              headers=header, data=params)
-
-    #     data = json.loads(response.data)
-    #     self.assertEqual(data['user_id'], 1)
-    #     self.assertEqual(data['user_id'], 1)
-    #     self.assertEqual(data['bringing_poster'], True)
-    #     self.assertEqual(data['updated_by_user_id'], 2)
-
-    # def test_get_attendance_list(self):
-    #     self.seed_static_data()
-    #     header = self.get_auth_header_for('ra@ra.com')
-
-    #     params = {'event_id': 1}
-    #     result = self.app.get(
-    #         '/api/v1/registration/confirmed', headers=header, data=params)
-    #     data = json.loads(result.data)
-    #     self.assertEqual(len(data), 1)
-    #     self.assertEqual(data[0]['user_id'], 1)
-
-    #     self.app.post('/api/v1/attendance',
-    #                   headers=header, data=params)
-
-    #     params = {'user_id': 1, 'event_id': 1,
-    #               'exclude_already_signed_in': True}
-
-    #     result2 = self.app.get(
-    #         '/api/v1/registration/confirmed', headers=header, data=params)
-    #     data2 = json.loads(result2.data)
-    #     self.assertEqual(len(data2), 0)
-
-    # Invited Guests always get returned
-    def test_get_attendance_list_2(self):
+    def test_non_admin_cannot_get_post_delete(self):
         self.seed_static_data()
-        mrObama = InvitedGuest(1, 1, 'EveryRole')
-        db.session.add(mrObama)
-        db.session.commit()
+        header = self.get_auth_header_for('attendee@mail.com')
+        params = {'user_id': 2, 'event_id': 1}
+
+        response_get = self.app.get(
+            '/api/v1/attendance', headers=header, data=params)
+        response_post = self.app.post(
+            '/api/v1/attendance', headers=header, data=params)
+        response_delete = self.app.delete(
+            '/api/v1/attendance', headers=header, data=params)
+
+        self.assertEqual(response_get.status_code, FORBIDDEN[1])
+        self.assertEqual(response_post.status_code, FORBIDDEN[1])
+        self.assertEqual(response_delete.status_code, FORBIDDEN[1])
+
+    def setup_get_attendance(self):
+        attendance = Attendance(1, 1, 2)
+        attendance_repository.create(attendance)
+
+    def test_get_attendance(self):
+        self.seed_static_data()
+        self.setup_get_attendance()
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1}
+
+        response = self.app.get('/api/v1/attendance',
+                                headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(data['user_id'], 1)
+        self.assertEqual(data['event_id'], 1)
+        self.assertEqual(data['updated_by_user_id'], 2)
+
+    def test_post_attendance(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1}
+
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(data['user_id'], 1)
+        self.assertEqual(data['user_id'], 1)
+        self.assertEqual(data['bringing_poster'], True)
+        self.assertEqual(data['updated_by_user_id'], 2)
+
+    # Normal Attendance
+    def test_get_attendance_list(self):
+        self.seed_static_data()
         header = self.get_auth_header_for('ra@ra.com')
 
-        params = {'user_id': 1, 'event_id': 1}
+        user_id = 1
+        params = {'event_id': 1}
         result = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data = json.loads(result.data)
-        LOGGER.debug(data)
-    #     self.assertEqual(len(data), 1)
-    #     self.assertEqual(data[0]['user_id'], 1)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['user_id'], user_id)
 
-    #     self.app.post('/api/v1/attendance',
-    #                   headers=header, data=params)
+        params = {'user_id': user_id, 'event_id': 1}
+        self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
 
-    #     params = {'user_id': 1, 'event_id': 1,
-    #               'exclude_already_signed_in': True}
+        params = {'user_id': user_id, 'event_id': 1,
+                  'exclude_already_signed_in': True}
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        self.assertEqual(len(data2), 0)
 
-    #     result2 = self.app.get(
-    #         '/api/v1/registration/confirmed', headers=header, data=params)
-    #     data2 = json.loads(result2.data)
-    #     self.assertEqual(len(data2), 0)
+    # Invited Guests attendance
+    def test_get_attendance_list_2(self):
+        self.seed_static_data()
+        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr', 1,
+                           1, 'M', 'Harvard', 'Law', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        db.session.add(mrObama)
+        db.session.commit()
+        invited_guest_id = mrObama.id
+        mrObamaInvitedGuest = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        db.session.add(mrObamaInvitedGuest)
+        db.session.commit()
+        header = self.get_auth_header_for('ra@ra.com')
 
-    # def test_cannot_register_attendance_twice(self):
-    #     self.seed_static_data()
-    #     header = self.get_auth_header_for('ra@ra.com')
-    #     params = {'user_id': 1, 'event_id': 1}
+        # Invited Guests always get returned
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        self.assertGreaterEqual(len(data),1)
+        is_invited_guest_returned = False
+        for attendee in data:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        self.assertTrue(is_invited_guest_returned)
 
-    #     response = self.app.post('/api/v1/attendance',
-    #                              headers=header, data=params)
-    #     response = self.app.post('/api/v1/attendance',
-    #                              headers=header, data=params)
+        # Confirm Attendance of Invited Guest
+        params = {'user_id': invited_guest_id, 'event_id': 1}
+        self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
 
-    #     self.assertEqual(response.status_code, ATTENDANCE_ALREADY_CONFIRMED[1])
+        # No Invited Guest since he/she has already been signed in.
+        params = { 'event_id': 1,
+                  'exclude_already_signed_in': True}
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        is_invited_guest_returned = False
+        for attendee in data2:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        
+        self.assertFalse(is_invited_guest_returned)
 
-    # def setup_delete_attendance(self):
-    #     attendance = Attendance(1, 1, 2)
-    #     attendance_repository.create(attendance)
+   # No duplicate attendances
+    def test_get_attendance_list_3(self):
+        self.seed_static_data()
+        # Add attendee as Invited Guest as well
+        invited_guest_id = self.attendee.id
+        dupl_attendee = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        db.session.add(dupl_attendee)
+        db.session.commit()
 
-    # def test_delete_attendance(self):
-    #     self.seed_static_data()
-    #     self.setup_delete_attendance()
-    #     header = self.get_auth_header_for('ra@ra.com')
-    #     params = {'user_id': 1, 'event_id': 1}
+        header = self.get_auth_header_for('ra@ra.com')
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
+        num_occurences_in_attendance_list = len(occurences_in_attendance_list)
+        self.assertEquals(num_occurences_in_attendance_list,1)
 
-    #     response = self.app.delete(
-    #         '/api/v1/attendance', headers=header, data=params)
+    def test_cannot_register_attendance_twice(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1}
 
-    #     attendance = attendance_repository.get(1, 1)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(attendance, None)
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
+
+        self.assertEqual(response.status_code, ATTENDANCE_ALREADY_CONFIRMED[1])
+
+    def setup_delete_attendance(self):
+        attendance = Attendance(1, 1, 2)
+        attendance_repository.create(attendance)
+
+    def test_delete_attendance(self):
+        self.seed_static_data()
+        self.setup_delete_attendance()
+        header = self.get_auth_header_for('ra@ra.com')
+        params = {'user_id': 1, 'event_id': 1}
+
+        response = self.app.delete(
+            '/api/v1/attendance', headers=header, data=params)
+
+        attendance = attendance_repository.get(1, 1)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(attendance, None)
