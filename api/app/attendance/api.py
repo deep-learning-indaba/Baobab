@@ -117,35 +117,23 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         # Other Fields
         unavilable_response = None
         invitedguest_role = unavilable_response
-        is_guest_registration = unavilable_response
+        is_invited_guest = unavilable_response
         has_accepted_accom_award = unavilable_response
 
-        registration = None
         offer = db.session.query(Offer).filter(
             Offer.user_id == 1).filter(Offer.event_id == event_id).first()
 
-        if not offer:
-            # Check if Guest Registration
-            registration_form = db.session.query(RegistrationForm).filter(
-                RegistrationForm.event_id == event_id).first()
-            if(registration_form):
-                registration = db.session.query(GuestRegistration).filter(
-                    GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
-
-        else:
+        if offer:
             has_accepted_accom_award = (
                 offer.accommodation_award and offer.accepted_accommodation_award)
-            # Normal registration
-            registration = db.session.query(Registration).filter(
-                Registration.offer_id == offer.id).first()
-
-        if(registration is not None):
-            is_guest_registration = (not offer and registration)
-            if(is_guest_registration):
-                invited_guest = db.session.query(InvitedGuest).filter(
+        
+        # Check if invited guest
+        invited_guest = db.session.query(InvitedGuest).filter(
                     InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
-                if(invited_guest):
-                    invitedguest_role = invited_guest.role
+        if(invited_guest):
+            is_invited_guest = True
+            invitedguest_role = invited_guest.role
+        
 
         # Shirt Size
         shirt_answer = (get_registration_answer_based_headline(
@@ -160,7 +148,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             bringing_poster = True
 
         attendance_user = AttendanceUser(
-            attendance, has_accepted_accom_award, shirt_answer, is_guest_registration, bringing_poster, invitedguest_role)
+            attendance, has_accepted_accom_award, shirt_answer, is_invited_guest, bringing_poster, invitedguest_role)
         return attendance_user, 201
 
     @auth_required

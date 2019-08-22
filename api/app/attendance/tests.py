@@ -18,6 +18,7 @@ from app.invitedGuest.models import InvitedGuest
 from datetime import datetime, timedelta
 from app.registrationResponse.repository import RegistrationRepository
 from app import LOGGER
+import json
 
 
 class AttendanceApiTest(ApiTestCase):
@@ -179,12 +180,21 @@ class AttendanceApiTest(ApiTestCase):
         self.app.post('/api/v1/attendance',
                       headers=header, data=params)
 
-        params = {'user_id': user_id, 'event_id': 1,
+        # Exclude signed in
+        params = { 'event_id': 1,
                   'exclude_already_signed_in': True}
         result2 = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data2 = json.loads(result2.data)
         self.assertEqual(len(data2), 0)
+
+        # Include signed in - possible to undo
+        params = {'exclude_already_signed_in': 'false','event_id': 1}
+        LOGGER.debug(params)
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        self.assertEqual(len(data2), 1)
 
     # Invited Guests attendance
     def test_get_attendance_list_2(self):
@@ -194,7 +204,8 @@ class AttendanceApiTest(ApiTestCase):
         db.session.add(mrObama)
         db.session.commit()
         invited_guest_id = mrObama.id
-        mrObamaInvitedGuest = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        role = "EveryRole"
+        mrObamaInvitedGuest = InvitedGuest(event_id=1, user_id=invited_guest_id, role=role)
         db.session.add(mrObamaInvitedGuest)
         db.session.commit()
         header = self.get_auth_header_for('ra@ra.com')
@@ -213,8 +224,12 @@ class AttendanceApiTest(ApiTestCase):
 
         # Confirm Attendance of Invited Guest
         params = {'user_id': invited_guest_id, 'event_id': 1}
-        self.app.post('/api/v1/attendance',
+        attendance_response = self.app.post('/api/v1/attendance',
                       headers=header, data=params)
+      
+        response = json.loads(attendance_response.data)
+        self.assertEquals(response['is_invitedguest'],True)
+        self.assertEquals(response['invitedguest_role'],role)
 
         # No Invited Guest since he/she has already been signed in.
         params = { 'event_id': 1,
@@ -246,6 +261,7 @@ class AttendanceApiTest(ApiTestCase):
         occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
         num_occurences_in_attendance_list = len(occurences_in_attendance_list)
         self.assertEquals(num_occurences_in_attendance_list,1)
+
 
     def test_cannot_register_attendance_twice(self):
         self.seed_static_data()
