@@ -264,7 +264,6 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
 
 def map_registration_info(registration_info):
-    print(registration_info)
     return {
         'registration_id': registration_info.Registration.id,
         'user_id': registration_info.AppUser.id,
@@ -274,7 +273,7 @@ def map_registration_info(registration_info):
         'user_category': registration_info.AppUser.user_category.name,
         'affiliation': registration_info.AppUser.affiliation,
         'created_at': registration_info.Registration.created_at,
-        'confirmed': registration_info.Registration.confirmed
+        'confirmed': registration_info.Registration.confirmed,
     }
 
 

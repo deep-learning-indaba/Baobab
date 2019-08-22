@@ -32,7 +32,7 @@ attendance_fields = {
     'is_invitedguest': fields.Boolean,
     'bringing_poster': fields.Boolean,
     'message': fields.String,
-    'invitedguest_role': fields.String
+    'invitedguest_role': fields.String,
 }
 
 
@@ -115,14 +115,13 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         )
 
         # Other Fields
-        unavilable_response = None
-        invitedguest_role = unavilable_response
-        is_invited_guest = unavilable_response
-        has_accepted_accom_award = unavilable_response
+        unavailable_response = None
+        invitedguest_role = unavailable_response
+        is_invited_guest = unavailable_response
+        has_accepted_accom_award = unavailable_response
 
         offer = db.session.query(Offer).filter(
-            Offer.user_id == 1).filter(Offer.event_id == event_id).first()
-
+            Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
         if offer:
             has_accepted_accom_award = (
                 offer.accommodation_award and offer.accepted_accommodation_award)
@@ -138,7 +137,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         # Shirt Size
         shirt_answer = (get_registration_answer_based_headline(
             user_id, "T-Shirt Size") and get_registration_answer_based_headline(
-            user_id, "T-Shirt Size").value) or unavilable_response
+            user_id, "T-Shirt Size").value) or unavailable_response
 
         # Poster registration
         bringing_poster = False
