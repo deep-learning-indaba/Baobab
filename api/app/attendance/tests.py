@@ -14,6 +14,7 @@ from app.registration.models import RegistrationForm
 from app.registration.models import Registration
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationAnswer
+from app.invitedGuest.models import InvitedGuest
 from datetime import datetime, timedelta
 from app.registrationResponse.repository import RegistrationRepository
 from app import LOGGER
@@ -30,6 +31,7 @@ class AttendanceApiTest(ApiTestCase):
 
         attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
                            1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        self.attendee = attendee
         registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
                                      1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
         users = [attendee, registration_admin]
@@ -160,28 +162,90 @@ class AttendanceApiTest(ApiTestCase):
         self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
 
-    def test_post_attendance_2(self):
+    # Normal Attendance
+    def test_get_attendance_list(self):
         self.seed_static_data()
         header = self.get_auth_header_for('ra@ra.com')
 
-        params = {'user_id': 1, 'event_id': 1}
+        user_id = 1
+        params = {'event_id': 1}
         result = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data = json.loads(result.data)
-        LOGGER.debug(data)
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['user_id'], 1)
+        self.assertEqual(data[0]['user_id'], user_id)
 
+        params = {'user_id': user_id, 'event_id': 1}
         self.app.post('/api/v1/attendance',
                       headers=header, data=params)
 
-        params = {'user_id': 1, 'event_id': 1,
+        params = {'user_id': user_id, 'event_id': 1,
                   'exclude_already_signed_in': True}
-
         result2 = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data2 = json.loads(result2.data)
         self.assertEqual(len(data2), 0)
+
+    # Invited Guests attendance
+    def test_get_attendance_list_2(self):
+        self.seed_static_data()
+        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr', 1,
+                           1, 'M', 'Harvard', 'Law', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        db.session.add(mrObama)
+        db.session.commit()
+        invited_guest_id = mrObama.id
+        mrObamaInvitedGuest = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        db.session.add(mrObamaInvitedGuest)
+        db.session.commit()
+        header = self.get_auth_header_for('ra@ra.com')
+
+        # Invited Guests always get returned
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        self.assertGreaterEqual(len(data),1)
+        is_invited_guest_returned = False
+        for attendee in data:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        self.assertTrue(is_invited_guest_returned)
+
+        # Confirm Attendance of Invited Guest
+        params = {'user_id': invited_guest_id, 'event_id': 1}
+        self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
+
+        # No Invited Guest since he/she has already been signed in.
+        params = { 'event_id': 1,
+                  'exclude_already_signed_in': True}
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        is_invited_guest_returned = False
+        for attendee in data2:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        
+        self.assertFalse(is_invited_guest_returned)
+
+   # No duplicate attendances
+    def test_get_attendance_list_3(self):
+        self.seed_static_data()
+        # Add attendee as Invited Guest as well
+        invited_guest_id = self.attendee.id
+        dupl_attendee = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        db.session.add(dupl_attendee)
+        db.session.commit()
+
+        header = self.get_auth_header_for('ra@ra.com')
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
+        num_occurences_in_attendance_list = len(occurences_in_attendance_list)
+        self.assertEquals(num_occurences_in_attendance_list,1)
 
     def test_cannot_register_attendance_twice(self):
         self.seed_static_data()
