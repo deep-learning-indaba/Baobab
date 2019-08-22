@@ -313,7 +313,7 @@ registration_admin_fields = {
 def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=False):
     try:
         current_user = UserRepository.get_by_id(user_id)
-        if not current_user.is_registration_admin(event_id):
+        if not current_user.is_registration_volunteer(event_id):
             return errors.FORBIDDEN
         if(exclude_already_signed_in == True):
             registrations = RegistrationRepository.get_unsigned_in_attendees(

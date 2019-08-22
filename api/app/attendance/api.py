@@ -61,7 +61,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         registration_user_id = g.current_user['id']
 
         registration_user = user_repository.get_by_id(registration_user_id)
-        if not registration_user.is_registration_admin(event_id):
+        if not registration_user.is_registration_volunteer(event_id):
             return FORBIDDEN
 
         event = event_repository.get_by_id(event_id)
@@ -87,7 +87,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         registration_user_id = g.current_user['id']
 
         registration_user = user_repository.get_by_id(registration_user_id)
-        if not registration_user.is_registration_admin(event_id):
+        if not registration_user.is_registration_volunteer(event_id):
             return FORBIDDEN
 
         event = event_repository.get_by_id(event_id)
@@ -158,7 +158,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         registration_user_id = g.current_user['id']
 
         registration_user = user_repository.get_by_id(registration_user_id)
-        if not registration_user.is_registration_admin(event_id):
+        if not registration_user.is_registration_volunteer(event_id):
             return FORBIDDEN
 
         event = event_repository.get_by_id(event_id)

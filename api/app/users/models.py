@@ -121,6 +121,14 @@ class AppUser(db.Model, UserMixin):
 
         return False
 
+    def is_registration_volunteer(self, event_id):
+        # An event admin is also a registration admin
+        return (
+            self._has_admin_role(event_id, 'registration-admin') 
+            or self._has_admin_role(event_id, 'admin')
+            or self._has_admin_role(event_id,'registration-volunteer')
+        )
+         
 class PasswordReset(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
