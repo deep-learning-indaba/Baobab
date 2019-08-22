@@ -142,7 +142,6 @@ class InvitedGuestTest(ApiTestCase):
             '/api/v1/invitedGuest', data=INVITED_GUEST_2, headers=self.headers)
         response = self.app.get(
             '/api/v1/invitedGuestList?event_id='+str(event_id), headers=self.adminHeaders)
-        # print(response)
         data = json.loads(response.data)
         data = sorted(data, key=lambda k: k['invited_guest_id'])
         self.assertEqual(len(data), 2)
