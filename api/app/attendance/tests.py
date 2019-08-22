@@ -32,17 +32,21 @@ class AttendanceApiTest(ApiTestCase):
 
         attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
                            1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+
         self.attendee = attendee
+
         registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
                                      1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
         users = [attendee, registration_admin]
+
         for user in users:
             user.verify()
         db.session.add_all(users)
 
         event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(
             2019, 8, 25), datetime(2019, 8, 31))
-        db.session.add(event)
+        self.event = event
+        db.session.add(self.event)
 
         event_role = EventRole('registration-admin', 2, 1)
         db.session.add(event_role)
@@ -58,13 +62,14 @@ class AttendanceApiTest(ApiTestCase):
             accepted_accommodation_award=True,
             accepted_travel_award=True
         )
+        db.session.add_all([offer])
 
-        db.session.add(offer)
         form = RegistrationForm(
             event_id=event.id
         )
         db.session.add(form)
         db.session.commit()
+        self.form = form
         section = RegistrationSection(
             registration_form_id=form.id,
             name="Section 1",
@@ -95,14 +100,15 @@ class AttendanceApiTest(ApiTestCase):
             offer_id=offer.id,
             registration_form_id=form.id,
             confirmed=True)
-        db.session.add(registration)
+
+        db.session.add_all([registration])
         db.session.commit()
         ra = RegistrationAnswer(
             registration_id=registration.id,
             registration_question_id=rq.id,
             value="yes"
         )
-        db.session.add(ra)
+        db.session.add_all([ra])
         db.session.commit()
 
     def get_auth_header_for(self, email):
@@ -159,13 +165,42 @@ class AttendanceApiTest(ApiTestCase):
 
         data = json.loads(response.data)
         self.assertEqual(data['user_id'], 1)
-        self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
 
     # Normal Attendance
     def test_get_attendance_list(self):
         self.seed_static_data()
+
+        # Create an unconfirmed user
+        attendee2 = AppUser('attendee2@mail.com', 'attendee2', 'attendee2', 'Ms', 1,
+                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+
+        self.attendee2 = attendee2
+        db.session.add(attendee2)
+        db.session.commit()
+
+        offer2 = Offer(
+            user_id=attendee2.id,
+            event_id=self.event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            accommodation_award=True,
+            travel_award=True,
+            accepted_accommodation_award=True,
+            accepted_travel_award=True
+        )
+        db.session.add(offer2)
+        db.session.commit()
+
+        registration2 = Registration(
+            offer_id=offer2.id,
+            registration_form_id=self.form.id,
+            confirmed=False)
+        db.session.add(registration2)
+        db.session.commit()
+
         header = self.get_auth_header_for('ra@ra.com')
 
         user_id = 1
@@ -173,7 +208,7 @@ class AttendanceApiTest(ApiTestCase):
         result = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data = json.loads(result.data)
-        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['user_id'], user_id)
 
         params = {'user_id': user_id, 'event_id': 1}
@@ -186,7 +221,7 @@ class AttendanceApiTest(ApiTestCase):
         result2 = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data2 = json.loads(result2.data)
-        self.assertEqual(len(data2), 0)
+        self.assertEqual(len(data2), 1)
 
         # Include signed in - possible to undo
         params = {'exclude_already_signed_in': 'false','event_id': 1}
@@ -194,7 +229,7 @@ class AttendanceApiTest(ApiTestCase):
         result2 = self.app.get(
             '/api/v1/registration/confirmed', headers=header, data=params)
         data2 = json.loads(result2.data)
-        self.assertEqual(len(data2), 1)
+        self.assertEqual(len(data2), 2)
 
     # Invited Guests attendance
     def test_get_attendance_list_2(self):

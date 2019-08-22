@@ -49,18 +49,26 @@ class RegistrationRepository():
         ).filter(
             Offer.event_id == event_id
         ).all()
+    
+    
 
     @staticmethod
     def get_unsigned_in_attendees(event_id, confirmed):
         """Get attendees who have confirmed they will attend and have not already signed in."""
         stmt = ~ exists().where(Attendance.user_id == AppUser.id)
-        reg = db.session.query(Registration, Offer, AppUser).filter(
-            Registration.confirmed == confirmed
-        ).join(
+
+        registration_stmt = db.session.query(Registration, Offer, AppUser).join(
             Offer, Registration.offer_id == Offer.id
         ).join(
             AppUser, Offer.user_id == AppUser.id
         ).filter(
             Offer.event_id == event_id
-        ).filter(stmt).all()
+        ).filter(stmt)
+
+        
+        if confirmed is not None: 
+            registration_stmt = registration_stmt.filter(
+                Registration.confirmed == confirmed)
+
+        reg = registration_stmt.all()
         return reg

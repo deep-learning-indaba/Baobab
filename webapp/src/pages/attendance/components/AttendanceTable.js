@@ -94,6 +94,17 @@ class AttendanceTable extends React.Component {
       });
     });
   };
+  getTrProps = (state, rowInfo, instance) => {
+    if (rowInfo) {
+      return {
+        style: {
+          background: rowInfo.original.confirmed === true ? 'white' : '#dc3545',
+          color: 'black'
+        }
+      }
+    }
+    return {}
+  };
 
   handleUndo = () => {
     const { eventId, selectedUser } = this.state;
@@ -304,15 +315,20 @@ class AttendanceTable extends React.Component {
         ),
         accessor: u => u.user_id,
         Cell: props => (
-          <button
-            className="btn btn-success btn-sm"
-            onClick={e => {
-              this.onConfirm(props.original);
-            }}
-            disabled={confirming}
-          >
-            Confirm
-          </button>
+          <div>
+            { props.original.confirmed
+              ?  <button
+                  className="btn btn-success btn-sm"
+                  onClick={e => {
+                    this.onConfirm(props.original);
+                  }}
+                  disabled={confirming}
+                >
+                  Confirm
+                </button>
+              : <div>Payment Required</div>
+            }
+          </div>
         )
       }
     ];
@@ -358,7 +374,7 @@ class AttendanceTable extends React.Component {
           <div class="row">
             <div class="col-12">
               {filteredList && filteredList.length > 0 && (
-                <ReactTable data={filteredList} columns={columns} minRows={0} />
+                <ReactTable data={filteredList} columns={columns} minRows={0} getTrProps={this.getTrProps} />
               )}
 
               {confirmResult && !confirmResult.success && confirmResultDiv}

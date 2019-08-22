@@ -264,6 +264,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
 
 def map_registration_info(registration_info):
+    print(registration_info)
     return {
         'registration_id': registration_info.Registration.id,
         'user_id': registration_info.AppUser.id,
@@ -272,7 +273,8 @@ def map_registration_info(registration_info):
         'email': registration_info.AppUser.email,
         'user_category': registration_info.AppUser.user_category.name,
         'affiliation': registration_info.AppUser.affiliation,
-        'created_at': registration_info.Registration.created_at
+        'created_at': registration_info.Registration.created_at,
+        'confirmed': registration_info.Registration.confirmed
     }
 
 
@@ -291,7 +293,8 @@ def map_registration_info_guests(registration_info):
         'email': registration_info.AppUser.email,
         'user_category': registration_info.AppUser.user_category.name,
         'affiliation': registration_info.AppUser.affiliation,
-        'created_at': created_at
+        'created_at': created_at,
+        'confirmed' : True,
     }
 
 
@@ -303,7 +306,8 @@ registration_admin_fields = {
     'email': fields.String(),
     'user_category': fields.String(),
     'affiliation': fields.String(),
-    'created_at': fields.DateTime('iso8601')
+    'created_at': fields.DateTime('iso8601'),
+    'confirmed': fields.Boolean,
 }
 
 
@@ -318,8 +322,8 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
             guest_registration = GuestRegistrationRepository.get_all_unsigned_guests(
                 event_id)
         else:
-            registrations = RegistrationRepository.get_confirmed_for_event(
-                event_id, confirmed=confirmed)
+            registrations = RegistrationRepository.get_all_for_event(
+                event_id)
             guest_registration = GuestRegistrationRepository.get_all_guests(
                 event_id)
         registrations = [map_registration_info(info) for info in registrations]
@@ -330,7 +334,7 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
         all_registrations_no_duplicates = list()
         for name, group in itertools.groupby(sorted(all_registrations, key=lambda d : d['user_id']), key=lambda d : d['user_id']):
             all_registrations_no_duplicates.append(next(group))
-        
+        print(all_registrations_no_duplicates)
         return marshal(all_registrations_no_duplicates, registration_admin_fields)
     except Exception as e:
         LOGGER.error(
@@ -353,11 +357,13 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
 
     @auth_required
     def get(self):
+        
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
         exclude_already_signed_in = args['exclude_already_signed_in'] or None
-        return _get_registrations(event_id, user_id, confirmed=True, exclude_already_signed_in=exclude_already_signed_in)
+        # This is just for Indaba
+        return _get_registrations(event_id, user_id, confirmed=None, exclude_already_signed_in=exclude_already_signed_in)
 
 
 def _send_registration_confirmation_mail(user, event_name):
