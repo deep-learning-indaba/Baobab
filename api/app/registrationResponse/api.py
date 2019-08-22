@@ -322,8 +322,12 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
             guest_registration = GuestRegistrationRepository.get_all_unsigned_guests(
                 event_id)
         else:
-            registrations = RegistrationRepository.get_all_for_event(
-                event_id)
+            if confirmed is None: 
+                registrations = RegistrationRepository.get_all_for_event(
+                    event_id)
+            else:
+                registrations = RegistrationRepository.get_confirmed_for_event(
+                    event_id, confirmed=confirmed)                
             guest_registration = GuestRegistrationRepository.get_all_guests(
                 event_id)
         registrations = [map_registration_info(info) for info in registrations]
@@ -334,7 +338,6 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
         all_registrations_no_duplicates = list()
         for name, group in itertools.groupby(sorted(all_registrations, key=lambda d : d['user_id']), key=lambda d : d['user_id']):
             all_registrations_no_duplicates.append(next(group))
-        print(all_registrations_no_duplicates)
         return marshal(all_registrations_no_duplicates, registration_admin_fields)
     except Exception as e:
         LOGGER.error(
