@@ -93,6 +93,19 @@ class App extends Component {
     );
   };
 
+  isRegistrationVolunteer = user => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "admin" || r.role === "registration-admin" || r.role === "registration-volunteer"
+        ))
+    );
+  };
+
   isEventReviewer = user => {
     if (!user) {
       return false;
@@ -219,13 +232,6 @@ class App extends Component {
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
-                        to="/eventAttendance"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Event Attendance
-                      </NavLink>
-                      <NavLink
                         to="/eventStats"
                         className="dropdown-item"
                         onClick={this.toggleMenu}
@@ -255,6 +261,31 @@ class App extends Component {
                       </NavLink>
                     </div>
                   </li>
+                )}
+                {this.isRegistrationVolunteer(this.state.user) && (
+                   <li class="nav-item dropdown">
+                      <a
+                        class="nav-link dropdown-toggle"
+                        href="#"
+                        id="navbarDropdown"
+                        role="button"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                      >
+                        Registration Volunteer
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <NavLink
+                          to="/eventAttendance"
+                          className="dropdown-item"
+                          onClick={this.toggleMenu}
+                        >
+                          Event Attendance
+                        </NavLink>
+                      </div>
+                    </li>
+
                 )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
