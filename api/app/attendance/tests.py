@@ -8,9 +8,21 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, FORBIDDEN
 from app.utils.testing import ApiTestCase
+from app.registration.models import Offer
+from app.registration.models import RegistrationQuestion
+from app.registration.models import RegistrationForm
+from app.registration.models import Registration
+from app.registration.models import RegistrationSection
+from app.registration.models import RegistrationAnswer
+from app.invitedGuest.models import InvitedGuest
+from datetime import datetime, timedelta
+from app.registrationResponse.repository import RegistrationRepository
+from app import LOGGER
+import json
+
 
 class AttendanceApiTest(ApiTestCase):
-    
+
     def seed_static_data(self):
         user_category = UserCategory('PhD')
         db.session.add(user_category)
@@ -18,20 +30,87 @@ class AttendanceApiTest(ApiTestCase):
         country = Country('South Africa')
         db.session.add(country)
 
-        attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1, 1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
+                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+
+        self.attendee = attendee
+
+        registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
+                                     1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
         users = [attendee, registration_admin]
+
         for user in users:
             user.verify()
         db.session.add_all(users)
 
-        event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31))
-        db.session.add(event)
+        event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(
+            2019, 8, 25), datetime(2019, 8, 31))
+        self.event = event
+        db.session.add(self.event)
 
         event_role = EventRole('registration-admin', 2, 1)
         db.session.add(event_role)
         db.session.commit()
-    
+        offer = Offer(
+            user_id=attendee.id,
+            event_id=event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            accommodation_award=True,
+            travel_award=True,
+            accepted_accommodation_award=True,
+            accepted_travel_award=True
+        )
+        db.session.add_all([offer])
+
+        form = RegistrationForm(
+            event_id=event.id
+        )
+        db.session.add(form)
+        db.session.commit()
+        self.form = form
+        section = RegistrationSection(
+            registration_form_id=form.id,
+            name="Section 1",
+            description="the section description",
+            order=1,
+            show_for_travel_award=True,
+            show_for_accommodation_award=False,
+            show_for_payment_required=False,
+        )
+        db.session.add(section)
+        db.session.commit()
+        rq = RegistrationQuestion(
+            section_id=section.id,
+            registration_form_id=form.id,
+            description="Will you be bringing a poster?",
+            type="short-text",
+            is_required=True,
+            order=1,
+            placeholder="the placeholder",
+            headline="Will you be bringing a poster?",
+            validation_regex="[]/",
+            validation_text=" text"
+        )
+        db.session.add(rq)
+        db.session.commit()
+
+        registration = Registration(
+            offer_id=offer.id,
+            registration_form_id=form.id,
+            confirmed=True)
+
+        db.session.add_all([registration])
+        db.session.commit()
+        ra = RegistrationAnswer(
+            registration_id=registration.id,
+            registration_question_id=rq.id,
+            value="yes"
+        )
+        db.session.add_all([ra])
+        db.session.commit()
+
     def get_auth_header_for(self, email):
         body = {
             'email': email,
@@ -47,9 +126,12 @@ class AttendanceApiTest(ApiTestCase):
         header = self.get_auth_header_for('attendee@mail.com')
         params = {'user_id': 2, 'event_id': 1}
 
-        response_get = self.app.get('/api/v1/attendance', headers=header, data=params)
-        response_post = self.app.post('/api/v1/attendance', headers=header, data=params)
-        response_delete = self.app.delete('/api/v1/attendance', headers=header, data=params)
+        response_get = self.app.get(
+            '/api/v1/attendance', headers=header, data=params)
+        response_post = self.app.post(
+            '/api/v1/attendance', headers=header, data=params)
+        response_delete = self.app.delete(
+            '/api/v1/attendance', headers=header, data=params)
 
         self.assertEqual(response_get.status_code, FORBIDDEN[1])
         self.assertEqual(response_post.status_code, FORBIDDEN[1])
@@ -65,8 +147,9 @@ class AttendanceApiTest(ApiTestCase):
         header = self.get_auth_header_for('ra@ra.com')
         params = {'user_id': 1, 'event_id': 1}
 
-        response = self.app.get('/api/v1/attendance', headers=header, data=params)
-        
+        response = self.app.get('/api/v1/attendance',
+                                headers=header, data=params)
+
         data = json.loads(response.data)
         self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['event_id'], 1)
@@ -77,20 +160,154 @@ class AttendanceApiTest(ApiTestCase):
         header = self.get_auth_header_for('ra@ra.com')
         params = {'user_id': 1, 'event_id': 1}
 
-        response = self.app.post('/api/v1/attendance', headers=header, data=params)
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
 
         data = json.loads(response.data)
         self.assertEqual(data['user_id'], 1)
-        self.assertEqual(data['event_id'], 1)
+        self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
-    
+        self.assertEqual(data['accommodation_award'], True)
+
+    # Normal Attendance
+    def test_get_attendance_list(self):
+        self.seed_static_data()
+
+        # Create an unconfirmed user
+        attendee2 = AppUser('attendee2@mail.com', 'attendee2', 'attendee2', 'Ms', 1,
+                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+
+        self.attendee2 = attendee2
+        db.session.add(attendee2)
+        db.session.commit()
+
+        offer2 = Offer(
+            user_id=attendee2.id,
+            event_id=self.event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            accommodation_award=True,
+            travel_award=True,
+            accepted_accommodation_award=True,
+            accepted_travel_award=True
+        )
+        db.session.add(offer2)
+        db.session.commit()
+
+        registration2 = Registration(
+            offer_id=offer2.id,
+            registration_form_id=self.form.id,
+            confirmed=False)
+        db.session.add(registration2)
+        db.session.commit()
+
+        header = self.get_auth_header_for('ra@ra.com')
+
+        user_id = 1
+        params = {'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['user_id'], user_id)
+
+        params = {'user_id': user_id, 'event_id': 1}
+        self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
+
+        # Exclude signed in
+        params = { 'event_id': 1,
+                  'exclude_already_signed_in': True}
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        self.assertEqual(len(data2), 1)
+
+        # Include signed in - possible to undo
+        params = {'exclude_already_signed_in': 'false','event_id': 1}
+        LOGGER.debug(params)
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        self.assertEqual(len(data2), 2)
+
+    # Invited Guests attendance
+    def test_get_attendance_list_2(self):
+        self.seed_static_data()
+        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr', 1,
+                           1, 'M', 'Harvard', 'Law', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        db.session.add(mrObama)
+        db.session.commit()
+        invited_guest_id = mrObama.id
+        role = "EveryRole"
+        mrObamaInvitedGuest = InvitedGuest(event_id=1, user_id=invited_guest_id, role=role)
+        db.session.add(mrObamaInvitedGuest)
+        db.session.commit()
+        header = self.get_auth_header_for('ra@ra.com')
+
+        # Invited Guests always get returned
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        self.assertGreaterEqual(len(data),1)
+        is_invited_guest_returned = False
+        for attendee in data:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        self.assertTrue(is_invited_guest_returned)
+
+        # Confirm Attendance of Invited Guest
+        params = {'user_id': invited_guest_id, 'event_id': 1}
+        attendance_response = self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
+      
+        response = json.loads(attendance_response.data)
+        self.assertEquals(response['is_invitedguest'],True)
+        self.assertEquals(response['invitedguest_role'],role)
+
+        # No Invited Guest since he/she has already been signed in.
+        params = { 'event_id': 1,
+                  'exclude_already_signed_in': True}
+        result2 = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data2 = json.loads(result2.data)
+        is_invited_guest_returned = False
+        for attendee in data2:
+            if(attendee['user_id'] == invited_guest_id):
+                is_invited_guest_returned = True
+        
+        self.assertFalse(is_invited_guest_returned)
+
+   # No duplicate attendances
+    def test_get_attendance_list_3(self):
+        self.seed_static_data()
+        # Add attendee as Invited Guest as well
+        invited_guest_id = self.attendee.id
+        dupl_attendee = InvitedGuest(event_id=1, user_id=invited_guest_id, role='EveryRole')
+        db.session.add(dupl_attendee)
+        db.session.commit()
+
+        header = self.get_auth_header_for('ra@ra.com')
+        params = { 'event_id': 1}
+        result = self.app.get(
+            '/api/v1/registration/confirmed', headers=header, data=params)
+        data = json.loads(result.data)
+        occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
+        num_occurences_in_attendance_list = len(occurences_in_attendance_list)
+        self.assertEquals(num_occurences_in_attendance_list,1)
+
+
     def test_cannot_register_attendance_twice(self):
         self.seed_static_data()
         header = self.get_auth_header_for('ra@ra.com')
         params = {'user_id': 1, 'event_id': 1}
 
-        response = self.app.post('/api/v1/attendance', headers=header, data=params)
-        response = self.app.post('/api/v1/attendance', headers=header, data=params)
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
+        response = self.app.post('/api/v1/attendance',
+                                 headers=header, data=params)
 
         self.assertEqual(response.status_code, ATTENDANCE_ALREADY_CONFIRMED[1])
 
@@ -104,9 +321,9 @@ class AttendanceApiTest(ApiTestCase):
         header = self.get_auth_header_for('ra@ra.com')
         params = {'user_id': 1, 'event_id': 1}
 
-        response = self.app.delete('/api/v1/attendance', headers=header, data=params)
+        response = self.app.delete(
+            '/api/v1/attendance', headers=header, data=params)
 
         attendance = attendance_repository.get(1, 1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(attendance, None)
-

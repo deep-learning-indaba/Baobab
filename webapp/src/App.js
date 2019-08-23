@@ -21,6 +21,7 @@ import CreateInvitedGuests from "./pages/createInvitedGuest";
 import Registration from "./pages/registration";
 import InvitedLetter from "./pages/invitationLetter";
 import RegistrationAdmin from "./pages/registrationAdmin";
+import Attendance from "./pages/attendance/Attendance";
 import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
@@ -88,6 +89,19 @@ class App extends Component {
       (user.roles &&
         user.roles.some(
           r => r.role === "admin" || r.role === "registration-admin"
+        ))
+    );
+  };
+
+  isRegistrationVolunteer = user => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "admin" || r.role === "registration-admin" || r.role === "registration-volunteer"
         ))
     );
   };
@@ -248,6 +262,31 @@ class App extends Component {
                     </div>
                   </li>
                 )}
+                {this.isRegistrationVolunteer(this.state.user) && (
+                   <li class="nav-item dropdown">
+                      <a
+                        class="nav-link dropdown-toggle"
+                        href="#"
+                        id="navbarDropdown"
+                        role="button"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                      >
+                        Registration Volunteer
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <NavLink
+                          to="/eventAttendance"
+                          className="dropdown-item"
+                          onClick={this.toggleMenu}
+                        >
+                          Event Attendance
+                        </NavLink>
+                      </div>
+                    </li>
+
+                )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
                     <a
@@ -351,6 +390,11 @@ class App extends Component {
                   exact
                   path="/applicationForm"
                   component={Application}
+                />
+                <PrivateRoute
+                  exact
+                  path="/eventAttendance"
+                  component={Attendance}
                 />
                 <PrivateRoute exact path="/eventStats" component={EventStats} />
                 <PrivateRoute
