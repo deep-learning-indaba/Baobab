@@ -19,10 +19,13 @@ class AttendanceTable extends React.Component {
       undoing: false,
       exclude_already_signed_in: null,
       location: props.location,
-      userAlreadyExists: null
+      userAlreadyExists: null,
+      showAllColumns: null
     };
   }
   componentDidMount() {
+    window.addEventListener("resize", this.resize);
+    this.resize();
     let url = this.props.location;
     // Default only show people who haven't signed in.
     let exclude_already_signed_in = true;
@@ -41,6 +44,10 @@ class AttendanceTable extends React.Component {
       () => this.getAttendanceList()
     );
   }
+
+  resize = () => {
+    this.setState({ showAllColumns: window.innerWidth >= 500 });
+  };
   getAttendanceList() {
     const { exclude_already_signed_in } = this.state;
     attendanceService
@@ -98,12 +105,12 @@ class AttendanceTable extends React.Component {
     if (rowInfo) {
       return {
         style: {
-          background: rowInfo.original.confirmed === true ? 'white' : '#dc3545',
-          color: 'black'
+          background: rowInfo.original.confirmed === true ? "white" : "#dc3545",
+          color: "black"
         }
-      }
+      };
     }
-    return {}
+    return {};
   };
 
   handleUndo = () => {
@@ -285,39 +292,41 @@ class AttendanceTable extends React.Component {
       );
     }
 
-    const columns = [
-      {
-        id: "user",
-        Header: <div>Full-Name</div>,
-        accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
-        minWidth: 150,
-        sort: "asc"
-      },
-      {
-        id: "email",
-        Header: <div>Email</div>,
-        accessor: u => u.email
-      },
-      {
-        id: "affiliation",
-        Header: <div>Affiliation</div>,
-        accessor: u => u.affiliation
-      },
-      {
-        id: "role",
-        Header: <div>Category</div>,
-        accessor: u => u.user_category
-      },
-      {
-        id: "confirm",
-        Header: (
-          <div className="registration-admin-confirm">Mark attendance</div>
-        ),
-        accessor: u => u.user_id,
-        Cell: props => (
-          <div>
-            { props.original.confirmed
-              ?  <button
+    let columns = null;
+    if (this.state.showAllColumns == true) {
+      columns = [
+        {
+          id: "user",
+          Header: <div>Full-Name</div>,
+          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
+          minWidth: 150,
+          sort: "asc"
+        },
+        {
+          id: "email",
+          Header: <div>Email</div>,
+          accessor: u => u.email
+        },
+        {
+          id: "affiliation",
+          Header: <div>Affiliation</div>,
+          accessor: u => u.affiliation
+        },
+        {
+          id: "role",
+          Header: <div>Category</div>,
+          accessor: u => u.user_category
+        },
+        {
+          id: "confirm",
+          Header: (
+            <div className="registration-admin-confirm">Mark attendance</div>
+          ),
+          accessor: u => u.user_id,
+          Cell: props => (
+            <div>
+              {props.original.confirmed ? (
+                <button
                   className="btn btn-success btn-sm"
                   onClick={e => {
                     this.onConfirm(props.original);
@@ -326,12 +335,53 @@ class AttendanceTable extends React.Component {
                 >
                   Confirm
                 </button>
-              : <div>Payment Required</div>
-            }
-          </div>
-        )
-      }
-    ];
+              ) : (
+                <div>Payment Required</div>
+              )}
+            </div>
+          )
+        }
+      ];
+    } else {
+      columns = [
+        {
+          id: "user",
+          Header: <div>Full-Name</div>,
+          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
+          minWidth: 150,
+          sort: "asc"
+        },
+        {
+          id: "email",
+          Header: <div>Email</div>,
+          accessor: u => u.email
+        },
+        {
+          id: "confirm",
+          Header: (
+            <div className="registration-admin-confirm">Mark attendance</div>
+          ),
+          accessor: u => u.user_id,
+          Cell: props => (
+            <div>
+              {props.original.confirmed ? (
+                <button
+                  className="btn btn-success btn-sm"
+                  onClick={e => {
+                    this.onConfirm(props.original);
+                  }}
+                  disabled={confirming}
+                >
+                  Confirm
+                </button>
+              ) : (
+                <div>Payment Required</div>
+              )}
+            </div>
+          )
+        }
+      ];
+    }
 
     if (loading) {
       return (
@@ -341,6 +391,10 @@ class AttendanceTable extends React.Component {
           </div>
         </div>
       );
+    }
+    let heading = "Attendance Registration";
+    if (this.state.exclude_already_signed_in == false) {
+      heading = "Attendance Registration - Special Situations";
     }
 
     return (
@@ -361,7 +415,7 @@ class AttendanceTable extends React.Component {
             (confirmResult && confirmResult.success && confirmResultDiv)}
         </ConfirmModal>
         <div class="card no-padding-h">
-          <p className="h5 text-center mb-4 ">Attendance Registration</p>
+          <p className="h5 text-center mb-4 ">{heading}</p>
           <div class="row mb-4">
             <div class="col-12">
               <FormTextBox
@@ -374,7 +428,12 @@ class AttendanceTable extends React.Component {
           <div class="row">
             <div class="col-12">
               {filteredList && filteredList.length > 0 && (
-                <ReactTable data={filteredList} columns={columns} minRows={0} getTrProps={this.getTrProps} />
+                <ReactTable
+                  data={filteredList}
+                  columns={columns}
+                  minRows={0}
+                  getTrProps={this.getTrProps}
+                />
               )}
 
               {confirmResult && !confirmResult.success && confirmResultDiv}
