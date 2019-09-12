@@ -227,7 +227,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
     def send_confirmation(self, user, response):
         try:
-            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+            answers = db.session.query(Answer).join(Question, Answer.question_id == Question.id).filter(Answer.response_id == response.id).order_by(Question.order).all()
             if answers is None:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
 
