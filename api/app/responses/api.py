@@ -30,19 +30,6 @@ The Deep Learning Indaba 2019 Organisers
 """
 
 
-def _get_answer_value(answer, question):
-    if question.type == 'multi-choice' and question.options is not None:
-        value = [o for o in question.options if o['value'] == answer.value]
-        if not value:
-            return answer.value
-        return value[0]['label']
-    
-    if question.type == 'file' and answer.value:
-        return 'Uploaded File'
-
-    return answer.value
-
-
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
     answer_fields = {
@@ -240,13 +227,9 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
     def send_confirmation(self, user, response):
         try:
-            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+            answers = db.session.query(Answer).join(Question, Answer.question_id == Question.id).filter(Answer.response_id == response.id).order_by(Question.order).all()
             if answers is None:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
-
-            questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id).all()
-            if questions is None:
-                LOGGER.warn('Found no questions associated with application form with id {form_id}'.format(form_id=response.application_form_id))
 
             application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == response.application_form_id).first() 
             if application_form is None:
@@ -259,16 +242,9 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            # Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
-            summary = {}
-            for answer in answers:
-                for question in questions:
-                    if answer.question_id == question.id:
-                        summary[question.headline] = _get_answer_value(answer, question)
-
             subject = 'Your application to {}'.format(event.description)
             greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
-            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, summary)
+            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, answers)
             emailer.send_mail(user.email, subject, body_text=body_text)
 
         except:

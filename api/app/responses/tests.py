@@ -146,7 +146,7 @@ class ResponseApiTest(ApiTestCase):
             self._seed_data()
             response_data = {
                 'application_form_id': self.test_form.id,
-                'is_submitted': False,
+                'is_submitted': True,
                 'answers': [
                     {
                         'question_id': self.test_question.id,
@@ -175,7 +175,7 @@ class ResponseApiTest(ApiTestCase):
 
             self.assertEqual(data['application_form_id'], self.test_form.id)
             self.assertEqual(data['user_id'], self.user_data['id'])
-            self.assertIsNone(data['submitted_timestamp'])
+            self.assertIsNotNone(data['submitted_timestamp'])
             self.assertFalse(data['is_withdrawn'])
             self.assertTrue(data['answers'])
 
