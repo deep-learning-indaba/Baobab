@@ -12,7 +12,7 @@ from flask_admin.contrib.sqla import ModelView
 import flask_login as login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import tldextract
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -27,14 +27,34 @@ bcrypt = Bcrypt(app)
 redis = FlaskRedis(app)
 LOGGER = Logger().get_logger()
 
-
-
 import routes
 
 migrate = Migrate(app, db)
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
+
+from organisation.resolver import OrganisationResolver
+
+def get_domain():
+    origin = request.environ.get('HTTP_ORIGIN', '')
+    if not origin:  # Try to get from Referer header
+        origin = request.environ.get('HTTP_REFERER', '')
+        LOGGER.debug('No ORIGIN header, falling back to Referer: {}'.format(origin))
+    if not origin:
+        LOGGER.warning('Could not determine origin domain, falling back to deeplearningindaba')
+        origin = 'deeplearningindaba'
+    
+    domain = tldextract.extract(origin).domain
+    return domain
+
+@app.before_request
+def populate_organisation():
+    domain = get_domain()
+    LOGGER.info('Origin Domain: {}'.format(domain))
+    g.organisation = OrganisationResolver.resolve_from_domain(domain)
+
+## Flask Admin Config
 
 # set optional bootswatch theme
 app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
