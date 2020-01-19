@@ -41,11 +41,13 @@ def get_domain():
     if not origin:  # Try to get from Referer header
         origin = request.environ.get('HTTP_REFERER', '')
         LOGGER.debug('No ORIGIN header, falling back to Referer: {}'.format(origin))
-    if not origin:
-        LOGGER.warning('Could not determine origin domain, falling back to deeplearningindaba')
-        origin = 'deeplearningindaba'
     
-    domain = tldextract.extract(origin).domain
+    if origin:
+        domain = tldextract.extract(origin).domain
+    else:
+        LOGGER.warning('Could not determine origin domain')
+        domain = ''
+    
     return domain
 
 @app.before_request
