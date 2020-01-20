@@ -21,7 +21,7 @@ def upgrade():
     sa.Column('small_logo', sa.String(length=100), nullable=False),
     sa.Column('large_logo', sa.String(length=100), nullable=False),
     sa.Column('domain', sa.String(length=100), nullable=False),
-    sa.Column('is_default', sa.Boolean(), nullable=False),
+
     sa.PrimaryKeyConstraint('id')
     )
 
@@ -32,24 +32,21 @@ def upgrade():
             'name': 'Deep Learning Indaba',
             'small_logo': 'logo-32x32-white.png',
             'large_logo': 'indaba-logo-dark.png',
-            'domain': 'deeplearningindaba',
-            'is_default': True
+            'domain': 'deeplearningindaba'
         },
         {
             'id': 2,
             'name': 'Eastern European Machine Learning Summer School',
             'small_logo': 'logo_eeml_white.png',
             'large_logo': 'logo_eeml_black.png',
-            'domain': 'eeml',
-            'is_default': False
+            'domain': 'eeml'
         },
         {
             'id': 3,
             'name': 'Deep Learning Indaba',
             'small_logo': 'logo-32x32-white.png',
             'large_logo': 'indaba-logo-dark.png',
-            'domain': 'localhost',
-            'is_default': False
+            'domain': 'localhost'
         }
     ])
 

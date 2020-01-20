@@ -53,7 +53,7 @@ def get_domain():
 @app.before_request
 def populate_organisation():
     domain = get_domain()
-    LOGGER.info('Origin Domain: {}'.format(domain))
+    LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
     g.organisation = OrganisationResolver.resolve_from_domain(domain)
 
 ## Flask Admin Config
