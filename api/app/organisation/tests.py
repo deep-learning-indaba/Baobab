@@ -4,16 +4,20 @@ from app import app, db, LOGGER
 from app.organisation.models import Organisation
 
 
-class GuestRegistrationApiTest(ApiTestCase):
+class OrganisationApiTest(ApiTestCase):
     def seed_static_data(self):
         organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         db.session.add(organisation)
         db.session.commit()
         db.session.flush()
 
+    def setUp(self):
+        super(OrganisationApiTest, self).setUp()
+        self.seed_static_data()
+
     def test_organisation_from_origin(self):
         with app.app_context():
-            self.seed_static_data()
+            # self.seed_static_data()
 
             response = self.app.get(
                 '/api/v1/organisation',
@@ -28,7 +32,7 @@ class GuestRegistrationApiTest(ApiTestCase):
 
     def test_organisation_from_referer(self):
         with app.app_context():
-            self.seed_static_data()
+            # self.seed_static_data()
 
             response = self.app.get(
                 '/api/v1/organisation',
@@ -43,7 +47,7 @@ class GuestRegistrationApiTest(ApiTestCase):
 
     def test_organisation_error(self):
         with app.app_context():
-            self.seed_static_data()
+            # self.seed_static_data()
 
             response = self.app.get(
                 '/api/v1/organisation',
