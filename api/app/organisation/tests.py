@@ -6,10 +6,8 @@ from app.organisation.models import Organisation
 
 class GuestRegistrationApiTest(ApiTestCase):
     def seed_static_data(self):
-        organisation1 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        organisation2 = Organisation('My Org', 'org.png', 'org_big.png', 'org')
-        db.session.add(organisation1)
-        db.session.add(organisation2)
+        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(organisation)
         db.session.commit()
         db.session.flush()
 
