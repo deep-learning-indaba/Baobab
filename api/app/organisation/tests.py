@@ -17,8 +17,6 @@ class OrganisationApiTest(ApiTestCase):
 
     def test_organisation_from_origin(self):
         with app.app_context():
-            # self.seed_static_data()
-
             response = self.app.get(
                 '/api/v1/organisation',
                 headers={'Origin': 'https://baobab.deeplearningindaba.com/apply'})
@@ -32,8 +30,6 @@ class OrganisationApiTest(ApiTestCase):
 
     def test_organisation_from_referer(self):
         with app.app_context():
-            # self.seed_static_data()
-
             response = self.app.get(
                 '/api/v1/organisation',
                 headers={'Origin': '', 'referer': 'https://baobab.deeplearningindaba.com/apply'})
@@ -47,8 +43,6 @@ class OrganisationApiTest(ApiTestCase):
 
     def test_organisation_error(self):
         with app.app_context():
-            # self.seed_static_data()
-
             response = self.app.get(
                 '/api/v1/organisation',
                 headers={'Origin': '', 'referer': ''})
