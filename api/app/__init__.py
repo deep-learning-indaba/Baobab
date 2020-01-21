@@ -37,6 +37,10 @@ manager.add_command('db', MigrateCommand)
 from organisation.resolver import OrganisationResolver
 
 def get_domain():
+    # TODO: Remove this test-related hack!
+    if app.config['TESTING'] and 'HTTP_ORIGIN' not in request.environ and 'HTTP_REFERER' not in request.environ:
+        return 'org'
+
     origin = request.environ.get('HTTP_ORIGIN', '')
     if not origin:  # Try to get from Referer header
         origin = request.environ.get('HTTP_REFERER', '')
