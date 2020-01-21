@@ -468,6 +468,7 @@ class InvitedGuests extends Component {
                       label={validationFields.title.display}
                       showError={this.getError(validationFields.title.name)}
                       errorText={this.getError(validationFields.title.name)}
+                      defaultValue={this.state.user[validationFields.title.name] || ""}
                       value={this.state.user[validationFields.title.name] || ""}
                     />
                   </div>
