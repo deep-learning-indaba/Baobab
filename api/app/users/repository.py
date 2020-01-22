@@ -3,6 +3,7 @@ from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response
 from app.users.models import AppUser
+from app.organisation.models import Organisation
 
 class UserRepository():
 
@@ -18,8 +19,10 @@ class UserRepository():
                          .first()
 
     @staticmethod
-    def get_by_email(email):
-        return db.session.query(AppUser).filter_by(email=email).first()
+    def get_by_email(email, organisation_id):
+        return db.session.query(AppUser)\
+            filter(func.lower(AppUser.email) == func.lower(email))\
+            .filter_by(organisation_id=organisation_id).first()
 
     @staticmethod
     def get_by_event_admin(user_id, event_admin_user_id):
@@ -33,6 +36,7 @@ class UserRepository():
 
     @staticmethod
     def get_all_with_unsubmitted_response():
+        # TODO: Filter this to event
         return db.session.query(AppUser)\
                          .filter_by(active=True, is_deleted=False)\
                          .join(Response, Response.user_id==AppUser.id)\
@@ -41,6 +45,7 @@ class UserRepository():
     
     @staticmethod
     def get_all_without_responses():
+        # TODO: Filter this to event
         return db.session.query(AppUser)\
                          .filter_by(active=True, is_deleted=False)\
                          .outerjoin(Response, Response.user_id==AppUser.id)\
