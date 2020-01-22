@@ -95,6 +95,7 @@ class LoginForm(form.Form):
         return True
 
     def get_user(self):
+        # TODO: What organisation should we use to query here?
         return db.session.query(AppUser).filter(AppUser.email==self.email.data).first()
 
 # Initialize flask-login
