@@ -4,6 +4,7 @@ from app import db, app
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQLite3Connection
+from app.organisation.models import Organisation
 
 
 @event.listens_for(Engine, "connect")
@@ -23,6 +24,12 @@ class ApiTestCase(unittest.TestCase):
         db.reflect()
         db.drop_all()
         db.create_all()
+        
+        # Add a dummy organisation
+        organisation = Organisation('My Org', 'org.png', 'org_big.png', 'org')
+        db.session.add(organisation)
+        db.session.commit()
+        db.session.flush()
 
     def tearDown(self):
         db.session.remove()
