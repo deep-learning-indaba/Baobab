@@ -15,15 +15,6 @@ USER_DATA = {
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'nationality_country_id': 1,
-        'residence_country_id': 1,
-        'user_gender': 'Male',
-        'affiliation': 'University',
-        'department': 'Computer Science',
-        'user_disability': 'None',
-        'user_category_id': 1,
-        'user_primaryLanguage': 'Zulu',
-        'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'password': '123456'
     }
 
@@ -89,16 +80,6 @@ class UserApiTest(ApiTestCase):
         assert data['firstname'] == 'Some'
         assert data['lastname'] == 'Thing'
         assert data['user_title'] == 'Mr'
-        assert data['nationality_country'] == 'South Africa'
-        assert data['residence_country'] == 'South Africa'
-        assert data['user_gender'] == 'Male'
-        assert data['affiliation'] == 'University'
-        assert data['department'] == 'Computer Science'
-        assert data['user_disability'] == 'None'
-        assert data['user_category'] == 'Postdoc'
-        assert data['user_primaryLanguage'] == 'Zulu'
-        assert data['user_dateOfBirth'] == datetime(
-            1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S')
 
     def test_update_user(self):
         self.seed_static_data()
@@ -113,15 +94,6 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Updated',
             'lastname': 'Updated',
             'user_title': 'Mrs',
-            'nationality_country_id': 1,
-            'residence_country_id': 1,
-            'user_gender': 'Female',
-            'affiliation': 'Company',
-            'department': 'AI',
-            'user_disability': 'None',
-            'user_category_id': 1,
-            'user_primaryLanguage': 'Zulu',
-            'user_dateOfBirth':  datetime(1984, 12, 12, 0, 0, 0).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             'password': ''
         })
         assert response.status_code == 200
@@ -132,16 +104,6 @@ class UserApiTest(ApiTestCase):
         assert data['firstname'] == 'Updated'
         assert data['lastname'] == 'Updated'
         assert data['user_title'] == 'Mrs'
-        assert data['nationality_country'] == 'South Africa'
-        assert data['residence_country'] == 'South Africa'
-        assert data['user_gender'] == 'Female'
-        assert data['affiliation'] == 'Company'
-        assert data['department'] == 'AI'
-        assert data['user_disability'] == 'None'
-        assert data['user_category'] == 'Postdoc'
-        assert data['user_primaryLanguage'] == 'Zulu'
-        assert data['user_dateOfBirth'] == datetime(
-            1984, 12, 12, 0, 0, 0, 0).strftime('%Y-%m-%dT%H:%M:%S')
 
     def test_authentication_deleted(self):
         self.seed_static_data()
@@ -332,10 +294,7 @@ class UserApiTest(ApiTestCase):
         assert response.status_code == 404
 
     def setup_verified_user(self):
-        user = AppUser('something@email.com', 'Some', 'Thing', 'Mr',
-                         1, 1, 'Male', 'University', 'Computer Science', 
-                         'None', 1, datetime(1984, 12, 12),
-                          'English', '123456')
+        user = AppUser(email='something@email.com', firstname='Some', lastname='Thing', user_title='Mr',password= '123456')
         user.verify_token = 'existing token'
         user.verify()
         db.session.add(user)
@@ -353,15 +312,6 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Some',
             'lastname': 'Thing',
             'user_title': 'Mr',
-            'nationality_country_id': 1,
-            'residence_country_id': 1,
-            'user_gender': 'Male',
-            'affiliation': 'University',
-            'department': 'Computer Science',
-            'user_disability': 'None',
-            'user_category_id': 1,
-            'user_primaryLanguage': 'Zulu',
-            'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
             'password':''
             })
 
@@ -373,15 +323,6 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.firstname, 'Some')
         self.assertEqual(user.lastname, 'Thing')
         self.assertEqual(user.user_title, 'Mr')
-        self.assertEqual(user.nationality_country_id, 1)
-        self.assertEqual(user.residence_country_id, 1)
-        self.assertEqual(user.user_gender, 'Male')
-        self.assertEqual(user.affiliation, 'University')
-        self.assertEqual(user.department, 'Computer Science')
-        self.assertEqual(user.user_disability, 'None')
-        self.assertEqual(user.user_category_id, 1)
-        self.assertEqual(user.user_primaryLanguage, 'Zulu')
-        self.assertEqual(user.user_dateOfBirth, datetime(1984, 12, 12))
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
 
@@ -392,10 +333,10 @@ class UserApiTest(ApiTestCase):
         ]
         db.session.add_all(application_forms)
 
-        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc')
+        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc')
+        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc')
+        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc')
         users = [candidate1, candidate2, candidate3, event_admin]
         for user in users:
             user.verify()
@@ -422,6 +363,7 @@ class UserApiTest(ApiTestCase):
 
         data = json.loads(response.data)
         data = sorted(data, key=lambda k: k['user_id'])
+
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['user_id'], 1)
         self.assertEqual(data[0]['is_submitted'], True)
@@ -530,11 +472,11 @@ class UserProfileApiTest(ApiTestCase):
         ]
         db.session.add_all(application_forms)
 
-        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        system_admin = AppUser('system_admin@sa.com', 'system_admin', '1', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', True)
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer = AppUser('reviewer@r.com', 'reviewer', '1', 'Ms', 1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        candidate1 = AppUser(email='c1@c.com', firstname='candidate', lastname='1', user_title='Mr',password= 'abc')
+        candidate2 = AppUser(email='c2@c.com', firstname='candidate', lastname='2', user_title='Ms', password='abc')
+        system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr',password='abc', is_admin=True)
+        event_admin = AppUser(email='event_admin@ea.com', firstname='event_admin', lastname='1', user_title='Ms', password='abc')
+        reviewer = AppUser(email='reviewer@r.com', firstname='reviewer', lastname='1', user_title='Ms', password='abc')
         users = [candidate1, candidate2, system_admin, event_admin, reviewer]
         for user in users:
             user.verify()
@@ -606,9 +548,9 @@ class EmailerAPITest(ApiTestCase):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
-        self.candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        self.candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        self.system_admin = AppUser('system_admin@sa.com', 'system_admin', '1', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', True)
+        self.candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc')
+        self.candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc')
+        self.system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr', password='abc',is_admin=True)
 
         users = [self.candidate1, self.candidate2, self.system_admin]
         for user in users:

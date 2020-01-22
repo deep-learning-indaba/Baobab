@@ -22,11 +22,7 @@ class EventsAPITest(ApiTestCase):
         db.session.add(test_category)
         db.session.commit()
 
-        self.test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                                 'Male', 'University', 'Computer Science', 'None', 1,
-                                 datetime(1984, 12, 12),
-                                 'Zulu',
-                                 '123456')
+        self.test_user = AppUser(email='something@email.com', firstname='Some', lastname='Thing', user_title='Mr', password='123456')
         self.test_user.verified_email = True
         db.session.add(self.test_user)
         db.session.commit()
@@ -320,17 +316,17 @@ class RemindersAPITest(ApiTestCase):
         user_category = UserCategory('Post Doc')
         db.session.add(user_category)
 
-        inactive_user = AppUser('inactive@mail.co.za', 'inactive', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+        inactive_user = AppUser('inactive@mail.co.za', 'inactive', '1', 'Mr', 'abc')
         inactive_user.deactivate()
-        deleted_user = AppUser('deleted@mail.co.za', 'deleted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+        deleted_user = AppUser('deleted@mail.co.za', 'deleted', '1', 'Mr', 'abc')
         deleted_user.delete()
         users = [
-            AppUser('event@admin.co.za', 'event', 'admin', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
-            AppUser('applicant@mail.co.za', 'applicant', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
+            AppUser('event@admin.co.za', 'event', 'admin', 'Mr',  'abc'),
+            AppUser('applicant@mail.co.za', 'applicant', '1', 'Mr',  'abc'),
             inactive_user,
             deleted_user,
-            AppUser('notstarted@mail.co.za', 'notstarted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
-            AppUser('applicant2@mail.co.za', 'applicant', '2', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
+            AppUser('notstarted@mail.co.za', 'notstarted', '1', 'Mr',  'abc'),
+            AppUser('applicant2@mail.co.za', 'applicant', '2', 'Mr', 'abc')
         ]
         for user in users:
             user.verify()

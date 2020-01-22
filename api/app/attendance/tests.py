@@ -30,13 +30,11 @@ class AttendanceApiTest(ApiTestCase):
         country = Country('South Africa')
         db.session.add(country)
 
-        attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
-                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 'abc')
 
         self.attendee = attendee
 
-        registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
-                                     1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms','abc')
         users = [attendee, registration_admin]
 
         for user in users:
@@ -174,8 +172,7 @@ class AttendanceApiTest(ApiTestCase):
         self.seed_static_data()
 
         # Create an unconfirmed user
-        attendee2 = AppUser('attendee2@mail.com', 'attendee2', 'attendee2', 'Ms', 1,
-                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        attendee2 = AppUser('attendee2@mail.com', 'attendee2', 'attendee2', 'Ms', 'abc')
 
         self.attendee2 = attendee2
         db.session.add(attendee2)
@@ -235,8 +232,7 @@ class AttendanceApiTest(ApiTestCase):
     # Invited Guests attendance
     def test_get_attendance_list_2(self):
         self.seed_static_data()
-        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr', 1,
-                           1, 'M', 'Harvard', 'Law', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr',  'abc')
         db.session.add(mrObama)
         db.session.commit()
         invited_guest_id = mrObama.id

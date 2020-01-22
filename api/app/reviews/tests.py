@@ -36,16 +36,16 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(countries)
         db.session.commit()
         
-        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', 1, 1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', 1, 1, 'F', 'UCT', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr', 1, 1, 'M', 'UKZN', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', 1, 1, 'F', 'RU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 2, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 2, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 3, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
-        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
+        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', 'abc')
+        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms',  'abc')
+        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr',  'abc')
+        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', 'abc')
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr',  'abc')
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms',  'abc')
+        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr',  'abc')
+        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms',  'abc')
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 'abc', True)
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 'abc')
         users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
         for user in users:
             user.verify()
@@ -422,11 +422,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['response']['user_id'], 6)
         self.assertEqual(data['response']['answers'][0]['value'], 'I want to do a PhD.')
-        self.assertEqual(data['user']['affiliation'], 'RU')
-        self.assertEqual(data['user']['department'], 'Chem')
-        self.assertEqual(data['user']['nationality_country'], 'Botswana')
-        self.assertEqual(data['user']['residence_country'], 'Namibia')
-        self.assertEqual(data['user']['user_category'], 'Student')
+        self.assertEquals(data['user']['email'],'c2@c.com')
         
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
@@ -439,11 +435,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['response']['user_id'], 7)
         self.assertEqual(data['response']['answers'][1]['value'], 'I will share by tutoring.')
-        self.assertEqual(data['user']['affiliation'], 'UFH')
-        self.assertEqual(data['user']['department'], 'Phys')
-        self.assertEqual(data['user']['nationality_country'], 'Zimbabwe')
-        self.assertEqual(data['user']['residence_country'], 'Mozambique')
-        self.assertEqual(data['user']['user_category'], 'MSc')
+        self.assertEqual(data['user']['email'], 'c3@c.com')
 
     def setup_candidate_who_has_applied_to_multiple_events(self):
         responses = [
@@ -481,11 +473,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 1)
         self.assertEqual(data['response']['user_id'], 5)
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
-        self.assertEqual(data['user']['affiliation'], 'UWC')
-        self.assertEqual(data['user']['department'], 'CS')
-        self.assertEqual(data['user']['nationality_country'], 'South Africa')
-        self.assertEqual(data['user']['residence_country'], 'Egypt')
-        self.assertEqual(data['user']['user_category'], 'Honours')
+        self.assertEqual(data['user']['email'], 'c1@c.com')
 
     def setup_multi_choice_answer(self):
         response = Response(1, 5, True)

@@ -36,19 +36,13 @@ class InvitationLetterTests(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
+        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 
                             '123456')
         test_user.verified_email = True
         db.session.add(test_user)
         db.session.commit()
 
-        test_user_2 = AppUser('somethingelse@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Female', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
+        test_user_2 = AppUser('somethingelse@email.com', 'Some', 'Thing', 'Mr', 
                             '123456')
         test_user_2.verified_email = True
         db.session.add(test_user_2)
@@ -308,10 +302,7 @@ class PDFConverterTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
+        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 
                             '123456')
         test_user.verified_email = True
         db.session.add(test_user)

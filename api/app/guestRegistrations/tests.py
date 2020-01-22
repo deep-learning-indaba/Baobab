@@ -18,17 +18,12 @@ class GuestRegistrationApiTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
+        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', '123456')
         test_user.verified_email = True
         db.session.add(test_user)
         db.session.commit()
 
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456', True)
+        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms','123456', True)
         event_admin.verified_email = True
         db.session.add(event_admin)
 
