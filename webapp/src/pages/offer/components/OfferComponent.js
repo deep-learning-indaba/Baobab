@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
+import { applicationFormService} from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 
@@ -22,7 +23,8 @@ class Offer extends Component {
       noOffer: null,
       category: "",
       accepted_accommodation_award: false,
-      accepted_travel_award: false
+      accepted_travel_award: false,
+      applicationExist: null
     };
   }
   
@@ -321,6 +323,22 @@ class Offer extends Component {
     });
   }
 
+  componentDidMount(){
+    applicationFormService.getResponse(DEFAULT_EVENT_ID).then(results => {
+      console.log(results)
+      if (results.is_submitted && !results.is_withdrawn){
+        this.setState({
+          applicationExist: true
+        })
+      }
+      else{
+        this.setState({
+          applicationExist: false
+        })
+      }
+    });
+  }
+
   getOffer = () => {
     this.setState({ loading: true });
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
@@ -350,7 +368,7 @@ class Offer extends Component {
 
   render() {
   
-    const { loading, offer, error } = this.state;
+    const { loading, offer, error, applicationExist } = this.state;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -373,6 +391,13 @@ class Offer extends Component {
         </div>
       );
     else if (offer !== null) return this.displayOfferContent();
+    else if (offer === null && !applicationExist)
+      return (
+        <div className="h5 pt-5" align="center">
+          {" "}
+          You did not apply to attend.
+        </div>
+      ); 
     else
       return (
         <div className="h5 pt-5" align="center">
