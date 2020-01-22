@@ -15,13 +15,13 @@ class AppUser(db.Model, UserMixin):
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     user_title = db.Column(db.String(20), nullable=False)
-    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=False)
-    user_gender = db.Column(db.String(20), nullable=False)
-    affiliation = db.Column(db.String(255), nullable=False)
-    department = db.Column(db.String(255), nullable=False)
-    user_disability = db.Column(db.String(255), nullable=False)
-    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=False)
+    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
+    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
+    user_gender = db.Column(db.String(20), nullable=True)
+    affiliation = db.Column(db.String(255), nullable=True)
+    department = db.Column(db.String(255), nullable=True)
+    user_disability = db.Column(db.String(255), nullable=True)
+    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=True)
     user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
     user_primaryLanguage = db.Column(db.String(255), nullable=True)
     password = db.Column(db.String(255), nullable=False)
@@ -42,30 +42,12 @@ class AppUser(db.Model, UserMixin):
                  firstname,
                  lastname,
                  user_title,
-                 nationality_country_id,
-                 residence_country_id,
-                 user_gender,
-                 affiliation,
-                 department,
-                 user_disability,
-                 user_category_id,
-                 user_dateOfBirth,
-                 user_primaryLanguage,
                  password,
                  is_admin=False):
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
         self.user_title = user_title
-        self.nationality_country_id = nationality_country_id
-        self.residence_country_id = residence_country_id
-        self.user_gender = user_gender
-        self.affiliation = affiliation
-        self.department = department
-        self.user_disability = user_disability
-        self.user_category_id = user_category_id
-        self.user_dateOfBirth = user_dateOfBirth
-        self.user_primaryLanguage = user_primaryLanguage
         self.set_password(password)
         self.active = True
         self.is_admin = is_admin

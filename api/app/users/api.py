@@ -54,18 +54,6 @@ user_fields = {
     'firstname': fields.String,
     'lastname': fields.String,
     'user_title': fields.String,
-    'nationality_country_id': fields.Integer,
-    'nationality_country': fields.String(attribute='nationality_country.name'),
-    'residence_country_id': fields.Integer,
-    'residence_country': fields.String(attribute='residence_country.name'),
-    'user_gender': fields.String,
-    'user_dateOfBirth': fields.DateTime('iso8601'),
-    'user_primaryLanguage': fields.String,
-    'affiliation': fields.String,
-    'department': fields.String,
-    'user_disability': fields.String,
-    'user_category_id': fields.Integer,
-    'user_category': fields.String(attribute='user_category.name')
 }
 
 
@@ -115,13 +103,6 @@ class UserAPI(SignupMixin, restful.Resource):
         firstname = args['firstname']
         lastname = args['lastname']
         user_title = args['user_title']
-        nationality_country_id = args['nationality_country_id']
-        residence_country_id = args['residence_country_id']
-        user_gender = args['user_gender']
-        affiliation = args['affiliation']
-        department = args['department']
-        user_disability = args['user_disability']
-        user_category_id = args['user_category_id']
 
         if(invitedGuest):
             password = self.randomPassword()
@@ -131,10 +112,6 @@ class UserAPI(SignupMixin, restful.Resource):
         if(password is None):
             return MISSING_PASSWORD
 
-        user_dateOfBirth = datetime.strptime(
-            (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
-        user_primaryLanguage = args['user_primaryLanguage']
-
         LOGGER.info("Registering email: {}".format(email))
 
         user = AppUser(
@@ -142,23 +119,14 @@ class UserAPI(SignupMixin, restful.Resource):
             firstname=firstname,
             lastname=lastname,
             user_title=user_title,
-            nationality_country_id=nationality_country_id,
-            residence_country_id=residence_country_id,
-            user_gender=user_gender,
-            affiliation=affiliation,
-            department=department,
-            user_disability=user_disability,
-            user_category_id=user_category_id,
-            user_dateOfBirth=user_dateOfBirth,
-            user_primaryLanguage=user_primaryLanguage,
             password=password)
 
         db.session.add(user)
 
         try:
             db.session.commit()
-        except IntegrityError:
-            LOGGER.error("email: {} already in use".format(email))
+        except IntegrityError as i:
+            LOGGER.error("error: {i} email: {} already in use".format(i,email))
             return EMAIL_IN_USE
 
         if(not invitedGuest):
@@ -188,16 +156,6 @@ class UserAPI(SignupMixin, restful.Resource):
         firstname = args['firstname']
         lastname = args['lastname']
         user_title = args['user_title']
-        nationality_country_id = args['nationality_country_id']
-        residence_country_id = args['residence_country_id']
-        user_gender = args['user_gender']
-        affiliation = args['affiliation']
-        department = args['department']
-        user_disability = args['user_disability']
-        user_category_id = args['user_category_id']
-        user_dateOfBirth = datetime.strptime(
-            (args['user_dateOfBirth']), '%Y-%m-%dT%H:%M:%S.%fZ')
-        user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
@@ -208,15 +166,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user.firstname = firstname
         user.lastname = lastname
         user.user_title = user_title
-        user.nationality_country_id = nationality_country_id
-        user.residence_country_id = residence_country_id
-        user.user_gender = user_gender
-        user.affiliation = affiliation
-        user.department = department
-        user.user_disability = user_disability
-        user.user_category_id = user_category_id
-        user.user_dateOfBirth = user_dateOfBirth
-        user.user_primaryLanguage = user_primaryLanguage
 
         try:
             db.session.commit()
@@ -264,18 +213,9 @@ class UserProfileView():
     def __init__(self, user_response):
         self.user_id = user_response.AppUser.id
         self.email = user_response.AppUser.email
-        self.affiliation = user_response.AppUser.affiliation
-        self.department = user_response.AppUser.department
         self.firstname = user_response.AppUser.firstname
         self.lastname = user_response.AppUser.lastname
-        self.nationality_country = user_response.AppUser.nationality_country.name
-        self.residence_country = user_response.AppUser.residence_country.name
-        self.user_category = user_response.AppUser.user_category.name
-        self.user_disability = user_response.AppUser.user_disability
-        self.user_gender = user_response.AppUser.user_gender
         self.user_title = user_response.AppUser.user_title
-        self.user_dateOfBirth = user_response.AppUser.user_dateOfBirth
-        self.user_primaryLanguage = user_response.AppUser.user_primaryLanguage
         self.response_id = user_response.Response.id
         self.is_submitted = user_response.Response.is_submitted
         self.submitted_timestamp = user_response.Response.submitted_timestamp
@@ -284,27 +224,17 @@ class UserProfileView():
 
 
 user_profile_list_fields = {
-        'user_id': fields.Integer,
-        'email': fields.String,
-        'firstname': fields.String,
-        'lastname': fields.String,
-        'user_title': fields.String,
-        'nationality_country': fields.String,
-        'residence_country': fields.String,
-        'user_gender': fields.String,
-        'user_dateOfBirth': fields.DateTime('iso8601'),
-        'user_primaryLanguage': fields.String,
-        'affiliation': fields.String,
-        'department': fields.String,
-        'user_disability': fields.String,
-        'user_category_id': fields.Integer,
-        'user_category': fields.String,
-        'response_id': fields.Integer,
-        'is_submitted': fields.Boolean,
-        'submitted_timestamp': fields.DateTime('iso8601'),
-        'is_withdrawn': fields.Boolean,
-        'withdrawn_timestamp': fields.DateTime('iso8601')
-    }
+    'user_id': fields.Integer,
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'user_title': fields.String,
+    'response_id': fields.Integer,
+    'is_submitted': fields.Boolean,
+    'submitted_timestamp': fields.DateTime('iso8601'),
+    'is_withdrawn': fields.Boolean,
+    'withdrawn_timestamp': fields.DateTime('iso8601')
+}
 
 
 class UserProfileList(UserProfileListMixin, restful.Resource):
@@ -321,6 +251,7 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
             return FORBIDDEN
 
         user_responses = user_repository.get_all_with_responses_for(event_id)
+
         views = [UserProfileView(user_response)
                  for user_response in user_responses]
         return views
@@ -372,7 +303,7 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
             if bcrypt.check_password_hash(user.password, args['password']):
                 LOGGER.debug(
                     "Successful authentication for email: {}".format(args['email']))
-                roles=db.session.query(EventRole).filter(
+                roles = db.session.query(EventRole).filter(
                     EventRole.user_id == user.id).all()
                 return user_info(user, roles)
 
@@ -386,21 +317,21 @@ class PasswordResetRequestAPI(restful.Resource):
 
     def post(self):
 
-        req_parser=reqparse.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('email', type=str, required=True)
-        args=req_parser.parse_args()
+        args = req_parser.parse_args()
 
         LOGGER.debug(
             "Requesting password reset for email {}".format(args['email']))
 
-        user=db.session.query(AppUser).filter(
+        user = db.session.query(AppUser).filter(
             func.lower(AppUser.email) == func.lower(args['email'])).first()
 
         if not user:
             LOGGER.debug("No user found for email {}".format(args['email']))
             return USER_NOT_FOUND
 
-        password_reset=PasswordReset(user=user)
+        password_reset = PasswordReset(user=user)
         db.session.add(password_reset)
         db.session.commit()
 
@@ -417,15 +348,15 @@ class PasswordResetConfirmAPI(restful.Resource):
 
     def post(self):
 
-        req_parser=reqparse.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('code', type=str, required=True)
         req_parser.add_argument('password', type=str, required=True)
-        args=req_parser.parse_args()
+        args = req_parser.parse_args()
 
         LOGGER.debug(
             "Confirming password reset for code: {}".format(args['code']))
 
-        password_reset=db.session.query(PasswordReset).filter(
+        password_reset = db.session.query(PasswordReset).filter(
             PasswordReset.code == args['code']).first()
 
         if not password_reset:
@@ -451,11 +382,11 @@ class VerifyEmailAPI(restful.Resource):
 
     def get(self):
 
-        token=request.args.get('token')
+        token = request.args.get('token')
 
         LOGGER.debug("Verifying email for token: {}".format(token))
 
-        user=db.session.query(AppUser).filter(
+        user = db.session.query(AppUser).filter(
             AppUser.verify_token == token).first()
 
         if not user:
@@ -473,11 +404,11 @@ class VerifyEmailAPI(restful.Resource):
 
 class ResendVerificationEmailAPI(restful.Resource):
     def get(self):
-        email=request.args.get('email')
+        email = request.args.get('email')
 
         LOGGER.debug("Resending verification email to: {}".format(email))
 
-        user=db.session.query(AppUser).filter(
+        user = db.session.query(AppUser).filter(
             func.lower(AppUser.email) == func.lower(email)).first()
 
         if not user:
@@ -485,7 +416,7 @@ class ResendVerificationEmailAPI(restful.Resource):
             return USER_NOT_FOUND
 
         if user.verify_token is None:
-            user.verify_token=make_code()
+            user.verify_token = make_code()
 
         try:
             db.session.commit()
@@ -516,14 +447,14 @@ class UserCommentAPI(restful.Resource):
 
     @auth_required
     def post(self):
-        req_parser=reqparse.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=False)
         req_parser.add_argument('user_id', type=int, required=False)
         req_parser.add_argument('comment', type=str, required=False)
-        args=req_parser.parse_args()
+        args = req_parser.parse_args()
 
-        current_user_id=g.current_user['id']
-        comment=UserComment(args['event_id'], args['user_id'],
+        current_user_id = g.current_user['id']
+        comment = UserComment(args['event_id'], args['user_id'],
                               current_user_id, datetime.now(), args['comment'])
 
         db.session.add(comment)
@@ -534,16 +465,16 @@ class UserCommentAPI(restful.Resource):
     @auth_required
     @marshal_with(user_comment_fields)
     def get(self):
-        req_parser=reqparse.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
-        args=req_parser.parse_args()
+        args = req_parser.parse_args()
 
-        current_user=user_repository.get_by_id(g.current_user['id'])
+        current_user = user_repository.get_by_id(g.current_user['id'])
         if not current_user.is_event_admin(args['event_id']):
             return FORBIDDEN
 
-        comments=db.session.query(UserComment).filter(
+        comments = db.session.query(UserComment).filter(
             UserComment.event_id == args['event_id'],
             UserComment.user_id == args['user_id']).all()
 
@@ -555,30 +486,30 @@ GENERIC_EMAIL_TEMPLATE = """Dear {user_title} {user_firstname} {user_lastname},
 {body}
 """
 
+
 class EmailerAPI(restful.Resource):
 
     @admin_required
     def post(self):
-        req_parser=reqparse.RequestParser()
+        req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('email_subject', type=str, required=True)
         req_parser.add_argument('email_body', type=str, required=True)
-        args=req_parser.parse_args()
+        args = req_parser.parse_args()
 
         user = user_repository.get_by_id(args['user_id'])
         if user is None:
             return errors.USER_NOT_FOUND
         try:
             send_mail(recipient=user.email,
-                    subject=args['email_subject'],
-                    body_text=GENERIC_EMAIL_TEMPLATE.format(
-                        user_title=user.user_title, 
-                        user_firstname=user.firstname, 
-                        user_lastname=user.lastname,
-                        body=args['email_body'],
-                    )
-            )
+                      subject=args['email_subject'],
+                      body_text=GENERIC_EMAIL_TEMPLATE.format(
+                          user_title=user.user_title,
+                          user_firstname=user.firstname,
+                          user_lastname=user.lastname,
+                          body=args['email_body'],
+                      )
+                      )
         except Exception as e:
             LOGGER.error('Error sending email: {}'.format(e))
             return errors.EMAIL_NOT_SENT
-            
