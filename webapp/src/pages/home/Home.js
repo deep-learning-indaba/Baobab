@@ -36,6 +36,11 @@ class Home extends Component {
     //   }
     // });
 
+    // Only check for response/offer/invited guest if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user)
+      return 
+
     applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
       let applicationStatus = null;
       if (resp.response) {
