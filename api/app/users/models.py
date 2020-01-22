@@ -32,6 +32,8 @@ class AppUser(db.Model, UserMixin):
     verified_email = db.Column(db.Boolean(), nullable=True)
     verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
 
+    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
+
     nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
     residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
@@ -52,6 +54,7 @@ class AppUser(db.Model, UserMixin):
                  user_dateOfBirth,
                  user_primaryLanguage,
                  password,
+                 organisation_id,
                  is_admin=False):
         self.email = email
         self.firstname = firstname
@@ -67,6 +70,7 @@ class AppUser(db.Model, UserMixin):
         self.user_dateOfBirth = user_dateOfBirth
         self.user_primaryLanguage = user_primaryLanguage
         self.set_password(password)
+        self.organisation_id = organisation_id
         self.active = True
         self.is_admin = is_admin
         self.is_deleted = False
