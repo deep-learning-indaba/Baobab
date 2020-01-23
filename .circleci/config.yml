@@ -7,6 +7,7 @@ jobs:
       - run:
           name: Start container
           command: |
+            python --version
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
@@ -39,7 +40,8 @@ jobs:
       - run:
           name: Migrate the staging database
           command: |
-            docker-compose run web bash migrate_database.sh
+            docker-compose run -e GCLOUD_SQL_SERVICE_KEY=$GCLOUD_SQL_SERVICE_KEY -e STAGING_DB_PROXY=$STAGING_DB_PROXY web bash migrate_database.sh 
+  
   migrate-prod:
     machine: true
     steps:
