@@ -39,7 +39,8 @@ jobs:
       - run:
           name: Migrate the staging database
           command: |
-            docker-compose run web bash migrate_database.sh
+            docker-compose run -e GCLOUD_SQL_SERVICE_KEY=$GCLOUD_SQL_SERVICE_KEY -e STAGING_DB_PROXY=$STAGING_DB_PROXY web bash migrate_database.sh 
+  
   migrate-prod:
     machine: true
     steps:
