@@ -33,9 +33,8 @@ jobs:
             docker-compose run test-ci  
 
   migrate-test:
-    build: 
-      docker:
-        - image: gcr.io/google-appengine/python
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
