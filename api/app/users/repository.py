@@ -4,6 +4,7 @@ from app.events.models import EventRole
 from app.responses.models import Response
 from app.users.models import AppUser
 from app.organisation.models import Organisation
+from sqlalchemy import func
 
 class UserRepository():
 
@@ -21,7 +22,7 @@ class UserRepository():
     @staticmethod
     def get_by_email(email, organisation_id):
         return db.session.query(AppUser)\
-            filter(func.lower(AppUser.email) == func.lower(email))\
+            .filter(func.lower(AppUser.email) == func.lower(email))\
             .filter_by(organisation_id=organisation_id).first()
 
     @staticmethod
