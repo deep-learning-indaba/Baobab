@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from app import db, bcrypt, LOGGER
 from app.utils.misc import make_code
 from flask_login import UserMixin
+from sqlalchemy.schema import UniqueConstraint
 
 def expiration_date():
     return datetime.now() + timedelta(days=1)
@@ -11,7 +12,7 @@ def expiration_date():
 class AppUser(db.Model, UserMixin):
 
     id = db.Column(db.Integer(), primary_key=True)
-    email = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), nullable=False)
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
     user_title = db.Column(db.String(20), nullable=False)
@@ -33,6 +34,8 @@ class AppUser(db.Model, UserMixin):
     verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
 
     organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
+
+    __table_args__ = (UniqueConstraint('email', 'organisation_id', name='org_email_unique'),)
 
     nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
     residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
