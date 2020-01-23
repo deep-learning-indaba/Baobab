@@ -485,7 +485,7 @@ class ResendVerificationEmailAPI(restful.Resource):
         user = user_repository.get_by_email(email, g.organisation.id)
 
         if not user:
-            LOGGER.debug("User not found for email: {} in organisation: {}".format(email, organisation.name))
+            LOGGER.debug("User not found for email: {} in organisation: {}".format(email, g.organisation.name))
             return USER_NOT_FOUND
 
         if user.verify_token is None:
