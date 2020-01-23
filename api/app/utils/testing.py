@@ -38,7 +38,8 @@ class ApiTestCase(unittest.TestCase):
                  user_primaryLanguage='Swahili',
                  password='abc',
                  organisation_id=1,
-                 is_admin=False):
+                 is_admin=False,
+                 post_create_fn=lambda x: None):
         user_dateOfBirth = user_dateOfBirth or datetime(1984, 12, 12)
         user = AppUser(email,
                  firstname,
@@ -57,6 +58,9 @@ class ApiTestCase(unittest.TestCase):
                  organisation_id,
                  is_admin)
         user.verify()
+
+        post_create_fn(user)
+
         db.session.add(user)
         self.test_users.append(user)
         return user
