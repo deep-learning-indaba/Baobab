@@ -22,7 +22,8 @@ const fieldValidations = [
   ruleRunner(validationFields.residentialStreet1, requiredText),
   ruleRunner(validationFields.residentialCity, requiredText),
   ruleRunner(validationFields.residentialPostalCode, requiredText),
-  ruleRunner(validationFields.residentialCountry, requiredDropdown)
+  ruleRunner(validationFields.residentialCountry, requiredDropdown),
+  ruleRunner(validationFields.letterAddressedTo, requiredText)
 ];
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
@@ -121,7 +122,7 @@ class InvitationLetterForm extends Component {
       this.state.user.residentialPostalCode &&
       this.state.user.residentialPostalCode.length > 0 &&
       this.state.user.residentialCountry &&
-      this.state.user.residentialCountry > 0
+      this.state.user.letterAddressedTo.length > 0
     );
   }
   convertAddressField = (street1, street2, city, postalCode, country) => {
