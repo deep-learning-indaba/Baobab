@@ -124,7 +124,7 @@ class InvitedGuests extends Component {
   };
 
   convertToCsv = (guestList) => {
-    var str = "NAME,EMAIL,AFFILIATION,ROLE" + "\r\n";
+    var str = "NAME,EMAIL,AFFILIATION,ROLE\r\n";
     for (var i = 0; i < guestList.length; i++) {
       let fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
       str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].user.affiliation + ',' + guestList[i].role;
@@ -152,6 +152,8 @@ class InvitedGuests extends Component {
     }
   };
 
+
+
   filterByName = field => {
     let searchList = this.state.guestList;
 
@@ -159,18 +161,7 @@ class InvitedGuests extends Component {
     var roleSearch = this.state.roleSearch;
     let tempList = searchList.filter(  (guest) =>  {
       let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
-
-      if (fullname.toLowerCase().indexOf(value) > -1)
-        if(roleSearch !== "all" )
-        {
-          if( guest.role === roleSearch)
-          {
-            return guest;
-          }
-        }
-        else{
-          return guest;
-        }
+      return (fullname.toLowerCase().indexOf(value) > -1) && (roleSearch === "all" || guest.role === roleSearch)
     })
     this.setState({
       filteredList: tempList,
@@ -199,6 +190,7 @@ class InvitedGuests extends Component {
           else{
             return guest;
           }
+          return false;
       })
     this.setState({
       filteredList: tempList,
@@ -303,13 +295,6 @@ class InvitedGuests extends Component {
     const { loading, error } = this.state;
     const roleOptions = invitedGuestServices.getRoles()
     const searchRoleOptions = this.getSearchRoles(roleOptions);
-
-
-    let lastGuest;
-    let searchTerm;
-    if (this.state.guestList !== null) {
-      lastGuest = this.state.guestList[this.state.guestList.length - 1];
-    }
 
     if (loading) {
       return (

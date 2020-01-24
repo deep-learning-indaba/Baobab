@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -101,7 +101,7 @@ class AttendanceTable extends React.Component {
       });
     });
   };
-  getTrProps = (state, rowInfo, instance) => {
+  getTrProps = (state, rowInfo) => {
     if (rowInfo) {
       return {
         style: {
@@ -169,7 +169,6 @@ class AttendanceTable extends React.Component {
       loading,
       error,
       confirming,
-      undoing,
       confirmResult,
       undoResult,
       searchTerm,
@@ -328,7 +327,7 @@ class AttendanceTable extends React.Component {
               {props.original.confirmed ? (
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={e => {
+                  onClick={() => {
                     this.onConfirm(props.original);
                   }}
                   disabled={confirming}
@@ -367,7 +366,7 @@ class AttendanceTable extends React.Component {
               {props.original.confirmed ? (
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={e => {
+                  onClick={() => {
                     this.onConfirm(props.original);
                   }}
                   disabled={confirming}

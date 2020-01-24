@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 class FormGroup extends React.Component {
   render() {
     let formClass = "form-group";

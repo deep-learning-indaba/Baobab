@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
-import { getEvents } from "../../services/events";
 import { applicationFormService } from "../../services/applicationForm";
 import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
@@ -10,7 +9,7 @@ import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 const headings = ["Event", "Start date", "End date", "Status"];
-const fieldNames = ["description", "start_date", "end_date", "status"];
+// const fieldNames = ["description", "start_date", "end_date", "status"]; unused
 
 class Home extends Component {
 
@@ -81,47 +80,40 @@ class Home extends Component {
   }
 
   render() {
-    let table = (<div></div>)
 
-    if (this.state.rows && this.state.rows.length > 0) {
-      const theadMarkup = (
-        <tr>
-          {this.state.headings.map((_cell, cellIndex) => {
-            return (
-              <th className="Cell">
-                {this.state.headings[cellIndex]}
-              </th>
-            )
-          })}
-        </tr>
-      );
+    // if (this.state.rows && this.state.rows.length > 0) {
+    //   const theadMarkup = (
+    //     <tr>
+    //       {this.state.headings.map((_cell, cellIndex) => {
+    //         return (
+    //           <th className="Cell">
+    //             {this.state.headings[cellIndex]}
+    //           </th>
+    //         )
+    //       })}
+    //     </tr>
+    //   );
 
-      const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
-        return (
-          <tr>
-            {fieldNames.map((_cell, cellIndex) => {
-              return (
-                <td className="Cell">
-                  {
-                    this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
-                      this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
-                      <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
-                      this.state.rows[rowIndex][fieldNames[cellIndex]]
-                  }
-                </td>
-              )
-            })}
-          </tr>
-        )
-      });
+    //   const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
+    //     return (
+    //       <tr>
+    //         {fieldNames.map((_cell, cellIndex) => {
+    //           return (
+    //             <td className="Cell">
+    //               {
+    //                 this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
+    //                   <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]]
+    //               }
+    //             </td>
+    //           )
+    //         })}
+    //       </tr>
+    //     )
+    //   });
 
-      table = this.state.rows ? (
-        <table align="center" className="Table">
-          <thead>{theadMarkup}</thead>
-          <tbody>{tbodyMarkup}</tbody>
-        </table>
-      ) : (<div></div>)
-    }
+    // }
 
     let statusClass = this.state.applicationStatus === "Submitted" 
       ? this.state.offer === null ? "text-warning" : "text-success" 

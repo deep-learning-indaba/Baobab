@@ -1,7 +1,6 @@
-import React, { Component } from "react";
+import React from "react";
 import FormGroup from "./FormGroup";
 import { default as ReactSelect } from "react-select";
-import ReactToolTip from "react-tooltip";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 

@@ -509,20 +509,14 @@ class RegistrationComponent extends Component {
 
                 {section.registration_questions
                   .sort((a, b) => a.order - b.order)
-                  .map(question => {
+                  .filter(question => {
                     if (question.depends_on_question_id) {
-                      let answer = this.state.answers.find(
-                        a =>
-                          a.registration_question_id ==
-                          question.depends_on_question_id
-                      );
-                      if (
-                        !answer ||
-                        answer.value === question.hide_for_dependent_value
-                      ) {
-                        return;
-                      }
+                      let answer = this.state.answers.find( a => a.registration_question_id === question.depends_on_question_id );
+                      return answer && (answer.value !== question.hide_for_dependent_value)
                     }
+                    return true
+                  })
+                  .map(question => {
                     return (
                       <div
                         className="text-left"

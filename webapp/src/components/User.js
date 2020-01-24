@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { withRouter } from "react-router";
 import { userService } from "../services/user";
 import isEqual from "lodash.isequal";
@@ -20,7 +20,7 @@ class UserDropdown extends Component {
     } else this.setState({ user: props.user });
   };
 
-  handleLogout = event => {
+  handleLogout = () => {
     this.props.onClick();
     userService.logout();
     if (this.props.logout) {

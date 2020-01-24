@@ -174,7 +174,7 @@ class ReviewForm extends Component {
 
         this.setState({
             form: response.form,
-            error: response.error,
+            // error: response.error, duplicate key
             isLoading: false,
             questionModels: questionModels,
             error: "",

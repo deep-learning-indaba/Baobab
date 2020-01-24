@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import "./Registration.css";
 import RegistrationComponent from "./components/RegistrationComponent"
 import GuestRegistrationComponent from "./components/GuestRegistrationComponent"
-import { registrationService } from "../../services/registration";
 import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests.service';
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;

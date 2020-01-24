@@ -7,7 +7,6 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
-import { offerServices } from "../../../services/offer";
 import { fileService } from "../../../services/file/file.service";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
@@ -188,7 +187,7 @@ class GuestRegistrationComponent extends Component {
               });
             }
           })
-          .catch(error => {});
+          .catch(() => {});
         this.setState({
           questionSections: questionSections.sort((a, b) => a.order - b.order),
           registrationFormId: result.form.id,
@@ -289,7 +288,7 @@ class GuestRegistrationComponent extends Component {
                 });
               }
             })
-            .catch(error => {
+            .catch(() => {
               this.setState({
                 formFailure: true,
                 formSuccess: false,
@@ -486,20 +485,14 @@ class GuestRegistrationComponent extends Component {
 
                 {section.registration_questions
                   .sort((a, b) => a.order - b.order)
-                  .map(question => {
+                  .filter(question => {
                     if (question.depends_on_question_id) {
-                      let answer = this.state.answers.find(
-                        a =>
-                          a.registration_question_id ==
-                          question.depends_on_question_id
-                      );
-                      if (
-                        !answer ||
-                        answer.value === question.hide_for_dependent_value
-                      ) {
-                        return;
-                      }
+                      let answer = this.state.answers.find( a => a.registration_question_id === question.depends_on_question_id );
+                      return answer && (answer.value !== question.hide_for_dependent_value)
                     }
+                    return true
+                  })
+                  .map(question => {
                     return (
                       <div
                         className="text-left"

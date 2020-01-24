@@ -40,7 +40,7 @@ onSubmit=(user_id)=>{
     window.location='/viewprofile/:'+user_id;
 }
  render(){
-    const {List, isEmpty,loading,error,Desc_Asc} = this.state;
+    const {List, isEmpty,loading,error} = this.state;
     const loadingStyle = {
         "width": "3rem",
         "height": "3rem"

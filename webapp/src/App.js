@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Router, Route, Link, NavLink, Switch } from "react-router-dom";
+import { Router, Route, NavLink, Switch } from "react-router-dom";
 import logo from "./images/logo-32x32-white.png";
 import Home from "./pages/home";
 import Login from "./pages/login";
@@ -33,7 +33,7 @@ ReactGA.initialize("UA-136093201-1", {
 });
 
 ReactGA.pageview(window.location.pathname + window.location.search);
-history.listen((location, action) => {
+history.listen((location) => {
   ReactGA.pageview(location.pathname + location.search);
 });
 
