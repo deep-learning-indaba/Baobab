@@ -48,7 +48,7 @@ onSubmit=(user_id)=>{
     const columns = [
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
                       accessor:u=>u.lastname+" "+u.firstname+", "+u.user_title,
-                      Cell: props => <a href="#" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</a>,
+                      Cell: props => <button className="link-style" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</button>,
                       minWidth: 150},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},

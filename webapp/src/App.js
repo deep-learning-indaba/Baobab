@@ -187,10 +187,9 @@ class App extends Component {
                   </NavLink>
                 </li>
                 {this.state.user && (
-                  <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                  <li class="nav-item dropdown ">
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -198,7 +197,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Registration
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registration"
@@ -219,9 +218,8 @@ class App extends Component {
                 )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -229,7 +227,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Event Admin
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/eventStats"
@@ -264,9 +262,8 @@ class App extends Component {
                 )}
                 {this.isRegistrationVolunteer(this.state.user) && (
                    <li class="nav-item dropdown">
-                      <a
-                        class="nav-link dropdown-toggle"
-                        href="#"
+                      <div
+                        class="nav-link dropdown-toggle link-style"
                         id="navbarDropdown"
                         role="button"
                         data-toggle="dropdown"
@@ -274,7 +271,7 @@ class App extends Component {
                         aria-expanded="false"
                       >
                         Registration Volunteer
-                      </a>
+                      </div>
                       <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <NavLink
                           to="/eventAttendance"
@@ -289,9 +286,8 @@ class App extends Component {
                 )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -299,7 +295,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Reviews
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/review"
@@ -320,9 +316,8 @@ class App extends Component {
                 )}
                 {this.isRegistrationAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -330,7 +325,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Registration Admin
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registrationAdmin"

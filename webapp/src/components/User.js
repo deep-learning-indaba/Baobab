@@ -33,9 +33,8 @@ class UserDropdown extends Component {
       return (
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
+            <button
+              class="nav-link dropdown-toggle link-style"
               id="userDropdown"
               data-toggle="dropdown"
               aria-haspopup="true"
@@ -43,7 +42,7 @@ class UserDropdown extends Component {
             >
               <i class="fas fa-user" />{" "}
               {this.state.user.firstname + " " + this.state.user.lastname}
-            </a>
+            </button>
             <div class="dropdown-menu" aria-labelledby="userDropdown">
               <a
                 class="dropdown-item"
@@ -52,9 +51,9 @@ class UserDropdown extends Component {
               >
                 Profile
               </a>
-              <a class="dropdown-item" href="#" onClick={this.handleLogout}>
+              <button class="dropdown-item link-style"  onClick={this.handleLogout}>
                 Logout
-              </a>
+              </button>
             </div>
           </li>
         </ul>
