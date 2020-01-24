@@ -1,6 +1,6 @@
 FROM gcr.io/google-appengine/python
 
-RUN virtualenv /env
+RUN virtualenv /env -p python3
 
 # Setting these environment variables are the same as running
 # source /env/bin/activate.
