@@ -162,7 +162,7 @@ class RegistrationComponent extends Component {
     this.setState({isLoading: true});
 
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
-      if (result.error === "" && result.offer != null) {
+      if (result.error === "" && result.offer !== null) {
         this.setState(
           {
             offer: result.offer,

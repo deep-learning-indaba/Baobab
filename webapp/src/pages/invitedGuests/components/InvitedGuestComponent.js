@@ -161,7 +161,7 @@ class InvitedGuests extends Component {
       let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
 
       if (fullname.toLowerCase().indexOf(value) > -1)
-        if(roleSearch != "all" )
+        if(roleSearch !== "all" )
         {
           if( guest.role === roleSearch)
           {
@@ -189,7 +189,7 @@ class InvitedGuests extends Component {
       tempList = searchList.filter(function (guest) {
         let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
         if (guest.role === dropdown.value || dropdown.value === "all")
-          if(searchTerm != "" )
+          if(searchTerm !== "" )
           {
             if(fullname.toLowerCase().indexOf(searchTerm) > -1)
             {
