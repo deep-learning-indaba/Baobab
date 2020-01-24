@@ -121,7 +121,35 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
-# Flask Admin
+from organisation.resolver import OrganisationResolver
+
+def get_domain():
+    # TODO: Remove this test-related hack!
+    if app.config['TESTING'] and 'HTTP_ORIGIN' not in request.environ and 'HTTP_REFERER' not in request.environ:
+        return 'org'
+
+    origin = request.environ.get('HTTP_ORIGIN', '')
+    if not origin:  # Try to get from Referer header
+        origin = request.environ.get('HTTP_REFERER', '')
+        LOGGER.debug('No ORIGIN header, falling back to Referer: {}'.format(origin))
+    
+    if origin:
+        domain = tldextract.extract(origin).domain
+    else:
+        LOGGER.warning('Could not determine origin domain')
+        domain = ''
+    
+    return domain
+
+@app.before_request
+def populate_organisation():
+    domain = get_domain()
+    LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
+    g.organisation = OrganisationResolver.resolve_from_domain(domain)
+
+## Flask Admin Config
+
+# set optional bootswatch theme
 app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 from .applicationModel.models import Question, Section
 from .responses.models import Response, Answer, ResponseReviewer
