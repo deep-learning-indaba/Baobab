@@ -125,8 +125,8 @@ class UserAPI(SignupMixin, restful.Resource):
 
         try:
             db.session.commit()
-        except IntegrityError as i:
-            LOGGER.error("error: {i} email: {} already in use".format(i,email))
+        except IntegrityError:
+            LOGGER.error("email: {} already in use".format(email))
             return EMAIL_IN_USE
 
         if(not invitedGuest):
