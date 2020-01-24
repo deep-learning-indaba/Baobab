@@ -166,7 +166,7 @@ class ReviewForm extends Component {
                 }
                 return {
                     question: q,
-                    answer: response.form.response.answers.find(a => a.question_id == q.question_id),
+                    answer: response.form.response.answers.find(a => a.question_id === q.question_id),
                     score: score
                 };
             }).sort((a, b) => a.question.order - b.question.order);
@@ -399,7 +399,7 @@ class ReviewForm extends Component {
             return <div className={"alert alert-danger"}>{error}</div>;
         }
 
-        if (!form.review_response && form.reviews_remaining_count == 0) {
+        if (!form.review_response && form.reviews_remaining_count === 0) {
             return (
                 <div class="review-form-container">
                     <div class="alert alert-success">

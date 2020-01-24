@@ -85,7 +85,7 @@ class AttendanceTable extends React.Component {
           });
         } else {
           let success =
-            (result.error == null || result.error == "") &&
+            (result.error === null || result.error === "") &&
             result.statusCode === 201;
           this.setState({
             showDetailsModal: success,
@@ -293,7 +293,7 @@ class AttendanceTable extends React.Component {
     }
 
     let columns = null;
-    if (this.state.showAllColumns == true) {
+    if (this.state.showAllColumns === true) {
       columns = [
         {
           id: "user",
@@ -393,7 +393,7 @@ class AttendanceTable extends React.Component {
       );
     }
     let heading = "Attendance Registration";
-    if (this.state.exclude_already_signed_in == false) {
+    if (this.state.exclude_already_signed_in === false) {
       heading = "Attendance Registration - Special Situations";
     }
 
@@ -439,7 +439,7 @@ class AttendanceTable extends React.Component {
               {confirmResult && !confirmResult.success && confirmResultDiv}
 
               {(!originalAttendanceList ||
-                originalAttendanceList.length == 0) && (
+                originalAttendanceList.length === 0) && (
                 <div class="alert alert-success">
                   All attendances are confirmed.
                 </div>

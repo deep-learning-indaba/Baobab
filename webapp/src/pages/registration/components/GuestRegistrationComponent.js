@@ -132,7 +132,7 @@ class GuestRegistrationComponent extends Component {
     if (answer) {
       answer.value = value.toString();
       answers = answers.map(function(item) {
-        return item.registration_question_id == id ? answer : item;
+        return item.registration_question_id === id ? answer : item;
       });
     } else {
       answer = {
@@ -162,7 +162,7 @@ class GuestRegistrationComponent extends Component {
     this.setState({isLoading: true});
 
     registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
-      if (result.error == "" && result.form.registration_sections.length > 0) {
+      if (result.error === "" && result.form.registration_sections.length > 0) {
         let questionSections = [];
         for (var i = 0; i < result.form.registration_sections.length; i++) {
           if (
@@ -318,7 +318,7 @@ class GuestRegistrationComponent extends Component {
 
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
-        if (item.value == answer.value) return item.label;
+        if (item.value === answer.value) return item.label;
         return null;
       });
     };
@@ -495,7 +495,7 @@ class GuestRegistrationComponent extends Component {
                       );
                       if (
                         !answer ||
-                        answer.value == question.hide_for_dependent_value
+                        answer.value === question.hide_for_dependent_value
                       ) {
                         return;
                       }

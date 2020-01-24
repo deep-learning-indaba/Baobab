@@ -382,7 +382,7 @@ class InvitedGuests extends Component {
           }
 
           {
-            (!this.state.guestList || this.state.guestList.length == 0) &&
+            (!this.state.guestList || this.state.guestList.length === 0) &&
             <div class="alert alert-danger">No invited guests</div>
           }
           <div className="col-12"> <a href="javascript:void(0)" className="pull-right" onClick={() => this.downloadCsv()}>Download csv</a></div>

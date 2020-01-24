@@ -123,7 +123,7 @@ class Home extends Component {
       ) : (<div></div>)
     }
 
-    let statusClass = this.state.applicationStatus == "Submitted" 
+    let statusClass = this.state.applicationStatus === "Submitted" 
       ? this.state.offer === null ? "text-warning" : "text-success" 
       : "text-danger"
 
@@ -160,21 +160,21 @@ class Home extends Component {
                 <p>You've been invited to the Indaba as a guest! Please proceed to registration <NavLink to="/registration">here</NavLink>.</p>
                 </div>}
 
-                {this.state.applicationStatus == "Submitted" &&
+                {this.state.applicationStatus === "Submitted" &&
                 <div>
                   {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
                   : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
                 </div>}
 
-                {this.state.applicationStatus == "Withdrawn" && <p>
+                {this.state.applicationStatus === "Withdrawn" && <p>
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
 
-                {this.state.applicationStatus == "NOT Submitted" && <p>
+                {this.state.applicationStatus === "NOT Submitted" && <p>
                   You did not submit an application to attend the Deep Learning Indaba 2019!
                 </p>}
 
-                {this.state.applicationStatus == "Not Started" && this.state.invitedGuest !== true  && <p>
+                {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true  && <p>
                   You did not apply to attend the Deep Learning Indaba 2019.
                 </p>}
 

@@ -132,7 +132,7 @@ class RegistrationComponent extends Component {
     if (answer) {
       answer.value = value.toString();
       answers = answers.map(function(item) {
-        return item.registration_question_id == id ? answer : item;
+        return item.registration_question_id === id ? answer : item;
       });
     } else {
       answer = {
@@ -162,7 +162,7 @@ class RegistrationComponent extends Component {
     this.setState({isLoading: true});
 
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
-      if (result.error == "" && result.offer != null) {
+      if (result.error === "" && result.offer != null) {
         this.setState(
           {
             offer: result.offer,
@@ -173,7 +173,7 @@ class RegistrationComponent extends Component {
               .getRegistrationForm(DEFAULT_EVENT_ID, this.state.offer.id)
               .then(result => {
                 if (
-                  result.error == "" &&
+                  result.error === "" &&
                   result.form.registration_sections.length > 0
                 ) {
                   let questionSections = [];
@@ -342,7 +342,7 @@ class RegistrationComponent extends Component {
 
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
-        if (item.value == answer.value) return item.label;
+        if (item.value === answer.value) return item.label;
         return null;
       });
     };
@@ -518,7 +518,7 @@ class RegistrationComponent extends Component {
                       );
                       if (
                         !answer ||
-                        answer.value == question.hide_for_dependent_value
+                        answer.value === question.hide_for_dependent_value
                       ) {
                         return;
                       }

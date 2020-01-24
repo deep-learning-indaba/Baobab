@@ -135,7 +135,7 @@ class RegistrationAdminComponent extends Component {
                 {confirmError && <div class="alert alert-danger">{confirmError}</div>}
                 
                 {
-                (!unconfirmedList || unconfirmedList.length == 0) &&
+                (!unconfirmedList || unconfirmedList.length === 0) &&
                   <div class="alert alert-success">There are no unconfirmed registrations</div>
                 }
               </div>
