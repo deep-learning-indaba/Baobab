@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "array-flat-polyfill": "^1.0.1",
     "axios": "^0.18.1",
     "bootstrap": "^4.3.1",
     "country-list": "^2.1.0",
+    "draft-js": "^0.11.4",
     "env-cmd": "^8.0.2",
     "enzyme": "^3.8.0",
     "enzyme-adapter-react-16": "^1.7.1",
@@ -15,6 +17,7 @@
     "react-app-polyfill": "^0.2.2",
     "react-bootstrap4-modal": "^1.7.0",
     "react-dom": "^16.7.0",
+    "react-draft-wysiwyg": "^1.14.4",
     "react-error-boundary": "^1.2.3",
     "react-ga": "^2.5.7",
     "react-google-charts": "^3.0.11",
@@ -25,8 +28,7 @@
     "react-stepzilla": "^5.0.0",
     "react-table": "^6.9.2",
     "react-tooltip": "^3.9.2",
-    "stackdriver-errors-js": "^0.5.0",
-    "array-flat-polyfill": "^1.0.1"
+    "stackdriver-errors-js": "^0.5.0"
   },
   "scripts": {
     "start": "react-scripts start ",
