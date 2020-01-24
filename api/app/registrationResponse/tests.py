@@ -342,7 +342,7 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[0]['lastname'], 'Thing')
             self.assertEqual(responses[0]['email'], 'something@email.com')
             self.assertEqual(responses[0]['user_category'], 'Postdoc')
-            self.assertEqual(responses[0]['affiliation'], 'University')
+            self.assertEqual(responses[0]['affiliation'], 'university X')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
 
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)

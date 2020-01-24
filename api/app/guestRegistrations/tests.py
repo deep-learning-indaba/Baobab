@@ -34,6 +34,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.form)
         db.session.commit()
+        self.form_id = self.form.id
 
         self.event_id = event.id
 
@@ -75,6 +76,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question)
         db.session.commit()
+        self.question_id = self.question.id
 
         self.question2 = RegistrationQuestion(
             section_id=section2.id,
@@ -90,6 +92,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question2)
         db.session.commit()
+        self.question2_id = self.question2.id
 
         self.question3 = RegistrationQuestion(
             section_id=section2.id,
@@ -105,11 +108,12 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question3)
         db.session.commit()
+        self.question3_id = self.question3.id
+
+        db.session.flush()
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
-
-        db.session.flush()
 
     def get_auth_header_for(self, email):
         body = {
@@ -125,18 +129,18 @@ class GuestRegistrationApiTest(ApiTestCase):
     def test_create_registration(self):
         self.seed_static_data()
         registration_data = {
-            'registration_form_id': self.form.id,
+            'registration_form_id': self.form_id,
             'answers': [
                 {
-                    'registration_question_id': self.question.id,
+                    'registration_question_id': self.question_id,
                     'value': 'Answer 1'
                 },
                 {
-                    'registration_question_id': self.question2.id,
+                    'registration_question_id': self.question2_id,
                     'value': 'Hello world, this is the 2nd answer.'
                 },
                 {
-                    'registration_question_id': self.question3.id,
+                    'registration_question_id': self.question3_id,
                     'value': 'Hello world, this is the 3rd answer.'
                 }
             ]
@@ -152,18 +156,18 @@ class GuestRegistrationApiTest(ApiTestCase):
         self.seed_static_data()
 
         registration_data = {
-            'registration_form_id': self.form.id,
+            'registration_form_id': self.form_id,
             'answers': [
                 {
-                    'registration_question_id': self.question.id,
+                    'registration_question_id': self.question_id,
                     'value': 'Answer 1'
                 },
                 {
-                    'registration_question_id': self.question2.id,
+                    'registration_question_id': self.question2_id,
                     'value': 'Hello world, this is the 2nd answer.'
                 },
                 {
-                    'registration_question_id': self.question3.id,
+                    'registration_question_id': self.question3_id,
                     'value': 'Hello world, this is the 3rd answer.'
                 }
             ]
@@ -185,18 +189,18 @@ class GuestRegistrationApiTest(ApiTestCase):
         """Test if update work"""
         self.seed_static_data()
         registration_data = {
-            'registration_form_id': self.form.id,
+            'registration_form_id': self.form_id,
             'answers': [
                 {
-                    'registration_question_id': self.question.id,
+                    'registration_question_id': self.question_id,
                     'value': 'Answer 1'
                 },
                 {
-                    'registration_question_id': self.question2.id,
+                    'registration_question_id': self.question2_id,
                     'value': 'Hello world, this is the 2nd answer.'
                 },
                 {
-                    'registration_question_id': self.question3.id,
+                    'registration_question_id': self.question3_id,
                     'value': 'Hello world, this is the 3rd answer.'
                 }
             ]
@@ -213,18 +217,18 @@ class GuestRegistrationApiTest(ApiTestCase):
             "Reg-form: {}".format(data))
         put_registration_data = {
             'guest_registration_id': data['id'],
-            'registration_form_id': self.form.id,
+            'registration_form_id': self.form_id,
             'answers': [
                 {
-                    'registration_question_id': self.question.id,
+                    'registration_question_id': self.question_id,
                     'value': 'Answer Other'
                 },
                 {
-                    'registration_question_id': self.question2.id,
+                    'registration_question_id': self.question2_id,
                     'value': 'Hello world, this is the 2nd answer.'
                 },
                 {
-                    'registration_question_id': self.question3.id,
+                    'registration_question_id': self.question3_id,
                     'value': 'Hello world, this is the 3rd answer.'
                 }
             ]
