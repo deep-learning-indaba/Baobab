@@ -348,10 +348,10 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)
             self.assertEqual(responses[1]['user_id'], self.offer3.user_id)
             self.assertEqual(responses[1]['firstname'], 'event_admin')
-            self.assertEqual(responses[1]['lastname'], '1')
+            self.assertEqual(responses[1]['lastname'], 'Lastname')
             self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
             self.assertEqual(responses[1]['user_category'], 'Postdoc')
-            self.assertEqual(responses[1]['affiliation'], 'NWU')
+            self.assertEqual(responses[1]['affiliation'], 'university X')
             self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
 
     def test_get_confirmed_not_event_admin(self):
