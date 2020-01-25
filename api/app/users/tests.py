@@ -660,7 +660,7 @@ class OrganisationUserTest(ApiTestCase):
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba'))
+        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba', 'indaba.com'))
 
         self.user1_org1 = AppUser('first_user@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 1)
         self.user1_org2 = AppUser('first_user@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 2)
@@ -717,7 +717,7 @@ class OrganisationUserTest(ApiTestCase):
     def allow_same_email_different_org(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba'))
+        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba', 'indaba.com'))
         db.session.commit()
 
         response = self.app.post('/api/v1/user', data=USER_DATA, headers={'Origin': 'www.myorg.net'})

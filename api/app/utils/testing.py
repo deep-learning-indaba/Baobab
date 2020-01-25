@@ -82,7 +82,7 @@ class ApiTestCase(unittest.TestCase):
 
         # Add a dummy organisation
         organisation = Organisation(name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='org', )
+                                    large_logo='org_big.png', domain='org', url='www.org.net')
         db.session.add(organisation)
         db.session.commit()
         db.session.flush()
