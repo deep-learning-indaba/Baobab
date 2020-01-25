@@ -1,4 +1,4 @@
-"""empty message
+"""Add URL to organisation
 
 Revision ID: 6d27df178e8e
 Revises: 4d8b254d7e7e
@@ -12,6 +12,12 @@ down_revision = '4d8b254d7e7e'
 
 from alembic import op
 import sqlalchemy as sa
+from app.organisation.models import Organisation
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import orm
+from app import db
+
+Base = declarative_base()
 
 
 def upgrade():
