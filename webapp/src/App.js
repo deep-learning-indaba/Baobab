@@ -126,7 +126,7 @@ class App extends Component {
                 src={this.state.organisation && require("./images/" + this.state.organisation.small_logo)}
                 width="30"
                 height="30"
-                class="d-inline-block align-top"
+                class="d-inline-block align-top brand-image"
                 alt=""
               />
               {this.state.organisation && this.state.organisation.system_name}
@@ -435,7 +435,7 @@ class App extends Component {
                 </a>
                 {this.state.organisation && this.state.organisation.system_name !== "Baobab" && 
                   <div class="float-right">
-                    Powered by <a href="http://www.deeplearningindaba.com" target="_blank">Baobab</a>
+                    Powered by <a href="http://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer">Baobab</a>
                   </div>
                 }
               </p>
