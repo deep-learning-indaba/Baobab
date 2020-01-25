@@ -176,6 +176,7 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                {this.state.user && (
                 <li class="nav-item">
                   <NavLink
                     to="/offer"
@@ -186,6 +187,7 @@ class App extends Component {
                     Offer
                   </NavLink>
                 </li>
+                )}
                 {this.state.user && (
                   <li class="nav-item dropdown ">
                     <div
