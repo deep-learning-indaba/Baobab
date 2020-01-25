@@ -124,7 +124,7 @@ class InvitedGuests extends Component {
   };
 
   convertToCsv = (guestList) => {
-    var str = "NAME,EMAIL,AFFILIATION,ROLE" + "\r\n";
+    var str = "NAME,EMAIL,AFFILIATION,ROLE\r\n";
     for (var i = 0; i < guestList.length; i++) {
       let fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
       str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].user.affiliation + ',' + guestList[i].role;
@@ -152,6 +152,8 @@ class InvitedGuests extends Component {
     }
   };
 
+
+
   filterByName = field => {
     let searchList = this.state.guestList;
 
@@ -159,18 +161,7 @@ class InvitedGuests extends Component {
     var roleSearch = this.state.roleSearch;
     let tempList = searchList.filter(  (guest) =>  {
       let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
-
-      if (fullname.toLowerCase().indexOf(value) > -1)
-        if(roleSearch != "all" )
-        {
-          if( guest.role === roleSearch)
-          {
-            return guest;
-          }
-        }
-        else{
-          return guest;
-        }
+      return (fullname.toLowerCase().indexOf(value) > -1) && (roleSearch === "all" || guest.role === roleSearch)
     })
     this.setState({
       filteredList: tempList,
@@ -189,7 +180,7 @@ class InvitedGuests extends Component {
       tempList = searchList.filter(function (guest) {
         let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
         if (guest.role === dropdown.value || dropdown.value === "all")
-          if(searchTerm != "" )
+          if(searchTerm !== "" )
           {
             if(fullname.toLowerCase().indexOf(searchTerm) > -1)
             {
@@ -199,6 +190,7 @@ class InvitedGuests extends Component {
           else{
             return guest;
           }
+          return false;
       })
     this.setState({
       filteredList: tempList,
@@ -304,13 +296,6 @@ class InvitedGuests extends Component {
     const roleOptions = invitedGuestServices.getRoles()
     const searchRoleOptions = this.getSearchRoles(roleOptions);
 
-
-    let lastGuest;
-    let searchTerm;
-    if (this.state.guestList !== null) {
-      lastGuest = this.state.guestList[this.state.guestList.length - 1];
-    }
-
     if (loading) {
       return (
         <div class="d-flex justify-content-center">
@@ -382,10 +367,10 @@ class InvitedGuests extends Component {
           }
 
           {
-            (!this.state.guestList || this.state.guestList.length == 0) &&
+            (!this.state.guestList || this.state.guestList.length === 0) &&
             <div class="alert alert-danger">No invited guests</div>
           }
-          <div className="col-12"> <a href="javascript:void(0)" className="pull-right" onClick={() => this.downloadCsv()}>Download csv</a></div>
+          <div className="col-12"> <button className="pull-right link-style" onClick={() => this.downloadCsv()}>Download csv</button></div>
         </div>
 
         {this.state.addedSucess && (
@@ -468,6 +453,7 @@ class InvitedGuests extends Component {
                       label={validationFields.title.display}
                       showError={this.getError(validationFields.title.name)}
                       errorText={this.getError(validationFields.title.name)}
+                      defaultValue={this.state.user[validationFields.title.name] || ""}
                       value={this.state.user[validationFields.title.name] || ""}
                     />
                   </div>

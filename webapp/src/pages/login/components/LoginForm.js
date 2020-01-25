@@ -130,7 +130,7 @@ class LoginForm extends Component {
           {error && 
             <div className={"alert alert-danger"}>
               {error}
-              {notVerified && <a href="#" onClick={this.resendVerification}> Resend Verification Email</a>}
+              {notVerified && <button className="link-style" onClick={this.resendVerification}> Resend Verification Email</button>}
             </div>
           }
           {resendStatus && <div className={"alert alert-success"}>{resendStatus}</div>}
