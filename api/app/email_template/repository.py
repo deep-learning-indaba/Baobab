@@ -5,5 +5,5 @@ from app.email_template.models import EmailTemplate
 class EmailRepository():
 
     @staticmethod
-    def get(id, key):
-        return db.session.query(EmailTemplate).filter_by(id=id, key=key).first()
+    def get(event_id, key):
+        return db.session.query(EmailTemplate).filter_by(event_id=event_id, key=key).first()
