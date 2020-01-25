@@ -11,7 +11,7 @@ from app.users.repository import UserRepository as user_repository
 from app.events.models import EventRole
 
 from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD
+from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD,ERROR_UPDATING_USER_PROFILE
 
 from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
@@ -152,7 +152,6 @@ class UserAPI(SignupMixin, restful.Resource):
     def put(self):
         args = self.req_parser.parse_args()
 
-        email = args['email']
         firstname = args['firstname']
         lastname = args['lastname']
         user_title = args['user_title']
@@ -160,8 +159,6 @@ class UserAPI(SignupMixin, restful.Resource):
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
 
-        if user.email != email:
-            user.update_email(email)
 
         user.firstname = firstname
         user.lastname = lastname
@@ -169,9 +166,9 @@ class UserAPI(SignupMixin, restful.Resource):
 
         try:
             db.session.commit()
-        except IntegrityError:
-            LOGGER.error("email {} already in use".format(email))
-            return EMAIL_IN_USE
+        except Exception as e:
+            LOGGER.error("Exception updating user profile - {}".format(e))
+            return ERROR_UPDATING_USER_PROFILE
 
         if not user.verified_email:
             send_mail(recipient=user.email,
