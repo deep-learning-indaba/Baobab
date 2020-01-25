@@ -1,5 +1,4 @@
-import React, { Component } from "react";
-import ReactToolTip from "react-tooltip";
+import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";

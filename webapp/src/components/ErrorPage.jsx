@@ -1,7 +1,6 @@
-import { ErrorBoundary } from "react-error-boundary";
-import errorHandler from "../utils/errorHandlerUtility";
-import logo from "../images/indaba-logo-dark.png";
 import React from "react";
+import logo from "../images/indaba-logo-dark.png";
+import errorHandler from "../utils/errorHandlerUtility";
 
 const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
 const BUG_BODY_TEXT = `Browser name and version:

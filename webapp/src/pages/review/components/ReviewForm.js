@@ -166,7 +166,7 @@ class ReviewForm extends Component {
                 }
                 return {
                     question: q,
-                    answer: response.form.response.answers.find(a => a.question_id == q.question_id),
+                    answer: response.form.response.answers.find(a => a.question_id === q.question_id),
                     score: score
                 };
             }).sort((a, b) => a.question.order - b.question.order);
@@ -174,7 +174,7 @@ class ReviewForm extends Component {
 
         this.setState({
             form: response.form,
-            error: response.error,
+            // error: response.error, duplicate key
             isLoading: false,
             questionModels: questionModels,
             error: "",
@@ -399,7 +399,7 @@ class ReviewForm extends Component {
             return <div className={"alert alert-danger"}>{error}</div>;
         }
 
-        if (!form.review_response && form.reviews_remaining_count == 0) {
+        if (!form.review_response && form.reviews_remaining_count === 0) {
             return (
                 <div class="review-form-container">
                     <div class="alert alert-success">
@@ -414,7 +414,13 @@ class ReviewForm extends Component {
 
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">{form.user.user_category}<small><a href="#" onClick={this.addFlag} className="flag-category"><i className="fa fa-flag"></i></a></small></h3>
+                <h3 class="text-center mb-4">{form.user.user_category}
+                 <small>
+                    <button onClick={this.addFlag} className="flag-category link-style ">
+                        <i className="fa fa-flag"></i>
+                    </button>
+                 </small>
+                </h3>
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Nationality:</span><br/> {form.user.nationality_country}

@@ -1,6 +1,5 @@
-import React, { Component } from "react";
+import React from "react";
 import FormGroup from "./FormGroup";
-import ReactToolTip from "react-tooltip";
 import FormToolTip from "./FormToolTip";
 
 class FormTextArea extends React.Component {

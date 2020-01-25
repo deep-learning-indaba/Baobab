@@ -179,7 +179,7 @@ class Offer extends Component {
         <form class="form pt-2 ">
           <p className="card p">
             You have been accepted as a{" "}
-            {userProfile != null ? userProfile.user_category : "<Category>"}{" "}
+            {userProfile !== null ? userProfile.user_category : "<Category>"}{" "}
           </p>
           <div className="white-background card form">
             <p class="font-weight-bold">Offer Details</p>
@@ -241,7 +241,7 @@ class Offer extends Component {
 
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
-              {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
+              {offer !== null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
             </p>
            
             <div class="form-group">

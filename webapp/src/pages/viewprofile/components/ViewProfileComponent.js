@@ -3,7 +3,7 @@ import { withRouter } from "react-router";
 import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
+// const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class ViewProfileComponent extends Component {
   constructor(props) {
@@ -57,11 +57,6 @@ class ViewProfileComponent extends Component {
     });
   }
   render() {
-    const xs = 12;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
     const colClassNameTitle = createColClassName(12, 4, 2, 2);
     const colClassNameSurname = createColClassName(12, 4, 4, 4);
     const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
@@ -73,18 +68,15 @@ class ViewProfileComponent extends Component {
       is_Submitted,
       is_Withdrawn,
       Lastname,
-      Response_id,
       Date_Submitted,
       Date_Withdrawn,
       User_Category,
       DateOfBirth,
       Gender,
-      ID,
       PrimaryLanguage,
       Title,
       Nationality,
       Residence,
-      Category,
       Disability
     } = this.state.user;
     const { loading, error, isNull } = this.state;
