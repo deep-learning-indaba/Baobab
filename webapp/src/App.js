@@ -26,6 +26,7 @@ import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
+import { organisationService } from "./services/organisation/organisation.service";
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
@@ -49,6 +50,7 @@ class App extends Component {
 
     this.state = {
       user: {},
+      organisation: null,
       collapsed: true
     };
 
@@ -58,6 +60,13 @@ class App extends Component {
   componentDidMount() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
+    });
+
+    organisationService.getOrganisation().then(response => {
+      this.setState({
+        organisation: response.organisation,
+        error: response.error
+      }, ()=>{console.log('Retrieved organisation: ', this.state.organisation);});
     });
   }
 
@@ -132,7 +141,7 @@ class App extends Component {
                 class="d-inline-block align-top"
                 alt=""
               />
-              Baobab
+              {this.state.organisation && this.state.organisation.system_name}
             </a>
             <button
               class="navbar-toggler"
