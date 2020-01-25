@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { userService } from "../../../services/user";
-import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -53,7 +52,7 @@ class RequestPasswordResetForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, submitted, loading, error, resetRequested } = this.state;
+    const { loading, error, resetRequested } = this.state;
 
     if (resetRequested) {
       return (

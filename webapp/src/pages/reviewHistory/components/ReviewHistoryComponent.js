@@ -5,7 +5,6 @@ import ReactTable from "react-table";
 import "react-table/react-table.css";
 
 import { reviewService } from "../../../services/reviews";
-import { createColClassName } from "../../../utils/styling/styling";
 import { columns } from "./tablecolumns";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
@@ -43,7 +42,7 @@ class ReviewHistoryComponent extends Component {
       });
   };
 
-  fetchData=(state, instance)=> {
+  fetchData=(state)=> {
     this.setState({ isLoading: true });
     let sortColumn;
     if(state.sorted && state.sorted.length > 0){
