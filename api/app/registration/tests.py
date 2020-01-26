@@ -56,23 +56,8 @@ REGISTRATION_QUESTION = {
 class OfferApiTest(ApiTestCase):
 
     def seed_static_data(self, add_offer=True):
-        db.session.add(UserCategory('Offer Category'))
-        db.session.add(Country('Suid Afrika'))
-        db.session.commit()
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12), 'Zulu', '654321')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        offer_admin = AppUser('offer_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '654321', True)
-        offer_admin.verified_email = True
-        db.session.add(offer_admin)
-
+        test_user = self.add_user('something@email.com')
+        offer_admin = self.add_user('offer_admin@ea.com', 'event_admin', is_admin=True)
         db.session.commit()
 
         event = Event(
@@ -104,7 +89,7 @@ class OfferApiTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '654321'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
@@ -119,10 +104,10 @@ class OfferApiTest(ApiTestCase):
                                  headers=self.adminHeaders)
         data = json.loads(response.data)
 
-        assert response.status_code == 201
-        assert data['payment_required']
-        assert data['travel_award']
-        assert data['accommodation_award']
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(data['payment_required'])
+        self.assertTrue(data['travel_award'])
+        self.assertTrue(data['accommodation_award'])
 
     def test_create_offer_with_template(self):
         self.seed_static_data(add_offer=False)
@@ -198,23 +183,8 @@ class OfferApiTest(ApiTestCase):
 class RegistrationTest(ApiTestCase):
 
     def seed_static_data(self):
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456', True)
-        event_admin.verified_email = True
-        db.session.add(event_admin)
+        test_user = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
 
         db.session.commit()
 
@@ -314,7 +284,7 @@ class RegistrationTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '123456'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)

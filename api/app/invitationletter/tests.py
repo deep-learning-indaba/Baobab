@@ -36,24 +36,9 @@ class InvitationLetterTests(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
+        test_user = self.add_user('something@email.com')
+        test_user_2 = self.add_user('somethingelse@email.com')
         db.session.commit()
-
-        test_user_2 = AppUser('somethingelse@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Female', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user_2.verified_email = True
-        db.session.add(test_user_2)
-        db.session.commit()
-
 
         event = Event(
             name="Tech Talk",
@@ -303,18 +288,7 @@ class InvitationLetterTests(ApiTestCase):
 class PDFConverterTest(ApiTestCase):
 
     def seed_static_data(self):
-        
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
+        test_user = self.add_user('something@email.com')
         db.session.commit()
 
         event = Event(
