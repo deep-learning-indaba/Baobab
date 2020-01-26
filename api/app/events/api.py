@@ -27,11 +27,11 @@ def event_info(user_id, event):
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y"),
         'status': get_user_event_response_status(user_id, event.id),
-        'is_application_open': True if (datetime.now() < event.end_date and datetime.now() >= event.start_date) else False,
-        'is_review_open': True if (datetime.now() < event.review_close and datetime.now() >= event.review_open) else False,
-        'is_selection_open': True if (datetime.now() < event.selection_close and datetime.now() >= event.selection_open) else False,
-        'is_offer_open': True if (datetime.now() < event.offer_close and datetime.now() >= event.offer_open) else False,
-        'is_registration_open': True if (datetime.now() < event.registration_close and datetime.now() >= event.registration_open) else False
+        'is_application_open': event.is_application_open,
+        'is_review_open': event.is_review_open,
+        'is_selection_open': event.is_selection_open,
+        'is_offer_open': event.is_offer_open,
+        'is_registration_open': event.is_registration_open
     }
 
 

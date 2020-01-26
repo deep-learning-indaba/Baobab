@@ -13,7 +13,7 @@ class Event(db.Model):
     end_date = db.Column(db.DateTime(), nullable=False)
 
     application_open = db.Column(db.DateTime(), nullable=False)
-    appcliation_close = db.Column(db.DateTime(), nullable=False)
+    application_close = db.Column(db.DateTime(), nullable=False)
     review_open = db.Column(db.DateTime(), nullable=False)
     review_close = db.Column(db.DateTime(), nullable=False)
     selection_open = db.Column(db.DateTime(), nullable=False)
@@ -46,8 +46,8 @@ class Event(db.Model):
         self.description = description
         self.start_date = start_date
         self.end_date = end_date
-        self.appcliation_open = application_open
-        self.appcliation_close = application_close
+        self.application_open = application_open
+        self.application_close = application_close
         self.review_open = review_open
         self.review_close = review_close
         self.selection_open = selection_open
@@ -69,11 +69,11 @@ class Event(db.Model):
     def set_end_date(self, new_end_date):
         self.end_date = new_end_date
 
-    def set_applicaiton_open(self, new_application_open):
+    def set_application_open(self, new_application_open):
         self.application_open = new_application_open
 
-    def set_applicaiton_close(self, new_application_close):
-        self.appcliation_close = new_application_close
+    def set_application_close(self, new_application_close):
+        self.application_close = new_application_close
 
     def set_review_open(self, new_review_open):
         self.review_open = new_review_open
@@ -101,6 +101,31 @@ class Event(db.Model):
 
     def get_application_form(self):
         return self.application_forms[0]
+
+    @property
+    def is_application_open(self):
+        now = datetime.now()
+        return now >= self.application_open and now < self.application_close
+    
+    @property
+    def is_review_open(self):
+        now = datetime.now()
+        return now >= self.review_open and now < self.review_close
+
+    @property
+    def is_selection_open(self):
+        now = datetime.now()
+        return now >= self.selection_open and now < self.selection_close
+
+    @property
+    def is_offer_open(self):
+        now = datetime.now()
+        return now >= self.offer_open and now < self.offer_close
+
+    @property
+    def is_registration_open(self):
+        now = datetime.now()
+        return now >= self.registration_open and now < self.registration_close
 
 class EventRole(db.Model):
 
