@@ -7,7 +7,7 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
-from app.events.mixins import EventsMixin
+from app.events.mixins import EventsMixin, EventMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -23,6 +23,7 @@ from app.utils.emailer import send_mail
 def event_info(user_id, event):
     return {
         'id': event.id,
+        'name': event.name,
         'description': event.description,
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y"),
@@ -33,9 +34,10 @@ def event_info(user_id, event):
 def get_user_event_response_status(user_id, event_id):
 
     def _log_application_status(context):
-        LOGGER.debug("Application {} for user_id: {}, event_id: {}".format(context, user_id, event_id))
+        LOGGER.debug("Application {} for user_id: {}, event_id: {}".format(
+            context, user_id, event_id))
 
-    try: 
+    try:
         applicationForm = db.session.query(ApplicationForm).filter(
             ApplicationForm.event_id == event_id).first()
 
@@ -47,7 +49,7 @@ def get_user_event_response_status(user_id, event_id):
                 response = db.session.query(Response).filter(
                     Response.application_form_id == applicationForm.id).filter(
                         Response.user_id == user_id
-                        ).order_by(Response.started_timestamp.desc()).first()
+                ).order_by(Response.started_timestamp.desc()).first()
 
                 if response:
                     if response.is_withdrawn:
@@ -66,11 +68,12 @@ def get_user_event_response_status(user_id, event_id):
             else:
                 _log_application_status('open')
                 return "Apply now"
-    
+
     except SQLAlchemyError as e:
-        LOGGER.error("Database error encountered: {}".format(e))            
-    except: 
-        LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+        LOGGER.error("Database error encountered: {}".format(e))
+    except:
+        LOGGER.error("Encountered unknown error: {}".format(
+            traceback.format_exc()))
 
     _log_application_status('not available')
     return "Application not available"
@@ -96,13 +99,86 @@ class EventsAPI(restful.Resource):
         return returnEvents, 200
 
 
+class EventAPI(EventMixin, restful.Resource):
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_admin:
+            return FORBIDDEN
+
+        name = args['name']
+        description = args['description']
+        start_date = datetime.strptime(
+            (args['start_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        end_date = datetime.strptime(
+            (args['end_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        event = Event(name=name,
+                      description=description,
+                      start_date=start_date,
+                      end_date=end_date)
+
+        db.session.add(event)
+        db.session.commit()
+
+        try:
+
+            admin_event_role = EventRole('admin', user_id, event.id)
+            db.session.add(admin_event_role)
+            db.session.commit()
+        except Exception as e:
+            LOGGER.error(
+                'Failed to add event role for user id {} due to: {}'.format(user_id, e))
+            return errors.ADD_EVENT_ROLE_FAILED
+
+        return event_info(user_id, event), 201
+
+    @auth_required
+    def put(self):
+        args = self.req_parser.parse_args()
+        LOGGER.debug(args)
+        event = db.session.query(Event).filter(
+            Event.id == args['id']).first()
+        if not event:
+            return EVENT_NOT_FOUND
+
+        user_id = g.current_user["id"]
+        event_id = event.id
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event_id):
+            return FORBIDDEN
+
+        name = args['name']
+        description = args['description']
+        start_date = datetime.strptime(
+            (args['start_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+        end_date = datetime.strptime(
+            (args['end_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        event = db.session.query(Event).filter(
+            Event.id == event_id).first()
+
+        event.name = name
+        event.description = description
+        event.start_date = start_date
+        event.end_date = end_date
+
+        db.session.commit()
+
+        return event_info(user_id, event), 200
+
+
 class EventStatsAPI(EventsMixin, restful.Resource):
 
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
 
-        event = db.session.query(Event).filter(Event.id == args['event_id']).first()
+        event = db.session.query(Event).filter(
+            Event.id == args['event_id']).first()
         if not event:
             return EVENT_NOT_FOUND
 
@@ -114,7 +190,8 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
         num_users = db.session.query(AppUser.id).count()
         num_responses = db.session.query(Response.id).count()
-        num_submitted_respones = db.session.query(Response).filter(Response.is_submitted == True).count()
+        num_submitted_respones = db.session.query(
+            Response).filter(Response.is_submitted == True).count()
 
         return {
             'event_description': event.description,
@@ -124,7 +201,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         }, 200
 
 
-NOT_SUBMITTED_EMAIL_BODY="""
+NOT_SUBMITTED_EMAIL_BODY = """
 Dear {title} {firstname} {lastname},
 
 We noticed that you started applying to attend the {event} but have not completed and submitted your application. This is a final reminder that you have until {deadline} to submit your application in order to be considered. Please complete and submit your application if you would still like to attend this event.
@@ -135,8 +212,9 @@ Kind Regards,
 The Deep Learning Indaba team
 """
 
+
 class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
-    
+
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
@@ -158,32 +236,36 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             lastname = user.lastname
             event_name = event.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
-            
-            subject = 'FINAL REMINDER to submit you application for {}'.format(event_name)
-            body = NOT_SUBMITTED_EMAIL_BODY.format(title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
-            
+
+            subject = 'FINAL REMINDER to submit you application for {}'.format(
+                event_name)
+            body = NOT_SUBMITTED_EMAIL_BODY.format(
+                title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
+
             send_mail(recipient=user.email, subject=subject, body_text=body)
-        
+
         return {'unsubmitted_responses': len(users)}, 201
 
-NOT_STARTED_EMAIL_BODY="""
+
+NOT_STARTED_EMAIL_BODY = """
 Dear {title} {firstname} {lastname},
 
 WE HAVE NOT RECEIVED YOUR APPLICATION TO ATTEND {event}
 
-We noticed that you have created a Baobab account, but have not yet started an application to attend {event}. 
+We noticed that you have created a Baobab account, but have not yet started an application to attend {event}.
 
-If you think you have already filled in the form, you may have not clicked on the SUBMIT button on the final page. If this is the case, we DO NOT have your application and unfortunately you will have to re-do it. We sincerely apologise for any confusion and inconvenience in this regard. 
-This is a final reminder that you have until {deadline} to complete and submit your application. 
+If you think you have already filled in the form, you may have not clicked on the SUBMIT button on the final page. If this is the case, we DO NOT have your application and unfortunately you will have to re-do it. We sincerely apologise for any confusion and inconvenience in this regard.
+This is a final reminder that you have until {deadline} to complete and submit your application.
 
 Please ensure you have submitted your application before this date if you would still like to attend this event.
 
 Kind Regards,
 The Deep Learning Indaba team
 """
-    
+
+
 class NotStartedReminderAPI(EventsMixin, restful.Resource):
-    
+
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
@@ -205,10 +287,12 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             lastname = user.lastname
             event_name = event.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
-            
-            subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(event_name)
-            body = NOT_STARTED_EMAIL_BODY.format(title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
-            
+
+            subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
+                event_name)
+            body = NOT_STARTED_EMAIL_BODY.format(
+                title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
+
             send_mail(recipient=user.email, subject=subject, body_text=body)
-        
+
         return {'not_started_responses': len(users)}, 201
