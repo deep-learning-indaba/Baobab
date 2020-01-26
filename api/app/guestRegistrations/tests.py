@@ -14,8 +14,6 @@ from app import db, LOGGER
 class GuestRegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
@@ -41,10 +39,7 @@ class GuestRegistrationApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-            key='REGINAL', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning'
+
         )
         db.session.add(event)
         db.session.commit()

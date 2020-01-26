@@ -35,18 +35,12 @@ AUTH_DATA = {
 class UserApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
-        organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation2)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(),
-                            'SOUTHAFRI2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(),
-                            'SUDANMO', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()
@@ -443,13 +437,10 @@ class UserApiTest(ApiTestCase):
 class UserCommentAPITest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(),
-                            'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.commit()
 
@@ -524,16 +515,12 @@ class UserCommentAPITest(ApiTestCase):
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
-        organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation2)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
         events = [
-            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
-            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now()),
+            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now())
         ]
         db.session.add_all(events)
 

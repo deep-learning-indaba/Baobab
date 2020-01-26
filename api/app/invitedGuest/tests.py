@@ -49,10 +49,6 @@ USER_DATA = {
 class InvitedGuestTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
-        organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation2)
         test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
                             'Male', 'University', 'Computer Science', 'None', 1,
                             datetime(1984, 12, 12),
@@ -78,9 +74,9 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(event_admin)
 
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
 

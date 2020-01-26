@@ -7,32 +7,26 @@ from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
-from app.events.mixins import EventsMixin, EventsKeyMixin
+from app.events.mixins import EventsMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
-from app.events.repository import EventRepository as event_repository
 
 
 def event_info(user_id, event):
     return {
         'id': event.id,
         'description': event.description,
-        'key': event.key,
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y"),
-        'status': get_user_event_response_status(user_id, event.id),
-        'email_from': event.email_from,
-        'organisation_name': event.Organisation.name,
-        'organisation_id': event.Organisation.id,
-        'url': event.url
+        'status': get_user_event_response_status(user_id, event.id)
     }
 
 
@@ -108,7 +102,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
 
-        event = event_repository.get_by_id_with_organisation(args['event_id'])
+        event = db.session.query(Event).filter(Event.id == args['event_id']).first()
         if not event:
             return EVENT_NOT_FOUND
 
@@ -128,24 +122,6 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             'num_responses': num_responses,
             'num_submitted_responses': num_submitted_respones
         }, 200
-
-class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
-
-    @auth_required
-    def get(self):
-        args = self.req_parser.parse_args()
-
-        event = event_repository.get_by_key_with_organisation(args['event_key'])
-        if not event:
-            return EVENT_WITH_KEY_NOT_FOUND
-
-        user_id = g.current_user["id"]
-        event_id = args['event_id']
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
-
-        return event_info(user_id, event), 200
 
 
 NOT_SUBMITTED_EMAIL_BODY="""
