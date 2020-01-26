@@ -9,6 +9,7 @@ from app.registration.models import RegistrationQuestion
 from app import app, db
 
 from app import db, LOGGER
+from app.organisation.models import Organisation
 
 
 class GuestRegistrationApiTest(ApiTestCase):

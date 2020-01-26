@@ -5,6 +5,7 @@ from app import db, LOGGER
 from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.applicationModel.models import ApplicationForm, Section, Question
+from app.organisation.models import Organisation
 
 
 class ApplicationFormApiTest(ApiTestCase):

@@ -9,6 +9,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
+from app.organisation.models import Organisation
 
 
 class EventsAPITest(ApiTestCase):

@@ -8,6 +8,7 @@ from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.models import RegistrationQuestion
 from app import app, db
+from app.organisation.models import Organisation
 
 
 class RegistrationApiTest(ApiTestCase):

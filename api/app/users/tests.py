@@ -8,6 +8,7 @@ from app.users.models import AppUser, PasswordReset, UserCategory, Country, User
 from app.events.models import Event, EventRole
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
+from app.organisation.models import Organisation
 
 
 USER_DATA = {

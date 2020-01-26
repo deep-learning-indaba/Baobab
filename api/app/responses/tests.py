@@ -9,6 +9,7 @@ from app.responses.models import Response, Answer
 from app.events.models import Event
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
+from app.organisation.models import Organisation
 
 
 def _add_object_to_db(obj):

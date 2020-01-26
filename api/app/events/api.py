@@ -19,20 +19,21 @@ from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUN
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
+from app.organisation.models import Organisation
 
 
-def event_info(user_id, event):
+def event_info(user_id, response):
     return {
-        'id': event.id,
-        'description': event.description,
-        'key': event.key,
-        'start_date': event.start_date.strftime("%d %B %Y"),
-        'end_date': event.end_date.strftime("%d %B %Y"),
-        'status': get_user_event_response_status(user_id, event.id),
-        'email_from': event.email_from,
-        'organisation_name': event.Organisation.name,
-        'organisation_id': event.Organisation.id,
-        'url': event.url
+        'id': response.Event.id,
+        'description': response.Event.description,
+        'key': response.Event.key,
+        'start_date': response.Event.start_date.strftime("%d %B %Y"),
+        'end_date': response.Event.end_date.strftime("%d %B %Y"),
+        'status': get_user_event_response_status(user_id, response.Event.id),
+        'email_from': response.Event.email_from,
+        'organisation_name': response.Organisation.name,
+        'organisation_id': response.Organisation.id,
+        'url': response.Event.url
     }
 
 
@@ -91,8 +92,8 @@ class EventsAPI(restful.Resource):
         if g and hasattr(g, 'current_user') and g.current_user:
             user_id = g.current_user["id"]
 
-        events = db.session.query(Event).filter(
-            Event.start_date > datetime.now()).all()
+        events = db.session.query(Event, Organisation).filter(
+            Event.start_date > datetime.now()).join(Organisation, Organisation.id==Event.organisation_id).all()
 
         returnEvents = []
 

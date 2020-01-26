@@ -12,6 +12,7 @@ from app.invitationletter.models import InvitationTemplate
 from app.utils.pdfconvertor import convert_to
 from app.invitationletter.generator import generate
 from nose.tools import nottest
+from app.organisation.models import Organisation
 
 
 INVITATION_LETTER = {

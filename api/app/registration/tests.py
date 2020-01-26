@@ -8,6 +8,7 @@ from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
+from app.organisation.models import Organisation
 
 
 OFFER_DATA = {
