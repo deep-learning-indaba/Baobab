@@ -86,3 +86,5 @@ ATTENDANCE_ALREADY_CONFIRMED = (
     {'message': 'Attendance has already been confirmed for this user and event.'}, 400)
 ATTENDANCE_NOT_FOUND = (
     {'message': 'Attendance not found.'}, 404)
+ADD_EVENT_ROLE_FAILED = (
+    {'message': 'Unable to add event role for the user_id and event_id.'}, 500)
