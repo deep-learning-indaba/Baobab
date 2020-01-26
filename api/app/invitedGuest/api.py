@@ -73,8 +73,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         email = args['email']
         role = args['role']
 
-        user = db.session.query(AppUser).filter(
-            func.lower(AppUser.email) == func.lower(email)).first()
+        user = user_repository.get_by_email(email, g.organisation.id)
 
         if not user:
             return USER_NOT_FOUND

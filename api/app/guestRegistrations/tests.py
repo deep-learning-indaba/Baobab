@@ -14,24 +14,9 @@ from app import db, LOGGER
 class GuestRegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456', True)
-        event_admin.verified_email = True
-        db.session.add(event_admin)
-
+        test_user = self.add_user('something@email.com')
+        event_admin = self.add_user('event_admin@ea.com')
+        
         db.session.commit()
 
         event = Event(
@@ -49,6 +34,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.form)
         db.session.commit()
+        self.form_id = self.form.id
 
         self.event_id = event.id
 
@@ -90,6 +76,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question)
         db.session.commit()
+        self.question_id = self.question.id
 
         self.question2 = RegistrationQuestion(
             section_id=section2.id,
@@ -105,6 +92,7 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question2)
         db.session.commit()
+        self.question2_id = self.question2.id
 
         self.question3 = RegistrationQuestion(
             section_id=section2.id,
@@ -120,16 +108,17 @@ class GuestRegistrationApiTest(ApiTestCase):
         )
         db.session.add(self.question3)
         db.session.commit()
+        self.question3_id = self.question3.id
+
+        db.session.flush()
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
-        db.session.flush()
-
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '123456'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
@@ -138,131 +127,128 @@ class GuestRegistrationApiTest(ApiTestCase):
         return header
 
     def test_create_registration(self):
-        with app.app_context():
-            self.seed_static_data()
-            registration_data = {
-                'registration_form_id': self.form.id,
-                'answers': [
-                    {
-                        'registration_question_id': self.question.id,
-                        'value': 'Answer 1'
-                    },
-                    {
-                        'registration_question_id': self.question2.id,
-                        'value': 'Hello world, this is the 2nd answer.'
-                    },
-                    {
-                        'registration_question_id': self.question3.id,
-                        'value': 'Hello world, this is the 3rd answer.'
-                    }
-                ]
-            }
-            response = self.app.post(
-                '/api/v1/guest-registration',
-                data=json.dumps(registration_data),
-                content_type='application/json',
-                headers=self.headers)
-            self.assertEqual(response.status_code, 201)
+        self.seed_static_data()
+        registration_data = {
+            'registration_form_id': self.form_id,
+            'answers': [
+                {
+                    'registration_question_id': self.question_id,
+                    'value': 'Answer 1'
+                },
+                {
+                    'registration_question_id': self.question2_id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                },
+                {
+                    'registration_question_id': self.question3_id,
+                    'value': 'Hello world, this is the 3rd answer.'
+                }
+            ]
+        }
+        response = self.app.post(
+            '/api/v1/guest-registration',
+            data=json.dumps(registration_data),
+            content_type='application/json',
+            headers=self.headers)
+        self.assertEqual(response.status_code, 201)
 
     def test_get_registration(self):
-        with app.app_context():
-            self.seed_static_data()
+        self.seed_static_data()
 
-            registration_data = {
-                'registration_form_id': self.form.id,
-                'answers': [
-                    {
-                        'registration_question_id': self.question.id,
-                        'value': 'Answer 1'
-                    },
-                    {
-                        'registration_question_id': self.question2.id,
-                        'value': 'Hello world, this is the 2nd answer.'
-                    },
-                    {
-                        'registration_question_id': self.question3.id,
-                        'value': 'Hello world, this is the 3rd answer.'
-                    }
-                ]
-            }
-            response = self.app.post(
-                '/api/v1/guest-registration',
-                data=json.dumps(registration_data),
-                content_type='application/json',
-                headers=self.headers
-            )
-            LOGGER.debug("hi: {}".format(response.data))
-            response = self.app.get(
-                '/api/v1/guest-registration',
-                content_type='application/json',
-                headers=self.headers)
-            self.assertEqual(response.status_code, 200)
+        registration_data = {
+            'registration_form_id': self.form_id,
+            'answers': [
+                {
+                    'registration_question_id': self.question_id,
+                    'value': 'Answer 1'
+                },
+                {
+                    'registration_question_id': self.question2_id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                },
+                {
+                    'registration_question_id': self.question3_id,
+                    'value': 'Hello world, this is the 3rd answer.'
+                }
+            ]
+        }
+        response = self.app.post(
+            '/api/v1/guest-registration',
+            data=json.dumps(registration_data),
+            content_type='application/json',
+            headers=self.headers
+        )
+        LOGGER.debug("hi: {}".format(response.data))
+        response = self.app.get(
+            '/api/v1/guest-registration',
+            content_type='application/json',
+            headers=self.headers)
+        self.assertEqual(response.status_code, 200)
 
     def test_update_200(self):
         """Test if update work"""
-        with app.app_context():
-            self.seed_static_data()
-            registration_data = {
-                'registration_form_id': self.form.id,
-                'answers': [
-                    {
-                        'registration_question_id': self.question.id,
-                        'value': 'Answer 1'
-                    },
-                    {
-                        'registration_question_id': self.question2.id,
-                        'value': 'Hello world, this is the 2nd answer.'
-                    },
-                    {
-                        'registration_question_id': self.question3.id,
-                        'value': 'Hello world, this is the 3rd answer.'
-                    }
-                ]
-            }
+        self.seed_static_data()
+        registration_data = {
+            'registration_form_id': self.form_id,
+            'answers': [
+                {
+                    'registration_question_id': self.question_id,
+                    'value': 'Answer 1'
+                },
+                {
+                    'registration_question_id': self.question2_id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                },
+                {
+                    'registration_question_id': self.question3_id,
+                    'value': 'Hello world, this is the 3rd answer.'
+                }
+            ]
+        }
 
-            response = self.app.post(
-                '/api/v1/guest-registration',
-                data=json.dumps(registration_data),
-                content_type='application/json',
-                headers=self.headers
-            )
-            data = json.loads(response.data)
-            LOGGER.debug(
-                "Reg-form: {}".format(data))
-            put_registration_data = {
-                'guest_registration_id': data['id'],
-                'registration_form_id': self.form.id,
-                'answers': [
-                    {
-                        'registration_question_id': self.question.id,
-                        'value': 'Answer Other'
-                    },
-                    {
-                        'registration_question_id': self.question2.id,
-                        'value': 'Hello world, this is the 2nd answer.'
-                    },
-                    {
-                        'registration_question_id': self.question3.id,
-                        'value': 'Hello world, this is the 3rd answer.'
-                    }
-                ]
-            }
-            post_response = self.app.put(
-                '/api/v1/guest-registration',
-                data=json.dumps(put_registration_data),
-                content_type='application/json',
-                headers=self.headers)
+        response = self.app.post(
+            '/api/v1/guest-registration',
+            data=json.dumps(registration_data),
+            content_type='application/json',
+            headers=self.headers
+        )
+        data = json.loads(response.data)
+        LOGGER.debug(
+            "Reg-form: {}".format(data))
+        put_registration_data = {
+            'guest_registration_id': data['id'],
+            'registration_form_id': self.form_id,
+            'answers': [
+                {
+                    'registration_question_id': self.question_id,
+                    'value': 'Answer Other'
+                },
+                {
+                    'registration_question_id': self.question2_id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                },
+                {
+                    'registration_question_id': self.question3_id,
+                    'value': 'Hello world, this is the 3rd answer.'
+                }
+            ]
+        }
+        post_response = self.app.put(
+            '/api/v1/guest-registration',
+            data=json.dumps(put_registration_data),
+            content_type='application/json',
+            headers=self.headers)
 
-            LOGGER.debug(
-                "put response: {}".format(post_response))
-            self.assertEqual(post_response.status_code, 200)
+        LOGGER.debug(
+            "put response: {}".format(post_response))
+        self.assertEqual(post_response.status_code, 200)
 
-            response = self.app.get(
-                '/api/v1/guest-registration',
-                content_type='application/json',
-                headers=self.headers)
-            updated_data = json.loads(response.data)
-            self.assertEqual(updated_data['answers'][0]['value'], "Answer Other")
+        response = self.app.get(
+            '/api/v1/guest-registration',
+            content_type='application/json',
+            headers=self.headers)
+        updated_data = json.loads(response.data)
+        self.assertEqual(updated_data['answers'][0]['value'], "Answer Other")
 
     def test_get_form(self):
         self.seed_static_data()
@@ -277,8 +263,8 @@ class GuestRegistrationApiTest(ApiTestCase):
             "form: {}".format(json.loads(response.data)))
 
         form = json.loads(response.data)
-        assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
-        assert form['registration_sections'][0]['name'] == 'Section 1'
+        self.assertEqual(form['registration_sections'][0]['registration_questions'][0]['type'], 'short-text')
+        self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
 
     def test_if_user_is_guest(self):
         self.seed_static_data()
