@@ -3,6 +3,11 @@ import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 
 class FormTextArea extends React.Component {
+  state = {
+    words: 0,
+    characters: 0,
+  }
+  
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -14,12 +19,19 @@ class FormTextArea extends React.Component {
   }
 
   getWordCount = () => {
+    let words = 0;
     if (this.props.value) {
-      return this.props.value.trim().split(/\s+/).length;
+      words = this.props.value.trim().split(/\s+/).length;
     } else {
-      return 0;
+      words = 0;
     }
+
+    this.setState({
+      words
+    })
+    return words
   };
+
   render() {
     return (
       <div>
@@ -46,6 +58,7 @@ class FormTextArea extends React.Component {
             rows={this.props.rows}
             value={this.props.value || ""}
             onChange={this.props.onChange}
+            onKeyPress={this.getWordCount}
             ref={input => {
               this.nameInput = input;
             }}
@@ -53,7 +66,7 @@ class FormTextArea extends React.Component {
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
           />
-          <span class="question__word-count float-right">Word Count:{this.getWordCount()}</span>
+          <span class="question__word-count float-right">Word Count:{this.state.words}</span>
         </FormGroup>
         
       </div>
