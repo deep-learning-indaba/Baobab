@@ -1,14 +1,14 @@
 """Add URL to organisation
 
 Revision ID: 6d27df178e8e
-Revises: 4d8b254d7e7e
+Revises: 32c1ae6dd23a
 Create Date: 2020-01-25 11:25:20.421281
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '6d27df178e8e'
-down_revision = '4d8b254d7e7e'
+down_revision = '32c1ae6dd23a'
 
 from alembic import op
 import sqlalchemy as sa
