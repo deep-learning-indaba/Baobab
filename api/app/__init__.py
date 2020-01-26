@@ -16,7 +16,6 @@ import tldextract
 import sys
 import importlib
 importlib.reload(sys)
-sys.path.append("..")
 # sys.setdefaultencoding('utf-8')
 
 app = Flask(__name__)
