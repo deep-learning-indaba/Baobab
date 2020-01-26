@@ -561,7 +561,7 @@ class UserProfileApiTest(ApiTestCase):
             EventRole('reviwer', 5, 1)
         ]
         db.session.add_all(event_roles)
-        
+        db.session.commit()
         responses = [
             Response(1, 1, True, datetime(2019, 4, 10)),
             Response(2, 2, True, datetime(2019, 4, 9))
