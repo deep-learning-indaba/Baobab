@@ -24,8 +24,6 @@ import json
 class AttendanceApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         user_category = UserCategory('PhD')
         db.session.add(user_category)
 
@@ -46,7 +44,7 @@ class AttendanceApiTest(ApiTestCase):
         db.session.add_all(users)
 
         event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(
-            2019, 8, 25), datetime(2019, 8, 31),'JOLLOF', 1 'abx@indaba.deeplearning','indaba.deeplearning')
+            2019, 8, 25), datetime(2019, 8, 31))
         self.event = event
         db.session.add(self.event)
 

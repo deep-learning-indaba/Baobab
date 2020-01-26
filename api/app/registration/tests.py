@@ -56,8 +56,6 @@ REGISTRATION_QUESTION = {
 class OfferApiTest(ApiTestCase):
 
     def seed_static_data(self, add_offer=True):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         db.session.add(UserCategory('Offer Category'))
         db.session.add(Country('Suid Afrika'))
         db.session.commit()
@@ -82,10 +80,6 @@ class OfferApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12),
             end_date=datetime(2020, 12, 12),
-            key='SPEEDNET', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()
@@ -204,8 +198,6 @@ class OfferApiTest(ApiTestCase):
 class RegistrationTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
@@ -231,10 +223,7 @@ class RegistrationTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-            key='SPEEDNET', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning'
+
         )
         db.session.add(event)
         db.session.commit()
