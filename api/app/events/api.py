@@ -124,7 +124,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         num_submitted_respones = db.session.query(Response).filter(Response.is_submitted == True).count()
 
         return {
-            'event_description': event.description,
+            'event_description': event.Event.description,
             'num_users': num_users,
             'num_responses': num_responses,
             'num_submitted_responses': num_submitted_respones

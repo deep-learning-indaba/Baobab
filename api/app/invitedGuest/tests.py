@@ -2,7 +2,7 @@ import json
 
 from datetime import datetime, timedelta
 
-from app import app, db
+from app import app, db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, PasswordReset, UserCategory, Country, UserComment
 from app.events.models import Event, EventRole
@@ -54,6 +54,8 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(organisation)
         organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         db.session.add(organisation2)
+        db.session.commit()
+
         test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
                             'Male', 'University', 'Computer Science', 'None', 1,
                             datetime(1984, 12, 12),

@@ -40,6 +40,7 @@ class UserApiTest(ApiTestCase):
         db.session.add(organisation)
         organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         db.session.add(organisation2)
+        db.session.commit()
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
