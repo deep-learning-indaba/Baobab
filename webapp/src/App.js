@@ -1,27 +1,15 @@
 import React, { Component } from "react";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
+import EventHome from "./pages/eventHome";
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
-import Application from "./pages/applicationForm";
-import Review from "./pages/review";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
-import ReviewAssignment from "./pages/reviewAssignment";
-import ReviewHistory from "./pages/reviewHistory";
-import EventStats from "./pages/eventStats";
-import ProfileList from "./pages/profileList";
-import ViewProfile from "./pages/viewprofile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
-import InvitedGuests from "./pages/invitedGuests";
-import CreateInvitedGuests from "./pages/createInvitedGuest";
-import Registration from "./pages/registration";
-import InvitedLetter from "./pages/invitationLetter";
-import RegistrationAdmin from "./pages/registrationAdmin";
-import Attendance from "./pages/attendance/Attendance";
-import Offer from "./pages/offer";
+
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -360,65 +348,11 @@ class App extends Component {
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <PrivateRoute exact path="/profile" component={Profile} />
-                <PrivateRoute
-                  exact
-                  path="/invitationLetter"
-                  component={InvitedLetter}
-                />
-                <PrivateRoute
-                  exact
-                  path="/applicationForm"
-                  component={Application}
-                />
-                <PrivateRoute
-                  exact
-                  path="/eventAttendance"
-                  component={Attendance}
-                />
-                <PrivateRoute exact path="/eventStats" component={EventStats} />
-                <PrivateRoute
-                  exact
-                  path="/reviewAssignment"
-                  component={ReviewAssignment}
-                />
-                <PrivateRoute
-                  exact
-                  path="/reviewHistory"
-                  component={ReviewHistory}
-                />
-                <PrivateRoute
-                  exact
-                  path="/invitedGuests"
-                  component={InvitedGuests}
-                />
-                <PrivateRoute
-                  exact
-                  path="/invitedGuests/create"
-                  component={CreateInvitedGuests}
-                />
-                <PrivateRoute exact path="/review" component={Review} />
-                <PrivateRoute exact path="/review/:id" component={Review} />
-                <PrivateRoute
-                  exact
-                  path="/profile-list"
-                  component={ProfileList}
-                />
-                <PrivateRoute exact path="/offer" component={Offer} />
-                <PrivateRoute
-                  exact
-                  path="/registration"
-                  component={Registration}
-                />
-                <PrivateRoute
-                  exact
-                  path="/viewprofile/:id"
-                  component={ViewProfile}
-                />
-                <PrivateRoute
-                  exact
-                  path="/registrationAdmin"
-                  component={RegistrationAdmin}
-                />
+                <PrivateRoute 
+                  exact 
+                  path="/:eventKey" 
+                  component={EventHome} 
+                /> 
               </Switch>
             </div>
           </div>
