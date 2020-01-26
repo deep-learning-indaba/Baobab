@@ -13,6 +13,7 @@ class Event(db.Model):
     end_date = db.Column(db.DateTime(), nullable=False)
 
     application_forms = db.relationship('ApplicationForm')
+    email_templates = db.relationship('EmailTemplate')
 
     def __init__(self, name, description, start_date, end_date):
         self.name = name
