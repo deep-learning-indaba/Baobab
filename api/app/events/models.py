@@ -12,14 +12,50 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
 
+    application_open = db.Column(db.DateTime(), nullable=False)
+    appcliation_close = db.Column(db.DateTime(), nullable=False)
+    review_open = db.Column(db.DateTime(), nullable=False)
+    review_close = db.Column(db.DateTime(), nullable=False)
+    selection_open = db.Column(db.DateTime(), nullable=False)
+    selection_close = db.Column(db.DateTime(), nullable=False)
+    offer_open = db.Column(db.DateTime(), nullable=False)
+    offer_close = db.Column(db.DateTime(), nullable=False)
+    registration_open = db.Column(db.DateTime(), nullable=False)
+    registration_close = db.Column(db.DateTime(), nullable=False)
+
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
 
-    def __init__(self, name, description, start_date, end_date):
+    def __init__(self, 
+                 name, 
+                 description, 
+                 start_date, 
+                 end_date,
+                 application_open,
+                 application_close,
+                 review_open,
+                 review_close,
+                 selection_open,
+                 selection_close,
+                 offer_open,
+                 offer_close,
+                 registration_open,
+                 registration_close
+                 ):
         self.name = name
         self.description = description
         self.start_date = start_date
         self.end_date = end_date
+        self.appcliation_open = application_open
+        self.appcliation_close = application_close
+        self.review_open = review_open
+        self.review_close = review_close
+        self.selection_open = selection_open
+        self.selection_close = selection_close
+        self.offer_open = offer_open
+        self.offer_close = offer_close
+        self.registration_open = registration_open
+        self.registration_close = registration_close
 
     def set_name(self, new_name):
         self.name = new_name
@@ -33,9 +69,38 @@ class Event(db.Model):
     def set_end_date(self, new_end_date):
         self.end_date = new_end_date
 
+    def set_applicaiton_open(self, new_application_open):
+        self.application_open = new_application_open
+
+    def set_applicaiton_close(self, new_application_close):
+        self.appcliation_close = new_application_close
+
+    def set_review_open(self, new_review_open):
+        self.review_open = new_review_open
+
+    def set_review_close(self, new_review_close):
+        self.review_close = new_review_close
+
+    def set_selection_open(self, new_selection_open):
+        self.selection_open = new_selection_open
+
+    def set_selection_close(self, new_selection_close):
+        self.selection_close = new_selection_close
+
+    def set_offer_open(self, new_offer_open):
+        self.offer_open = new_offer_open
+
+    def set_offer_close(self, new_offer_close):
+        self.offer_close = new_offer_close
+
+    def set_registration_open(self, new_registration_open):
+        self.registration_open = new_registration_open
+
+    def set_registration_close(self, new_registration_close):
+        self.registration_close = new_registration_close
+
     def get_application_form(self):
         return self.application_forms[0]
-
 
 class EventRole(db.Model):
 
