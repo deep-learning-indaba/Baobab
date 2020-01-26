@@ -50,44 +50,21 @@ USER_DATA = {
 class InvitedGuestTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
-        organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation2)
+        test_user = self.add_user('something@email.com')
+        test_user2 = self.add_user('something2@email.com')
+
+        event_admin = self.add_user('event_admin@ea.com')
         db.session.commit()
 
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-
-        test_user2 = AppUser('something2@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                             'Male', 'University', 'Computer Science', 'None', 1,
-                             datetime(1984, 12, 12),
-                             'Zulu',
-                             '123456')
-        test_user2.verified_email = True
-        db.session.add(test_user2)
-
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456')
-        event_admin.verified_email = True
-        db.session.add(event_admin)
-
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
+        db.session.commit()
 
-        adminRole = EventRole('admin', 3, 1)
+        adminRole = EventRole('admin', event_admin.id, self.event1.id)
         db.session.add(adminRole)
         db.session.commit()
 
@@ -101,7 +78,7 @@ class InvitedGuestTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '123456'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)

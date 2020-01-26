@@ -11,14 +11,11 @@ from app.organisation.models import Organisation
 class ApplicationFormApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
         test_event = Event('Test Event', 'Event Description',
-                           self.start_time, self.end_time, 
-                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                           self.start_time, self.end_time)
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(

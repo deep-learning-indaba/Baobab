@@ -25,26 +25,15 @@ from app.organisation.models import Organisation
 class AttendanceApiTest(ApiTestCase):
 
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
         user_category = UserCategory('PhD')
         db.session.add(user_category)
 
         country = Country('South Africa')
         db.session.add(country)
 
-        attendee = AppUser('attendee@mail.com', 'attendee', 'attendee', 'Mr', 1,
-                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        self.attendee = self.add_user(email='attendee@mail.com')
 
-        self.attendee = attendee
-
-        registration_admin = AppUser('ra@ra.com', 'registration', 'admin', 'Ms',
-                                     1, 1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        users = [attendee, registration_admin]
-
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
+        registration_admin = self.add_user('ra@ra.com')
 
         event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(
             2019, 8, 25), datetime(2019, 8, 31),'JOLLOF', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
@@ -55,7 +44,7 @@ class AttendanceApiTest(ApiTestCase):
         db.session.add(event_role)
         db.session.commit()
         offer = Offer(
-            user_id=attendee.id,
+            user_id=self.attendee.id,
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
@@ -176,12 +165,7 @@ class AttendanceApiTest(ApiTestCase):
     def test_get_attendance_list(self):
         self.seed_static_data()
 
-        # Create an unconfirmed user
-        attendee2 = AppUser('attendee2@mail.com', 'attendee2', 'attendee2', 'Ms', 1,
-                           1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-
-        self.attendee2 = attendee2
-        db.session.add(attendee2)
+        attendee2 = self.add_user('attendee2@mail.com')
         db.session.commit()
 
         offer2 = Offer(
@@ -238,8 +222,7 @@ class AttendanceApiTest(ApiTestCase):
     # Invited Guests attendance
     def test_get_attendance_list_2(self):
         self.seed_static_data()
-        mrObama = AppUser('obama@mail.com', 'Barack', 'Obama', 'Mr', 1,
-                           1, 'M', 'Harvard', 'Law', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
+        mrObama = self.add_user('obama@mail.com', 'Barack', 'Obama', 'Mr')
         db.session.add(mrObama)
         db.session.commit()
         invited_guest_id = mrObama.id

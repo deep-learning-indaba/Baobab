@@ -15,10 +15,6 @@ from app.organisation.models import Organisation
 class ReviewsApiTest(ApiTestCase):
     
     def seed_static_data(self):
-        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation)
-        organisation2 = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(organisation2)
         user_categories = [
             UserCategory('Honours'),
             UserCategory('Student'),
@@ -29,7 +25,6 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         countries = [
-            Country('South Africa'),
             Country('Egypt'),
             Country('Botswana'),
             Country('Namibia'),
@@ -41,27 +36,22 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(countries)
         db.session.commit()
         
-        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', 1, 1, 'M', 'Wits', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', 1, 1, 'F', 'UCT', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr', 1, 1, 'M', 'UKZN', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', 1, 1, 'F', 'RU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', 1, 2, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 2, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 3, datetime(1984, 12, 12), 'Eng', 'abc')
-        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc', True)
-        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 4, datetime(1984, 12, 12), 'Eng', 'abc')
-        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
+        reviewer1 = self.add_user('r1@r.com', 'reviewer', '1', 'Mr', 1, 1, 'M', 'Wits', 'CS', 'NA', 2)
+        reviewer2 = self.add_user('r2@r.com', 'reviewer', '2', 'Ms', 1, 1, 'F', 'UCT', 'Chem', 'NA', 2)
+        reviewer3 = self.add_user('r3@r.com', 'reviewer', '3', 'Mr', 1, 1, 'M', 'UKZN', 'Phys', 'NA', 2)
+        reviewer4 = self.add_user('r4@r.com', 'reviewer', '4', 'Ms', 1, 1, 'F', 'RU', 'Math', 'NA', 2)
+        candidate1 = self.add_user('c1@c.com', 'candidate', '1', 'Mr', 1, 2, 'M', 'UWC', 'CS', 'NA', 2)
+        candidate2 = self.add_user('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 3)
+        candidate3 = self.add_user('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 4)
+        candidate4 = self.add_user('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5)
+        system_admin = self.add_user('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5, is_admin=True)
+        event_admin = self.add_user('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5)
+        
         db.session.commit()
 
         events = [
-            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
-            'KENYADABA2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
-            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
-            'INDABA2020', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31)),
+            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15))
         ]
         db.session.add_all(events)
         db.session.commit()

@@ -1,6 +1,5 @@
 from app import db
 from app.events.models import Event
-from app.organisation.models import Organisation
 
 
 class EventRepository():
