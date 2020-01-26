@@ -11,11 +11,13 @@ from app.organisation.models import Organisation
 class ApplicationFormApiTest(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('IndabaX')
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
         test_event = Event('Test Event', 'Event Description',
-                           self.start_time, self.end_time)
+                           self.start_time, self.end_time, 
+                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(

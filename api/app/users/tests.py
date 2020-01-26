@@ -36,12 +36,16 @@ AUTH_DATA = {
 class UserApiTest(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba')
+        self.add_organisation('Deep Learning IndabaX')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now())
+                            datetime.now(), datetime.now(),
+                            'SOUTHAFRI2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now())
+                            datetime.now(), datetime.now(),
+                            'SUDANMO', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()
@@ -438,10 +442,12 @@ class UserApiTest(ApiTestCase):
 class UserCommentAPITest(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now())
+                            datetime.now(), datetime.now(),
+                            'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.event1)
         db.session.commit()
 
@@ -516,13 +522,15 @@ class UserCommentAPITest(ApiTestCase):
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
+        self.add_organisation('Deep Learning IndabaX', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
 
         events = [
-            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now()),
-            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now())
+            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
+            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
         ]
         db.session.add_all(events)
 
@@ -661,7 +669,7 @@ class OrganisationUserTest(ApiTestCase):
     def seed_static_data(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba'))
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', domain='indaba')
 
         self.user1_org1 = AppUser('first_user@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 1)
         self.user1_org2 = AppUser('first_user@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 2)
@@ -718,8 +726,7 @@ class OrganisationUserTest(ApiTestCase):
     def allow_same_email_different_org(self):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba'))
-        db.session.commit()
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
 
         response = self.app.post('/api/v1/user', data=USER_DATA, headers={'Origin': 'www.myorg.net'})
         self.assertEqual(response.status_code, 201)

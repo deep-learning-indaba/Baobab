@@ -25,8 +25,10 @@ from app.organisation.models import Organisation
 class AttendanceApiTest(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         user_category = UserCategory('PhD')
         db.session.add(user_category)
+        db.session.commit()
 
         country = Country('South Africa')
         db.session.add(country)

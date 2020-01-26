@@ -55,11 +55,17 @@ class InvitedGuestTest(ApiTestCase):
 
         event_admin = self.add_user('event_admin@ea.com')
         db.session.commit()
+        self.add_organisation('Deep Learning Indaba')
+        self.add_organisation('Deep Learning IndabaX')
+        db.session.commit()
+
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
 
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now())
+                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now())
+                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()

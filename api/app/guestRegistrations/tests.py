@@ -18,6 +18,9 @@ class GuestRegistrationApiTest(ApiTestCase):
         test_user = self.add_user('something@email.com')
         event_admin = self.add_user('event_admin@ea.com')
         
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
         db.session.commit()
 
         event = Event(
@@ -25,7 +28,10 @@ class GuestRegistrationApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='REGINAL', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()
