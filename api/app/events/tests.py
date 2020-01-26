@@ -14,6 +14,8 @@ from app.utils.errors import FORBIDDEN
 class EventsAPITest(ApiTestCase):
 
     def seed_static_data(self):
+        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(organisation)
         test_country = Country('Indaba Land')
         db.session.add(test_country)
         db.session.commit()
@@ -32,7 +34,8 @@ class EventsAPITest(ApiTestCase):
         db.session.commit()
 
         test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'SPEEDNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(test_event)
         db.session.commit()
 
@@ -230,6 +233,9 @@ class EventsStatsAPITest(ApiTestCase):
     }
 
     def seed_static_data(self):
+        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(organisation)
+
         test_country = Country('Indaba Land')
         db.session.add(test_country)
         db.session.commit()
@@ -247,7 +253,8 @@ class EventsStatsAPITest(ApiTestCase):
         self.test_user2 = json.loads(response.data)
 
         self.test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'KONNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.test_event)
         db.session.commit()
 
@@ -314,6 +321,8 @@ class EventsStatsAPITest(ApiTestCase):
 
 class RemindersAPITest(ApiTestCase):
     def seed_static_data(self):
+        organisation = Organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        db.session.add(organisation)
         country = Country('South Africa')
         db.session.add(country)
 
@@ -336,7 +345,8 @@ class RemindersAPITest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
 
-        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31))
+        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 
+        'COOLER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(event)
 
         event_role = EventRole('admin', 1, 1)
