@@ -532,6 +532,7 @@ class UserProfileApiTest(ApiTestCase):
         db.session.add(organisation2)
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
+        db.session.commit()
 
         events = [
             Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
