@@ -133,7 +133,7 @@ function get() {
     })
     .catch(function(error) {
       // handle error
-      return [], { error: error };
+      return { error: error };
     });
 }
 
