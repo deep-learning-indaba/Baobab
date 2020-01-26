@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './EventHome.css';
 import { applicationFormService } from "../../services/applicationForm";
-import { Route, NavLink, Switch } from "react-router-dom";
+import { Route, NavLink } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
 import Review from "../review";
