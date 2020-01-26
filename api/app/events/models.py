@@ -69,9 +69,6 @@ class Event(db.Model):
     def set_end_date(self, new_end_date):
         self.end_date = new_end_date
 
-    def get_application_form(self):
-        return self.application_forms[0]
-
     def set_applicaiton_open(self, new_application_open):
         self.application_open = new_application_open
 
@@ -102,6 +99,8 @@ class Event(db.Model):
     def set_registration_close(self, new_registration_close):
         self.registration_close = new_registration_close
 
+    def get_application_form(self):
+        return self.application_forms[0]
 
 class EventRole(db.Model):
 

@@ -26,7 +26,12 @@ def event_info(user_id, event):
         'description': event.description,
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y"),
-        'status': get_user_event_response_status(user_id, event.id)
+        'status': get_user_event_response_status(user_id, event.id),
+        'is_application_open': True if (datetime.now() < event.end_date and datetime.now() >= event.start_date) else False,
+        'is_review_open': True if (datetime.now() < event.review_close and datetime.now() >= event.review_open) else False,
+        'is_selection_open': True if (datetime.now() < event.selection_close and datetime.now() >= event.selection_open) else False,
+        'is_offer_open': True if (datetime.now() < event.offer_close and datetime.now() >= event.offer_open) else False,
+        'is_registration_open': True if (datetime.now() < event.registration_close and datetime.now() >= event.registration_open) else False
     }
 
 
@@ -92,6 +97,7 @@ class EventsAPI(restful.Resource):
 
         for event in events:
             returnEvents.append(event_info(user_id, event))
+
 
         return returnEvents, 200
 
