@@ -2,3 +2,12 @@ img.large-logo {
     margin-bottom: 2em;
     max-width: 600px;
 }
+
+table.event-table {
+    border-collapse: separate;
+    border-spacing: 50px 0;
+}
+
+table.event-table td {
+    padding: 10px 0;
+}

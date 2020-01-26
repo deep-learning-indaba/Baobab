@@ -57,11 +57,10 @@ class Home extends Component {
             
             {this.props.user && <div>
                 <h3>Upcoming Events</h3>
-                {this.state.events && this.state.events.length > 0 && <table>
-                    <thead><tr><th>Event</th><th>Status</th></tr></thead>
+                {this.state.events && this.state.events.length > 0 && <table className="event-table">
                     <tbody>
                         {this.state.events.map(e=>{
-                            return <tr><td>{e.description + "; " + e.start_date + " to " + e.end_date}</td><td>{e.status}</td></tr>
+                            return <tr><td><h5>{e.description}</h5>{e.start_date + " to " + e.end_date}</td><td>{e.status}</td></tr>
                         })}
                     </tbody>
                 </table>}

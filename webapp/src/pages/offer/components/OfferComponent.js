@@ -5,7 +5,6 @@ import { applicationFormService} from "../../../services/applicationForm/applica
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class Offer extends Component {
   constructor(props) {
@@ -47,7 +46,7 @@ class Offer extends Component {
         offerServices
           .updateOffer(
             offer.id,
-            DEFAULT_EVENT_ID,
+            this.props.event.id,
             candidate_response,
             candidate_response? "" : rejected_reason,
             accepted_accommodation_award,
@@ -324,7 +323,7 @@ class Offer extends Component {
   }
 
   componentDidMount(){
-    applicationFormService.getResponse(DEFAULT_EVENT_ID).then(results => {
+    applicationFormService.getResponse(this.props.event.id).then(results => {
       console.log(results)
       if (results.is_submitted && !results.is_withdrawn){
         this.setState({
@@ -341,7 +340,7 @@ class Offer extends Component {
 
   getOffer = () => {
     this.setState({ loading: true });
-    offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
+    offerServices.getOffer(this.props.event.id).then(result => {
       if (result.error && result.statusCode === 404) {
         this.setState({
           noOffer: true,

@@ -25,7 +25,6 @@ const fieldValidations = [
   ruleRunner(validationFields.letterAddressedTo, requiredText)
 ];
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 class InvitationLetterForm extends Component {
   constructor(props) {
     super(props);
@@ -211,7 +210,7 @@ class InvitationLetterForm extends Component {
       () => {
         this.setState({ loading: true });
         registrationService
-          .requestInvitationLetter(this.state.user, DEFAULT_EVENT_ID)
+          .requestInvitationLetter(this.state.user, this.props.event.id)
           .then(
             response => {
               this.setState({

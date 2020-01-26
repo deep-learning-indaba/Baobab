@@ -11,7 +11,6 @@ import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
@@ -494,7 +493,7 @@ class ApplicationForm extends Component {
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(DEFAULT_EVENT_ID).then(response => {
+    applicationFormService.getForEvent(this.props.event.id).then(response => {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -506,7 +505,7 @@ class ApplicationForm extends Component {
   }
 
   loadResponse = () => {
-    applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
+    applicationFormService.getResponse(this.props.event.id).then(resp => {
       if (resp.response) {
         this.setState({
           responseId: resp.response.id,

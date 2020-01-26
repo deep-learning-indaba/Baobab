@@ -3,8 +3,6 @@ import { withRouter} from "react-router";
  import ReactTable from 'react-table';
 import { profileService} from "../../../services/profilelist";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class ProfileListComponent extends Component{
     constructor(props){
         super(props);
@@ -25,7 +23,7 @@ class ProfileListComponent extends Component{
     this.setState({Desc_Asc:!this.state.Desc_Asc});
  }
  componentDidMount(){ 
-    profileService.getProfilesList(DEFAULT_EVENT_ID)
+    profileService.getProfilesList(this.props.event.id)
                     .then(results => {
                         this.setState(
                             {

@@ -5,16 +5,7 @@
   padding-top: 30px;
 }
 
-.Blurb{
-  text-align: center;
-  margin: 30px;
+.event-home {
+  padding-top: 4em;
 }
 
-.Table {
-  border-spacing: 0px;
-}
-
-.Cell {
-  padding: 4px;
-  text-align: left;
-}

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './EventHome.css';
 import { applicationFormService } from "../../services/applicationForm";
-import { NavLink, Switch } from "react-router-dom";
+import { Route, NavLink, Switch } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
 import Review from "../review";
@@ -17,7 +17,6 @@ import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
-import { PrivateRoute } from "../../components";
 import { offerServices } from "../../services/offer/offer.service";
 import { invitedGuestServices } from "../../services/invitedGuests/invitedGuests.service";
 
@@ -95,7 +94,7 @@ class EventStatus extends Component {
 
     const { event } = this.state
       return (
-        <div >
+        <div className="event-home">
           <h1>{event.description}</h1>
   
           {this.state.applicationStatus && 
@@ -208,92 +207,125 @@ class EventHome extends Component {
 
     if (! event) {
       return (
-      <div className={"alert alert-danger"}>Coult not find the event "{this.state.eventKey}"</div>
+      <div className={"alert alert-danger"}>Could not find the event "{this.state.eventKey}"</div>
       )
     }
 
     return (
-      <Switch>
-        <PrivateRoute 
+      <div>
+        <Route 
           exact 
           path={`${match.path}/`}
-          component={EventStatus}
+          render={props => (
+            <EventStatus {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/invitationLetter`}
-          component={InvitedLetter}
+          render={props => (
+            <InvitedLetter {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
-          path={`${match.path}/applicationForm`}
-          component={Application}
+          path={`${match.path}/apply`}
+          render={props => (
+            <Application {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/eventAttendance`}
-          component={Attendance}
+          render={props => (
+            <Attendance {...props} event={event} />
+          )}
         />
-        <PrivateRoute 
+        <Route 
           exact 
           path={`${match.path}/eventStats`}
-          component={EventStats} 
+          render={props => (
+            <EventStats {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/reviewAssignment`}
-          component={ReviewAssignment}
+          render={props => (
+            <ReviewAssignment {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/reviewHistory`}
-          component={ReviewHistory}
+          render={props => (
+            <ReviewHistory {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/invitedGuests`}
-          component={InvitedGuests}
+          render={props => (
+            <InvitedGuests {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/invitedGuests/create`}
-          component={CreateInvitedGuests}
+          render={props => (
+            <CreateInvitedGuests {...props} event={event} />
+          )}
         />
-        <PrivateRoute 
+        <Route 
           exact 
           path={`${match.path}/review`}
-          component={Review} 
+          render={props => (
+            <Review {...props} event={event} />
+          )}
         />
-        <PrivateRoute 
+        <Route 
           exact 
           path={`${match.path}/review/:id`}
-          component={Review} 
+          render={props => (
+            <Review {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/profile-list`}
-          component={ProfileList}
+          render={props => (
+            <ProfileList {...props} event={event} />
+          )}
         />
-        <PrivateRoute 
+        <Route 
           exact 
           path={`${match.path}/offer`}
-          component={Offer} />
-        <PrivateRoute
+          render={props => (
+            <Offer {...props} event={event} />
+          )}
+        />
+        <Route
           exact
           path={`${match.path}/registration`}
-          component={Registration}
+          render={props => (
+            <Registration {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/viewprofile/:id`}
-          component={ViewProfile}
+          render={props => (
+            <ViewProfile {...props} event={event} />
+          )}
         />
-        <PrivateRoute
+        <Route
           exact
           path={`${match.path}/registrationAdmin`}
-          component={RegistrationAdmin}
+          render={props => (
+            <RegistrationAdmin {...props} event={event} />
+          )}
         />
-      </Switch>
+        </div>
     )
     
   }

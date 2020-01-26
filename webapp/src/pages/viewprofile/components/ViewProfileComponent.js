@@ -3,8 +3,6 @@ import { withRouter } from "react-router";
 import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
 
-// const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class ViewProfileComponent extends Component {
   constructor(props) {
     super(props);

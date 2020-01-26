@@ -108,19 +108,19 @@ class App extends Component {
     return (
       <Router history={history}>
         <div>
-          <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="/">
+          <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+            <a className="navbar-brand" href="/">
               <img
                 src={this.state.organisation && require("./images/" + this.state.organisation.small_logo)}
                 width="30"
                 height="30"
-                class="d-inline-block align-top brand-image"
+                className="d-inline-block align-top brand-image"
                 alt=""
               />
               {this.state.organisation && this.state.organisation.system_name}
             </a>
             <button
-              class="navbar-toggler"
+              className="navbar-toggler"
               type="button"
               data-toggle="collapse"
               data-target="#navbarNav"
@@ -128,7 +128,7 @@ class App extends Component {
               aria-expanded="false"
               aria-label="Toggle navigation"
             >
-              <span class="navbar-toggler-icon" />
+              <span className="navbar-toggler-icon" />
             </button>
             <div
               class={
@@ -137,8 +137,8 @@ class App extends Component {
               }
               id="navbarNav"
             >
-              <ul class="navbar-nav mr-auto">
-                <li class={"nav-item"}>
+              <ul className="navbar-nav mr-auto">
+                <li className={"nav-item"}>
                   <NavLink
                     exact
                     to="/"
@@ -150,7 +150,7 @@ class App extends Component {
                   </NavLink>
                 </li>
                 {this.state.user && (
-                  <li class="nav-item">
+                  <li className="nav-item">
                     <NavLink
                       to="/applicationForm"
                       activeClassName="nav-link active"
@@ -162,7 +162,7 @@ class App extends Component {
                   </li>
                 )}
                 {this.state.user && (
-                <li class="nav-item">
+                <li className="nav-item">
                   <NavLink
                     to="/offer"
                     activeClassName="nav-link active"
@@ -174,9 +174,9 @@ class App extends Component {
                 </li>
                 )}
                 {this.state.user && (
-                  <li class="nav-item dropdown ">
+                  <li className="nav-item dropdown ">
                     <div
-                      class="nav-link dropdown-toggle link-style"
+                      className="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -185,7 +185,7 @@ class App extends Component {
                     >
                       Registration
                     </div>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registration"
                         className="dropdown-item"
@@ -213,9 +213,9 @@ class App extends Component {
                   </li>
                 )}
                 {this.isEventAdmin(this.state.user) && (
-                  <li class="nav-item dropdown">
+                  <li className="nav-item dropdown">
                     <div
-                      class="nav-link dropdown-toggle link-style"
+                      className="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -224,7 +224,7 @@ class App extends Component {
                     >
                       Event Admin
                     </div>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/eventStats"
                         className="dropdown-item"
@@ -257,9 +257,9 @@ class App extends Component {
                   </li>
                 )}
                 {this.isEventReviewer(this.state.user) && (
-                  <li class="nav-item dropdown">
+                  <li className="nav-item dropdown">
                     <div
-                      class="nav-link dropdown-toggle link-style"
+                      className="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -268,7 +268,7 @@ class App extends Component {
                     >
                       Reviews
                     </div>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/review"
                         className="dropdown-item"
@@ -287,9 +287,9 @@ class App extends Component {
                   </li>
                 )}
                 {this.isRegistrationAdmin(this.state.user) && (
-                  <li class="nav-item dropdown">
+                  <li className="nav-item dropdown">
                     <div
-                      class="nav-link dropdown-toggle link-style"
+                      className="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -298,7 +298,7 @@ class App extends Component {
                     >
                       Registration Admin
                     </div>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registrationAdmin"
                         className="dropdown-item"
@@ -317,7 +317,7 @@ class App extends Component {
               />
             </div>
           </nav>
-          <div class="Body">
+          <div className="Body">
             <div className="container-fluid">
               <Switch>
                 <Route
@@ -349,16 +349,15 @@ class App extends Component {
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <PrivateRoute 
-                  exact 
                   path="/:eventKey" 
                   component={EventHome} 
                 /> 
               </Switch>
             </div>
           </div>
-          <footer class="text-muted">
-            <div class="container-flex">
-              <p>
+          <footer className="text-muted">
+            <div className="container-flex">
+              <div>
                 {this.state.organisation && this.state.organisation.system_name}, © 2020 |{" "}
                 <a href={this.state.organisation && this.state.organisation.url}>
                 {this.state.organisation && this.state.organisation.name}
@@ -368,11 +367,11 @@ class App extends Component {
                   Privacy Policy
                 </a>
                 {this.state.organisation && this.state.organisation.system_name !== "Baobab" && 
-                  <div class="float-right">
+                  <div className="float-right">
                     Powered by <a href="http://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer">Baobab</a>
                   </div>
                 }
-              </p>
+              </div>
             </div>
           </footer>
         </div>
