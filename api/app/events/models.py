@@ -17,6 +17,7 @@ class Event(db.Model):
     url = db.Column(db.String(255), nullable=False)
 
     application_forms = db.relationship('ApplicationForm')
+    email_templates = db.relationship('EmailTemplate')
 
     def __init__(self, name, description, start_date, end_date, key, organisation_id, email_from, url):
         self.name = name
