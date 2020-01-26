@@ -12,12 +12,9 @@ down_revision = '32c1ae6dd23a'
 
 from alembic import op
 import sqlalchemy as sa
-from app.organisation.models import Organisation
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from app import db
-
-Base = declarative_base()
 
 
 def upgrade():
@@ -29,22 +26,9 @@ def upgrade():
                existing_type=sa.VARCHAR(length=50),
                nullable=False)
 
-    Base.metadata.bind = op.get_bind()
-    session = orm.Session(bind=Base.metadata.bind)
-
-    indaba = session.query(Organisation).filter_by(id=1).first()
-    if indaba:
-        indaba.url = 'http://www.deeplearningindaba.com'
-    
-    eeml = session.query(Organisation).filter_by(id=2).first()
-    if eeml:
-        eeml.url = 'http://eeml.eu'
-
-    local = session.query(Organisation).filter_by(id=3).first()
-    if local:
-        local.url = 'http://www.deeplearningindaba.com'
-
-    session.commit()
+    op.execute("""UPDATE organisation SET url = 'http://www.deeplearningindaba.com' WHERE id = 1""")
+    op.execute("""UPDATE organisation SET url = 'http://eeml.eu' WHERE id = 2""")
+    op.execute("""UPDATE organisation SET url = 'http://www.deeplearningindaba.com' WHERE id = 3""")
 
     op.alter_column('organisation', 'url', nullable=False)
 
