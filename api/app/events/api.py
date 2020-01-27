@@ -33,7 +33,12 @@ def event_info(user_id, event_org):
         'email_from': event_org.Event.email_from,
         'organisation_name': event_org.Organisation.name,
         'organisation_id': event_org.Organisation.id,
-        'url': event_org.Event.url
+        'url': event_org.Event.url,
+        'is_application_open': event.is_application_open,
+        'is_review_open': event.is_review_open,
+        'is_selection_open': event.is_selection_open,
+        'is_offer_open': event.is_offer_open,
+        'is_registration_open': event.is_registration_open
     }
 
 
@@ -99,6 +104,7 @@ class EventsAPI(restful.Resource):
 
         for event in events:
             returnEvents.append(event_info(user_id, event))
+
 
         return returnEvents, 200
 
