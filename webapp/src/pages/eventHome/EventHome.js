@@ -175,6 +175,8 @@ class EventHome extends Component {
         error: response.error,
         eventKey: eventKey,
         isLoading: false
+      }, ()=>{
+        this.props.setEvent(this.props.match.params, this.state.event);
       });
     });
   }

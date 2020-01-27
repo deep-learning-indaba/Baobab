@@ -26,41 +26,14 @@ history.listen((location) => {
 });
 
 
-class App extends Component {
+class EventNav extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      user: {},
-      organisation: null,
       collapsed: true
     };
-
-    this.refreshUser = this.refreshUser.bind(this);
   }
-
-  componentDidMount() {
-    this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
-    });
-
-    organisationService.getOrganisation().then(response => {
-      this.setState({
-        organisation: response.organisation,
-        error: response.error
-      });
-    });
-  }
-
-  refreshUser() {
-    this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
-    });
-  }
-
-  toggleMenu = () => {
-    this.setState({ collapsed: !this.state.collapsed });
-  };
 
   isEventAdmin = user => {
     if (!user) {
@@ -106,6 +79,230 @@ class App extends Component {
 
   render() {
     return (
+    <ul className="navbar-nav mr-auto">
+      <li className={"nav-item"}>
+        <NavLink
+          exact
+          to="/"
+          activeClassName="nav-link active"
+          className="nav-link"
+          onClick={this.props.toggleMenu}
+        >
+          Home
+        </NavLink>
+      </li>
+      {this.props.user && (
+        <li className="nav-item">
+          <NavLink
+            to="/applicationForm"
+            activeClassName="nav-link active"
+            className="nav-link"
+            onClick={this.props.toggleMenu}
+          >
+            Apply
+          </NavLink>
+        </li>
+      )}
+      {this.props.user && (
+      <li className="nav-item">
+        <NavLink
+          to="/offer"
+          activeClassName="nav-link active"
+          className="nav-link"
+          onClick={this.props.toggleMenu}
+        >
+          Offer
+        </NavLink>
+      </li>
+      )}
+      {this.props.user && (
+        <li className="nav-item dropdown ">
+          <div
+            className="nav-link dropdown-toggle link-style"
+            id="navbarDropdown"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Registration
+          </div>
+          <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+            <NavLink
+              to="/registration"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Registration Form
+            </NavLink>
+            <NavLink
+              to="/invitationLetter"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Invitation Letter
+            </NavLink>
+            {this.isRegistrationVolunteer(this.state.user) && 
+              <NavLink
+                to="/eventAttendance"
+                className="dropdown-item"
+                onClick={this.props.toggleMenu}
+              >
+                Event Attendance
+              </NavLink>
+            }
+          </div>
+        </li>
+      )}
+      {this.isEventAdmin(this.props.user) && (
+        <li className="nav-item dropdown">
+          <div
+            className="nav-link dropdown-toggle link-style"
+            id="navbarDropdown"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Event Admin
+          </div>
+          <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+            <NavLink
+              to="/eventStats"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Event Stats
+            </NavLink>
+            <NavLink
+              to="/reviewAssignment"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Review Assignment
+            </NavLink>
+            <NavLink
+              to="/invitedGuests"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Invited Guests
+            </NavLink>
+            <NavLink
+              to="/profile-list"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Applicant Profiles
+            </NavLink>
+          </div>
+        </li>
+      )}
+      {this.isEventReviewer(this.props.user) && (
+        <li className="nav-item dropdown">
+          <div
+            className="nav-link dropdown-toggle link-style"
+            id="navbarDropdown"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Reviews
+          </div>
+          <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+            <NavLink
+              to="/review"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Review
+            </NavLink>
+            <NavLink
+              to="/reviewHistory"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Review History
+            </NavLink>
+          </div>
+        </li>
+      )}
+      {this.isRegistrationAdmin(this.props.user) && (
+        <li className="nav-item dropdown">
+          <div
+            className="nav-link dropdown-toggle link-style"
+            id="navbarDropdown"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Registration Admin
+          </div>
+          <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+            <NavLink
+              to="/registrationAdmin"
+              className="dropdown-item"
+              onClick={this.props.toggleMenu}
+            >
+              Unconfirmed Registrations
+            </NavLink>
+          </div>
+        </li>
+      )}
+    </ul>
+    )
+  }
+}
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      user: {},
+      organisation: null,
+      collapsed: true,
+      eventKey: null,
+      event: null
+    };
+
+    this.refreshUser = this.refreshUser.bind(this);
+  }
+
+  componentDidMount() {
+    this.setState({
+      user: JSON.parse(localStorage.getItem("user"))
+    });
+
+    organisationService.getOrganisation().then(response => {
+      this.setState({
+        organisation: response.organisation,
+        error: response.error
+      });
+    });
+  }
+
+  refreshUser() {
+    this.setState({
+      user: JSON.parse(localStorage.getItem("user"))
+    });
+  }
+
+  toggleMenu = () => {
+    this.setState({ collapsed: !this.state.collapsed });
+  };
+
+  setEvent = (eventKey, event) => {
+    this.setState({
+      eventKey: eventKey,
+      event: event
+    });
+  }
+
+  render() {
+    return (
       <Router history={history}>
         <div>
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -137,179 +334,7 @@ class App extends Component {
               }
               id="navbarNav"
             >
-              <ul className="navbar-nav mr-auto">
-                <li className={"nav-item"}>
-                  <NavLink
-                    exact
-                    to="/"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Home
-                  </NavLink>
-                </li>
-                {this.state.user && (
-                  <li className="nav-item">
-                    <NavLink
-                      to="/applicationForm"
-                      activeClassName="nav-link active"
-                      className="nav-link"
-                      onClick={this.toggleMenu}
-                    >
-                      Apply
-                    </NavLink>
-                  </li>
-                )}
-                {this.state.user && (
-                <li className="nav-item">
-                  <NavLink
-                    to="/offer"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Offer
-                  </NavLink>
-                </li>
-                )}
-                {this.state.user && (
-                  <li className="nav-item dropdown ">
-                    <div
-                      className="nav-link dropdown-toggle link-style"
-                      id="navbarDropdown"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
-                      Registration
-                    </div>
-                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <NavLink
-                        to="/registration"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Registration Form
-                      </NavLink>
-                      <NavLink
-                        to="/invitationLetter"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Invitation Letter
-                      </NavLink>
-                      {this.isRegistrationVolunteer(this.state.user) && 
-                        <NavLink
-                          to="/eventAttendance"
-                          className="dropdown-item"
-                          onClick={this.toggleMenu}
-                        >
-                          Event Attendance
-                        </NavLink>
-                      }
-                    </div>
-                  </li>
-                )}
-                {this.isEventAdmin(this.state.user) && (
-                  <li className="nav-item dropdown">
-                    <div
-                      className="nav-link dropdown-toggle link-style"
-                      id="navbarDropdown"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
-                      Event Admin
-                    </div>
-                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <NavLink
-                        to="/eventStats"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Event Stats
-                      </NavLink>
-                      <NavLink
-                        to="/reviewAssignment"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Review Assignment
-                      </NavLink>
-                      <NavLink
-                        to="/invitedGuests"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Invited Guests
-                      </NavLink>
-                      <NavLink
-                        to="/profile-list"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Applicant Profiles
-                      </NavLink>
-                    </div>
-                  </li>
-                )}
-                {this.isEventReviewer(this.state.user) && (
-                  <li className="nav-item dropdown">
-                    <div
-                      className="nav-link dropdown-toggle link-style"
-                      id="navbarDropdown"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
-                      Reviews
-                    </div>
-                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <NavLink
-                        to="/review"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Review
-                      </NavLink>
-                      <NavLink
-                        to="/reviewHistory"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Review History
-                      </NavLink>
-                    </div>
-                  </li>
-                )}
-                {this.isRegistrationAdmin(this.state.user) && (
-                  <li className="nav-item dropdown">
-                    <div
-                      className="nav-link dropdown-toggle link-style"
-                      id="navbarDropdown"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
-                      Registration Admin
-                    </div>
-                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <NavLink
-                        to="/registrationAdmin"
-                        className="dropdown-item"
-                        onClick={this.toggleMenu}
-                      >
-                        Unconfirmed Registrations
-                      </NavLink>
-                    </div>
-                  </li>
-                )}
-              </ul>
+              {this.state.currentEvent && <EventNav eventKey={this.state.eventKey} event={this.state.event}/>}
               <UserDropdown
                 logout={this.refreshUser}
                 user={this.state.user}
@@ -323,7 +348,7 @@ class App extends Component {
                 <Route
                   exact
                   path="/"
-                  render={props => <Home {...props} user={this.state.user} />}
+                  render={props => <Home {...props} user={this.state.user} setEvent={this.setEvent}/>}
                 />
                 <Route
                   exact
@@ -351,6 +376,7 @@ class App extends Component {
                 <PrivateRoute 
                   path="/:eventKey" 
                   component={EventHome} 
+                  setEvent={this.setEvent}
                 /> 
               </Switch>
             </div>

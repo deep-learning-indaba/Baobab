@@ -29,6 +29,8 @@ class Home extends Component {
                 });
             });
         }
+        
+        this.props.setEvent(null, null);
 
         organisationService.getOrganisation().then(response=>{
             if (response.error) {
