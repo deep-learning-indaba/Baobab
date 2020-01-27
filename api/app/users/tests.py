@@ -33,10 +33,16 @@ class UserApiTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
                             datetime.now(), datetime.now(),
-                            'SOUTHAFRI2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            'SOUTHAFRI2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
                             datetime.now(), datetime.now(),
-                            'SUDANMO', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            'SUDANMO', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()
@@ -390,7 +396,10 @@ class UserCommentAPITest(ApiTestCase):
         db.session.add(Country('South Africa'))
         self.event1 = Event('Indaba', 'Indaba Event',
                             datetime.now(), datetime.now(),
-                            'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.commit()
 
@@ -472,8 +481,14 @@ class UserProfileApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
-            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now()),
+            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         ]
         db.session.add_all(events)
 
