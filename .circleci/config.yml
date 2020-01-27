@@ -8,6 +8,9 @@ jobs:
           name: Start container
           command: |
             python --version
+            sudo python -m pip install --upgrade pip
+            sudo python -m pip install flake8
+            python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
