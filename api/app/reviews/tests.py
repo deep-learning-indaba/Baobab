@@ -10,10 +10,13 @@ from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
+from app.organisation.models import Organisation
 
 class ReviewsApiTest(ApiTestCase):
     
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba 2019', 'blah.png', 'blah_big.png')
+        self.add_organisation('Deep Learning Indaba 2020', 'blah.png', 'blah_big.png')
         user_categories = [
             UserCategory('Honours'),
             UserCategory('Student'),
@@ -49,8 +52,10 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31)),
-            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15))
+            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            'KENYADABA2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
+            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            'INDABA2020', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
         ]
         db.session.add_all(events)
         db.session.commit()

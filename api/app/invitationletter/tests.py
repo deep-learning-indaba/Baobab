@@ -12,6 +12,7 @@ from app.invitationletter.models import InvitationTemplate
 from app.utils.pdfconvertor import convert_to
 from app.invitationletter.generator import generate
 from nose.tools import nottest
+from app.organisation.models import Organisation
 
 
 INVITATION_LETTER = {
@@ -32,6 +33,7 @@ INVITATION_LETTER = {
 class InvitationLetterTests(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
@@ -45,7 +47,10 @@ class InvitationLetterTests(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='REGINAL', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()
@@ -289,6 +294,9 @@ class PDFConverterTest(ApiTestCase):
 
     def seed_static_data(self):
         test_user = self.add_user('something@email.com')
+        self.add_organisation('Deep Learning Indaba')
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
         db.session.commit()
 
         event = Event(
@@ -296,7 +304,10 @@ class PDFConverterTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='REGINAL', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()

@@ -9,6 +9,7 @@ from app.responses.models import Response, Answer
 from app.events.models import Event
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
+from app.organisation.models import Organisation
 
 
 def _add_object_to_db(obj):
@@ -36,6 +37,8 @@ class ResponseApiTest(ApiTestCase):
     }
 
     def _seed_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
+        self.add_organisation('Deep Learning IndabaX')
         # Add a user
         test_country = Country('Indaba Land')
         _add_object_to_db(test_country)
@@ -53,7 +56,7 @@ class ResponseApiTest(ApiTestCase):
 
         # Add application form data
         self.test_event = Event('Test Event', 'Event Description', date(
-            2019, 2, 24), date(2019, 3, 24))
+            2019, 2, 24), date(2019, 3, 24), 'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         _add_object_to_db(self.test_event)
         self.test_form = ApplicationForm(
             self.test_event.id, True, date(2019, 3, 24))
@@ -117,7 +120,7 @@ class ResponseApiTest(ApiTestCase):
         with app.app_context():
             self._seed_data()
             test_event2 = Event('Test Event 2', 'Event Description', date(
-                2019, 2, 24), date(2019, 3, 24))
+                2019, 2, 24), date(2019, 3, 24), 'HOLLA', 2, 'mover@indaba.com', 'idb.com')
             _add_object_to_db(test_event2)
 
             response = self.app.get('/api/v1/response',
