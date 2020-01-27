@@ -36,6 +36,12 @@ class Event(db.Model):
     def get_application_form(self):
         return self.application_forms[0]
 
+    def update(self, name, description, start_date, end_date):
+        self.name = name
+        self.description = description
+        self.start_date = start_date
+        self.end_date = end_date
+
 
 class EventRole(db.Model):
 

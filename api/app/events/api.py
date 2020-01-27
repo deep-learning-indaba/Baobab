@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
 from app.events.mixins import EventsMixin, EventMixin
+from app.events.repository import add, get_by_id
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -121,8 +122,7 @@ class EventAPI(EventMixin, restful.Resource):
                       start_date=start_date,
                       end_date=end_date)
 
-        db.session.add(event)
-        db.session.commit()
+        event = add(event)
 
         try:
 
@@ -139,16 +139,16 @@ class EventAPI(EventMixin, restful.Resource):
     @auth_required
     def put(self):
         args = self.req_parser.parse_args()
-        LOGGER.debug(args)
-        event = db.session.query(Event).filter(
-            Event.id == args['id']).first()
+
+        event = get_by_id(args['id'])
+
         if not event:
             return EVENT_NOT_FOUND
 
         user_id = g.current_user["id"]
-        event_id = event.id
         current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
+
+        if not current_user.is_event_admin(event.id):
             return FORBIDDEN
 
         name = args['name']
@@ -158,13 +158,10 @@ class EventAPI(EventMixin, restful.Resource):
         end_date = datetime.strptime(
             (args['end_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
 
-        event = db.session.query(Event).filter(
-            Event.id == event_id).first()
-
-        event.name = name
-        event.description = description
-        event.start_date = start_date
-        event.end_date = end_date
+        event.update(name=name,
+                     description=description,
+                     start_date=start_date,
+                     end_date=end_date)
 
         db.session.commit()
 
