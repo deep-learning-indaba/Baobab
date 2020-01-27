@@ -120,7 +120,7 @@ function createInvitedGuest(user, event_Id, role) {
     user_title: user.title,
     role: role,
   };
-  console.log(data)
+  
   return axios
     .post(baseUrl + "/api/v1/invitedGuest/create", data, { headers: authHeader() })
     .then(function (response) {

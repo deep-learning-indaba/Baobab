@@ -329,8 +329,7 @@ class PasswordResetRequestAPI(restful.Resource):
         LOGGER.debug(
             "Requesting password reset for email {} and organisation {}".format(args['email'], g.organisation.name))
 
-        user = db.session.query(AppUser).filter(
-            func.lower(AppUser.email) == func.lower(args['email'])).first()
+        user = user_repository.get_by_email(args['email'], g.organisation.id)
 
         if not user:
             LOGGER.debug("No user found for email {} and organisation {}".format(args['email'], g.organisation.name))
@@ -413,9 +412,8 @@ class ResendVerificationEmailAPI(restful.Resource):
         email = request.args.get('email')
 
         LOGGER.debug("Resending verification email to: {}".format(email))
-
-        user = db.session.query(AppUser).filter(
-            func.lower(AppUser.email) == func.lower(email)).first()
+        
+        user = user_repository.get_by_email(email, g.organisation.id)
 
         if not user:
             LOGGER.debug("User not found for email: {} in organisation: {}".format(email, g.organisation.name))
