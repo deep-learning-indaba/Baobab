@@ -173,6 +173,7 @@ class InvitedGuestView():
         self.email = invitedGuest.AppUser.email
         self.firstname = invitedGuest.AppUser.firstname
         self.lastname = invitedGuest.AppUser.lastname
+        self.user_title = invitedGuest.AppUser.user_title
         # TODO re-add this using information given from some form of questionnaire
         # self.affiliation = invitedGuest.AppUser.affiliation
         # self.department = invitedGuest.AppUser.department
@@ -181,7 +182,6 @@ class InvitedGuestView():
         # self.user_category = invitedGuest.AppUser.user_category.name
         # self.user_disability = invitedGuest.AppUser.user_disability
         # self.user_gender = invitedGuest.AppUser.user_gender
-        # self.user_title = invitedGuest.AppUser.user_title
         # self.user_dateOfBirth = invitedGuest.AppUser.user_dateOfBirth
         # self.user_primaryLanguage = invitedGuest.AppUser.user_primaryLanguage
 
