@@ -11,14 +11,23 @@ class Event(db.Model):
     description = db.Column(db.String(255), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
+    key = db.Column(db.String(255), nullable=False, unique=True)
+    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False, unique=True)
+    email_from = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), nullable=False)
 
     application_forms = db.relationship('ApplicationForm')
+    email_templates = db.relationship('EmailTemplate')
 
-    def __init__(self, name, description, start_date, end_date):
+    def __init__(self, name, description, start_date, end_date, key, organisation_id, email_from, url):
         self.name = name
         self.description = description
         self.start_date = start_date
         self.end_date = end_date
+        self.key = key
+        self.organisation_id = organisation_id
+        self.email_from = email_from
+        self.url = url
 
     def set_name(self, new_name):
         self.name = new_name

@@ -27,33 +27,14 @@ class ApiTestCase(unittest.TestCase):
                  firstname='User', 
                  lastname='Lastname', 
                  user_title='Mrs',
-                 nationality_country_id=1,
-                 residence_country_id=1,
-                 user_gender='female',
-                 affiliation='university X',
-                 department='Computer science',
-                 user_disability='None',
-                 user_category_id=1,
-                 user_dateOfBirth=None,
-                 user_primaryLanguage='Swahili',
                  password='abc',
                  organisation_id=1,
                  is_admin=False,
                  post_create_fn=lambda x: None):
-        user_dateOfBirth = user_dateOfBirth or datetime(1984, 12, 12)
         user = AppUser(email,
                  firstname,
                  lastname,
                  user_title,
-                 nationality_country_id,
-                 residence_country_id,
-                 user_gender,
-                 affiliation,
-                 department,
-                 user_disability,
-                 user_category_id,
-                 user_dateOfBirth,
-                 user_primaryLanguage,
                  password,
                  organisation_id,
                  is_admin)
@@ -81,11 +62,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(self.country)
 
         # Add a dummy organisation
-        organisation = Organisation(name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='org', url='www.org.net')
-        db.session.add(organisation)
-        db.session.commit()
+        self.add_organisation(domain='org')
         db.session.flush()
+
+    def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
+                                    large_logo='org_big.png', domain='com'):
+        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain))
+        db.session.commit()
 
     def tearDown(self):
         db.session.remove()

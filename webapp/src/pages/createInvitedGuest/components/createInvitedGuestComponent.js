@@ -6,17 +6,12 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import {
   getTitleOptions,
-  getCounties,
-  getGenderOptions,
-  getCategories,
-  getDisabilityOptions
 } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
   validEmail,
-  isValidDate
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -25,15 +20,6 @@ const fieldValidations = [
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
   ruleRunner(validationFields.email, validEmail),
-  ruleRunner(validationFields.nationality, requiredDropdown),
-  ruleRunner(validationFields.residence, requiredDropdown),
-  ruleRunner(validationFields.gender, requiredDropdown),
-  ruleRunner(validationFields.affiliation, requiredText),
-  ruleRunner(validationFields.department, requiredText),
-  ruleRunner(validationFields.disability, requiredText),
-  ruleRunner(validationFields.category, requiredDropdown),
-  ruleRunner(validationFields.primaryLanguage, requiredText),
-  ruleRunner(validationFields.dateOfBirth, isValidDate)
 ];
 
 class creatreInvitedGuestComponent extends Component {
@@ -47,11 +33,7 @@ class creatreInvitedGuestComponent extends Component {
       },
       submitted: false,
       errors: [],
-      categoryOptions: [],
-      countryOptions: [],
       titleOptions: [],
-      genderOptions: [],
-      disabilityOptions: [],
       error: "",
       created: false,
       conflict: false
@@ -75,23 +57,15 @@ class creatreInvitedGuestComponent extends Component {
   componentWillMount() {
     Promise.all([
       getTitleOptions,
-      getGenderOptions,
-      getCounties,
-      getCategories,
-      getDisabilityOptions
     ]).then(result => {
       this.setState({
         titleOptions: this.checkOptionsList(result[0]),
-        genderOptions: this.checkOptionsList(result[1]),
-        countryOptions: this.checkOptionsList(result[2]),
-        categoryOptions: this.checkOptionsList(result[3]),
-        disabilityOptions: this.checkOptionsList(result[4])
       });
     });
   }
 
   validateForm() {
-    return this.state.user.email.length > 0;
+    return (this.state.user && this.state.user.email && this.state.user.email.length > 0);
   }
 
   handleChangeDropdown = (name, dropdown) => {
@@ -102,7 +76,7 @@ class creatreInvitedGuestComponent extends Component {
           [name]: dropdown.value
         }
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -118,7 +92,7 @@ class creatreInvitedGuestComponent extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -137,6 +111,8 @@ class creatreInvitedGuestComponent extends Component {
     )
       return;
 
+    //TODO review this workflow, it seems dodgy. 
+    //createInvitedGuest always returns 400 (no role). Then addInvitedGuest creates the invitedguest.
     invitedGuestServices
       .createInvitedGuest(this.state.user, this.props.event.id)
       .then(user => {
@@ -160,56 +136,27 @@ class creatreInvitedGuestComponent extends Component {
 
   render() {
     const xs = 12;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
+    const sm = 4;
+    const md = 4;
+    const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassNameTitle = createColClassName(12, 3, 2, 2);
-    const colClassNameSurname = createColClassName(12, 3, 4, 4);
-    const colClassEmailLanguageDob = createColClassName(12, 4, 4, 4);
     const {
       firstName,
       lastName,
       email,
       title,
-      nationality,
-      residence,
-      gender,
-      affiliation,
-      department,
-      disability,
-      category,
-      dateOfBirth,
-      primaryLanguage
     } = this.state.user;
 
     const roleOptions = invitedGuestServices.getRoles();
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
-    const nationalityValue = this.getContentValue(
-      this.state.countryOptions,
-      nationality
-    );
-    const residenceValue = this.getContentValue(
-      this.state.countryOptions,
-      residence
-    );
-    const genderValue = this.getContentValue(this.state.genderOptions, gender);
-    const categoryValue = this.getContentValue(
-      this.state.categoryOptions,
-      category
-    );
-    const disabilityValue = this.getContentValue(
-      this.state.disabilityOptions,
-      disability
-    );
 
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Create Guest</p>
           <div class="row">
-            <div class={colClassNameTitle}>
+            <div class={commonColClassName}>
               <FormSelect
                 options={this.state.titleOptions}
                 id={validationFields.title.name}
@@ -219,7 +166,7 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.title.display}
               />
             </div>
-            <div class={colClassNameSurname}>
+            <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
                 type="text"
@@ -229,7 +176,7 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.firstName.display}
               />
             </div>
-            <div class={colClassNameSurname}>
+            <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
                 type="text"
@@ -239,19 +186,9 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.lastName.display}
               />
             </div>
-            <div class={colClassNameTitle}>
-              <FormSelect
-                options={this.state.genderOptions}
-                id={validationFields.gender.name}
-                placeholder={validationFields.gender.display}
-                onChange={this.handleChangeDropdown}
-                value={genderValue}
-                label={validationFields.gender.display}
-              />
-            </div>
           </div>
           <div class="row">
-            <div class={colClassEmailLanguageDob}>
+            <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.email.name}
                 type="email"
@@ -261,98 +198,6 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.email.display}
               />
             </div>
-            <div class={colClassEmailLanguageDob}>
-              <FormTextBox
-                id={validationFields.dateOfBirth.name}
-                type="date"
-                placeholder={validationFields.dateOfBirth.display}
-                onChange={this.handleChange(validationFields.dateOfBirth)}
-                value={dateOfBirth}
-                label={validationFields.dateOfBirth.display}
-              />
-            </div>
-            <div class={colClassEmailLanguageDob}>
-              <FormTextBox
-                id={validationFields.primaryLanguage.name}
-                type="text"
-                placeholder={validationFields.primaryLanguage.display}
-                onChange={this.handleChange(validationFields.primaryLanguage)}
-                value={primaryLanguage}
-                label={validationFields.primaryLanguage.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.countryOptions}
-                id={validationFields.nationality.name}
-                placeholder={validationFields.nationality.display}
-                onChange={this.handleChangeDropdown}
-                value={nationalityValue}
-                label={validationFields.nationality.display}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.countryOptions}
-                id={validationFields.residence.name}
-                placeholder={validationFields.residence.display}
-                onChange={this.handleChangeDropdown}
-                value={residenceValue}
-                label={validationFields.residence.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.affiliation.name}
-                type="text"
-                placeholder={validationFields.affiliation.display}
-                onChange={this.handleChange(validationFields.affiliation)}
-                value={affiliation}
-                label={validationFields.affiliation.display}
-                description={validationFields.affiliation.description}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.department.name}
-                type="text"
-                placeholder={validationFields.department.display}
-                onChange={this.handleChange(validationFields.department)}
-                value={department}
-                label={validationFields.department.display}
-                description={validationFields.department.description}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.disabilityOptions}
-                id={validationFields.disability.name}
-                placeholder={validationFields.disability.display}
-                onChange={this.handleChangeDropdown}
-                value={disabilityValue}
-                label={validationFields.disability.display}
-                description={validationFields.disability.description}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.categoryOptions}
-                id={validationFields.category.name}
-                placeholder={validationFields.category.display}
-                onChange={this.handleChangeDropdown}
-                value={categoryValue}
-                label={validationFields.category.display}
-                description={validationFields.category.description}
-              />
-            </div>
-          </div>
-          <div class="row">
             <div class={commonColClassName}>
               <FormSelect
                 defaultValue={this.state.user.role}
