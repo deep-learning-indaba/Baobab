@@ -295,9 +295,9 @@ class Section extends React.Component {
             />
           ))}
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <a href="#" class="save mx-auto" onClick={this.handleSave}>
+          <button className="save mx-auto link-style" onClick={this.handleSave}>
             Save for later...
-          </a>
+          </button>
         )}
         {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
         {hasValidated && !validationStale && (
@@ -331,9 +331,6 @@ function AnswerValue(props) {
 }
 
 class Confirmation extends React.Component {
-  constructor(props) {
-    super(props);
-  }
 
   render() {
     return (
@@ -451,7 +448,7 @@ class Submitted extends React.Component {
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
         <p class="awards alert alert-info">
-        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank">here</a> by 12 April 2019.
+        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank" rel="noopener noreferrer">here</a> by 12 April 2019.
 Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
         </p>
         <div class="submitted-footer">
