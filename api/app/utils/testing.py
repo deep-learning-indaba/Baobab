@@ -81,11 +81,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(self.country)
 
         # Add a dummy organisation
-        organisation = Organisation(name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='org', )
-        db.session.add(organisation)
-        db.session.commit()
+        self.add_organisation(domain='org')
         db.session.flush()
+
+    def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
+                                    large_logo='org_big.png', domain='com'):
+        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain))
+        db.session.commit()
 
     def tearDown(self):
         db.session.remove()
