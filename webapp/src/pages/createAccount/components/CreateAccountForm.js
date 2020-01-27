@@ -156,9 +156,9 @@ class CreateAccountForm extends Component {
   };
   render() {
     const xs = 12;
-    const sm = 3;
-    const md = 3;
-    const lg = 3;
+    const sm = 4;
+    const md = 4;
+    const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
     const {
       firstName,
@@ -222,6 +222,8 @@ class CreateAccountForm extends Component {
                 label={validationFields.lastName.display}
               />
             </div>
+          </div>
+          <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.email.name}
@@ -232,8 +234,6 @@ class CreateAccountForm extends Component {
                 label={validationFields.email.display}
               />
             </div>
-          </div>
-          <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.password.name}

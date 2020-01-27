@@ -301,32 +301,6 @@ class UserApiTest(ApiTestCase):
         db.session.add(user)
         db.session.commit()
 
-    def test_email_change_gets_new_token_and_is_unverified(self):
-        self.seed_static_data()
-        self.setup_verified_user()
-        response = self.app.post('/api/v1/authenticate', data=AUTH_DATA)
-        data = json.loads(response.data)
-        headers = {'Authorization': data['token']}
-
-        response = self.app.put('/api/v1/user', headers=headers, data={
-            'email': 'somethingnew@email.com',
-            'firstname': 'Some',
-            'lastname': 'Thing',
-            'user_title': 'Mr',
-            'password':''
-            })
-
-        self.assertEqual(response.status_code,  200)
-
-        user = db.session.query(AppUser).get(1)
-
-        self.assertEqual(user.email, 'somethingnew@email.com')
-        self.assertEqual(user.firstname, 'Some')
-        self.assertEqual(user.lastname, 'Thing')
-        self.assertEqual(user.user_title, 'Mr')
-        self.assertEqual(user.verified_email, False)
-        self.assertNotEqual(user.verify_token, 'existing token')
-
     def setup_responses(self):
         application_forms = [
             ApplicationForm(1, True, datetime(2019, 4, 12)),
