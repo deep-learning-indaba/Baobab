@@ -94,7 +94,7 @@ class EventNav extends Component {
       {this.props.user && (
         <li className="nav-item">
           <NavLink
-            to="/applicationForm"
+            to={`${this.props.eventKey}/apply`}
             activeClassName="nav-link active"
             className="nav-link"
             onClick={this.props.toggleMenu}
@@ -106,7 +106,7 @@ class EventNav extends Component {
       {this.props.user && (
       <li className="nav-item">
         <NavLink
-          to="/offer"
+          to={`${this.props.eventKey}/offer`}
           activeClassName="nav-link active"
           className="nav-link"
           onClick={this.props.toggleMenu}
@@ -129,14 +129,14 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to="/registration"
+              to={`${this.props.eventKey}/registration`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Registration Form
             </NavLink>
             <NavLink
-              to="/invitationLetter"
+              to={`${this.props.eventKey}/invitationLetter`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -144,7 +144,7 @@ class EventNav extends Component {
             </NavLink>
             {this.isRegistrationVolunteer(this.state.user) && 
               <NavLink
-                to="/eventAttendance"
+                to={`${this.props.eventKey}/eventAttendance`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
@@ -168,28 +168,28 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to="/eventStats"
+              to={`${this.props.eventKey}/eventStats`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Event Stats
             </NavLink>
             <NavLink
-              to="/reviewAssignment"
+              to={`${this.props.eventKey}/reviewAssignment`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Review Assignment
             </NavLink>
             <NavLink
-              to="/invitedGuests"
+              to={`${this.props.eventKey}/invitedGuests`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Invited Guests
             </NavLink>
             <NavLink
-              to="/profile-list"
+              to={`${this.props.eventKey}/profile-list`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -212,14 +212,14 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to="/review"
+              to={`${this.props.eventKey}/review`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Review
             </NavLink>
             <NavLink
-              to="/reviewHistory"
+              to={`${this.props.eventKey}/reviewHistory`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -242,7 +242,7 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to="/registrationAdmin"
+              to={`${this.props.eventKey}/registrationAdmin`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -265,7 +265,7 @@ class App extends Component {
       organisation: null,
       collapsed: true,
       eventKey: null,
-      event: null
+      currentEvent: null
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -297,7 +297,7 @@ class App extends Component {
   setEvent = (eventKey, event) => {
     this.setState({
       eventKey: eventKey,
-      event: event
+      currentEvent: event
     });
   }
 
@@ -334,7 +334,7 @@ class App extends Component {
               }
               id="navbarNav"
             >
-              {this.state.currentEvent && <EventNav eventKey={this.state.eventKey} event={this.state.event}/>}
+              {this.state.currentEvent ? <EventNav eventKey={this.state.eventKey} event={this.state.currentEvent} user={this.state.user}/> : <ul className="navbar-nav mr-auto"></ul>}
               <UserDropdown
                 logout={this.refreshUser}
                 user={this.state.user}
@@ -373,10 +373,11 @@ class App extends Component {
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <PrivateRoute exact path="/profile" component={Profile} />
-                <PrivateRoute 
+                <Route 
                   path="/:eventKey" 
-                  component={EventHome} 
-                  setEvent={this.setEvent}
+                  render={props => (
+                    <EventHome {...props} setEvent={this.setEvent} />
+                  )}
                 /> 
               </Switch>
             </div>

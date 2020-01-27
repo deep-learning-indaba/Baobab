@@ -143,7 +143,7 @@ class ViewProfileComponent extends Component {
                 <div class="row">
                   <fieldset class="fieldset">
                     <legend class="legend">User Application Info. </legend>
-                    <div class="row" class={colClassNameUserApplicationInfo}>
+                    <div className="row" class={colClassNameUserApplicationInfo}>
                       {is_Submitted && (
                         <div >
                           <div class="form-group">
