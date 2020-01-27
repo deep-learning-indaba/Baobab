@@ -125,7 +125,6 @@ class EventAPI(EventMixin, restful.Resource):
         event = add(event)
 
         try:
-
             admin_event_role = EventRole('admin', user_id, event.id)
             db.session.add(admin_event_role)
             db.session.commit()
