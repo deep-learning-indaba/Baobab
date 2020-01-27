@@ -22,18 +22,18 @@ from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 
 
-def event_info(user_id, response):
+def event_info(user_id, event_org):
     return {
-        'id': response.Event.id,
-        'description': response.Event.description,
-        'key': response.Event.key,
-        'start_date': response.Event.start_date.strftime("%d %B %Y"),
-        'end_date': response.Event.end_date.strftime("%d %B %Y"),
-        'status': get_user_event_response_status(user_id, response.Event.id),
-        'email_from': response.Event.email_from,
-        'organisation_name': response.Organisation.name,
-        'organisation_id': response.Organisation.id,
-        'url': response.Event.url
+        'id': event_org.Event.id,
+        'description': event_org.Event.description,
+        'key': event_org.Event.key,
+        'start_date': event_org.Event.start_date.strftime("%d %B %Y"),
+        'end_date': event_org.Event.end_date.strftime("%d %B %Y"),
+        'status': get_user_event_response_status(user_id, event_org.Event.id),
+        'email_from': event_org.Event.email_from,
+        'organisation_name': event_org.Organisation.name,
+        'organisation_id': event_org.Organisation.id,
+        'url': event_org.Event.url
     }
 
 
