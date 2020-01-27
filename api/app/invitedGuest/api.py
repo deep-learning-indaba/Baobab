@@ -32,7 +32,7 @@ def invitedGuest_info(invitedGuest, user):
         'role': invitedGuest.role,
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
-
+# TODO change your Baobab to [event] 
 GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
 We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 
@@ -73,8 +73,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         email = args['email']
         role = args['role']
 
-        user = db.session.query(AppUser).filter(
-            func.lower(AppUser.email) == func.lower(email)).first()
+        user = user_repository.get_by_email(email, g.organisation.id)
 
         if not user:
             return USER_NOT_FOUND
@@ -172,18 +171,19 @@ class InvitedGuestView():
         self.role = invitedGuest.InvitedGuest.role
         self.user_id = invitedGuest.AppUser.id
         self.email = invitedGuest.AppUser.email
-        self.affiliation = invitedGuest.AppUser.affiliation
-        self.department = invitedGuest.AppUser.department
         self.firstname = invitedGuest.AppUser.firstname
         self.lastname = invitedGuest.AppUser.lastname
-        self.nationality_country = invitedGuest.AppUser.nationality_country.name
-        self.residence_country = invitedGuest.AppUser.residence_country.name
-        self.user_category = invitedGuest.AppUser.user_category.name
-        self.user_disability = invitedGuest.AppUser.user_disability
-        self.user_gender = invitedGuest.AppUser.user_gender
         self.user_title = invitedGuest.AppUser.user_title
-        self.user_dateOfBirth = invitedGuest.AppUser.user_dateOfBirth
-        self.user_primaryLanguage = invitedGuest.AppUser.user_primaryLanguage
+        # TODO re-add this using information given from some form of questionnaire
+        # self.affiliation = invitedGuest.AppUser.affiliation
+        # self.department = invitedGuest.AppUser.department
+        # self.nationality_country = invitedGuest.AppUser.nationality_country.name
+        # self.residence_country = invitedGuest.AppUser.residence_country.name
+        # self.user_category = invitedGuest.AppUser.user_category.name
+        # self.user_disability = invitedGuest.AppUser.user_disability
+        # self.user_gender = invitedGuest.AppUser.user_gender
+        # self.user_dateOfBirth = invitedGuest.AppUser.user_dateOfBirth
+        # self.user_primaryLanguage = invitedGuest.AppUser.user_primaryLanguage
 
 
 class InvitedGuestList(InvitedGuestListMixin, restful.Resource):

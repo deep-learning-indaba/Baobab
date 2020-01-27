@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import { Router, Route, Link, NavLink, Switch } from "react-router-dom";
-import logo from "./images/logo-32x32-white.png";
+import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
@@ -26,6 +25,7 @@ import Offer from "./pages/offer";
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
+import { organisationService } from "./services/organisation/organisation.service";
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
@@ -33,15 +33,10 @@ ReactGA.initialize("UA-136093201-1", {
 });
 
 ReactGA.pageview(window.location.pathname + window.location.search);
-history.listen((location, action) => {
+history.listen((location) => {
   ReactGA.pageview(location.pathname + location.search);
 });
 
-const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
-const BUG_BODY_TEXT = `Browser name and version:
-What I was trying to do:
-Description of problem: 
-`;
 
 class App extends Component {
   constructor(props) {
@@ -49,6 +44,7 @@ class App extends Component {
 
     this.state = {
       user: {},
+      organisation: null,
       collapsed: true
     };
 
@@ -58,6 +54,13 @@ class App extends Component {
   componentDidMount() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
+    });
+
+    organisationService.getOrganisation().then(response => {
+      this.setState({
+        organisation: response.organisation,
+        error: response.error
+      });
     });
   }
 
@@ -114,25 +117,19 @@ class App extends Component {
   };
 
   render() {
-    const bug_mailto =
-      "mailto:baobab@deeplearningindaba.com?subject=" +
-      encodeURI(BUG_SUBJECT_TEXT) +
-      "&body=" +
-      encodeURI(BUG_BODY_TEXT);
-
     return (
       <Router history={history}>
         <div>
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="/">
               <img
-                src={logo}
+                src={this.state.organisation && require("./images/" + this.state.organisation.small_logo)}
                 width="30"
                 height="30"
-                class="d-inline-block align-top"
+                class="d-inline-block align-top brand-image"
                 alt=""
               />
-              Baobab
+              {this.state.organisation && this.state.organisation.system_name}
             </a>
             <button
               class="navbar-toggler"
@@ -176,6 +173,7 @@ class App extends Component {
                     </NavLink>
                   </li>
                 )}
+                {this.state.user && (
                 <li class="nav-item">
                   <NavLink
                     to="/offer"
@@ -186,11 +184,11 @@ class App extends Component {
                     Offer
                   </NavLink>
                 </li>
+                )}
                 {this.state.user && (
-                  <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                  <li class="nav-item dropdown ">
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -198,7 +196,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Registration
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registration"
@@ -214,14 +212,22 @@ class App extends Component {
                       >
                         Invitation Letter
                       </NavLink>
+                      {this.isRegistrationVolunteer(this.state.user) && 
+                        <NavLink
+                          to="/eventAttendance"
+                          className="dropdown-item"
+                          onClick={this.toggleMenu}
+                        >
+                          Event Attendance
+                        </NavLink>
+                      }
                     </div>
                   </li>
                 )}
                 {this.isEventAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -229,7 +235,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Event Admin
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/eventStats"
@@ -262,36 +268,10 @@ class App extends Component {
                     </div>
                   </li>
                 )}
-                {this.isRegistrationVolunteer(this.state.user) && (
-                   <li class="nav-item dropdown">
-                      <a
-                        class="nav-link dropdown-toggle"
-                        href="#"
-                        id="navbarDropdown"
-                        role="button"
-                        data-toggle="dropdown"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                      >
-                        Registration Volunteer
-                      </a>
-                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <NavLink
-                          to="/eventAttendance"
-                          className="dropdown-item"
-                          onClick={this.toggleMenu}
-                        >
-                          Event Attendance
-                        </NavLink>
-                      </div>
-                    </li>
-
-                )}
                 {this.isEventReviewer(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -299,7 +279,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Reviews
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/review"
@@ -320,9 +300,8 @@ class App extends Component {
                 )}
                 {this.isRegistrationAdmin(this.state.user) && (
                   <li class="nav-item dropdown">
-                    <a
-                      class="nav-link dropdown-toggle"
-                      href="#"
+                    <div
+                      class="nav-link dropdown-toggle link-style"
                       id="navbarDropdown"
                       role="button"
                       data-toggle="dropdown"
@@ -330,7 +309,7 @@ class App extends Component {
                       aria-expanded="false"
                     >
                       Registration Admin
-                    </a>
+                    </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <NavLink
                         to="/registrationAdmin"
@@ -446,17 +425,19 @@ class App extends Component {
           <footer class="text-muted">
             <div class="container-flex">
               <p>
-                Baobab, © 2019 |{" "}
-                <a href="http://www.deeplearningindaba.com">
-                  Deep Learning Indaba
+                {this.state.organisation && this.state.organisation.system_name}, © 2020 |{" "}
+                <a href={this.state.organisation && this.state.organisation.url}>
+                {this.state.organisation && this.state.organisation.name}
                 </a>{" "}
                 |{" "}
                 <a href="/PrivacyPolicy.pdf" target="_blank">
                   Privacy Policy
                 </a>
-                <a href={bug_mailto} class="btn btn-info float-right">
-                  Report a Bug
-                </a>
+                {this.state.organisation && this.state.organisation.system_name !== "Baobab" && 
+                  <div class="float-right">
+                    Powered by <a href="http://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer">Baobab</a>
+                  </div>
+                }
               </p>
             </div>
           </footer>

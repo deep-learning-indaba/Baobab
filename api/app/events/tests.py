@@ -9,11 +9,14 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
+from app.organisation.models import Organisation
 
 
 class EventsAPITest(ApiTestCase):
 
     def seed_static_data(self):
+        self.test_user = self.add_user('something@email.com')
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         test_country = Country('Indaba Land')
         db.session.add(test_country)
         db.session.commit()
@@ -22,17 +25,13 @@ class EventsAPITest(ApiTestCase):
         db.session.add(test_category)
         db.session.commit()
 
-        self.test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                                 'Male', 'University', 'Computer Science', 'None', 1,
-                                 datetime(1984, 12, 12),
-                                 'Zulu',
-                                 '123456')
         self.test_user.verified_email = True
         db.session.add(self.test_user)
         db.session.commit()
 
         test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'SPEEDNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(test_event)
         db.session.commit()
 
@@ -64,7 +63,7 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
-            'password': '123456'
+            'password': 'abc'
         })
 
         assert response.status_code == 200
@@ -90,7 +89,7 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
-            'password': '123456'
+            'password': 'abc'
         })
 
         assert response.status_code == 200
@@ -114,7 +113,7 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
-            'password': '123456'
+            'password': 'abc'
         })
 
         assert response.status_code == 200
@@ -152,7 +151,7 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
-            'password': '123456'
+            'password': 'abc'
         })
 
         assert response.status_code == 200
@@ -177,10 +176,10 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
-            'password': '123456'
+            'password': 'abc'
         })
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
@@ -226,10 +225,12 @@ class EventsStatsAPITest(ApiTestCase):
         'user_category_id': 1,
         'user_primaryLanguage': 'Zulu',
         'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'password': '123456'
+        'password': 'abc'
     }
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+
         test_country = Country('Indaba Land')
         db.session.add(test_country)
         db.session.commit()
@@ -247,7 +248,8 @@ class EventsStatsAPITest(ApiTestCase):
         self.test_user2 = json.loads(response.data)
 
         self.test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'KONNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.test_event)
         db.session.commit()
 
@@ -314,42 +316,39 @@ class EventsStatsAPITest(ApiTestCase):
 
 class RemindersAPITest(ApiTestCase):
     def seed_static_data(self):
+        inactive_user = self.add_user('inactive@mail.co.za', 'inactive', post_create_fn=lambda u: u.deactivate())
+        deleted_user = self.add_user('deleted@mail.co.za', 'deleted', post_create_fn=lambda u: u.delete() )
+        
+        event_admin = self.add_user('event@admin.co.za', 'event', 'admin')
+        self.add_user('applicant@mail.co.za', 'applicant')
+        self.add_user('notstarted@mail.co.za', 'notstarted')
+        self.add_user('applicant2@mail.co.za', 'applicant')
+        
+        db.session.commit()
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         country = Country('South Africa')
         db.session.add(country)
 
         user_category = UserCategory('Post Doc')
         db.session.add(user_category)
 
-        inactive_user = AppUser('inactive@mail.co.za', 'inactive', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
-        inactive_user.deactivate()
-        deleted_user = AppUser('deleted@mail.co.za', 'deleted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
-        deleted_user.delete()
-        users = [
-            AppUser('event@admin.co.za', 'event', 'admin', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
-            AppUser('applicant@mail.co.za', 'applicant', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
-            inactive_user,
-            deleted_user,
-            AppUser('notstarted@mail.co.za', 'notstarted', '1', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc'),
-            AppUser('applicant2@mail.co.za', 'applicant', '2', 'Mr', 1, 1, 'Male', 'Wits', 'Computer Science', 'None', 1, datetime(1991, 3, 27), 'English', 'abc')
-        ]
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
-
-        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31))
+        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 
+        'COOLER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(event)
+        db.session.commit()
 
-        event_role = EventRole('admin', 1, 1)
+        event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
         application_form = ApplicationForm(1, True, datetime(2019, 4, 12))
         db.session.add(application_form)
+        db.session.commit()
 
         responses = [
-            Response(1, 1, True),
-            Response(1, 2, False),
-            Response(1, 4, True, datetime.now(), True, datetime.now()),
-            Response(1, 6, False),
+            Response(application_form.id, self.test_users[0].id, True),
+            Response(application_form.id, self.test_users[1].id, False),
+            Response(application_form.id, self.test_users[3].id, True, datetime.now(), True, datetime.now()),
+            Response(application_form.id, self.test_users[4].id, False),
         ]
         db.session.add_all(responses)
 
@@ -372,8 +371,8 @@ class RemindersAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/reminder-unsubmitted', headers=header, data=params)
         data = json.loads(response.data)
-
-        self.assertEqual(data['unsubmitted_responses'], 2)
+        LOGGER.warning(data)
+        self.assertEqual(data['unsubmitted_responses'], 1)
 
     def test_not_started_reminder(self):
         self.seed_static_data()
@@ -382,8 +381,8 @@ class RemindersAPITest(ApiTestCase):
 
         response = self.app.post('/api/v1/reminder-not-started', headers=header, data=params)
         data = json.loads(response.data)
-
-        self.assertEqual(data['not_started_responses'], 1)
+        LOGGER.warning(data)
+        self.assertEqual(data['not_started_responses'], 2)
     
     def test_non_event_admin_blocked_from_sending_reminders(self):
         self.seed_static_data()

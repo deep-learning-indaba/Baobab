@@ -43,15 +43,6 @@ function create(user) {
       firstname: user.firstName,
       lastname: user.lastName,
       user_title: user.title,
-      nationality_country_id: user.nationality,
-      residence_country_id: user.residence,
-      user_gender: user.gender,
-      affiliation: user.affiliation,
-      department: user.department,
-      user_disability: user.disability,
-      user_category_id: user.category,
-      user_dateOfBirth: new Date(user.dateOfBirth).toISOString(),
-      user_primaryLanguage: user.primaryLanguage,
       password: user.password
     })
     .then(response => {
@@ -70,15 +61,6 @@ function update(user) {
         firstname: user.firstName,
         lastname: user.lastName,
         user_title: user.title,
-        nationality_country_id: user.nationality,
-        residence_country_id: user.residence,
-        user_gender: user.gender,
-        affiliation: user.affiliation,
-        department: user.department,
-        user_disability: user.disability,
-        user_category_id: user.category,
-        user_dateOfBirth: new Date(user.dateOfBirth).toISOString(),
-        user_primaryLanguage: user.primaryLanguage,
         password: ""
       },
       { headers: authHeader() }
@@ -133,7 +115,7 @@ function get() {
     })
     .catch(function(error) {
       // handle error
-      return [], { error: error };
+      return { error: error };
     });
 }
 

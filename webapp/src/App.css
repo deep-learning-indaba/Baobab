@@ -53,3 +53,13 @@ footer .btn {
   padding-right: 30px;
   padding-left: 30px;
 }
+
+.link-style{
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.navbar-brand .brand-image {
+  margin-right: 10px;
+}

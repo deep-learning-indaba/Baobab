@@ -348,7 +348,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
         
-        reviewer_user = user_repository.get_by_email(reviewer_user_email)
+        reviewer_user = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
         if reviewer_user is None:
             return USER_NOT_FOUND
         
@@ -406,6 +406,7 @@ review_fields = {
     'department' : fields.String,
     'user_category' : fields.String, 
     'final_verdict' : fields.String,
+    'reviewed_user_id': fields.String
 }
 
 review_histroy_fields = {
@@ -419,11 +420,13 @@ class ReviewHistoryModel:
     def __init__(self, review):
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
-        self.nationality_country = review.AppUser.nationality_country.name
-        self.residence_country = review.AppUser.residence_country.name
-        self.affiliation = review.AppUser.affiliation
-        self.department = review.AppUser.department
-        self.user_category = review.AppUser.user_category.name
+        self.reviewed_user_id  = review.AppUser.id
+        # TODO get this information outside of AppUser - e.g. a question asking for nationality,residence etc 
+        # self.nationality_country = review.AppUser.nationality_country.name
+        # self.residence_country = review.AppUser.residence_country.name
+        # self.affiliation = review.AppUser.affiliation
+        # self.department = review.AppUser.department
+        # self.user_category = review.AppUser.user_category.name
 
         final_verdict = [o for o in review.options if str(o['value']) == review.value]
         final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"

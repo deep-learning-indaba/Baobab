@@ -8,38 +8,19 @@ from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.models import RegistrationQuestion
 from app import app, db
+from app.organisation.models import Organisation
 
 
 class RegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self, create_registration=False):
+        test_user = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        test_user2 = self.add_user('something2@email.com', 'Something2', 'Thing2', 'Mrs')
+        event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
+        
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        test_user2 = AppUser('something2@email.com', 'Something2', 'Thing2', 'Mrs', 1, 1,
-                            'Female', 'University of Indaba', 'Machine Learning', 'None', 1,
-                            datetime(1985, 2, 3),
-                            'Zulu',
-                            '123456')
-        test_user2.verified_email = True
-        db.session.add(test_user2)
-        db.session.commit()
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456', True)
-        event_admin.verified_email = True
-        db.session.add(event_admin)
-
         db.session.commit()
 
         event = Event(
@@ -47,7 +28,10 @@ class RegistrationApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='SPEEDNET', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()
@@ -185,7 +169,7 @@ class RegistrationApiTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '123456'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
@@ -364,17 +348,19 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[0]['firstname'], 'Some')
             self.assertEqual(responses[0]['lastname'], 'Thing')
             self.assertEqual(responses[0]['email'], 'something@email.com')
-            self.assertEqual(responses[0]['user_category'], 'Postdoc')
-            self.assertEqual(responses[0]['affiliation'], 'University')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[0]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[0]['affiliation'], 'University')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
 
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)
             self.assertEqual(responses[1]['user_id'], self.offer3.user_id)
             self.assertEqual(responses[1]['firstname'], 'event_admin')
-            self.assertEqual(responses[1]['lastname'], '1')
+            self.assertEqual(responses[1]['lastname'], 'Lastname')
             self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
-            self.assertEqual(responses[1]['user_category'], 'Postdoc')
-            self.assertEqual(responses[1]['affiliation'], 'NWU')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[1]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[1]['affiliation'], 'NWU')
             self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
 
     def test_get_confirmed_not_event_admin(self):

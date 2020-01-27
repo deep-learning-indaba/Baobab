@@ -10,6 +10,8 @@ RESET_PASSWORD_CODE_NOT_VALID = (
     {'message': 'Valid code is required to reset a password'}, 418)
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
+EVENT_WITH_KEY_NOT_FOUND = ({'message': 'No event exists with that KEY'}, 404)
+EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)
 SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
 QUESTION_NOT_FOUND = (
     {'message': 'No question exists with that Event ID'}, 404)
@@ -86,3 +88,5 @@ ATTENDANCE_ALREADY_CONFIRMED = (
     {'message': 'Attendance has already been confirmed for this user and event.'}, 400)
 ATTENDANCE_NOT_FOUND = (
     {'message': 'Attendance not found.'}, 404)
+ERROR_UPDATING_USER_PROFILE = (
+    {'message': 'Exception updating user profile.'}, 500)

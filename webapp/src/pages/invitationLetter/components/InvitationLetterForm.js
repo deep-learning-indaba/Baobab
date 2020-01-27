@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
-import FormSelect from "../../../components/form/FormSelect";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
@@ -278,7 +277,6 @@ class InvitationLetterForm extends Component {
       residentialCity,
       residentialPostalCode,
       residentialCountry,
-      bringingAPoster,
       letterAddressedTo
     } = this.state.user;
 

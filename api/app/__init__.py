@@ -67,6 +67,7 @@ app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 from applicationModel.models import Question, Section
 from responses.models import Response, Answer, ResponseReviewer
 from users.models import UserCategory, AppUser, UserComment
+from email_template.models import EmailTemplate
 from events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
@@ -95,6 +96,7 @@ class LoginForm(form.Form):
         return True
 
     def get_user(self):
+        # TODO: What organisation should we use to query here?
         return db.session.query(AppUser).filter(AppUser.email==self.email.data).first()
 
 # Initialize flask-login
@@ -180,4 +182,5 @@ admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
 
 admin.add_view(BaobabModelView(InvitationTemplate, db.session))
 admin.add_view(BaobabModelView(InvitationLetterRequest, db.session))
+admin.add_view(BaobabModelView(EmailTemplate, db.session))
 
