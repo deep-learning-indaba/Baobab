@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
-import { getEvents } from "../../services/events";
 import { applicationFormService } from "../../services/applicationForm";
 import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
@@ -11,7 +10,7 @@ import CookieConsent from "react-cookie-consent";
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 const headings = ["Event", "Start date", "End date", "Status"];
-const fieldNames = ["description", "start_date", "end_date", "status"];
+// const fieldNames = ["description", "start_date", "end_date", "status"]; unused
 
 class Home extends Component {
 
@@ -22,7 +21,7 @@ class Home extends Component {
       headings: headings,
       rows: [],
       applicationStatus: null,
-      offer: null
+      offer:null
     }
   }
 
@@ -36,6 +35,11 @@ class Home extends Component {
     //     })
     //   }
     // });
+
+    // Only check for response/offer/invited guest if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user)
+      return 
 
     applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
       let applicationStatus = null;
@@ -59,7 +63,7 @@ class Home extends Component {
         });
       }
     });
-
+    
     offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
       this.setState({
         offer: result.offer
@@ -72,62 +76,55 @@ class Home extends Component {
           invitedGuest: true
         });
       }
-      else if (response.statusCode === "404") {
+      else if (response.statusCode ==="404"){
         this.setState({
           invitedGuest: false
         });
       }
     })
-
+  
   }
 
   render() {
-    let table = (<div></div>)
 
-    if (this.state.rows && this.state.rows.length > 0) {
-      const theadMarkup = (
-        <tr>
-          {this.state.headings.map((_cell, cellIndex) => {
-            return (
-              <th className="Cell">
-                {this.state.headings[cellIndex]}
-              </th>
-            )
-          })}
-        </tr>
-      );
+    // if (this.state.rows && this.state.rows.length > 0) {
+    //   const theadMarkup = (
+    //     <tr>
+    //       {this.state.headings.map((_cell, cellIndex) => {
+    //         return (
+    //           <th className="Cell">
+    //             {this.state.headings[cellIndex]}
+    //           </th>
+    //         )
+    //       })}
+    //     </tr>
+    //   );
 
-      const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
-        return (
-          <tr>
-            {fieldNames.map((_cell, cellIndex) => {
-              return (
-                <td className="Cell">
-                  {
-                    this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" ||
-                      this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
-                      <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
-                      this.state.rows[rowIndex][fieldNames[cellIndex]]
-                  }
-                </td>
-              )
-            })}
-          </tr>
-        )
-      });
+    //   const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
+    //     return (
+    //       <tr>
+    //         {fieldNames.map((_cell, cellIndex) => {
+    //           return (
+    //             <td className="Cell">
+    //               {
+    //                 this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
+    //                   <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]]
+    //               }
+    //             </td>
+    //           )
+    //         })}
+    //       </tr>
+    //     )
+    //   });
 
-      table = this.state.rows ? (
-        <table align="center" className="Table">
-          <thead>{theadMarkup}</thead>
-          <tbody>{tbodyMarkup}</tbody>
-        </table>
-      ) : (<div></div>)
-    }
+    // }
 
-    let statusClass = this.state.applicationStatus == "Submitted"
-      ? this.state.offer === null ? "text-warning" : "text-success"
+    let statusClass = this.state.applicationStatus === "Submitted" 
+      ? this.state.offer === null ? "text-warning" : "text-success" 
       : "text-danger"
-
+    // TODO change Baobab to [event]
     return (
       <div >
         <div>
@@ -136,17 +133,17 @@ class Home extends Component {
         {this.props.user && this.state.applicationStatus && <h3 className="Blurb">Application Status for Deep Learning Indaba 2019</h3>}
         {!this.props.user && <h2 className="Blurb">Welcome to Baobab</h2>}
 
-        {(this.props.user && this.state.applicationStatus) &&
+        {(this.props.user && this.state.applicationStatus) && 
           <div>
             <div class="status2019 row text-center">
               <div className="col-sm">
                 <h5 className={statusClass}>
 
                   {this.state.applicationStatus === "Submitted" && this.state.offer && <span>
-                    Your application was successful!
+                    Your application was successful! 
                   </span>}
 
-                  {this.state.applicationStatus === "Submitted" && !this.state.offer && this.state.invitedGuest !== true && <span>
+                  {this.state.applicationStatus === "Submitted" && !this.state.offer &&  this.state.invitedGuest !== true && <span>
                     Waiting List
                   </span>}
 
@@ -157,25 +154,25 @@ class Home extends Component {
                   {this.state.applicationStatus !== "Submitted" && this.state.invitedGuest !== true && this.state.applicationStatus}
                 </h5>
 
-                {this.state.invitedGuest === true && <div>
-                  <p>You've been invited to the Indaba as a guest! Please proceed to registration <NavLink to="/registration">here</NavLink>.</p>
+                { this.state.invitedGuest === true && <div>  
+                <p>You've been invited to the Indaba as a guest! Please proceed to registration <NavLink to="/registration">here</NavLink>.</p>
                 </div>}
 
-                {this.state.applicationStatus == "Submitted" &&
-                  <div>
-                    {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
-                      : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
-                  </div>}
+                {this.state.applicationStatus === "Submitted" &&
+                <div>
+                  {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
+                  : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
+                </div>}
 
-                {this.state.applicationStatus == "Withdrawn" && <p>
+                {this.state.applicationStatus === "Withdrawn" && <p>
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
 
-                {this.state.applicationStatus == "NOT Submitted" && <p>
+                {this.state.applicationStatus === "NOT Submitted" && <p>
                   You did not submit an application to attend the Deep Learning Indaba 2019!
                 </p>}
 
-                {this.state.applicationStatus == "Not Started" && this.state.invitedGuest !== true && <p>
+                {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true  && <p>
                   You did not apply to attend the Deep Learning Indaba 2019.
                 </p>}
 
