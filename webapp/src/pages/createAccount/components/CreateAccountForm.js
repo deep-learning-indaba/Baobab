@@ -285,7 +285,9 @@ class CreateAccountForm extends Component {
                 />
               </div>
               <div id="agreePrivacyPolicy">
-                {"I have read and agree to the privacy policy "}
+                {"I have read and agree to the "}
+                <a href="/PrivacyPolicy.pdf" target="_blank">privacy policy </a>
+                
                 <input
                   name="agreePrivacyPolicy"
                   type="checkbox"
