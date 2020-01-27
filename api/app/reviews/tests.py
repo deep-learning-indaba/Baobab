@@ -10,10 +10,13 @@ from app.responses.models import Response, Answer, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
+from app.organisation.models import Organisation
 
 class ReviewsApiTest(ApiTestCase):
     
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba 2019', 'blah.png', 'blah_big.png')
+        self.add_organisation('Deep Learning Indaba 2020', 'blah.png', 'blah_big.png')
         user_categories = [
             UserCategory('Honours'),
             UserCategory('Student'),
@@ -35,22 +38,27 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(countries)
         db.session.commit()
         
-        reviewer1 = self.add_user('r1@r.com', 'reviewer', '1', 'Mr', 1, 1, 'M', 'Wits', 'CS', 'NA', 2)
-        reviewer2 = self.add_user('r2@r.com', 'reviewer', '2', 'Ms', 1, 1, 'F', 'UCT', 'Chem', 'NA', 2)
-        reviewer3 = self.add_user('r3@r.com', 'reviewer', '3', 'Mr', 1, 1, 'M', 'UKZN', 'Phys', 'NA', 2)
-        reviewer4 = self.add_user('r4@r.com', 'reviewer', '4', 'Ms', 1, 1, 'F', 'RU', 'Math', 'NA', 2)
-        candidate1 = self.add_user('c1@c.com', 'candidate', '1', 'Mr', 1, 2, 'M', 'UWC', 'CS', 'NA', 2)
-        candidate2 = self.add_user('c2@c.com', 'candidate', '2', 'Ms', 3, 4, 'F', 'RU', 'Chem', 'NA', 3)
-        candidate3 = self.add_user('c3@c.com', 'candidate', '3', 'Mr', 5, 6, 'M', 'UFH', 'Phys', 'NA', 4)
-        candidate4 = self.add_user('c4@c.com', 'candidate', '4', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5)
-        system_admin = self.add_user('sa@sa.com', 'system_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5, is_admin=True)
-        event_admin = self.add_user('ea@ea.com', 'event_admin', '1', 'Ms', 7, 8, 'F', 'NWU', 'Math', 'NA', 5)
-        
+        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1,)
+        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms',  password='abc', organisation_id=1,)
+        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr',  password='abc', organisation_id=1,)
+        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', password='abc', organisation_id=1,)
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr',  password='abc', organisation_id=1,)
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms',  password='abc', organisation_id=1,)
+        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr',  password='abc', organisation_id=1,)
+        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms',  password='abc', organisation_id=1,)
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', password='abc', organisation_id=1, is_admin=True)
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', password='abc',organisation_id=1)
+        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
         db.session.commit()
 
         events = [
-            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31)),
-            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15))
+            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            'KENYADABA2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning'),
+            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            'INDABA2020', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
         ]
         db.session.add_all(events)
         db.session.commit()
@@ -214,9 +222,9 @@ class ReviewsApiTest(ApiTestCase):
     
     def setup_one_reviewer_three_candidates(self):
         responses = [
-            Response(1, 5, True),
-            Response(1, 6, True),
-            Response(1, 7, True)
+            Response(application_form_id=1, user_id=5, is_submitted=True),
+            Response(application_form_id=1, user_id=6, is_submitted=True),
+            Response(application_form_id=1, user_id=7, is_submitted=True)
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -418,11 +426,6 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['response']['user_id'], 6)
         self.assertEqual(data['response']['answers'][0]['value'], 'I want to do a PhD.')
-        self.assertEqual(data['user']['affiliation'], 'RU')
-        self.assertEqual(data['user']['department'], 'Chem')
-        self.assertEqual(data['user']['nationality_country'], 'Botswana')
-        self.assertEqual(data['user']['residence_country'], 'Namibia')
-        self.assertEqual(data['user']['user_category'], 'Student')
         
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
@@ -435,16 +438,12 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['response']['user_id'], 7)
         self.assertEqual(data['response']['answers'][1]['value'], 'I will share by tutoring.')
-        self.assertEqual(data['user']['affiliation'], 'UFH')
-        self.assertEqual(data['user']['department'], 'Phys')
-        self.assertEqual(data['user']['nationality_country'], 'Zimbabwe')
-        self.assertEqual(data['user']['residence_country'], 'Mozambique')
-        self.assertEqual(data['user']['user_category'], 'MSc')
 
     def setup_candidate_who_has_applied_to_multiple_events(self):
+        user_id = 5
         responses = [
-            Response(1, 5, True),
-            Response(2, 5, True)
+            Response(application_form_id=1, user_id=user_id, is_submitted=True),
+            Response(application_form_id=2, user_id=user_id, is_submitted=True)
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -477,11 +476,6 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 1)
         self.assertEqual(data['response']['user_id'], 5)
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
-        self.assertEqual(data['user']['affiliation'], 'UWC')
-        self.assertEqual(data['user']['department'], 'CS')
-        self.assertEqual(data['user']['nationality_country'], 'South Africa')
-        self.assertEqual(data['user']['residence_country'], 'Egypt')
-        self.assertEqual(data['user']['user_category'], 'Honours')
 
     def setup_multi_choice_answer(self):
         response = Response(1, 5, True)
@@ -884,10 +878,11 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(second_reviewer)
         db.session.commit()
 
+        users_id = [5,6,7]
         responses = [
-            Response(1, 5, is_submitted=True),
-            Response(1, 6, is_submitted=True),
-            Response(1, 7, is_submitted=True)
+            Response(application_form_id=1, user_id=users_id[0], is_submitted=True),
+            Response(application_form_id=1, user_id=users_id[1], is_submitted=True),
+            Response(application_form_id=1, user_id=users_id[2], is_submitted=True)
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -916,10 +911,12 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_responses)
         db.session.commit()
 
+        return users_id
+
 
     def test_review_history_returned(self):
         self.seed_static_data()
-        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
+        users_id = self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
 
         params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r3@r.com')
@@ -931,28 +928,13 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['num_entries'], 3)
 
         self.assertEqual(data['reviews'][0]['review_response_id'], 1)
-        self.assertEqual(data['reviews'][0]['nationality_country'], 'South Africa')
-        self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
-        self.assertEqual(data['reviews'][0]['affiliation'], 'UWC')
-        self.assertEqual(data['reviews'][0]['department'], 'CS')
-        self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
-        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][0]['reviewed_user_id'], str(users_id[0]))
 
         self.assertEqual(data['reviews'][1]['review_response_id'], 2)
-        self.assertEqual(data['reviews'][1]['nationality_country'], 'Botswana')
-        self.assertEqual(data['reviews'][1]['residence_country'], 'Namibia')
-        self.assertEqual(data['reviews'][1]['affiliation'], 'RU')
-        self.assertEqual(data['reviews'][1]['department'], 'Chem')
-        self.assertEqual(data['reviews'][1]['user_category'], 'Student')
-        self.assertEqual(data['reviews'][1]['final_verdict'], 'Yes')
+        self.assertEqual(data['reviews'][1]['reviewed_user_id'], str(users_id[1]))
 
         self.assertEqual(data['reviews'][2]['review_response_id'], 5)
-        self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
-        self.assertEqual(data['reviews'][2]['residence_country'], 'Mozambique')
-        self.assertEqual(data['reviews'][2]['affiliation'], 'UFH')
-        self.assertEqual(data['reviews'][2]['department'], 'Phys')
-        self.assertEqual(data['reviews'][2]['user_category'], 'MSc')
-        self.assertEqual(data['reviews'][2]['final_verdict'], 'Maybe')
+        self.assertEqual(data['reviews'][2]['reviewed_user_id'], str(users_id[2]))
         
     def test_brings_back_only_logged_in_reviewer_reviewresponses(self):
         self.seed_static_data()
@@ -1058,6 +1040,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['submitted_timestamp'], '2018-06-06T00:00:00')
         self.assertEqual(data['reviews'][2]['submitted_timestamp'], '2019-01-01T00:00:00')
 
+    # TODO re-add these tests once we can get the info outside of AppUser
+    @SkipTest
     def test_order_by_nationalitycountry(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
@@ -1072,6 +1056,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['nationality_country'], 'South Africa')
         self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
 
+    # TODO re-add these tests once we can get the info outside of AppUser
+    @SkipTest
     def test_order_by_residencecountry(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
@@ -1086,6 +1072,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['residence_country'], 'Mozambique')
         self.assertEqual(data['reviews'][2]['residence_country'], 'Namibia')
 
+    # TODO re-add these tests once we can get the info outside of AppUser
+    @SkipTest
     def test_order_by_affiliation(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
@@ -1100,6 +1088,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['affiliation'], 'UFH')
         self.assertEqual(data['reviews'][2]['affiliation'], 'UWC')
 
+    # TODO re-add these tests once we can get the info outside of AppUser
+    @SkipTest
     def test_order_by_department(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
@@ -1114,6 +1104,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['department'], 'Chem')
         self.assertEqual(data['reviews'][2]['department'], 'Phys')       
 
+    @SkipTest
     def test_order_by_usercategory(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
