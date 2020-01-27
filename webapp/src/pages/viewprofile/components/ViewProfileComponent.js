@@ -109,7 +109,6 @@ class ViewProfileComponent extends Component {
                       </div>
                       <div class={commonColClassName}>
                         <FormTextBox
-                          disabled
                           id={validationFields.firstName.name}
                           type="text"
                           placeholder={validationFields.firstName.display}

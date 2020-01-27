@@ -184,6 +184,7 @@ class ProfileForm extends Component {
       firstName,
       lastName,
       title,
+      email
     } = this.state.user;
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
@@ -207,7 +208,6 @@ class ProfileForm extends Component {
             </div>
             <div class={commonColClassName}>
               <FormTextBox
-                disabled
                 id={validationFields.firstName.name}
                 type="text"
                 placeholder={validationFields.firstName.display}
@@ -225,6 +225,15 @@ class ProfileForm extends Component {
                 value={lastName}
                 label={validationFields.lastName.display}
                 editable={false}
+              />
+            </div>
+            <div class={commonColClassName}>
+              <FormTextBox
+                id={validationFields.email.name}
+                type="email"
+                value={email}
+                label={validationFields.email.display}
+                description={"Read-only"}
               />
             </div>
           </div>
