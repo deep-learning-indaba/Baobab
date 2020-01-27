@@ -88,3 +88,5 @@ ATTENDANCE_ALREADY_CONFIRMED = (
     {'message': 'Attendance has already been confirmed for this user and event.'}, 400)
 ATTENDANCE_NOT_FOUND = (
     {'message': 'Attendance not found.'}, 404)
+ERROR_UPDATING_USER_PROFILE = (
+    {'message': 'Exception updating user profile.'}, 500)

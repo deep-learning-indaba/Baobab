@@ -289,6 +289,7 @@ class InvitedGuests extends Component {
     return "";
   }
 
+  // TODO change Baobab to [event]
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
 

@@ -8,15 +8,6 @@ class SignupMixin(object):
     req_parser.add_argument('firstname', type=str, required=True)
     req_parser.add_argument('lastname', type=str, required=True)
     req_parser.add_argument('user_title', type=str, required=True)
-    req_parser.add_argument('nationality_country_id', type=int, required=True)
-    req_parser.add_argument('residence_country_id', type=int, required=True)
-    req_parser.add_argument('user_gender', type=str, required=True)
-    req_parser.add_argument('affiliation', type=str, required=True)
-    req_parser.add_argument('department', type=str, required=True)
-    req_parser.add_argument('user_disability', type=str, required=True)
-    req_parser.add_argument('user_category_id', type=int, required=True)
-    req_parser.add_argument('user_primaryLanguage', type=str, required=True)
-    req_parser.add_argument('user_dateOfBirth', type=str, required=True)
     req_parser.add_argument('password', type=str, required=False)
 
 

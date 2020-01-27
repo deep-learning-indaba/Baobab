@@ -348,8 +348,9 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[0]['firstname'], 'Some')
             self.assertEqual(responses[0]['lastname'], 'Thing')
             self.assertEqual(responses[0]['email'], 'something@email.com')
-            self.assertEqual(responses[0]['user_category'], 'Postdoc')
-            self.assertEqual(responses[0]['affiliation'], 'university X')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[0]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[0]['affiliation'], 'University')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
 
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)
@@ -357,8 +358,9 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[1]['firstname'], 'event_admin')
             self.assertEqual(responses[1]['lastname'], 'Lastname')
             self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
-            self.assertEqual(responses[1]['user_category'], 'Postdoc')
-            self.assertEqual(responses[1]['affiliation'], 'university X')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[1]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[1]['affiliation'], 'NWU')
             self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
 
     def test_get_confirmed_not_event_admin(self):
