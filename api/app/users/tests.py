@@ -295,7 +295,7 @@ class UserApiTest(ApiTestCase):
         assert response.status_code == 404
 
     def setup_verified_user(self):
-        user = AppUser(email='something@email.com', firstname='Some', lastname='Thing', user_title='Mr',password= '123456')
+        user = AppUser(email='something@email.com', firstname='Some', lastname='Thing', user_title='Mr',password= '123456', organisation_id=1)
         user.verify_token = 'existing token'
         user.verify()
         db.session.add(user)
@@ -334,10 +334,10 @@ class UserApiTest(ApiTestCase):
         ]
         db.session.add_all(application_forms)
 
-        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc')
-        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc')
-        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc')
-        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc')
+        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
+        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
         users = [candidate1, candidate2, candidate3, event_admin]
         for user in users:
             user.verify()
@@ -473,11 +473,11 @@ class UserProfileApiTest(ApiTestCase):
         ]
         db.session.add_all(application_forms)
 
-        candidate1 = AppUser(email='c1@c.com', firstname='candidate', lastname='1', user_title='Mr',password= 'abc')
-        candidate2 = AppUser(email='c2@c.com', firstname='candidate', lastname='2', user_title='Ms', password='abc')
-        system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr',password='abc', is_admin=True)
-        event_admin = AppUser(email='event_admin@ea.com', firstname='event_admin', lastname='1', user_title='Ms', password='abc')
-        reviewer = AppUser(email='reviewer@r.com', firstname='reviewer', lastname='1', user_title='Ms', password='abc')
+        candidate1 = AppUser(email='c1@c.com', firstname='candidate', lastname='1', user_title='Mr',password= 'abc', organisation_id=1)
+        candidate2 = AppUser(email='c2@c.com', firstname='candidate', lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr',password='abc', organisation_id=1, is_admin=True)
+        event_admin = AppUser(email='event_admin@ea.com', firstname='event_admin', lastname='1', user_title='Ms', password='abc',organisation_id=1)
+        reviewer = AppUser(email='reviewer@r.com', firstname='reviewer', lastname='1', user_title='Ms', password='abc', organisation_id=1)
         users = [candidate1, candidate2, system_admin, event_admin, reviewer]
         for user in users:
             user.verify()
@@ -549,9 +549,9 @@ class EmailerAPITest(ApiTestCase):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
-        self.candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc')
-        self.candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc')
-        self.system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr', password='abc',is_admin=True)
+        self.candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        self.candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        self.system_admin = AppUser(email='system_admin@sa.com', firstname='system_admin', lastname='1', user_title='Mr', password='abc', organisation_id=1,is_admin=True)
 
         users = [self.candidate1, self.candidate2, self.system_admin]
         for user in users:
@@ -604,9 +604,9 @@ class OrganisationUserTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.add(Organisation('Indaba', 'System X', 'logo.png', 'large_logo.png', 'indaba'))
 
-        self.user1_org1 = AppUser('first_user@c.com', 'candidate', '1', 'Mr', 1, 1, 'M', 'UWC', 'CS', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 1)
-        self.user1_org2 = AppUser('first_user@c.com', 'candidate', '2', 'Ms', 1, 1, 'F', 'RU', 'Chem', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 2)
-        self.user2_org1 = AppUser('second_user@c.com', 'system_admin', '1', 'Mr', 1, 1, 'M', 'UFH', 'Phys', 'NA', 1, datetime(1984, 12, 12), 'Eng', 'abc', 1, True)
+        self.user1_org1 = AppUser('first_user@c.com', 'candidate', '1', 'Mr',  password="abc",organisation_id=1)
+        self.user1_org2 = AppUser('first_user@c.com', 'candidate', '2', 'Ms',  password="abc",organisation_id=2)
+        self.user2_org1 = AppUser('second_user@c.com', 'system_admin', '1', 'Mr', password="abc",organisation_id=1, is_admin=True)
 
         users = [self.user1_org1, self.user1_org2, self.user2_org1]
         for user in users:
@@ -623,6 +623,7 @@ class OrganisationUserTest(ApiTestCase):
 
         response = self.app.post('api/v1/authenticate', data=body, headers={'Origin': domain})
         data = json.loads(response.data)
+
         header = {
             'Authorization': data['token'],
             'Origin': domain
