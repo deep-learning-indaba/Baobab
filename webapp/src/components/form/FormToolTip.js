@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import ReactToolTip from "react-tooltip";
 class FormToolTip extends React.Component {
   render() {

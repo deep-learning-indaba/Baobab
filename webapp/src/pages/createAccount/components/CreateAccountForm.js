@@ -112,7 +112,7 @@ class CreateAccountForm extends Component {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
-    if (this.state.user.password != this.state.user.confirmPassword) {
+    if (this.state.user.password !== this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
     if (

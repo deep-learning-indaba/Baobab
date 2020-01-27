@@ -26,26 +26,26 @@ from sqlalchemy import func
 from app.utils import errors
 
 VERIFY_EMAIL_BODY = """
-Dear {} {} {},
+Dear {title} {firstname} {lastname},
 
-Thank you for creating a new Baobab account. Please use the following link to verify your email address:
+Thank you for creating a new {system} account. Please use the following link to verify your email address:
 
-{}/verifyEmail?token={}
+{host}/verifyEmail?token={token}
 
 Kind Regards,
-The Baobab Team
+{organisation}
 """
 
 RESET_EMAIL_BODY = """
-Dear {} {} {},
+Dear {title} {firstname} {lastname},
 
-You recently requested a password reset on Baobab, please use the following link to reset you password:
-{}/resetPassword?resetToken={}
+You recently requested a password reset on {system}, please use the following link to reset you password:
+{host}/resetPassword?resetToken={token}
 
-If you did not request a password reset, please ignore this email and contact the Deep Learning Indaba organisers.
+If you did not request a password reset, please ignore this email and contact {organisation}.
 
 Kind Regards,
-The Baobab Team
+{organisation}
 """
 
 user_fields = {
@@ -80,6 +80,7 @@ def user_info(user, roles):
     }
 
 
+# TODO: Update this to read from DB instead of app config and look for other usages.
 def get_baobab_host():
     return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
@@ -119,7 +120,8 @@ class UserAPI(SignupMixin, restful.Resource):
             firstname=firstname,
             lastname=lastname,
             user_title=user_title,
-            password=password)
+            password=password,
+            organisation_id=g.organisation.id)
 
         db.session.add(user)
 
@@ -131,11 +133,13 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if(not invitedGuest):
             send_mail(recipient=user.email,
-                      subject='Baobab Email Verification',
+                      subject='{} Email Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
-                          user_title, firstname, lastname,
-                          get_baobab_host(),
-                          user.verify_token))
+                          title=user_title, firstname=firstname, lastname=lastname,
+                          system=g.organisation.system_name,
+                          organisation=g.organisation.name,
+                          host=get_baobab_host(),
+                          token=user.verify_token))
 
             LOGGER.debug("Sent verification email to {}".format(user.email))
         else:
@@ -175,11 +179,13 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if not user.verified_email:
             send_mail(recipient=user.email,
-                      subject='Baobab Email Re-Verification',
+                      subject='{} Email Re-Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
-                          user_title, firstname, lastname,
-                          get_baobab_host(),
-                          user.verify_token))
+                          title=user_title, firstname=firstname, lastname=lastname,
+                          system=g.organisation.system_name,
+                          organisation=g.organisation.name,
+                          host=get_baobab_host(),
+                          token=user.verify_token))
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
@@ -284,8 +290,7 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
-        user = db.session.query(AppUser).filter(
-            func.lower(AppUser.email) == func.lower(args['email'])).first()
+        user = user_repository.get_by_email(args['email'], g.organisation.id)
 
         LOGGER.debug("Authenticating user: {}".format(args['email']))
 
@@ -322,13 +327,13 @@ class PasswordResetRequestAPI(restful.Resource):
         args = req_parser.parse_args()
 
         LOGGER.debug(
-            "Requesting password reset for email {}".format(args['email']))
+            "Requesting password reset for email {} and organisation {}".format(args['email'], g.organisation.name))
 
         user = db.session.query(AppUser).filter(
             func.lower(AppUser.email) == func.lower(args['email'])).first()
 
         if not user:
-            LOGGER.debug("No user found for email {}".format(args['email']))
+            LOGGER.debug("No user found for email {} and organisation {}".format(args['email'], g.organisation.name))
             return USER_NOT_FOUND
 
         password_reset = PasswordReset(user=user)
@@ -336,10 +341,11 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.commit()
 
         send_mail(recipient=args['email'],
-                  subject='Password Reset for Deep Learning Indaba portal',
+                  subject='Password Reset for {}'.format(g.organisation.system_name),
                   body_text=RESET_EMAIL_BODY.format(
-            user.user_title, user.firstname, user.lastname,
-            get_baobab_host(), password_reset.code))
+                        title=user.user_title, firstname=user.firstname, lastname=user.lastname,
+                        system=g.organisation.system_name, organisation=g.organisation.name,
+                        host=get_baobab_host(), token=password_reset.code))
 
         return {}, 201
 
@@ -412,7 +418,7 @@ class ResendVerificationEmailAPI(restful.Resource):
             func.lower(AppUser.email) == func.lower(email)).first()
 
         if not user:
-            LOGGER.debug("User not found for email: {}".format(email))
+            LOGGER.debug("User not found for email: {} in organisation: {}".format(email, g.organisation.name))
             return USER_NOT_FOUND
 
         if user.verify_token is None:
@@ -425,11 +431,13 @@ class ResendVerificationEmailAPI(restful.Resource):
             return ADD_VERIFY_TOKEN_FAILED
 
         send_mail(recipient=user.email,
-                  subject='Baobab Email Verification',
+                  subject='{} Email Verification'.format(g.organisation.system_name),
                   body_text=VERIFY_EMAIL_BODY.format(
-                      user.user_title, user.firstname, user.lastname,
-                      get_baobab_host(),
-                      user.verify_token))
+                      title=user.user_title, firstname=user.firstname, lastname=user.lastname,
+                      system=g.organisation.system_name,
+                      organisation=g.organisation.name,
+                      host=get_baobab_host(),
+                      token=user.verify_token))
 
         LOGGER.debug("Resent email verification to: {}".format(email))
 

@@ -13,26 +13,10 @@ from app import app, db
 class RegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self, create_registration=False):
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        test_user2 = AppUser('something2@email.com', 'Something2', 'Thing2', 'Mrs', 
-                            '123456')
-        test_user2.verified_email = True
-        db.session.add(test_user2)
-        db.session.commit()
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', '123456', True)
-        event_admin.verified_email = True
-        db.session.add(event_admin)
-
+        test_user = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        test_user2 = self.add_user('something2@email.com', 'Something2', 'Thing2', 'Mrs')
+        event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
+        
         db.session.commit()
 
         event = Event(
@@ -178,7 +162,7 @@ class RegistrationApiTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '123456'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
@@ -365,7 +349,7 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)
             self.assertEqual(responses[1]['user_id'], self.offer3.user_id)
             self.assertEqual(responses[1]['firstname'], 'event_admin')
-            self.assertEqual(responses[1]['lastname'], '1')
+            self.assertEqual(responses[1]['lastname'], 'Lastname')
             self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
             # TODO re-add once we get these fields outside of AppUser
             # self.assertEqual(responses[1]['user_category'], 'Postdoc')

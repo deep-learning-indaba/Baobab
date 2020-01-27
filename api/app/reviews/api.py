@@ -348,7 +348,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
         
-        reviewer_user = user_repository.get_by_email(reviewer_user_email)
+        reviewer_user = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
         if reviewer_user is None:
             return USER_NOT_FOUND
         

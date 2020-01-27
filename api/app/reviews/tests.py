@@ -24,7 +24,6 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         countries = [
-            Country('South Africa'),
             Country('Egypt'),
             Country('Botswana'),
             Country('Namibia'),

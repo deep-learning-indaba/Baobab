@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import logo from '../../images/indaba-logo-dark.png';
 import './Home.css';
-import { getEvents } from "../../services/events";
 import { applicationFormService } from "../../services/applicationForm";
 import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
@@ -10,7 +9,7 @@ import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 const headings = ["Event", "Start date", "End date", "Status"];
-const fieldNames = ["description", "start_date", "end_date", "status"];
+// const fieldNames = ["description", "start_date", "end_date", "status"]; unused
 
 class Home extends Component {
 
@@ -86,49 +85,42 @@ class Home extends Component {
   }
 
   render() {
-    let table = (<div></div>)
 
-    if (this.state.rows && this.state.rows.length > 0) {
-      const theadMarkup = (
-        <tr>
-          {this.state.headings.map((_cell, cellIndex) => {
-            return (
-              <th className="Cell">
-                {this.state.headings[cellIndex]}
-              </th>
-            )
-          })}
-        </tr>
-      );
+    // if (this.state.rows && this.state.rows.length > 0) {
+    //   const theadMarkup = (
+    //     <tr>
+    //       {this.state.headings.map((_cell, cellIndex) => {
+    //         return (
+    //           <th className="Cell">
+    //             {this.state.headings[cellIndex]}
+    //           </th>
+    //         )
+    //       })}
+    //     </tr>
+    //   );
 
-      const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
-        return (
-          <tr>
-            {fieldNames.map((_cell, cellIndex) => {
-              return (
-                <td className="Cell">
-                  {
-                    this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
-                      this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
-                      <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
-                      this.state.rows[rowIndex][fieldNames[cellIndex]]
-                  }
-                </td>
-              )
-            })}
-          </tr>
-        )
-      });
+    //   const tbodyMarkup = this.state.rows.map((_row, rowIndex) => {
+    //     return (
+    //       <tr>
+    //         {fieldNames.map((_cell, cellIndex) => {
+    //           return (
+    //             <td className="Cell">
+    //               {
+    //                 this.state.rows[rowIndex][fieldNames[cellIndex]] === "Apply now" || 
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]] === "Continue application" ?
+    //                   <NavLink to="/applicationForm">{this.state.rows[rowIndex][fieldNames[cellIndex]]}</NavLink> :
+    //                   this.state.rows[rowIndex][fieldNames[cellIndex]]
+    //               }
+    //             </td>
+    //           )
+    //         })}
+    //       </tr>
+    //     )
+    //   });
 
-      table = this.state.rows ? (
-        <table align="center" className="Table">
-          <thead>{theadMarkup}</thead>
-          <tbody>{tbodyMarkup}</tbody>
-        </table>
-      ) : (<div></div>)
-    }
+    // }
 
-    let statusClass = this.state.applicationStatus == "Submitted" 
+    let statusClass = this.state.applicationStatus === "Submitted" 
       ? this.state.offer === null ? "text-warning" : "text-success" 
       : "text-danger"
 
@@ -165,21 +157,21 @@ class Home extends Component {
                 <p>You've been invited to the Indaba as a guest! Please proceed to registration <NavLink to="/registration">here</NavLink>.</p>
                 </div>}
 
-                {this.state.applicationStatus == "Submitted" &&
+                {this.state.applicationStatus === "Submitted" &&
                 <div>
                   {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
                   : <p>You are currently on the waiting list for the Deep Learning Indaba 2019. Please await further communication.</p>}
                 </div>}
 
-                {this.state.applicationStatus == "Withdrawn" && <p>
+                {this.state.applicationStatus === "Withdrawn" && <p>
                   Your application has been withdrawn - you will not be considered for a place at the Indaba.
                 </p>}
 
-                {this.state.applicationStatus == "NOT Submitted" && <p>
+                {this.state.applicationStatus === "NOT Submitted" && <p>
                   You did not submit an application to attend the Deep Learning Indaba 2019!
                 </p>}
 
-                {this.state.applicationStatus == "Not Started" && this.state.invitedGuest !== true  && <p>
+                {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true  && <p>
                   You did not apply to attend the Deep Learning Indaba 2019.
                 </p>}
 
