@@ -411,7 +411,7 @@ class ReviewForm extends Component {
                 </div>
             )
         }
-
+        // TODO change Baobab to [event]
         return (
             <div class="review-form-container">
                 <h3 class="text-center mb-4">{form.user.user_category}
