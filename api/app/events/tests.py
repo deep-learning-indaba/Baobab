@@ -9,15 +9,29 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
+from app.organisation.models import Organisation
 
 
 class EventsAPITest(ApiTestCase):
 
     def seed_static_data(self):
         self.test_user = self.add_user('something@email.com')
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        test_country = Country('Indaba Land')
+        db.session.add(test_country)
+        db.session.commit()
+
+        test_category = UserCategory('Category1')
+        db.session.add(test_category)
+        db.session.commit()
+
+        self.test_user.verified_email = True
+        db.session.add(self.test_user)
+        db.session.commit()
 
         test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'SPEEDNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(test_event)
         db.session.commit()
 
@@ -215,6 +229,8 @@ class EventsStatsAPITest(ApiTestCase):
     }
 
     def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+
         test_country = Country('Indaba Land')
         db.session.add(test_country)
         db.session.commit()
@@ -232,7 +248,8 @@ class EventsStatsAPITest(ApiTestCase):
         self.test_user2 = json.loads(response.data)
 
         self.test_event = Event('Test Event', 'Event Description',
-                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60))
+                           datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
+                           'KONNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(self.test_event)
         db.session.commit()
 
@@ -308,8 +325,15 @@ class RemindersAPITest(ApiTestCase):
         self.add_user('applicant2@mail.co.za', 'applicant')
         
         db.session.commit()
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        country = Country('South Africa')
+        db.session.add(country)
 
-        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31))
+        user_category = UserCategory('Post Doc')
+        db.session.add(user_category)
+
+        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 
+        'COOLER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
         db.session.add(event)
         db.session.commit()
 

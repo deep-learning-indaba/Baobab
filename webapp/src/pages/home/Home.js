@@ -35,6 +35,11 @@ class Home extends Component {
     //   }
     // });
 
+    // Only check for response/offer/invited guest if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user)
+      return 
+
     applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
       let applicationStatus = null;
       if (resp.response) {
@@ -118,7 +123,7 @@ class Home extends Component {
     let statusClass = this.state.applicationStatus === "Submitted" 
       ? this.state.offer === null ? "text-warning" : "text-success" 
       : "text-danger"
-
+    // TODO change Baobab to [event]
     return (
       <div >
         <div>

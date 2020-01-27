@@ -5,7 +5,7 @@ const api_key = process.env.REACT_APP_STACKDRIVER_API_KEY || null;
 const environment = process.env.NODE_ENV;
 
 let errorHandler;
-
+// TODO change Baobab to [event]
 if (environment === "production") {
   if(api_key){
     errorHandler = new StackdriverErrorReporter();

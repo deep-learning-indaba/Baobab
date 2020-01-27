@@ -270,8 +270,9 @@ def map_registration_info(registration_info):
         'firstname': registration_info.AppUser.firstname,
         'lastname': registration_info.AppUser.lastname,
         'email': registration_info.AppUser.email,
-        'user_category': registration_info.AppUser.user_category.name,
-        'affiliation': registration_info.AppUser.affiliation,
+        # TODO get this from somewhere else
+        # 'user_category': registration_info.AppUser.user_category.name,
+        # 'affiliation': registration_info.AppUser.affiliation,
         'created_at': registration_info.Registration.created_at,
         'confirmed': registration_info.Registration.confirmed,
     }
@@ -290,8 +291,9 @@ def map_registration_info_guests(registration_info):
         'firstname': registration_info.AppUser.firstname,
         'lastname': registration_info.AppUser.lastname,
         'email': registration_info.AppUser.email,
-        'user_category': registration_info.AppUser.user_category.name,
-        'affiliation': registration_info.AppUser.affiliation,
+        # TODO get this information from somewhere else
+        # 'user_category': registration_info.AppUser.user_category.name,
+        # 'affiliation': registration_info.AppUser.affiliation,
         'created_at': created_at,
         'confirmed' : True,
     }
@@ -329,6 +331,7 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
                     event_id, confirmed=confirmed)                
             guest_registration = GuestRegistrationRepository.get_all_guests(
                 event_id)
+
         registrations = [map_registration_info(info) for info in registrations]
         guest_registrations = [map_registration_info_guests(
             info) for info in guest_registration]
@@ -400,7 +403,6 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
                 return errors.FORBIDDEN
 
             registration.confirm()
-
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
             if _send_registration_confirmation_mail(registration_user, registration_event.name):

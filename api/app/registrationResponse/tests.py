@@ -8,6 +8,7 @@ from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.models import RegistrationQuestion
 from app import app, db
+from app.organisation.models import Organisation
 
 
 class RegistrationApiTest(ApiTestCase):
@@ -17,6 +18,9 @@ class RegistrationApiTest(ApiTestCase):
         test_user2 = self.add_user('something2@email.com', 'Something2', 'Thing2', 'Mrs')
         event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
         
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
         db.session.commit()
 
         event = Event(
@@ -24,7 +28,10 @@ class RegistrationApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='SPEEDNET', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning'
         )
         db.session.add(event)
         db.session.commit()
@@ -341,8 +348,9 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[0]['firstname'], 'Some')
             self.assertEqual(responses[0]['lastname'], 'Thing')
             self.assertEqual(responses[0]['email'], 'something@email.com')
-            self.assertEqual(responses[0]['user_category'], 'Postdoc')
-            self.assertEqual(responses[0]['affiliation'], 'university X')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[0]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[0]['affiliation'], 'University')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
 
             self.assertEqual(responses[1]['registration_id'], self.registration3.id)
@@ -350,8 +358,9 @@ class RegistrationApiTest(ApiTestCase):
             self.assertEqual(responses[1]['firstname'], 'event_admin')
             self.assertEqual(responses[1]['lastname'], 'Lastname')
             self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
-            self.assertEqual(responses[1]['user_category'], 'Postdoc')
-            self.assertEqual(responses[1]['affiliation'], 'university X')
+            # TODO re-add once we get these fields outside of AppUser
+            # self.assertEqual(responses[1]['user_category'], 'Postdoc')
+            # self.assertEqual(responses[1]['affiliation'], 'NWU')
             self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
 
     def test_get_confirmed_not_event_admin(self):
