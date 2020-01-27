@@ -159,10 +159,13 @@ class UserAPI(SignupMixin, restful.Resource):
         firstname = args['firstname']
         lastname = args['lastname']
         user_title = args['user_title']
+        email = args['email']
 
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
 
+        if user.email != email:
+            user.update_email(email)
 
         user.firstname = firstname
         user.lastname = lastname
