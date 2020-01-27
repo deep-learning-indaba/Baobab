@@ -52,6 +52,7 @@ class ProfileForm extends Component {
           title: result.user_title,
           firstName: result.firstname,
           lastName: result.lastname,
+          email: result.email
         }
       });
     });

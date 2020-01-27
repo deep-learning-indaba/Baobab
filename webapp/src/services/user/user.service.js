@@ -43,7 +43,6 @@ function create(user) {
       firstname: user.firstName,
       lastname: user.lastName,
       user_title: user.title,
-      user_primaryLanguage: user.primaryLanguage,
       password: user.password
     })
     .then(response => {
@@ -62,7 +61,6 @@ function update(user) {
         firstname: user.firstName,
         lastname: user.lastName,
         user_title: user.title,
-        user_primaryLanguage: user.primaryLanguage,
         password: ""
       },
       { headers: authHeader() }
