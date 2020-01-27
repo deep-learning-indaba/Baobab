@@ -1,14 +1,14 @@
-"""empty message
+"""Made AppUser fields nullable
 
 Revision ID: 7fced3d22209
-Revises: 2873f4f08a4b
+Revises: 32c1ae6dd23a
 Create Date: 2020-01-22 14:26:45.992225
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '7fced3d22209'
-down_revision = '2873f4f08a4b'
+down_revision = '32c1ae6dd23a'
 
 from alembic import op
 import sqlalchemy as sa
