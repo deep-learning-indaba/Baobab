@@ -171,6 +171,7 @@ class CreateAccountForm extends Component {
 
     const { loading, errors, showErrors, error, created } = this.state;
 
+    // TODO change your Baobab account to [event] account
     if (created) {
       return (
         <div className="CreateAccount">

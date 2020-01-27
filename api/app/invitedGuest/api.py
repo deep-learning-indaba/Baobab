@@ -32,7 +32,7 @@ def invitedGuest_info(invitedGuest, user):
         'role': invitedGuest.role,
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
-
+# TODO change your Baobab to [event] 
 GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
 We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 

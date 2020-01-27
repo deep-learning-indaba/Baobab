@@ -166,6 +166,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         
         return {'unsubmitted_responses': len(users)}, 201
 
+# TODO change your Baobab to [event] 
 NOT_STARTED_EMAIL_BODY="""
 Dear {title} {firstname} {lastname},
 

@@ -123,7 +123,7 @@ class Home extends Component {
     let statusClass = this.state.applicationStatus === "Submitted" 
       ? this.state.offer === null ? "text-warning" : "text-success" 
       : "text-danger"
-
+    // TODO change Baobab to [event]
     return (
       <div >
         <div>
