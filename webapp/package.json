@@ -16,6 +16,7 @@
     "react": "^16.7.0",
     "react-app-polyfill": "^0.2.2",
     "react-bootstrap4-modal": "^1.7.0",
+    "react-cookie-consent": "^3.0.0",
     "react-dom": "^16.7.0",
     "react-draft-wysiwyg": "^1.14.4",
     "react-error-boundary": "^1.2.3",
