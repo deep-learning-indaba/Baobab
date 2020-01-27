@@ -9,7 +9,7 @@ class EventRepository():
         return db.session.query(Event).get(event_id)
 
     @staticmethod
-    def add(event: Event):
+    def add(event):
         db.session.add(event)
         db.session.commit()
         return event

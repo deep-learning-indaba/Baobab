@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.events.models import Event, EventRole
 from app.events.mixins import EventsMixin, EventMixin
-from app.events.repository import add, get_by_id
+from app.events.repository import EventRepository as event_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -122,7 +122,7 @@ class EventAPI(EventMixin, restful.Resource):
                       start_date=start_date,
                       end_date=end_date)
 
-        event = add(event)
+        event = event_repository.add(event)
 
         try:
             admin_event_role = EventRole('admin', user_id, event.id)
@@ -139,7 +139,7 @@ class EventAPI(EventMixin, restful.Resource):
     def put(self):
         args = self.req_parser.parse_args()
 
-        event = get_by_id(args['id'])
+        event = event_repository.get_by_id(args['id'])
 
         if not event:
             return EVENT_NOT_FOUND
