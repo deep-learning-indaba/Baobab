@@ -1,5 +1,5 @@
 from app import db
-from app.events.models import Event, EventRole
+from app.events.models import Event
 from app.organisation.models import Organisation
 
 
@@ -34,13 +34,3 @@ class EventRepository():
         db.session.add(event)
         db.session.commit()
         return event
-
-
-class EventRoleRepository():
-
-    @staticmethod
-    def add(role, user_id, event_id):
-        event_role = EventRole(role, user_id, event_id)
-        db.session.add(event_role)
-        db.session.commit()
-        return event_role

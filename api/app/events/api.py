@@ -14,11 +14,11 @@ from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, ADD_EVENT_ROLE_FAILED
+from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
-from app.events.repository import EventRepository as event_repository, EventRoleRepository as event_role_repository
+from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 
 
@@ -153,20 +153,14 @@ class EventAPI(EventMixin, restful.Resource):
             registration_open,
             registration_close
         )
-
+        event.add_event_role('admin', user_id)
         try:
             event = event_repository.add(event)
-        except IntegrityError:
-            LOGGER.error("Event with KEY: {} already exists".format(key))
-            return EVENT_KEY_IN_USE
+        except IntegrityError as e:
 
-        try:
-            admin_event_role = event_role_repository.add(
-                'admin', user_id, event.id)
-        except Exception as e:
-            LOGGER.error(
-                'Failed to add event role for user id {} due to: {}'.format(user_id, e))
-            return ADD_EVENT_ROLE_FAILED
+            LOGGER.error("Event with KEY: {} already exists".format(key))
+            LOGGER.error(e)
+            return EVENT_KEY_IN_USE
 
         event_org = event_repository.get_by_id_with_organisation(event.id)
         return event_info(user_id, event_org), 201

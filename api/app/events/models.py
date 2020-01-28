@@ -32,6 +32,7 @@ class Event(db.Model):
 
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
+    event_roles = db.relationship('EventRole')
 
     def __init__(self,
                  name,
@@ -71,7 +72,8 @@ class Event(db.Model):
         self.offer_open = offer_open
         self.offer_close = offer_close
         self.registration_open = registration_open
-        self.registration_close = registration_close
+        self.registration_close = registration_close,
+        self.event_roles = []
 
     def set_name(self, new_name):
         self.name = new_name
@@ -117,6 +119,10 @@ class Event(db.Model):
 
     def get_application_form(self):
         return self.application_forms[0]
+
+    def add_event_role(self, role, user_id):
+        event_role = EventRole(role, user_id, self.id)
+        self.event_roles.append(event_role)
 
     def update(self,
                name,
@@ -194,6 +200,7 @@ class EventRole(db.Model):
     role = db.Column(db.String(50), nullable=False)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
+    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(self, role, user_id, event_id):
         self.role = role
