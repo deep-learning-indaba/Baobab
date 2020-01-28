@@ -9,6 +9,7 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import CookieConsent from "react-cookie-consent";
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -401,6 +402,18 @@ class App extends Component {
               </div>
             </div>
           </footer>
+          <CookieConsent
+            cookieName="sweetIndabaCookie"
+            style={{ background: "#343a40" }}
+            buttonStyle={{ fontWeight: "bold" }}
+            enableDeclineButton
+            declineButtonText="Decline"
+            buttonText="I accept"
+            buttonClasses="btn btn-primary"
+            containerClasses="alert alert-warning col-lg-12"
+            contentClasses="text-capitalize"
+          > By accepting you agree to our use of cookies and other technologies to process your personal data to give you better functionality and to ensure your experience is consistent between visits.  <a href="/PrivacyPolicy.pdf" style={{ color: "white" }}>Learn more >></a>
+          </CookieConsent>
         </div>
       </Router>
     );

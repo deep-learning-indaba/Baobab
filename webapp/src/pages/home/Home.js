@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 
+
 class Home extends Component {
 
     constructor(props) {
@@ -30,7 +31,9 @@ class Home extends Component {
             });
         }
         
-        this.props.setEvent(null, null);
+        if (this.props.setEvent) {
+            this.props.setEvent(null, null);
+        }
 
         organisationService.getOrganisation().then(response=>{
             if (response.error) {
