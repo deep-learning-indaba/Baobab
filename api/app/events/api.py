@@ -92,9 +92,7 @@ class EventsAPI(restful.Resource):
         if g and hasattr(g, 'current_user') and g.current_user:
             user_id = g.current_user["id"]
 
-        events = db.session.query(Event, Organisation).filter(
-            Event.start_date > datetime.now()).join(Organisation, Organisation.id==Event.organisation_id).all()
-
+        events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
 
         for event in events:
@@ -140,13 +138,7 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         if not event:
             return EVENT_WITH_KEY_NOT_FOUND
 
-        user_id = g.current_user["id"]
-        event_id = args['event_id']
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
-
-        return event_info(user_id, event), 200
+        return event_info(g.current_user['id'], event), 200
 
 
 NOT_SUBMITTED_EMAIL_BODY="""
