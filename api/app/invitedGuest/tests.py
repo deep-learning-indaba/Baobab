@@ -63,9 +63,15 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(Country('South Africa'))
 
         self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning')
+                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(self.event1)
         db.session.add(self.event2)
         db.session.commit()

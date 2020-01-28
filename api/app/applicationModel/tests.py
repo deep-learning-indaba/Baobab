@@ -17,7 +17,10 @@ class ApplicationFormApiTest(ApiTestCase):
 
         test_event = Event('Test Event', 'Event Description',
                            self.start_time, self.end_time, 
-                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(
