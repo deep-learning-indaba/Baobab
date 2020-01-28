@@ -90,3 +90,5 @@ ATTENDANCE_NOT_FOUND = (
     {'message': 'Attendance not found.'}, 404)
 ERROR_UPDATING_USER_PROFILE = (
     {'message': 'Exception updating user profile.'}, 500)
+ADD_EVENT_ROLE_FAILED = (
+    {'message': 'Unable to add event role for the user_id and event_id.'}, 500)
