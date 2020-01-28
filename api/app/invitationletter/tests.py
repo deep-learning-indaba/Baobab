@@ -50,7 +50,17 @@ class InvitationLetterTests(ApiTestCase):
             key='REGINAL', 
             organisation_id=1, 
             email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning'
+            url='indaba.deeplearning',
+            application_open=datetime.now(), 
+            application_close=datetime.now(),
+            review_open=datetime.now(),
+            review_close=datetime.now(),
+            selection_open=datetime.now(),
+            selection_close=datetime.now(),
+            offer_open=datetime.now(),
+            offer_close=datetime.now(),
+            registration_open=datetime.now(),
+            registration_close=datetime.now()
         )
         db.session.add(event)
         db.session.commit()
@@ -307,7 +317,17 @@ class PDFConverterTest(ApiTestCase):
             key='REGINAL', 
             organisation_id=1, 
             email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning'
+            url='indaba.deeplearning',
+            application_open=datetime.now(), 
+            application_close=datetime.now(),
+            review_open=datetime.now(),
+            review_close=datetime.now(),
+            selection_open=datetime.now(),
+            selection_close=datetime.now(),
+            offer_open=datetime.now(),
+            offer_close=datetime.now(),
+            registration_open=datetime.now(),
+            registration_close=datetime.now()
         )
         db.session.add(event)
         db.session.commit()
