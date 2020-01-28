@@ -136,9 +136,13 @@ class EventStatus extends Component {
                     You did not submit an application to attend {event.description}.
                   </p>}
   
-                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true  && <p>
+                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && !this.props.event.is_application_open && <p>
                     You did not apply to attend {event.description}.
                   </p>}
+
+                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && this.props.event.is_application_open && <NavLink to={`${this.props.event.key}/apply`} className="btn btn-success">
+                      Apply Now!                    
+                  </NavLink>}
   
                 </div>
               </div>

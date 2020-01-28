@@ -294,7 +294,7 @@ class Section extends React.Component {
             />
           ))}
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="save mx-auto link-style" onClick={this.handleSave}>
+          <button className="save mx-auto link-style" onClick={this.handleSave} >
             Save for later...
           </button>
         )}

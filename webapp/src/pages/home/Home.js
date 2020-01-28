@@ -63,7 +63,13 @@ class Home extends Component {
                     <tbody>
                         {this.state.events.map(e=>{
                             // TODO: Update status based on event stage changes.
-                            return <tr><td><h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>{e.start_date + " to " + e.end_date}</td><td>{e.status}</td></tr>
+                            return (<tr>
+                                <td>
+                                    <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                    {e.start_date + " to " + e.end_date}
+                                </td>
+                                <td>{e.status === "Apply now" && e.is_application_open ? <NavLink to={`${e.key}/apply`} className="btn btn-success">Apply Now</NavLink> : e.status}</td>
+                            </tr>)
                         })}
                     </tbody>
                 </table>}
