@@ -34,11 +34,11 @@ def event_info(user_id, event_org):
         'organisation_name': event_org.Organisation.name,
         'organisation_id': event_org.Organisation.id,
         'url': event_org.Event.url,
-        'is_application_open': event.is_application_open,
-        'is_review_open': event.is_review_open,
-        'is_selection_open': event.is_selection_open,
-        'is_offer_open': event.is_offer_open,
-        'is_registration_open': event.is_registration_open
+        'is_application_open': event_org.Event.is_application_open,
+        'is_review_open': event_org.Event.is_review_open,
+        'is_selection_open': event_org.Event.is_selection_open,
+        'is_offer_open': event_org.Event.is_offer_open,
+        'is_registration_open': event_org.Event.is_registration_open
     }
 
 

@@ -31,7 +31,10 @@ class EventsAPITest(ApiTestCase):
 
         test_event = Event('Test Event', 'Event Description',
                            datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
-                           'SPEEDNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                           'SPEEDNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(test_event)
         db.session.commit()
 
@@ -249,7 +252,10 @@ class EventsStatsAPITest(ApiTestCase):
 
         self.test_event = Event('Test Event', 'Event Description',
                            datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60), 
-                           'KONNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+                           'KONNET', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(self.test_event)
         db.session.commit()
 
@@ -333,7 +339,9 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(user_category)
 
         event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 
-        'COOLER', 1, 'abx@indaba.deeplearning','indaba.deeplearning')
+        'COOLER', 1, 'abx@indaba.deeplearning','indaba.deeplearning', datetime.now(), datetime.now(), 
+        datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+        datetime.now(), datetime.now())
         db.session.add(event)
         db.session.commit()
 
