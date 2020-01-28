@@ -159,7 +159,7 @@ class RegistrationComponent extends Component {
   componentDidMount() {
     this.setState({isLoading: true});
 
-    offerServices.getOffer(this.props.event.id).then(result => {
+    offerServices.getOffer(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error === "" && result.offer !== null) {
         this.setState(
           {
@@ -168,7 +168,7 @@ class RegistrationComponent extends Component {
           },
           () => {
             registrationService
-              .getRegistrationForm(this.props.event.id, this.state.offer.id)
+              .getRegistrationForm(this.props.event ? this.props.event.id : 0, this.state.offer.id)
               .then(result => {
                 if (
                   result.error === "" &&

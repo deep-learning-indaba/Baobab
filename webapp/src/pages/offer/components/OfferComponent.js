@@ -46,7 +46,7 @@ class Offer extends Component {
         offerServices
           .updateOffer(
             offer.id,
-            this.props.event.id,
+            this.props.event ? this.props.event.id : 0,
             candidate_response,
             candidate_response? "" : rejected_reason,
             accepted_accommodation_award,
@@ -323,7 +323,7 @@ class Offer extends Component {
   }
 
   componentDidMount(){
-    applicationFormService.getResponse(this.props.event.id).then(results => {
+    applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(results => {
       console.log(results)
       if (results.is_submitted && !results.is_withdrawn){
         this.setState({
@@ -340,7 +340,7 @@ class Offer extends Component {
 
   getOffer = () => {
     this.setState({ loading: true });
-    offerServices.getOffer(this.props.event.id).then(result => {
+    offerServices.getOffer(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error && result.statusCode === 404) {
         this.setState({
           noOffer: true,

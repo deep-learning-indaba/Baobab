@@ -27,7 +27,7 @@ class ReviewHistoryComponent extends Component {
 
   loadReviewHistory = (pageNumber,pageSize,sortColumn) => {
     reviewService
-      .getReviewHistory(this.props.event.id, pageNumber, pageSize,sortColumn)
+      .getReviewHistory(this.props.event ? this.props.event.id : 0, pageNumber, pageSize,sortColumn)
       .then(response => {
         this.setState({
           isLoading: false,

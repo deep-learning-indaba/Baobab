@@ -82,9 +82,9 @@ class EventStatus extends Component {
   }
 
   componentDidMount() {
-    this.getApplicationResponse(this.props.event.id);
-    this.getOffer(this.props.event.id);
-    this.getInvitedGuest(this.props.event.id);
+    this.getApplicationResponse(this.props.event ? this.props.event.id : 0);
+    this.getOffer(this.props.event ? this.props.event.id : 0);
+    this.getInvitedGuest(this.props.event ? this.props.event.id : 0);
   }
 
   render() {
@@ -136,11 +136,11 @@ class EventStatus extends Component {
                     You did not submit an application to attend {event.description}.
                   </p>}
   
-                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && !this.props.event.is_application_open && <p>
+                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && this.props.event && !this.props.event.is_application_open && <p>
                     You did not apply to attend {event.description}.
                   </p>}
 
-                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && this.props.event.is_application_open && <NavLink to={`${this.props.event.key}/apply`} className="btn btn-success">
+                  {this.state.applicationStatus === "Not Started" && this.state.invitedGuest !== true && this.props.event && this.props.event.is_application_open && <NavLink to={`${this.props.event.key}/apply`} className="btn btn-success">
                       Apply Now!                    
                   </NavLink>}
   
@@ -167,7 +167,7 @@ class EventHome extends Component {
   }
 
   componentDidMount() {
-    const { eventKey } = this.props.match.params;
+    const eventKey = this.props.match ? this.props.match.params : null;
 
     this.setState({
       isLoading: true

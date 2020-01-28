@@ -158,7 +158,7 @@ class GuestRegistrationComponent extends Component {
   componentDidMount() {
     this.setState({isLoading: true});
 
-    registrationService.getGuestRegistration(this.props.event.id).then(result => {
+    registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error === "" && result.form.registration_sections.length > 0) {
         let questionSections = [];
         for (var i = 0; i < result.form.registration_sections.length; i++) {

@@ -493,7 +493,7 @@ class ApplicationForm extends Component {
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(this.props.event.id).then(response => {
+    applicationFormService.getForEvent(this.props.event ? this.props.event.id: 0).then(response => {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -505,7 +505,7 @@ class ApplicationForm extends Component {
   }
 
   loadResponse = () => {
-    applicationFormService.getResponse(this.props.event.id).then(resp => {
+    applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(resp => {
       if (resp.response) {
         this.setState({
           responseId: resp.response.id,

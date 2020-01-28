@@ -14,7 +14,7 @@ export default class Registration extends Component {
   }
 
   componentDidMount() {
-    invitedGuestServices.determineIfInvitedGuest(this.props.event.id).then(response => {
+    invitedGuestServices.determineIfInvitedGuest(this.props.event ? this.props.event.id : 0).then(response => {
       if (response.statusCode === "200") {
         this.setState({
           GuestRegistration: true

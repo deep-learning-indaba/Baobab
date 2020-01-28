@@ -55,7 +55,7 @@ class InvitedGuests extends Component {
     };
   }
   getGuestList() {
-    invitedGuestServices.getInvitedGuestList(this.props.event.id).then(result => {
+    invitedGuestServices.getInvitedGuestList(this.props.event ? this.props.event.id : 0).then(result => {
       this.setState({
         loading: false,
         guestList: result.form,
@@ -249,7 +249,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .addInvitedGuest(this.state.user.email, this.props.event.id, this.state.user.role)
+        .addInvitedGuest(this.state.user.email, this.props.event ? this.props.event.id : 0, this.state.user.role)
         .then(resp => this.handleResponse(resp));
     });
   }
@@ -268,7 +268,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .createInvitedGuest(user, this.props.event.id, user.role)
+        .createInvitedGuest(user, this.props.event ? this.props.event.id : 0, user.role)
         .then(resp => this.handleResponse(resp));
     });
   }

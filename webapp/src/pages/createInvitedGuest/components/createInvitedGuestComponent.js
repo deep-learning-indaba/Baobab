@@ -114,7 +114,7 @@ class creatreInvitedGuestComponent extends Component {
     //TODO review this workflow, it seems dodgy. 
     //createInvitedGuest always returns 400 (no role). Then addInvitedGuest creates the invitedguest.
     invitedGuestServices
-      .createInvitedGuest(this.state.user, this.props.event.id)
+      .createInvitedGuest(this.state.user, this.props.event ? this.props.event.id : 0)
       .then(user => {
         this.setState({
           created: true
@@ -126,7 +126,7 @@ class creatreInvitedGuestComponent extends Component {
         } else if (this.state.created === true) {
           invitedGuestServices.addInvitedGuest(
             this.state.user.email,
-            this.props.event.id,
+            this.props.event ? this.props.event.id : 0,
             this.state.user.role
           );
           this.props.history.push("/invitedGuests");

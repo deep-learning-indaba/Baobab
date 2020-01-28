@@ -22,14 +22,14 @@ class ReviewAssignmentComponent extends Component {
 
 
   componentDidMount() {
-    reviewService.getReviewAssignments(this.props.event.id).then(result=>{
+    reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0).then(result=>{
       this.setState({
         loading: false,
         reviewers: result.reviewers,
         error: result.error,
         newReviewerEmail: ""
       });
-      return reviewService.getReviewSummary(this.props.event.id);
+      return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
     })
     .then(result => {
       this.setState({
@@ -59,10 +59,10 @@ class ReviewAssignmentComponent extends Component {
     }
 
     // Assign the reviews
-    reviewService.assignReviews(this.props.event.id, this.state.reviewers).then(
+    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, this.state.reviewers).then(
       result => {
         // Get updated reviewers, with updated allocations
-        return reviewService.getReviewAssignments(this.props.event.id)
+        return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0)
       }, 
       error => this.setState({ error, loading: false})
     ).then(
@@ -73,7 +73,7 @@ class ReviewAssignmentComponent extends Component {
           error: result.error,
           newReviewerEmail: ""
         });
-        return reviewService.getReviewSummary(this.props.event.id);
+        return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
       },
       error => this.setState({ error, loading: false})
     )

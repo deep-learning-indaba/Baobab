@@ -17,7 +17,7 @@ class EventStatsComponent extends Component {
   }
 
   componentDidMount() {
-    eventStatsService.getStats(this.props.event.id).then(result=>{
+    eventStatsService.getStats(this.props.event ? this.props.event.id : 0).then(result=>{
       this.setState({
         loading: false,
         buttonLoading: false,
@@ -32,9 +32,9 @@ class EventStatsComponent extends Component {
     event.preventDefault();
     this.setState({ buttonLoading: true });
 
-    eventStatsService.sendReminderToSubmit(this.props.event.id).then(
+    eventStatsService.sendReminderToSubmit(this.props.event ? this.props.event.id : 0).then(
       result => {
-        return eventStatsService.sendReminderToBegin(this.props.event.id)
+        return eventStatsService.sendReminderToBegin(this.props.event ? this.props.event.id : 0)
       },
       error => this.setState({ error, buttonLoading: false })
     ).then(

@@ -23,7 +23,7 @@ class ProfileListComponent extends Component{
     this.setState({Desc_Asc:!this.state.Desc_Asc});
  }
  componentDidMount(){ 
-    profileService.getProfilesList(this.props.event.id)
+    profileService.getProfilesList(this.props.event ? this.props.event.id : 0)
                     .then(results => {
                         this.setState(
                             {

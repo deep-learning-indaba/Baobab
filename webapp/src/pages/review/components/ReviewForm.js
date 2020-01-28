@@ -192,7 +192,7 @@ class ReviewForm extends Component {
             reviewService.getReviewResponse(responseId).then(this.processResponse);
         }
         else {
-            reviewService.getReviewForm(this.props.event.id, this.state.currentSkip).then(this.processResponse);
+            reviewService.getReviewForm(this.props.event ? this.props.event.id : 0, this.state.currentSkip).then(this.processResponse);
         }
     }
 
@@ -320,7 +320,7 @@ class ReviewForm extends Component {
         this.setState({
             flagSubmitting: true
         }, ()=> {
-            userService.addComment(this.props.event.id, this.state.form.user.id, this.state.flagValue)
+            userService.addComment(this.props.event ? this.props.event.id : 0, this.state.form.user.id, this.state.flagValue)
                 .then(response => {
                     if (response.error) {
                         this.setState({

@@ -210,7 +210,7 @@ class InvitationLetterForm extends Component {
       () => {
         this.setState({ loading: true });
         registrationService
-          .requestInvitationLetter(this.state.user, this.props.event.id)
+          .requestInvitationLetter(this.state.user, this.props.event ? this.props.event.id : 0)
           .then(
             response => {
               this.setState({

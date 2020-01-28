@@ -40,7 +40,7 @@ class EventNav extends Component {
       return false;
     }
     return (
-      user.is_admin || (user.roles && user.roles.some(r => r.role === "admin" && r.event_id === event.id))
+      user.is_admin || (user.roles && user.roles.some(r => r.role === "admin" && event && r.event_id === event.id))
     );
   };
 
@@ -52,7 +52,7 @@ class EventNav extends Component {
       user.is_admin ||
       (user.roles &&
         user.roles.some(
-          r => (r.role === "admin" || r.role === "registration-admin") && r.event_id === event.id
+          r => (r.role === "admin" || r.role === "registration-admin") && event && r.event_id === event.id
         ))
     );
   };
@@ -65,7 +65,7 @@ class EventNav extends Component {
       user.is_admin ||
       (user.roles &&
         user.roles.some(
-          r => (r.role === "admin" || r.role === "registration-admin" || r.role === "registration-volunteer") && r.event_id === event.id
+          r => (r.role === "admin" || r.role === "registration-admin" || r.role === "registration-volunteer") && event && r.event_id === event.id
         ))
     );
   };
@@ -74,7 +74,7 @@ class EventNav extends Component {
     if (!user) {
       return false;
     }
-    return user.roles && user.roles.some(r => r.role === "reviewer" && r.event_id === event.id);
+    return user.roles && user.roles.some(r => r.role === "reviewer" && event && r.event_id === event.id);
   };
 
   render() {
@@ -91,7 +91,7 @@ class EventNav extends Component {
           Home
         </NavLink>
       </li>
-      {this.props.user && this.props.event.is_application_open && (
+      {this.props.user && this.props.event && this.props.event.is_application_open && (
         <li className="nav-item">
           <NavLink
             to={`/${this.props.eventKey}/apply`}
@@ -103,7 +103,7 @@ class EventNav extends Component {
           </NavLink>
         </li>
       )}
-      {this.props.user && this.props.event.is_offer_open && (
+      {this.props.user && this.props.event && this.props.event.is_offer_open && (
       <li className="nav-item">
         <NavLink
           to={`/${this.props.eventKey}/offer`}
@@ -115,7 +115,7 @@ class EventNav extends Component {
         </NavLink>
       </li>
       )}
-      {this.props.user && this.props.event.is_registration_open && (
+      {this.props.user && this.props.event && this.props.event.is_registration_open && (
         <li className="nav-item dropdown ">
           <div
             className="nav-link dropdown-toggle link-style"
@@ -198,7 +198,7 @@ class EventNav extends Component {
           </div>
         </li>
       )}
-      {this.isEventReviewer(this.props.user, this.props.event) && this.props.event.is_review_open && (
+      {this.isEventReviewer(this.props.user, this.props.event) && this.props.event && this.props.event.is_review_open && (
         <li className="nav-item dropdown">
           <div
             className="nav-link dropdown-toggle link-style"
@@ -228,7 +228,7 @@ class EventNav extends Component {
           </div>
         </li>
       )}
-      {this.isRegistrationAdmin(this.props.user, this.props.event) && this.props.event.is_registration_open && (
+      {this.isRegistrationAdmin(this.props.user, this.props.event) && this.props.event && this.props.event.is_registration_open && (
         <li className="nav-item dropdown">
           <div
             className="nav-link dropdown-toggle link-style"
