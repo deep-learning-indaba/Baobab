@@ -72,7 +72,7 @@ class Event(db.Model):
         self.offer_open = offer_open
         self.offer_close = offer_close
         self.registration_open = registration_open
-        self.registration_close = registration_close,
+        self.registration_close = registration_close
         self.event_roles = []
 
     def set_name(self, new_name):
