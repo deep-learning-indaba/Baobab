@@ -7,6 +7,7 @@ from files import api as files_api
 from events import api as events_api
 from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
+from references import api as reference_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
 from guestRegistrations import api as guest_registration
@@ -69,6 +70,12 @@ rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
 rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
                       '/api/v1/checkIfInvitedGuest')
+rest_api.add_resource(reference_api.ReferenceRequestFormAPI,
+                      '/api/v1/reference-request/send')
+rest_api.add_resource(reference_api.ReferenceRequestListAPI,
+                      '/api/v1/reference-request/list')
+rest_api.add_resource(reference_api.ReferenceRequestAPI,
+                      '/api/v1/reference-request')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')

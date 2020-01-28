@@ -25,6 +25,11 @@ class ReferenceRequestRepository():
         reference_request.set_token(str(uuid.uuid4()))
         db.session.add(reference_request)
         db.session.commit()
+    
+    @staticmethod
+    def update(reference_request):
+        db.session.add(reference_request)
+        db.session.commit()
 
     @staticmethod
     def get_all_by_response_id(response_id):

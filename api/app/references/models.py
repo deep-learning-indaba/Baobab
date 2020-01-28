@@ -14,7 +14,9 @@ class ReferenceRequest(db.Model):
     lastname = db.Column(db.String(50), nullable=False)
     relation = db.Column(db.String(50), nullable=False)
     token = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), nullable=True)
     email_sent = db.Column(db.DateTime(), nullable=True)
+
 
     response = db.relationship('Response', foreign_keys=[response_id])
 
@@ -23,13 +25,15 @@ class ReferenceRequest(db.Model):
                 title,
                 firstname,
                 lastname, 
-                relation
+                relation,
+                email
                  ):
         self.response_id = response_id
         self.title = title
         self.firstname = firstname
         self.lastname = lastname
         self.relation = relation
+        self.email = email
 
     def set_email_sent(self, email_sent):
         self.email_sent = email_sent
