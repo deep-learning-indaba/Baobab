@@ -6,6 +6,7 @@ import { applicationFormService } from "../../services/applicationForm";
 import { offerServices } from "../../services/offer/offer.service";
 import { NavLink } from "react-router-dom";
 import { invitedGuestServices } from '../../services/invitedGuests/invitedGuests.service';
+import CookieConsent from "react-cookie-consent";
 
 const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
@@ -189,6 +190,18 @@ class Home extends Component {
           //Temporarily removed during campaign to get people to complete their applications
           //this.props.user && table
         }
+        <CookieConsent
+          cookieName="sweetIndabaCookie"
+          style={{ background: "#343a40" }}
+          buttonStyle={{ fontWeight: "bold" }}
+          enableDeclineButton
+          declineButtonText="Decline"
+          buttonText="I accept"
+          buttonClasses="btn btn-primary"
+          containerClasses="alert alert-warning col-lg-12"
+          contentClasses="text-capitalize"
+        > By accepting you agree to our use of cookies and other technologies to process your personal data to give you better functionality and to ensure your experience is consistent between visits.  <a href="/PrivacyPolicy.pdf" style={{ color: "white" }}>Learn more >></a>
+        </CookieConsent>
       </div>
     );
   }
