@@ -32,10 +32,10 @@ function getEvents() {
 
 function getByKey(event_key) {
     return axios
-        .get(baseUrl + `/api/v1/events`, { 'headers': authHeader() })  // TODO: Update to event key API
+        .get(baseUrl + `/api/v1/event-by-key?event_key=${event_key}`, { 'headers': authHeader() })
         .then(function(response){
             return{
-                event: response.data.find(d=>d.description.toLowerCase().includes(event_key)),
+                event: response.data,
                 error:"",
                 statusCode: response.status
             };

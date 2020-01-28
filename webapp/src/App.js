@@ -78,12 +78,14 @@ class EventNav extends Component {
   };
 
   render() {
+    // TODO: Update visibility based on event stages. 
+
     return (
     <ul className="navbar-nav mr-auto">
       <li className={"nav-item"}>
         <NavLink
           exact
-          to="/"
+          to={`/${this.props.eventKey}`}
           activeClassName="nav-link active"
           className="nav-link"
           onClick={this.props.toggleMenu}
@@ -94,7 +96,7 @@ class EventNav extends Component {
       {this.props.user && (
         <li className="nav-item">
           <NavLink
-            to={`${this.props.eventKey}/apply`}
+            to={`/${this.props.eventKey}/apply`}
             activeClassName="nav-link active"
             className="nav-link"
             onClick={this.props.toggleMenu}
@@ -106,7 +108,7 @@ class EventNav extends Component {
       {this.props.user && (
       <li className="nav-item">
         <NavLink
-          to={`${this.props.eventKey}/offer`}
+          to={`/${this.props.eventKey}/offer`}
           activeClassName="nav-link active"
           className="nav-link"
           onClick={this.props.toggleMenu}
@@ -129,14 +131,14 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to={`${this.props.eventKey}/registration`}
+              to={`/${this.props.eventKey}/registration`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Registration Form
             </NavLink>
             <NavLink
-              to={`${this.props.eventKey}/invitationLetter`}
+              to={`/${this.props.eventKey}/invitationLetter`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -144,7 +146,7 @@ class EventNav extends Component {
             </NavLink>
             {this.isRegistrationVolunteer(this.state.user) && 
               <NavLink
-                to={`${this.props.eventKey}/eventAttendance`}
+                to={`/${this.props.eventKey}/eventAttendance`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
@@ -168,28 +170,28 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to={`${this.props.eventKey}/eventStats`}
+              to={`/${this.props.eventKey}/eventStats`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Event Stats
             </NavLink>
             <NavLink
-              to={`${this.props.eventKey}/reviewAssignment`}
+              to={`/${this.props.eventKey}/reviewAssignment`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Review Assignment
             </NavLink>
             <NavLink
-              to={`${this.props.eventKey}/invitedGuests`}
+              to={`/${this.props.eventKey}/invitedGuests`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Invited Guests
             </NavLink>
             <NavLink
-              to={`${this.props.eventKey}/profile-list`}
+              to={`/${this.props.eventKey}/profile-list`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -212,14 +214,14 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to={`${this.props.eventKey}/review`}
+              to={`/${this.props.eventKey}/review`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
               Review
             </NavLink>
             <NavLink
-              to={`${this.props.eventKey}/reviewHistory`}
+              to={`/${this.props.eventKey}/reviewHistory`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >
@@ -242,7 +244,7 @@ class EventNav extends Component {
           </div>
           <div className="dropdown-menu" aria-labelledby="navbarDropdown">
             <NavLink
-              to={`${this.props.eventKey}/registrationAdmin`}
+              to={`/${this.props.eventKey}/registrationAdmin`}
               className="dropdown-item"
               onClick={this.props.toggleMenu}
             >

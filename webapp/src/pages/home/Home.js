@@ -62,7 +62,8 @@ class Home extends Component {
                 {this.state.events && this.state.events.length > 0 && <table className="event-table">
                     <tbody>
                         {this.state.events.map(e=>{
-                            return <tr><td><h5>{e.description}</h5>{e.start_date + " to " + e.end_date}</td><td>{e.status}</td></tr>
+                            // TODO: Update status based on event stage changes.
+                            return <tr><td><h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>{e.start_date + " to " + e.end_date}</td><td>{e.status}</td></tr>
                         })}
                     </tbody>
                 </table>}
