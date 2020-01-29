@@ -14,7 +14,8 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
+    organisation_id = db.Column(db.Integer(), db.ForeignKey(
+        'organisation.id'), nullable=False)
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
 
@@ -31,15 +32,16 @@ class Event(db.Model):
 
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
+    event_roles = db.relationship('EventRole')
 
-    def __init__(self, 
-                 name, 
-                 description, 
-                 start_date, 
+    def __init__(self,
+                 name,
+                 description,
+                 start_date,
                  end_date,
-                 key, 
-                 organisation_id, 
-                 email_from, 
+                 key,
+                 organisation_id,
+                 email_from,
                  url,
                  application_open,
                  application_close,
@@ -71,6 +73,7 @@ class Event(db.Model):
         self.offer_close = offer_close
         self.registration_open = registration_open
         self.registration_close = registration_close
+        self.event_roles = []
 
     def set_name(self, new_name):
         self.name = new_name
@@ -117,11 +120,53 @@ class Event(db.Model):
     def get_application_form(self):
         return self.application_forms[0]
 
+    def add_event_role(self, role, user_id):
+        event_role = EventRole(role, user_id, self.id)
+        self.event_roles.append(event_role)
+
+    def update(self,
+               name,
+               description,
+               start_date,
+               end_date,
+               key,
+               organisation_id,
+               email_from,
+               url,
+               application_open,
+               application_close,
+               review_open,
+               review_close,
+               selection_open,
+               selection_close,
+               offer_open,
+               offer_close,
+               registration_open,
+               registration_close):
+        self.name = name
+        self.description = description
+        self.start_date = start_date
+        self.end_date = end_date
+        self.key = key
+        self.organisation_id = organisation_id
+        self.email_from = email_from
+        self.url = url
+        self.application_open = application_open
+        self.application_close = application_close
+        self.review_open = review_open
+        self.review_close = review_close
+        self.selection_open = selection_open
+        self.selection_close = selection_close
+        self.offer_open = offer_open
+        self.offer_close = offer_close
+        self.registration_open = registration_open
+        self.registration_close = registration_close
+
     @property
     def is_application_open(self):
         now = datetime.now()
         return now >= self.application_open and now < self.application_close
-    
+
     @property
     def is_review_open(self):
         now = datetime.now()
@@ -142,6 +187,7 @@ class Event(db.Model):
         now = datetime.now()
         return now >= self.registration_open and now < self.registration_close
 
+
 class EventRole(db.Model):
 
     __tablename__ = "event_role"
@@ -154,6 +200,7 @@ class EventRole(db.Model):
     role = db.Column(db.String(50), nullable=False)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
+    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(self, role, user_id, event_id):
         self.role = role
