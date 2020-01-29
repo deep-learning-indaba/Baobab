@@ -5,8 +5,6 @@ import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
 
-// const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class ViewProfileComponent extends Component {
   constructor(props) {
     super(props);
@@ -145,7 +143,7 @@ class ViewProfileComponent extends Component {
                 <div class="row">
                   <fieldset class="fieldset">
                     <legend class="legend">User Application Info. </legend>
-                    <div class="row" class={colClassNameUserApplicationInfo}>
+                    <div className="row" class={colClassNameUserApplicationInfo}>
                       {is_Submitted && (
                         <div >
                           <div class="form-group">

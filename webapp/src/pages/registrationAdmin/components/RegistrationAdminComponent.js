@@ -5,8 +5,6 @@ import ReactTable from 'react-table';
 import FormTextBox from "../../../components/form/FormTextBox";
 import { registrationAdminService } from "../../../services/registration/registration.admin.service";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class RegistrationAdminComponent extends Component {
     constructor(props) {
       super(props);
@@ -23,7 +21,7 @@ class RegistrationAdminComponent extends Component {
     }
 
     getUnconfirmed = () => {
-      registrationAdminService.getUnconfirmed(DEFAULT_EVENT_ID).then(response=> {
+      registrationAdminService.getUnconfirmed(this.props.event ? this.props.event.id : 0).then(response=> {
         this.setState({
           unconfirmedList: response.data,
           error: response.error,

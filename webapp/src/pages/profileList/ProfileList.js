@@ -6,7 +6,7 @@ export default class ProfileList extends Component {
 
     render(){
      return (
-        <ProfileListComponent></ProfileListComponent>
+        <ProfileListComponent {...this.props}></ProfileListComponent>
      );
     }
 

@@ -1,20 +1,13 @@
-.img-fluid{
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  padding-top: 30px;
+img.large-logo {
+    margin-bottom: 2em;
+    max-width: 600px;
 }
 
-.Blurb{
-  text-align: center;
-  margin: 30px;
+table.event-table {
+    border-collapse: separate;
+    border-spacing: 50px 0;
 }
 
-.Table {
-  border-spacing: 0px;
-}
-
-.Cell {
-  padding: 4px;
-  text-align: left;
+table.event-table td {
+    padding: 10px 0;
 }

@@ -4,8 +4,9 @@ import ApplicationForm from "./components/ApplicationForm"
 
 export default class Application extends Component {
     render() {
+
       return (
-       <ApplicationForm/> 
+       <ApplicationForm {...this.props}/> 
       );
     }
   }

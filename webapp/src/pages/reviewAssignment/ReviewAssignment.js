@@ -6,7 +6,7 @@ export default class ReviewAssignment extends Component {
   
   render() {
     return (
-      <ReviewAssignmentComponent></ReviewAssignmentComponent> 
+      <ReviewAssignmentComponent {...this.props}></ReviewAssignmentComponent> 
     );
   }
 }
