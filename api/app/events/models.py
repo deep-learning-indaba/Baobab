@@ -30,6 +30,7 @@ class Event(db.Model):
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
 
+    organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')

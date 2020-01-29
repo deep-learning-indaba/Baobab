@@ -15,6 +15,7 @@ class Response(db.Model):
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
 
+    application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer')
 
