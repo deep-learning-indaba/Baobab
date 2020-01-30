@@ -12,6 +12,8 @@ class Organisation(db.Model):
     domain = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(100), nullable=False)
 
+    events = db.relationship('Event')
+
     def __init__(self, name, system_name, small_logo, large_logo, domain, url):
         self.name = name
         self.small_logo = small_logo
