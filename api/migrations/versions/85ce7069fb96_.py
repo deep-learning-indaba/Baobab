@@ -38,6 +38,21 @@ We have noticed that some people were confused about the "check your answers" pa
 Kind Regards,
 The {organisation_name} team
 """
+            },
+            {
+                'id': 2,
+                'key': 'application-not-started',
+                'event_id': None,
+                'template': """
+Dear {title} {firstname} {lastname},
+WE HAVE NOT RECEIVED YOUR APPLICATION TO ATTEND {event}
+We noticed that you have created a {system_name} account, but have not yet started an application to attend {event}.
+If you think you have already filled in the form, you may have not clicked on the SUBMIT button on the final page. If this is the case, we DO NOT have your application and unfortunately you will have to re-do it. We sincerely apologise for any confusion and inconvenience in this regard.
+This is a final reminder that you have until {deadline} to complete and submit your application.
+Please ensure you have submitted your application before this date if you would still like to attend this event.
+Kind Regards,
+The {organisation_name} team
+"""
             }
         ]
     )

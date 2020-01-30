@@ -353,12 +353,10 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(event)
         db.session.commit()
 
-        email_template = EmailTemplate(
-            'application-not-submitted', 
-            None, 
-            '{title} {firstname} {lastname} {event} {deadline} {organisation_name}'
-        )
-        db.session.add(email_template)
+        email_templates = [
+            EmailTemplate('application-not-submitted', None, ''),
+            EmailTemplate('application-not-started', None, '')]
+        db.session.add_all(email_templates)
         db.session.commit()
 
         event_role = EventRole('admin', event_admin.id, event.id)

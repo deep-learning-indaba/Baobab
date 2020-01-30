@@ -344,24 +344,6 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
         return {'unsubmitted_responses': len(users)}, 201
 
 
-# TODO change your Baobab to [event]
-NOT_STARTED_EMAIL_BODY = """
-Dear {title} {firstname} {lastname},
-
-WE HAVE NOT RECEIVED YOUR APPLICATION TO ATTEND {event}
-
-We noticed that you have created a Baobab account, but have not yet started an application to attend {event}.
-
-If you think you have already filled in the form, you may have not clicked on the SUBMIT button on the final page. If this is the case, we DO NOT have your application and unfortunately you will have to re-do it. We sincerely apologise for any confusion and inconvenience in this regard.
-This is a final reminder that you have until {deadline} to complete and submit your application.
-
-Please ensure you have submitted your application before this date if you would still like to attend this event.
-
-Kind Regards,
-The Deep Learning Indaba team
-"""
-
-
 class NotStartedReminderAPI(EventsMixin, restful.Resource):
 
     @auth_required
@@ -384,12 +366,21 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             firstname = user.firstname
             lastname = user.lastname
             event_name = event.name
+            organisation_name = event.organisation.name
+            system_name = event.organisation.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
 
+            not_started_body = email_repository.get(event_id, 'application-not-started').template
             subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
                 event_name)
-            body = NOT_STARTED_EMAIL_BODY.format(
-                title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
+            body = not_started_body.format(
+                title=title,
+                firstname=firstname,
+                lastname=lastname,
+                event=event_name,
+                organisation_name=organisation_name,
+                system_name=system_name,
+                deadline=deadline)
 
             send_mail(recipient=user.email, subject=subject, body_text=body)
 
