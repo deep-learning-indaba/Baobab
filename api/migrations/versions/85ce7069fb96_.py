@@ -36,7 +36,7 @@ Dear {title} {firstname} {lastname},
 We noticed that you started applying to attend the {event} but have not completed and submitted your application. This is a final reminder that you have until {deadline} to submit your application in order to be considered. Please complete and submit your application if you would still like to attend this event.
 We have noticed that some people were confused about the "check your answers" page and may not have clicked on the Submit button on this page. Please be aware that you must click on the Submit button to confirm your application. If you do not receive an email from us with a copy of your answers, your application will not be considered.
 Kind Regards,
-The {organisation_name} team
+The {organisation_name} Team
 """
             },
             {
@@ -51,7 +51,18 @@ If you think you have already filled in the form, you may have not clicked on th
 This is a final reminder that you have until {deadline} to complete and submit your application.
 Please ensure you have submitted your application before this date if you would still like to attend this event.
 Kind Regards,
-The {organisation_name} team
+The {organisation_name} Team
+"""
+            },
+            {
+                'id': 3,
+                'key': 'withdrawal',
+                'event_id': None,
+                'template': """Dear {title} {firstname} {lastname},
+This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
+If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
+Kind Regards,
+The {organisation_name} Team
 """
             }
         ]
