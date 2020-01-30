@@ -12,6 +12,9 @@ down_revision = '33e175de61ca'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import table, column
+
+from app.email_template.models import EmailTemplate
 
 
 def upgrade():
