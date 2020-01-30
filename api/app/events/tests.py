@@ -5,6 +5,7 @@ from app import app, db, LOGGER
 from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
+from app.email_template.models import EmailTemplate
 from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
@@ -350,6 +351,14 @@ class RemindersAPITest(ApiTestCase):
         ), datetime.now(), datetime.now(), datetime.now(),
             datetime.now(), datetime.now())
         db.session.add(event)
+        db.session.commit()
+
+        email_template = EmailTemplate(
+            'application-not-submitted', 
+            None, 
+            '{title} {firstname} {lastname} {event} {deadline} {organisation_name}'
+        )
+        db.session.add(email_template)
         db.session.commit()
 
         event_role = EventRole('admin', event_admin.id, event.id)

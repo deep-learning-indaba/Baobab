@@ -6,6 +6,7 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
+from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event, EventRole
 from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin
 from app.users.models import AppUser
@@ -302,18 +303,6 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         return event_info(g.current_user['id'], event), 200
 
 
-NOT_SUBMITTED_EMAIL_BODY = """
-Dear {title} {firstname} {lastname},
-
-We noticed that you started applying to attend the {event} but have not completed and submitted your application. This is a final reminder that you have until {deadline} to submit your application in order to be considered. Please complete and submit your application if you would still like to attend this event.
-
-We have noticed that some people were confused about the "check your answers" page and may not have clicked on the Submit button on this page. Please be aware that you must click on the Submit button to confirm your application. If you do not receive an email from us with a copy of your answers, your application will not be considered.
-
-Kind Regards,
-The Deep Learning Indaba team
-"""
-
-
 class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
 
     @auth_required
@@ -336,12 +325,19 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             firstname = user.firstname
             lastname = user.lastname
             event_name = event.name
+            organisation_name = event.organisation.name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
 
             subject = 'FINAL REMINDER to submit you application for {}'.format(
                 event_name)
-            body = NOT_SUBMITTED_EMAIL_BODY.format(
-                title=title, firstname=firstname, lastname=lastname, event=event_name, deadline=deadline)
+            not_submitted_body = email_repository.get(event_id, 'application-not-submitted').template
+            body = not_submitted_body.format(
+                title=title,
+                firstname=firstname,
+                lastname=lastname,
+                event=event_name,
+                organisation_name=organisation_name,
+                deadline=deadline)
 
             send_mail(recipient=user.email, subject=subject, body_text=body)
 
