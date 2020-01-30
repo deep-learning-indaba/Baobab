@@ -12,7 +12,6 @@ import traceback
 from flask import g, request
 from flask_restful import  fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
-from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.registration.models import Offer
 from app.registration.mixins import OfferMixin
@@ -23,6 +22,22 @@ from app.utils.auth import auth_required, admin_required
 from app.utils.emailer import send_mail
 from config import BOABAB_HOST
 
+OFFER_EMAIL_BODY = """
+Dear {user_title} {first_name} {last_name},
+
+Congratulations! You've been selected to attend the {event_name}!
+
+Please follow the link below to see details and accept your offer: {host}/offer
+You have up until the {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
+
+If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
+We will read all of these and if there is anything we can do to accommodate you (for example if more funding for travel becomes available), we may extend you a new offer in a subsequent round.
+
+If you have any queries, please forward them to info@deeplearningindaba.com  
+
+Kind Regards,
+The Deep Learning Indaba Team
+"""
 
 def get_baobab_host():
     return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
@@ -150,9 +165,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.add(offer_entity)
         db.session.commit()
 
-        offer_template = email_repository.get(event_id, 'offer').template
         if user.email:
-            email_body_template = email_template or offer_template
+            email_body_template = email_template or OFFER_EMAIL_BODY
             send_mail(recipient=user.email, subject='{} Application Status Update'.format(event_name),
                       body_text=email_body_template.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,

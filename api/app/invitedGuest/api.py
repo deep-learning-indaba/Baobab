@@ -11,7 +11,6 @@ from flask import g, request
 import random
 import string
 
-from app.email_template.repository import EmailRepository as email_repository
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED
@@ -33,6 +32,36 @@ def invitedGuest_info(invitedGuest, user):
         'role': invitedGuest.role,
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
+# TODO change your Baobab to [event] 
+GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
+
+We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 
+To assist with our planning process, please complete our guest registration form in Baobab, by visiting {host}/registration 
+After completing this, you will also be able to generate an official invitation letter, should you require one for visa or other purposes.
+
+Please reply to this email should you have any questions or concerns.  
+
+Kind Regards,
+The Deep Learning Indaba Organising Committee
+"""
+
+NEW_GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
+
+We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 
+To assist with our planning process, please complete our guest registration form in our portal, Baobab, by following these instructions:
+
+1. Visit {host}/resetPassword?resetToken={reset_code} to set your account password.
+2. Log in using your email address (the one you received this email on!) and new password.
+3. Visit {host}/registration to complete the registration form.
+4. Update your user profile by visiting {host}/profile - while this step is optional, we highly value this data for reporting purposes! 
+
+After completing the registration form, you will also be able to generate an official invitation letter, should you require one for visa or other purposes.
+
+Please reply to this email should you have any questions or concerns. 
+
+Kind Regards,
+The Deep Learning Indaba Organising Committee
+"""
 
 
 class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
@@ -74,19 +103,16 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
                 "Failed to add invited guest: {}".format(email))
             return ADD_INVITED_GUEST_FAILED
 
-        guest_invite_template = email_repository.get(event_id, 'guest-invite').template
         if send_email:
             try:
                 send_mail(
                     recipient=user.email,
                     subject='Your invitation to {}'.format(event.name),
-                    body_text=guest_invite_template.format(
+                    body_text=GUEST_EMAIL_TEMPLATE.format(
                         user_title=user.user_title, 
                         firstname=user.firstname, 
                         lastname=user.lastname,
                         role=role,
-                        organisation_name=event.organisation.name,
-                        system_name=event.organisation.system_name,
                         host=misc.get_baobab_host()))
             except Exception as e:
                 LOGGER.error('Failed to send email to invited guest with user Id {}, due to {}'.format(user.id, e))
@@ -120,18 +146,15 @@ class CreateUser(SignupMixin, restful.Resource):
             db.session.add(password_reset)
             db.session.commit()
 
-            new_guest_invite_template = email_repository.get(event_id, 'new-guest-invite').template
             try:
                 send_mail(
                         recipient=user.email,
                         subject='Your invitation to {}'.format(event.name),
-                        body_text=new_guest_invite_template.format(
+                        body_text=NEW_GUEST_EMAIL_TEMPLATE.format(
                             user_title=user.user_title, 
                             firstname=user.firstname, 
                             lastname=user.lastname,
                             role=role,
-                            organisation_name=event.organisation.name,
-                            system_name=event.organisation.system_name,
                             host=misc.get_baobab_host(),
                             reset_code=password_reset.code))
             except Exception as e:

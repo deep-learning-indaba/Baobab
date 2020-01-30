@@ -3,11 +3,11 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from app import db
 
+from app.attendance.emails import ATTENDANCE_EMAIL_BODY
 from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.events.repository import EventRepository as event_repository
-from app.email_template.repository import EmailRepository as email_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import send_mail
@@ -104,16 +104,14 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         attendance = Attendance(event_id, user_id, registration_user_id)
         attendance_repository.create(attendance)
 
-        attendance_email_body = email_repository.get(event_id, 'attendance-welcome').template
         send_mail(
             recipient=user.email,
             subject='Welcome to {}'.format(event.name),
-            body_text=attendance_email_body.template.format(
+            body_text=ATTENDANCE_EMAIL_BODY.format(
                 user_title=user.user_title,
                 first_name=user.firstname,
                 last_name=user.lastname,
-                event_name=event.name,
-                organisation_name=event.organisation.name)
+                event_name=event.name)
         )
 
         # Other Fields
