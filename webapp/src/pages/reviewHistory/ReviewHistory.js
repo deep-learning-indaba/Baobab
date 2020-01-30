@@ -4,6 +4,6 @@ import ReviewHistoryComponent from "./components/ReviewHistoryComponent";
 
 export default class ReviewHistory extends Component {
   render() {
-    return <ReviewHistoryComponent />;
+    return <ReviewHistoryComponent {...this.props}/>;
   }
 }

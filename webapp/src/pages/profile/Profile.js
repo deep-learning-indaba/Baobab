@@ -6,7 +6,7 @@ export default class Profile extends Component {
 
   render() {
     return (
-      <ProfileForm loggedIn={this.props.loggedIn}></ProfileForm>
+      <ProfileForm loggedIn={this.props.loggedIn} {...this.props}></ProfileForm>
     );
   }
 }

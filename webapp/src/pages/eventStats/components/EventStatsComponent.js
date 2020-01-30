@@ -3,8 +3,6 @@ import { Chart } from "react-google-charts";
 import { eventStatsService } from "../../../services/eventStats";
 import { withRouter } from "react-router";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class EventStatsComponent extends Component {
   constructor(props) {
     super(props);
@@ -19,7 +17,7 @@ class EventStatsComponent extends Component {
   }
 
   componentDidMount() {
-    eventStatsService.getStats(DEFAULT_EVENT_ID).then(result=>{
+    eventStatsService.getStats(this.props.event ? this.props.event.id : 0).then(result=>{
       this.setState({
         loading: false,
         buttonLoading: false,
@@ -34,9 +32,9 @@ class EventStatsComponent extends Component {
     event.preventDefault();
     this.setState({ buttonLoading: true });
 
-    eventStatsService.sendReminderToSubmit(DEFAULT_EVENT_ID).then(
+    eventStatsService.sendReminderToSubmit(this.props.event ? this.props.event.id : 0).then(
       result => {
-        return eventStatsService.sendReminderToBegin(DEFAULT_EVENT_ID)
+        return eventStatsService.sendReminderToBegin(this.props.event ? this.props.event.id : 0)
       },
       error => this.setState({ error, buttonLoading: false })
     ).then(
