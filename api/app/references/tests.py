@@ -42,7 +42,7 @@ class ReferenceAPITest(ApiTestCase):
             'email' :'common@email.com'
         }
         response = self.app.post(
-            '/api/v1/reference-request/send', data=REFERENCE_REQUEST_DETAIL, headers=self.headers)
+            '/api/v1/reference-request', data=REFERENCE_REQUEST_DETAIL, headers=self.headers)
         assert response.status_code == 201
 
 

@@ -70,8 +70,6 @@ rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
 rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
                       '/api/v1/checkIfInvitedGuest')
-rest_api.add_resource(reference_api.ReferenceRequestFormAPI,
-                      '/api/v1/reference-request/send')
 rest_api.add_resource(reference_api.ReferenceRequestListAPI,
                       '/api/v1/reference-request/list')
 rest_api.add_resource(reference_api.ReferenceRequestAPI,

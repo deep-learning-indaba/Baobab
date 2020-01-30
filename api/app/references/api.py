@@ -5,16 +5,18 @@ import flask_restful as restful
 from flask_restful import fields, marshal_with
 
 from app.events.models import Event
+from app.events.repository import EventRepository as event_repository
 from app import LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.references.models import ReferenceRequest
-from app.references.mixins import ReferenceRequestsMixin, ReferenceRequestsFormMixin, ReferenceRequestsListMixin
+from app.references.mixins import ReferenceRequestsMixin, ReferenceRequestsListMixin
 from app.utils import misc
 from app.users.repository import UserRepository as user_repository
+from app.responses.repository import ResponseRepository as response_repository
 
 reference_request_fields = {
     'id': fields.Integer,
@@ -33,27 +35,13 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
     @auth_required
     def get(self):
         LOGGER.debug('Received get request for reference-request')
-        args = self.req_parser.parse_args()
+        args = self.get_req_parser.parse_args()
         return reference_request_repository.get_by_id(args['id']), 200
-
-    
-class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):
-
-    @marshal_with(reference_request_fields)
-    @auth_required
-    def get(self):
-        LOGGER.debug('Received get request for reference-request')
-        args = self.req_parser.parse_args()
-        return reference_request_repository.get_all_by_response_id(args['response_id']), 200
-
-
-
-class ReferenceRequestFormAPI(ReferenceRequestsFormMixin, restful.Resource):
 
     @auth_required
     def post(self):
         LOGGER.debug('Received post request for reference-request')
-        args = self.req_parser.parse_args()
+        args = self.post_req_parser.parse_args()
         response_id = args['response_id']
         title = args['title']
         firstname = args['firstname']
@@ -65,7 +53,7 @@ class ReferenceRequestFormAPI(ReferenceRequestsFormMixin, restful.Resource):
         if not user:
             return USER_NOT_FOUND
 
-        response_event = reference_request_repository.get_event_by_response_id(response_id)
+        response_event = event_repository.get_event_by_response_id(response_id)
         if not response_event or not response_event.Event:
             return EVENT_NOT_FOUND
         event = response_event.Event
@@ -87,6 +75,24 @@ class ReferenceRequestFormAPI(ReferenceRequestsFormMixin, restful.Resource):
         reference_request.set_email_sent(datetime.now())
         reference_request_repository.update(reference_request)
         return {}, 201
+
+    
+class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):
+
+    @marshal_with(reference_request_fields)
+    @auth_required
+    def get(self):
+        LOGGER.debug('Received get request for reference-request')
+        user = user_repository.get_by_id(g.current_user['id'])
+        if not user:
+            return USER_NOT_FOUND
+
+        args = self.req_parser.parse_args()
+        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        if not response:
+            return RESPONSE_NOT_FOUND
+
+        return reference_request_repository.get_all_by_response_id(response.id), 200
 
 
 REFERENCE_REQUEST_EMAIL_BODY="""
