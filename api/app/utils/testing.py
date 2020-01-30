@@ -66,8 +66,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.flush()
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='com', url='www.org.com'):
-        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain, url))
+                                    large_logo='org_big.png', domain='com', url='www.org.com',
+                                    email_from='contact@org.com'):
+        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain, url, email_from))
         db.session.commit()
 
     def tearDown(self):

@@ -133,6 +133,8 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if(not invitedGuest):
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject='{} Email Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
                           title=user_title, firstname=firstname, lastname=lastname,
@@ -179,6 +181,8 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if not user.verified_email:
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject='{} Email Re-Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
                           title=user_title, firstname=firstname, lastname=lastname,
@@ -340,6 +344,8 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.commit()
 
         send_mail(recipient=args['email'],
+                  sender_name=g.organisation.name,
+                  sender_email=g.organisation.email_from,
                   subject='Password Reset for {}'.format(g.organisation.system_name),
                   body_text=RESET_EMAIL_BODY.format(
                         title=user.user_title, firstname=user.firstname, lastname=user.lastname,
@@ -429,6 +435,8 @@ class ResendVerificationEmailAPI(restful.Resource):
             return ADD_VERIFY_TOKEN_FAILED
 
         send_mail(recipient=user.email,
+                  sender_name=g.organisation.name,
+                  sender_email=g.organisation.email_from,
                   subject='{} Email Verification'.format(g.organisation.system_name),
                   body_text=VERIFY_EMAIL_BODY.format(
                       title=user.user_title, firstname=user.firstname, lastname=user.lastname,
@@ -508,6 +516,8 @@ class EmailerAPI(restful.Resource):
             return errors.USER_NOT_FOUND
         try:
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject=args['email_subject'],
                       body_text=GENERIC_EMAIL_TEMPLATE.format(
                           user_title=user.user_title,
