@@ -240,8 +240,16 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         try:
             subject = 'Your application to {}'.format(event.description)
-            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
-            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, answers)
+            question_answer_summary = strings.build_response_email_body(answers)
+
+            template = email_repository.get(event.id, 'confirmation-response').template
+            body_text = template.format(
+                title=user.user_title,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                event_description=event.description,
+                question_answer_summary=question_answer_summary,
+                event_name=event.name)
             emailer.send_mail(user.email, subject, body_text=body_text)
 
         except:

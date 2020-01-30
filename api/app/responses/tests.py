@@ -41,8 +41,12 @@ class ResponseApiTest(ApiTestCase):
         organisation = Organisation('Deep Learning Indaba', 'Baobab', 'blah.png', 'blah_big.png', 'deeplearningindba', 'https://www.deeplearningindaba.com')
         _add_object_to_db(organisation)
 
-        email_template = EmailTemplate('withdrawal', None, '')
-        _add_object_to_db(email_template)
+        email_templates = [
+            EmailTemplate('withdrawal', None, ''),
+            EmailTemplate('confirmation-response', None, '{question_answer_summary}')
+        ]
+        db.session.add_all(email_templates)
+        db.session.commit()
 
         # Add a user
         test_country = Country('Indaba Land')

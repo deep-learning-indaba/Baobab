@@ -64,6 +64,21 @@ If this was a mistake, you may resubmit an application before the application de
 Kind Regards,
 The {organisation_name} Team
 """
+            },
+            {
+                'id': 4,
+                'key':'confirmation-response',
+                'event_id': None,
+                'template': """Dear {title} {firstname} {lastname},
+
+Thank you for applying to attend {event_description}. Your application is being reviewed by our committee and we will get back to you as soon as possible. Included below is a copy of your responses.
+
+
+{question_answer_summary}
+
+
+Kind Regards,
+The {event_name} Team"""
             }
         ]
     )
