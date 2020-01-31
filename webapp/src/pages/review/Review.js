@@ -5,7 +5,7 @@ import ReviewForm from "./components/ReviewForm"
 export default class Review extends Component {
     render() {
       return (
-       <ReviewForm/> 
+       <ReviewForm {...this.props}/> 
       );
     }
   }

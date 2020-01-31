@@ -9,8 +9,6 @@ import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
 import { fileService } from "../../../services/file/file.service";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
@@ -160,7 +158,7 @@ class GuestRegistrationComponent extends Component {
   componentDidMount() {
     this.setState({isLoading: true});
 
-    registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
+    registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error === "" && result.form.registration_sections.length > 0) {
         let questionSections = [];
         for (var i = 0; i < result.form.registration_sections.length; i++) {

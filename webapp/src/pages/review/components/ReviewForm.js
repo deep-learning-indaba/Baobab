@@ -12,8 +12,6 @@ import { createColClassName } from "../../../utils/styling/styling";
 import Linkify from 'react-linkify';
 import { ConfirmModal } from "react-bootstrap4-modal";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 const LONG_TEXT = "long-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
@@ -194,7 +192,7 @@ class ReviewForm extends Component {
             reviewService.getReviewResponse(responseId).then(this.processResponse);
         }
         else {
-            reviewService.getReviewForm(DEFAULT_EVENT_ID, this.state.currentSkip).then(this.processResponse);
+            reviewService.getReviewForm(this.props.event ? this.props.event.id : 0, this.state.currentSkip).then(this.processResponse);
         }
     }
 
@@ -322,7 +320,7 @@ class ReviewForm extends Component {
         this.setState({
             flagSubmitting: true
         }, ()=> {
-            userService.addComment(DEFAULT_EVENT_ID, this.state.form.user.id, this.state.flagValue)
+            userService.addComment(this.props.event ? this.props.event.id : 0, this.state.form.user.id, this.state.flagValue)
                 .then(response => {
                     if (response.error) {
                         this.setState({
