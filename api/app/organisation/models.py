@@ -11,7 +11,7 @@ class Organisation(db.Model):
     large_logo = db.Column(db.String(100), nullable=False)
     domain = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(100), nullable=False)
-    email_from = db.Column(db.String(100), nullable=False)
+    email_from = db.Column(db.String(100), nullable=True)
 
     def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from):
         self.name = name
