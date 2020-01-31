@@ -43,6 +43,8 @@ class ReferenceAPITest(ApiTestCase):
         }
         response = self.app.post(
             '/api/v1/reference-request', data=REFERENCE_REQUEST_DETAIL, headers=self.headers)
+        resference_requests = reference_request_repository.get_all()
+        assert len(resference_requests) == 1
         assert response.status_code == 201
 
 

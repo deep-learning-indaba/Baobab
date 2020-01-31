@@ -11,6 +11,10 @@ class ReferenceRequestRepository():
         return db.session.query(ReferenceRequest).get(reference_request_id)
 
     @staticmethod
+    def get_all():
+        return db.session.query(ReferenceRequest).all()
+
+    @staticmethod
     def create(reference_request):
         reference_request.set_token(str(uuid.uuid4()))
         db.session.add(reference_request)
