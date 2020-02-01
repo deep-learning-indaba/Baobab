@@ -367,7 +367,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             lastname = user.lastname
             event_name = event.name
             organisation_name = event.organisation.name
-            system_name = event.organisation.name
+            system_name = event.organisation.system_name
             deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
 
             not_started_body = email_repository.get(event_id, 'application-not-started').template
