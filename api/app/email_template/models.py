@@ -8,7 +8,7 @@ class EmailTemplate(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     key = db.Column(db.String(50), nullable=False)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=True)
     template = db.Column(db.String(), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
