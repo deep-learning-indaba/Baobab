@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
+from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.users.models import AppUser
 from app.utils.auth import auth_required
@@ -17,17 +18,6 @@ from app.utils import errors, emailer, strings
 from app import LOGGER
 
 from app import db, bcrypt
-
-
-WITHDRAWAL_BODY = """Dear {title} {firstname} {lastname},
-
-This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
-
-If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
-
-Kind Regards,
-The Deep Learning Indaba 2019 Organisers
-"""
 
 
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
@@ -216,9 +206,16 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         try:
             user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
-            subject = 'Withdrawal of Application for the Deep Learning Indaba'
+            event = response.application_form.event
+            organisation = event.organisation
+            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
             
-            WITHDRAWAL_BODY.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
+            withdrawal_template = email_repository.get(event.id, 'withdrawal').template
+            body_text = withdrawal_template.format(
+                title=user.user_title,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                organisation_name=organisation.name)
             emailer.send_mail(user.email, subject, body_text)
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
@@ -243,8 +240,16 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         try:
             subject = 'Your application to {}'.format(event.description)
-            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
-            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, answers)
+            question_answer_summary = strings.build_response_email_body(answers)
+
+            template = email_repository.get(event.id, 'confirmation-response').template
+            body_text = template.format(
+                title=user.user_title,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                event_description=event.description,
+                question_answer_summary=question_answer_summary,
+                event_name=event.name)
             emailer.send_mail(user.email, subject, body_text=body_text)
 
         except:
