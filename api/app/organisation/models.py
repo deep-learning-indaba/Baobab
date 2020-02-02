@@ -15,7 +15,7 @@ class Organisation(db.Model):
     system_url = db.Column(db.String(100), nullable=False)
     events = db.relationship('Event')
 
-    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from):
+    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url):
         self.name = name
         self.small_logo = small_logo
         self.large_logo = large_logo
@@ -23,3 +23,4 @@ class Organisation(db.Model):
         self.system_name = system_name
         self.url = url
         self.email_from = email_from
+        self.system_url = system_url
