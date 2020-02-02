@@ -38,7 +38,7 @@ class ResponseApiTest(ApiTestCase):
     }
 
     def _seed_data(self):
-        organisation = Organisation(
+        organisation = self.add_organisation(
             'Deep Learning Indaba',
             'Baobab',
             'blah.png',
