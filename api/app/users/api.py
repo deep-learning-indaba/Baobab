@@ -71,7 +71,7 @@ user_comment_fields = {
 def user_info(user, roles):
     return {
         'id': user.id,
-        'token': generate_token(user),
+        'token': generate_token(user).decode('utf-8'),
         'firstname': user.firstname,
         'lastname': user.lastname,
         'title': user.user_title,
