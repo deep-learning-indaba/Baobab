@@ -70,8 +70,10 @@ class ApiTestCase(unittest.TestCase):
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', domain='com', url='www.org.com',
                                     email_from='contact@org.com', system_url='baobab.deeplearningindaba.com'):
-        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain, url, email_from, system_url))
+        org = Organisation(name, system_name, small_logo, large_logo, domain, url, email_from, system_url)
+        db.session.add(org)
         db.session.commit()
+        return org
 
     def add_event(self, 
                  name ='Test Event', 

@@ -46,7 +46,6 @@ class ResponseApiTest(ApiTestCase):
             'deeplearningindba',
             'https://www.deeplearningindaba.com',
             'from@deeplearningindaba.com')
-        _add_object_to_db(organisation)
 
         email_templates = [
             EmailTemplate('withdrawal', None, ''),
