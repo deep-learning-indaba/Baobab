@@ -189,13 +189,13 @@ class CreateAccountForm extends Component {
 
     const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy, consentData } = this.state;
 
-    // TODO change your Baobab account to [event] account
     if (created) {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
-            Your Baobab account has been created, but before you can use it, we
+            Your {this.props.organisation ? this.props.organisation.name : ""} account 
+            has been created, but before you can use it, we
             need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
             address.
