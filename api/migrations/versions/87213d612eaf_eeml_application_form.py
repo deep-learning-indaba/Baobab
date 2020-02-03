@@ -20,6 +20,31 @@ import datetime
 
 Base = declarative_base()
 
+class Organisation(Base):
+
+    __tablename__ = "organisation"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    system_name = db.Column(db.String(50), nullable=False)
+    small_logo = db.Column(db.String(100), nullable=False)
+    large_logo = db.Column(db.String(100), nullable=False)
+    domain = db.Column(db.String(100), nullable=False)
+    url = db.Column(db.String(100), nullable=False)
+    email_from = db.Column(db.String(100), nullable=True)
+    system_url = db.Column(db.String(100), nullable=False)
+
+    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url):
+        self.name = name
+        self.small_logo = small_logo
+        self.large_logo = large_logo
+        self.domain = domain
+        self.system_name = system_name
+        self.url = url
+        self.email_from = email_from
+        self.system_url = system_url
+
 class Country(Base):
     __tablename__ = "country"
     __table_args__ = {'extend_existing': True}
@@ -163,17 +188,23 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
+    # Reset auto-increment ids
+    op.get_bind().execute("""SELECT setval('event_id_seq', (SELECT max(id) FROM event));""")
+    op.get_bind().execute("""SELECT setval('application_form_id_seq', (SELECT max(id) FROM application_form));""")
+    op.get_bind().execute("""SELECT setval('section_id_seq', (SELECT max(id) FROM section));""")
+    op.get_bind().execute("""SELECT setval('question_id_seq', (SELECT max(id) FROM question));""")
+
     # Add event
     eeml2020 = Event('EEML 2020', 'Eastern European Machine Learning Summer School 2020, 6-11 July 2020, Krakow, Poland',
-        datetime.date(6, 7, 2020), datetime.date(11, 7, 2020), 'eeml2020', 2, 'contact@eeml.eu',
-        'http://eeml.eu', datetime.date(2, 2, 2020), datetime.date(20, 3, 2020), datetime.date(20, 3, 2020), 
-        datetime.date(20, 4, 2020), datetime.date(20, 4, 2020), datetime.date(20, 5, 2020), datetime.date(20, 5, 2020),
-        datetime.date(20, 6, 2020), datetime.date(20, 6, 2020), datetime.date(30, 6, 2020))
+        datetime.date(2020, 7, 6), datetime.date(2020, 7, 11), 'eeml2020', 2, 'contact@eeml.eu',
+        'http://eeml.eu', datetime.date(2020, 2, 2), datetime.date(2020, 3, 20), datetime.date(2020, 3, 20), 
+        datetime.date(2020, 4, 20), datetime.date(2020, 4, 20), datetime.date(2020, 5, 20), datetime.date(2020, 5, 20),
+        datetime.date(2020, 6, 20), datetime.date(2020, 6, 20), datetime.date(2020, 6, 30))
 
     session.add(eeml2020)
     session.commit()
 
-    app_form = ApplicationForm(eeml2020.id, True, datetime.date(20, 3, 2020))
+    app_form = ApplicationForm(eeml2020.id, True, datetime.date(2020, 3, 20))
     session.add(app_form)
     session.commit()
 
@@ -192,16 +223,16 @@ Do not forget to press Submit once you fill in the application form. It is possi
     personal_q1 = Question(app_form.id, personal_info.id, 'I Am:', 'Select an Option...', 1, 'multi-choice', None, 
             options=[
                 {'label': 'An undergraduate student', 'value': 'undergrad'},
-                {'label': 'A masters student”', 'value': 'masters'},
-                {'label': 'A PhD student”', 'value': 'phd'},
-                {'label': 'A Post-doc”', 'value': 'postdoc'},
-                {'label': '“Faculty””', 'value': 'faculty'},
-                {'label': '“Industry”', 'value': '“industry”'},
+                {'label': 'A masters student', 'value': 'masters'},
+                {'label': 'A PhD student', 'value': 'phd'},
+                {'label': 'A Post-doc', 'value': 'postdoc'},
+                {'label': 'Faculty', 'value': 'faculty'},
+                {'label': 'Industry', 'value': 'industry'},
                 {'label': 'Other (free-lancer etc)', 'value': 'other'}
             ])
     personal_q2 = Question(app_form.id, personal_info.id, 'Other', 'Other', 2, 'short-text', None, None, description='If you answered "Other", please specify', is_required=False)
     personal_q3 = Question(app_form.id, personal_info.id, 'Affiliation', 'Affiliation', 3, 'short-text', None, None, is_required=False)
-    personal_q4 = Question(app_form.id, personal_info.id, 'Country', 'Select a Country...', 4, 'multi-choice', None, None, options=get_country_list())
+    personal_q4 = Question(app_form.id, personal_info.id, 'Country', 'Select a Country...', 4, 'multi-choice', None, None, options=get_country_list(session))
     personal_q5 = Question(app_form.id, personal_info.id, 'Institution or Company', 'Institution or Company', 5, 'short-text', None, None, is_required=False, description='(if applicable)')
     personal_q6 = Question(app_form.id, personal_info.id, 'Research Group / Laboratory', 'Research Group / Laboratory', 6, 'short-text', None, None, is_required=False, description='(if applicable)')
     personal_q7 = Question(app_form.id, personal_info.id, 'Supervisor', 'Supervisor', 7, 'short-text', None, None, is_required=False, description='(if applicable)')
@@ -213,7 +244,7 @@ Do not forget to press Submit once you fill in the application form. It is possi
         description='Have you attended the previous edition of this school - TMLSS2018 or EEML2019?')
     session.add_all([personal_q1, personal_q2, personal_q3, personal_q4, personal_q5, personal_q6, personal_q7, personal_q8])
 
-    reserch_interests = Section(app_form.id, 'Research Interests', '', 3)
+    research_interests = Section(app_form.id, 'Research Interests', '', 3)
     session.add(research_interests)
     session.commit()
 
@@ -237,7 +268,7 @@ Do not forget to press Submit once you fill in the application form. It is possi
     session.add(diversity)
     session.commit()
 
-    diversity_q1 = Question(app_form.id, diversity.id, 'Gender Identity', 'Select an option...', 1, 'multi-choice', 
+    diversity_q1 = Question(app_form.id, diversity.id, 'Gender Identity', 'Select an option...', 1, 'multi-choice', None,
         options=[
             {'label': 'Female', 'value': 'female'},
             {'label': 'Male', 'value': 'male'},
@@ -261,8 +292,10 @@ Note that financial support is offered on financial considerations, not on merit
     financial_q1 = Question(app_form.id, financial_support.id, 'Motivation', 'Enter up to 500 characters', 1, 'long-text', 
         validation_regex='^.{0,500}$', validation_text='Maximum 500 characters', 
         is_required=False, description='Max 500 characters')
+    session.add(financial_q1)
+    session.commit()
 
-def get_country_list():
+def get_country_list(session):
     countries = session.query(Country).all()
     country_list = []
     for country in countries:
@@ -273,6 +306,22 @@ def get_country_list():
     return country_list
 
 def downgrade():
-    # ### commands auto generated by Alembic - please adjust! ###
-    pass
-    # ### end Alembic commands ###
+    Base.metadata.bind = op.get_bind()
+    session = orm.Session(bind=Base.metadata.bind)
+
+    event = session.query(Event).filter_by(key='eeml2020').first()
+    app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
+    session.query(Question).filter_by(application_form_id=app_form.id).delete()
+    session.query(Section).filter_by(application_form_id=app_form.id).delete()
+
+    session.query(ApplicationForm).filter_by(event_id=event.id).delete()
+    session.query(Event).filter_by(key='eeml2020').delete()
+
+    session.commit()
+
+    op.get_bind().execute("""SELECT setval('event_id_seq', (SELECT max(id) FROM event));""")
+    op.get_bind().execute("""SELECT setval('application_form_id_seq', (SELECT max(id) FROM application_form));""")
+    op.get_bind().execute("""SELECT setval('section_id_seq', (SELECT max(id) FROM section));""")
+    op.get_bind().execute("""SELECT setval('question_id_seq', (SELECT max(id) FROM question));""")
+
+
