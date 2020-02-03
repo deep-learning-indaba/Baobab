@@ -38,7 +38,7 @@ class ResponseApiTest(ApiTestCase):
     }
 
     def _seed_data(self):
-        organisation = Organisation(
+        organisation = self.add_organisation(
             'Deep Learning Indaba',
             'Baobab',
             'blah.png',
@@ -46,7 +46,6 @@ class ResponseApiTest(ApiTestCase):
             'deeplearningindba',
             'https://www.deeplearningindaba.com',
             'from@deeplearningindaba.com')
-        _add_object_to_db(organisation)
 
         email_templates = [
             EmailTemplate('withdrawal', None, ''),
