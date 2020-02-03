@@ -282,6 +282,9 @@ class App extends Component {
         organisation: response.organisation,
         error: response.error
       });
+      if (response.organisation) {
+        document.title = response.organisation.system_name + " | " + response.organisation.name
+      }
     });
   }
 
