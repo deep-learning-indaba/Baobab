@@ -437,18 +437,13 @@ class Submitted extends React.Component {
         )}
 
         <p class="thank-you">
-          Thank you for applying to attend The Deep Learning Indaba 2019,
-          Kenyatta University, Nairobi, Kenya . Your application is being
-          reviewed by our committee and we will get back to you as soon as
+          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}. 
+          Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
         <p class="timestamp">
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
-        </p>
-        <p class="awards alert alert-info">
-        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank" rel="noopener noreferrer">here</a> by 12 April 2019.
-Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
         </p>
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
@@ -463,9 +458,7 @@ Winners will receive sponsored trips to the University of Oxford and NeurIPS 201
           cancelText={"No - Don't withdraw"}
         >
           <p>
-            Are you SURE you want to withdraw your application to the Deep
-            Learning Indaba 2019? You will NOT be considered for a place at the
-            Indaba if you continue.
+            Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
           </p>
         </ConfirmModal>
       </div>
@@ -682,6 +675,7 @@ class ApplicationForm extends Component {
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
+          event={this.props.event}
         />
       );
     }
