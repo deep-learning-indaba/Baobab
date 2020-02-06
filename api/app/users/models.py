@@ -132,7 +132,7 @@ class AppUser(db.Model, UserMixin):
 class PasswordReset(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'))
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), index=True)
     code = db.Column(db.String(255), unique=True, default=make_code)
     date = db.Column(db.DateTime(), default=expiration_date)
 
@@ -169,8 +169,8 @@ class UserCategory(db.Model):
 class UserComment(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False, index=True)
     comment_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     timestamp = db.Column(db.DateTime(), nullable=False)
     comment = db.Column(db.String(2000))

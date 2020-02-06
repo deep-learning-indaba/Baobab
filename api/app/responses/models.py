@@ -7,8 +7,8 @@ class Response(db.Model):
     __tablename__ = "response"
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(),db.ForeignKey("application_form.id"), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
+    application_form_id = db.Column(db.Integer(),db.ForeignKey("application_form.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False, index=True)
     is_submitted = db.Column(db.Boolean(), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=True)
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
@@ -41,8 +41,8 @@ class Answer(db.Model):
     __tablename__ = "answer"
 
     id = db.Column(db.Integer(), primary_key=True)
-    response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
-    question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
+    response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False, index=True)
+    question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False, index=True)
     value = db.Column(db.String(), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
@@ -64,8 +64,8 @@ class Answer(db.Model):
 
 class ResponseReviewer(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
-    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False, index=True)
+    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False, index=True)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
