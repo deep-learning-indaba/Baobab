@@ -32,7 +32,7 @@ class AppUser(db.Model, UserMixin):
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
     verified_email = db.Column(db.Boolean(), nullable=True)
     verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
-
+    policy_agreed_datetime = db.Column(db.DateTime(), nullable=True)
     organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
 
     __table_args__ = (UniqueConstraint('email', 'organisation_id', name='org_email_unique'),)
