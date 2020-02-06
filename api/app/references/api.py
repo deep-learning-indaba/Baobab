@@ -7,7 +7,8 @@ from flask_restful import fields, marshal_with
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app import LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN, REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
+                        REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
@@ -140,6 +141,10 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         reference_request = reference_request_repository.get_by_token(token)
         if not reference_request:
             return REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
+
+        reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
+        if reference:
+            return DUPLICATE_REFERENCE_SUBMISSION
 
         reference = Reference(reference_request_id=reference_request.id, uploaded_document=uploaded_document)
         reference_request_repository.add(reference)

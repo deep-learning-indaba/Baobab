@@ -12,6 +12,7 @@ TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 EVENT_WITH_KEY_NOT_FOUND = ({'message': 'No event exists with that KEY'}, 404)
 REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
+DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)
 SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
 QUESTION_NOT_FOUND = (
