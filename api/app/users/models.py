@@ -61,6 +61,7 @@ class AppUser(db.Model, UserMixin):
         self.is_deleted = False
         self.deleted_datetime_utc = None
         self.verified_email = False
+        self.agree_to_policy()
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password)
@@ -70,6 +71,9 @@ class AppUser(db.Model, UserMixin):
     
     def verify(self):
         self.verified_email = True
+
+    def agree_to_policy(self):
+        self.policy_agreed_datetime = datetime.now()
 
     def update_email(self, new_email):
         self.verified_email = False

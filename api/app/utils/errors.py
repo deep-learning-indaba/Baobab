@@ -92,3 +92,5 @@ ERROR_UPDATING_USER_PROFILE = (
     {'message': 'Exception updating user profile.'}, 500)
 ADD_EVENT_ROLE_FAILED = (
     {'message': 'Unable to add event role for the user_id and event_id.'}, 500)
+POLICY_NOT_AGREED = (
+    {'message': 'Privacy policy must be agreed to before signing up for an account.'}, 400)

@@ -9,6 +9,7 @@ class SignupMixin(object):
     req_parser.add_argument('lastname', type=str, required=True)
     req_parser.add_argument('user_title', type=str, required=True)
     req_parser.add_argument('password', type=str, required=False)
+    req_parser.add_argument('policy_agreed', type=bool, required=True)
 
 
 class AuthenticateMixin(object):

@@ -1,28 +1,31 @@
-from datetime import datetime
-
-from flask import g, request
-import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with, marshal
-from sqlalchemy.exc import IntegrityError
-
-from app.users.models import AppUser, PasswordReset, UserComment
-from app.users.mixins import SignupMixin, AuthenticateMixin, UserProfileListMixin, UserProfileMixin
-from app.users.repository import UserRepository as user_repository
-from app.events.models import EventRole
-
-from app.utils.auth import auth_required, admin_required, generate_token
-from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CREDENTIALS, EMAIL_NOT_VERIFIED, EMAIL_VERIFY_CODE_NOT_VALID, USER_NOT_FOUND, RESET_PASSWORD_CODE_EXPIRED, USER_DELETED, FORBIDDEN, ADD_VERIFY_TOKEN_FAILED, VERIFY_EMAIL_INVITED_GUEST, MISSING_PASSWORD,ERROR_UPDATING_USER_PROFILE
-
-from app import db, bcrypt, LOGGER
-from app.utils.emailer import send_mail
-
-from app.utils.misc import make_code
 import random
 import string
-from sqlalchemy import func
-from app.utils import misc
+from datetime import datetime
 
-from app.utils import errors
+import flask_restful as restful
+from flask import g, request
+from flask_restful import fields, marshal, marshal_with, reqparse
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
+
+from app import LOGGER, bcrypt, db
+from app.events.models import EventRole
+from app.users.mixins import (AuthenticateMixin, SignupMixin,
+                              UserProfileListMixin, UserProfileMixin)
+from app.users.models import AppUser, PasswordReset, UserComment
+from app.users.repository import UserRepository as user_repository
+from app.utils import errors, misc
+from app.utils.auth import admin_required, auth_required, generate_token
+from app.utils.emailer import send_mail
+from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
+                              EMAIL_IN_USE, EMAIL_NOT_VERIFIED,
+                              EMAIL_VERIFY_CODE_NOT_VALID,
+                              ERROR_UPDATING_USER_PROFILE, FORBIDDEN,
+                              MISSING_PASSWORD, POLICY_NOT_AGREED,
+                              RESET_PASSWORD_CODE_EXPIRED,
+                              RESET_PASSWORD_CODE_NOT_VALID, USER_DELETED,
+                              USER_NOT_FOUND, VERIFY_EMAIL_INVITED_GUEST)
+from app.utils.misc import make_code
 
 VERIFY_EMAIL_BODY = """
 Dear {title} {firstname} {lastname},
@@ -98,6 +101,7 @@ class UserAPI(SignupMixin, restful.Resource):
         firstname = args['firstname']
         lastname = args['lastname']
         user_title = args['user_title']
+        policy_agreed = args['policy_agreed']
 
         if(invitedGuest):
             password = self.randomPassword()
@@ -106,6 +110,9 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if(password is None):
             return MISSING_PASSWORD
+        
+        if not policy_agreed:
+            return POLICY_NOT_AGREED
 
         LOGGER.info("Registering email: {}".format(email))
 
