@@ -1,4 +1,5 @@
 from flask_restful import reqparse
+from flask_restful.inputs import boolean
 
 
 class SignupMixin(object):
@@ -9,7 +10,7 @@ class SignupMixin(object):
     req_parser.add_argument('lastname', type=str, required=True)
     req_parser.add_argument('user_title', type=str, required=True)
     req_parser.add_argument('password', type=str, required=False)
-    req_parser.add_argument('policy_agreed', type=bool, required=True)
+    req_parser.add_argument('policy_agreed', type=boolean, required=True)
 
     put_req_parser = reqparse.RequestParser()
     put_req_parser.add_argument('email', type=str, required=True)
@@ -41,4 +42,4 @@ class UserProfileMixin(object):
 class PrivacyPolicyMixin(object):
 
     req_parser = reqparse.RequestParser()
-    req_parser.add_argument('policy_agreed', type=bool, required=True)
+    req_parser.add_argument('policy_agreed', type=boolean, required=True)

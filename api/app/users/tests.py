@@ -79,6 +79,12 @@ class UserApiTest(ApiTestCase):
         response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 409
 
+    def test_policy_not_agreed(self):
+        self.seed_static_data()
+        USER_DATA['policy_agreed'] = False
+        response = self.app.post('/api/v1/user', data=USER_DATA)
+        self.assertEqual(response.status_code, 400)
+
     def test_get_user(self):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
