@@ -40,3 +40,19 @@ class ReferenceRequest(db.Model):
 
     def set_token(self, token):
         self.token = token
+
+
+
+class Reference(db.Model):
+
+    __tablename__ = "reference"
+
+    id = db.Column(db.Integer(), primary_key=True)
+    reference_request_id = db.Column(db.Integer(), db.ForeignKey('reference_request.id'), nullable=False)
+    uploaded_document = db.Column(db.String(128))
+    timestamp = db.Column(db.DateTime(), nullable=True)
+
+    def __init__(self, reference_request_id, uploaded_document, timestamp):
+        self.reference_request_id = reference_request_id
+        self.uploaded_document = uploaded_document
+        self.timestamp = timestamp
