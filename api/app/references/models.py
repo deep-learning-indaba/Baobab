@@ -50,7 +50,7 @@ class Reference(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     reference_request_id = db.Column(db.Integer(), db.ForeignKey('reference_request.id'), nullable=False)
     uploaded_document = db.Column(db.String(128))
-    timestamp = db.Column(db.DateTime(), nullable=True)
+    timestamp = db.Column(db.DateTime(), nullable=False)
 
     def __init__(self, reference_request_id, uploaded_document, timestamp):
         self.reference_request_id = reference_request_id
