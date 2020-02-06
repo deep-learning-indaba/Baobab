@@ -45,6 +45,7 @@ class ApiTestCase(unittest.TestCase):
         post_create_fn(user)
 
         db.session.add(user)
+        db.session.commit()
         self.test_users.append(user)
         return user
 

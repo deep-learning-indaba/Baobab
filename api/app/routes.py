@@ -99,3 +99,4 @@ rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
 rest_api.add_resource(attendance_api.AttendanceAPI, '/api/v1/attendance')
 rest_api.add_resource(organisation_api.OrganisationApi, '/api/v1/organisation')
+rest_api.add_resource(users_api.PrivacyPolicyAPI, '/api/v1/privacypolicy')
