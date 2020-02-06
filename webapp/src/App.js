@@ -406,14 +406,15 @@ class App extends Component {
             </div>
           </footer>
           <CookieConsent
-            cookieName="indaba-cookie-consent"
+            cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}
             buttonStyle={{ fontWeight: "bold" }}
             buttonText="I understand"
             buttonClasses="btn btn-primary"s
             containerClasses="alert alert-warning col-lg-12"> 
           <h5>This website stores cookies on your computer.</h5>
-          <span style={{fontSize: "0.8em"}}>These allow us to remember who you are between pages and between visits and are used to collect information about how you interact with our website. We use this information in order to customize your experience and for analytics and metrics about our visitors. To find out more about the cookies we use, see our <a href="/PrivacyPolicy.pdf">Privacy Policy  >></a></span>
+          <span style={{fontSize: "0.8em"}}>These allow us to remember who you are between pages and between visits and are used to collect information about how you interact with our website. We use this information in order to customize your experience and for analytics and metrics about our visitors. To find out more about the cookies we use, see our 
+          <a href={"/" + this.state.organisation ? this.state.organisation.privacy_policy : ""}>Privacy Policy  >></a></span>
           </CookieConsent>
         </div>
       </Router>
