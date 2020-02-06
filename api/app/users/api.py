@@ -16,12 +16,11 @@ from app.utils.errors import EMAIL_IN_USE, RESET_PASSWORD_CODE_NOT_VALID, BAD_CR
 from app import db, bcrypt, LOGGER
 from app.utils.emailer import send_mail
 
-from config import BOABAB_HOST
-
 from app.utils.misc import make_code
 import random
 import string
 from sqlalchemy import func
+from app.utils import misc
 
 from app.utils import errors
 
@@ -80,11 +79,6 @@ def user_info(user, roles):
     }
 
 
-# TODO: Update this to read from DB instead of app config and look for other usages.
-def get_baobab_host():
-    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
-
-
 class UserAPI(SignupMixin, restful.Resource):
 
     def randomPassword(self, stringLength=10):
@@ -133,12 +127,14 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if(not invitedGuest):
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject='{} Email Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
                           title=user_title, firstname=firstname, lastname=lastname,
                           system=g.organisation.system_name,
                           organisation=g.organisation.name,
-                          host=get_baobab_host(),
+                          host=misc.get_baobab_host(),
                           token=user.verify_token))
 
             LOGGER.debug("Sent verification email to {}".format(user.email))
@@ -179,12 +175,14 @@ class UserAPI(SignupMixin, restful.Resource):
 
         if not user.verified_email:
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject='{} Email Re-Verification'.format(g.organisation.system_name),
                       body_text=VERIFY_EMAIL_BODY.format(
                           title=user_title, firstname=firstname, lastname=lastname,
                           system=g.organisation.system_name,
                           organisation=g.organisation.name,
-                          host=get_baobab_host(),
+                          host=misc.get_baobab_host(),
                           token=user.verify_token))
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
@@ -340,11 +338,13 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.commit()
 
         send_mail(recipient=args['email'],
+                  sender_name=g.organisation.name,
+                  sender_email=g.organisation.email_from,
                   subject='Password Reset for {}'.format(g.organisation.system_name),
                   body_text=RESET_EMAIL_BODY.format(
                         title=user.user_title, firstname=user.firstname, lastname=user.lastname,
                         system=g.organisation.system_name, organisation=g.organisation.name,
-                        host=get_baobab_host(), token=password_reset.code))
+                        host=misc.get_baobab_host(), token=password_reset.code))
 
         return {}, 201
 
@@ -429,12 +429,14 @@ class ResendVerificationEmailAPI(restful.Resource):
             return ADD_VERIFY_TOKEN_FAILED
 
         send_mail(recipient=user.email,
+                  sender_name=g.organisation.name,
+                  sender_email=g.organisation.email_from,
                   subject='{} Email Verification'.format(g.organisation.system_name),
                   body_text=VERIFY_EMAIL_BODY.format(
                       title=user.user_title, firstname=user.firstname, lastname=user.lastname,
                       system=g.organisation.system_name,
                       organisation=g.organisation.name,
-                      host=get_baobab_host(),
+                      host=misc.get_baobab_host(),
                       token=user.verify_token))
 
         LOGGER.debug("Resent email verification to: {}".format(email))
@@ -508,6 +510,8 @@ class EmailerAPI(restful.Resource):
             return errors.USER_NOT_FOUND
         try:
             send_mail(recipient=user.email,
+                      sender_name=g.organisation.name,
+                      sender_email=g.organisation.email_from,
                       subject=args['email_subject'],
                       body_text=GENERIC_EMAIL_TEMPLATE.format(
                           user_title=user.user_title,

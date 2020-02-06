@@ -14,7 +14,7 @@ import {
   validEmail,
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
-
+ 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
@@ -40,7 +40,10 @@ class CreateAccountForm extends Component {
       errors: [],
       titleOptions: [],
       error: "",
-      created: false
+      created: false,
+      over18: false,
+      agreePrivacyPolicy: false,
+      consentData: false
     };
   }
 
@@ -108,6 +111,21 @@ class CreateAccountForm extends Component {
     };
   };
 
+  toggleAge = () => {
+    let currentOver18 = this.state.over18;
+    this.setState({ over18: !currentOver18 });
+  };
+
+  togglePrivacyPolicy = () => {
+    let currentPrivacyPolicy = this.state.agreePrivacyPolicy;
+    this.setState({ agreePrivacyPolicy: !currentPrivacyPolicy });
+  };
+
+  toggleConsentData = () => {
+    let currentConsentData = this.state.consentData;
+    this.setState({ consentData: !currentConsentData });
+  };
+
   handleSubmit = event => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
@@ -169,15 +187,15 @@ class CreateAccountForm extends Component {
       confirmPassword,
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created } = this.state;
+    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy, consentData } = this.state;
 
-    // TODO change your Baobab account to [event] account
     if (created) {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
-            Your Baobab account has been created, but before you can use it, we
+            Your {this.props.organisation ? this.props.organisation.name : ""} account 
+            has been created, but before you can use it, we
             need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
             address.
@@ -256,10 +274,42 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+          <div>
+              <div>
+                {"I am over 18 "}
+                <input
+                  name="over18"
+                  type="checkbox"
+                  checked={over18}
+                  onChange={this.toggleAge}
+                />
+              </div>
+              <div id="agreePrivacyPolicy">
+                {"I have read and agree to the "}
+                <a href="/PrivacyPolicy.pdf" target="_blank">privacy policy </a>
+                
+                <input
+                  name="agreePrivacyPolicy"
+                  type="checkbox"
+                  checked={agreePrivacyPolicy}
+                  onChange={this.togglePrivacyPolicy}
+                />
+              </div>
+              <div id="consentData">
+                {"I consent to my data being shared with Baobab administrators for operational reasons "}
+                <input
+                  name="consentData"
+                  type="checkbox"
+                  checked={consentData}
+                  onChange={this.toggleConsentData}
+                />
+              </div>
+          </div>
+            <br></br><br></br>
           <button
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading}
+            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18 || !consentData}
           >
             {loading && (
               <span

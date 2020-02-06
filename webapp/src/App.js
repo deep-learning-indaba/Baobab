@@ -282,6 +282,9 @@ class App extends Component {
         organisation: response.organisation,
         error: response.error
       });
+      if (response.organisation) {
+        document.title = response.organisation.system_name + " | " + response.organisation.name
+      }
     });
   }
 
@@ -362,7 +365,7 @@ class App extends Component {
                   exact
                   path="/createAccount"
                   render={props => (
-                    <CreateAccount {...props} loggedIn={this.refreshUser} />
+                    <CreateAccount {...props} loggedIn={this.refreshUser} organisation={this.state.organisation} />
                   )}
                 />
                 <Route
