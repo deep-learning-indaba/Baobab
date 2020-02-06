@@ -97,7 +97,7 @@ class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):
             return USER_NOT_FOUND
 
         args = self.req_parser.parse_args()
-        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        response = response_repository.get_by_id(args['response_id'])
         if not response:
             return RESPONSE_NOT_FOUND
 
@@ -122,14 +122,15 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
     @auth_required
     def get(self):
         LOGGER.debug('Received get request for reference')
-        user = user_repository.get_by_id(g.current_user['id'])
-        if not (user or user.is_admin):
-            return FORBIDDEN
-
         args = self.get_req_parser.parse_args()
-        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        response = response_repository.get_by_id(args['response_id'])
         if not response:
             return RESPONSE_NOT_FOUND
+        
+        event = event_repository.get_event_by_response_id(response.id)
+        user = user_repository.get_by_id(g.current_user['id'])
+        if not (user or user.is_event_admin(event.id)):
+            return FORBIDDEN
 
         reference_responses = reference_request_repository.get_reference_by_response_id(response.id)
         return [reference_response.Reference for reference_response in reference_responses], 200
