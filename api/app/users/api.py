@@ -10,8 +10,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app import LOGGER, bcrypt, db
 from app.events.models import EventRole
-from app.users.mixins import (AuthenticateMixin, SignupMixin,
-                              UserProfileListMixin, UserProfileMixin)
+from app.users.mixins import (AuthenticateMixin, PrivacyPolicyMixin,
+                              SignupMixin, UserProfileListMixin,
+                              UserProfileMixin)
 from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
@@ -21,8 +22,8 @@ from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
                               EMAIL_IN_USE, EMAIL_NOT_VERIFIED,
                               EMAIL_VERIFY_CODE_NOT_VALID,
                               ERROR_UPDATING_USER_PROFILE, FORBIDDEN,
-                              MISSING_PASSWORD, POLICY_NOT_AGREED,
-                              RESET_PASSWORD_CODE_EXPIRED,
+                              MISSING_PASSWORD, POLICY_ALREADY_AGREED,
+                              POLICY_NOT_AGREED, RESET_PASSWORD_CODE_EXPIRED,
                               RESET_PASSWORD_CODE_NOT_VALID, USER_DELETED,
                               USER_NOT_FOUND, VERIFY_EMAIL_INVITED_GUEST)
 from app.utils.misc import make_code
@@ -530,3 +531,24 @@ class EmailerAPI(restful.Resource):
         except Exception as e:
             LOGGER.error('Error sending email: {}'.format(e))
             return errors.EMAIL_NOT_SENT
+
+
+class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
+    @auth_required
+    def put(self):
+        args = self.req_parser.parse_args()
+        policy_agreed = args['policy_agreed']
+
+        if not policy_agreed:
+            return POLICY_NOT_AGREED
+        
+        current_user_id = g.current_user['id']
+        current_user = user_repository.get_by_id(current_user_id)
+
+        if not current_user.has_agreed():
+            return POLICY_ALREADY_AGREED
+
+        current_user.agree_to_policy()
+        db.session.commit()
+
+        return {}, 200
