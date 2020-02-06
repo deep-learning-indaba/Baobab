@@ -17,6 +17,8 @@ With Docker/Compose installed, use the following steps to launch for the first t
 * `docker-compose up` to start the web app. This will download and provision two containers: one running PostgreSQL and one running the Flask app. This will take a while, but once it completes subsequent launches will be much faster.
 * When `docker-compose up` completes, the app should be accessible at [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
+If you are running the project for the first time , please check the section Database migrations to generate the database
+
 
 ## Environment Variables
 
