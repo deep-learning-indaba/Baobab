@@ -80,9 +80,21 @@ PS: If you are making request using curl, or POSTMAN client , make sure that you
 
 **Body:**
 ```json
-{
-    "email": "something@email.com",
-    "password": "123456"
+{	
+	"firstname":"Espoir",
+	"lastname":"Murhabazi",
+	"user_title":"Ir",
+    "email": "sampel@gmail.cim",
+    "nationality_country_id":"243",
+    "residence_country_id":"243",
+    "user_gender":"M",
+    "department":"Computer Science",
+    "user_disability":"none",
+    "user_category_id":1,
+    "affiliation":"Home",
+    "user_primaryLanguage":"english", 
+    "user_dateOfBirth":"2020-02-06T14:49:16.725Z",
+    "password": "***********"
 }
 ```
 
