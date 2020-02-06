@@ -69,6 +69,7 @@ Migrations for the provided models are part of the seed project. To generate new
 
 This API uses token-based authentication. A token is obtained by registering a new user (`/api/v1/user`) or authenticating an existing user (`/api/v1/authenticate`). Once the client has the token, it must be included in the `Authorization` header of all requests.
 
+PS: If you are making request using curl, or POSTMAN client , make sure that you have set Origin Header to "localhost"  to make the endpoints work
 
 ### Register a new user
 
