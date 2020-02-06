@@ -16,6 +16,7 @@ class ReferenceRequest(db.Model):
     token = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=True)
     email_sent = db.Column(db.DateTime(), nullable=True)
+    reference_submitted = db.Column(db.Boolean(), nullable=False)
 
 
     response = db.relationship('Response', foreign_keys=[response_id])
@@ -34,12 +35,16 @@ class ReferenceRequest(db.Model):
         self.lastname = lastname
         self.relation = relation
         self.email = email
+        self.reference_submitted = False
 
     def set_email_sent(self, email_sent):
         self.email_sent = email_sent
 
     def set_token(self, token):
         self.token = token
+
+    def set_reference_submitted(self):
+        self.reference_submitted = True
 
 
 

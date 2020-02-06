@@ -27,7 +27,8 @@ reference_request_fields = {
     'relation': fields.String,
     'email_sent': fields.DateTime,
     'response_id': fields.Integer,
-    'email': fields.String
+    'email': fields.String,
+    'reference_submitted' : fields.Boolean
 }
 
 reference_fields = {
@@ -145,7 +146,9 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
         if reference:
             return DUPLICATE_REFERENCE_SUBMISSION
-
+        
+        reference_request.set_reference_submitted()
         reference = Reference(reference_request_id=reference_request.id, uploaded_document=uploaded_document)
         reference_request_repository.add(reference)
+        reference_request_repository.add(reference_request)
         return {}, 201

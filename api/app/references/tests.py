@@ -66,6 +66,7 @@ class ReferenceAPITest(ApiTestCase):
         reference_request_repository.create(reference_req2)
         response = self.app.get(
             '/api/v1/reference-request/list', data={'response_id':1}, headers=self.headers)
+        LOGGER.debug(response.data)
         data = json.loads(response.data)
         assert response.status_code == 200
         assert len(data) == 2
@@ -88,3 +89,6 @@ class ReferenceAPITest(ApiTestCase):
         data = json.loads(response.data)
         assert response.status_code == 200
         assert len(data) == 1
+        reference_request = reference_request_repository.get_by_id(1)
+        assert reference_request.reference_submitted == True
+
