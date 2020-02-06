@@ -12,8 +12,8 @@ from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
-from app.references.models import ReferenceRequest
-from app.references.mixins import ReferenceRequestsMixin, ReferenceRequestsListMixin
+from app.references.models import ReferenceRequest, Reference
+from app.references.mixins import ReferenceRequestsMixin, ReferenceRequestsListMixin, ReferenceMixin
 from app.utils import misc
 from app.users.repository import UserRepository as user_repository
 from app.responses.repository import ResponseRepository as response_repository
@@ -129,7 +129,8 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         if not response:
             return RESPONSE_NOT_FOUND
 
-        return reference_request_repository.get_reference_by_response_id(response.id), 200
+        reference_responses = reference_request_repository.get_reference_by_response_id(response.id)
+        return [reference_response.Reference for reference_response in reference_responses], 200
 
     def post(self):
         LOGGER.debug('Received post request for reference')

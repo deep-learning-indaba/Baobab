@@ -1,5 +1,5 @@
 from app import db
-from app.references.models import ReferenceRequest
+from app.references.models import ReferenceRequest, Reference
 from app.events.models import Event
 import uuid
 
@@ -41,5 +41,5 @@ class ReferenceRequestRepository():
     def get_reference_by_response_id(response_id):
         return db.session.query(ReferenceRequest.response_id, Reference)\
                          .join(ReferenceRequest, ReferenceRequest.id == Reference.reference_request_id)\
-                         .filter_by(ReferenceRequest.response_id=response_id)\
+                         .filter_by(response_id=ReferenceRequest.response_id)\
                          .all()

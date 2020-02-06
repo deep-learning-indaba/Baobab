@@ -31,7 +31,7 @@ class ReferenceAPITest(ApiTestCase):
 
         db.session.flush()
 
-    def test_create_registration_form(self):
+    def test_create_reference_request(self):
         self._seed_data()
         REFERENCE_REQUEST_DETAIL = {
             'response_id':1, 
@@ -69,3 +69,22 @@ class ReferenceAPITest(ApiTestCase):
         data = json.loads(response.data)
         assert response.status_code == 200
         assert len(data) == 2
+
+    def test_reference_api(self):
+        self._seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        REFERENCE_DETAIL = {
+            'token':reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.headers)
+        assert response.status_code == 201
+
+        response = self.app.get(
+            '/api/v1/reference', data={'response_id':1}, headers=self.headers)
+        LOGGER.debug(response.data)
+        data = json.loads(response.data)
+        assert response.status_code == 200
+        assert len(data) == 1
