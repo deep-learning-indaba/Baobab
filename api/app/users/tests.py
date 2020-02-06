@@ -16,7 +16,8 @@ USER_DATA = {
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'password': '123456'
+        'password': '123456',
+        'policy_agreed': True
     }
 
 AUTH_DATA = {
@@ -96,7 +97,7 @@ class UserApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
 
         headers = {'Authorization': data['token']}
 
@@ -107,14 +108,15 @@ class UserApiTest(ApiTestCase):
             'user_title': 'Mrs',
             'password': ''
         })
-        assert response.status_code == 200
+
+        self.assertEqual(response.status_code, 200)
 
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
-        assert data['email'] == 'something@email.com'
-        assert data['firstname'] == 'Updated'
-        assert data['lastname'] == 'Updated'
-        assert data['user_title'] == 'Mrs'
+        self.assertEqual(data['email'], 'something@email.com')
+        self.assertEqual(data['firstname'], 'Updated')
+        self.assertEqual(data['lastname'], 'Updated')
+        self.assertEqual(data['user_title'], 'Mrs')
 
     def test_authentication_deleted(self):
         self.seed_static_data()

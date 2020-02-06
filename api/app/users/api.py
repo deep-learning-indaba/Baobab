@@ -158,7 +158,7 @@ class UserAPI(SignupMixin, restful.Resource):
 
     @auth_required
     def put(self):
-        args = self.req_parser.parse_args()
+        args = self.put_req_parser.parse_args()
 
         firstname = args['firstname']
         lastname = args['lastname']
