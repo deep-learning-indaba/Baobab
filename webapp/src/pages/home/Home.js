@@ -48,6 +48,18 @@ class Home extends Component {
 
     }
 
+    statusDisplay(e) {
+        if (e.status === "Apply now" && e.is_application_open) {
+            return <NavLink to={`${e.key}/apply`} className="btn btn-success">Apply Now</NavLink>
+        }
+        else if (e.status === "Continue application" && e.is_application_open) {
+            return <NavLink to={`${e.key}/apply`} className="btn btn-warning">Continue Application</NavLink>
+        }
+        else {
+            return e.status
+        }
+    }
+
     render() {
         return (
         <div>
@@ -71,7 +83,7 @@ class Home extends Component {
                                     <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                     {e.start_date + " to " + e.end_date}
                                 </td>
-                                <td>{e.status === "Apply now" && e.is_application_open ? <NavLink to={`${e.key}/apply`} className="btn btn-success">Apply Now</NavLink> : e.status}</td>
+                                <td>{this.statusDisplay(e)}</td>
                             </tr>)
                         })}
                     </tbody>
