@@ -7,7 +7,7 @@ from flask_restful import fields, marshal_with
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app import LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN, REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
@@ -27,6 +27,13 @@ reference_request_fields = {
     'email_sent': fields.DateTime,
     'response_id': fields.Integer,
     'email': fields.String
+}
+
+reference_fields = {
+    'id': fields.Integer,
+    'reference_request_id': fields.String,
+    'uploaded_document': fields.String,
+    'timestamp': fields.DateTime
 }
 
 class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
@@ -73,7 +80,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         send_mail(recipient=email, subject=subject, body_text=body)
 
         reference_request.set_email_sent(datetime.now())
-        reference_request_repository.update(reference_request)
+        reference_request_repository.add(reference_request)
         return {}, 201
 
     
@@ -105,3 +112,34 @@ Please visit {link} to upload your reference by {application_close_date}
 Kind regards,
 The {event_description} team.
 """
+
+
+class ReferenceAPI(ReferenceMixin, restful.Resource):
+
+    @marshal_with(reference_fields)
+    @auth_required
+    def get(self):
+        LOGGER.debug('Received get request for reference')
+        user = user_repository.get_by_id(g.current_user['id'])
+        if not (user or user.is_admin):
+            return FORBIDDEN
+
+        args = self.get_req_parser.parse_args()
+        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        if not response:
+            return RESPONSE_NOT_FOUND
+
+        return reference_request_repository.get_reference_by_response_id(response.id), 200
+
+    def post(self):
+        LOGGER.debug('Received post request for reference')
+        args = self.post_req_parser.parse_args()
+        token = args['token']
+        uploaded_document = args['uploaded_document']
+        reference_request = reference_request_repository.get_by_token(token)
+        if not reference_request:
+            return REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
+
+        reference = Reference(reference_request_id=reference_request.id, uploaded_document=uploaded_document)
+        reference_request_repository.add(reference)
+        return {}, 201

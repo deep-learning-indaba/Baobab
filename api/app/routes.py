@@ -76,6 +76,8 @@ rest_api.add_resource(reference_api.ReferenceRequestListAPI,
                       '/api/v1/reference-request/list')
 rest_api.add_resource(reference_api.ReferenceRequestAPI,
                       '/api/v1/reference-request')
+rest_api.add_resource(reference_api.ReferenceAPI,
+                      '/api/v1/reference')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')

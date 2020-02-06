@@ -52,7 +52,7 @@ class Reference(db.Model):
     uploaded_document = db.Column(db.String(128))
     timestamp = db.Column(db.DateTime(), nullable=False)
 
-    def __init__(self, reference_request_id, uploaded_document, timestamp):
+    def __init__(self, reference_request_id, uploaded_document):
         self.reference_request_id = reference_request_id
         self.uploaded_document = uploaded_document
-        self.timestamp = timestamp
+        self.timestamp = datetime.now()
