@@ -59,6 +59,7 @@ class FormTextArea extends React.Component {
             value={this.props.value || ""}
             onChange={this.props.onChange}
             onKeyPress={this.getWordCount}
+            onKeyUp={this.getWordCount}
             ref={input => {
               this.nameInput = input;
             }}
