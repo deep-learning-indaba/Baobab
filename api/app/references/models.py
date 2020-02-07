@@ -16,7 +16,7 @@ class ReferenceRequest(db.Model):
     token = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=True)
     email_sent = db.Column(db.DateTime(), nullable=True)
-    reference_submitted = db.Column(db.Boolean(), nullable=False)
+    references = db.relationship('Reference')
 
 
     response = db.relationship('Response', foreign_keys=[response_id])
@@ -35,7 +35,6 @@ class ReferenceRequest(db.Model):
         self.lastname = lastname
         self.relation = relation
         self.email = email
-        self.reference_submitted = False
 
     def set_email_sent(self, email_sent):
         self.email_sent = email_sent
@@ -43,8 +42,8 @@ class ReferenceRequest(db.Model):
     def set_token(self, token):
         self.token = token
 
-    def set_reference_submitted(self):
-        self.reference_submitted = True
+    def has_reference(self):
+        return len(self.references) == 1
 
 
 
@@ -54,8 +53,9 @@ class Reference(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     reference_request_id = db.Column(db.Integer(), db.ForeignKey('reference_request.id'), nullable=False)
-    uploaded_document = db.Column(db.String(128))
+    uploaded_document = db.Column(db.String(128), nullable=False)
     timestamp = db.Column(db.DateTime(), nullable=False)
+    reference_request = db.relationship('ReferenceRequest', foreign_keys=[reference_request_id])
 
     def __init__(self, reference_request_id, uploaded_document):
         self.reference_request_id = reference_request_id

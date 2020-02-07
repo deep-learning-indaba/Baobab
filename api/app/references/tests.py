@@ -21,6 +21,8 @@ class ReferenceAPITest(ApiTestCase):
         other_user_data = self.add_user('someuser@mail.com')
 
         test_event = self.add_event()
+        test_event.add_event_role('admin', 1)
+        self.add_to_db(test_event)
         self.test_form = ApplicationForm(test_event.id, True, date(2019, 3, 24))
         self.add_to_db(self.test_form)
         
@@ -44,8 +46,8 @@ class ReferenceAPITest(ApiTestCase):
         response = self.app.post(
             '/api/v1/reference-request', data=REFERENCE_REQUEST_DETAIL, headers=self.headers)
         resference_requests = reference_request_repository.get_all()
-        assert len(resference_requests) == 1
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(resference_requests), 1)
 
 
     def test_get_reference_request_by_id(self):
@@ -55,8 +57,8 @@ class ReferenceAPITest(ApiTestCase):
         response = self.app.get(
             '/api/v1/reference-request', data={'id':1}, headers=self.headers)
         data = json.loads(response.data)
-        assert response.status_code == 200
-        assert data['firstname'] == 'John'
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['firstname'], 'John')
 
     def test_get_reference_request_by_response_id(self):
         self._seed_data()
@@ -68,8 +70,8 @@ class ReferenceAPITest(ApiTestCase):
             '/api/v1/reference-request/list', data={'response_id':1}, headers=self.headers)
         LOGGER.debug(response.data)
         data = json.loads(response.data)
-        assert response.status_code == 200
-        assert len(data) == 2
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 2)
 
     def test_reference_api(self):
         self._seed_data()
@@ -81,14 +83,14 @@ class ReferenceAPITest(ApiTestCase):
         }
         response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.headers)
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
 
         response = self.app.get(
             '/api/v1/reference', data={'response_id':1}, headers=self.headers)
         LOGGER.debug(response.data)
         data = json.loads(response.data)
-        assert response.status_code == 200
-        assert len(data) == 1
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 1)
         reference_request = reference_request_repository.get_by_id(1)
-        assert reference_request.reference_submitted == True
+        self.assertEqual(reference_request.has_reference(), True)
 

@@ -6,7 +6,6 @@ from flask_restful import fields, marshal_with
 
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
-from app import LOGGER
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
                         REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION
 
@@ -43,13 +42,11 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
     @marshal_with(reference_request_fields)
     @auth_required
     def get(self):
-        LOGGER.debug('Received get request for reference-request')
         args = self.get_req_parser.parse_args()
         return reference_request_repository.get_by_id(args['id']), 200
 
     @auth_required
     def post(self):
-        LOGGER.debug('Received post request for reference-request')
         args = self.post_req_parser.parse_args()
         response_id = args['response_id']
         title = args['title']
@@ -62,10 +59,9 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         if not user:
             return USER_NOT_FOUND
 
-        response_event = event_repository.get_event_by_response_id(response_id)
-        if not response_event or not response_event.Event:
+        event = event_repository.get_event_by_response_id(response_id)
+        if not event:
             return EVENT_NOT_FOUND
-        event = response_event.Event
         reference_request = ReferenceRequest(response_id=response_id,title=title, 
                                         firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
@@ -91,13 +87,8 @@ class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):
     @marshal_with(reference_request_fields)
     @auth_required
     def get(self):
-        LOGGER.debug('Received get request for reference-request')
-        user = user_repository.get_by_id(g.current_user['id'])
-        if not user:
-            return USER_NOT_FOUND
-
         args = self.req_parser.parse_args()
-        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        response = response_repository.get_by_id_and_user_id(args['response_id'], g.current_user['id'])
         if not response:
             return RESPONSE_NOT_FOUND
 
@@ -121,21 +112,20 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
     @marshal_with(reference_fields)
     @auth_required
     def get(self):
-        LOGGER.debug('Received get request for reference')
-        user = user_repository.get_by_id(g.current_user['id'])
-        if not (user or user.is_admin):
-            return FORBIDDEN
-
         args = self.get_req_parser.parse_args()
-        response = response_repository.get_by_id_and_user_id(args['response_id'], user.id)
+        user = user_repository.get_by_id(g.current_user['id'])
+        response = response_repository.get_by_id(args['response_id'])
         if not response:
             return RESPONSE_NOT_FOUND
 
+        event = event_repository.get_event_by_response_id(response.id)
+
+        if not user.is_event_admin(event.id):
+            return FORBIDDEN
         reference_responses = reference_request_repository.get_reference_by_response_id(response.id)
         return [reference_response.Reference for reference_response in reference_responses], 200
 
     def post(self):
-        LOGGER.debug('Received post request for reference')
         args = self.post_req_parser.parse_args()
         token = args['token']
         uploaded_document = args['uploaded_document']
@@ -143,12 +133,9 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         if not reference_request:
             return REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
 
-        reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
-        if reference:
+        if reference_request.has_reference():
             return DUPLICATE_REFERENCE_SUBMISSION
         
-        reference_request.set_reference_submitted()
         reference = Reference(reference_request_id=reference_request.id, uploaded_document=uploaded_document)
         reference_request_repository.add(reference)
-        reference_request_repository.add(reference_request)
         return {}, 201
