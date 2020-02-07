@@ -1,6 +1,14 @@
 # Baobab
 
-Deep Learning Indaba applications and selection web application.
+Baobab is an open source multi-tenant web application designed to facilitate the application and selection process for large scale meetings within the machine learning and artificial intelligence communities globally.
+
+## Application Lifecycle
+
+The process starts off with the release of an application form for potential applicants to complete online. Once all the applications are in, reviewers assess each one by completing a form of their own which is used to record the decisions of each applicant.
+
+Following the selection process, applicants are informed of the decision and relevant information regarding the meet up and reference letters (for visas etc.) are dispatched.
+
+Lastly, successful applicants can then register to confirm they will attend as well as check in at the venue itself.
 
 # Structure
 
