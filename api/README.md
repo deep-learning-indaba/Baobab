@@ -50,7 +50,7 @@ docker-compose run web nosetests
 ```
 
 ### Run Specific Tests
-Test cans be progressively can get more and more specific.
+Test can progressively can get more and more specific.
 
 #### Run all tests in a file
 We will use `invitedGuest` as the example.
