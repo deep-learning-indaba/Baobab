@@ -216,7 +216,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 firstname=user.firstname,
                 lastname=user.lastname,
                 organisation_name=organisation.name)
-            emailer.send_mail(user.email, subject, body_text)
+            emailer.send_mail(user.email, subject, body_text, sender_name=g.organisation.name, sender_email=g.organisation.email_from)
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
 
@@ -250,7 +250,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 event_description=event.description,
                 question_answer_summary=question_answer_summary,
                 event_name=event.name)
-            emailer.send_mail(user.email, subject, body_text=body_text)
+            emailer.send_mail(
+                user.email, 
+                subject, 
+                body_text=body_text, 
+                sender_name=g.organisation.name,
+                sender_email=g.organisation.email_from)
 
         except:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
