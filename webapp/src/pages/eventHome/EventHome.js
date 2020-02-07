@@ -107,7 +107,11 @@ class EventStatus extends Component {
                       Your application was successful! 
                     </span>}
   
-                    {this.state.applicationStatus === "Submitted" && !this.state.offer &&  this.state.invitedGuest !== true && <span>
+                    {this.state.applicationStatus === "Submitted" && this.props.event && this.props.event.is_application_open && !this.state.offer &&  this.state.invitedGuest !== true && <span>
+                      Submitted
+                    </span>}
+
+                    {this.state.applicationStatus === "Submitted" && this.props.event && !this.props.event.is_application_open && !this.state.offer &&  this.state.invitedGuest !== true && <span>
                       Waiting List
                     </span>}
   
@@ -125,7 +129,7 @@ class EventStatus extends Component {
                   {this.state.applicationStatus === "Submitted" &&
                   <div>
                     {this.state.offer !== null ? <p>There is an offer waiting for you, <NavLink to="/offer">click here</NavLink> to view it.</p>
-                    : <p>You are currently on the waiting list for {event.description}. Please await further communication.</p>}
+                    : <p>You have submitted your application to {event.description}. Please await further communication.</p>}
                   </div>}
   
                   {this.state.applicationStatus === "Withdrawn" && <p>
@@ -167,7 +171,7 @@ class EventHome extends Component {
   }
 
   componentDidMount() {
-    const eventKey = this.props.match ? this.props.match.params : null;
+    const eventKey = this.props.match ? this.props.match.params.eventKey : null;
 
     this.setState({
       isLoading: true

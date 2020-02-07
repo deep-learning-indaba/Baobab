@@ -18,7 +18,7 @@ from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
-from config import BOABAB_HOST
+from app.utils import misc
 from app.utils.emailer import send_mail
 
 option_fields = {
@@ -99,9 +99,6 @@ review_fields = {
 }
 
 REVIEWS_PER_SUBMISSION = 3
-
-def get_baobab_host():
-    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
@@ -368,7 +365,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         firstname=reviewer_user.firstname, 
                         lastname=reviewer_user.lastname,
                         num_reviews=len(response_ids),
-                        baobab_host=get_baobab_host(),
+                        baobab_host=misc.get_baobab_host(),
                         event=event.name))
 
         return {}, 201
