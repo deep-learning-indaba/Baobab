@@ -16,6 +16,11 @@ class FormTextArea extends React.Component {
     if (nextProps.showFocus) {
       this.nameInput.focus();
     }
+    this.getWordCount();
+  }
+
+  componentDidMount() {
+    this.getWordCount();
   }
 
   getWordCount = () => {
