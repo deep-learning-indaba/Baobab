@@ -43,6 +43,32 @@ def event_info(user_id, event_org):
     }
 
 
+def event_details(event_org):
+    date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
+    return {
+        'id': event_org.Event.id,
+        'name': event_org.Event.name,
+        'description': event_org.Event.description,
+        'key': event_org.Event.key,
+        'start_date': event_org.Event.start_date.strftime(date_format),
+        'end_date': event_org.Event.end_date.strftime(date_format),
+        'email_from': event_org.Event.email_from,
+        'organisation_name': event_org.Organisation.name,
+        'organisation_id': event_org.Organisation.id,
+        'url': event_org.Event.url,
+        'application_open': event_org.Event.application_open.strftime(date_format),
+        'application_close': event_org.Event.application_close.strftime(date_format),
+        'review_open': event_org.Event.review_open.strftime(date_format),
+        'review_close': event_org.Event.review_close.strftime(date_format),
+        'selection_open': event_org.Event.selection_open.strftime(date_format),
+        'selection_close': event_org.Event.selection_close.strftime(date_format),
+        'offer_open': event_org.Event.offer_open.strftime(date_format),
+        'offer_close': event_org.Event.offer_close.strftime(date_format),
+        'registration_open': event_org.Event.registration_open.strftime(date_format),
+        'registration_close': event_org.Event.registration_close.strftime(date_format)
+    }
+
+
 def get_user_event_response_status(user_id, event_id):
 
     def _log_application_status(context):
@@ -92,6 +118,15 @@ def get_user_event_response_status(user_id, event_id):
 
 
 class EventAPI(EventMixin, restful.Resource):
+    def get(self):
+        event_id = request.args['id']
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        else:
+            event_org = event_repository.get_by_id_with_organisation(event.id)
+            return event_details(event_org), 200
+
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
@@ -163,7 +198,7 @@ class EventAPI(EventMixin, restful.Resource):
             return EVENT_KEY_IN_USE
 
         event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_info(user_id, event_org), 201
+        return event_details(event_org), 201
 
     @auth_required
     def put(self):
@@ -238,7 +273,7 @@ class EventAPI(EventMixin, restful.Resource):
             return EVENT_KEY_IN_USE
 
         event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_info(user_id, event_org), 200
+        return event_details(event_org), 200
 
 
 class EventsAPI(restful.Resource):
