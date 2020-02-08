@@ -10,6 +10,7 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import ReviewAssignment from "./pages/reviewAssignment";
 import ReviewHistory from "./pages/reviewHistory";
+import EventConfig from "./pages/eventConfig";
 import EventStats from "./pages/eventStats";
 import ProfileList from "./pages/profileList";
 import ViewProfile from "./pages/viewprofile";
@@ -33,10 +34,9 @@ ReactGA.initialize("UA-136093201-1", {
 });
 
 ReactGA.pageview(window.location.pathname + window.location.search);
-history.listen((location) => {
+history.listen(location => {
   ReactGA.pageview(location.pathname + location.search);
 });
-
 
 class App extends Component {
   constructor(props) {
@@ -104,7 +104,10 @@ class App extends Component {
       user.is_admin ||
       (user.roles &&
         user.roles.some(
-          r => r.role === "admin" || r.role === "registration-admin" || r.role === "registration-volunteer"
+          r =>
+            r.role === "admin" ||
+            r.role === "registration-admin" ||
+            r.role === "registration-volunteer"
         ))
     );
   };
@@ -123,7 +126,10 @@ class App extends Component {
           <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="/">
               <img
-                src={this.state.organisation && require("./images/" + this.state.organisation.small_logo)}
+                src={
+                  this.state.organisation &&
+                  require("./images/" + this.state.organisation.small_logo)
+                }
                 width="30"
                 height="30"
                 class="d-inline-block align-top brand-image"
@@ -174,16 +180,16 @@ class App extends Component {
                   </li>
                 )}
                 {this.state.user && (
-                <li class="nav-item">
-                  <NavLink
-                    to="/offer"
-                    activeClassName="nav-link active"
-                    className="nav-link"
-                    onClick={this.toggleMenu}
-                  >
-                    Offer
-                  </NavLink>
-                </li>
+                  <li class="nav-item">
+                    <NavLink
+                      to="/offer"
+                      activeClassName="nav-link active"
+                      className="nav-link"
+                      onClick={this.toggleMenu}
+                    >
+                      Offer
+                    </NavLink>
+                  </li>
                 )}
                 {this.state.user && (
                   <li class="nav-item dropdown ">
@@ -212,7 +218,7 @@ class App extends Component {
                       >
                         Invitation Letter
                       </NavLink>
-                      {this.isRegistrationVolunteer(this.state.user) && 
+                      {this.isRegistrationVolunteer(this.state.user) && (
                         <NavLink
                           to="/eventAttendance"
                           className="dropdown-item"
@@ -220,7 +226,7 @@ class App extends Component {
                         >
                           Event Attendance
                         </NavLink>
-                      }
+                      )}
                     </div>
                   </li>
                 )}
@@ -237,6 +243,13 @@ class App extends Component {
                       Event Admin
                     </div>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <NavLink
+                        to="/eventConfig"
+                        className="dropdown-item"
+                        onClick={this.toggleMenu}
+                      >
+                        Event Configuration
+                      </NavLink>
                       <NavLink
                         to="/eventStats"
                         className="dropdown-item"
@@ -378,6 +391,11 @@ class App extends Component {
                 <PrivateRoute exact path="/eventStats" component={EventStats} />
                 <PrivateRoute
                   exact
+                  path="/eventConfig"
+                  component={EventConfig}
+                />
+                <PrivateRoute
+                  exact
                   path="/reviewAssignment"
                   component={ReviewAssignment}
                 />
@@ -425,19 +443,30 @@ class App extends Component {
           <footer class="text-muted">
             <div class="container-flex">
               <p>
-                {this.state.organisation && this.state.organisation.system_name}, © 2020 |{" "}
-                <a href={this.state.organisation && this.state.organisation.url}>
-                {this.state.organisation && this.state.organisation.name}
+                {this.state.organisation && this.state.organisation.system_name}
+                , © 2020 |{" "}
+                <a
+                  href={this.state.organisation && this.state.organisation.url}
+                >
+                  {this.state.organisation && this.state.organisation.name}
                 </a>{" "}
                 |{" "}
                 <a href="/PrivacyPolicy.pdf" target="_blank">
                   Privacy Policy
                 </a>
-                {this.state.organisation && this.state.organisation.system_name !== "Baobab" && 
-                  <div class="float-right">
-                    Powered by <a href="http://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer">Baobab</a>
-                  </div>
-                }
+                {this.state.organisation &&
+                  this.state.organisation.system_name !== "Baobab" && (
+                    <div class="float-right">
+                      Powered by{" "}
+                      <a
+                        href="http://www.deeplearningindaba.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Baobab
+                      </a>
+                    </div>
+                  )}
               </p>
             </div>
           </footer>
