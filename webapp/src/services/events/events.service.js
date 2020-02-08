@@ -5,6 +5,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const eventsService = {
   getEvents,
+  getEvent,
   create,
   update
 };
@@ -19,6 +20,23 @@ export function getEvents() {
     .catch(function(error) {
       // handle error
       return { events: [], error: error };
+    });
+}
+
+export function getEvent(event_id) {
+  return axios
+    .get(baseUrl + `/api/v1/event?id=` + event_id)
+    .then(response => {
+      // handle success
+      let event = null;
+      if (response) {
+        event = response.data;
+      }
+      return { event: event, error: "" };
+    })
+    .catch(error => {
+      // handle error
+      return { event: null, error: error };
     });
 }
 
