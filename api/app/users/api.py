@@ -545,7 +545,7 @@ class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
         current_user_id = g.current_user['id']
         current_user = user_repository.get_by_id(current_user_id)
 
-        if not current_user.has_agreed():
+        if current_user.has_agreed():
             return POLICY_ALREADY_AGREED
 
         current_user.agree_to_policy()

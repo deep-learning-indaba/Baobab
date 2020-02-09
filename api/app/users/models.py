@@ -76,7 +76,7 @@ class AppUser(db.Model, UserMixin):
         self.policy_agreed_datetime = datetime.now()
     
     def has_agreed(self):
-        return not self.policy_agreed_datetime
+        return self.policy_agreed_datetime is not None
 
     def update_email(self, new_email):
         self.verified_email = False
