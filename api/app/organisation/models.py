@@ -13,9 +13,10 @@ class Organisation(db.Model):
     url = db.Column(db.String(100), nullable=False)
     email_from = db.Column(db.String(100), nullable=True)
     system_url = db.Column(db.String(100), nullable=False)
+    privacy_policy = db.Column(db.String(100), nullable=False)
     events = db.relationship('Event')
 
-    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url):
+    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url, privacy_policy):
         self.name = name
         self.small_logo = small_logo
         self.large_logo = large_logo
@@ -24,3 +25,4 @@ class Organisation(db.Model):
         self.url = url
         self.email_from = email_from
         self.system_url = system_url
+        self.privacy_policy = privacy_policy
