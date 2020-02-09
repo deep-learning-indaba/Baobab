@@ -219,17 +219,8 @@ class EventsStatsAPITest(ApiTestCase):
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'nationality_country_id': 1,
-        'residence_country_id': 1,
-        'user_ethnicity': 'None',
-        'user_gender': 'Male',
-        'affiliation': 'University',
-        'department': 'Computer Science',
-        'user_disability': 'None',
-        'user_category_id': 1,
-        'user_primaryLanguage': 'Zulu',
-        'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'password': 'abc'
+        'password': 'abc',
+        'policy_agreed': True
     }
 
     def seed_static_data(self):
@@ -285,43 +276,39 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.flush()
 
     def test_get_stats_forbidden(self):
-        with app.app_context():
-            self.seed_static_data()
-            response = self.app.get('/api/v1/eventstats',
-                                    headers={
-                                        'Authorization': self.test_user2['token']},
-                                    query_string={'event_id': self.test_event.id})
-            self.assertEqual(response.status_code, 403)
+        self.seed_static_data()
+        response = self.app.get('/api/v1/eventstats',
+                                headers={
+                                    'Authorization': self.test_user2['token']},
+                                query_string={'event_id': self.test_event.id})
+        self.assertEqual(response.status_code, 403)
 
     def test_event_id_required(self):
-        with app.app_context():
-            self.seed_static_data()
-            response = self.app.get('/api/v1/eventstats',
-                                    headers={
-                                        'Authorization': self.test_user2['token']},
-                                    query_string={'someparam': self.test_event.id})
-            self.assertEqual(response.status_code, 400)
+        self.seed_static_data()
+        response = self.app.get('/api/v1/eventstats',
+                                headers={
+                                    'Authorization': self.test_user2['token']},
+                                query_string={'someparam': self.test_event.id})
+        self.assertEqual(response.status_code, 400)
 
     def test_event_id_missing(self):
-        with app.app_context():
-            self.seed_static_data()
-            response = self.app.get('/api/v1/eventstats',
-                                    headers={
-                                        'Authorization': self.test_user2['token']},
-                                    query_string={'event_id': self.test_event.id + 100})
-            self.assertEqual(response.status_code, 404)
+        self.seed_static_data()
+        response = self.app.get('/api/v1/eventstats',
+                                headers={
+                                    'Authorization': self.test_user2['token']},
+                                query_string={'event_id': self.test_event.id + 100})
+        self.assertEqual(response.status_code, 404)
 
     def test_event_stats_accurate(self):
-        with app.app_context():
-            self.seed_static_data()
-            response = self.app.get('/api/v1/eventstats',
-                                    headers={
-                                        'Authorization': self.test_user1['token']},
-                                    query_string={'event_id': self.test_event.id})
-            data = json.loads(response.data)
-            self.assertEqual(data['num_users'], 2)
-            self.assertEqual(data['num_responses'], 2)
-            self.assertEqual(data['num_submitted_responses'], 1)
+        self.seed_static_data()
+        response = self.app.get('/api/v1/eventstats',
+                                headers={
+                                    'Authorization': self.test_user1['token']},
+                                query_string={'event_id': self.test_event.id})
+        data = json.loads(response.data)
+        self.assertEqual(data['num_users'], 2)
+        self.assertEqual(data['num_responses'], 2)
+        self.assertEqual(data['num_submitted_responses'], 1)
 
 
 class RemindersAPITest(ApiTestCase):
