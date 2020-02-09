@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+import copy
 
 from app import app, db
 from app.applicationModel.models import ApplicationForm
@@ -81,8 +82,10 @@ class UserApiTest(ApiTestCase):
 
     def test_policy_not_agreed(self):
         self.seed_static_data()
-        USER_DATA['policy_agreed'] = False
-        response = self.app.post('/api/v1/user', data=USER_DATA)
+        user_data = copy.deepcopy(USER_DATA)
+        user_data['policy_agreed'] = False
+        
+        response = self.app.post('/api/v1/user', data=user_data)
         self.assertEqual(response.status_code, 400)
 
     def test_get_user(self):
