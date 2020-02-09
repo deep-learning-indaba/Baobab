@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { eventsService } from "../../../services/events";
+import { organisationService } from "../../../services/organisation";
 import { withRouter } from "react-router";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
@@ -14,7 +15,8 @@ class EventConfigComponent extends Component {
       start_date: Date.now(),
       end_date: Date.now(),
       key: "",
-      organisation_id: 1,
+      organisation_id: -1,
+      organisation_name: "",
       email_from: "",
       url: "",
       application_open: Date.now(),
@@ -29,6 +31,7 @@ class EventConfigComponent extends Component {
       registration_close: Date.now()
     };
     this.state = {
+      organisation: null,
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
@@ -42,8 +45,20 @@ class EventConfigComponent extends Component {
   }
 
   componentDidMount() {
+    organisationService.getOrganisation().then(result => {
+      this.emptyEvent.organisation_id = result.organisation.id;
+      this.emptyEvent.organisation_name = result.organisation.name;
+
+      this.setState({
+        error: result.error,
+        organisation: result.organisation,
+        preEvent: this.emptyEvent,
+        updatedEvent: this.emptyEvent
+      });
+    });
     this.getEvents();
   }
+
   getEvents = () => {
     eventsService.getEvents().then(result => {
       let new_events = result.events.map(event => {
@@ -84,7 +99,7 @@ class EventConfigComponent extends Component {
 
   onClickCancel = () => {
     this.setState({
-      preEvent: this.emptyEvent,
+      preEvent: null,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
       successButtonText: "Add Event",
@@ -190,6 +205,7 @@ class EventConfigComponent extends Component {
 
     return (
       <div>
+        <br></br>
         <div className="card">
           <div className="row">
             <div className={threeColClassName}>
@@ -200,7 +216,9 @@ class EventConfigComponent extends Component {
                 placeholder="Select event"
                 onChange={(id, event) => this.updateSelectedEvent(event)}
                 label="Select Event"
-                value={{ label: preEvent.name, value: preEvent.id }}
+                value={
+                  preEvent ? { label: preEvent.name, value: preEvent.id } : null
+                }
               />
             </div>
             <div className={threeColClassName}>
@@ -220,6 +238,22 @@ class EventConfigComponent extends Component {
         {updatingEvent || addingNewEvent ? (
           <div className="card">
             <form>
+              <div className={"form-group row"}>
+                <label
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor="organisation_id"
+                >
+                  Organisation
+                </label>
+                <div className="col-sm-10">
+                  <input
+                    type="text"
+                    className="form-control-plaintext readonly"
+                    id="organisation_id"
+                    value={updatedEvent.organisation_name}
+                  />
+                </div>
+              </div>
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"} htmlFor="name">
                   Event Name
@@ -247,26 +281,6 @@ class EventConfigComponent extends Component {
                     className="form-control"
                     id="description"
                     value={updatedEvent.description}
-                  />
-                </div>
-              </div>
-              <div className={"form-group row"}>
-                {/* TODO: Replace with Selector, need to get a list of all organisations */}
-                <label
-                  className={"col-sm-2 col-form-label"}
-                  htmlFor="organisation_id"
-                >
-                  Organisation
-                </label>
-                <div className="col-sm-10">
-                  <input
-                    onChange={e =>
-                      this.updateEventDetails("organisation_id", e)
-                    }
-                    type="text"
-                    className="form-control"
-                    id="organisation_id"
-                    value={updatedEvent.organisation_id}
                   />
                 </div>
               </div>
