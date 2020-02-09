@@ -24,17 +24,8 @@ class ResponseApiTest(ApiTestCase):
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'nationality_country_id': 1,
-        'residence_country_id': 1,
-        'user_ethnicity': 'None',
-        'user_gender': 'Male',
-        'affiliation': 'University',
-        'department': 'Computer Science',
-        'user_disability': 'None',
-        'user_category_id': 1,
-        'user_primaryLanguage': 'Zulu',
-        'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'password': '123456'
+        'password': '123456',
+        'policy_agreed': True
     }
 
     def _seed_data(self):
