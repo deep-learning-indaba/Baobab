@@ -42,8 +42,7 @@ class CreateAccountForm extends Component {
       error: "",
       created: false,
       over18: false,
-      agreePrivacyPolicy: false,
-      consentData: false
+      agreePrivacyPolicy: false
     };
   }
 
@@ -121,10 +120,6 @@ class CreateAccountForm extends Component {
     this.setState({ agreePrivacyPolicy: !currentPrivacyPolicy });
   };
 
-  toggleConsentData = () => {
-    let currentConsentData = this.state.consentData;
-    this.setState({ consentData: !currentConsentData });
-  };
 
   handleSubmit = event => {
     event.preventDefault();
@@ -187,7 +182,7 @@ class CreateAccountForm extends Component {
       confirmPassword,
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy, consentData } = this.state;
+    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy } = this.state;
 
     if (created) {
       return (
@@ -275,41 +270,44 @@ class CreateAccountForm extends Component {
             </div>
           </div>
           <div>
-              <div>
-                {"I am over 18 "}
+              <br/>
+              <h5>Please confirm the following in order to create an account</h5>
+              
+              <div className="form-check">  
                 <input
+                  className="form-check-input"
+                  id="over18"
                   name="over18"
                   type="checkbox"
                   checked={over18}
-                  onChange={this.toggleAge}
-                />
+                  onChange={this.toggleAge} />  
+                <label class="form-check-label" for="over18">
+                  I am over 18
+                </label>
               </div>
-              <div id="agreePrivacyPolicy">
-                {"I have read and agree to the "}
-                <a href="/PrivacyPolicy.pdf" target="_blank">privacy policy </a>
                 
+              
+              <div className="form-check">
                 <input
+                  className="form-check-input"
                   name="agreePrivacyPolicy"
+                  id="agreePrivacyPolicy"
                   type="checkbox"
                   checked={agreePrivacyPolicy}
                   onChange={this.togglePrivacyPolicy}
                 />
+                <label class="form-check-label" for="agreePrivacyPolicy">
+                  {"I have read and agree to the "}
+                  <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")} target="_blank">privacy policy </a>
+                </label>
               </div>
-              <div id="consentData">
-                {"I consent to my data being shared with Baobab administrators for operational reasons "}
-                <input
-                  name="consentData"
-                  type="checkbox"
-                  checked={consentData}
-                  onChange={this.toggleConsentData}
-                />
-              </div>
+              
           </div>
             <br></br><br></br>
           <button
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18 || !consentData}
+            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}
           >
             {loading && (
               <span
