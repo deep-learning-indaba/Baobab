@@ -55,6 +55,12 @@ class Home extends Component {
         else if (e.status === "Continue application" && e.is_application_open) {
             return <NavLink to={`${e.key}/apply`} className="btn btn-warning">Continue Application</NavLink>
         }
+        else if (e.status === "Application withdrawn" && e.is_application_open) {
+            return <div>
+                Application Withdrawn<br/>
+                <NavLink to={`${e.key}/apply`} className="btn btn-warning">Re-apply</NavLink>
+            </div>
+        }
         else {
             return e.status
         }

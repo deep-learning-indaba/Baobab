@@ -132,9 +132,12 @@ class EventStatus extends Component {
                     : <p>You have submitted your application to {event.description}. Please await further communication.</p>}
                   </div>}
   
-                  {this.state.applicationStatus === "Withdrawn" && <p>
-                    Your application has been withdrawn - you will not be considered for a place at {event.description}.
-                  </p>}
+                  {this.state.applicationStatus === "Withdrawn" && <div>
+                    Your application has been withdrawn - you will not be considered for a place at {event.description}.<br/><br/>
+                    <NavLink to={`${this.props.event.key}/apply`} className="btn btn-warning">
+                      Re-apply
+                    </NavLink>
+                  </div>}
   
                   {this.state.applicationStatus === "NOT Submitted" && <p>
                     You did not submit an application to attend {event.description}.
