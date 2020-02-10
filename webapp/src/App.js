@@ -189,6 +189,13 @@ class EventNav extends Component {
             </div>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
               <NavLink
+                to={`/${this.props.eventKey}/eventConfig`}
+                className="dropdown-item"
+                onClick={this.props.toggleMenu}
+              >
+                Event Configuration
+              </NavLink>
+              <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
