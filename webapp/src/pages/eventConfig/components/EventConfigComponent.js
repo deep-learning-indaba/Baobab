@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { eventsService } from "../../../services/events";
+import { eventService } from "../../../services/events";
 import { organisationService } from "../../../services/organisation";
 import { withRouter } from "react-router";
 import FormSelect from "../../../components/form/FormSelect";
@@ -60,7 +60,7 @@ class EventConfigComponent extends Component {
   }
 
   getEvents = () => {
-    eventsService.getEvents().then(result => {
+    eventService.getEvents().then(result => {
       let new_events = result.events.map(event => {
         return { label: event.name, value: event.id, ...event };
       });
@@ -73,7 +73,7 @@ class EventConfigComponent extends Component {
   };
 
   updateSelectedEvent = event => {
-    eventsService.getEvent(event.id).then(result => {
+    eventService.getEvent(event.id).then(result => {
       this.setState({
         preEvent: result.event,
         updatedEvent: result.event,
@@ -111,7 +111,7 @@ class EventConfigComponent extends Component {
   onClickSubmit = () => {
     if (this.state.addingNewEvent) {
       // POST
-      eventsService.create(this.state.updatedEvent).then(result => {
+      eventService.create(this.state.updatedEvent).then(result => {
         this.setState({
           preEvent: result.event,
           updatedEvent: result.event,
@@ -124,7 +124,7 @@ class EventConfigComponent extends Component {
       });
     } else {
       // PUT
-      eventsService.update(this.state.updatedEvent).then(result => {
+      eventService.update(this.state.updatedEvent).then(result => {
         this.setState({
           preEvent: result.event,
           updatedEvent: result.event,
