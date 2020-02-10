@@ -314,16 +314,6 @@ class RegistrationTest(ApiTestCase):
 
         db.session.flush()
 
-    def get_auth_header_for(self, email):
-        body = {
-            'email': email,
-            'password': 'abc'
-        }
-        response = self.app.post('api/v1/authenticate', data=body)
-        data = json.loads(response.data)
-        header = {'Authorization': data['token']}
-        return header
-
     def test_create_registration_form(self):
         self.seed_static_data()
         response = self.app.post(

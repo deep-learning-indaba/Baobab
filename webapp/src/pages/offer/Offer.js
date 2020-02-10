@@ -6,7 +6,7 @@ export default class Offer extends Component{
 
     render(){
         return (
-            <OfferComponent></OfferComponent>
+            <OfferComponent {...this.props}></OfferComponent>
         );
     }
 }

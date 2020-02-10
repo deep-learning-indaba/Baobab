@@ -10,8 +10,6 @@ import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
 import { fileService } from "../../../services/file/file.service";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
@@ -161,7 +159,7 @@ class RegistrationComponent extends Component {
   componentDidMount() {
     this.setState({isLoading: true});
 
-    offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
+    offerServices.getOffer(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error === "" && result.offer !== null) {
         this.setState(
           {
@@ -170,7 +168,7 @@ class RegistrationComponent extends Component {
           },
           () => {
             registrationService
-              .getRegistrationForm(DEFAULT_EVENT_ID, this.state.offer.id)
+              .getRegistrationForm(this.props.event ? this.props.event.id : 0, this.state.offer.id)
               .then(result => {
                 if (
                   result.error === "" &&

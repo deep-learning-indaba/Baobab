@@ -32,7 +32,6 @@ const extraFieldValidations = [
   ruleRunner(validationFields.affiliation, requiredText)
 ]
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const MENTOR_ATTENDEE_CATEGORY_ID = 8;
 
 class InvitedGuests extends Component {
@@ -56,7 +55,7 @@ class InvitedGuests extends Component {
     };
   }
   getGuestList() {
-    invitedGuestServices.getInvitedGuestList(DEFAULT_EVENT_ID).then(result => {
+    invitedGuestServices.getInvitedGuestList(this.props.event ? this.props.event.id : 0).then(result => {
       this.setState({
         loading: false,
         guestList: result.form,
@@ -250,7 +249,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
+        .addInvitedGuest(this.state.user.email, this.props.event ? this.props.event.id : 0, this.state.user.role)
         .then(resp => this.handleResponse(resp));
     });
   }
@@ -269,7 +268,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
+        .createInvitedGuest(user, this.props.event ? this.props.event.id : 0, user.role)
         .then(resp => this.handleResponse(resp));
     });
   }

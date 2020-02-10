@@ -15,8 +15,6 @@ import {
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
@@ -116,7 +114,7 @@ class creatreInvitedGuestComponent extends Component {
     //TODO review this workflow, it seems dodgy. 
     //createInvitedGuest always returns 400 (no role). Then addInvitedGuest creates the invitedguest.
     invitedGuestServices
-      .createInvitedGuest(this.state.user, DEFAULT_EVENT_ID)
+      .createInvitedGuest(this.state.user, this.props.event ? this.props.event.id : 0)
       .then(user => {
         this.setState({
           created: true
@@ -128,7 +126,7 @@ class creatreInvitedGuestComponent extends Component {
         } else if (this.state.created === true) {
           invitedGuestServices.addInvitedGuest(
             this.state.user.email,
-            DEFAULT_EVENT_ID,
+            this.props.event ? this.props.event.id : 0,
             this.state.user.role
           );
           this.props.history.push("/invitedGuests");

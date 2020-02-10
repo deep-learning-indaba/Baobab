@@ -2,7 +2,7 @@ import axios from "axios";
 import { authHeader } from '../base.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
-const UNKNOWN_COUNTRY = 260;
+// const UNKNOWN_COUNTRY = 260;
 
 export const invitedGuestServices = {
   getInvitedGuestList,

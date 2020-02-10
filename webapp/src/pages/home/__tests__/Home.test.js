@@ -1,6 +1,6 @@
 import React from 'react';
 import {shallow} from 'enzyme';
-import Home from '../Home.js';
+import Home from '../Home';
 
 test('Check if Home component renders.', () => {
   // Render Home main component.

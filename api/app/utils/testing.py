@@ -1,12 +1,14 @@
 import unittest
 
-from datetime import datetime
+import json
+from datetime import datetime,timedelta
 from app import db, app
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQLite3Connection
 from app.organisation.models import Organisation
 from app.users.models import AppUser, UserCategory, Country
+from app.events.models import Event
 
 
 @event.listens_for(Engine, "connect")
@@ -66,8 +68,53 @@ class ApiTestCase(unittest.TestCase):
         db.session.flush()
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='com', url='www.org.com'):
-        db.session.add(Organisation(name, system_name, small_logo, large_logo, domain, url))
+                                    large_logo='org_big.png', domain='com', url='www.org.com',
+                                    email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
+                                    privacy_policy='PrivacyPolicy.pdf'):
+        org = Organisation(name, system_name, small_logo, large_logo, domain, url, email_from, system_url, privacy_policy)
+        db.session.add(org)
+        db.session.commit()
+        return org
+
+    def add_event(self, 
+                 name ='Test Event', 
+                 description = 'Event Description', 
+                 start_date = datetime.now() + timedelta(days=30), 
+                 end_date = datetime.now() + timedelta(days=60),
+                 key = 'INDABA2025', 
+                 organisation_id = 1, 
+                 email_from = 'abx@indaba.deeplearning', 
+                 url = 'indaba.deeplearning',
+                 application_open = datetime.now(),
+                 application_close = datetime.now() + timedelta(days=10),
+                 review_open = datetime.now() ,
+                 review_close = datetime.now() + timedelta(days=15),
+                 selection_open = datetime.now(),
+                 selection_close = datetime.now() + timedelta(days=15),
+                 offer_open = datetime.now(),
+                 offer_close = datetime.now(),
+                 registration_open = datetime.now(),
+                 registration_close = datetime.now() + timedelta(days=15)):
+
+        event = Event(name, description, start_date,  end_date, key,  organisation_id,  email_from,  url, 
+                      application_open, application_close, review_open, review_close, selection_open, 
+                      selection_close, offer_open,  offer_close, registration_open, registration_close)
+        db.session.add(event)
+        db.session.commit()
+        return event
+
+    def get_auth_header_for(self, email, password='abc'):
+        body = {
+            'email': email,
+            'password': password
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
+
+    def add_to_db(self, obj):
+        db.session.add(obj)
         db.session.commit()
 
     def tearDown(self):

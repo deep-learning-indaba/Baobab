@@ -1,6 +1,9 @@
+from datetime import datetime
 from app import db
 from app.events.models import Event
 from app.organisation.models import Organisation
+from app.responses.models import Response
+from app.applicationModel.models import ApplicationForm
 
 
 class EventRepository():
@@ -28,6 +31,22 @@ class EventRepository():
                          .filter_by(id=event_id)\
                          .join(Organisation, Organisation.id == Event.organisation_id)\
                          .one_or_none()
+
+    @staticmethod
+    def get_event_by_response_id(response_id):
+        return db.session.query(Response.application_form_id, ApplicationForm.event_id, Event)\
+                         .filter_by(id=response_id)\
+                         .join(ApplicationForm, ApplicationForm.id == Response.application_form_id)\
+                         .join(Event, Event.id == ApplicationForm.event_id)\
+                         .first()
+
+    @staticmethod
+    def get_upcoming_for_organisation(organisation_id):
+        return db.session.query(Event, Organisation)\
+                         .filter(Event.start_date > datetime.now())\
+                         .filter_by(organisation_id=organisation_id)\
+                         .join(Organisation, Organisation.id==Event.organisation_id)\
+                         .all()
 
     @staticmethod
     def add(event):
