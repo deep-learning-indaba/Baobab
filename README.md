@@ -96,7 +96,11 @@ Common errors you may get when running the ```docker-compose build``` or ```dock
 
 * **My country doesn’t allow for docker to installed**
 
-    [Windscribe](https://windscribe.com/) is a free VPN that doesn’t require a credit card for set up and can potentially help with the install. Tor browsers are also a potential avenue to try out. If you find a workaround that works, please let us know !
+    [Windscribe](https://windscribe.com/) is a free VPN that doesn’t require a credit card for set up and can potentially help with the install. Tor browsers are also a potential avenue to try out. If you find a workaround that works, please let us know!
+
+* **How much disk space is required to run the project?**
+
+    The docker images, containers, and volumes use up approximately 4.7GB of disk space.
 
 * **I have a question about the issue, where should I ask?**
 
