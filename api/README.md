@@ -50,7 +50,7 @@ docker-compose run web nosetests
 ```
 
 ### Run Specific Tests
-Test can progressively can get more and more specific.
+As the project has grown, so has the number of tests and the amount of time needed to run them all. Luckily, you can progressively get more and more specific about which tests you can run making your feedback loop shorter and thus speeding up the development process.
 
 #### Run all tests in a file
 We will use `invitedGuest` as the example.

@@ -4,7 +4,7 @@ Baobab is an open source multi-tenant web application designed to facilitate the
 
 ## Application Lifecycle
 
-The process starts with the release of an application form for potential applicants to complete online. Once all the applications are in, reviewers assess each one by completing a form of their own which is used to record the decisions of each applicant.
+The process starts with the release of an application form for potential applicants to complete online. Once all the applications are in, reviewers assess each one by completing a form of their own which is used to record the decisions on each applicant.
 
 Following the selection process, applicants are informed of the decision and relevant information regarding the event and reference letters (for visas etc.) are dispatched.
 
@@ -21,7 +21,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Tasks
 
-Tasks are managed via the [Issues](https://github.com/deep-learning-indaba/Baobab/issues) tab. If you want to work on a particular issue, please assign yourself to it. Each issue should include a _definition of done_ checklist that should be met before submitting a pull request to merge into the develop branch. 
+Tasks are managed via the [Issues](https://github.com/deep-learning-indaba/Baobab/issues) tab. If you want to work on a particular issue, please assign yourself to it. Each issue should include a _definition of done_ checklist that should be met before submitting a pull request to merge into the develop branch. Although if you're stuck or unsure of anything, submit the pull request anyway and we can give you feedback and iterate until it's ready.
 
 ## Technology Stack
 **Backend**
@@ -99,6 +99,7 @@ Common errors you may get when running the ```docker-compose build``` or ```dock
     [Windscribe](https://windscribe.com/) is a free VPN that doesn’t require a credit card for set up and can potentially help with the install. Tor browsers are also a potential avenue to try out. If you find a workaround that works, please let us know !
 
 * **I have a question about the issue, where should I ask?**
+
     All questions relating to a specific issue, should be left on the GitHub on the issue itself (or the Pull Request if you've opened one).
 
     Please be as descriptive as possible, and include any error messages you might be experiencing.
