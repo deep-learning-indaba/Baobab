@@ -394,7 +394,7 @@ class App extends Component {
                 {this.state.organisation && this.state.organisation.name}
                 </a>{" "}
                 |{" "}
-                <a href="/PrivacyPolicy.pdf" target="_blank">
+                <a href={"/" + (this.state.organisation ? this.state.organisation.privacy_policy : "")} target="_blank">
                   Privacy Policy
                 </a>
                 {this.state.organisation && this.state.organisation.system_name !== "Baobab" && 
