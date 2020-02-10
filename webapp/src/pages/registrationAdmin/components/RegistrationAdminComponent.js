@@ -1,12 +1,9 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-import { createColClassName } from "../../../utils/styling/styling";
 import "react-table/react-table.css";
 import ReactTable from 'react-table';
 import FormTextBox from "../../../components/form/FormTextBox";
 import { registrationAdminService } from "../../../services/registration/registration.admin.service";
-
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class RegistrationAdminComponent extends Component {
     constructor(props) {
@@ -24,7 +21,7 @@ class RegistrationAdminComponent extends Component {
     }
 
     getUnconfirmed = () => {
-      registrationAdminService.getUnconfirmed(DEFAULT_EVENT_ID).then(response=> {
+      registrationAdminService.getUnconfirmed(this.props.event ? this.props.event.id : 0).then(response=> {
         this.setState({
           unconfirmedList: response.data,
           error: response.error,
@@ -109,7 +106,7 @@ class RegistrationAdminComponent extends Component {
           id: "confirm",
           Header: <div className="registration-admin-confirm">Confirm</div>,
           accessor: u => u.registration_id,
-          Cell: props => <button className="btn btn-success btn-sm" onClick={e=>{this.onConfirm(props.value)}} disabled={confirming}>Confirm</button>,
+          Cell: props => <button className="btn btn-success btn-sm" onClick={()=>{this.onConfirm(props.value)}} disabled={confirming}>Confirm</button>,
         }
       ];
 
@@ -135,7 +132,7 @@ class RegistrationAdminComponent extends Component {
                 {confirmError && <div class="alert alert-danger">{confirmError}</div>}
                 
                 {
-                (!unconfirmedList || unconfirmedList.length == 0) &&
+                (!unconfirmedList || unconfirmedList.length === 0) &&
                   <div class="alert alert-success">There are no unconfirmed registrations</div>
                 }
               </div>

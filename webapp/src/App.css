@@ -25,10 +25,15 @@
   color: #40798C;
 }
 
+body {
+  background: #E8ECEE;
+}
+
 .Body{
   background: #E8ECEE;
   min-height: 85vh;
   padding-bottom: 1em;
+  padding-top: 2em;
 }
 
 .HomeNavBar{
@@ -36,7 +41,8 @@
 }
 
 footer {
-  margin: 1em;
+  padding: 1em;
+  background: white;
 }
 
 footer .btn {
@@ -52,4 +58,14 @@ footer .btn {
 .container-fluid {
   padding-right: 30px;
   padding-left: 30px;
+}
+
+.link-style{
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.navbar-brand .brand-image {
+  margin-right: 10px;
 }

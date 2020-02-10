@@ -72,8 +72,6 @@ class ConfirmPasswordResetForm extends Component {
     const {
       password,
       confirmPassword,
-      token,
-      submitted,
       loading,
       error
     } = this.state;

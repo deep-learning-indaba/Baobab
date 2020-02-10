@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
+import { applicationFormService} from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class Offer extends Component {
   constructor(props) {
@@ -22,7 +22,8 @@ class Offer extends Component {
       noOffer: null,
       category: "",
       accepted_accommodation_award: false,
-      accepted_travel_award: false
+      accepted_travel_award: false,
+      applicationExist: null
     };
   }
   
@@ -45,7 +46,7 @@ class Offer extends Component {
         offerServices
           .updateOffer(
             offer.id,
-            DEFAULT_EVENT_ID,
+            this.props.event ? this.props.event.id : 0,
             candidate_response,
             candidate_response? "" : rejected_reason,
             accepted_accommodation_award,
@@ -177,7 +178,7 @@ class Offer extends Component {
         <form class="form pt-2 ">
           <p className="card p">
             You have been accepted as a{" "}
-            {userProfile != null ? userProfile.user_category : "<Category>"}{" "}
+            {userProfile !== null ? userProfile.user_category : "<Category>"}{" "}
           </p>
           <div className="white-background card form">
             <p class="font-weight-bold">Offer Details</p>
@@ -239,7 +240,7 @@ class Offer extends Component {
 
             <p class="font-weight-bold">
               Please accept or reject this offer by{" "}
-              {offer != null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
+              {offer !== null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0,10): "-date-" : "unable to load expiry date"}{" "}
             </p>
            
             <div class="form-group">
@@ -321,9 +322,25 @@ class Offer extends Component {
     });
   }
 
+  componentDidMount(){
+    applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(results => {
+      console.log(results)
+      if (results.is_submitted && !results.is_withdrawn){
+        this.setState({
+          applicationExist: true
+        })
+      }
+      else{
+        this.setState({
+          applicationExist: false
+        })
+      }
+    });
+  }
+
   getOffer = () => {
     this.setState({ loading: true });
-    offerServices.getOffer(DEFAULT_EVENT_ID).then(result => {
+    offerServices.getOffer(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error && result.statusCode === 404) {
         this.setState({
           noOffer: true,
@@ -350,7 +367,7 @@ class Offer extends Component {
 
   render() {
   
-    const { loading, offer, error } = this.state;
+    const { loading, offer, error, applicationExist } = this.state;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
@@ -373,6 +390,13 @@ class Offer extends Component {
         </div>
       );
     else if (offer !== null) return this.displayOfferContent();
+    else if (offer === null && !applicationExist)
+      return (
+        <div className="h5 pt-5" align="center">
+          {" "}
+          You did not apply to attend.
+        </div>
+      ); 
     else
       return (
         <div className="h5 pt-5" align="center">

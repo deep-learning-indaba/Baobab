@@ -7,10 +7,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
-import { offerServices } from "../../../services/offer";
 import { fileService } from "../../../services/file/file.service";
-
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -132,7 +129,7 @@ class GuestRegistrationComponent extends Component {
     if (answer) {
       answer.value = value.toString();
       answers = answers.map(function(item) {
-        return item.registration_question_id == id ? answer : item;
+        return item.registration_question_id === id ? answer : item;
       });
     } else {
       answer = {
@@ -161,8 +158,8 @@ class GuestRegistrationComponent extends Component {
   componentDidMount() {
     this.setState({isLoading: true});
 
-    registrationService.getGuestRegistration(DEFAULT_EVENT_ID).then(result => {
-      if (result.error == "" && result.form.registration_sections.length > 0) {
+    registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0).then(result => {
+      if (result.error === "" && result.form.registration_sections.length > 0) {
         let questionSections = [];
         for (var i = 0; i < result.form.registration_sections.length; i++) {
           if (
@@ -188,7 +185,7 @@ class GuestRegistrationComponent extends Component {
               });
             }
           })
-          .catch(error => {});
+          .catch(() => {});
         this.setState({
           questionSections: questionSections.sort((a, b) => a.order - b.order),
           registrationFormId: result.form.id,
@@ -289,7 +286,7 @@ class GuestRegistrationComponent extends Component {
                 });
               }
             })
-            .catch(error => {
+            .catch(() => {
               this.setState({
                 formFailure: true,
                 formSuccess: false,
@@ -318,7 +315,7 @@ class GuestRegistrationComponent extends Component {
 
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
-        if (item.value == answer.value) return item.label;
+        if (item.value === answer.value) return item.label;
         return null;
       });
     };
@@ -486,20 +483,14 @@ class GuestRegistrationComponent extends Component {
 
                 {section.registration_questions
                   .sort((a, b) => a.order - b.order)
-                  .map(question => {
+                  .filter(question => {
                     if (question.depends_on_question_id) {
-                      let answer = this.state.answers.find(
-                        a =>
-                          a.registration_question_id ==
-                          question.depends_on_question_id
-                      );
-                      if (
-                        !answer ||
-                        answer.value == question.hide_for_dependent_value
-                      ) {
-                        return;
-                      }
+                      let answer = this.state.answers.find( a => a.registration_question_id === question.depends_on_question_id );
+                      return answer && (answer.value !== question.hide_for_dependent_value)
                     }
+                    return true
+                  })
+                  .map(question => {
                     return (
                       <div
                         className="text-left"

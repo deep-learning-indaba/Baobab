@@ -5,10 +5,7 @@ import ReactTable from "react-table";
 import "react-table/react-table.css";
 
 import { reviewService } from "../../../services/reviews";
-import { createColClassName } from "../../../utils/styling/styling";
 import { columns } from "./tablecolumns";
-
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 
 class ReviewHistoryComponent extends Component {
   constructor(props) {
@@ -30,7 +27,7 @@ class ReviewHistoryComponent extends Component {
 
   loadReviewHistory = (pageNumber,pageSize,sortColumn) => {
     reviewService
-      .getReviewHistory(DEFAULT_EVENT_ID, pageNumber, pageSize,sortColumn)
+      .getReviewHistory(this.props.event ? this.props.event.id : 0, pageNumber, pageSize,sortColumn)
       .then(response => {
         this.setState({
           isLoading: false,
@@ -43,7 +40,7 @@ class ReviewHistoryComponent extends Component {
       });
   };
 
-  fetchData=(state, instance)=> {
+  fetchData=(state)=> {
     this.setState({ isLoading: true });
     let sortColumn;
     if(state.sorted && state.sorted.length > 0){

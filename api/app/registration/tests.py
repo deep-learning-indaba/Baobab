@@ -8,6 +8,7 @@ from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
+from app.organisation.models import Organisation
 
 
 OFFER_DATA = {
@@ -56,23 +57,11 @@ REGISTRATION_QUESTION = {
 class OfferApiTest(ApiTestCase):
 
     def seed_static_data(self, add_offer=True):
+        test_user = self.add_user('something@email.com')
+        offer_admin = self.add_user('offer_admin@ea.com', 'event_admin', is_admin=True)
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
         db.session.add(UserCategory('Offer Category'))
         db.session.add(Country('Suid Afrika'))
-        db.session.commit()
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12), 'Zulu', '654321')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        offer_admin = AppUser('offer_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '654321', True)
-        offer_admin.verified_email = True
-        db.session.add(offer_admin)
-
         db.session.commit()
 
         event = Event(
@@ -80,6 +69,20 @@ class OfferApiTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12),
             end_date=datetime(2020, 12, 12),
+            key='SPEEDNET', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning',
+            application_open=datetime.now(), 
+            application_close=datetime.now(),
+            review_open=datetime.now(),
+            review_close=datetime.now(),
+            selection_open=datetime.now(),
+            selection_close=datetime.now(),
+            offer_open=datetime.now(),
+            offer_close=datetime.now(),
+            registration_open=datetime.now(),
+            registration_close=datetime.now()
         )
         db.session.add(event)
         db.session.commit()
@@ -104,7 +107,7 @@ class OfferApiTest(ApiTestCase):
     def get_auth_header_for(self, email):
         body = {
             'email': email,
-            'password': '654321'
+            'password': 'abc'
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
@@ -119,10 +122,10 @@ class OfferApiTest(ApiTestCase):
                                  headers=self.adminHeaders)
         data = json.loads(response.data)
 
-        assert response.status_code == 201
-        assert data['payment_required']
-        assert data['travel_award']
-        assert data['accommodation_award']
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(data['payment_required'])
+        self.assertTrue(data['travel_award'])
+        self.assertTrue(data['accommodation_award'])
 
     def test_create_offer_with_template(self):
         self.seed_static_data(add_offer=False)
@@ -198,24 +201,11 @@ class OfferApiTest(ApiTestCase):
 class RegistrationTest(ApiTestCase):
 
     def seed_static_data(self):
+        test_user = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        db.session.commit()
-
-        test_user = AppUser('something@email.com', 'Some', 'Thing', 'Mr', 1, 1,
-                            'Male', 'University', 'Computer Science', 'None', 1,
-                            datetime(1984, 12, 12),
-                            'Zulu',
-                            '123456')
-        test_user.verified_email = True
-        db.session.add(test_user)
-        db.session.commit()
-
-        event_admin = AppUser('event_admin@ea.com', 'event_admin', '1', 'Ms', 1,
-                              1, 'F', 'NWU', 'Math', 'NA', 1, datetime(1984, 12, 12), 'Eng', '123456', True)
-        event_admin.verified_email = True
-        db.session.add(event_admin)
-
         db.session.commit()
 
         event = Event(
@@ -223,7 +213,20 @@ class RegistrationTest(ApiTestCase):
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-
+            key='SPEEDNET', 
+            organisation_id=1, 
+            email_from='abx@indaba.deeplearning',
+            url='indaba.deeplearning',
+            application_open=datetime.now(), 
+            application_close=datetime.now(),
+            review_open=datetime.now(),
+            review_close=datetime.now(),
+            selection_open=datetime.now(),
+            selection_close=datetime.now(),
+            offer_open=datetime.now(),
+            offer_close=datetime.now(),
+            registration_open=datetime.now(),
+            registration_close=datetime.now()
         )
         db.session.add(event)
         db.session.commit()
@@ -310,16 +313,6 @@ class RegistrationTest(ApiTestCase):
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
         db.session.flush()
-
-    def get_auth_header_for(self, email):
-        body = {
-            'email': email,
-            'password': '123456'
-        }
-        response = self.app.post('api/v1/authenticate', data=body)
-        data = json.loads(response.data)
-        header = {'Authorization': data['token']}
-        return header
 
     def test_create_registration_form(self):
         self.seed_static_data()

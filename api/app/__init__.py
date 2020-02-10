@@ -12,7 +12,7 @@ from flask_admin.contrib.sqla import ModelView
 import flask_login as login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import tldextract
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -27,8 +27,6 @@ bcrypt = Bcrypt(app)
 redis = FlaskRedis(app)
 LOGGER = Logger().get_logger()
 
-
-
 import routes
 
 migrate = Migrate(app, db)
@@ -36,11 +34,40 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
+from organisation.resolver import OrganisationResolver
+
+def get_domain():
+    # TODO: Remove this test-related hack!
+    if app.config['TESTING'] and 'HTTP_ORIGIN' not in request.environ and 'HTTP_REFERER' not in request.environ:
+        return 'org'
+
+    origin = request.environ.get('HTTP_ORIGIN', '')
+    if not origin:  # Try to get from Referer header
+        origin = request.environ.get('HTTP_REFERER', '')
+        LOGGER.debug('No ORIGIN header, falling back to Referer: {}'.format(origin))
+    
+    if origin:
+        domain = tldextract.extract(origin).domain
+    else:
+        LOGGER.warning('Could not determine origin domain')
+        domain = ''
+    
+    return domain
+
+@app.before_request
+def populate_organisation():
+    domain = get_domain()
+    LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
+    g.organisation = OrganisationResolver.resolve_from_domain(domain)
+
+## Flask Admin Config
+
 # set optional bootswatch theme
 app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
 from applicationModel.models import Question, Section
 from responses.models import Response, Answer, ResponseReviewer
 from users.models import UserCategory, AppUser, UserComment
+from email_template.models import EmailTemplate
 from events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
@@ -69,6 +96,7 @@ class LoginForm(form.Form):
         return True
 
     def get_user(self):
+        # TODO: What organisation should we use to query here?
         return db.session.query(AppUser).filter(AppUser.email==self.email.data).first()
 
 # Initialize flask-login
@@ -154,4 +182,5 @@ admin.add_view(BaobabModelView(RegistrationAnswer, db.session))
 
 admin.add_view(BaobabModelView(InvitationTemplate, db.session))
 admin.add_view(BaobabModelView(InvitationLetterRequest, db.session))
+admin.add_view(BaobabModelView(EmailTemplate, db.session))
 

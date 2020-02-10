@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -85,7 +85,7 @@ class AttendanceTable extends React.Component {
           });
         } else {
           let success =
-            (result.error == null || result.error == "") &&
+            (result.error === null || result.error === "") &&
             result.statusCode === 201;
           this.setState({
             showDetailsModal: success,
@@ -101,7 +101,7 @@ class AttendanceTable extends React.Component {
       });
     });
   };
-  getTrProps = (state, rowInfo, instance) => {
+  getTrProps = (state, rowInfo) => {
     if (rowInfo) {
       return {
         style: {
@@ -169,7 +169,6 @@ class AttendanceTable extends React.Component {
       loading,
       error,
       confirming,
-      undoing,
       confirmResult,
       undoResult,
       searchTerm,
@@ -293,7 +292,7 @@ class AttendanceTable extends React.Component {
     }
 
     let columns = null;
-    if (this.state.showAllColumns == true) {
+    if (this.state.showAllColumns === true) {
       columns = [
         {
           id: "user",
@@ -328,7 +327,7 @@ class AttendanceTable extends React.Component {
               {props.original.confirmed ? (
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={e => {
+                  onClick={() => {
                     this.onConfirm(props.original);
                   }}
                   disabled={confirming}
@@ -367,7 +366,7 @@ class AttendanceTable extends React.Component {
               {props.original.confirmed ? (
                 <button
                   className="btn btn-success btn-sm"
-                  onClick={e => {
+                  onClick={() => {
                     this.onConfirm(props.original);
                   }}
                   disabled={confirming}
@@ -393,7 +392,7 @@ class AttendanceTable extends React.Component {
       );
     }
     let heading = "Attendance Registration";
-    if (this.state.exclude_already_signed_in == false) {
+    if (this.state.exclude_already_signed_in === false) {
       heading = "Attendance Registration - Special Situations";
     }
 
@@ -439,7 +438,7 @@ class AttendanceTable extends React.Component {
               {confirmResult && !confirmResult.success && confirmResultDiv}
 
               {(!originalAttendanceList ||
-                originalAttendanceList.length == 0) && (
+                originalAttendanceList.length === 0) && (
                 <div class="alert alert-success">
                   All attendances are confirmed.
                 </div>

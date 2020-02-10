@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
-import validationFields from "../../../utils/validation/validationFields";
 import { getCounties } from "../../../utils/validation/contentHelpers";
 class Address extends Component {
   constructor(props) {

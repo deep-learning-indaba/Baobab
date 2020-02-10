@@ -5,16 +5,22 @@ from app import db, LOGGER
 from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.applicationModel.models import ApplicationForm, Section, Question
+from app.organisation.models import Organisation
 
 
 class ApplicationFormApiTest(ApiTestCase):
 
     def seed_static_data(self):
+        self.add_organisation('IndabaX')
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
         test_event = Event('Test Event', 'Event Description',
-                           self.start_time, self.end_time)
+                           self.start_time, self.end_time, 
+                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now())
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(

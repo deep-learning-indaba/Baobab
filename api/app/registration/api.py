@@ -20,7 +20,7 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, admin_required
 from app.utils.emailer import send_mail
-from config import BOABAB_HOST
+from app.utils import misc
 
 OFFER_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
@@ -38,9 +38,6 @@ If you have any queries, please forward them to info@deeplearningindaba.com
 Kind Regards,
 The Deep Learning Indaba Team
 """
-
-def get_baobab_host():
-    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 def offer_info(offer_entity, requested_travel=None):
     return {
@@ -170,7 +167,7 @@ class OfferAPI(OfferMixin, restful.Resource):
             send_mail(recipient=user.email, subject='{} Application Status Update'.format(event_name),
                       body_text=email_body_template.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
-                            event_name=event_name, host=get_baobab_host(),
+                            event_name=event_name, host=misc.get_baobab_host(),
                             expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d")))
 
             LOGGER.debug("Sent an offer email to {}".format(user.email))

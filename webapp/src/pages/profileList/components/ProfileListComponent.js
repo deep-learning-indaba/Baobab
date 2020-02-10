@@ -3,8 +3,6 @@ import { withRouter} from "react-router";
  import ReactTable from 'react-table';
 import { profileService} from "../../../services/profilelist";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class ProfileListComponent extends Component{
     constructor(props){
         super(props);
@@ -25,7 +23,7 @@ class ProfileListComponent extends Component{
     this.setState({Desc_Asc:!this.state.Desc_Asc});
  }
  componentDidMount(){ 
-    profileService.getProfilesList(DEFAULT_EVENT_ID)
+    profileService.getProfilesList(this.props.event ? this.props.event.id : 0)
                     .then(results => {
                         this.setState(
                             {
@@ -40,7 +38,7 @@ onSubmit=(user_id)=>{
     window.location='/viewprofile/:'+user_id;
 }
  render(){
-    const {List, isEmpty,loading,error,Desc_Asc} = this.state;
+    const {List, isEmpty,loading,error} = this.state;
     const loadingStyle = {
         "width": "3rem",
         "height": "3rem"
@@ -48,7 +46,7 @@ onSubmit=(user_id)=>{
     const columns = [
                      {id: "user", Header: <div className="list-fullname">Full-Name</div>,
                       accessor:u=>u.lastname+" "+u.firstname+", "+u.user_title,
-                      Cell: props => <a href="#" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</a>,
+                      Cell: props => <button className="link-style" onClick={e=>{e.preventDefault(); this.onSubmit(props.original.user_id)}}>{props.value}</button>,
                       minWidth: 150},
                      {Header:<div className="list-user-category">Category</div>,accessor:"user_category"},
                      {Header:<div className="list-affiliation">Affiliation</div>,accessor:"affiliation"},
