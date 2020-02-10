@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { eventService } from "../../../services/events";
 import { withRouter } from "react-router";
-import FormSelect from "../../../components/form/FormSelect";
-import { createColClassName } from "../../../utils/styling/styling";
 import DateTimePicker from "react-datetime-picker";
 
 class EventConfigComponent extends Component {
