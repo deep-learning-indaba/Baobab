@@ -294,7 +294,7 @@ class Section extends React.Component {
             />
           ))}
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="save mx-auto link-style" onClick={this.handleSave} >
+          <button className="btn btn-secondary" onClick={this.handleSave} >
             Save for later...
           </button>
         )}
@@ -339,11 +339,14 @@ class Confirmation extends React.Component {
             <h2>Review your Answers</h2>
             <p>
               Please confirm that your answers are correct. Use the previous
-              button to correct them if they are not. Click the SUBMIT button when you are happy. 
+              button to correct them if they are not. You can also exit and come back 
+              later as they have all been saved. 
+
+              Click the SUBMIT button once you are happy to submit your answers to the committee.
             </p>
 
             <div class="alert alert-warning">
-            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT in order for your application to be considered!
+            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
             </div>
 
             <div class="text-center">
