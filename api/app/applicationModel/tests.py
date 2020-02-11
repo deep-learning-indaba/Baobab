@@ -55,3 +55,4 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['description'], 'Test Question Description')
         self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
         self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
+        self.assertEqual(data['nominations'], False)
