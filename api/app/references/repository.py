@@ -1,5 +1,5 @@
 from app import db
-from app.references.models import ReferenceRequest
+from app.references.models import ReferenceRequest, Reference
 from app.events.models import Event
 import uuid
 
@@ -21,8 +21,8 @@ class ReferenceRequestRepository():
         db.session.commit()
     
     @staticmethod
-    def update(reference_request):
-        db.session.add(reference_request)
+    def add(obj_to_commit):
+        db.session.add(obj_to_commit)
         db.session.commit()
 
     @staticmethod
@@ -30,3 +30,22 @@ class ReferenceRequestRepository():
         return db.session.query(ReferenceRequest)\
                          .filter_by(response_id=response_id)\
                          .all()
+
+    @staticmethod
+    def get_by_token(token):
+        return db.session.query(ReferenceRequest)\
+                         .filter_by(token=token)\
+                         .first()
+
+    @staticmethod
+    def get_reference_by_response_id(response_id):
+        return db.session.query(ReferenceRequest.response_id, Reference)\
+                         .join(ReferenceRequest, ReferenceRequest.id == Reference.reference_request_id)\
+                         .filter_by(response_id=ReferenceRequest.response_id)\
+                         .all()
+
+    @staticmethod
+    def get_reference_by_reference_request_id(reference_request_id):
+        return db.session.query(Reference)\
+                         .filter_by(reference_request_id=Reference.reference_request_id)\
+                         .first()

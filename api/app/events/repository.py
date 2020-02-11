@@ -34,11 +34,12 @@ class EventRepository():
 
     @staticmethod
     def get_event_by_response_id(response_id):
-        return db.session.query(Response.application_form_id, ApplicationForm.event_id, Event)\
+        result = db.session.query(Response.application_form_id, ApplicationForm.event_id, Event)\
                          .filter_by(id=response_id)\
                          .join(ApplicationForm, ApplicationForm.id == Response.application_form_id)\
                          .join(Event, Event.id == ApplicationForm.event_id)\
                          .first()
+        return result.Event if result else None
 
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):

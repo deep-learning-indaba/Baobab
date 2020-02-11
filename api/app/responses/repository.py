@@ -9,3 +9,8 @@ class ResponseRepository():
         return db.session.query(Response)\
                          .filter_by(id=response_id, user_id=user_id)\
                          .first()
+
+
+    @staticmethod
+    def get_by_id(response_id):
+        return db.session.query(Response).get(response_id)

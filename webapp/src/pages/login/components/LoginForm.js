@@ -62,7 +62,7 @@ class LoginForm extends Component {
       this.setState({
         loading: false,
         error: resp.error,
-        resendStatus: resp.error ? "": "We have re-sent you verification email, please check your inbox and spam and click on the link to verify your email address.",
+        resendStatus: resp.error ? "": "We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address.",
         email: "",
         password: ""
       });
