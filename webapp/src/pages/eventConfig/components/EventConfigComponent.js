@@ -44,9 +44,6 @@ class EventConfigComponent extends Component {
         preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
-        successButtonText: "Update Event",
-        updatingEvent: true,
-        addingNewEvent: false,
         error: result.error
       });
     });
@@ -67,19 +64,23 @@ class EventConfigComponent extends Component {
   updateEventDetails = (fieldName, e) => {
     let u = { ...this.state.updatedEvent, [fieldName]: e.target.value };
 
-    this.setState({
-      updatedEvent: u
-    });
-    this.hasBeenEdited();
+    this.setState(
+      {
+        updatedEvent: u
+      },
+      () => this.hasBeenEdited()
+    );
   };
 
   updateDateTimeEventDetails = (fieldName, value) => {
     let u = { ...this.state.updatedEvent, [fieldName]: value };
 
-    this.setState({
-      updatedEvent: u
-    });
-    this.hasBeenEdited();
+    this.setState(
+      {
+        updatedEvent: u
+      },
+      () => this.hasBeenEdited()
+    );
   };
 
   render() {
@@ -117,8 +118,9 @@ class EventConfigComponent extends Component {
               </label>
               <div className="col-sm-10">
                 <input
+                  readOnly
                   type="text"
-                  className="form-control-plaintext readonly"
+                  className={"form-control-plaintext readonly"}
                   id="organisation_id"
                   value={updatedEvent.organisation_name}
                 />
@@ -160,6 +162,7 @@ class EventConfigComponent extends Component {
               </label>
               <div className="col-sm-10">
                 <input
+                  readOnly
                   className={"form-control-plaintext readonly"}
                   id="key"
                   value={updatedEvent.key}

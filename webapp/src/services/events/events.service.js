@@ -15,16 +15,21 @@ export function getEvent(event_id) {
   return axios
     .get(baseUrl + `/api/v1/event?id=` + event_id)
     .then(response => {
-      // handle success
-      let event = null;
-      if (response) {
-        event = response.data;
-      }
-      return { event: event, error: "" };
+      return {
+        event: response.data,
+        error: "",
+        statusCode: response.status
+      };
     })
     .catch(error => {
-      // handle error
-      return { event: null, error: error };
+      return {
+        event: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
     });
 }
 
@@ -55,16 +60,21 @@ export function create(event) {
       { headers: authHeader() }
     )
     .then(response => {
-      // handle success
-      let event = null;
-      if (response) {
-        event = response.data;
-      }
-      return { event: event, error: "" };
+      return {
+        event: response.data,
+        error: "",
+        statusCode: response.status
+      };
     })
     .catch(error => {
-      // handle error
-      return { event: null, error: error };
+      return {
+        event: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
     });
 }
 
@@ -96,16 +106,21 @@ export function update(event) {
       { headers: authHeader() }
     )
     .then(response => {
-      // handle success
-      let event = null;
-      if (response) {
-        event = response.data;
-      }
-      return { event: event, error: "" };
+      return {
+        event: response.data,
+        error: "",
+        statusCode: response.status
+      };
     })
     .catch(error => {
-      // handle error
-      return { event: null, error: error };
+      return {
+        event: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+        statusCode: error.response && error.response.status
+      };
     });
 }
 
