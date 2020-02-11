@@ -1,5 +1,4 @@
 import React from "react";
-import logo from "../images/indaba-logo-dark.png";
 import errorHandler from "../utils/errorHandlerUtility";
 
 const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
@@ -26,9 +25,6 @@ export const ErrorPage = ({ componentStack, error }) => {
     <div className="Body">
       <div class="container h-100">
         <div class="row h-100 justify-content-center align-items-center" />
-        <div>
-          <img src={logo} className="img-fluid" alt="logo" />
-        </div>
         <h2 className="Blurb">
           <strong>Oops! An error occured!</strong>
         </h2>
