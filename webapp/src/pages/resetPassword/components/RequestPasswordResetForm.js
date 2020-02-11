@@ -71,7 +71,7 @@ class RequestPasswordResetForm extends Component {
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset Password</p>
-          <div class="form-group">
+          <div class="form-group reset-password-container">
             <label for="email">Email address</label>
             <input
               type="email"
