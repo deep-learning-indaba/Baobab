@@ -15,7 +15,6 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from app import db
-from app.users.models import AppUser
 
 Base = declarative_base()
 
