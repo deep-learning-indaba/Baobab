@@ -47,7 +47,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'event_id': fields.Integer,
         'is_open':  fields.Boolean,
         'deadline': fields.DateTime,
-        'sections': fields.List(fields.Nested(section_fields)) 
+        'sections': fields.List(fields.Nested(section_fields)),
+        'nominations': fields.Boolean 
     }
 
     def get(self):
