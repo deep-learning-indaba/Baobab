@@ -26,7 +26,7 @@ def upgrade():
     op.add_column('app_user', sa.Column('organisation_id', sa.Integer(), nullable=True))
     op.create_foreign_key('fk_user_organisation', 'app_user', 'organisation', ['organisation_id'], ['id'])
 
-    op.execute("""UPDATE app_users SET organisation_id = 1""")
+    op.execute("""UPDATE app_user SET organisation_id = 1""")
     op.alter_column('app_user', 'organisation_id', nullable=False)
 
     op.add_column('organisation', sa.Column('system_name', sa.String(length=50), nullable=True))
