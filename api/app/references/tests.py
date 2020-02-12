@@ -23,7 +23,7 @@ class ReferenceAPITest(ApiTestCase):
         test_event = self.add_event()
         test_event.add_event_role('admin', 1)
         self.add_to_db(test_event)
-        self.test_form = ApplicationForm(test_event.id, True, date(2019, 3, 24))
+        self.test_form = ApplicationForm(test_event.id, True)
         self.add_to_db(self.test_form)
         
         self.test_response = Response(
