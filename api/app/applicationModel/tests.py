@@ -45,11 +45,12 @@ class ApplicationFormApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/application-form?event_id=1')
         data = json.loads(response.data)
-        assert data['event_id'] == 1
-        assert data['is_open'] == True
-        assert data['sections'][0]['description'] == 'Test Description'
-        assert data['sections'][0]['name'] == 'Test Section'
-        assert data['sections'][0]['order'] == 1
-        assert data['sections'][0]['questions'][0]['description'] == 'Test Question Description'
-        assert data['sections'][0]['questions'][0]['order'] == 1
-        assert data['sections'][0]['questions'][0]['type'] == 'multi-choice'
+        self.assertEqual(data['event_id'], 1)
+        self.assertEqual(data['is_open'], True)
+        self.assertEqual(data['sections'][0]['description'], 'Test Description')
+        self.assertEqual(data['sections'][0]['name'], 'Test Section')
+        self.assertEqual(data['sections'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], 'Test Question Description')
+        self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
+        self.assertEqual(data['nominations'], False)
