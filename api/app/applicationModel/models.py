@@ -8,7 +8,7 @@ class ApplicationForm(db.Model):
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
-    nominations = db.Column(db.Boolean(), nullable=True)
+    nominations = db.Column(db.Boolean(), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
 
