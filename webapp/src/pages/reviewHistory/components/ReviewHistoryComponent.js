@@ -53,7 +53,9 @@ class ReviewHistoryComponent extends Component {
     const { error, isLoading, reviewHistory,defaultPageSize,totalPages } = this.state;
 
     if (error) {
-      return <div className={"alert alert-danger"}>{error}</div>;
+      return <div className={"alert alert-danger alert-container"}>
+        {error}
+      </div>;
     }
 
     return (
