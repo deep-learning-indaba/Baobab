@@ -8,3 +8,7 @@
     width: 100vw !important ;
   }
 }
+
+.alert-container{
+  margin-top: 16px;
+}
