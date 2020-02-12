@@ -8,3 +8,7 @@
 .display-none{
     display: none;
 }
+
+.alert-container{
+    margin-top: 16px;
+  }

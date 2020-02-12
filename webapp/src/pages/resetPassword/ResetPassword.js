@@ -14,7 +14,8 @@ export default class ResetPassword extends Component {
     componentDidMount() {
         if (this.props.location && this.props.location.search) {
             this.setState({
-                resetToken: this.props.location.search.substring(this.props.location.search.indexOf('=') + 1)
+                resetToken: this.props.location.search.substring(
+                    this.props.location.search.indexOf('=') + 1)
             });
         }
     }
@@ -22,7 +23,9 @@ export default class ResetPassword extends Component {
     render() {
         if (this.state.resetToken) {
             return (
-                <ConfirmPasswordResetForm token={this.state.resetToken}></ConfirmPasswordResetForm >
+                <ConfirmPasswordResetForm
+                    token={this.state.resetToken}>
+                </ConfirmPasswordResetForm>
             );
         } else {
             return (
