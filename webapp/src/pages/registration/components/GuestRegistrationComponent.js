@@ -128,7 +128,7 @@ class GuestRegistrationComponent extends Component {
     let answers = this.state.answers;
     if (answer) {
       answer.value = value.toString();
-      answers = answers.map(function(item) {
+      answers = answers.map(function (item) {
         return item.registration_question_id === id ? answer : item;
       });
     } else {
@@ -156,7 +156,7 @@ class GuestRegistrationComponent extends Component {
   };
 
   componentDidMount() {
-    this.setState({isLoading: true});
+    this.setState({ isLoading: true });
 
     registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0).then(result => {
       if (result.error === "" && result.form.registration_sections.length > 0) {
@@ -185,7 +185,7 @@ class GuestRegistrationComponent extends Component {
               });
             }
           })
-          .catch(() => {});
+          .catch(() => { });
         this.setState({
           questionSections: questionSections.sort((a, b) => a.order - b.order),
           registrationFormId: result.form.id,
@@ -434,7 +434,9 @@ class GuestRegistrationComponent extends Component {
     }
 
     if (error) {
-      return <div className={"alert alert-danger"}>{error}</div>;
+      return <div className={"alert alert-danger alert-container"}>
+        {error}
+      </div>;
     }
 
     return (
@@ -455,19 +457,19 @@ class GuestRegistrationComponent extends Component {
             </div>
           </div>
         ) : (
-          <div
-            className={this.state.formSuccess ? "display-none" : "stretched"}
-          >
-            <h2>Registration</h2>
-          </div>
-        )}
+            <div
+              className={this.state.formSuccess ? "display-none" : "stretched"}
+            >
+              <h2>Registration</h2>
+            </div>
+          )}
         {this.state.formFailure && (
-          <div className="alert alert-danger stretched">
+          <div className="alert alert-danger stretched alert-container">
             <div>{this.state.error}, please try again</div>
           </div>
         )}
         {this.state.registrationId && !this.state.formSuccess && (
-          <div class="alert alert-success">
+          <div class="alert alert-success alert-container">
             You have already registered, but feel free to update your answers
             below if they've changed!
           </div>
@@ -485,7 +487,7 @@ class GuestRegistrationComponent extends Component {
                   .sort((a, b) => a.order - b.order)
                   .filter(question => {
                     if (question.depends_on_question_id) {
-                      let answer = this.state.answers.find( a => a.registration_question_id === question.depends_on_question_id );
+                      let answer = this.state.answers.find(a => a.registration_question_id === question.depends_on_question_id);
                       return answer && (answer.value !== question.hide_for_dependent_value)
                     }
                     return true
@@ -501,13 +503,13 @@ class GuestRegistrationComponent extends Component {
                           question.id,
                           question,
                           this.state.answers &&
-                            this.state.answers.find(
-                              a => a.registration_question_id === question.id
-                            ),
+                          this.state.answers.find(
+                            a => a.registration_question_id === question.id
+                          ),
                           this.state.validationErrors &&
-                            this.state.validationErrors.find(
-                              v => v.registration_question_id === question.id
-                            )
+                          this.state.validationErrors.find(
+                            v => v.registration_question_id === question.id
+                          )
                         )}
                       </div>
                     );
@@ -529,22 +531,21 @@ class GuestRegistrationComponent extends Component {
               Submit reponse
             </button>
             {hasValidated && !validationStale && !isValid && (
-              <div class="alert alert-danger">
-                There are one or more validation errors, please correct before
-                submitting.
+              <div class="alert alert-danger alert-container">
+                There are one or more validation errors, please correct before submitting.
               </div>
             )}
           </div>
         ) : (
-          <div>
-            {this.state.formSuccess !== true &&
-              this.state.formFailure !== true && (
-                <div className="alert alert-danger">
-                  No registration form available
+            <div>
+              {this.state.formSuccess !== true &&
+                this.state.formFailure !== true && (
+                  <div className="alert alert-danger alert-container">
+                    No registration form available
                 </div>
-              )}
-          </div>
-        )}
+                )}
+            </div>
+          )}
       </div>
     );
   }

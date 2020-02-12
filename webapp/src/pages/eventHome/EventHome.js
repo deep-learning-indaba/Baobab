@@ -149,11 +149,11 @@ class EventStatus extends Component {
                         <NavLink to="/offer">click here</NavLink> to view it.
                       </p>
                     ) : (
-                      <p>
-                        You have submitted your application to{" "}
-                        {event.description}. Please await further communication.
+                        <p>
+                          You have submitted your application to{" "}
+                          {event.description}. Please await further communication.
                       </p>
-                    )}
+                      )}
                   </div>
                 )}
 
@@ -259,13 +259,15 @@ class EventHome extends Component {
 
     if (error) {
       return (
-        <div className={"alert alert-danger"}>{JSON.stringify(error)}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {JSON.stringify(error)}
+        </div>
       );
     }
 
     if (!event) {
       return (
-        <div className={"alert alert-danger"}>
+        <div className={"alert alert-danger alert-container"}>
           Could not find the event "{this.state.eventKey}"
         </div>
       );

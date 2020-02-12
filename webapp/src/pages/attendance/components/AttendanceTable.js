@@ -69,7 +69,7 @@ class AttendanceTable extends React.Component {
           result.statusCode === 400 &&
           result.error &&
           result.error.toLowerCase() ===
-            "Attendance has already been confirmed for this user and event.".toLowerCase()
+          "Attendance has already been confirmed for this user and event.".toLowerCase()
         ) {
           // Still Allow Undo if user exists
           this.setState({
@@ -186,13 +186,13 @@ class AttendanceTable extends React.Component {
     if (confirmResult) {
       if (confirmResult.success) {
         confirmResultDiv = (
-          <div class="alert alert-success">
+          <div class="alert alert-success alert-container">
             Success - Attendance Confirmation.
           </div>
         );
       } else {
         confirmResultDiv = (
-          <div class="alert alert-danger">
+          <div class="alert alert-danger alert-container">
             {" "}
             Failure - Attendance Confirmation. Http Code:
             {confirmResult.statusCode} Message: {confirmResult.confirmError}
@@ -211,7 +211,7 @@ class AttendanceTable extends React.Component {
         );
       } else {
         undoResultDiv = (
-          <div class="alert alert-danger">
+          <div class="alert alert-danger alert-container">
             {" "}
             Failure - Undo Attendance Confirmation. Message :{" "}
             {undoResult.undoError}
@@ -335,8 +335,8 @@ class AttendanceTable extends React.Component {
                   Confirm
                 </button>
               ) : (
-                <div>Payment Required</div>
-              )}
+                  <div>Payment Required</div>
+                )}
             </div>
           )
         }
@@ -374,8 +374,8 @@ class AttendanceTable extends React.Component {
                   Confirm
                 </button>
               ) : (
-                <div>Payment Required</div>
-              )}
+                  <div>Payment Required</div>
+                )}
             </div>
           )
         }
@@ -399,7 +399,9 @@ class AttendanceTable extends React.Component {
     return (
       <div className="container-fluid pad-top-30-md">
         {error && (
-          <div className={"alert alert-danger"}>{JSON.stringify(error)}</div>
+          <div className={"alert alert-danger alert-container"}>
+            {JSON.stringify(error)}
+          </div>
         )}
         <ConfirmModal
           visible={this.state.showDetailsModal}
@@ -439,10 +441,10 @@ class AttendanceTable extends React.Component {
 
               {(!originalAttendanceList ||
                 originalAttendanceList.length === 0) && (
-                <div class="alert alert-success">
-                  All attendances are confirmed.
+                  <div class="alert alert-success alert-container">
+                    All attendances are confirmed.
                 </div>
-              )}
+                )}
             </div>
           </div>
         </div>

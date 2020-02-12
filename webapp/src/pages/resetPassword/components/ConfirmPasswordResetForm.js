@@ -78,7 +78,10 @@ class ConfirmPasswordResetForm extends Component {
 
     return (
       <div className="ResetPassword">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
+        {error &&
+          <div className={"alert alert-danger alert-container"}>
+            {error}
+          </div>}
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset password</p>
           <div class="col">
