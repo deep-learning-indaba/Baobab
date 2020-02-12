@@ -4,17 +4,15 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import {
-  getTitleOptions,
-} from "../../../utils/validation/contentHelpers";
+import {getTitleOptions} from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail,
+  validEmail
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
- 
+
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
@@ -162,7 +160,9 @@ class CreateAccountForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+        </div>
       );
     }
     return errorMessages;
@@ -182,14 +182,22 @@ class CreateAccountForm extends Component {
       confirmPassword,
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy } = this.state;
+    const {
+      loading,
+      errors,
+      showErrors,
+      error,
+      created,
+      over18,
+      agreePrivacyPolicy
+    } = this.state;
 
     if (created) {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
-            Your {this.props.organisation ? this.props.organisation.name : ""} account 
+            Your {this.props.organisation ? this.props.organisation.name : ""} account
             has been created, but before you can use it, we
             need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
@@ -270,40 +278,39 @@ class CreateAccountForm extends Component {
             </div>
           </div>
           <div>
-              <br/>
-              <h5>Please confirm the following in order to create an account</h5>
-              
-              <div className="form-check">  
-                <input
-                  className="form-check-input"
-                  id="over18"
-                  name="over18"
-                  type="checkbox"
-                  checked={over18}
-                  onChange={this.toggleAge} />  
-                <label class="form-check-label" for="over18">
-                  I am over 18
+            <br />
+            <h5>Please confirm the following in order to create an account</h5>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                id="over18"
+                name="over18"
+                type="checkbox"
+                checked={over18}
+                onChange={this.toggleAge} />
+              <label class="form-check-label" for="over18">
+                I am over 18
                 </label>
-              </div>
-                
-              
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  name="agreePrivacyPolicy"
-                  id="agreePrivacyPolicy"
-                  type="checkbox"
-                  checked={agreePrivacyPolicy}
-                  onChange={this.togglePrivacyPolicy}
-                />
-                <label class="form-check-label" for="agreePrivacyPolicy">
-                  {"I have read and agree to the "}
-                  <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")} target="_blank">privacy policy </a>
-                </label>
-              </div>
-              
+            </div>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                name="agreePrivacyPolicy"
+                id="agreePrivacyPolicy"
+                type="checkbox"
+                checked={agreePrivacyPolicy}
+                onChange={this.togglePrivacyPolicy}
+              />
+              <label class="form-check-label" for="agreePrivacyPolicy">
+                {"I have read and agree to the "}
+                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")} target="_blank">privacy policy </a>
+              </label>
+            </div>
+
           </div>
-            <br></br><br></br>
+          <br></br><br></br>
           <button
             type="submit"
             class="btn btn-primary"
@@ -319,7 +326,9 @@ class CreateAccountForm extends Component {
             Sign Up
           </button>
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger">{error}</div>}
+          {error && <div class="alert alert-danger alert-container">
+            {error}
+          </div>}
         </form>
       </div>
     );
