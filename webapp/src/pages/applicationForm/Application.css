@@ -180,3 +180,7 @@ ol.progtrckr li.progtrckr-done:hover:before {
     display: inline;
   }
 }
+
+.alert-container{
+  margin-top: 16px;
+}
