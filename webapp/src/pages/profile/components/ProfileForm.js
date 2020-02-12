@@ -168,7 +168,9 @@ class ProfileForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+          </div>
       );
     }
     return errorMessages;
