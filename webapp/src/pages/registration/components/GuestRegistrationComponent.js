@@ -29,31 +29,29 @@ class FileUploadComponent extends Component {
   }
 
   handleUploadFile = file => {
-    this.setState(
-      {
-        uploading: true
-      },
-      () => {
-        fileService
-          .uploadFile(file, progressEvent => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            this.setState({
-              uploadPercentComplete: percentCompleted
-            });
-          })
-          .then(response => {
-            if (response.fileId && this.props.onChange) {
-              this.props.onChange(this.props.question.id, response.fileId);
-            }
-            this.setState({
-              uploaded: response.fileId !== "",
-              uploadError: response.error,
-              uploading: false
-            });
+    this.setState({
+      uploading: true
+    }, () => {
+      fileService
+        .uploadFile(file, progressEvent => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          this.setState({
+            uploadPercentComplete: percentCompleted
           });
-      }
+        })
+        .then(response => {
+          if (response.fileId && this.props.onChange) {
+            this.props.onChange(this.props.question.id, response.fileId);
+          }
+          this.setState({
+            uploaded: response.fileId !== "",
+            uploadError: response.error,
+            uploading: false
+          });
+        });
+    }
     );
   };
 
@@ -70,8 +68,7 @@ class FileUploadComponent extends Component {
         uploading={this.state.uploading}
         uploadPercentComplete={this.state.uploadPercentComplete}
         uploadFile={this.handleUploadFile}
-        uploaded={this.state.uploaded}
-      />
+        uploaded={this.state.uploaded} />
     );
   }
 }
@@ -117,6 +114,7 @@ class GuestRegistrationComponent extends Component {
       event.target.type === "checkbox"
         ? event.target.checked | 0
         : event.target.value;
+
     let id = parseInt(event.target.id);
     this.onChange(id, value);
   };
@@ -125,7 +123,9 @@ class GuestRegistrationComponent extends Component {
     let answer = this.state.answers.find(
       a => a.registration_question_id === id
     );
+
     let answers = this.state.answers;
+
     if (answer) {
       answer.value = value.toString();
       answers = answers.map(function (item) {
@@ -138,10 +138,10 @@ class GuestRegistrationComponent extends Component {
       };
       answers.push(answer);
     }
-    this.setState(
-      {
-        answers: answers
-      },
+
+    this.setState({
+      answers: answers
+    },
       () => {
         if (this.state.hasValidated) {
           this.isValidated();
@@ -158,50 +158,49 @@ class GuestRegistrationComponent extends Component {
   componentDidMount() {
     this.setState({ isLoading: true });
 
-    registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0).then(result => {
-      if (result.error === "" && result.form.registration_sections.length > 0) {
-        let questionSections = [];
-        for (var i = 0; i < result.form.registration_sections.length; i++) {
-          if (
-            result.form.registration_sections[i].registration_questions.length >
-            0
-          ) {
-            questionSections.push(result.form.registration_sections[i]);
+    registrationService.getGuestRegistration(this.props.event ? this.props.event.id : 0)
+      .then(result => {
+        if (result.error === "" && result.form.registration_sections.length > 0) {
+          let questionSections = [];
+          for (var i = 0; i < result.form.registration_sections.length; i++) {
+            if (result.form.registration_sections[i].registration_questions.length > 0
+            ) {
+              questionSections.push(result.form.registration_sections[i]);
+            }
+          }
+
+          registrationService.getGuestRegistrationResponse()
+            .then(result => {
+              if (result.error === "") {
+                this.setState({
+                  isLoading: false,
+                  answers: result.form.answers,
+                  registrationId: result.form.guest_registration_id
+                });
+              }
+              else {
+                this.setState({
+                  isLoading: false
+                });
+              }
+            })
+            .catch(() => { });
+          this.setState({
+            questionSections: questionSections.sort((a, b) => a.order - b.order),
+            registrationFormId: result.form.id,
+          });
+        } else {
+          if (result.statusCode === 409) {
+            this.props.history.push("/offer");
+          }
+          else {
+            this.setState({
+              isLoading: false,
+              error: result.error
+            });
           }
         }
-        registrationService
-          .getGuestRegistrationResponse()
-          .then(result => {
-            if (result.error === "") {
-              this.setState({
-                isLoading: false,
-                answers: result.form.answers,
-                registrationId: result.form.guest_registration_id
-              });
-            }
-            else {
-              this.setState({
-                isLoading: false
-              });
-            }
-          })
-          .catch(() => { });
-        this.setState({
-          questionSections: questionSections.sort((a, b) => a.order - b.order),
-          registrationFormId: result.form.id,
-        });
-      } else {
-        if (result.statusCode === 409) {
-          this.props.history.push("/offer");
-        }
-        else {
-          this.setState({
-            isLoading: false,
-            error: result.error
-          });
-        }
-      }
-    });
+      });
   }
 
   validate = (question, answer) => {
@@ -210,8 +209,7 @@ class GuestRegistrationComponent extends Component {
     if (question.is_required && (!answer || !answer.value)) {
       errors.push(question.validation_text || "An answer is required.");
     }
-    if (
-      answer &&
+    if (answer &&
       question.validation_regex &&
       !answer.value.match(question.validation_regex)
     ) {
@@ -263,36 +261,34 @@ class GuestRegistrationComponent extends Component {
       this.setState(
         {
           isSubmitting: true
-        },
-        () => {
-          registrationService
-            .submitGuestResponse(data, this.state.registrationId ? true : false)
-            .then(response => {
-              if (
-                response.error === "" &&
-                (response.form.status === 201 || response.form.status === 200)
-              ) {
-                this.setState({
-                  formFailure: false,
-                  formSuccess: true,
-                  isSubmitting: false
-                });
-              } else {
-                this.setState({
-                  formFailure: true,
-                  formSuccess: false,
-                  isSubmitting: false,
-                  error: response.error
-                });
-              }
-            })
-            .catch(() => {
+        }, () => {
+          registrationService.submitGuestResponse(
+            data,
+            this.state.registrationId ? true : false
+          ).then(response => {
+            if (response.error === "" &&
+              (response.form.status === 201 || response.form.status === 200)
+            ) {
+              this.setState({
+                formFailure: false,
+                formSuccess: true,
+                isSubmitting: false
+              });
+            } else {
               this.setState({
                 formFailure: true,
                 formSuccess: false,
-                isSubmitting: false
+                isSubmitting: false,
+                error: response.error
               });
+            }
+          }).catch(() => {
+            this.setState({
+              formFailure: true,
+              formSuccess: false,
+              isSubmitting: false
             });
+          });
         }
       );
     }
@@ -336,9 +332,9 @@ class GuestRegistrationComponent extends Component {
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required}
-            />
+              required={question.is_required} />
           );
+
         case SINGLE_CHOICE:
           return (
             <FormCheckbox
@@ -352,8 +348,7 @@ class GuestRegistrationComponent extends Component {
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required}
-            />
+              required={question.is_required} />
           );
         case LONG_TEXT[0]:
         case LONG_TEXT[1]:
@@ -369,9 +364,9 @@ class GuestRegistrationComponent extends Component {
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required && !answer}
-            />
+              required={question.is_required && !answer} />
           );
+
         case MULTI_CHOICE:
           return (
             <FormSelect
@@ -384,9 +379,9 @@ class GuestRegistrationComponent extends Component {
               required={question.is_required && !answer}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError}
-            />
+              errorText={validationError} />
           );
+
         case FILE:
           return (
             <FileUploadComponent
@@ -394,8 +389,7 @@ class GuestRegistrationComponent extends Component {
               answer={answer}
               validationError={validationError}
               onChange={this.onChange}
-              key={"i_" + key}
-            />
+              key={"i_" + key} />
           );
 
         case DATE:
@@ -411,9 +405,9 @@ class GuestRegistrationComponent extends Component {
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required}
-            />
+              required={question.is_required} />
           );
+
         default:
           return (
             <p className="text-danger">
@@ -446,34 +440,36 @@ class GuestRegistrationComponent extends Component {
             <h5>Successfully Registered</h5>
             <p>We look forward to welcoming you at the Indaba!</p>
             <a href="/invitationLetter"> Request an invitation letter.</a>
+
             <div className="col-12">
               <button
                 type="button"
                 class="btn btn-primary pull-right"
-                onClick={() => this.resetPage()}
-              >
+                onClick={() => this.resetPage()}>
                 Change your answers
               </button>
             </div>
           </div>
         ) : (
             <div
-              className={this.state.formSuccess ? "display-none" : "stretched"}
-            >
+              className={this.state.formSuccess ? "display-none" : "stretched"}>
               <h2>Registration</h2>
             </div>
           )}
+
         {this.state.formFailure && (
           <div className="alert alert-danger stretched alert-container">
             <div>{this.state.error}, please try again</div>
           </div>
         )}
+
         {this.state.registrationId && !this.state.formSuccess && (
           <div class="alert alert-success alert-container">
             You have already registered, but feel free to update your answers
             below if they've changed!
           </div>
         )}
+
         {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
           <div>
             {this.state.questionSections.map(section => (
@@ -496,40 +492,38 @@ class GuestRegistrationComponent extends Component {
                     return (
                       <div
                         className="text-left"
-                        key={"question_" + question.id}
-                      >
+                        key={"question_" + question.id}>
                         <h5>{question.headline}</h5>
                         {this.formControl(
                           question.id,
                           question,
                           this.state.answers &&
                           this.state.answers.find(
-                            a => a.registration_question_id === question.id
-                          ),
+                            a => a.registration_question_id === question.id),
                           this.state.validationErrors &&
                           this.state.validationErrors.find(
-                            v => v.registration_question_id === question.id
-                          )
+                            v => v.registration_question_id === question.id)
                         )}
                       </div>
                     );
                   })}
               </div>
             ))}
+
             <button
               type="submit"
               class="btn btn-primary margin-top-32"
-              onClick={this.buttonSubmit}
-            >
+              onClick={this.buttonSubmit}>
+
               {isSubmitting && (
                 <span
                   class="spinner-grow spinner-grow-sm"
                   role="status"
-                  aria-hidden="true"
-                />
+                  aria-hidden="true" />
               )}
               Submit reponse
             </button>
+
             {hasValidated && !validationStale && !isValid && (
               <div class="alert alert-danger alert-container">
                 There are one or more validation errors, please correct before submitting.

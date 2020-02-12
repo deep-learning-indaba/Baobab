@@ -25,35 +25,49 @@ class ProfileListComponent extends Component {
     componentDidMount() {
         profileService.getProfilesList(this.props.event ? this.props.event.id : 0)
             .then(results => {
-                this.setState(
-                    {
-                        List: results.List,
-                        isEmpty: this.isListEmpty(results.List),
-                        loading: false,
-                        error: results.error
-                    });
+                this.setState({
+                    List: results.List,
+                    isEmpty: this.isListEmpty(results.List),
+                    loading: false,
+                    error: results.error
+                });
             });
     }
+
     onSubmit = (user_id) => {
         window.location = '/viewprofile/:' + user_id;
     }
+
     render() {
-        const { List, isEmpty, loading, error } = this.state;
+        const { List,
+            isEmpty,
+            loading,
+            error
+        } = this.state;
+
         const loadingStyle = {
             "width": "3rem",
             "height": "3rem"
         }
-        const columns = [
-            {
-                id: "user", Header: <div className="list-fullname">Full-Name</div>,
-                accessor: u => u.lastname + " " + u.firstname + ", " + u.user_title,
-                Cell: props => <button className="link-style" onClick={e => { e.preventDefault(); this.onSubmit(props.original.user_id) }}>{props.value}</button>,
-                minWidth: 150
-            },
-            { Header: <div className="list-user-category">Category</div>, accessor: "user_category" },
-            { Header: <div className="list-affiliation">Affiliation</div>, accessor: "affiliation" },
-            { Header: <div className="list-department">Department</div>, accessor: "department" },
-            { Header: <div className="list-nationality">Nationality</div>, accessor: "nationality_country" }];
+
+        const columns = [{
+            id: "user", Header: <div className="list-fullname">Full-Name</div>,
+            accessor: u => u.lastname + " " + u.firstname + ", " + u.user_title,
+            Cell: props =>
+                <button className="link-style"
+                    onClick={e => {
+                        e.preventDefault();
+                        this.onSubmit(props.original.user_id)
+                    }}>
+                    {props.value}
+                </button>,
+            minWidth: 150
+        },
+
+        { Header: <div className="list-user-category">Category</div>, accessor: "user_category" },
+        { Header: <div className="list-affiliation">Affiliation</div>, accessor: "affiliation" },
+        { Header: <div className="list-department">Department</div>, accessor: "department" },
+        { Header: <div className="list-nationality">Nationality</div>, accessor: "nationality_country" }];
 
         if (loading) {
             return (
@@ -70,6 +84,7 @@ class ProfileListComponent extends Component {
                 {error}
             </div>
         }
+
         return (
             <div>
                 {isEmpty ? (
@@ -83,13 +98,14 @@ class ProfileListComponent extends Component {
                             <div className="alert alert-primary table-header">
                                 Total Profiles: {List.length}
                             </div>
+
                         </span>
                             <ReactTable
                                 data={List}
                                 columns={columns}
                                 minRows={0}
-                                multiSort={true}
-                            /> </div>)}
+                                multiSort={true} />
+                        </div>)}
             </div>
         );
     }

@@ -17,6 +17,7 @@ class LoginForm extends Component {
       resendStatus: ""
     };
   }
+
   validateForm() {
     return this.state.email.length > 0 && this.state.password.length > 0;
   }
@@ -48,7 +49,8 @@ class LoginForm extends Component {
       e =>
         this.setState({
           error:
-            e.response && e.response.data ? e.response.data.message : e.message,
+            e.response && e.response.data ?
+              e.response.data.message : e.message,
           loading: false,
           notVerified: e.response && e.response.status === 422
         })
@@ -75,7 +77,14 @@ class LoginForm extends Component {
     const md = 6;
     const lg = 6;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { email, password, loading, error, notVerified, resendStatus } = this.state;
+
+    const { email,
+      password,
+      loading,
+      error,
+      notVerified,
+      resendStatus
+    } = this.state;
 
     return (
       <div className="Login">
@@ -84,6 +93,7 @@ class LoginForm extends Component {
           onSubmit={this.handleSubmit}>
 
           <p className="h5 text-center mb-4">Login</p>
+
           <div class="form-group">
             <label for="email">Email address</label>
             <input
@@ -92,9 +102,9 @@ class LoginForm extends Component {
               id="email"
               onChange={this.handleChange}
               value={email}
-              autoFocus="true"
-            />
+              autoFocus="true" />
           </div>
+
           <div class="form-group">
             <label for="password">Password</label>
             <input
@@ -102,26 +112,25 @@ class LoginForm extends Component {
               class="form-control"
               id="password"
               onChange={this.handleChange}
-              value={password}
-            />
+              value={password} />
           </div>
+
           <div class="row">
             <div class={commonColClassName + " text-center"}>
               <button
                 type="submit"
                 class="btn btn-primary"
-                disabled={!this.validateForm() || loading}
-              >
+                disabled={!this.validateForm() || loading}>
                 {loading && (
                   <span
                     class="spinner-grow spinner-grow-sm"
                     role="status"
-                    aria-hidden="true"
-                  />
+                    aria-hidden="true" />
                 )}
                 Login
               </button>
             </div>
+
             <div class={commonColClassName + " text-center"}>
               <Link to="/createAccount">
                 <button type="submit" class="btn btn-primary">
@@ -130,19 +139,22 @@ class LoginForm extends Component {
               </Link>
             </div>
           </div>
+
           {error &&
             <div className={"alert alert-danger alert-container"}>
               {error}
               {notVerified &&
                 <button className="link-style"
-                  onClick={this.resendVerification}> Resend Verification Email
+                  onClick={this.resendVerification}>
+                  Resend Verification Email
               </button>}
-            </div>
-          }
+            </div>}
+
           {resendStatus &&
             <div className={"alert alert-success alert-container"}>
               {resendStatus}
             </div>}
+
           <div class="forgot-password text-center">
             <Link to="/resetPassword">Forgot password</Link>
           </div>
