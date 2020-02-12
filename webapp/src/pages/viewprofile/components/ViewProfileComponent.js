@@ -49,6 +49,7 @@ class ViewProfileComponent extends Component {
 
     const commonColClassName = createColClassName(12, 4, 4, 4);
     const colClassNameUserApplicationInfo = createColClassName(12, 4, 4, 4);
+
     const {
       email,
       title,
@@ -59,11 +60,14 @@ class ViewProfileComponent extends Component {
       Date_Submitted,
       Date_Withdrawn,
     } = this.state.user;
+
     const { loading, error, isNull } = this.state;
+
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
     };
+
     if (loading) {
       return (
         <div class="d-flex justify-content-center">
@@ -73,14 +77,17 @@ class ViewProfileComponent extends Component {
         </div>
       );
     }
+
     if (error) {
-      return <div class="alert alert-danger">{error}</div>;
+      return <div class="alert alert-danger alert-container">
+        {error}
+      </div>;
     }
     return (
       <div className="user-profile-container justify-content-center">
         {isNull ? (
           <div className="error-message-empty-list">
-            <div className="alert alert-danger">
+            <div className="alert alert-danger alert-container">
               No user profile to display!
             </div>
           </div>
@@ -136,13 +143,14 @@ class ViewProfileComponent extends Component {
                         />
                       </div>
                     </div>
-
                   </fieldset>
                 </div>
 
                 <div class="row">
                   <fieldset class="fieldset">
-                    <legend class="legend">User Application Info. </legend>
+                    <legend class="legend">
+                      User Application Info.
+                    </legend>
                     <div className="row" class={colClassNameUserApplicationInfo}>
                       {is_Submitted && (
                         <div >
@@ -151,7 +159,8 @@ class ViewProfileComponent extends Component {
                               class="alert alert-success yes-submitted-alert"
                               role="alert"
                             >
-                              Submitted on {Date_Submitted}
+                              Submitted on
+                              {Date_Submitted}
                             </div>
                           </div>
                         </div>
@@ -163,7 +172,8 @@ class ViewProfileComponent extends Component {
                               class="alert alert-danger no-submitted-alert"
                               role="alert"
                             >
-                              Withdrawn on {Date_Withdrawn}
+                              Withdrawn on
+                              {Date_Withdrawn}
                             </div>
                           </div>
                         </div>

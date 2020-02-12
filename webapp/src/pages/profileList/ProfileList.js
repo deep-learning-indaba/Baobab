@@ -4,10 +4,12 @@ import ProfileListComponent from "./components/ProfileListComponent.js";
 
 export default class ProfileList extends Component {
 
-    render(){
-     return (
-        <ProfileListComponent {...this.props}></ProfileListComponent>
-     );
+    render() {
+        return (
+            <ProfileListComponent
+                {...this.props}>
+            </ProfileListComponent>
+        );
     }
 
 }

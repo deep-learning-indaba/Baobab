@@ -47,13 +47,13 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true
-    }, ()=> {
-      fileService.uploadFile(file, progressEvent=> {
+    }, () => {
+      fileService.uploadFile(file, progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         this.setState({
           uploadPercentComplete: percentCompleted
         });
-      }).then(response=>{
+      }).then(response => {
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
         }
@@ -252,7 +252,7 @@ class Section extends React.Component {
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a), 
+            this.state.questionModels.map(q => q.answer).filter(a => a),
             isValid
           );
         }
@@ -300,7 +300,7 @@ class Section extends React.Component {
         )}
         {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
         {hasValidated && !validationStale && (
-          <div class="alert alert-danger">
+          <div class="alert alert-danger alert-container">
             Please fix the errors before continuing.
           </div>
         )}
@@ -311,9 +311,9 @@ class Section extends React.Component {
 
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
-    switch(props.qm.question.type) {
+    switch (props.qm.question.type) {
       case MULTI_CHOICE:
-        const options = props.qm.question.options.filter(o=>o.value === props.qm.answer.value);
+        const options = props.qm.question.options.filter(o => o.value === props.qm.answer.value);
         if (options) {
           return options[0].label;
         }
@@ -339,14 +339,14 @@ class Confirmation extends React.Component {
             <h2>Review your Answers</h2>
             <p>
               Please confirm that your answers are correct. Use the previous
-              button to correct them if they are not. You can also exit and come back 
-              later as they have all been saved. 
+              button to correct them if they are not. You can also exit and come back
+              later as they have all been saved.
 
               Click the SUBMIT button once you are happy to submit your answers to the committee.
             </p>
 
             <div class="alert alert-warning">
-            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
+              <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
             </div>
 
             <div class="text-center">
@@ -373,7 +373,7 @@ class Confirmation extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm}/></p>
+                      <p><AnswerValue qm={qm} /></p>
                     </div>
                   </div>
                 </div>
@@ -436,11 +436,13 @@ class Submitted extends React.Component {
       <div class="submitted">
         <h2>Thank you for applying!</h2>
         {this.state.isError && (
-          <div className={"alert alert-danger"}>{this.state.errorMessage}</div>
+          <div className={"alert alert-danger alert-container"}>
+            {this.state.errorMessage}
+          </div>
         )}
 
         <p class="thank-you">
-          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}. 
+          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}.
           Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
@@ -489,7 +491,7 @@ class ApplicationForm extends Component {
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(this.props.event ? this.props.event.id: 0).then(response => {
+    applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -627,7 +629,7 @@ class ApplicationForm extends Component {
       this.setState(prevState => {
         return {
           answers: prevState.answers
-            .filter(a => !answers.map(a=>a.question_id).includes(a.question_id))
+            .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
             .concat(answers)
         };
       }, () => {
@@ -669,7 +671,9 @@ class ApplicationForm extends Component {
     }
 
     if (isError) {
-      return <div className={"alert alert-danger"}>{errorMessage}</div>;
+      return <div className={"alert alert-danger alert-container"}>{
+        errorMessage}
+      </div>;
     }
 
     if (isSubmitted) {

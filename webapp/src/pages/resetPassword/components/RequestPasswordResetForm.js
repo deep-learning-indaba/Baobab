@@ -94,7 +94,10 @@ class RequestPasswordResetForm extends Component {
                 Reset password
               </button>
             </div>
-            {error && <div className={"alert alert-danger"}>{error}</div>}
+            {error && 
+              <div className={"alert alert-danger alert-container"}>
+                {error}
+              </div>}
           </div>
           <div />
         </form>

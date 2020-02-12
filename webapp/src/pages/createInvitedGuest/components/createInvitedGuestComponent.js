@@ -216,7 +216,9 @@ class creatreInvitedGuestComponent extends Component {
             Create guest
           </button>
           {this.state.conflict && (
-            <div class="alert alert-danger">Email is already taken</div>
+            <div class="alert alert-danger alert-container">
+              Email is already taken
+            </div>
           )}
         </form>
       </div>

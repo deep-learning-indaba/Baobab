@@ -67,7 +67,7 @@ class ResponseApiTest(ApiTestCase):
             datetime.now(), datetime.now(), datetime.now(), datetime.now())
         _add_object_to_db(self.test_event)
         self.test_form = ApplicationForm(
-            self.test_event.id, True, date(2019, 3, 24))
+            self.test_event.id, True)
         _add_object_to_db(self.test_form)
         test_section = Section(
             self.test_form.id, 'Test Section', 'Test Description', 1)

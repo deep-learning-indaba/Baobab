@@ -34,14 +34,14 @@ class EventsAPITest(ApiTestCase):
         test_event = Event('Test Event', 'Event Description',
                            datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
                            'SPEEDNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                           datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
                            datetime.now(), datetime.now(), datetime.now(), datetime.now(),
                            datetime.now(), datetime.now())
         db.session.add(test_event)
         db.session.commit()
 
         self.test_form = ApplicationForm(
-            test_event.id, True, datetime.now() + timedelta(days=60))
+            test_event.id, True)
         db.session.add(self.test_form)
         db.session.commit()
 
@@ -113,7 +113,7 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_closed(self):
         self.seed_static_data()
 
-        self.test_form.deadline = datetime.now() - timedelta(days=1)
+        self.test_form.event.application_close = datetime.now()
         db.session.commit()
 
         response = self.app.post('/api/v1/authenticate', data={
@@ -137,7 +137,7 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_unauthed_closed(self):
         self.seed_static_data()
 
-        self.test_form.deadline = datetime.now() - timedelta(days=1)
+        self.test_form.event.application_close = datetime.now()
         db.session.commit()
 
         response = self.app.get('/api/v1/events')
@@ -246,14 +246,14 @@ class EventsStatsAPITest(ApiTestCase):
         self.test_event = Event('Test Event', 'Event Description',
                                 datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
                                 'KONNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
-                                datetime.now(), datetime.now(), datetime.now(), datetime.now(),
+                                datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
                                 datetime.now(), datetime.now(), datetime.now(), datetime.now(),
                                 datetime.now(), datetime.now())
         db.session.add(self.test_event)
         db.session.commit()
 
         self.test_form = ApplicationForm(
-            self.test_event.id, True, datetime.now() + timedelta(days=60))
+            self.test_event.id, True)
         db.session.add(self.test_form)
         db.session.commit()
 
@@ -349,7 +349,7 @@ class RemindersAPITest(ApiTestCase):
         event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
-        application_form = ApplicationForm(1, True, datetime(2019, 4, 12))
+        application_form = ApplicationForm(1, True)
         db.session.add(application_form)
         db.session.commit()
 

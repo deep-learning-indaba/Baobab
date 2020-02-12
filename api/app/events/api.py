@@ -81,7 +81,7 @@ def get_user_event_response_status(user_id, event_id):
             ApplicationForm.event_id == event_id).first()
 
         if applicationForm:
-            if applicationForm.deadline < datetime.now():
+            if applicationForm.event.application_close < datetime.now():
                 _log_application_status('closed, deadline passed')
                 return "Application closed"
             elif user_id:
@@ -361,7 +361,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             lastname = user.lastname
             event_name = event.name
             organisation_name = event.organisation.name
-            deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
+            deadline = event.application_close.strftime('%A %-d %B %Y')
 
             subject = 'FINAL REMINDER to submit you application for {}'.format(
                 event_name)
@@ -403,7 +403,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             event_name = event.name
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
-            deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
+            deadline = event.application_close.strftime('%A %-d %B %Y')
 
             not_started_body = email_repository.get(event_id, 'application-not-started').template
             subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
