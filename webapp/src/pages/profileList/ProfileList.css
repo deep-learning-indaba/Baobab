@@ -14,9 +14,10 @@
     border-color: rgba(255,255,255,.5);
     box-shadow: 5px 9px 5px -4px rgba(0,0,0,0.28);
 }
+
 .alert-container{
     margin-top: 16px;
-  }
+}
 
 .list-number{
     font-size: 25px;

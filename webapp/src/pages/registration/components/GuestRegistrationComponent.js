@@ -434,7 +434,9 @@ class GuestRegistrationComponent extends Component {
     }
 
     if (error) {
-      return <div className={"alert alert-danger alert-container"}>{error}</div>;
+      return <div className={"alert alert-danger alert-container"}>
+        {error}
+      </div>;
     }
 
     return (
