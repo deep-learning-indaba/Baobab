@@ -9,6 +9,7 @@ from sqlite3 import Connection as SQLite3Connection
 from app.organisation.models import Organisation
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
+from app.applicationModel.models import ApplicationForm
 
 
 @event.listens_for(Engine, "connect")
@@ -121,3 +122,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.remove()
         db.reflect()
         db.drop_all()
+
+    def create_application_form(self,
+                            is_open,
+                            deadline,
+                            nominations):
+                            
+        application_form = ApplicationForm(is_open, deadline, nominations)
+        db.session.add(application_form)
+        db.session.commit()
+        return application_form
