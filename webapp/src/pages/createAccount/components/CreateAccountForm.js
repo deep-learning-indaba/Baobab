@@ -32,7 +32,8 @@ class CreateAccountForm extends Component {
       user: {
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        agreePrivacyPolicy: false
       },
       showErrors: false,
       submitted: false,
@@ -41,8 +42,7 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       error: "",
       created: false,
-      over18: false,
-      agreePrivacyPolicy: false
+      over18: false
     };
   }
 
