@@ -25,7 +25,6 @@ const fieldValidations = [
   ruleRunner(validationFields.letterAddressedTo, requiredText)
 ];
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 class InvitationLetterForm extends Component {
   constructor(props) {
     super(props);
@@ -87,7 +86,7 @@ class InvitationLetterForm extends Component {
           [name]: dropdown.value
         }
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -102,7 +101,7 @@ class InvitationLetterForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -211,7 +210,7 @@ class InvitationLetterForm extends Component {
       () => {
         this.setState({ loading: true });
         registrationService
-          .requestInvitationLetter(this.state.user, DEFAULT_EVENT_ID)
+          .requestInvitationLetter(this.state.user, this.props.event ? this.props.event.id : 0)
           .then(
             response => {
               this.setState({
@@ -243,7 +242,10 @@ class InvitationLetterForm extends Component {
   toggleBringingAPoster = () => {
     let currentBringingAPoster = this.state.user.bringingAPoster;
     this.setState({
-      user: { ...this.state.user, bringingAPoster: !currentBringingAPoster }
+      user: {
+        ...this.state.user,
+        bringingAPoster: !currentBringingAPoster
+      }
     });
   };
   getErrorMessages = errors => {
@@ -253,7 +255,9 @@ class InvitationLetterForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+        </div>
       );
     }
     return errorMessages;
@@ -461,10 +465,16 @@ class InvitationLetterForm extends Component {
             )}
             Request Invitation Letter
           </button>
-          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger">{error}</div>}
+          {errors &&
+            errors.$set &&
+            showErrors &&
+            this.getErrorMessages(errors)}
+          {error &&
+            <div class="alert alert-danger alert-container">
+              {error}
+            </div>}
           {this.state.invitationLetterId && (
-            <div className={"alert alert-success"}>
+            <div className={"alert alert-success alert-container"}>
               Invitation Letter request has been received. Invitation Letter
               Request ID : {this.state.invitationLetterId}, for future
               enquiries.

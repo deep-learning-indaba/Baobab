@@ -62,7 +62,7 @@ class LoginForm extends Component {
       this.setState({
         loading: false,
         error: resp.error,
-        resendStatus: resp.error ? "": "We have re-sent you verification email, please check your inbox and spam and click on the link to verify your email address.",
+        resendStatus: resp.error ? "" : "We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address.",
         email: "",
         password: ""
       });
@@ -79,7 +79,10 @@ class LoginForm extends Component {
 
     return (
       <div className="Login">
-        <form onSubmit={this.handleSubmit}>
+        <form
+          style={{ margin: "10px" }}
+          onSubmit={this.handleSubmit}>
+
           <p className="h5 text-center mb-4">Login</p>
           <div class="form-group">
             <label for="email">Email address</label>
@@ -127,13 +130,19 @@ class LoginForm extends Component {
               </Link>
             </div>
           </div>
-          {error && 
-            <div className={"alert alert-danger"}>
+          {error &&
+            <div className={"alert alert-danger alert-container"}>
               {error}
-              {notVerified && <button className="link-style" onClick={this.resendVerification}> Resend Verification Email</button>}
+              {notVerified &&
+                <button className="link-style"
+                  onClick={this.resendVerification}> Resend Verification Email
+              </button>}
             </div>
           }
-          {resendStatus && <div className={"alert alert-success"}>{resendStatus}</div>}
+          {resendStatus &&
+            <div className={"alert alert-success alert-container"}>
+              {resendStatus}
+            </div>}
           <div class="forgot-password text-center">
             <Link to="/resetPassword">Forgot password</Link>
           </div>

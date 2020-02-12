@@ -7,6 +7,7 @@ from files import api as files_api
 from events import api as events_api
 from reviews import api as reviews_api
 from invitedGuest import api as invitedGuest_api
+from references import api as reference_api
 from registration import api as registration_api
 from registrationResponse import api as registration_response
 from guestRegistrations import api as guest_registration
@@ -42,8 +43,12 @@ rest_api.add_resource(content_api.GenderContentAPI,
                       '/api/v1/content/gender'),
 rest_api.add_resource(events_api.EventsAPI,
                       '/api/v1/events'),
+rest_api.add_resource(events_api.EventAPI,
+                      '/api/v1/event'),
 rest_api.add_resource(events_api.EventStatsAPI,
                       '/api/v1/eventstats'),
+rest_api.add_resource(events_api.EventsByKeyAPI,
+                      '/api/v1/event-by-key'),
 rest_api.add_resource(users_api.VerifyEmailAPI,
                       '/api/v1/verify-email'),
 rest_api.add_resource(users_api.ResendVerificationEmailAPI,
@@ -68,6 +73,12 @@ rest_api.add_resource(invitedGuest_api.InvitedGuestList,
                       '/api/v1/invitedGuestList')
 rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
                       '/api/v1/checkIfInvitedGuest')
+rest_api.add_resource(reference_api.ReferenceRequestListAPI,
+                      '/api/v1/reference-request/list')
+rest_api.add_resource(reference_api.ReferenceRequestAPI,
+                      '/api/v1/reference-request')
+rest_api.add_resource(reference_api.ReferenceAPI,
+                      '/api/v1/reference')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')

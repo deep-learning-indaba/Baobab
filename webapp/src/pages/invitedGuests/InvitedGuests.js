@@ -6,7 +6,9 @@ export default class InvitedGuests extends Component {
 
   render() {
     return (
-      <InvitedGuestsComponent></InvitedGuestsComponent> 
+      <InvitedGuestsComponent
+        {...this.props}>
+      </InvitedGuestsComponent>
     );
   }
 }

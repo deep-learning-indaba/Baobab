@@ -18,7 +18,7 @@ from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
-from config import BOABAB_HOST
+from app.utils import misc
 from app.utils.emailer import send_mail
 
 option_fields = {
@@ -99,9 +99,6 @@ review_fields = {
 }
 
 REVIEWS_PER_SUBMISSION = 3
-
-def get_baobab_host():
-    return BOABAB_HOST[:-1] if BOABAB_HOST.endswith('/') else BOABAB_HOST
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
@@ -368,7 +365,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         firstname=reviewer_user.firstname, 
                         lastname=reviewer_user.lastname,
                         num_reviews=len(response_ids),
-                        baobab_host=get_baobab_host(),
+                        baobab_host=misc.get_baobab_host(),
                         event=event.name))
 
         return {}, 201
@@ -406,6 +403,7 @@ review_fields = {
     'department' : fields.String,
     'user_category' : fields.String, 
     'final_verdict' : fields.String,
+    'reviewed_user_id': fields.String
 }
 
 review_histroy_fields = {
@@ -419,11 +417,13 @@ class ReviewHistoryModel:
     def __init__(self, review):
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
-        self.nationality_country = review.AppUser.nationality_country.name
-        self.residence_country = review.AppUser.residence_country.name
-        self.affiliation = review.AppUser.affiliation
-        self.department = review.AppUser.department
-        self.user_category = review.AppUser.user_category.name
+        self.reviewed_user_id  = review.AppUser.id
+        # TODO get this information outside of AppUser - e.g. a question asking for nationality,residence etc 
+        # self.nationality_country = review.AppUser.nationality_country.name
+        # self.residence_country = review.AppUser.residence_country.name
+        # self.affiliation = review.AppUser.affiliation
+        # self.department = review.AppUser.department
+        # self.user_category = review.AppUser.user_category.name
 
         final_verdict = [o for o in review.options if str(o['value']) == review.value]
         final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"

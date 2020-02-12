@@ -3,10 +3,12 @@ import "./ReviewAssignment.css";
 import ReviewAssignmentComponent from "./components/ReviewAssignmentComponent.js"
 
 export default class ReviewAssignment extends Component {
-  
+
   render() {
     return (
-      <ReviewAssignmentComponent></ReviewAssignmentComponent> 
+      <ReviewAssignmentComponent
+        {...this.props}>
+      </ReviewAssignmentComponent>
     );
   }
 }

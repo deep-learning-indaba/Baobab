@@ -32,7 +32,6 @@ const extraFieldValidations = [
   ruleRunner(validationFields.affiliation, requiredText)
 ]
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const MENTOR_ATTENDEE_CATEGORY_ID = 8;
 
 class InvitedGuests extends Component {
@@ -52,11 +51,11 @@ class InvitedGuests extends Component {
       successMessage: "",
       adding: false,
       roleSearch: "all",
-      searchTerm:""
+      searchTerm: ""
     };
   }
   getGuestList() {
-    invitedGuestServices.getInvitedGuestList(DEFAULT_EVENT_ID).then(result => {
+    invitedGuestServices.getInvitedGuestList(this.props.event ? this.props.event.id : 0).then(result => {
       this.setState({
         loading: false,
         guestList: result.form,
@@ -159,13 +158,13 @@ class InvitedGuests extends Component {
 
     let value = field.target.value.toLowerCase();
     var roleSearch = this.state.roleSearch;
-    let tempList = searchList.filter(  (guest) =>  {
+    let tempList = searchList.filter((guest) => {
       let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
       return (fullname.toLowerCase().indexOf(value) > -1) && (roleSearch === "all" || guest.role === roleSearch)
     })
     this.setState({
       filteredList: tempList,
-      searchTerm:value
+      searchTerm: value
     })
   };
 
@@ -176,22 +175,20 @@ class InvitedGuests extends Component {
     this.setState({
       roleSearch: dropdown.value
     });
-    
-      tempList = searchList.filter(function (guest) {
-        let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
-        if (guest.role === dropdown.value || dropdown.value === "all")
-          if(searchTerm !== "" )
-          {
-            if(fullname.toLowerCase().indexOf(searchTerm) > -1)
-            {
-              return guest;
-            }
-          }
-          else{
+
+    tempList = searchList.filter(function (guest) {
+      let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
+      if (guest.role === dropdown.value || dropdown.value === "all")
+        if (searchTerm !== "") {
+          if (fullname.toLowerCase().indexOf(searchTerm) > -1) {
             return guest;
           }
-          return false;
-      })
+        }
+        else {
+          return guest;
+        }
+      return false;
+    })
     this.setState({
       filteredList: tempList,
     })
@@ -250,7 +247,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .addInvitedGuest(this.state.user.email, DEFAULT_EVENT_ID, this.state.user.role)
+        .addInvitedGuest(this.state.user.email, this.props.event ? this.props.event.id : 0, this.state.user.role)
         .then(resp => this.handleResponse(resp));
     });
   }
@@ -269,7 +266,7 @@ class InvitedGuests extends Component {
 
       this.setState({ adding: true });
       invitedGuestServices
-        .createInvitedGuest(user, DEFAULT_EVENT_ID, user.role)
+        .createInvitedGuest(user, this.props.event ? this.props.event.id : 0, user.role)
         .then(resp => this.handleResponse(resp));
     });
   }
@@ -289,6 +286,7 @@ class InvitedGuests extends Component {
     return "";
   }
 
+  // TODO change Baobab to [event]
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
 
@@ -332,7 +330,10 @@ class InvitedGuests extends Component {
 
     return (
       <div className="InvitedGuests container-fluid pad-top-30-md">
-        {error && <div className={"alert alert-danger"}>{JSON.stringify(error)}</div>}
+        {error &&
+          <div className={"alert alert-danger alert-container"}>
+            {JSON.stringify(error)}
+          </div>}
 
         <div class="card no-padding-h">
           <p className="h5 text-center mb-4 ">Invited Guests</p>
@@ -363,14 +364,25 @@ class InvitedGuests extends Component {
           </div>
           {
             this.state.guestList && this.state.guestList.length > 0 &&
-            <ReactTable data={this.state.filteredList} columns={columns} minRows={0} />
+            <ReactTable
+              data={this.state.filteredList}
+              columns={columns}
+              minRows={0} />
           }
 
           {
             (!this.state.guestList || this.state.guestList.length === 0) &&
-            <div class="alert alert-danger">No invited guests</div>
+            <div class="alert alert-danger alert-container">
+              No invited guests
+              </div>
           }
-          <div className="col-12"> <button className="pull-right link-style" onClick={() => this.downloadCsv()}>Download csv</button></div>
+          <div className="col-12">
+            <button
+              className="pull-right link-style"
+              onClick={() => this.downloadCsv()}>
+              Download csv
+              </button>
+          </div>
         </div>
 
         {this.state.addedSucess && (

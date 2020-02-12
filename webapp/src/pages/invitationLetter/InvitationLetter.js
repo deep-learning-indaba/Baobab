@@ -4,6 +4,8 @@ import InvitationLetterForm from "./components/InvitationLetterForm.js";
 
 export default class Login extends Component {
   render() {
-    return <InvitationLetterForm />;
+    return <InvitationLetterForm {
+      ...this.props}
+    />;
   }
 }

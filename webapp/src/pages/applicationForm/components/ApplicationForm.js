@@ -11,7 +11,6 @@ import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
 const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
@@ -48,13 +47,13 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true
-    }, ()=> {
-      fileService.uploadFile(file, progressEvent=> {
+    }, () => {
+      fileService.uploadFile(file, progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         this.setState({
           uploadPercentComplete: percentCompleted
         });
-      }).then(response=>{
+      }).then(response => {
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
         }
@@ -253,7 +252,7 @@ class Section extends React.Component {
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a), 
+            this.state.questionModels.map(q => q.answer).filter(a => a),
             isValid
           );
         }
@@ -295,13 +294,13 @@ class Section extends React.Component {
             />
           ))}
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="save mx-auto link-style" onClick={this.handleSave}>
+          <button className="btn btn-secondary" onClick={this.handleSave} >
             Save for later...
           </button>
         )}
         {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
         {hasValidated && !validationStale && (
-          <div class="alert alert-danger">
+          <div class="alert alert-danger alert-container">
             Please fix the errors before continuing.
           </div>
         )}
@@ -312,9 +311,9 @@ class Section extends React.Component {
 
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
-    switch(props.qm.question.type) {
+    switch (props.qm.question.type) {
       case MULTI_CHOICE:
-        const options = props.qm.question.options.filter(o=>o.value === props.qm.answer.value);
+        const options = props.qm.question.options.filter(o => o.value === props.qm.answer.value);
         if (options) {
           return options[0].label;
         }
@@ -340,11 +339,14 @@ class Confirmation extends React.Component {
             <h2>Review your Answers</h2>
             <p>
               Please confirm that your answers are correct. Use the previous
-              button to correct them if they are not. Click the SUBMIT button when you are happy. 
+              button to correct them if they are not. You can also exit and come back
+              later as they have all been saved.
+
+              Click the SUBMIT button once you are happy to submit your answers to the committee.
             </p>
 
             <div class="alert alert-warning">
-            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT in order for your application to be considered!
+              <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
             </div>
 
             <div class="text-center">
@@ -371,7 +373,7 @@ class Confirmation extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm}/></p>
+                      <p><AnswerValue qm={qm} /></p>
                     </div>
                   </div>
                 </div>
@@ -434,22 +436,19 @@ class Submitted extends React.Component {
       <div class="submitted">
         <h2>Thank you for applying!</h2>
         {this.state.isError && (
-          <div className={"alert alert-danger"}>{this.state.errorMessage}</div>
+          <div className={"alert alert-danger alert-container"}>
+            {this.state.errorMessage}
+          </div>
         )}
 
         <p class="thank-you">
-          Thank you for applying to attend The Deep Learning Indaba 2019,
-          Kenyatta University, Nairobi, Kenya . Your application is being
-          reviewed by our committee and we will get back to you as soon as
+          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}.
+          Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
         <p class="timestamp">
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
-        </p>
-        <p class="awards alert alert-info">
-        Do you want to be considered for an Indaba Award? Apply yourself or nominate another outstanding African <a href="http://www.deeplearningindaba.com/awards-2019.html" target="_blank" rel="noopener noreferrer">here</a> by 12 April 2019.
-Winners will receive sponsored trips to the University of Oxford and NeurIPS 2019!
         </p>
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
@@ -464,9 +463,7 @@ Winners will receive sponsored trips to the University of Oxford and NeurIPS 201
           cancelText={"No - Don't withdraw"}
         >
           <p>
-            Are you SURE you want to withdraw your application to the Deep
-            Learning Indaba 2019? You will NOT be considered for a place at the
-            Indaba if you continue.
+            Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
           </p>
         </ConfirmModal>
       </div>
@@ -494,7 +491,7 @@ class ApplicationForm extends Component {
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(DEFAULT_EVENT_ID).then(response => {
+    applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -506,7 +503,7 @@ class ApplicationForm extends Component {
   }
 
   loadResponse = () => {
-    applicationFormService.getResponse(DEFAULT_EVENT_ID).then(resp => {
+    applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(resp => {
       if (resp.response) {
         this.setState({
           responseId: resp.response.id,
@@ -632,7 +629,7 @@ class ApplicationForm extends Component {
       this.setState(prevState => {
         return {
           answers: prevState.answers
-            .filter(a => !answers.map(a=>a.question_id).includes(a.question_id))
+            .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
             .concat(answers)
         };
       }, () => {
@@ -674,7 +671,9 @@ class ApplicationForm extends Component {
     }
 
     if (isError) {
-      return <div className={"alert alert-danger"}>{errorMessage}</div>;
+      return <div className={"alert alert-danger alert-container"}>{
+        errorMessage}
+      </div>;
     }
 
     if (isSubmitted) {
@@ -683,6 +682,7 @@ class ApplicationForm extends Component {
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
+          event={this.props.event}
         />
       );
     }

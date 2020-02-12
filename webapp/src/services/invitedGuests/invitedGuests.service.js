@@ -2,7 +2,7 @@ import axios from "axios";
 import { authHeader } from '../base.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
-const UNKNOWN_COUNTRY = 260;
+// const UNKNOWN_COUNTRY = 260;
 
 export const invitedGuestServices = {
   getInvitedGuestList,
@@ -56,6 +56,7 @@ function addInvitedGuest(email_address, event_Id, role) {
     email: email_address,
     role: role,
   };
+
   return axios
     .post(baseUrl + "/api/v1/invitedGuest", data, { headers: authHeader() })
     .then(function (response) {
@@ -117,17 +118,9 @@ function createInvitedGuest(user, event_Id, role) {
     firstname: user.firstName,
     lastname: user.lastName,
     user_title: user.title,
-    nationality_country_id: user.nationality || UNKNOWN_COUNTRY,  
-    residence_country_id: user.residence || UNKNOWN_COUNTRY, 
-    user_gender: user.gender,
-    affiliation: user.affiliation,
-    department: user.department || " ",
-    user_disability: user.disability || "none",
-    user_category_id: user.category,
-    user_primaryLanguage: user.primaryLanguage || null,
-    user_dateOfBirth: new Date(user.dateOfBirth ? user.dateOfBirth : "1900-01-01").toISOString(),
     role: role,
   };
+  
   return axios
     .post(baseUrl + "/api/v1/invitedGuest/create", data, { headers: authHeader() })
     .then(function (response) {

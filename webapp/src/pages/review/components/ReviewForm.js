@@ -12,8 +12,6 @@ import { createColClassName } from "../../../utils/styling/styling";
 import Linkify from 'react-linkify';
 import { ConfirmModal } from "react-bootstrap4-modal";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 const LONG_TEXT = "long-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
@@ -26,7 +24,7 @@ class ReviewQuestion extends Component {
     }
 
     handleChange = event => {
-        const value =  event.target.type === 'checkbox' ? (event.target.checked | 0) : event.target.value;
+        const value = event.target.type === 'checkbox' ? (event.target.checked | 0) : event.target.value;
         if (this.props.onChange) {
             this.props.onChange(this.props.model, value);
         }
@@ -46,7 +44,7 @@ class ReviewQuestion extends Component {
 
     formControl = (key, question, answer, score, validationError) => {
         switch (question.type) {
-            case LONG_TEXT: 
+            case LONG_TEXT:
                 return (
                     <FormTextArea
                         Id={this.id}
@@ -93,13 +91,13 @@ class ReviewQuestion extends Component {
                         errorText={validationError}
                     />
                 )
-            default: 
+            default:
                 return (
                     <p className="text-danger">
                         WARNING: No control found for type {question.type}!
                     </p>
                 );
-            
+
         }
     }
 
@@ -115,18 +113,18 @@ class ReviewQuestion extends Component {
 
     render() {
         return (
-          <div className={"question"}>
-            <h4>{this.getHeadline(this.props.model)}</h4>
-            <Linkify properties={{target: '_blank'}}>
-                {this.formControl(
-                    this.props.model.question.id,
-                    this.props.model.question,
-                    this.props.model.answer,
-                    this.props.model.score ? this.props.model.score.value : null,
-                    this.props.model.validationError
-                )}
-            </Linkify>
-          </div>
+            <div className={"question"}>
+                <h4>{this.getHeadline(this.props.model)}</h4>
+                <Linkify properties={{ target: '_blank' }}>
+                    {this.formControl(
+                        this.props.model.question.id,
+                        this.props.model.question,
+                        this.props.model.answer,
+                        this.props.model.score ? this.props.model.score.value : null,
+                        this.props.model.validationError
+                    )}
+                </Linkify>
+            </div>
         )
     }
 }
@@ -134,7 +132,7 @@ class ReviewQuestion extends Component {
 class ReviewForm extends Component {
     constructor(props) {
         super(props);
-    
+
         this.state = {
             questionModels: null,
             isLoading: true,
@@ -153,7 +151,7 @@ class ReviewForm extends Component {
 
     processResponse = (response) => {
         let questionModels = null;
-        
+
         if (!response.form.review_response || (response.form.review_response.id === 0 && !response.form.review_response.scores)) {
             response.form.review_response = null;
         }
@@ -184,7 +182,7 @@ class ReviewForm extends Component {
             isSubmitting: false,
             flagModalVisible: false,
             flagValue: ""
-        }, ()=>{
+        }, () => {
             window.scrollTo(0, 0);
         });
     }
@@ -194,7 +192,10 @@ class ReviewForm extends Component {
             reviewService.getReviewResponse(responseId).then(this.processResponse);
         }
         else {
-            reviewService.getReviewForm(DEFAULT_EVENT_ID, this.state.currentSkip).then(this.processResponse);
+            reviewService.getReviewForm(
+                this.props.event ?
+                    this.props.event.id : 0,
+                this.state.currentSkip).then(this.processResponse);
         }
     }
 
@@ -205,21 +206,21 @@ class ReviewForm extends Component {
 
     onChange = (model, value) => {
         const newScore = {
-          review_question_id: model.question.id,
-          value: value
+            review_question_id: model.question.id,
+            value: value
         };
-    
+
         const newQuestionModels = this.state.questionModels.map(q => {
-          if (q.question.id !== model.question.id) {
-            return q;
-          }
-          return {
-            ...q,
-            validationError: this.state.hasValidated
-              ? this.validate(q, newScore)
-              : "",
-            score: newScore
-          };
+            if (q.question.id !== model.question.id) {
+                return q;
+            }
+            return {
+                ...q,
+                validationError: this.state.hasValidated
+                    ? this.validate(q, newScore)
+                    : "",
+                score: newScore
+            };
         });
 
         this.setState({
@@ -232,20 +233,20 @@ class ReviewForm extends Component {
         let errors = [];
         const question = questionModel.question;
         const score = updatedScore || questionModel.score;
-    
+
         if (question.is_required && (!score || !score.value)) {
-          errors.push("An answer/rating is required.");
+            errors.push("An answer/rating is required.");
         }
         if (
-          score &&
-          question.validation_regex &&
-          !score.value.match(question.validation_regex)
+            score &&
+            question.validation_regex &&
+            !score.value.match(question.validation_regex)
         ) {
-          errors.push(question.validation_text);
+            errors.push(question.validation_text);
         }
-    
+
         return errors.join("; ");
-      };
+    };
 
     isValidated = () => {
         const validatedModels = this.state.questionModels.map(q => {
@@ -270,14 +271,18 @@ class ReviewForm extends Component {
     };
 
     submit = () => {
-        let scores = this.state.questionModels.filter(qm=>qm.score).map(qm=>qm.score);
+        let scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
         if (this.isValidated()) {
             this.setState({
                 isSubmitting: true
-            }, ()=> {
+            }, () => {
                 const shouldUpdate = this.state.form.review_response;
                 reviewService
-                    .submit(this.state.form.response.id, this.state.form.review_form.id, scores, shouldUpdate)
+                    .submit(
+                        this.state.form.response.id,
+                        this.state.form.review_form.id,
+                        scores,
+                        shouldUpdate)
                     .then(response => {
                         if (response.error) {
                             this.setState({
@@ -321,8 +326,12 @@ class ReviewForm extends Component {
     handleFlagOk = () => {
         this.setState({
             flagSubmitting: true
-        }, ()=> {
-            userService.addComment(DEFAULT_EVENT_ID, this.state.form.user.id, this.state.flagValue)
+        }, () => {
+            userService.addComment(
+                this.props.event ?
+                    this.props.event.id : 0,
+                this.state.form.user.id,
+                this.state.flagValue)
                 .then(response => {
                     if (response.error) {
                         this.setState({
@@ -361,7 +370,7 @@ class ReviewForm extends Component {
 
         this.setState(prevState => {
             return {
-                flagValue: "I believe this applicant is not a " +  prevState.form.user.user_category + ", but rather a ...",
+                flagValue: "I believe this applicant is not a " + prevState.form.user.user_category + ", but rather a ...",
                 flagModalVisible: true
             };
         });
@@ -369,101 +378,116 @@ class ReviewForm extends Component {
 
     render() {
         const {
-          form,
-          error,
-          isLoading,
-          questionModels,
-          hasValidated,
-          validationStale,
-          isValid,
-          isSubmitting,
-          currentSkip
+            form,
+            error,
+            isLoading,
+            questionModels,
+            hasValidated,
+            validationStale,
+            isValid,
+            isSubmitting,
+            currentSkip
         } = this.state;
 
         const loadingStyle = {
             "width": "3rem",
             "height": "3rem"
         }
-      
+
         if (isLoading) {
             return (
                 <div class="d-flex justify-content-center">
-                <div class="spinner-border" style={loadingStyle} role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
+                    <div class="spinner-border" style={loadingStyle} role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
                 </div>
             );
         }
-    
+
         if (error) {
-            return <div className={"alert alert-danger"}>{error}</div>;
+            return <div className={"alert alert-danger alert-container"}>
+                {error}
+            </div>;
         }
 
         if (!form.review_response && form.reviews_remaining_count === 0) {
             return (
                 <div class="review-form-container">
-                    <div class="alert alert-success">
-                        <p class="complete-title">All Done!</p><br/>
+                    <div class="alert alert-success alert-container">
+                        <p class="complete-title">
+                            All Done!</p><br />
                         You have completed all your reviews! Please let us know if you have any capacity for more :)
-                        <br/><br/>
+                        <br /><br />
                         Thank you for your contribution to the Deep Learning Indaba!
                     </div>
                 </div>
             )
         }
-
+        // TODO change Baobab to [event]
         return (
             <div class="review-form-container">
                 <h3 class="text-center mb-4">{form.user.user_category}
-                 <small>
-                    <button onClick={this.addFlag} className="flag-category link-style ">
-                        <i className="fa fa-flag"></i>
-                    </button>
-                 </small>
+                    <small>
+                        <button
+                            onClick={this.addFlag}
+                            className="flag-category link-style ">
+                            <i className="fa fa-flag"></i>
+                        </button>
+                    </small>
                 </h3>
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Nationality:</span><br/> {form.user.nationality_country}
+                        <span class="font-weight-bold">Nationality:</span><br />
+                        {form.user.nationality_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Residence:</span><br/> {form.user.residence_country}
+                        <span class="font-weight-bold">Residence:</span><br />
+                        {form.user.residence_country}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Affiliation:</span><br/> {form.user.affiliation}
+                        <span class="font-weight-bold">Affiliation:</span><br />
+                        {form.user.affiliation}
                     </div>
                     <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Field of Study / Department:</span><br/> {form.user.department}
+                        <span class="font-weight-bold">Field of Study / Department:</span><br />
+                        {form.user.department}
                     </div>
                 </div>
-                {questionModels && questionModels.map(qm => 
-                    <ReviewQuestion model={qm} key={"q_" + qm.question.id} onChange={this.onChange}/>)
+                {questionModels && questionModels.map(qm =>
+                    <ReviewQuestion
+                        model={qm}
+                        key={"q_" + qm.question.id}
+                        onChange={this.onChange} />)
                 }
 
-                <br/><hr/>
+                <br /><hr />
                 <div>
                     Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
                 </div>
-                <hr/>
+                <hr />
 
                 <div class="buttons">
-                    {currentSkip > 0 && 
+                    {currentSkip > 0 &&
                         <button
-                            disabled={form.review_response || isSubmitting} 
-                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
-                            style={{marginRight: "1em"}}
+                            disabled={form.review_response || isSubmitting}
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
+                            style={{ marginRight: "1em" }}
                             onClick={this.goBack}>
                             Go Back
                         </button>
                     }
-                    {currentSkip < form.reviews_remaining_count && 
-                        <button 
-                            disabled={form.review_response || isSubmitting} 
-                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")} 
+                    {currentSkip < form.reviews_remaining_count &&
+                        <button
+                            disabled={form.review_response || isSubmitting}
+                            className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
                             onClick={this.skip}>
                             Skip
                         </button>
                     }
-                    <button disabled={isSubmitting} type="submit" class="btn btn-primary float-right" onClick={this.submit}>
+                    <button disabled={isSubmitting}
+                        type="submit"
+                        class="btn btn-primary float-right"
+                        onClick={this.submit}>
                         {isSubmitting && (
                             <span
                                 class="spinner-grow spinner-grow-sm"
@@ -474,9 +498,9 @@ class ReviewForm extends Component {
                         Submit
                     </button>
                 </div>
-                
-                {(hasValidated && !validationStale && !isValid) && 
-                    <div class="alert alert-danger">
+
+                {(hasValidated && !validationStale && !isValid) &&
+                    <div class="alert alert-danger alert-container">
                         There are one or more validation errors, please correct before submitting.
                     </div>
                 }
@@ -496,7 +520,7 @@ class ReviewForm extends Component {
                     okText={"Submit"}
                     cancelText={"Cancel"}
                     title="Flag applicant category"
-                    >
+                >
                     <div class="flagModal">
                         <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
                         <textarea
@@ -505,7 +529,10 @@ class ReviewForm extends Component {
                             rows="3"
                             onChange={this.flagOnChange}>
                         </textarea>
-                        {this.state.flagError && <div class="alert alert-danger">{this.state.flagError}</div>}
+                        {this.state.flagError &&
+                            <div class="alert alert-danger alert-container">
+                                {this.state.flagError}
+                            </div>}
                     </div>
                 </ConfirmModal>
             </div>

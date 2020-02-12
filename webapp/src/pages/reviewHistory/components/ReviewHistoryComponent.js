@@ -7,8 +7,6 @@ import "react-table/react-table.css";
 import { reviewService } from "../../../services/reviews";
 import { columns } from "./tablecolumns";
 
-const DEFAULT_EVENT_ID = process.env.REACT_APP_DEFAULT_EVENT_ID || 1;
-
 class ReviewHistoryComponent extends Component {
   constructor(props) {
     super(props);
@@ -29,7 +27,7 @@ class ReviewHistoryComponent extends Component {
 
   loadReviewHistory = (pageNumber,pageSize,sortColumn) => {
     reviewService
-      .getReviewHistory(DEFAULT_EVENT_ID, pageNumber, pageSize,sortColumn)
+      .getReviewHistory(this.props.event ? this.props.event.id : 0, pageNumber, pageSize,sortColumn)
       .then(response => {
         this.setState({
           isLoading: false,
@@ -55,7 +53,9 @@ class ReviewHistoryComponent extends Component {
     const { error, isLoading, reviewHistory,defaultPageSize,totalPages } = this.state;
 
     if (error) {
-      return <div className={"alert alert-danger"}>{error}</div>;
+      return <div className={"alert alert-danger alert-container"}>
+        {error}
+      </div>;
     }
 
     return (

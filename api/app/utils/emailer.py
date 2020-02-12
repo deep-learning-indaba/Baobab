@@ -8,9 +8,8 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
-
 def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
-              file_path=''):
+              file_path='', sender_name=None, sender_email=None):
     '''[summary]
 
     Arguments:
@@ -25,13 +24,16 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
     Raises:
         e -- [description]
     '''
+    sender_name = sender_name or SMTP_SENDER_NAME
+    sender_email = sender_email or SMTP_SENDER_EMAIL
+
     if (not DEBUG):
         if mail_type == 'AMZ':
             try:
                 msg = MIMEMultipart()
                 msg['Subject'] = subject
                 msg['From'] = email.utils.formataddr(
-                    (SMTP_SENDER_NAME, SMTP_SENDER_EMAIL))
+                    (sender_name, sender_email))
                 msg['To'] = recipient
 
                 body_part1 = MIMEText(body_text, 'plain', _charset=charset)
@@ -55,13 +57,15 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
                 server.starttls()
                 server.ehlo()
                 server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.sendmail(SMTP_SENDER_EMAIL, recipient, msg.as_string())
+                server.sendmail(sender_email, recipient, msg.as_string())
                 server.close()
             except Exception as e:
                 LOGGER.error("Exception {} while trying to send email: {}, {}".format(e, traceback.format_exc()))
                 raise e
 
     else:
+        LOGGER.debug('Sender Name: {sender_name}'.format(sender_name=sender_name))
+        LOGGER.debug('Sender Email: {sender_email}'.format(sender_email=sender_email))
         LOGGER.debug('Recipient : {recipient}'.format(recipient=recipient))
         LOGGER.debug('Subject : {subject}'.format(subject=subject))
         LOGGER.debug('Body Text : {body}'.format(body=body_text))

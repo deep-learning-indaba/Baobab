@@ -11,7 +11,12 @@ class OrganisationApi(restful.Resource):
         'name': fields.String,
         'small_logo': fields.String,
         'large_logo': fields.String,
-        'domain': fields.String
+        'domain': fields.String,
+        'system_name': fields.String,
+        'url': fields.String,
+        'email_from': fields.String,
+        'system_url': fields.String,
+        'privacy_policy': fields.String
     }
 
     @marshal_with(organisation_fields)

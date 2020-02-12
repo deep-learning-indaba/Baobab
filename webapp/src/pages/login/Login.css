@@ -9,10 +9,10 @@
     }
 }
 
-.forgot-password {
-  margin-top: 1.5em;
+.reset-password-container {
+  margin: 10px;
 }
 
-.alert {
+.forgot-password {
   margin-top: 1.5em;
 }
