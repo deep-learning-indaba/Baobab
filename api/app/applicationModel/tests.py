@@ -24,7 +24,7 @@ class ApplicationFormApiTest(ApiTestCase):
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(
-            test_event.id, True, self.end_time)
+            test_event.id, True)
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(
@@ -45,8 +45,6 @@ class ApplicationFormApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/application-form?event_id=1')
         data = json.loads(response.data)
-        assert data['deadline'] == self.end_time.strftime(
-            "%a, %d %b %Y %H:%M:%S") + " -0000"
         assert data['event_id'] == 1
         assert data['is_open'] == True
         assert data['sections'][0]['description'] == 'Test Description'
