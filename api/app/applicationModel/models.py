@@ -12,10 +12,9 @@ class ApplicationForm(db.Model):
 
     event = db.relationship('Event', foreign_keys=[event_id])
 
-    def __init__(self, event_id, is_open, deadline):
+    def __init__(self, event_id, is_open):
         self.event_id = event_id
         self.is_open = is_open
-        self.deadline = deadline
 
 
 class Section(db.Model):

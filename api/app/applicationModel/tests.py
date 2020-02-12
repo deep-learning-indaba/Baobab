@@ -24,7 +24,7 @@ class ApplicationFormApiTest(ApiTestCase):
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(
-            test_event.id, True, self.end_time)
+            test_event.id, True)
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(
@@ -56,3 +56,4 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
         self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
         self.assertEqual(data['nominations'], False)
+
