@@ -116,9 +116,8 @@ class CreateAccountForm extends Component {
   };
 
   togglePrivacyPolicy = () => {
-    let currentPrivacyPolicy = this.state.agreePrivacyPolicy;
-    this.setState({ agreePrivacyPolicy: !currentPrivacyPolicy });
-  };
+    let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
+    this.setState({user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy}});};
 
 
   handleSubmit = event => {
@@ -180,9 +179,10 @@ class CreateAccountForm extends Component {
       title,
       password,
       confirmPassword,
+      agreePrivacyPolicy
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy } = this.state;
+    const { loading, errors, showErrors, error, created, over18 } = this.state;
 
     if (created) {
       return (
