@@ -73,8 +73,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         application_forms = [
-            ApplicationForm(1, True),
-            ApplicationForm(2, False)
+            ApplicationForm(1, True, False),
+            ApplicationForm(2, False, False)
         ]
         db.session.add_all(application_forms)
         db.session.commit()
