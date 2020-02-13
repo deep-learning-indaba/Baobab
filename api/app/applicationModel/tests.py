@@ -24,7 +24,7 @@ class ApplicationFormApiTest(ApiTestCase):
         db.session.add(test_event)
         db.session.commit()
         test_form = ApplicationForm(
-            test_event.id, True)
+            test_event.id, True, False)
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(
