@@ -37,13 +37,11 @@ class ReviewAssignmentComponent extends Component {
           error: result.error
         })
       });
-
   }
 
   handleChange = event => {
     const value = event.target.value;
     this.setState({ newReviewerEmail: value });
-
   };
 
   handleSubmit = event => {
@@ -94,6 +92,7 @@ class ReviewAssignmentComponent extends Component {
         style={{ backgroundColor: "#fafafa" }}
         contentEditable
         suppressContentEditableWarning
+
         onBlur={e => {
           const reviewers = [...this.state.reviewers];
           const reviewSummary = this.state.reviewSummary;
@@ -101,10 +100,10 @@ class ReviewAssignmentComponent extends Component {
           reviewSummary.reviews_unallocated -= parseInt(e.target.innerHTML);
           this.setState({ reviewSummary });
         }}
+
         dangerouslySetInnerHTML={{
           __html: this.state.reviewers[cellInfo.index][cellInfo.column.id]
-        }}
-      />
+        }} />
     );
   }
 
@@ -158,11 +157,12 @@ class ReviewAssignmentComponent extends Component {
       <form onSubmit={this.handleSubmit}>
         <div className={"review-padding"}>
           <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
+
           <ReactTable
             data={reviewers}
             columns={columns}
-            minRows={0}
-          />
+            minRows={0} />
+
           <div>
             <FormTextBox
               Id={"newReviewEmail"}
@@ -171,13 +171,14 @@ class ReviewAssignmentComponent extends Component {
               placeholder={"Review email"}
               onChange={this.handleChange}
               value={newReviewerEmail}
-              key={"i_newReviewEmail"}
-            />
+              key={"i_newReviewEmail"} />
+
             <button
               class="btn btn-primary float-right"
               type="submit">
               Assign
             </button>
+
           </div>
         </div>
       </form>

@@ -1,3 +1,9 @@
+@media (max-width: 650px) {
+    img.large-logo {
+        max-width: 80%;
+    }
+}
+
 img.large-logo {
     margin-bottom: 2em;
     max-width: 600px;
@@ -11,9 +17,3 @@ table.event-table {
 table.event-table td {
     padding: 10px 0;
 }
-
-@media (max-width: 650px) {
-    img.large-logo {
-        max-width: 80%;
-    }
-  }

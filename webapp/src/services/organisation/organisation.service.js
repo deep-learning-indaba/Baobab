@@ -8,16 +8,16 @@ export const organisationService = {
 
 function getOrganisation() {
     return axios.get(baseUrl + "/api/v1/organisation")
-        .then(function(response){
-            return{
+        .then(function (response) {
+            return {
                 organisation: response.data,
-                error:"",
+                error: "",
                 statusCode: response.status
             };
         })
-        .catch(function(error){
-            return{
-                organisation:null,
+        .catch(function (error) {
+            return {
+                organisation: null,
                 error:
                     error.response && error.response.data
                         ? error.response.data.message

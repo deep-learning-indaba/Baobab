@@ -403,6 +403,7 @@ class AttendanceTable extends React.Component {
             {JSON.stringify(error)}
           </div>
         )}
+
         <ConfirmModal
           visible={this.state.showDetailsModal}
           onOK={this.handleContinue}
@@ -415,6 +416,7 @@ class AttendanceTable extends React.Component {
           {undoResultDiv ||
             (confirmResult && confirmResult.success && confirmResultDiv)}
         </ConfirmModal>
+
         <div class="card no-padding-h">
           <p className="h5 text-center mb-4 ">{heading}</p>
           <div class="row mb-4">

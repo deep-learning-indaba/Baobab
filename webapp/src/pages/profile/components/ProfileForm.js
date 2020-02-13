@@ -5,14 +5,9 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import validationFields from "../../../utils/validation/validationFields";
-import {
-  getTitleOptions,
-} from "../../../utils/validation/contentHelpers";
+import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import {
-  requiredText,
-  requiredDropdown,
-} from "../../../utils/validation/rules.js";
+import { requiredText, requiredDropdown } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
 const fieldValidations = [
@@ -73,13 +68,12 @@ class ProfileForm extends Component {
   }
 
   handleChangeDropdown = (name, dropdown) => {
-    this.setState(
-      {
-        user: {
-          ...this.state.user,
-          [name]: dropdown.value
-        }
-      },
+    this.setState({
+      user: {
+        ...this.state.user,
+        [name]: dropdown.value
+      }
+    },
       function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
@@ -88,33 +82,35 @@ class ProfileForm extends Component {
   };
 
   deleteAccount = () => {
-    userService.deleteAccount().then(
-      response => {
-        const { from } = this.props.location.state || {
-          from: { pathname: "/" }
-        };
-        this.props.history.push(from);
-      },
-      error => this.setState({ error, loading: false })
-    );
+    userService.deleteAccount()
+      .then(
+        response => {
+          const { from } = this.props.location.state || {
+            from: { pathname: "/" }
+          };
+          this.props.history.push(from);
+        },
+        error => this.setState({ error, loading: false })
+      );
     if (this.props.logout) {
       this.props.logout();
     }
   };
 
   resetPassword = () => {
-    userService.requestPasswordReset(this.state.user.email).then(response => {
-      if (response.status === 201) {
-        const { from } = { from: { pathname: "/" } };
-        this.props.history.push(from);
-      } else {
-        this.setState({
-          error: response.messsage,
-          loading: false,
-          confirmResetVisible: false
-        });
-      }
-    });
+    userService.requestPasswordReset(this.state.user.email)
+      .then(response => {
+        if (response.status === 201) {
+          const { from } = { from: { pathname: "/" } };
+          this.props.history.push(from);
+        } else {
+          this.setState({
+            error: response.messsage,
+            loading: false,
+            confirmResetVisible: false
+          });
+        }
+      });
   };
 
   handleChange = field => {
@@ -144,7 +140,6 @@ class ProfileForm extends Component {
       this.state.errors.$set.length > 0
     )
       return;
-
     this.setState({ loading: true });
 
     userService.update(this.state.user).then(
@@ -170,7 +165,7 @@ class ProfileForm extends Component {
       errorMessages.push(
         <div className={"alert alert-danger alert-container"}>
           {Object.values(arr[i])}
-          </div>
+        </div>
       );
     }
     return errorMessages;
@@ -182,6 +177,7 @@ class ProfileForm extends Component {
     const md = 4;
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
+
     const {
       firstName,
       lastName,
@@ -191,12 +187,17 @@ class ProfileForm extends Component {
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
 
-    const { loading, errors, showErrors } = this.state;
+    const { loading,
+      errors,
+      showErrors
+    } = this.state;
 
     return (
       <div className="Profile">
         <form onSubmit={this.handleSubmit}>
+
           <p className="h5 text-center mb-4">Profile</p>
+
           <div class="row">
             <div class={commonColClassName}>
               <FormSelect
@@ -205,9 +206,9 @@ class ProfileForm extends Component {
                 placeholder={validationFields.title.display}
                 onChange={this.handleChangeDropdown}
                 value={titleValue}
-                label={validationFields.title.display}
-              />
+                label={validationFields.title.display} />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
@@ -215,9 +216,9 @@ class ProfileForm extends Component {
                 placeholder={validationFields.firstName.display}
                 onChange={this.handleChange(validationFields.firstName)}
                 value={firstName}
-                label={validationFields.firstName.display}
-              />
+                label={validationFields.firstName.display} />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
@@ -226,56 +227,55 @@ class ProfileForm extends Component {
                 onChange={this.handleChange(validationFields.lastName)}
                 value={lastName}
                 label={validationFields.lastName.display}
-                editable={false}
-              />
+                editable={false} />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.email.name}
                 type="email"
                 value={email}
                 label={validationFields.email.display}
-                description={"Read-only"}
-              />
+                description={"Read-only"} />
             </div>
           </div>
+
           <div class="row">
             <div class={commonColClassName}>
               <button
                 type="button"
                 class="btn btn-primary Button"
                 disabled={loading}
-                onClick={() => this.setState({ confirmResetVisible: true })}
-              >
+                onClick={() => this.setState({ confirmResetVisible: true })}>
                 Reset password
               </button>
             </div>
+
             <div class={commonColClassName}>
               <button
                 type="submit"
                 class="btn btn-primary Button"
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading && (
                   <span
                     class="spinner-grow spinner-grow-sm"
                     role="status"
-                    aria-hidden="true"
-                  />
+                    aria-hidden="true" />
                 )}
                 Save profile
               </button>
             </div>
           </div>
+
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
         </form>
+
         <ConfirmModal
           visible={this.state.confirmResetVisible}
           onOK={this.resetPassword}
           onCancel={() => this.setState({ confirmResetVisible: false })}
           okText={"Reset Password"}
-          cancelText={"Cancel"}
-        >
+          cancelText={"Cancel"}>
           <p>
             Are you sure? Click "Reset Password" to receive an email with a link
             to reset your password.
