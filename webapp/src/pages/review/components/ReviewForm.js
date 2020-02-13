@@ -38,7 +38,6 @@ class ReviewQuestion extends Component {
         if (answer && answer.value && answer.value.trim()) {
             return answer.value;
         }
-
         return "<No Answer Provided>";
     }
 
@@ -56,8 +55,7 @@ class ReviewQuestion extends Component {
                         rows={5}
                         key={"i_" + key}
                         showError={validationError}
-                        errorText={validationError}
-                    />
+                        errorText={validationError} />
                 );
             case INFORMATION:
                 return (
@@ -74,8 +72,7 @@ class ReviewQuestion extends Component {
                         value={score}
                         key={"i_" + key}
                         showError={validationError}
-                        errorText={validationError}
-                    />
+                        errorText={validationError} />
                 )
             case RADIO:
                 return (
@@ -88,8 +85,7 @@ class ReviewQuestion extends Component {
                         value={score}
                         key={"i_" + key}
                         showError={validationError}
-                        errorText={validationError}
-                    />
+                        errorText={validationError} />
                 )
             default:
                 return (
@@ -97,7 +93,6 @@ class ReviewQuestion extends Component {
                         WARNING: No control found for type {question.type}!
                     </p>
                 );
-
         }
     }
 
@@ -189,9 +184,9 @@ class ReviewForm extends Component {
 
     loadForm = (responseId) => {
         if (responseId) {
-            reviewService.getReviewResponse(responseId).then(this.processResponse);
-        }
-        else {
+            reviewService.getReviewResponse(responseId)
+                .then(this.processResponse);
+        } else {
             reviewService.getReviewForm(
                 this.props.event ?
                     this.props.event.id : 0,
@@ -237,6 +232,7 @@ class ReviewForm extends Component {
         if (question.is_required && (!score || !score.value)) {
             errors.push("An answer/rating is required.");
         }
+
         if (
             score &&
             question.validation_regex &&
@@ -244,7 +240,6 @@ class ReviewForm extends Component {
         ) {
             errors.push(question.validation_text);
         }
-
         return errors.join("; ");
     };
 
@@ -266,7 +261,6 @@ class ReviewForm extends Component {
                 isValid: isValid
             }
         );
-
         return isValid;
     };
 
@@ -336,7 +330,7 @@ class ReviewForm extends Component {
                     if (response.error) {
                         this.setState({
                             flagError: response.error,
-                            flagSubmitting: false,
+                            flagSubmitting: false
                         });
                     }
                     else {
@@ -426,7 +420,8 @@ class ReviewForm extends Component {
         // TODO change Baobab to [event]
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">{form.user.user_category}
+                <h3 class="text-center mb-4">
+                    {form.user.user_category}
                     <small>
                         <button
                             onClick={this.addFlag}
@@ -435,19 +430,23 @@ class ReviewForm extends Component {
                         </button>
                     </small>
                 </h3>
+
                 <div class="row">
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Nationality:</span><br />
                         {form.user.nationality_country}
                     </div>
+
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Residence:</span><br />
                         {form.user.residence_country}
                     </div>
+
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Affiliation:</span><br />
                         {form.user.affiliation}
                     </div>
+
                     <div className={createColClassName(12, 6, 3, 3)}>
                         <span class="font-weight-bold">Field of Study / Department:</span><br />
                         {form.user.department}
@@ -457,13 +456,14 @@ class ReviewForm extends Component {
                     <ReviewQuestion
                         model={qm}
                         key={"q_" + qm.question.id}
-                        onChange={this.onChange} />)
-                }
-
+                        onChange={this.onChange} />
+                )}
                 <br /><hr />
+
                 <div>
                     Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
                 </div>
+
                 <hr />
 
                 <div class="buttons">
@@ -519,8 +519,8 @@ class ReviewForm extends Component {
                     disableButtons={this.state.flagSubmitting}
                     okText={"Submit"}
                     cancelText={"Cancel"}
-                    title="Flag applicant category"
-                >
+                    title="Flag applicant category">
+
                     <div class="flagModal">
                         <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
                         <textarea

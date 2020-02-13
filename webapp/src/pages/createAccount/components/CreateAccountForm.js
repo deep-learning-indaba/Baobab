@@ -4,7 +4,7 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import {getTitleOptions} from "../../../utils/validation/contentHelpers";
+import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
@@ -172,6 +172,7 @@ class CreateAccountForm extends Component {
     const md = 4;
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
+
     const {
       firstName,
       lastName,
@@ -223,6 +224,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.title.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
@@ -233,6 +235,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.firstName.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
@@ -244,6 +247,7 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+
           <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
@@ -255,6 +259,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.email.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.password.name}
@@ -265,6 +270,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.password.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.confirmPassword.name}
@@ -276,6 +282,7 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+
           <div>
             <br />
             <h5>Please confirm the following in order to create an account</h5>
@@ -290,7 +297,7 @@ class CreateAccountForm extends Component {
                 onChange={this.toggleAge} />
               <label class="form-check-label" for="over18">
                 I am over 18
-                </label>
+              </label>
             </div>
 
             <div className="form-check">
@@ -304,17 +311,20 @@ class CreateAccountForm extends Component {
               />
               <label class="form-check-label" for="agreePrivacyPolicy">
                 {"I have read and agree to the "}
-                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")} target="_blank">privacy policy </a>
+                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
+                  target="_blank">
+                  privacy policy
+                </a>
               </label>
             </div>
-
           </div>
+
           <br></br><br></br>
+
           <button
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}
-          >
+            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}>
             {loading && (
               <span
                 class="spinner-grow spinner-grow-sm"
@@ -324,10 +334,14 @@ class CreateAccountForm extends Component {
             )}
             Sign Up
           </button>
-          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger alert-container">
-            {error}
-          </div>}
+          {errors &&
+            errors.$set &&
+            showErrors &&
+            this.getErrorMessages(errors)}
+          {error &&
+            <div class="alert alert-danger alert-container">
+              {error}
+            </div>}
         </form>
       </div>
     );

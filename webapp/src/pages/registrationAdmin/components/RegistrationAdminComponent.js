@@ -63,7 +63,15 @@ class RegistrationAdminComponent extends Component {
   }
 
   render() {
-    const { loading, error, confirming, confirmError, confirmed, searchTerm, unconfirmedList, filteredList } = this.state;
+    const { loading,
+      error,
+      confirming,
+      confirmError,
+      confirmed,
+      searchTerm,
+      unconfirmedList,
+      filteredList
+    } = this.state;
 
     if (loading) {
       return (
@@ -79,34 +87,37 @@ class RegistrationAdminComponent extends Component {
       {
         id: "user",
         Header: <div className="invitedguest-fullname">Full-Name</div>,
-        accessor: u => <div className="registration-admin-fullname">{u.firstname + " " + u.lastname}</div>,
+        accessor: u =>
+          <div className="registration-admin-fullname">
+            {u.firstname + " " + u.lastname}
+          </div>,
         minWidth: 150
-      },
-      {
+      }, {
         id: "email",
         Header: <div className="registration-admin-email">Email</div>,
         accessor: u => u.email
-      },
-      {
+      }, {
         id: "category",
         Header: <div className="registration-admin-category">Category</div>,
         accessor: u => u.user_category
-      },
-      {
+      }, {
         id: "affiliation",
         Header: <div className="registration-admin-affiliation">Affiliation</div>,
         accessor: u => u.affiliation
-      },
-      {
+      }, {
         id: "createdAt",
         Header: <div className="registration-admin-createdat">Registration Created At</div>,
         accessor: u => u.created_at
-      },
-      {
+      }, {
         id: "confirm",
         Header: <div className="registration-admin-confirm">Confirm</div>,
         accessor: u => u.registration_id,
-        Cell: props => <button className="btn btn-success btn-sm" onClick={() => { this.onConfirm(props.value) }} disabled={confirming}>Confirm</button>,
+        Cell: props =>
+          <button className="btn btn-success btn-sm"
+            onClick={() => { this.onConfirm(props.value) }}
+            disabled={confirming}>
+            Confirm
+          </button>,
       }
     ];
 
@@ -116,6 +127,7 @@ class RegistrationAdminComponent extends Component {
           <div className={"alert alert-danger alert-container"}>
             {JSON.stringify(error)}
           </div>}
+
         <div class="card no-padding-h">
           <p className="h5 text-center mb-4 ">Unconfirmed Registrations</p>
           <div class="row mb-4">
@@ -125,32 +137,36 @@ class RegistrationAdminComponent extends Component {
                 onChange={this.onSearchChange} />
             </div>
           </div>
+
           <div class="row">
             <div class="col-12">
-              {
-                unconfirmedList && unconfirmedList.length > 0 &&
-                <ReactTable data={filteredList} columns={columns} minRows={0} />
+              {unconfirmedList && unconfirmedList.length > 0 &&
+                <ReactTable
+                  data={filteredList}
+                  columns={columns}
+                  minRows={0} />
               }
+
               {confirmed && !confirmError &&
                 <div class="alert alert-success alert-container">
-                  {confirmed}</div>}
+                  {confirmed}
+                </div>}
+
               {confirmError &&
                 <div class="alert alert-danger alert-container">
                   {confirmError}
                 </div>}
-              {
-                (!unconfirmedList || unconfirmedList.length === 0) &&
+
+              {(!unconfirmedList || unconfirmedList.length === 0) &&
                 <div class="alert alert-success alert-container">
                   There are no unconfirmed registrations
-                    </div>
-              }
+                </div>}
             </div>
           </div>
         </div>
       </div>
     )
   }
-
 }
 
 export default withRouter(RegistrationAdminComponent);
