@@ -11,9 +11,10 @@ class ApplicationForm(db.Model):
     event = db.relationship('Event', foreign_keys=[event_id])
     nominations = db.Column(db.Boolean(), nullable=False)
 
-    def __init__(self, event_id, is_open):
+    def __init__(self, event_id, is_open, nominations):
         self.event_id = event_id
         self.is_open = is_open
+        self.nominations = nominations
 
 
 class Section(db.Model):
