@@ -314,8 +314,8 @@ class UserApiTest(ApiTestCase):
 
     def setup_responses(self):
         application_forms = [
-            ApplicationForm(1, True),
-            ApplicationForm(2, False)
+            ApplicationForm(1, True, False),
+            ApplicationForm(2, False, False)
         ]
         db.session.add_all(application_forms)
 
@@ -493,8 +493,8 @@ class UserProfileApiTest(ApiTestCase):
         db.session.add_all(events)
 
         application_forms = [
-            ApplicationForm(1, True),
-            ApplicationForm(2, False)
+            ApplicationForm(1, True, False),
+            ApplicationForm(2, False, False)
         ]
         db.session.add_all(application_forms)
 
