@@ -45,6 +45,13 @@ yarn start
 yarn test
 ```
 
+## Connect to local database
+```
+Host: localhost 
+Port: 5432
+Database: docker  
+User: docker Password: docker 
+```
 ## Project Structure
 - src
   - images
