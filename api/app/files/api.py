@@ -14,7 +14,7 @@ from google.oauth2 import service_account
 
 import tempfile
 
-from app import LOGGER
+from app import db, LOGGER
 
 def _get_storage_bucket():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
@@ -48,23 +48,38 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
 
 
 class FileAPIImproved(FileUploadMixin, restful.Resource):
-    def get(self, file_id):
+
+
+    @staticmethod
+    def get_by_id(file_id):
+        return db.session.query(File).get(file_id)
+
+    def get(self):
         # TO DO: Query the File table
 
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('filename', type=str, required=True)
+        req_parser.add_argument('file_id', type=int, required=True)
         args = req_parser.parse_args()
         LOGGER.debug("FileUpload GET args: {}".format(args))
 
         bucket = _get_storage_bucket()
+        file = get_by_id(args['file_id'])
 
-        blob = bucket.blob(args['filename'])
+        blob = bucket.blob(args['file_id'])
 
         # TO DO : Rename the file and set the appropriate mime_type
 
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
-            return send_file(temp.name, as_attachment=True, attachment_filename=args['filename'], mimetype='application/pdf')
+            return send_file(temp.name, as_attachment=True, attachment_filename=file.file_name, mimetype=file.mime_type)
+
+    
+    @staticmethod
+    def save_file_object(file_obj):
+        db.session.add(file_obj)
+        db.session.commit()
+        last_save_file = db.session.query(File).last()
+        return last_save_file.file_id
 
 
     @auth_required
@@ -72,7 +87,7 @@ class FileAPIImproved(FileUploadMixin, restful.Resource):
         args = self.req_parser.parse_args()
         file_name = args['filename']
         mime_ = args['event_id']
-        email_template = args['email_template']
+        #email_template = args['email_template']
 
         LOGGER.debug("FileUpload args: {}".format(args))
 
@@ -93,8 +108,13 @@ class FileAPIImproved(FileUploadMixin, restful.Resource):
         blob.upload_from_string(bytes_file, content_type=content_type)
 
         # TO DO : Add a record to File table to store metadata
+        file_name = file.file_name
+        mime_type = file.content_type
+        new_file = File(file_name, mime_type)
+
+        file_id = save_file_object(new_file)
 
         return {
-            'file_id': unique_name, # TO DO : Return file id
+            'file_id': file_id, # TO DO : Return file id
         }, 201
 
