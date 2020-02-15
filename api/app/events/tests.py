@@ -40,7 +40,7 @@ class EventsAPITest(ApiTestCase):
         db.session.add(test_event)
         db.session.commit()
 
-        self.test_form = ApplicationForm(
+        self.test_form = self.create_application_form(
             test_event.id, True, False)
         db.session.add(self.test_form)
         db.session.commit()
@@ -261,7 +261,7 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(self.test_event)
         db.session.commit()
 
-        self.test_form = ApplicationForm(
+        self.test_form = self.create_application_form(
             self.test_event.id, True, False)
         db.session.add(self.test_form)
         db.session.commit()
@@ -362,7 +362,7 @@ class RemindersAPITest(ApiTestCase):
         event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
-        application_form = ApplicationForm(1, True, False)
+        application_form = self.create_application_form(1, True, False)
         db.session.add(application_form)
         db.session.commit()
 
