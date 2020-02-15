@@ -23,7 +23,7 @@ class ApplicationFormApiTest(ApiTestCase):
                            datetime.now(), datetime.now())
         db.session.add(test_event)
         db.session.commit()
-        test_form = ApplicationForm(
+        test_form = self.create_application_form(
             test_event.id, True, False)
         db.session.add(test_form)
         db.session.commit()
