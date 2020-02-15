@@ -30,7 +30,7 @@ rest_api.add_resource(responses_api.ResponseAPI, '/api/v1/response')
 rest_api.add_resource(content_api.CountryContentAPI,
                       '/api/v1/content/countries')
 rest_api.add_resource(files_api.FileUploadAPI, '/api/v1/file')
-rest_api.add_resource(files_api.FileAPIImproved, '/api/v1/file')
+rest_api.add_resource(files_api.FileAPIImproved, '/api/v1/fileimproved')
 rest_api.add_resource(content_api.CategoryContentAPI,
                       '/api/v1/content/categories')
 rest_api.add_resource(content_api.EthnicityContentAPI,
