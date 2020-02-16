@@ -34,7 +34,7 @@ class Event(db.Model):
     offer_close = db.Column(db.DateTime(), nullable=False)
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
-    event_type = db.Column(db.Enum(EventType), nullable=True)
+    event_type = db.Column(db.Enum(EventType), nullable=False)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
