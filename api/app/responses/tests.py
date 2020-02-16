@@ -62,9 +62,8 @@ class ResponseApiTest(ApiTestCase):
 
         # Add application form data
         self.test_event = self.add_event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24), 'NAGSOLVER')
-        self.test_form = ApplicationForm(
+        self.test_form = self.create_application_form(
             self.test_event.id, True)
-        _add_object_to_db(self.test_form)
         test_section = Section(
             self.test_form.id, 'Test Section', 'Test Description', 1)
         _add_object_to_db(test_section)

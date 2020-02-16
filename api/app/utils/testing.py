@@ -128,11 +128,11 @@ class ApiTestCase(unittest.TestCase):
         db.drop_all()
 
     def create_application_form(self,
+                            event_id = 1,
                             is_open = True,
-                            deadline = datetime.now() + timedelta(days=15),
                             nominations = False):
                             
-        application_form = ApplicationForm(is_open, deadline, nominations)
+        application_form = ApplicationForm(event_id, is_open, nominations)
         db.session.add(application_form)
         db.session.commit()
         return application_form
