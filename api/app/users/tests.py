@@ -1,22 +1,24 @@
 import json
-
 from datetime import datetime, timedelta
+import copy
 
 from app import app, db
-from app.utils.testing import ApiTestCase
-from app.users.models import AppUser, PasswordReset, UserCategory, Country, UserComment
-from app.events.models import Event, EventRole
 from app.applicationModel.models import ApplicationForm
-from app.responses.models import Response
+from app.events.models import Event, EventRole
 from app.organisation.models import Organisation
-
+from app.responses.models import Response
+from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
+                              UserComment)
+from app.utils.errors import POLICY_ALREADY_AGREED, POLICY_NOT_AGREED
+from app.utils.testing import ApiTestCase
 
 USER_DATA = {
         'email': 'something@email.com',
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'password': '123456'
+        'password': '123456',
+        'policy_agreed': True
     }
 
 AUTH_DATA = {
@@ -78,6 +80,14 @@ class UserApiTest(ApiTestCase):
         response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 409
 
+    def test_policy_not_agreed(self):
+        self.seed_static_data()
+        user_data = copy.deepcopy(USER_DATA)
+        user_data['policy_agreed'] = False
+        
+        response = self.app.post('/api/v1/user', data=user_data)
+        self.assertEqual(response.status_code, 400)
+
     def test_get_user(self):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
@@ -96,7 +106,7 @@ class UserApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
 
         headers = {'Authorization': data['token']}
 
@@ -107,14 +117,15 @@ class UserApiTest(ApiTestCase):
             'user_title': 'Mrs',
             'password': ''
         })
-        assert response.status_code == 200
+
+        self.assertEqual(response.status_code, 200)
 
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
-        assert data['email'] == 'something@email.com'
-        assert data['firstname'] == 'Updated'
-        assert data['lastname'] == 'Updated'
-        assert data['user_title'] == 'Mrs'
+        self.assertEqual(data['email'], 'something@email.com')
+        self.assertEqual(data['firstname'], 'Updated')
+        self.assertEqual(data['lastname'], 'Updated')
+        self.assertEqual(data['user_title'], 'Mrs')
 
     def test_authentication_deleted(self):
         self.seed_static_data()
@@ -697,4 +708,34 @@ class OrganisationUserTest(ApiTestCase):
         self.assertEqual(response.status_code, 409)
 
 
-        
+class PrivacyPolicyApiTest(ApiTestCase):
+
+    def test_policy_agreed(self):
+        user = self.add_user()
+        user.policy_agreed_datetime = None
+        db.session.commit()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': True})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_policy_already_agreed(self):
+        user = self.add_user()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': True})
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['message'], POLICY_ALREADY_AGREED[0]['message'])
+    
+    def test_policy_not_agreed(self):
+        user = self.add_user()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': False})
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['message'], POLICY_NOT_AGREED[0]['message'])

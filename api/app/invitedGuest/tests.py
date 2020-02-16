@@ -33,17 +33,9 @@ USER_DATA = {
     'firstname': 'Some',
     'lastname': 'Thing',
     'user_title': 'Mr',
-    'nationality_country_id': 1,
-    'residence_country_id': 1,
-    'user_gender': 'Male',
-    'affiliation': 'University',
-    'department': 'Computer Science',
-    'user_disability': 'None',
-    'user_category_id': 1,
-    'user_primaryLanguage': 'Zulu',
-    'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'role': 'mentor',
-    'event_id': 1
+    'event_id': 1,
+    'policy_agreed': True
 }
 
 

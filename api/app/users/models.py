@@ -32,7 +32,7 @@ class AppUser(db.Model, UserMixin):
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
     verified_email = db.Column(db.Boolean(), nullable=True)
     verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
-
+    policy_agreed_datetime = db.Column(db.DateTime(), nullable=True)
     organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
 
     __table_args__ = (UniqueConstraint('email', 'organisation_id', name='org_email_unique'),)
@@ -61,6 +61,7 @@ class AppUser(db.Model, UserMixin):
         self.is_deleted = False
         self.deleted_datetime_utc = None
         self.verified_email = False
+        self.agree_to_policy()
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password)
@@ -70,6 +71,12 @@ class AppUser(db.Model, UserMixin):
     
     def verify(self):
         self.verified_email = True
+
+    def agree_to_policy(self):
+        self.policy_agreed_datetime = datetime.now()
+    
+    def has_agreed(self):
+        return self.policy_agreed_datetime is not None
 
     def update_email(self, new_email):
         self.verified_email = False
