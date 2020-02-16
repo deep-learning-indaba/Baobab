@@ -21,6 +21,7 @@ from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 def event_info(user_id, event_org):
@@ -168,6 +169,7 @@ class EventAPI(EventMixin, restful.Resource):
             (args['registration_open']), _date_format)
         registration_close = datetime.strptime(
             (args['registration_close']), _date_format)
+        event_type = args['event_type']
 
         event = Event(
             name,
@@ -187,7 +189,8 @@ class EventAPI(EventMixin, restful.Resource):
             offer_open,
             offer_close,
             registration_open,
-            registration_close
+            registration_close,
+            EventType[event_type]
         )
         event.add_event_role('admin', user_id)
         try:

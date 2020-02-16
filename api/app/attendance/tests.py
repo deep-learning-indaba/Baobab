@@ -20,6 +20,7 @@ from app.registrationResponse.repository import RegistrationRepository
 from app import LOGGER
 import json
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 class AttendanceApiTest(ApiTestCase):
@@ -40,7 +41,7 @@ class AttendanceApiTest(ApiTestCase):
         event = Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(
             2019, 8, 25), datetime(2019, 8, 31),'JOLLOF', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
             datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), 
-            datetime.now(), datetime.now(), datetime.now(), datetime.now())
+            datetime.now(), datetime.now(), datetime.now(), datetime.now(), EventType.EVENT)
         self.event = event
         db.session.add(self.event)
 

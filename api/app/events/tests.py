@@ -11,6 +11,7 @@ from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 class EventsAPITest(ApiTestCase):
@@ -36,7 +37,7 @@ class EventsAPITest(ApiTestCase):
                            'SPEEDNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
                            datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
                            datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+                           datetime.now(), datetime.now(), EventType.EVENT)
         db.session.add(test_event)
         db.session.commit()
 
@@ -248,7 +249,7 @@ class EventsStatsAPITest(ApiTestCase):
                                 'KONNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
                                 datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
                                 datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                                datetime.now(), datetime.now())
+                                datetime.now(), datetime.now(), EventType.EVENT)
         db.session.add(self.test_event)
         db.session.commit()
 
@@ -334,9 +335,8 @@ class RemindersAPITest(ApiTestCase):
 
         event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
                       'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning', datetime.now(), datetime.now(),
-                      datetime.now(), datetime.now(), datetime.now(
-        ), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now())
+                      datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), 
+                      datetime.now(), datetime.now(), datetime.now(), EventType.EVENT)
         db.session.add(event)
         db.session.commit()
 
@@ -458,9 +458,8 @@ class EventAPITest(ApiTestCase):
 
         event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
                       'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning', datetime.now(), datetime.now(),
-                      datetime.now(), datetime.now(), datetime.now(
-        ), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now())
+                      datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), 
+                      datetime.now(), datetime.now(), datetime.now(), EventType.EVENT)
         db.session.add(event)
         db.session.commit()
 
