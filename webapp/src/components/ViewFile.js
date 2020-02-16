@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
-//const baseUrl = process.env.REACT_APP_API_URL;
-const baseUrl = "https://staging-api-dot-baobab.appspot.com";
+const baseUrl = process.env.REACT_APP_API_URL;
 
 class ViewFile extends Component {
   
