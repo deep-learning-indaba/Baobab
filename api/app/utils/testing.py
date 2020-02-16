@@ -2,7 +2,7 @@ import unittest
 
 import json
 from datetime import datetime,timedelta
-from app import db, app
+from app import db, app, LOGGER
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQLite3Connection
@@ -45,6 +45,7 @@ class ApiTestCase(unittest.TestCase):
         post_create_fn(user)
 
         db.session.add(user)
+        db.session.commit()
         self.test_users.append(user)
         return user
 
@@ -56,6 +57,7 @@ class ApiTestCase(unittest.TestCase):
         db.reflect()
         db.drop_all()
         db.create_all()
+        LOGGER.setLevel('ERROR')
 
         # Add dummy metadata
         self.user_category = UserCategory('Postdoc')
