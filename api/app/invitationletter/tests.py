@@ -42,7 +42,7 @@ class InvitationLetterTests(ApiTestCase):
         test_user_2 = self.add_user('somethingelse@email.com')
         db.session.commit()
 
-        event = Event(
+        event = self.add_event(
             name="Tech Talk",
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
@@ -50,19 +50,9 @@ class InvitationLetterTests(ApiTestCase):
             key='REGINAL', 
             organisation_id=1, 
             email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning',
-            application_open=datetime.now(), 
-            application_close=datetime.now(),
-            review_open=datetime.now(),
-            review_close=datetime.now(),
-            selection_open=datetime.now(),
-            selection_close=datetime.now(),
-            offer_open=datetime.now(),
-            offer_close=datetime.now(),
-            registration_open=datetime.now(),
-            registration_close=datetime.now()
+            url='indaba.deeplearning'
         )
-        db.session.add(event)
+
         db.session.commit()
 
         offer = Offer(
@@ -309,27 +299,13 @@ class PDFConverterTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        event = Event(
+        event = self.add_event(
             name="Tech Talk",
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-            key='REGINAL', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning',
-            application_open=datetime.now(), 
-            application_close=datetime.now(),
-            review_open=datetime.now(),
-            review_close=datetime.now(),
-            selection_open=datetime.now(),
-            selection_close=datetime.now(),
-            offer_open=datetime.now(),
-            offer_close=datetime.now(),
-            registration_open=datetime.now(),
-            registration_close=datetime.now()
+            key='REGINAL'
         )
-        db.session.add(event)
         db.session.commit()
         self.event = event
 

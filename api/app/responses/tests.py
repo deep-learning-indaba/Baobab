@@ -61,11 +61,7 @@ class ResponseApiTest(ApiTestCase):
         self.user_data = json.loads(response.data)
 
         # Add application form data
-        self.test_event = Event('Test Event', 'Event Description', date(
-            2019, 2, 24), date(2019, 3, 24), 'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(),datetime.now(), datetime.now(), 
-            datetime.now(), datetime.now(), datetime.now(), datetime.now())
-        _add_object_to_db(self.test_event)
+        self.test_event = self.add_event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24), 'NAGSOLVER')
         self.test_form = ApplicationForm(
             self.test_event.id, True)
         _add_object_to_db(self.test_form)
@@ -127,12 +123,8 @@ class ResponseApiTest(ApiTestCase):
         """Test that we get a 404 error if we try to get a response for an event with no application form."""
         
         self._seed_data()
-        test_event2 = Event('Test Event 2', 'Event Description', date(
-            2019, 2, 24), date(2019, 3, 24), 'HOLLA', 2, 'mover@indaba.com', 'idb.com',
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now())
-        _add_object_to_db(test_event2)
+        test_event2 = self.add_event('Test Event 2', 'Event Description', date(2019, 2, 24), 
+                        date(2019, 3, 24), 'HOLLA', 2, 'mover@indaba.com', 'idb.com')
 
         response = self.app.get('/api/v1/response',
                                 headers={
