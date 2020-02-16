@@ -169,7 +169,7 @@ class EventAPI(EventMixin, restful.Resource):
             (args['registration_open']), _date_format)
         registration_close = datetime.strptime(
             (args['registration_close']), _date_format)
-        event_type = args['event_type']
+        event_type = args['event_type'].upper()
 
         event = Event(
             name,
