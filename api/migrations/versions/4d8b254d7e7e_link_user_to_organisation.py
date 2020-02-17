@@ -15,7 +15,6 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from app import db
-from app.users.models import AppUser
 
 Base = declarative_base()
 
@@ -27,12 +26,7 @@ def upgrade():
     op.add_column('app_user', sa.Column('organisation_id', sa.Integer(), nullable=True))
     op.create_foreign_key('fk_user_organisation', 'app_user', 'organisation', ['organisation_id'], ['id'])
 
-    # Populate with organisation 1 and make non-nullable
-    users = session.query(AppUser).all()
-    for user in users:
-        user.organisation_id = 1
-    session.commit()
-    
+    op.execute("""UPDATE app_user SET organisation_id = 1""")
     op.alter_column('app_user', 'organisation_id', nullable=False)
 
     op.add_column('organisation', sa.Column('system_name', sa.String(length=50), nullable=True))

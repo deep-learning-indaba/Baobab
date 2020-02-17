@@ -30,7 +30,8 @@ class CreateAccountForm extends Component {
       user: {
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        agreePrivacyPolicy: false
       },
       showErrors: false,
       submitted: false,
@@ -39,8 +40,7 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       error: "",
       created: false,
-      over18: false,
-      agreePrivacyPolicy: false
+      over18: false
     };
   }
 
@@ -114,9 +114,8 @@ class CreateAccountForm extends Component {
   };
 
   togglePrivacyPolicy = () => {
-    let currentPrivacyPolicy = this.state.agreePrivacyPolicy;
-    this.setState({ agreePrivacyPolicy: !currentPrivacyPolicy });
-  };
+    let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
+    this.setState({user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy}});};
 
 
   handleSubmit = event => {
@@ -180,7 +179,8 @@ class CreateAccountForm extends Component {
       email,
       title,
       password,
-      confirmPassword
+      confirmPassword,
+      agreePrivacyPolicy
     } = this.state.user;
 
     const {
@@ -189,8 +189,7 @@ class CreateAccountForm extends Component {
       showErrors,
       error,
       created,
-      over18,
-      agreePrivacyPolicy
+      over18
     } = this.state;
 
     if (created) {

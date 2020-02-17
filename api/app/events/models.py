@@ -2,6 +2,11 @@
 from datetime import datetime
 
 from app import db
+from enum import Enum
+
+class EventType(Enum):
+    EVENT = 'event'
+    AWARD = 'award'
 
 
 class Event(db.Model):
@@ -29,6 +34,7 @@ class Event(db.Model):
     offer_close = db.Column(db.DateTime(), nullable=False)
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
+    event_type = db.Column(db.Enum(EventType), nullable=False)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
@@ -53,7 +59,8 @@ class Event(db.Model):
                  offer_open,
                  offer_close,
                  registration_open,
-                 registration_close
+                 registration_close,
+                 event_type
                  ):
 
         self.name = name
@@ -75,6 +82,7 @@ class Event(db.Model):
         self.registration_open = registration_open
         self.registration_close = registration_close
         self.event_roles = []
+        self.event_type = event_type
 
     def set_name(self, new_name):
         self.name = new_name

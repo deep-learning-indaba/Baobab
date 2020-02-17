@@ -55,14 +55,11 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
-            'KENYADABA2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning', datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now()),
-            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
-            'INDABA2020', 2, 'abx@indaba.deeplearning','indaba.deeplearning', datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), 
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now())
+            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            'KENYADABA2019'),
+            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            'INDABA2020', 2)
         ]
-        db.session.add_all(events)
         db.session.commit()
 
         event_roles = [
@@ -73,8 +70,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         application_forms = [
-            ApplicationForm(1, True),
-            ApplicationForm(2, False)
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
         ]
         db.session.add_all(application_forms)
         db.session.commit()
