@@ -7,6 +7,7 @@ from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME, GCP_BUCKET_NAME, FILE
 from app.utils.errors import FILE_SIZE_EXCEEDED
 from app.files.mixins import FileUploadMixin
 from app.files.models import File
+from app.files.repository import FileRepository as file_repository
 from app.utils.auth import auth_required
 
 from google.cloud import storage
@@ -49,45 +50,25 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
 
 class FileAPIImproved(FileUploadMixin, restful.Resource):
 
-
-    @staticmethod
-    def get_by_id(file_id):
-        return db.session.query(File).get(file_id)
-
     def get(self):
-        # TO DO: Query the File table
 
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('file_id', type=int, required=True)
         args = req_parser.parse_args()
-        LOGGER.debug("FileUpload GET args: {}".format(args))
 
         bucket = _get_storage_bucket()
-        file = get_by_id(args['file_id'])
+        file = file_repository.get_by_id(args['file_id'])
 
         blob = bucket.blob(args['file_id'])
-
-        # TO DO : Rename the file and set the appropriate mime_type
 
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
             return send_file(temp.name, as_attachment=True, attachment_filename=file.file_name, mimetype=file.mime_type)
 
-    
-    @staticmethod
-    def save_file_object(file_obj):
-        db.session.add(file_obj)
-        db.session.commit()
-        last_save_file = db.session.query(File).last()
-        return last_save_file.file_id
-
 
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
-        file_name = args['filename']
-        mime_ = args['event_id']
-        #email_template = args['email_template']
 
         LOGGER.debug("FileUpload args: {}".format(args))
 
@@ -107,14 +88,13 @@ class FileAPIImproved(FileUploadMixin, restful.Resource):
 
         blob.upload_from_string(bytes_file, content_type=content_type)
 
-        # TO DO : Add a record to File table to store metadata
         file_name = file.file_name
         mime_type = file.content_type
         new_file = File(file_name, mime_type)
 
-        file_id = save_file_object(new_file)
+        file_id = file_repository.save(new_file)
 
         return {
-            'file_id': file_id, # TO DO : Return file id
+            'file_id': file_id, 
         }, 201
 
