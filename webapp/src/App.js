@@ -9,6 +9,7 @@ import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
+import ViewFile from "./components/ViewFile";
 import CookieConsent from "react-cookie-consent";
 
 import ReactGA from "react-ga";
@@ -431,6 +432,7 @@ class App extends Component {
                   )}
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
+                <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route
                   path="/:eventKey"
