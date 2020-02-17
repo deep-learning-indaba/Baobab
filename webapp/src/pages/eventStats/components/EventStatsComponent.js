@@ -17,36 +17,45 @@ class EventStatsComponent extends Component {
   }
 
   componentDidMount() {
-    eventStatsService.getStats(this.props.event ? this.props.event.id : 0).then(result => {
-      this.setState({
-        loading: false,
-        buttonLoading: false,
-        stats: result.stats,
-        error: result.error,
-        emailSendStatus: ""
-      });
-    });
+    eventStatsService.getStats(
+      this.props.event ?
+        this.props.event.id : 0).then(result => {
+          this.setState({
+            loading: false,
+            buttonLoading: false,
+            stats: result.stats,
+            error: result.error,
+            emailSendStatus: ""
+          });
+        });
   }
 
   handleSubmit = event => {
     event.preventDefault();
     this.setState({ buttonLoading: true });
 
-    eventStatsService.sendReminderToSubmit(this.props.event ? this.props.event.id : 0).then(
-      result => {
-        return eventStatsService.sendReminderToBegin(this.props.event ? this.props.event.id : 0)
-      },
-      error => this.setState({ error, buttonLoading: false })
-    ).then(
-      result => {
-        this.setState({ buttonLoading: false, emailSendStatus: "Reminders sent!" })
-      },
-      error => this.setState({ error, buttonLoading: false })
-    );
+    eventStatsService.sendReminderToSubmit(this.props.event ?
+      this.props.event.id : 0).then(
+        result => {
+          return eventStatsService.sendReminderToBegin(this.props.event ? this.props.event.id : 0)
+        },
+        error => this.setState({ error, buttonLoading: false })
+      ).then(
+        result => {
+          this.setState({ buttonLoading: false, emailSendStatus: "Reminders sent!" })
+        },
+        error => this.setState({ error, buttonLoading: false })
+      );
   }
 
   render() {
-    const { loading, buttonLoading, emailSendStatus, stats, error } = this.state;
+    const {
+      loading,
+      buttonLoading,
+      emailSendStatus,
+      stats,
+      error
+    } = this.state;
 
     const loadingStyle = {
       "width": "3rem",
@@ -56,7 +65,8 @@ class EventStatsComponent extends Component {
     if (loading) {
       return (
         <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
+          <div class="spinner-border"
+            style={loadingStyle} role="status">
             <span class="sr-only">Loading...</span>
           </div>
         </div>
@@ -76,35 +86,39 @@ class EventStatsComponent extends Component {
     return (
       <div className={"event-stats text-center"}>
         <p className="h5">Statistics for {stats.event_description}</p>
+
         <Chart
           chartType="PieChart"
           loader={
             <div class="spinner-border" role="status">
               <span class="sr-only">Loading Chart</span>
             </div>}
+
           data={[
             ['Phase', 'Number'],
             ['Not Started', not_started],
             ['Not Submitted', not_submitted],
             ['Complete', submitted],
           ]}
+
           options={{
             title: 'Number of applications',
-          }}
-        />
+          }} />
+
         <form onSubmit={this.handleSubmit}>
           <div class="text-center">
+
             <button type="submit" class="event-action btn btn-primary"
               visible={!emailSendStatus} >
               {buttonLoading && (
                 <span
                   class="spinner-grow spinner-grow-sm"
                   role="status"
-                  aria-hidden="true"
-                />
+                  aria-hidden="true" />
               )}
               Send Reminders to Applicants
-                </button>
+              </button>
+
             {emailSendStatus &&
               <div className={"alert alert-success alert-container"}>
                 {emailSendStatus}
@@ -113,9 +127,7 @@ class EventStatsComponent extends Component {
         </form>
       </div>
     )
-
   }
-
 }
 
 export default withRouter(EventStatsComponent);

@@ -2,13 +2,15 @@ import unittest
 
 import json
 from datetime import datetime,timedelta
-from app import db, app
+from app import db, app, LOGGER
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlite3 import Connection as SQLite3Connection
 from app.organisation.models import Organisation
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
+from app.events.models import EventType
+from app.applicationModel.models import ApplicationForm
 
 
 @event.listens_for(Engine, "connect")
@@ -45,6 +47,7 @@ class ApiTestCase(unittest.TestCase):
         post_create_fn(user)
 
         db.session.add(user)
+        db.session.commit()
         self.test_users.append(user)
         return user
 
@@ -56,6 +59,7 @@ class ApiTestCase(unittest.TestCase):
         db.reflect()
         db.drop_all()
         db.create_all()
+        LOGGER.setLevel('ERROR')
 
         # Add dummy metadata
         self.user_category = UserCategory('Postdoc')
@@ -81,7 +85,7 @@ class ApiTestCase(unittest.TestCase):
                  description = 'Event Description', 
                  start_date = datetime.now() + timedelta(days=30), 
                  end_date = datetime.now() + timedelta(days=60),
-                 key = 'INDABA2025', 
+                 key = 'INDABA2025',
                  organisation_id = 1, 
                  email_from = 'abx@indaba.deeplearning', 
                  url = 'indaba.deeplearning',
@@ -94,11 +98,12 @@ class ApiTestCase(unittest.TestCase):
                  offer_open = datetime.now(),
                  offer_close = datetime.now(),
                  registration_open = datetime.now(),
-                 registration_close = datetime.now() + timedelta(days=15)):
+                 registration_close = datetime.now() + timedelta(days=15),
+                 event_type = EventType.EVENT):
 
         event = Event(name, description, start_date,  end_date, key,  organisation_id,  email_from,  url, 
                       application_open, application_close, review_open, review_close, selection_open, 
-                      selection_close, offer_open,  offer_close, registration_open, registration_close)
+                      selection_close, offer_open,  offer_close, registration_open, registration_close, event_type)
         db.session.add(event)
         db.session.commit()
         return event
@@ -121,3 +126,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.remove()
         db.reflect()
         db.drop_all()
+
+    def create_application_form(self,
+                            event_id = 1,
+                            is_open = True,
+                            nominations = False):
+                            
+        application_form = ApplicationForm(event_id, is_open, nominations)
+        db.session.add(application_form)
+        db.session.commit()
+        return application_form

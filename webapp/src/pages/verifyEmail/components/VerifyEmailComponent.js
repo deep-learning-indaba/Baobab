@@ -31,8 +31,7 @@ class VerifyEmailComponent extends Component {
           });
         })
       });
-    }
-    else {
+    } else {
       this.setState({
         error: "No verification token provided."
       });
@@ -72,7 +71,6 @@ class VerifyEmailComponent extends Component {
       </div>
     )
   }
-
 }
 
 export default withRouter(VerifyEmailComponent);

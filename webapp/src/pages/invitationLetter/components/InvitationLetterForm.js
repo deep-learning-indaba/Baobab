@@ -55,9 +55,11 @@ class InvitationLetterForm extends Component {
       let optionsObject = options.filter(option => {
         return option.value === value;
       });
-      if (optionsObject && optionsObject[0]) return optionsObject[0].label;
+      if (optionsObject && optionsObject[0])
+        return optionsObject[0].label;
     } else return null;
   }
+
   componentWillMount() {
     getCounties.then(result => {
       this.setState({
@@ -209,36 +211,38 @@ class InvitationLetterForm extends Component {
       },
       () => {
         this.setState({ loading: true });
-        registrationService
-          .requestInvitationLetter(this.state.user, this.props.event ? this.props.event.id : 0)
-          .then(
-            response => {
-              this.setState({
-                loading: false,
-                invitationLetterId:
-                  response && response.data
-                    ? response.data.invitation_letter_request_id
-                    : null,
-                error: response.error
-              });
-            },
-            error =>
-              this.setState({
+        registrationService.requestInvitationLetter(
+          this.state.user,
+          this.props.event ?
+            this.props.event.id : 0).then(
+              response => {
+                this.setState({
+                  loading: false,
+                  invitationLetterId:
+                    response && response.data
+                      ? response.data.invitation_letter_request_id
+                      : null,
+                  error: response.error
+                });
+              },
+              error => this.setState({
                 error:
                   error.response && error.response.data
                     ? error.response.data.message
                     : error.message,
                 loading: false
               })
-          );
+            );
         this.setState({ showErrors: true });
       }
     );
   };
+
   toggleWork = () => {
     let currentShowAddressState = this.state.showWorkAddress;
     this.setState({ showWorkAddress: !currentShowAddressState });
   };
+
   toggleBringingAPoster = () => {
     let currentBringingAPoster = this.state.user.bringingAPoster;
     this.setState({
@@ -248,11 +252,14 @@ class InvitationLetterForm extends Component {
       }
     });
   };
+
   getErrorMessages = errors => {
     let errorMessages = [];
-    if (errors.$set === null) return;
+    if (errors.$set === null)
+      return;
 
     let arr = errors.$set;
+
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
         <div className={"alert alert-danger alert-container"}>
@@ -262,6 +269,7 @@ class InvitationLetterForm extends Component {
     }
     return errorMessages;
   };
+
   render() {
     const {
       passportNumber,
@@ -295,12 +303,11 @@ class InvitationLetterForm extends Component {
 
     const nationalityValue = this.getContentValue(
       this.state.countryOptions,
-      nationality
-    );
+      nationality);
+
     const residenceValue = this.getContentValue(
       this.state.countryOptions,
-      residence
-    );
+      residence);
 
     const passportDetailsStyleLine = createColClassName(12, 3, 4, 4);
     const nationResidenceDetailsStyle = createColClassName(12, 3, 4, 4);
@@ -308,20 +315,21 @@ class InvitationLetterForm extends Component {
       <div className="InvitationLetter">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
+
           <div class="row">
             <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
                 placeholder={validationFields.fullNameOnPassport.display}
+
                 onChange={this.handleChange(
-                  validationFields.fullNameOnPassport
-                )}
+                  validationFields.fullNameOnPassport)}
                 value={fullNameOnPassport}
                 label={validationFields.fullNameOnPassport.display}
-                description={validationFields.fullNameOnPassport.description}
-              />
+                description={validationFields.fullNameOnPassport.description} />
             </div>
+
             <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
@@ -329,22 +337,21 @@ class InvitationLetterForm extends Component {
                 placeholder={validationFields.passportNumber.display}
                 onChange={this.handleChange(validationFields.passportNumber)}
                 value={passportNumber}
-                label={validationFields.passportNumber.display}
-              />
+                label={validationFields.passportNumber.display} />
             </div>
+
             <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportExpiryDate.name}
                 type="date"
                 placeholder={validationFields.passportExpiryDate.display}
                 onChange={this.handleChange(
-                  validationFields.passportExpiryDate
-                )}
+                  validationFields.passportExpiryDate)}
                 value={passportExpiryDate}
-                label={validationFields.passportExpiryDate.display}
-              />
+                label={validationFields.passportExpiryDate.display} />
             </div>
           </div>
+
           <div class="row">
             <div class={passportDetailsStyleLine}>
               <FormTextBox
@@ -352,12 +359,11 @@ class InvitationLetterForm extends Component {
                 type="text"
                 placeholder={validationFields.passportIssuedByAuthority.display}
                 onChange={this.handleChange(
-                  validationFields.passportIssuedByAuthority
-                )}
+                  validationFields.passportIssuedByAuthority)}
                 value={passportIssuedByAuthority}
-                label={validationFields.passportIssuedByAuthority.display}
-              />
+                label={validationFields.passportIssuedByAuthority.display} />
             </div>
+
             <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
@@ -366,9 +372,9 @@ class InvitationLetterForm extends Component {
                 onChange={this.handleChange(validationFields.letterAddressedTo)}
                 value={letterAddressedTo}
                 label={validationFields.letterAddressedTo.display}
-                description={validationFields.letterAddressedTo.description}
-              />
+                description={validationFields.letterAddressedTo.description} />
             </div>
+
             <div class={passportDetailsStyleLine}>
               <div id="labelWorkAddress">
                 {"Are you currently employed ? "}
@@ -376,11 +382,11 @@ class InvitationLetterForm extends Component {
                   name="showWorkAddress"
                   type="checkbox"
                   checked={showWorkAddress}
-                  onChange={this.toggleWork}
-                />
+                  onChange={this.toggleWork} />
               </div>
             </div>
           </div>
+
           <div class="row">
             <Address
               onChange={this.handleChange}
@@ -395,8 +401,8 @@ class InvitationLetterForm extends Component {
               cityValue={residentialCity}
               postalCodeValue={residentialPostalCode}
               countryValue={residentialCountry}
-              countryOptions={countryOptions}
-            />
+              countryOptions={countryOptions} />
+
             {showWorkAddress && (
               <Address
                 onChange={this.handleChange}
@@ -422,23 +428,23 @@ class InvitationLetterForm extends Component {
             update them.
           </p>
           <div class="row">
+
             <div class={nationResidenceDetailsStyle}>
               <FormTextBox
                 type="text"
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 value={nationalityValue}
-                label={validationFields.nationality.display}
-              />
+                label={validationFields.nationality.display} />
             </div>
+
             <div class={nationResidenceDetailsStyle}>
               <FormTextBox
                 type="text"
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 value={residenceValue}
-                label={validationFields.residence.display}
-              />
+                label={validationFields.residence.display} />
             </div>
 
             <div class={nationResidenceDetailsStyle}>
@@ -447,32 +453,33 @@ class InvitationLetterForm extends Component {
                 type="date"
                 placeholder={validationFields.dateOfBirth.display}
                 value={dateOfBirth}
-                label={validationFields.dateOfBirth.display}
-              />
+                label={validationFields.dateOfBirth.display} />
             </div>
           </div>
+
           <button
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading}
-          >
+            disabled={!this.validateForm() || loading}>
+
             {loading && (
               <span
                 class="spinner-grow spinner-grow-sm"
                 role="status"
-                aria-hidden="true"
-              />
-            )}
+                aria-hidden="true" />)}
             Request Invitation Letter
           </button>
+
           {errors &&
             errors.$set &&
             showErrors &&
             this.getErrorMessages(errors)}
+
           {error &&
             <div class="alert alert-danger alert-container">
               {error}
             </div>}
+
           {this.state.invitationLetterId && (
             <div className={"alert alert-success alert-container"}>
               Invitation Letter request has been received. Invitation Letter

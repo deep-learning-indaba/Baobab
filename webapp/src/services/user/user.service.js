@@ -43,7 +43,8 @@ function create(user) {
       firstname: user.firstName,
       lastname: user.lastName,
       user_title: user.title,
-      password: user.password
+      password: user.password,
+      policy_agreed: user.agreePrivacyPolicy
     })
     .then(response => {
       let user = null;

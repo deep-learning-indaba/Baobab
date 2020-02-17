@@ -22,6 +22,7 @@ class EventMixin(object):
     req_parser.add_argument('offer_close', type=str, required=True)
     req_parser.add_argument('registration_open', type=str, required=True)
     req_parser.add_argument('registration_close', type=str, required=True)
+    req_parser.add_argument('event_type', type=str, required=True)
 
 
 class EventsMixin(object):

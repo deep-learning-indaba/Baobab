@@ -33,17 +33,9 @@ USER_DATA = {
     'firstname': 'Some',
     'lastname': 'Thing',
     'user_title': 'Mr',
-    'nationality_country_id': 1,
-    'residence_country_id': 1,
-    'user_gender': 'Male',
-    'affiliation': 'University',
-    'department': 'Computer Science',
-    'user_disability': 'None',
-    'user_category_id': 1,
-    'user_primaryLanguage': 'Zulu',
-    'user_dateOfBirth':  datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'role': 'mentor',
-    'event_id': 1
+    'event_id': 1,
+    'policy_agreed': True
 }
 
 
@@ -62,18 +54,8 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
-        self.event1 = Event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(), 'LBFSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
-        self.event2 = Event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(), 'NAGSOLVER', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
-        db.session.add(self.event1)
-        db.session.add(self.event2)
+        self.event1 = self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'LBFSOLVER')
+        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan', datetime.now(), datetime.now(), 'NAGSOLVER', 2)
         db.session.commit()
 
         adminRole = EventRole('admin', event_admin.id, self.event1.id)
