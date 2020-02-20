@@ -431,6 +431,18 @@ class Submitted extends React.Component {
     });
   };
 
+  handleEdit = event => {
+    this.setState({
+      editAppModalVisible: true
+    });
+  };
+
+  cancelEditModal = event => {
+    this.setState({
+      editAppModalVisible: false
+    });
+  };
+
   render() {
     return (
       <div class="submitted">
@@ -455,6 +467,11 @@ class Submitted extends React.Component {
             Withdraw Application
           </button>
         </div>
+        <div class="submitted-footer">
+          <button class="btn btn-danger" onClick={this.handleEdit}>
+            Edit Application
+          </button>
+        </div>
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
@@ -464,6 +481,18 @@ class Submitted extends React.Component {
         >
           <p>
             Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
+          </p>
+        </ConfirmModal>
+
+        <ConfirmModal
+          visible={this.state.editAppModalVisible}
+          onOK={this.handleEditOK}
+          onCancel={this.cancelEditModal}
+          okText={"Yes - Edit application"}
+          cancelText={"No - Don't edit"}
+        >
+          <p>
+            Do you want to edit your application: {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
