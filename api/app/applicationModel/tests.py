@@ -6,6 +6,7 @@ from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 class ApplicationFormApiTest(ApiTestCase):
@@ -15,16 +16,11 @@ class ApplicationFormApiTest(ApiTestCase):
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
-        test_event = Event('Test Event', 'Event Description',
-                           self.start_time, self.end_time, 
-                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+        test_event = self.add_event('Test Event', 'Event Description', self.start_time, self.end_time)
         db.session.add(test_event)
         db.session.commit()
-        test_form = ApplicationForm(
-            test_event.id, True)
+        test_form = self.create_application_form(
+            test_event.id, True, False)
         db.session.add(test_form)
         db.session.commit()
         test_section = Section(
@@ -45,11 +41,12 @@ class ApplicationFormApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/application-form?event_id=1')
         data = json.loads(response.data)
-        assert data['event_id'] == 1
-        assert data['is_open'] == True
-        assert data['sections'][0]['description'] == 'Test Description'
-        assert data['sections'][0]['name'] == 'Test Section'
-        assert data['sections'][0]['order'] == 1
-        assert data['sections'][0]['questions'][0]['description'] == 'Test Question Description'
-        assert data['sections'][0]['questions'][0]['order'] == 1
-        assert data['sections'][0]['questions'][0]['type'] == 'multi-choice'
+        self.assertEqual(data['event_id'], 1)
+        self.assertEqual(data['is_open'], True)
+        self.assertEqual(data['sections'][0]['description'], 'Test Description')
+        self.assertEqual(data['sections'][0]['name'], 'Test Section')
+        self.assertEqual(data['sections'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], 'Test Question Description')
+        self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
+        self.assertEqual(data['nominations'], False)

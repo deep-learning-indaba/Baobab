@@ -11,6 +11,7 @@ from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 class EventsAPITest(ApiTestCase):
@@ -31,17 +32,14 @@ class EventsAPITest(ApiTestCase):
         db.session.add(self.test_user)
         db.session.commit()
 
-        test_event = Event('Test Event', 'Event Description',
+        test_event = self.add_event('Test Event', 'Event Description',
                            datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
-                           'SPEEDNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
-                           datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+                           'SPEEDNET', 1, 'abx@indaba.deeplearning')
         db.session.add(test_event)
         db.session.commit()
 
-        self.test_form = ApplicationForm(
-            test_event.id, True)
+        self.test_form = self.create_application_form(
+            test_event.id, True, False)
         db.session.add(self.test_form)
         db.session.commit()
 
@@ -243,17 +241,15 @@ class EventsStatsAPITest(ApiTestCase):
         response = self.app.post('/api/v1/user', data=other_user_data)
         self.test_user2 = json.loads(response.data)
 
-        self.test_event = Event('Test Event', 'Event Description',
+        self.test_event = self.add_event('Test Event', 'Event Description',
                                 datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
                                 'KONNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
-                                datetime.now(), datetime.now() + timedelta(days=30), datetime.now(), datetime.now(),
-                                datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                                datetime.now(), datetime.now())
+                                datetime.now(), datetime.now() + timedelta(days=30))
         db.session.add(self.test_event)
         db.session.commit()
 
-        self.test_form = ApplicationForm(
-            self.test_event.id, True)
+        self.test_form = self.create_application_form(
+            self.test_event.id, True, False)
         db.session.add(self.test_form)
         db.session.commit()
 
@@ -332,11 +328,8 @@ class RemindersAPITest(ApiTestCase):
         user_category = UserCategory('Post Doc')
         db.session.add(user_category)
 
-        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
-                      'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning', datetime.now(), datetime.now(),
-                      datetime.now(), datetime.now(), datetime.now(
-        ), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now())
+        event = self.add_event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
+                      'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning')
         db.session.add(event)
         db.session.commit()
 
@@ -349,7 +342,7 @@ class RemindersAPITest(ApiTestCase):
         event_role = EventRole('admin', event_admin.id, event.id)
         db.session.add(event_role)
 
-        application_form = ApplicationForm(1, True)
+        application_form = self.create_application_form(1, True, False)
         db.session.add(application_form)
         db.session.commit()
 
@@ -430,7 +423,8 @@ class EventAPITest(ApiTestCase):
         'offer_open': datetime(2020, 5, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'offer_close': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
         'registration_open': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'registration_close': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        'registration_close': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+        'event_type':'EVENT'
     }
 
     def seed_static_data(self):
@@ -456,12 +450,7 @@ class EventAPITest(ApiTestCase):
         db.session.add(self.test_user)
         db.session.commit()
 
-        event = Event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
-                      'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning', datetime.now(), datetime.now(),
-                      datetime.now(), datetime.now(), datetime.now(
-        ), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now())
-        db.session.add(event)
+        event = self.add_event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 'COOLER')
         db.session.commit()
 
         db.session.flush()
