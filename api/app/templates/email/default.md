@@ -16,6 +16,6 @@ Welcome to the Xth edition of this newsletter.
 * [Altair](https://altair-viz.github.io/index.html) just released a new version. If you haven't looked at it in a while,
   check out some of the [examples](https://altair-viz.github.io/gallery/index.html) for a snapshot of what you can do with it.
 
-## Final Words {{lip}}
+## Final Words
 
 Thanks again for subscribing to the newsletter. Feel free to forward it on to others that may be interested.
