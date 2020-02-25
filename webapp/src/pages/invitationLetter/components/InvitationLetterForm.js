@@ -8,8 +8,8 @@ import {
   isValidDate,
   requiredDropdown
 } from "../../../utils/validation/rules.js";
-import { userService } from "../../../services/user";
-import { getCounties } from "../../../utils/validation/contentHelpers";
+import FormSelect from "../../../components/form/FormSelect";
+import { getCountries } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 import { registrationService } from "../../../services/registration";
 
@@ -50,33 +50,19 @@ class InvitationLetterForm extends Component {
       return optionsList;
     } else return [];
   }
+  
   getContentValue(options, value) {
     if (options && options.filter) {
-      let optionsObject = options.filter(option => {
+      return options.filter(option => {
         return option.value === value;
       });
-      if (optionsObject && optionsObject[0])
-        return optionsObject[0].label;
     } else return null;
   }
 
   componentWillMount() {
-    getCounties.then(result => {
+    getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
-      });
-    });
-
-    userService.get().then(result => {
-      var date = result.user_dateOfBirth;
-      if (date) date = date.split("T")[0];
-      this.setState({
-        user: {
-          ...this.state.user,
-          nationality: result.nationality_country_id,
-          residence: result.residence_country_id,
-          dateOfBirth: date
-        }
       });
     });
   }
@@ -122,7 +108,10 @@ class InvitationLetterForm extends Component {
       this.state.user.residentialPostalCode &&
       this.state.user.residentialPostalCode.length > 0 &&
       this.state.user.residentialCountry &&
-      this.state.user.letterAddressedTo.length > 0
+      this.state.user.letterAddressedTo.length > 0 &&
+      this.state.user.residence > 0 &&
+      this.state.user.company > 0 && 
+      this.state.user.dateOfBirth != null
     );
   }
   convertAddressField = (street1, street2, city, postalCode, country) => {
@@ -422,29 +411,26 @@ class InvitationLetterForm extends Component {
             )}
           </div>
 
-          <p>
-            We have the following values required for your invitation from your
-            user profile. Please go to the user profile page if you need to
-            update them.
-          </p>
           <div class="row">
 
             <div class={nationResidenceDetailsStyle}>
-              <FormTextBox
-                type="text"
+               <FormSelect
+                options={countryOptions}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 value={nationalityValue}
-                label={validationFields.nationality.display} />
+                label={validationFields.nationality.display}
+                onChange={this.handleChangeDropdown} />
             </div>
 
             <div class={nationResidenceDetailsStyle}>
-              <FormTextBox
-                type="text"
+                <FormSelect
+                options={countryOptions}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 value={residenceValue}
-                label={validationFields.residence.display} />
+                label={validationFields.residence.display}
+                onChange={this.handleChangeDropdown} />
             </div>
 
             <div class={nationResidenceDetailsStyle}>
