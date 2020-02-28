@@ -70,6 +70,7 @@ It will take a fair bit of time the first time you do it, subsequently it will b
 
 7. The first time you run the app, you may need to run the **migrations** to ensure that all the tables are created in the database. While the app is running (after following the previous step), run the following in **another terminal/command prompt**: ```docker-compose run web python ./api/run.py db upgrade --directory api/migrations```
 
+8. Read the respective docs for [backend](./api/README.md) and [frontend](./webapp/README.md). 
 ## Troubleshooting
 Common errors you may get when running the ```docker-compose build``` or ```docker-compose up``` commands.
 
