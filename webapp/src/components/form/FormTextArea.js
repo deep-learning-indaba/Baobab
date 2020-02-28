@@ -41,7 +41,7 @@ class FormTextArea extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
           <div className="rowC">
@@ -53,7 +53,7 @@ class FormTextArea extends React.Component {
             )}
           </div>
           <textarea
-            id={this.props.Id}
+            id={this.props.id}
             className={
               this.shouldDisplayError()
                 ? "form-control is-invalid"

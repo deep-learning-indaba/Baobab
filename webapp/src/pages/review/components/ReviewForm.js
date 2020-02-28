@@ -46,7 +46,7 @@ class ReviewQuestion extends Component {
             case LONG_TEXT:
                 return (
                     <FormTextArea
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
@@ -64,7 +64,7 @@ class ReviewQuestion extends Component {
             case CHECKBOX:
                 return (
                     <FormCheckbox
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
@@ -77,7 +77,7 @@ class ReviewQuestion extends Component {
             case RADIO:
                 return (
                     <FormRadio
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         onChange={this.handleChange}

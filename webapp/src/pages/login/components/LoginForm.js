@@ -119,6 +119,7 @@ class LoginForm extends Component {
           <div class="row">
             <div class={commonColClassName + " text-center"}>
               <button
+                id="btn-login"
                 type="submit"
                 class="btn btn-primary"
                 disabled={!this.validateForm() || loading}>
@@ -142,7 +143,7 @@ class LoginForm extends Component {
           </div>
 
           {error &&
-            <div className={"alert alert-danger alert-container"}>
+            <div id="error-login" className={"alert alert-danger alert-container"}>
               {error}
               {notVerified &&
                 <button className="link-style"
