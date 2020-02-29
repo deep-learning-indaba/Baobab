@@ -71,7 +71,7 @@ class ReviewResponse(db.Model):
     reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=False)
-    
+
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
     response = db.relationship('Response', foreign_keys=[response_id])
@@ -108,8 +108,8 @@ class ReviewConfiguration(db.Model):
     review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
     num_reviews_required = db.Column(db.Integer())
     num_optional_reviews = db.Column(db.Integer())
-    drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
-    drop_optional_agreement_values = db.Column(db.String(), nullable=False)
+    drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=True)
+    drop_optional_agreement_values = db.Column(db.String(), nullable=True)
 
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[drop_optional_question_id])
