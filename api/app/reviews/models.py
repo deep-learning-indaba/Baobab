@@ -101,3 +101,12 @@ class ReviewScore(db.Model):
                  value):
         self.review_question_id = review_question_id
         self.value = value
+
+
+class ReviewConfiguration(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
+    num_reviews_required = db.Column(db.Integer())
+    num_optional_reviews = db.Column(db.Integer())
+    drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
+    drop_optional_agreement_values = db.Column(db.String(), nullable=False)
