@@ -1,13 +1,13 @@
 """empty message
 
-Revision ID: 1a9e664adef8
+Revision ID: 2717ef90a874
 Revises: 02242641e122
-Create Date: 2020-02-29 09:18:31.433792
+Create Date: 2020-02-29 09:23:29.153652
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '1a9e664adef8'
+revision = '2717ef90a874'
 down_revision = '02242641e122'
 
 from alembic import op
@@ -19,8 +19,8 @@ def upgrade():
     op.create_table('review_configuration',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('review_form_id', sa.Integer(), nullable=False),
-    sa.Column('num_reviews_required', sa.Integer(), nullable=True),
-    sa.Column('num_optional_reviews', sa.Integer(), nullable=True),
+    sa.Column('num_reviews_required', sa.Integer(), nullable=False),
+    sa.Column('num_optional_reviews', sa.Integer(), nullable=False),
     sa.Column('drop_optional_question_id', sa.Integer(), nullable=True),
     sa.Column('drop_optional_agreement_values', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['drop_optional_question_id'], ['review_question.id'], ),
