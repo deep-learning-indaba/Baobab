@@ -402,7 +402,6 @@ class GuestRegistrationComponent extends Component {
             <FormDate
               Id={question.id}
               name={this.id}
-              type="date"
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
