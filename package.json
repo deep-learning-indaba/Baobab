@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Deep Learning Indaba applications and selection web application.",
   "main": "index.js",
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
+    "eslint-config-react-app": "^5.2.0",
     "eslint": "^6.8.0",
     "prettier": "^1.19.1"
   },
