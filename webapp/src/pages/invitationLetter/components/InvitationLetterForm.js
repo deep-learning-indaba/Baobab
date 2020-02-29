@@ -101,6 +101,7 @@ class InvitationLetterForm extends Component {
         {
           user: {
             ...this.state.user,
+            // React datepicker component's onChange contains the value and not event.target.value
             [field.name]: event && event.target ? event.target.value : event
           }
         },
