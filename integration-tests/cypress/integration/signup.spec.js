@@ -13,7 +13,7 @@ describe("Sign up and Login", function() {
 
   before(function() {
     // If running outside of docker, then start container
-    if (Cypress.env("baseUrl").includes("webapp") == False) {
+    if (Cypress.config().baseUrl.includes("webapp") == false) {
       cy.exec("docker-compose up --detach");
     }
   });

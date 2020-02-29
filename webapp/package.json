@@ -32,6 +32,7 @@
   },
   "scripts": {
     "start": "react-scripts start ",
+    "start-integration": "env-cmd .env.integration react-scripts start",
     "build": "react-scripts build",
     "build-test": "env-cmd .env.test react-scripts build",
     "build-dev": "env-cmd .env.development react-scripts build",
