@@ -125,8 +125,8 @@ dmypy.json
 api/prod.yaml
 api/app.yaml
 
-e2e/cypress/support/
+integration-tests/cypress/support/
 
-e2e/cypress/videos/
+integration-tests/cypress/videos/
 
-e2e/cypress/screenshots/
+integration-tests/cypress/screenshots/

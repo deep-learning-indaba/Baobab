@@ -1,7 +1,3 @@
-redis:
-  image: redis
-  ports:
-    - 6379:6379
 db:
   image: orchardup/postgresql
   ports:
@@ -36,7 +32,7 @@ web:
 
 webapp:
   build: ./webapp
-  command: yarn start
+  command: yarn start-integration
   volumes:
     - ./webapp:/usr/src/app
     - ./webapp:/webapp
@@ -46,7 +42,15 @@ webapp:
     - NODE_ENV=development
     - CHOKIDAR_USEPOLLING=true
 
-test-ci:
-  build: ./webapp
-  command: yarn test-ci
-  dockerfile: Dockerfile-test
+cypress:
+  ipc: host
+  image: "cypress/included:3.2.0"
+  links:
+    - webapp
+  environment:
+    # pass base url to test pointing at the web application
+    - CYPRESS_baseUrl=http://webapp:3000
+  # share the current folder as volume to avoid copying
+  working_dir: /integration-tests
+  volumes:
+    - ./integration-tests/:/integration-tests
