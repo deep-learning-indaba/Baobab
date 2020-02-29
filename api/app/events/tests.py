@@ -209,6 +209,16 @@ class EventsAPITest(ApiTestCase):
         assert data[0]["description"] == 'Event Description'
         assert data[0]["status"] == 'Application not available'
 
+    def test_get_event_type(self):
+        self.seed_static_data()
+        db.session.delete(self.test_form)
+        db.session.commit()
+
+        response = self.app.get('/api/v1/events')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data[0]['event_type'] == 'EVENT'
+
 
 class EventsStatsAPITest(ApiTestCase):
 
