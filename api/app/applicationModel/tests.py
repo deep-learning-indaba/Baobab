@@ -6,6 +6,7 @@ from app.events.models import Event
 from app.utils.testing import ApiTestCase
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 class ApplicationFormApiTest(ApiTestCase):
@@ -15,12 +16,7 @@ class ApplicationFormApiTest(ApiTestCase):
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
-        test_event = Event('Test Event', 'Event Description',
-                           self.start_time, self.end_time, 
-                           'FREAD', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+        test_event = self.add_event('Test Event', 'Event Description', self.start_time, self.end_time)
         db.session.add(test_event)
         db.session.commit()
         test_form = self.create_application_form(
