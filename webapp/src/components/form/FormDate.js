@@ -32,11 +32,6 @@ class FormDate extends React.Component {
 
         <DateTimePicker
           id={this.props.Id}
-          className={
-            this.shouldDisplayError()
-                ? "form-control is-invalid"
-                : "form-control"
-          }
           ref={input => {
             this.dateInput = input;
           }}
@@ -45,6 +40,7 @@ class FormDate extends React.Component {
           required={this.props.required || null}
           tabIndex={this.props.tabIndex}
           autoFocus={this.props.autoFocus}
+          format="y-MM-dd"
         />
         </FormGroup>
       </div>

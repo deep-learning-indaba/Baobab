@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import FormDate from "../../../components/form/FormDate";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
@@ -100,7 +101,7 @@ class InvitationLetterForm extends Component {
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
+            [field.name]: event && event.target ? event.target.value : event
           }
         },
         function () {
@@ -316,8 +317,8 @@ class InvitationLetterForm extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
 
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -330,7 +331,7 @@ class InvitationLetterForm extends Component {
                 description={validationFields.fullNameOnPassport.description} />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -340,20 +341,28 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportNumber.display} />
             </div>
 
-            <div class={passportDetailsStyleLine}>
-              <FormTextBox
+            <div className={passportDetailsStyleLine}>
+              {/* <FormTextBox
                 id={validationFields.passportExpiryDate.name}
                 type="date"
                 placeholder={validationFields.passportExpiryDate.display}
                 onChange={this.handleChange(
                   validationFields.passportExpiryDate)}
                 value={passportExpiryDate}
-                label={validationFields.passportExpiryDate.display} />
+                label={validationFields.passportExpiryDate.display} /> */}
+                <FormDate
+                  id={validationFields.passportExpiryDate.name}
+                  placeholder={validationFields.passportExpiryDate.display}
+                  onChange={this.handleChange(
+                    validationFields.passportExpiryDate)}
+                  value={passportExpiryDate}
+                  label={validationFields.passportExpiryDate.display}
+                />
             </div>
           </div>
 
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -364,7 +373,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportIssuedByAuthority.display} />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
                 type="text"
@@ -375,7 +384,7 @@ class InvitationLetterForm extends Component {
                 description={validationFields.letterAddressedTo.description} />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <div id="labelWorkAddress">
                 {"Are you currently employed ? "}
                 <input
@@ -387,7 +396,7 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
 
-          <div class="row">
+          <div className="row">
             <Address
               onChange={this.handleChange}
               handleChangeDropdown={this.handleChangeDropdown}
@@ -427,9 +436,9 @@ class InvitationLetterForm extends Component {
             user profile. Please go to the user profile page if you need to
             update them.
           </p>
-          <div class="row">
+          <div className="row">
 
-            <div class={nationResidenceDetailsStyle}>
+            <div className={nationResidenceDetailsStyle}>
               <FormTextBox
                 type="text"
                 id={validationFields.nationality.name}
@@ -438,7 +447,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.nationality.display} />
             </div>
 
-            <div class={nationResidenceDetailsStyle}>
+            <div className={nationResidenceDetailsStyle}>
               <FormTextBox
                 type="text"
                 id={validationFields.residence.name}
@@ -447,24 +456,34 @@ class InvitationLetterForm extends Component {
                 label={validationFields.residence.display} />
             </div>
 
-            <div class={nationResidenceDetailsStyle}>
-              <FormTextBox
+            <div className={nationResidenceDetailsStyle}>
+              {/* <FormTextBox
                 id={validationFields.dateOfBirth.name}
                 type="date"
                 placeholder={validationFields.dateOfBirth.display}
                 value={dateOfBirth}
-                label={validationFields.dateOfBirth.display} />
+                label={validationFields.dateOfBirth.display} 
+                /> */}
+
+                <FormDate
+                  id={validationFields.dateOfBirth.name}
+                  placeholder={validationFields.dateOfBirth.display}
+                  value={dateOfBirth}
+                  onChange={this.handleChange(validationFields.dateOfBirth)}
+                  label={validationFields.dateOfBirth.display}
+                />
+
             </div>
           </div>
 
           <button
             type="submit"
-            class="btn btn-primary"
+            className="btn btn-primary"
             disabled={!this.validateForm() || loading}>
 
             {loading && (
               <span
-                class="spinner-grow spinner-grow-sm"
+                className="spinner-grow spinner-grow-sm"
                 role="status"
                 aria-hidden="true" />)}
             Request Invitation Letter
@@ -476,7 +495,7 @@ class InvitationLetterForm extends Component {
             this.getErrorMessages(errors)}
 
           {error &&
-            <div class="alert alert-danger alert-container">
+            <div className="alert alert-danger alert-container">
               {error}
             </div>}
 
