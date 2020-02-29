@@ -7,7 +7,8 @@ from flask_restful import fields, marshal_with
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
-                        REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION
+                        REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION,\
+                        APPLICATIONS_CLOSED
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
@@ -62,17 +63,17 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         event = event_repository.get_event_by_response_id(response_id)
         if not event:
             return EVENT_NOT_FOUND
-        reference_request = ReferenceRequest(response_id=response_id,title=title, 
+        reference_request = ReferenceRequest(response_id=response_id,title=title,
                                         firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
 
-        link = "{host}/{key}/reference?token={token}".format(host=misc.get_baobab_host(), 
+        link = "{host}/{key}/reference?token={token}".format(host=misc.get_baobab_host(),
                                                             key=event.key, token=reference_request.token)
-        
+
         subject = 'REFERENCE REQUEST - {}'.format(event.name)
-        body = REFERENCE_REQUEST_EMAIL_BODY.format(title=title, firstname=firstname, 
-                                        lastname=lastname, event_description=event.description, 
-                                        link=link, candidate_firstname=user.firstname, 
+        body = REFERENCE_REQUEST_EMAIL_BODY.format(title=title, firstname=firstname,
+                                        lastname=lastname, event_description=event.description,
+                                        link=link, candidate_firstname=user.firstname,
                                         candidate_lastname=user.lastname,
                                         application_close_date=event.application_close)
         send_mail(recipient=email, subject=subject, body_text=body)
@@ -81,7 +82,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         reference_request_repository.add(reference_request)
         return {}, 201
 
-    
+
 class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):
 
     @marshal_with(reference_request_fields)
@@ -130,12 +131,37 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         token = args['token']
         uploaded_document = args['uploaded_document']
         reference_request = reference_request_repository.get_by_token(token)
+        event = event_repository.get_event_by_response_id(reference_request.response_id)
+
         if not reference_request:
             return REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
 
         if reference_request.has_reference():
             return DUPLICATE_REFERENCE_SUBMISSION
-        
+
+        if not event.is_application_open:
+            return APPLICATIONS_CLOSED
+
         reference = Reference(reference_request_id=reference_request.id, uploaded_document=uploaded_document)
         reference_request_repository.add(reference)
         return {}, 201
+
+    def put(self):
+        args = self.put_req_parser.parse_args()
+        token = args['token']
+        uploaded_document = args['uploaded_document']
+        reference_request = reference_request_repository.get_by_token(token)
+        event = event_repository.get_event_by_response_id(reference_request.response_id)
+        reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
+
+        if not reference_request:
+            return {}, 404
+
+        if not event.is_application_open:
+            return APPLICATIONS_CLOSED
+
+        reference.uploaded_document = uploaded_document
+
+        reference_request_repository.commit()
+
+        return {}, 200

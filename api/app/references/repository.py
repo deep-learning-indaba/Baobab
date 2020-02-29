@@ -5,7 +5,7 @@ import uuid
 
 
 class ReferenceRequestRepository():
-    
+
     @staticmethod
     def get_by_id(reference_request_id):
         return db.session.query(ReferenceRequest).get(reference_request_id)
@@ -19,10 +19,14 @@ class ReferenceRequestRepository():
         reference_request.set_token(str(uuid.uuid4()))
         db.session.add(reference_request)
         db.session.commit()
-    
+
     @staticmethod
     def add(obj_to_commit):
         db.session.add(obj_to_commit)
+        db.session.commit()
+
+    @staticmethod
+    def commit():
         db.session.commit()
 
     @staticmethod
