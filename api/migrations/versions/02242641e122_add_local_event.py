@@ -263,6 +263,8 @@ def upgrade():
     """.format(registration_form_id=registration_form_id)
     op.get_bind().execute(query)
 
+    op.get_bind().execute("""UPDATE organisation set system_url='http://localhost:8080' where id=3""")
+
 def downgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
@@ -346,3 +348,5 @@ def downgrade():
     WHERE organisation_id = 3
     """
     op.get_bind().execute(query)
+
+    op.get_bind().execute("""UPDATE organisation set system_url='http://localhost' where id=3""")
