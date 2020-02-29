@@ -110,3 +110,6 @@ class ReviewConfiguration(db.Model):
     num_optional_reviews = db.Column(db.Integer())
     drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
     drop_optional_agreement_values = db.Column(db.String(), nullable=False)
+
+    review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
+    review_question = db.relationship('ReviewQuestion', foreign_keys=[drop_optional_question_id])
