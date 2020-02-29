@@ -25,8 +25,6 @@ from app.events.models import EventType
 
 
 def event_info(user_id, event_org):
-    print(repr(event_org.Event.event_type.name))
-    print("^^^^")
     return {
         'id': event_org.Event.id,
         'name': event_org.Event.name,
