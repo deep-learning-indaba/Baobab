@@ -45,6 +45,13 @@ yarn start
 yarn test
 ```
 
+## Connect to local database
+```
+Host: localhost 
+Port: 5432
+Database: docker  
+User: docker Password: docker 
+```
 ## Project Structure
 - src
   - images
@@ -76,5 +83,5 @@ test('Check if Home component renders.', () => {
 });
 ```
 ## Styling
-We use react-bootstrap as a component library, details and components can be found [here](https://react-bootstrap.github.io/).
+We use [Bootstrap 4](https://getbootstrap.com/docs/4.0/components/forms/) as a CSS framework.
 

@@ -1,0 +1,10 @@
+@media only screen and (min-width: 320px) and (max-width: 480px) {
+  .container-fluid,
+  .card {
+    padding: 0 !important ;
+    padding-right: 0px !important ;
+    padding-left: 0px !important ;
+    width: 100% !important ;
+    width: 100vw !important ;
+  }
+}

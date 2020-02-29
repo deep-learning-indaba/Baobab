@@ -1,0 +1,10 @@
+.img-fluid{
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 30px;
+}
+
+.event-home {
+  padding-top: 4em;
+}

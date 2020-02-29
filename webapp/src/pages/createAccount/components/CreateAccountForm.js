@@ -4,14 +4,7 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import {
-  getTitleOptions,
-  getCounties,
-  getGenderOptions,
-  getCategories,
-  getDisabilityOptions,
-  getEthnicityOptions
-} from "../../../utils/validation/contentHelpers";
+import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
@@ -25,16 +18,8 @@ const fieldValidations = [
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
   ruleRunner(validationFields.email, validEmail),
-  ruleRunner(validationFields.nationality, requiredDropdown),
-  ruleRunner(validationFields.residence, requiredDropdown),
-  ruleRunner(validationFields.ethnicity, requiredText),
-  ruleRunner(validationFields.gender, requiredDropdown),
-  ruleRunner(validationFields.affiliation, requiredText),
-  ruleRunner(validationFields.department, requiredText),
-  ruleRunner(validationFields.disability, requiredText),
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
-  ruleRunner(validationFields.category, requiredDropdown)
 ];
 
 class CreateAccountForm extends Component {
@@ -45,55 +30,40 @@ class CreateAccountForm extends Component {
       user: {
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        agreePrivacyPolicy: false
       },
       showErrors: false,
       submitted: false,
       loading: false,
       errors: [],
-      categoryOptions: [],
-      countryOptions: [],
       titleOptions: [],
-      genderOptions: [],
-      disabilityOptions: [],
-      ethnicityOptions: [],
       error: "",
-      created: false
+      created: false,
+      over18: false
     };
   }
 
   getContentValue(options, value) {
-    if(options && options.filter){
+    if (options && options.filter) {
       return options.filter(option => {
         return option.value === value;
       });
-    }
-    else return null
+    } else return null;
   }
 
-  checkOptionsList(optionsList){
-    if(Array.isArray(optionsList)){
-      return optionsList
-    }
-    else return []
+  checkOptionsList(optionsList) {
+    if (Array.isArray(optionsList)) {
+      return optionsList;
+    } else return [];
   }
 
   componentWillMount() {
     Promise.all([
       getTitleOptions,
-      getGenderOptions,
-      getCounties,
-      getCategories,
-      getEthnicityOptions,
-      getDisabilityOptions
     ]).then(result => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0]) ,
-        genderOptions: this.checkOptionsList(result[1]) ,
-        countryOptions: this.checkOptionsList(result[2]) ,
-        categoryOptions: this.checkOptionsList(result[3]) ,
-        ethnicityOptions: this.checkOptionsList(result[4]) ,
-        disabilityOptions: this.checkOptionsList(result[5]) 
+        titleOptions: this.checkOptionsList(result[0]),
       });
     });
   }
@@ -114,7 +84,7 @@ class CreateAccountForm extends Component {
           [name]: dropdown.value
         }
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -130,7 +100,7 @@ class CreateAccountForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -138,14 +108,29 @@ class CreateAccountForm extends Component {
     };
   };
 
+  toggleAge = () => {
+    let currentOver18 = this.state.over18;
+    this.setState({ over18: !currentOver18 });
+  };
+
+  togglePrivacyPolicy = () => {
+    let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
+    this.setState({user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy}});};
+
+
   handleSubmit = event => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
-    if (this.state.user.password != this.state.user.confirmPassword) {
+    if (this.state.user.password !== this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
-    if (this.state.errors.$set.length > 0) return;
+    if (
+      this.state.errors &&
+      this.state.errors.$set &&
+      this.state.errors.$set.length > 0
+    )
+      return;
 
     this.setState({ loading: true });
 
@@ -174,45 +159,47 @@ class CreateAccountForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+        </div>
       );
     }
     return errorMessages;
   };
   render() {
     const xs = 12;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
+    const sm = 4;
+    const md = 4;
+    const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const colClassNameTitle = createColClassName(12, 4, 2, 2);
-    const colClassNameSurname = createColClassName(12, 4, 5, 5);
+
     const {
       firstName,
       lastName,
       email,
       title,
-      nationality,
-      residence,
-      ethnicity,
-      gender,
-      affiliation,
-      department,
-      disability,
-      category,
       password,
-      confirmPassword
+      confirmPassword,
+      agreePrivacyPolicy
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created } = this.state;
+    const {
+      loading,
+      errors,
+      showErrors,
+      error,
+      created,
+      over18
+    } = this.state;
 
     if (created) {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
           <p className="account-created">
-            Your Baobab account has been created, but before you can use it, we
-            need to verify you email address. Please check your email (and spam
+            Your {this.props.organisation ? this.props.organisation.name : ""} account
+            has been created, but before you can use it, we
+            need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
             address.
           </p>
@@ -221,34 +208,13 @@ class CreateAccountForm extends Component {
     }
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
-    const nationalityValue = this.getContentValue(
-      this.state.countryOptions,
-      nationality
-    );
-    const residenceValue = this.getContentValue(
-      this.state.countryOptions,
-      residence
-    );
-    const ethnicityValue = this.getContentValue(
-      this.state.ethnicityOptions,
-      ethnicity
-    );
-    const genderValue = this.getContentValue(this.state.genderOptions, gender);
-    const categoryValue = this.getContentValue(
-      this.state.categoryOptions,
-      category
-    );
-    const disabilityValue = this.getContentValue(
-      this.state.disabilityOptions,
-      disability
-    );
 
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Create Account</p>
           <div class="row">
-            <div class={colClassNameTitle}>
+            <div class={commonColClassName}>
               <FormSelect
                 options={this.state.titleOptions}
                 id={validationFields.title.name}
@@ -258,7 +224,8 @@ class CreateAccountForm extends Component {
                 label={validationFields.title.display}
               />
             </div>
-            <div class={colClassNameSurname}>
+
+            <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
                 type="text"
@@ -268,7 +235,8 @@ class CreateAccountForm extends Component {
                 label={validationFields.firstName.display}
               />
             </div>
-            <div class={colClassNameSurname}>
+
+            <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
                 type="text"
@@ -279,108 +247,19 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
-          <FormTextBox
-            id={validationFields.email.name}
-            type="email"
-            placeholder={validationFields.email.display}
-            onChange={this.handleChange(validationFields.email)}
-            value={email}
-            label={validationFields.email.display}
-          />
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.countryOptions}
-                id={validationFields.nationality.name}
-                placeholder={validationFields.nationality.display}
-                onChange={this.handleChangeDropdown}
-                value={nationalityValue}
-                label={validationFields.nationality.display}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.countryOptions}
-                id={validationFields.residence.name}
-                placeholder={validationFields.residence.display}
-                onChange={this.handleChangeDropdown}
-                value={residenceValue}
-                label={validationFields.residence.display}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                id={validationFields.ethnicity.name}
-                options={this.state.ethnicityOptions}
-                placeholder={validationFields.ethnicity.display}
-                onChange={this.handleChangeDropdown}
-                value={ethnicityValue}
-                label={validationFields.ethnicity.display}
-                description={validationFields.ethnicity.description}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.genderOptions}
-                id={validationFields.gender.name}
-                placeholder={validationFields.gender.display}
-                onChange={this.handleChangeDropdown}
-                value={genderValue}
-                label={validationFields.gender.display}
-              />
-            </div>
-          </div>
+
           <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
-                id={validationFields.affiliation.name}
-                type="text"
-                placeholder={validationFields.affiliation.display}
-                onChange={this.handleChange(validationFields.affiliation)}
-                value={affiliation}
-                label={validationFields.affiliation.display}
-                description={validationFields.affiliation.description}
+                id={validationFields.email.name}
+                type="email"
+                placeholder={validationFields.email.display}
+                onChange={this.handleChange(validationFields.email)}
+                value={email}
+                label={validationFields.email.display}
               />
             </div>
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.department.name}
-                type="text"
-                placeholder={validationFields.department.display}
-                onChange={this.handleChange(validationFields.department)}
-                value={department}
-                label={validationFields.department.display}
-                description={validationFields.department.description}
-              />
-            </div>
-          </div>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.disabilityOptions}
-                id={validationFields.disability.name}
-                placeholder={validationFields.disability.display}
-                onChange={this.handleChangeDropdown}
-                value={disabilityValue}
-                label={validationFields.disability.display}
-                description={validationFields.disability.description}
-              />
-            </div>
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.categoryOptions}
-                id={validationFields.category.name}
-                placeholder={validationFields.category.display}
-                onChange={this.handleChangeDropdown}
-                value={categoryValue}
-                label={validationFields.category.display}
-                description={validationFields.category.description}
-              />
-            </div>
-          </div>
-          <div class="row">
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.password.name}
@@ -391,6 +270,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.password.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.confirmPassword.name}
@@ -402,16 +282,66 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+
+          <div>
+            <br />
+            <h5>Please confirm the following in order to create an account</h5>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                id="over18"
+                name="over18"
+                type="checkbox"
+                checked={over18}
+                onChange={this.toggleAge} />
+              <label class="form-check-label" for="over18">
+                I am over 18
+              </label>
+            </div>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                name="agreePrivacyPolicy"
+                id="agreePrivacyPolicy"
+                type="checkbox"
+                checked={agreePrivacyPolicy}
+                onChange={this.togglePrivacyPolicy}
+              />
+              <label class="form-check-label" for="agreePrivacyPolicy">
+                {"I have read and agree to the "}
+                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
+                  target="_blank">
+                  privacy policy
+                </a>
+              </label>
+            </div>
+          </div>
+
+          <br></br><br></br>
+
           <button
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading}
-          >
-            {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
+            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}>
+            {loading && (
+              <span
+                class="spinner-grow spinner-grow-sm"
+                role="status"
+                aria-hidden="true"
+              />
+            )}
             Sign Up
           </button>
-          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger">{error}</div>}
+          {errors &&
+            errors.$set &&
+            showErrors &&
+            this.getErrorMessages(errors)}
+          {error &&
+            <div class="alert alert-danger alert-container">
+              {error}
+            </div>}
         </form>
       </div>
     );

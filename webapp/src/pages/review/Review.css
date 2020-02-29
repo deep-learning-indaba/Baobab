@@ -1,0 +1,40 @@
+.review-form-container .question {
+    margin-top: 3em;
+}
+
+.review-form-container {
+    padding-top: 3em;
+    padding-left: 3em;
+    padding-right: 3em;
+}
+
+.review-form-container .form-group {
+    text-align: center;
+}
+
+.review-form-container .form-group .rowC p {
+    text-align: left;
+}
+
+.buttons {
+    margin-top: 3em;
+}
+
+.form-check.is-invalid~.invalid-feedback {
+    display: block;
+}
+
+.complete-title {
+    font-weight: bold;   
+}
+
+.hidden {
+    visibility: hidden;
+}
+
+.flag-category {
+    margin-left: 0.5em;
+    font-size: 0.5em;
+    display: inline-block;
+    color: darkred;
+}

@@ -4,3 +4,9 @@ dispatch:
 
   - url: "baobab.deeplearningindaba.com/*"
     service: prod-frontend
+
+  - url: "test-portal.eeml.eu/*"
+    service: staging-frontend
+
+  - url: "portal.eeml.eu/*"
+    service: prod-frontend

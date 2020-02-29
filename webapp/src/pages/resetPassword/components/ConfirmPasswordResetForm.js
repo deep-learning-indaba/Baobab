@@ -35,11 +35,10 @@ class ConfirmPasswordResetForm extends Component {
 
   handleChange = field => {
     return event => {
-      this.setState(
-        {
-          [field.name]: event.target.value
-        },
-        function() {
+      this.setState({
+        [field.name]: event.target.value
+      },
+        function () {
           let errorsForm = run(this.state, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -56,6 +55,7 @@ class ConfirmPasswordResetForm extends Component {
       .confirmPasswordReset(this.state.password, this.state.token)
       .then(response => {
         console.log("Response from user service: ", response);
+
         if (response.status === 201) {
           const { from } = { from: { pathname: "/login" } };
           this.props.history.push(from);
@@ -72,17 +72,20 @@ class ConfirmPasswordResetForm extends Component {
     const {
       password,
       confirmPassword,
-      token,
-      submitted,
       loading,
       error
     } = this.state;
 
     return (
       <div className="ResetPassword">
-        {error && <div className={"alert alert-danger"}>{error}</div>}
+        {error &&
+          <div className={"alert alert-danger alert-container"}>
+            {error}
+          </div>}
+
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset password</p>
+
           <div class="col">
             <div>
               <FormTextBox
@@ -91,9 +94,9 @@ class ConfirmPasswordResetForm extends Component {
                 placeholder={validationFields.password.display}
                 onChange={this.handleChange(validationFields.password)}
                 value={password}
-                label={validationFields.password.display}
-              />
+                label={validationFields.password.display} />
             </div>
+
             <div>
               <FormTextBox
                 id={validationFields.confirmPassword.name}
@@ -101,16 +104,17 @@ class ConfirmPasswordResetForm extends Component {
                 placeholder={validationFields.confirmPassword.display}
                 onChange={this.handleChange(validationFields.confirmPassword)}
                 value={confirmPassword}
-                label={validationFields.confirmPassword.display}
-              />
+                label={validationFields.confirmPassword.display} />
             </div>
+
             <div>
               <button
                 type="submit"
                 class="btn btn-primary"
-                disabled={!this.validateForm() || loading}
-              >
-                {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
+                disabled={!this.validateForm() || loading}>
+                {loading && <span class="spinner-grow spinner-grow-sm"
+                  role="status"
+                  aria-hidden="true"></span>}
                 Submit
               </button>
             </div>

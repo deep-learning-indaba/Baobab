@@ -7,13 +7,14 @@ class ApplicationForm(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
-    deadline = db.Column(db.DateTime(), nullable=False)
 
+    event = db.relationship('Event', foreign_keys=[event_id])
+    nominations = db.Column(db.Boolean(), nullable=False)
 
-    def __init__(self, event_id, is_open, deadline):
+    def __init__(self, event_id, is_open, nominations):
         self.event_id = event_id
         self.is_open = is_open
-        self.deadline = deadline
+        self.nominations = nominations
 
 
 class Section(db.Model):
@@ -21,9 +22,9 @@ class Section(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
-    name = db.Column(db.String(255), unique=True, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
-    order = db.Column(db.Integer(), unique=True, nullable=False)
+    order = db.Column(db.Integer(), nullable=False)
 
     def __init__(self, application_form_id, name, description, order):
         self.application_form_id = application_form_id

@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.idea/
 .Python
 build/
 develop-eggs/
@@ -100,6 +101,9 @@ venv.bak/
 # Spyder project settings
 .spyderproject
 .spyproject
+
+# VSCode project settings
+.vscode
 
 # Rope project settings
 .ropeproject

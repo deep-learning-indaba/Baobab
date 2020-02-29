@@ -1,0 +1,12 @@
+.review-padding {
+  padding-top: 3em;
+}
+
+.review-margin {
+  margin: 1em;
+}
+@media all and (min-width: 480px) {
+  .ReviewHistory {
+    padding: 60px 0;
+  }
+}

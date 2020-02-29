@@ -1,10 +1,16 @@
+import datetime
+import traceback
+
+from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from flask import g, request
-import datetime
-from flask_restful import reqparse, fields, marshal_with
+
+from sqlalchemy.exc import SQLAlchemyError
+
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
+from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.users.models import AppUser
 from app.utils.auth import auth_required
@@ -13,16 +19,6 @@ from app import LOGGER
 
 from app import db, bcrypt
 
-
-WITHDRAWAL_BODY = """Dear {title} {firstname} {lastname},
-
-This email serves to confirm that you have withdrawn your application to attend the Deep Learning Indaba 2019. 
-
-If this was a mistake, you may resubmit an application before the application deadline. If the deadline has past, please get in touch with us.
-
-Kind Regards,
-The Deep Learning Indaba 2019 Organisers
-"""
 
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
@@ -52,10 +48,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         try:
             event = db.session.query(Event).filter(Event.id == args['event_id']).first()
             if not event:
+                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
                 return errors.EVENT_NOT_FOUND
 
             form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
             if not form:
+                LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
                 return errors.FORM_NOT_FOUND
             
             # Get the latest response (note there may be older withdrawn responses)
@@ -63,13 +61,19 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 Response.application_form_id == form.id, Response.user_id == g.current_user['id']
                 ).order_by(Response.started_timestamp.desc()).first()
             if not response:
+                LOGGER.debug("Response not found for event_id: {}".format(args['event_id']))
                 return errors.RESPONSE_NOT_FOUND
             
             answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
             response.answers = list(answers)
 
             return response
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -105,7 +109,12 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
             finally:
                 return response, 201  # 201 is 'CREATED' status code
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -123,10 +132,13 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         try: 
             old_response = db.session.query(Response).filter(Response.id == args['id']).first()
             if not old_response:
+                LOGGER.error("Response not found for id {}".format(args['id']))
                 return errors.RESPONSE_NOT_FOUND
             if old_response.user_id != user_id:
+                LOGGER.error("Old user id {} does not match user id {}".format(old_response.user_id, user_id))
                 return errors.UNAUTHORIZED
             if old_response.application_form_id != args['application_form_id']:
+                LOGGER.error("Update conflict for {}".format(args['application_form_id']))
                 return errors.UPDATE_CONFLICT
 
             old_response.is_submitted = args['is_submitted']
@@ -155,7 +167,11 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             finally:
                 return old_response, 200
 
-        except Exception as e:
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
     @auth_required
@@ -180,29 +196,38 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
             db.session.commit()
             db.session.flush()
-        except:
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
             return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE            
 
         try:
             user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
-            subject = 'Withdrawal of Application for the Deep Learning Indaba'
+            event = response.application_form.event
+            organisation = event.organisation
+            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
             
-            WITHDRAWAL_BODY.format(title=user.user_title, firstname=user.firstname, lastname=user.lastname)
-            emailer.send_mail(user.email, subject, body_text)
+            withdrawal_template = email_repository.get(event.id, 'withdrawal').template
+            body_text = withdrawal_template.format(
+                title=user.user_title,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                organisation_name=organisation.name,
+                event_name=event.name)
+            emailer.send_mail(user.email, subject, body_text, sender_name=g.organisation.name, sender_email=g.organisation.email_from)
         except:                
-            LOGGER.warn('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
+            LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
 
         return {}, 204
 
     def send_confirmation(self, user, response):
         try:
-            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+            answers = db.session.query(Answer).join(Question, Answer.question_id == Question.id).filter(Answer.response_id == response.id).order_by(Question.order).all()
             if answers is None:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
-
-            questions = db.session.query(Question).filter(Question.application_form_id == response.application_form_id).all()
-            if questions is None:
-                LOGGER.warn('Found no questions associated with application form with id {form_id}'.format(form_id=response.application_form_id))
 
             application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == response.application_form_id).first() 
             if application_form is None:
@@ -212,23 +237,29 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             if event is None:
                 LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
         except:
-            LOGGER.warn('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
+            LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            #Building the summary, where the summary is a dictionary whose key is the question headline, and the value is the relevant answer
-            summary = {}
-            for answer in answers:
-                for question in questions:
-                    if answer.question_id == question.id:
-                        summary[question.headline] = answer.value
-
             subject = 'Your application to {}'.format(event.description)
-            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
-            body_text = greeting + '\n\n' + strings.build_response_email_body(event.name, event.description, summary)
-            emailer.send_mail(user.email, subject, body_text=body_text)
+            question_answer_summary = strings.build_response_email_body(answers)
+
+            template = email_repository.get(event.id, 'confirmation-response').template
+            body_text = template.format(
+                title=user.user_title,
+                firstname=user.firstname,
+                lastname=user.lastname,
+                event_description=event.description,
+                question_answer_summary=question_answer_summary,
+                event_name=event.name)
+            emailer.send_mail(
+                user.email, 
+                subject, 
+                body_text=body_text, 
+                sender_name=g.organisation.name,
+                sender_email=g.organisation.email_from)
 
         except:
-            LOGGER.warn('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
+            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
 
 
 

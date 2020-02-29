@@ -1,6 +1,14 @@
 # Baobab
 
-Deep Learning Indaba applications and selection web application.
+Baobab is an open source multi-tenant web application designed to facilitate the application and selection process for large scale meetings within the machine learning and artificial intelligence communities globally.
+
+## Application Lifecycle
+
+The process starts with the release of an application form for potential applicants to complete online. Once all the applications are in, reviewers assess each one by completing a form of their own which is used to record the decisions on each applicant.
+
+Following the selection process, applicants are informed of the decision and relevant information regarding the event and reference letters (for visas etc.) are dispatched.
+
+Lastly, successful applicants can then register to confirm they will attend as well as check-in at the event itself.
 
 # Structure
 
@@ -13,7 +21,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Tasks
 
-Tasks are being managed in the Issues and Projects tabs. If you want to work on a particular issue, please assign yourself to it. Each issue should include a "definition of done" checklist that should be met before submitting a pull request to merge into the develop branch. 
+Tasks are managed via the [Issues](https://github.com/deep-learning-indaba/Baobab/issues) tab. If you want to work on a particular issue, please assign yourself to it. Each issue should include a _definition of done_ checklist that should be met before submitting a pull request to merge into the develop branch. Although if you're stuck or unsure of anything, submit the pull request anyway and we can give you feedback and iterate until it's ready.
 
 ## Technology Stack
 **Backend**
@@ -65,16 +73,45 @@ It will take a fair bit of time the first time you do it, subsequently it will b
 ## Troubleshooting
 Common errors you may get when running the ```docker-compose build``` or ```docker-compose up``` commands.
 
-|Error|Resolution|
-|-----|----------|
-|Error about "apt-get update -qq" failing | Run `curl -sSL https://get.docker.com/ \| sh` and then rerun the ```docker-compose build``` command.|
-|driver failed programming external connectivity on endpoint <IP Address> | This is a common issue on Windows 10, try stopping all docker containers with ```docker stop $(docker ps -a -q)``` then restart docker on your machine and try again. See [here](https://github.com/docker/for-win/issues/573) for more information|
+| Error                                                                               | Resolution                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Error about "apt-get update -qq" failing                                            | Run `curl -sSL https://get.docker.com/ \| sh` and then rerun the ```docker-compose build``` command.                                                                                                                                                |
+| driver failed programming external connectivity on endpoint <IP Address>            | This is a common issue on Windows 10, try stopping all docker containers with ```docker stop $(docker ps -a -q)``` then restart docker on your machine and try again. See [here](https://github.com/docker/for-win/issues/573) for more information |
+| Windows Docker-Compose Error  /usr/bin/env: ‘python\r’: No such file or directory | Open run.py in vi or vim (access through git bash) - `vi run.py`, type `:set ff=unix` and save and edit `:wq`.                                                                                                                                      |
+## Frequently Asked Questions
+
+* **I have never worked on a large scale project like this before. Should I jump right in, or how much code should I look at first?**
+
+    This depends on you. The most important thing to remember is that you don't have to worry about breaking anything. All code is reviewed and tested before being deployed so jumping right in or taking a slower and more measured approach are both fine. The issue descriptions should also contain enough information to get you started and if not, a comment asking for clarification is more than welcome.
+
+* **What are the expected time frames regarding the high and low priority?**
+
+    High priority: pull request within two days.
+
+    Low priority: pull request after seven to nine days.
+
+* **I can’t help right now, but I should free up in a month or two - can I still help?**
+
+    Baobab will log a continuous stream of new issues, bugs that creep in, or new features needed. 
+
+* **My country doesn’t allow for docker to installed**
+
+    [Windscribe](https://windscribe.com/) is a free VPN that doesn’t require a credit card for set up and can potentially help with the install. Tor browsers are also a potential avenue to try out. If you find a workaround that works, please let us know!
+
+* **How much disk space is required to run the project?**
+
+    The docker images, containers, and volumes use up approximately 4.7GB of disk space.
+
+* **I have a question about the issue, where should I ask?**
+
+    All questions relating to a specific issue, should be left on the GitHub on the issue itself (or the Pull Request if you've opened one).
+
+    Please be as descriptive as possible, and include any error messages you might be experiencing.
+
+    If you have any time, please peruse the other issues and see if there are other questions you can answer. We are here to learn from each other!
+
 
 
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-* TBC.

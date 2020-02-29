@@ -6,7 +6,13 @@ jobs:
       - checkout
       - run:
           name: Start container
-          command: docker-compose up -d
+          command: |
+            python --version
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            openssl aes256 -md md5 -d -in docker-compose.circleci.yaml.enc -out docker-compose.yml -pass pass:$CONFIG_PASSWORD
+            docker-compose up -d
       - run:
           name: Run migrations
           command: |
@@ -15,7 +21,7 @@ jobs:
             docker-compose run web python api/run.py db upgrade --directory api/migrations
       - run:
           name: Run tests
-          command: docker-compose run web nosetests -v
+          command: docker-compose run  web nosetests -v 
 
   frontEndTests:
     machine: true
@@ -28,7 +34,8 @@ jobs:
             docker-compose run test-ci  
 
   migrate-test:
-    machine: true
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
@@ -38,8 +45,8 @@ jobs:
             echo $GCLOUD_SQL_SERVICE_KEY > cloud_proxy.key
             wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
             chmod +x cloud_sql_proxy
-            sudo mkdir /cloudsql
-            sudo chmod 777 /cloudsql
+            mkdir /cloudsql
+            chmod 777 /cloudsql
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
@@ -47,7 +54,8 @@ jobs:
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
   migrate-prod:
-    machine: true
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
@@ -57,8 +65,8 @@ jobs:
             echo $GCLOUD_SQL_SERVICE_KEY > cloud_proxy.key
             wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
             chmod +x cloud_sql_proxy
-            sudo mkdir /cloudsql
-            sudo chmod 777 /cloudsql
+            mkdir /cloudsql
+            chmod 777 /cloudsql
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
@@ -77,8 +85,9 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
-            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
-            gcloud app deploy
+            mv Dockerfile.deploy Dockerfile # It doesn't like deploying to flex:python with Dockerfile
+            gcloud app deploy --version=v1
+
 
   deploy-backend-prod:
     machine: true
@@ -92,8 +101,8 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
-            rm Dockerfile # It doesn't like deploying to flex:python with Dockerfile
-            gcloud app deploy prod.yaml
+            mv Dockerfile.deploy Dockerfile 
+            gcloud app deploy prod.yaml --version=v1
 
   deploy-test:
     machine: true
@@ -133,6 +142,7 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd webapp
+            openssl aes256 -md md5 -d -in .env.production.enc -out .env.production -pass pass:$CONFIG_PASSWORD
             yarn
             CI=false yarn build
             gcloud app deploy prod-app.yaml dispatch.yaml

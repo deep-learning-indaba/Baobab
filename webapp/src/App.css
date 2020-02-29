@@ -25,21 +25,51 @@
   color: #40798C;
 }
 
+body {
+  background: #E8ECEE;
+}
+
 .Body{
   background: #E8ECEE;
-  min-height: 100vh;
+  min-height: 85vh;
+  padding-bottom: 1em;
+  padding-top: 2em;
 }
 
 .HomeNavBar{
   margin-bottom: 0px;
 }
 
-footer > .container > p {
-  margin-top: 1em;
+footer {
+  padding: 1em;
+  background: white;
+}
+
+footer .btn {
+  margin-top: -0.5em;
 }
 
 @media (max-width: 650px) {
   .Body {
     padding-top: 3em;
   }
+}
+
+.container-fluid {
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+.link-style{
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.navbar-brand .brand-image {
+  margin-right: 10px;
+}
+
+.alert-container{
+  margin-top: 16px;
 }
