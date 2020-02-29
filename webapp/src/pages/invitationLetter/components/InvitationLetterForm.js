@@ -342,14 +342,6 @@ class InvitationLetterForm extends Component {
             </div>
 
             <div className={passportDetailsStyleLine}>
-              {/* <FormTextBox
-                id={validationFields.passportExpiryDate.name}
-                type="date"
-                placeholder={validationFields.passportExpiryDate.display}
-                onChange={this.handleChange(
-                  validationFields.passportExpiryDate)}
-                value={passportExpiryDate}
-                label={validationFields.passportExpiryDate.display} /> */}
                 <FormDate
                   id={validationFields.passportExpiryDate.name}
                   placeholder={validationFields.passportExpiryDate.display}
@@ -457,14 +449,6 @@ class InvitationLetterForm extends Component {
             </div>
 
             <div className={nationResidenceDetailsStyle}>
-              {/* <FormTextBox
-                id={validationFields.dateOfBirth.name}
-                type="date"
-                placeholder={validationFields.dateOfBirth.display}
-                value={dateOfBirth}
-                label={validationFields.dateOfBirth.display} 
-                /> */}
-
                 <FormDate
                   id={validationFields.dateOfBirth.name}
                   placeholder={validationFields.dateOfBirth.display}
