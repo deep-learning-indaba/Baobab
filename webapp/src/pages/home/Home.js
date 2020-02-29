@@ -93,13 +93,35 @@ class Home extends Component {
                             <tbody>
                                 {this.state.events.map(e => {
                                     // TODO: Update status based on event stage changes.
-                                    return (<tr>
+                                    if(e.type == 'EVENT')
+                                    {
+                                        return (<tr>
                                         <td>
                                             <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                             {e.start_date + " to " + e.end_date}
                                         </td>
                                         <td>{this.statusDisplay(e)}</td>
                                     </tr>)
+                                    }
+                                })}
+                            </tbody>
+                        </table>}
+                    <h3>Awards</h3>
+                    {this.state.events &&
+                        this.state.events.length > 0 &&
+                        <table className="event-table">
+                            <tbody>
+                                {this.state.events.map(e => {
+                                    if(e.type == 'AWARD')
+                                    {
+                                        return (<tr>
+                                        <td>
+                                            <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                            {e.start_date + " to " + e.end_date}
+                                        </td>
+                                        <td>{this.statusDisplay(e)}</td>
+                                    </tr>)
+                                    }
                                 })}
                             </tbody>
                         </table>}

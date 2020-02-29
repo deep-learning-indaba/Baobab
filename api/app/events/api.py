@@ -25,6 +25,8 @@ from app.events.models import EventType
 
 
 def event_info(user_id, event_org):
+    print(repr(event_org.Event.event_type.name))
+    print("^^^^")
     return {
         'id': event_org.Event.id,
         'name': event_org.Event.name,
@@ -41,7 +43,8 @@ def event_info(user_id, event_org):
         'is_review_open': event_org.Event.is_review_open,
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
-        'is_registration_open': event_org.Event.is_registration_open
+        'is_registration_open': event_org.Event.is_registration_open,
+        'type': event_org.Event.event_type.name
     }
 
 
