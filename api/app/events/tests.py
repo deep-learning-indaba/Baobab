@@ -51,10 +51,10 @@ class EventsAPITest(ApiTestCase):
         response = self.app.get('/api/v1/events')
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Apply now'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Apply now')
 
     def test_get_events_applied(self):
         self.seed_static_data()
@@ -69,7 +69,7 @@ class EventsAPITest(ApiTestCase):
             'password': 'abc'
         })
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
@@ -77,10 +77,10 @@ class EventsAPITest(ApiTestCase):
             '/api/v1/events', headers={'Authorization': data["token"]})
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Applied'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Applied')
 
     def test_get_events_withdrawn(self):
         self.seed_static_data()
@@ -95,7 +95,7 @@ class EventsAPITest(ApiTestCase):
             'password': 'abc'
         })
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
@@ -103,10 +103,10 @@ class EventsAPITest(ApiTestCase):
             '/api/v1/events', headers={'Authorization': data["token"]})
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Application withdrawn'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Application withdrawn')
 
     def test_get_events_closed(self):
         self.seed_static_data()
@@ -119,7 +119,7 @@ class EventsAPITest(ApiTestCase):
             'password': 'abc'
         })
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
@@ -127,10 +127,10 @@ class EventsAPITest(ApiTestCase):
             '/api/v1/events', headers={'Authorization': data["token"]})
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Application closed'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Application closed')
 
     def test_get_events_unauthed_closed(self):
         self.seed_static_data()
@@ -141,10 +141,10 @@ class EventsAPITest(ApiTestCase):
         response = self.app.get('/api/v1/events')
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Application closed'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Application closed')
 
     def test_get_events_not_available(self):
         self.seed_static_data()
@@ -157,7 +157,7 @@ class EventsAPITest(ApiTestCase):
             'password': 'abc'
         })
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
@@ -165,10 +165,10 @@ class EventsAPITest(ApiTestCase):
             '/api/v1/events', headers={'Authorization': data["token"]})
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Application not available'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Application not available')
 
     def test_unsubmitted_response(self):
         self.seed_static_data()
@@ -190,10 +190,10 @@ class EventsAPITest(ApiTestCase):
             '/api/v1/events', headers={'Authorization': data["token"]})
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Continue application'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Continue application')
 
     def test_get_events_unauthed_not_available(self):
         self.seed_static_data()
@@ -204,10 +204,10 @@ class EventsAPITest(ApiTestCase):
         response = self.app.get('/api/v1/events')
         data = json.loads(response.data)
 
-        assert len(data) == 1
-        assert data[0]["id"] == 1
-        assert data[0]["description"] == 'Event Description'
-        assert data[0]["status"] == 'Application not available'
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], 1)
+        self.assertEqual(data[0]["description"], 'Event Description')
+        self.assertEqual(data[0]["status"], 'Application not available')
 
     def test_get_event_type(self):
         self.seed_static_data()
@@ -480,26 +480,26 @@ class EventAPITest(ApiTestCase):
         self.seed_static_data()
         response = self.app.post(
             'api/v1/event', data=self.test_event_data_dict)
-        assert response.status_code == 401
+        self.assertEqual(response.status_code, 401)
 
     def test_put_event_unauthed(self):
         self.seed_static_data()
         response = self.app.put('api/v1/event', data=self.test_event_data_dict)
-        assert response.status_code == 401
+        self.assertEqual(response.status_code, 401)
 
     def test_post_event_not_admin(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_user.email)
         response = self.app.post(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
-        assert response.status_code == 403
+        self.assertEqual(response.status_code, 403)
 
     def test_post_event_is_admin(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)
         response = self.app.post(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
 
     def test_post_event_eventrole_added(self):
         self.seed_static_data()
@@ -507,7 +507,7 @@ class EventAPITest(ApiTestCase):
         event_response = self.app.post(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
         event_data = json.loads(event_response.data)
-        assert event_response.status_code == 201
+        self.assertEqual(event_response.status_code, 201)
 
         body = {
             'email': self.test_admin_user.email,
@@ -515,10 +515,10 @@ class EventAPITest(ApiTestCase):
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
-        assert len(data['roles']) == 1
+        self.assertEqual(len(data['roles']), 1)
         for event_role in data['roles']:
             if event_role['event_id'] == event_data['id']:
-                assert data['roles'][0]['role'] == 'admin'
+                self.assertEqual(data['roles'][0]['role'], 'admin')
 
     def test_put_event_is_admin(self):
         self.seed_static_data()
@@ -529,8 +529,8 @@ class EventAPITest(ApiTestCase):
         response = self.app.put(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
         data = json.loads(response.data)
-        assert response.status_code == 200
-        assert data['name'] == 'Test Event Updated'
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['name'], 'Test Event Updated')
 
     def test_put_event_not_admin(self):
         self.seed_static_data()
@@ -544,4 +544,4 @@ class EventAPITest(ApiTestCase):
 
         response = self.app.put(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
-        assert response.status_code == 403
+        self.assertEqual(response.status_code, 403)
