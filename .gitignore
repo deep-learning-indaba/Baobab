@@ -104,6 +104,10 @@ venv.bak/
 # VSCode project settings
 .vscode
 
+
+# IntelliJ/Pycharm/Webstorm/etc. project settings
+.iml
+
 # Rope project settings
 .ropeproject
 

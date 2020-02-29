@@ -11,6 +11,7 @@ from app.events.models import Event
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
 from app.organisation.models import Organisation
+from app.responses.repository import ResponseRepository as response_repository
 
 
 def _add_object_to_db(obj):
@@ -27,6 +28,16 @@ class ResponseApiTest(ApiTestCase):
         'password': '123456',
         'policy_agreed': True
     }
+
+    nominated_data_dict = {
+        'email':     'awesome@email.com',
+        'firstname': 'Awesome',
+        'lastname':  'McAwesomeFace',
+        'title':     'Mx',
+        }
+
+    other_user_email = 'other@user.com'
+
 
     def _seed_data(self):
         organisation = self.add_organisation(
@@ -45,15 +56,17 @@ class ResponseApiTest(ApiTestCase):
         db.session.add_all(email_templates)
         db.session.commit()
 
-        # Add a user
+        # Add country
         test_country = Country('Indaba Land')
         _add_object_to_db(test_country)
 
+        # Add category
         test_category = UserCategory('Category1')
         _add_object_to_db(test_category)
 
+        # Add users to database
         other_user_data = self.user_data_dict.copy()
-        other_user_data['email'] = 'other@user.com'
+        other_user_data['email'] = self.other_user_email
         response = self.app.post('/api/v1/user', data=other_user_data)
         self.other_user_data = json.loads(response.data)
 
@@ -82,6 +95,18 @@ class ResponseApiTest(ApiTestCase):
             self.test_response.id, self.test_question.id, 'My Answer')
         _add_object_to_db(self.test_answer1)
 
+        # add nomination application form
+        self.test_nomination_form = self.create_application_form(
+                self.test_event.id, True, True)
+        self.test_nomination_response = Response(
+                self.test_nomination_form.id, self.other_user_data['id'],
+                nomination_title=self.nominated_data_dict['title'],
+                nomination_firstname=self.nominated_data_dict['firstname'],
+                nomination_lastname=self.nominated_data_dict['lastname'],
+                nomination_email=self.nominated_data_dict['email'],
+                )
+        _add_object_to_db(self.test_nomination_response)
+
         db.session.flush()
 
     def test_get_response(self):
@@ -106,9 +131,34 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(answer['value'], self.test_answer1.value)
         self.assertEqual(answer['question_id'], 1)
 
+    def test_get_response_from_repo(self):
+        """Test for when retrieving a response from the repository and not via the api directly"""
+        self._seed_data()
+
+        response = response_repository.get_by_id_and_user_id(
+                self.test_response.id, self.other_user_data['id'])
+        self.assertEqual(response.candidate_title, self.other_user_data['title'])
+        self.assertEqual(response.candidate_firstname, self.other_user_data['firstname'])
+        self.assertEqual(response.candidate_lastname, self.other_user_data['lastname'])
+        # 'email' not in other_user_data, use the test class's attribute instead
+        self.assertEqual(response.candidate_email, self.other_user_email)
+
+    def test_get_response_from_repo_nomination(self):
+        """Test for when retrieving a response from the repository and not via the api directly
+        AND when the application form was for nominations"""
+        self._seed_data()
+
+        response = response_repository.get_by_id_and_user_id(
+                self.test_nomination_response.id, self.other_user_data['id'])
+        self.assertEqual(response.candidate_title, self.nominated_data_dict['title'])
+        self.assertEqual(response.candidate_firstname, self.nominated_data_dict['firstname'])
+        self.assertEqual(response.candidate_lastname, self.nominated_data_dict['lastname'])
+        self.assertEqual(response.candidate_email, self.nominated_data_dict['email'])
+
+
     def test_get_event(self):
         """Test that we get an error if we try to get a response for an event that doesn't exist."""
-        
+
         self._seed_data()
 
         response = self.app.get('/api/v1/response',
