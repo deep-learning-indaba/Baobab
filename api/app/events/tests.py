@@ -215,9 +215,9 @@ class EventsAPITest(ApiTestCase):
         db.session.commit()
 
         response = self.app.get('/api/v1/events')
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
-        assert data[0]['event_type'] == 'EVENT'
+        self.assertEqual(data[0]['event_type'], 'EVENT')
 
 
 class EventsStatsAPITest(ApiTestCase):
