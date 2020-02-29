@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
-import { getCounties } from "../../../utils/validation/contentHelpers";
+import { getCountries } from "../../../utils/validation/contentHelpers";
 
 class Address extends Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class Address extends Component {
   }
 
   componentWillMount() {
-    getCounties.then(result => {
+    getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
       });
