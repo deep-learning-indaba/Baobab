@@ -2,11 +2,7 @@ import * as ErrorMessages from "./errorMessage.js";
 import * as validate from 'validate.js';
 
 validate.validators.regex = (value, options, key, attributes) => {
-  let regExp = new RegExp(options.pattern);
-  // console.log('THIS IS THE VALUE', value);
-  // console.log('TEST THE VALUE', regExp.test(value));
-  
-  
+  let regExp = new RegExp(options.pattern);  
   if (!regExp.test(value)) {
     return options.message;
   }
