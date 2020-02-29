@@ -9,7 +9,7 @@ import {
   requiredDropdown
 } from "../../../utils/validation/rules.js";
 import { userService } from "../../../services/user";
-import { getCounties } from "../../../utils/validation/contentHelpers";
+import { getCountries } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 import { registrationService } from "../../../services/registration";
 
@@ -61,7 +61,7 @@ class InvitationLetterForm extends Component {
   }
 
   componentWillMount() {
-    getCounties.then(result => {
+    getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
       });
