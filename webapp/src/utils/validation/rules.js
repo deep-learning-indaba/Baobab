@@ -107,9 +107,9 @@ export const validatePassword = text => {
         message: "must be at least 6 characters"
       },
       regex: {
-        pattern: /(?=.*[A-Z])/,
-        message: "should contain at least 1 capital letter"
-      }
+        pattern: /^(?=.{6,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*\W).*$/,
+        message: "should contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special character and must be at least 6 characters"
+      },
     }
   });
 }
