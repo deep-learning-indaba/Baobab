@@ -10,6 +10,7 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -17,6 +18,7 @@ const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 
 class FieldEditor extends React.Component {
@@ -129,6 +131,17 @@ class FieldEditor extends React.Component {
             errorText={validationError}
           />
         );
+      case MULTI_CHECKBOX:
+        return (
+          <FormMultiCheckbox
+            Id={this.id}
+            name={this.id}
+            options={this.options}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError} />
+        )
       case FILE:
         return (
           <FormFileUpload
