@@ -8,7 +8,7 @@ from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
                         REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION,\
-                        APPLICATIONS_CLOSED
+                        APPLICATIONS_CLOSED, REFERENCE_REQUEST_NOT_FOUND
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
@@ -155,7 +155,7 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
 
         if not reference_request:
-            return {}, 404
+            return REFERENCE_REQUEST_NOT_FOUND
 
         if not event.is_application_open:
             return APPLICATIONS_CLOSED

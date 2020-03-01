@@ -119,11 +119,12 @@ class ReferenceAPITest(ApiTestCase):
             '/api/v1/reference', data={'response_id':1}, headers=self.headers)
         LOGGER.debug(response.data)
         data = json.loads(response.data)
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 1)
         reference_request = reference_request_repository.get_by_id(1)
         self.assertEqual(reference_request.has_reference(), True)
+        reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
+        self.assertEqual(reference.uploaded_document, REFERENCE_DETAIL_2['uploaded_document'])
 
     def test_reference_application_closed(self):
 
