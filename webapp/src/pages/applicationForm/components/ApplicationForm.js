@@ -19,6 +19,7 @@ const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
+const DATE = "date";
 
 class FieldEditor extends React.Component {
   constructor(props) {
