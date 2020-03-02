@@ -5,6 +5,7 @@ import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
+import FormDate from "../../../components/form/FormDate";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -32,7 +33,9 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    const value = event.target.value;
+    // React datepicker component's onChange contains the value and not event.target.value
+    const value = event && event.target ? event.target.value : event;
+
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -144,6 +147,20 @@ class FieldEditor extends React.Component {
             uploadFile={this.handleUploadFile}
             uploaded={this.state.uploaded}
           />
+        );
+      case DATE:
+        return (
+          <FormDate
+            Id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer ? answer.value : answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} />
         );
       default:
         return (
