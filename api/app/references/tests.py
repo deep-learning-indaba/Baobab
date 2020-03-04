@@ -26,11 +26,44 @@ class ReferenceAPITest(ApiTestCase):
         self.test_event_data = copy.deepcopy(test_event.__dict__)
         self.add_to_db(test_event)
 
+        nomination_event = self.add_event(key="AWARD_NOMINATIONS_ONLY")
+        nomination_event.add_event_role('admin', 1)
+        self.test_nomination_event_data = copy.deepcopy(nomination_event.__dict__)
+        self.add_to_db(nomination_event)
+
         self.test_form = self.create_application_form(test_event.id, True, False)
+        self.test_nomination_form = self.create_application_form(nomination_event.id, True, True)
+
+        sections = [
+            Section(test_event.id, 'Nominations', 'Nominate yourself for an award', 1),
+            Section(nomination_event.id, 'Nominations', 'Nominate someone else for an award', 1)
+        ]
+        db.session.add_all(sections)
+        db.session.commit()
+
+        questions = [
+            Question(test_event.id, sections[0].id,
+                     'name',
+                     'Enter 50 to 150 words', 1, 'long_text', ''),
+            Question(test_event.id, sections[0].id,
+                     'email', 'Enter 50 to 150 words', 2, 'long_text', ''),
+            Question(nomination_event.id, sections[1].id,
+                     'name', 'Enter 50 to 150 words', 1, 'long_text', ''),
+            Question(nomination_event.id, sections[1].id,
+                     'email', 'Enter 50 to 150 words', 2, 'long_text', ''),
+        ]
+        db.session.add_all(questions)
+        db.session.commit()
 
         self.test_response = Response(
             self.test_form.id, self.other_user_data.id)
         self.add_to_db(self.test_response)
+        answers = [Answer(self.test_response.id, question.id,
+                          "answer to '{}' from section {}".format(question.headline, question.section_id))
+                   for question in questions]
+        db.session.add_all(answers)
+        db.session.commit()
+
         self.headers = self.get_auth_header_for("someuser@mail.com")
 
         db.session.flush()
@@ -84,10 +117,8 @@ class ReferenceAPITest(ApiTestCase):
         LOGGER.debug(response.data)
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(data['candidate_title'], self.other_user_data.user_title)
-        self.assertEqual(data['candidate_firstname'], self.other_user_data.firstname)
-        self.assertEqual(data['candidate_lastname'], self.other_user_data.lastname)
-        self.assertEqual(data['candidate_email'], self.other_user_data.email)
+        self.assertTrue('name' in data['candidate'])
+        self.assertTrue('email' in data['candidate'])
         self.assertEqual(data['relation'], reference_req.relation)
         self.assertEqual(data['name'], self.test_event_data['name'])
         self.assertEqual(data['description'], self.test_event_data['description'])

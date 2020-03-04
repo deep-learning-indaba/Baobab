@@ -4,6 +4,8 @@ from flask import g, request
 import flask_restful as restful
 from flask_restful import fields, marshal_with
 
+from app.applicationModel.models import ApplicationForm
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
@@ -29,14 +31,11 @@ reference_request_fields = {
     'email_sent': fields.DateTime,
     'response_id': fields.Integer,
     'email': fields.String,
-    'reference_submitted' : fields.Boolean
+    'reference_submitted': fields.Boolean
 }
 
 reference_request_details_fields = {
-    'candidate_title':               fields.String,
-    'candidate_firstname':           fields.String,
-    'candidate_lastname':            fields.String,
-    'candidate_email':               fields.String,
+    'candidate':                     fields.Raw,
     'relation':                      fields.String,
     'name':                          fields.String,
     'description':                   fields.String,
@@ -132,12 +131,24 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
             return EVENT_NOT_FOUND
 
         reference = reference_repository.get_by_reference_request_id(reference_request.id)
+        app_form = event.get_application_form()  # type: ApplicationForm
+
+        # get section from appform where nomination
+        name = "Nominations" # TODO: change this to a key
+        section = application_form_repository\
+            .get_section_by_app_id_and_section_name(app_form.id, name)
+
+        candidate = {}
+        if section is not None:
+            question_answers = response_repository.\
+                get_question_answers_by_section_id_and_response_id(section.id, response_id)
+            for qa in question_answers:
+                question = qa.Question
+                answer = qa.Answer
+                candidate[question.headline] = answer.value
 
         return_object = {
-            'candidate_title':               response.candidate_title,
-            'candidate_firstname':           response.candidate_firstname,
-            'candidate_lastname':            response.candidate_lastname,
-            'candidate_email':               response.candidate_email,
+            'candidate':                     candidate,
             'relation':                      reference_request.relation,
             'name':                          event.name,
             'description':                   event.description,
@@ -176,7 +187,7 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
 
         if not user.is_event_admin(event.id):
             return FORBIDDEN
-        reference_responses = reference_request_repository.get_reference_by_response_id(response.id)
+        reference_responses = reference_request_repository.get_references_by_response_id(response.id)
         return [reference_response.Reference for reference_response in reference_responses], 200
 
     def post(self):

@@ -14,46 +14,13 @@ class Response(db.Model):
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
-    nomination_title = db.Column(db.String(20), nullable=True)
-    nomination_firstname = db.Column(db.String(100), nullable=True)
-    nomination_lastname = db.Column(db.String(100), nullable=True)
-    nomination_email = db.Column(db.String(255), nullable=True)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer')
 
-    @property
-    def candidate_title(self):
-        if self.application_form.nominations:
-            return self.nomination_title
-        else:
-            return self.user.user_title
-
-    @property
-    def candidate_firstname(self):
-        if self.application_form.nominations:
-            return self.nomination_firstname
-        else:
-            return self.user.firstname
-
-    @property
-    def candidate_lastname(self):
-        if self.application_form.nominations:
-            return self.nomination_lastname
-        else:
-            return self.user.lastname
-
-    @property
-    def candidate_email(self):
-        if self.application_form.nominations:
-            return self.nomination_email
-        else:
-            return self.user.email
-
     def __init__(self, application_form_id, user_id, is_submitted=False, submitted_timestamp=None,
-                 is_withdrawn=False, withdrawn_timestamp=None,
-                 nomination_title=None, nomination_firstname=None, nomination_lastname=None, nomination_email=None,
+                 is_withdrawn=False, withdrawn_timestamp=None
                  ):
         self.application_form_id = application_form_id
         self.user_id = user_id
@@ -62,10 +29,6 @@ class Response(db.Model):
         self.is_withdrawn = is_withdrawn
         self.withdrawn_timestamp = withdrawn_timestamp
         self.started_timestamp = date.today()
-        self.nomination_title = nomination_title
-        self.nomination_firstname = nomination_firstname
-        self.nomination_lastname = nomination_lastname
-        self.nomination_email = nomination_email
 
     def submit_response(self):
         self.is_submitted = True
