@@ -16,9 +16,6 @@ from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import orm
 from app import db
-from app.utils.misc import make_code
-from flask_login import UserMixin
-from sqlalchemy.schema import UniqueConstraint
 import datetime
 from enum import Enum
 
@@ -39,7 +36,6 @@ class Organisation(Base):
     email_from = db.Column(db.String(100), nullable=True)
     system_url = db.Column(db.String(100), nullable=False)
     privacy_policy = db.Column(db.String(100), nullable=False)
-    events = db.relationship('Event')
 
     def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url, privacy_policy):
         self.name = name
@@ -66,147 +62,6 @@ class Country(Base):
 class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
-
-class EventRole(Base):
-
-    __tablename__ = "event_role"
-    __table_args__ = {'extend_existing':True}
-
-    id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey(
-        "event.id"), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey(
-        "app_user.id"), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
-
-    user = db.relationship('AppUser', foreign_keys=[user_id])
-    event = db.relationship('Event', foreign_keys=[event_id])
-
-    def __init__(self, role, user_id, event_id):
-        self.role = role
-        self.user_id = user_id
-        self.event_id = event_id
-
-    def set_user(self, new_user_id):
-        self.user_id = new_user_id
-
-    def set_event(self, new_event_id):
-        self.event_id = new_event_id
-
-    def set_role(self, new_role):
-        self.role = new_role
-
-class UserComment(Base):
-
-    __tablename__ = "usercomment"
-    __table_args__ = {'extend_existing':True}
-
-    id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
-    comment_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
-    timestamp = db.Column(db.DateTime(), nullable=False)
-    comment = db.Column(db.String(2000))
-
-    event = db.relationship('Event')
-    user = db.relationship('AppUser', foreign_keys=[user_id])
-    comment_by_user = db.relationship('AppUser', foreign_keys=[comment_by_user_id])
-
-    def __init__(self, event_id, user_id, comment_by_user_id, timestamp, comment):
-        self.event_id = event_id
-        self.user_id = user_id
-        self.comment_by_user_id = comment_by_user_id
-        self.timestamp = timestamp
-        self.comment = comment
-
-class UserCategory(Base):
-
-    __tablename__ = "usercategory"
-    __table_args__ = {'extend_existing':True}
-
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(500))
-    group = db.Column(db.String(100))
-
-    def __init__(self, name, description=None, group=None):
-        self.name = name
-        self.description = description
-        self.group = group
-
-class AppUser(Base):
-
-    __tablename__ = "appuser"
-    __table_args__ = {'extend_existing':True}
-
-    id = db.Column(db.Integer(), primary_key=True)
-    email = db.Column(db.String(255), nullable=False)
-    firstname = db.Column(db.String(100), nullable=False)
-    lastname = db.Column(db.String(100), nullable=False)
-    user_title = db.Column(db.String(20), nullable=False)
-    nationality_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
-    residence_country_id = db.Column(db.Integer(), db.ForeignKey('country.id'), nullable=True)
-    user_gender = db.Column(db.String(20), nullable=True)
-    affiliation = db.Column(db.String(255), nullable=True)
-    department = db.Column(db.String(255), nullable=True)
-    user_disability = db.Column(db.String(255), nullable=True)
-    user_category_id = db.Column(db.Integer(), db.ForeignKey('user_category.id'), nullable=True)
-    user_dateOfBirth = db.Column(db.DateTime(), nullable=True)
-    user_primaryLanguage = db.Column(db.String(255), nullable=True)
-    password = db.Column(db.String(255), nullable=False)
-    active = db.Column(db.Boolean(), nullable=False)
-    is_admin = db.Column(db.Boolean(), nullable=False)
-    is_deleted = db.Column(db.Boolean(), nullable=False)
-    deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
-    verified_email = db.Column(db.Boolean(), nullable=True)
-    verify_token = db.Column(db.String(255), nullable=True, unique=True, default=make_code)
-    policy_agreed_datetime = db.Column(db.DateTime(), nullable=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
-
-    __table_args__ = (UniqueConstraint('email', 'organisation_id', name='org_email_unique'),)
-
-    nationality_country = db.relationship('Country', foreign_keys=[nationality_country_id])
-    residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
-    user_category = db.relationship('UserCategory')
-    event_roles = db.relationship('EventRole')
-
-    def __init__(self,
-                 email,
-                 firstname,
-                 lastname,
-                 user_title,
-                 password,
-                 organisation_id,
-                 is_admin=False):
-        self.email = email
-        self.firstname = firstname
-        self.lastname = lastname
-        self.user_title = user_title
-        self.set_password(password)
-        self.organisation_id = organisation_id
-        self.active = True
-        self.is_admin = is_admin
-        self.is_deleted = False
-        self.deleted_datetime_utc = None
-        self.verified_email = False
-        self.agree_to_policy()
-
-class EmailTemplate(Base):
-
-    __tablename__ = 'email_template'
-    __table_args__ = {'extend_existing':True}
-
-    id = db.Column(db.Integer(), primary_key=True)
-    key = db.Column(db.String(50), nullable=False)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=True)
-    template = db.Column(db.String(), nullable=False)
-
-    event = db.relationship('Event', foreign_keys=[event_id])
-
-    def __init__(self, key, event_id, template):
-        self.key = key
-        self.event_id = event_id
-        self.template = template
 
 class Event(Base):
 
@@ -235,11 +90,6 @@ class Event(Base):
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
-
-    organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
-    application_forms = db.relationship('ApplicationForm')
-    email_templates = db.relationship('EmailTemplate')
-    event_roles = db.relationship('EventRole')
 
     def __init__(self,
                  name,
