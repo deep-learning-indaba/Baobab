@@ -204,7 +204,7 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    tkdd2020 = Event('Thamsanqa Kambule Doctoral Dissertation Award 2020',
+    kambuledoctoral2020 = Event('Thamsanqa Kambule Doctoral Dissertation Award 2020',
     'Thamsanqa Kambule Doctoral Dissertation Award 2020',
     datetime.date(2020, 8, 23),datetime.date(2020, 8, 28), 'kambuledoctoral2020',
     1,'baobab@deeplearningindaba.com','http://www.deeplearningindaba.com',
@@ -213,10 +213,10 @@ def upgrade():
     datetime.date(2020,1,1), datetime.date(2020,1,1),datetime.date(2020,1,1),
     datetime.date(2020,1,1), EventType.AWARD)
 
-    session.add(tkdd2020)
+    session.add(kambuledoctoral2020)
     session.commit()
 
-    event_id = tkdd2020.id
+    event_id = kambuledoctoral2020.id
 
     application_form = ApplicationForm(event_id, True, True)
     session.add(application_form)
@@ -532,13 +532,13 @@ def downgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    event = session.query(Event).filter_by(key='tkdd2020').first()
+    event = session.query(Event).filter_by(key='kambuledoctoral2020').first()
     app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
     session.query(Question).filter_by(application_form_id=app_form.id).delete()
     session.query(Section).filter_by(application_form_id=app_form.id).delete()
 
     session.query(ApplicationForm).filter_by(event_id=event.id).delete()
-    session.query(Event).filter_by(key='tkdd2020').delete()
+    session.query(Event).filter_by(key='kambuledoctoral2020').delete()
 
     session.commit()
     
