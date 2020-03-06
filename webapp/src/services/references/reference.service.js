@@ -10,11 +10,11 @@ export const referenceService = {
 
 function getReferenceRequestDetails(token){
     return axios
-        .get(baseUrl+`/api/v1/reference-request/detail?token=${token}`,{headers: authHeader()})
+        .get(baseUrl+`/api/v1/reference-request/detail?token=${token}`, {headers: authHeader()})
         .then((response)=>{
             return {
                 details: response.data,
-                error: null
+                error: ""
             }
         })
         .catch((error)=>{
