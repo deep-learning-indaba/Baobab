@@ -26,7 +26,7 @@ export default class FileUploadComponent extends Component {
           })
           .then(response => {
             if (response.fileId && this.props.onChange) {
-              this.props.onChange(this.props.question.id, response.fileId);
+              this.props.onChange(this.props.id, response.fileId);
             }
             this.setState({
               uploaded: response.fileId !== "",
@@ -41,11 +41,11 @@ export default class FileUploadComponent extends Component {
     render() {
       return (
         <FormFileUpload
-          Id={this.props.question.id}
+          Id={this.props.id}
           name={this.id}
-          label={this.props.question.description}
+          label={this.props.description}
           key={"i_" + this.props.key}
-          value={(this.props.answer && this.props.answer.value) || ""}
+          value={value || ""}
           showError={this.props.validationError || this.state.uploadError}
           errorText={this.props.validationError || this.state.uploadError}
           uploading={this.state.uploading}
