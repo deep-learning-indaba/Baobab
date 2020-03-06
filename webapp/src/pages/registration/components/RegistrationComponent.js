@@ -5,11 +5,11 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
-import FormFileUpload from "../../../components/form/FormFileUpload";
+
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
-import { fileService } from "../../../services/file/file.service";
+import { FileUploadComponent } from "../components/FileUpload";
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -17,62 +17,6 @@ const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const FILE = "file";
 const DATE = "date";
-
-class FileUploadComponent extends Component {
-  //TODO: Move to central place and share with application form
-  constructor(props) {
-    super(props);
-    this.state = {
-      uploadPercentComplete: 0,
-      uploading: false,
-      uploaded: false,
-      uploadError: ""
-    };
-  }
-
-  handleUploadFile = file => {
-    this.setState({
-      uploading: true
-    }, () => {
-      fileService
-        .uploadFile(file, progressEvent => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total);
-          this.setState({
-            uploadPercentComplete: percentCompleted
-          });
-        })
-        .then(response => {
-          if (response.fileId && this.props.onChange) {
-            this.props.onChange(this.props.question.id, response.fileId);
-          }
-          this.setState({
-            uploaded: response.fileId !== "",
-            uploadError: response.error,
-            uploading: false
-          });
-        });
-    }
-    );
-  };
-
-  render() {
-    return (
-      <FormFileUpload
-        Id={this.props.question.id}
-        name={this.id}
-        label={this.props.question.description}
-        key={"i_" + this.props.key}
-        value={(this.props.answer && this.props.answer.value) || ""}
-        showError={this.props.validationError || this.state.uploadError}
-        errorText={this.props.validationError || this.state.uploadError}
-        uploading={this.state.uploading}
-        uploadPercentComplete={this.state.uploadPercentComplete}
-        uploadFile={this.handleUploadFile}
-        uploaded={this.state.uploaded} />
-    );
-  }
-}
 
 class RegistrationComponent extends Component {
   constructor(props) {
