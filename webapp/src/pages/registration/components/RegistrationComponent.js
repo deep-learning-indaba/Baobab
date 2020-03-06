@@ -340,8 +340,9 @@ class RegistrationComponent extends Component {
         case FILE:
           return (
             <FileUploadComponent
-              question={question}
-              answer={answer}
+              id={question.id}
+              description={question.description}
+              value={this.props.answer && this.props.answer.value}
               validationError={validationError}
               onChange={this.onChange}
               key={"i_" + key} />
