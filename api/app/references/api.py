@@ -67,8 +67,8 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
                                         firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
 
-        link = "{host}/{key}/reference?token={token}".format(host=misc.get_baobab_host(),
-                                                            key=event.key, token=reference_request.token)
+        link = "{host}/{key}/reference/{token}".format(host=misc.get_baobab_host(),
+                                                       key=event.key, token=reference_request.token)
 
         subject = 'REFERENCE REQUEST - {}'.format(event.name)
         body = REFERENCE_REQUEST_EMAIL_BODY.format(title=title, firstname=firstname,
