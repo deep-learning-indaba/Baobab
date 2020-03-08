@@ -51,15 +51,13 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
 class FileAPIImproved(FileUploadMixin, restful.Resource):
 
     def get(self):
+        args = self.get_req_parser.parse_args()
+        file_id = args['file_id']
 
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('file_id', type=int, required=True)
-        args = req_parser.parse_args()
+        file = file_repository.get_by_id(file_id)
 
         bucket = _get_storage_bucket()
-        file = file_repository.get_by_id(args['file_id'])
-
-        blob = bucket.blob(args['file_id'])
+        blob = bucket.blob(file.guid)        
 
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
@@ -70,31 +68,21 @@ class FileAPIImproved(FileUploadMixin, restful.Resource):
     def post(self):
         args = self.req_parser.parse_args()
 
-        LOGGER.debug("FileUpload args: {}".format(args))
-
-        bucket = _get_storage_bucket()
+        uploaded_file = args['file']
         
-        unique_name = str(uuid.uuid4().hex)
-        blob = bucket.blob(unique_name)
-
-        file = args['file']
-        bytes_file = file.read()
-        content_type = file.content_type
-        file_size = len(bytes_file) 
-
+        bytes_file = uploaded_file.read()
+        file_size = len(bytes_file)
         if file_size > FILE_SIZE_LIMIT:
-            LOGGER.debug('File size of {} exceeds limit of {}'.format(file_size, FILE_SIZE_EXCEEDED))
             return FILE_SIZE_EXCEEDED
 
-        blob.upload_from_string(bytes_file, content_type=content_type)
+        file = File(uploaded_file)
 
-        file_name = file.file_name
-        mime_type = file.content_type
-        new_file = File(file_name, mime_type)
+        bucket = _get_storage_bucket()
+        blob = bucket.blob(file.guid)
+        blob.upload_from_string(bytes_file, content_type=file.mime_type)
 
-        file_id = file_repository.save(new_file)
+        file_id = file_repository.save(file)
 
         return {
-            'file_id': file_id, 
+            'file_id': file_id,
         }, 201
-
