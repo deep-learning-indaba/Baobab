@@ -9,7 +9,8 @@ import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
-import { FileUploadComponent } from "../components/FileUpload";
+import FileUploadComponent from "../../../components/FileUpload";
+import Loading from "../../../components/Loading";
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -261,11 +262,6 @@ class RegistrationComponent extends Component {
       isSubmitting
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
         if (item.value === answer.value) return item.label;
@@ -372,13 +368,7 @@ class RegistrationComponent extends Component {
 
     if (isLoading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
+        <Loading/>
       );
     }
 
