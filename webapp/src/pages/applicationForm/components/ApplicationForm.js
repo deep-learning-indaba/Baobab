@@ -138,9 +138,12 @@ class FieldEditor extends React.Component {
       case MULTI_CHECKBOX:
         return (
           <FormMultiCheckbox
-            Id={this.id}
+            id={this.id}
             name={this.id}
-            options={this.options}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || null}
             onChange={this.handleChange}
             key={"i_" + key}
             showError={validationError}
