@@ -7,7 +7,8 @@ class FormMultiCheckbox extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      options: []
+      options: [],
+      checked: []
     };
   }
 
@@ -41,28 +42,34 @@ class FormMultiCheckbox extends React.Component {
       return {
         checked: newChecked
       };
-    })
+    }, () => {
+      if (this.props.onChange) {
+        this.props.onChange(this.state.checked.join('-'));
+      }
+    });
   }
 
   renderFormCheckbox = (option) => {
     return (
-        <div class="custom-control custom-checkbox">
-          <input
-            id={"checkbox_" + option.value}
-            className={
-              this.shouldDisplayError()
-                ? "custom-control-input is-invalid"
-                : "custom-control-input"
-            }
-            type="checkbox"
-            checked={option.checked}
-            onChange={e => {this.onCheckChanged(option, e.target.value);}}
-            ref={input => {
-              this.nameInput = input;
-            }}
-          />
-          <label class="custom-control-label" for={"checkbox_" + option.value}>{option.label}</label>
-        </div>
+      <div class="custom-control custom-checkbox">
+        <input
+          id={"checkbox_" + option.value}
+          className={
+            this.shouldDisplayError()
+              ? "custom-control-input is-invalid"
+              : "custom-control-input"
+          }
+          type="checkbox"
+          checked={this.state.checked.includes(option.value)}
+          onChange={e => {
+            this.onCheckChanged(option, e.target.checked);
+          }}
+          ref={input => {
+            this.nameInput = input;
+          }}
+        />
+        <label class="custom-control-label" for={"checkbox_" + option.value}>{option.label}</label>
+      </div>
     );
   }
 
@@ -80,8 +87,8 @@ class FormMultiCheckbox extends React.Component {
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-              <div />
-            )}
+                <div />
+              )}
           </div>
           <div className="form-inline">
             {this.props.options.map((option) => this.renderFormCheckbox(option))}
