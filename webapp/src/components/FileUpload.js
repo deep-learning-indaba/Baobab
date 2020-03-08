@@ -1,7 +1,9 @@
+import React, { Component } from "react";
 import FormFileUpload from "./form/FormFileUpload";
 import { fileService } from "../services/file/file.service";
+import { withRouter } from "react-router";
 
-export default class FileUploadComponent extends Component {
+class FileUploadComponent extends Component {
     constructor(props) {
       super(props);
       this.state = {
@@ -45,7 +47,7 @@ export default class FileUploadComponent extends Component {
           name={this.id}
           label={this.props.description}
           key={"i_" + this.props.key}
-          value={value || ""}
+          value={this.props.value || ""}
           showError={this.props.validationError || this.state.uploadError}
           errorText={this.props.validationError || this.state.uploadError}
           uploading={this.state.uploading}
@@ -55,3 +57,5 @@ export default class FileUploadComponent extends Component {
       );
     }
   }
+
+  export default withRouter(FileUploadComponent);
