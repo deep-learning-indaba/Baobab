@@ -43,7 +43,8 @@ When working with git, there are a few key points that need to be learnt first:
 2. While writing your code, be sure to [commit](https://chris.beams.io/posts/git-commit/) any changes regularly, so you can also roll back to earlier versions. This is especially useful as your script grows, and you might find things were a little less broken a few additions ago
 3. [Pull requests](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request): Once the code is ready to possibly be added to the develop branch, you can create a pull request. A pull request is a submission for code review.. The review is done by our highly qualified team of developers who ensure the code does what it is supposed to and meets the conventional standards. There will likely be comments, and change requests - and this is where we learn
 4. [Merge](https://www.atlassian.com/git/tutorials/using-branches/git-merge): once the pull request is approved, it will be merged into the main develop branch by one of the pull request reviewers
-5. Keeping up to date with the main branch: while you have been working, other contributors are also updating the code. Thus, before starting on a new issue, make sure to “[pull](https://git-scm.com/docs/git-pull)” the develop branch to make sure your local Baobab repo has the latest version of the code from GitHub. 
+5. Keeping up to date with the main branch: while you have been working, other contributors are also updating the code. Thus, before starting on a new issue, make sure to [`pull`](https://git-scm.com/docs/git-pull) the develop branch to make sure your local Baobab repo has the latest version of the code from GitHub. 
+
 Basic GitHub commands can be found [here](https://confluence.atlassian.com/bitbucketserver/basic-git-commands-776639767.html)
 If you aren’t completely comfortable using the terminal commands for GitHub, [“git cola”](https://git-cola.github.io/) is a great GUI to learn to orientate yourself with the various operations, such as writing commit messages (without worrying about poorly placed “”) and visualising branching and seeing the differences in a script before committing.
 
@@ -72,7 +73,7 @@ There are various kinds of tests one should always keep in mind writing code:
  
 ### Migrations and databases (for back-end developers)
 Databases are used to organise and store information for easy information access and retrieval.
-[PostgreSQL](https://www.postgresqltutorial.com/what-is-postgresql/) is an fullly object-relational database management system.SQL [(Structured Query Language)](http://www.sqlcourse.com/intro.html) is the language used for communication  with the database. T
+[PostgreSQL](https://www.postgresqltutorial.com/what-is-postgresql/) is an fully object-relational database management system.SQL [(Structured Query Language)](http://www.sqlcourse.com/intro.html) is the language used for communication  with the database.
 [ORM](https://www.fullstackpython.com/object-relational-mappers-orms.html) (object-relational mapper) allows the programmer to communicate with the database in a Python, instead of the database query language (or SQL) which can get quite complicated. 
 
 #### What are migrations?
