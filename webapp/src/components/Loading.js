@@ -1,6 +1,7 @@
 import React, { Component } from "react";
+import { withRouter } from "react-router";
 
-export default class Loading extends Component {
+class Loading extends Component {
 
     render() {
         const loadingStyle = {
@@ -20,3 +21,5 @@ export default class Loading extends Component {
     }
 
 }
+
+export default withRouter(Loading);
