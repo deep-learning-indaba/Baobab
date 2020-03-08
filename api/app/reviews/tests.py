@@ -12,6 +12,8 @@ from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUN
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
 
+from parameterized import parameterized
+
 class ReviewsApiTest(ApiTestCase):
     
     def seed_static_data(self):
@@ -139,7 +141,7 @@ class ReviewsApiTest(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
-    def setup_one_reviewer_one_candidate(self):
+    def setup_one_reviewer_one_candidate(self, active=True):
         responses = [
             Response(1, 5, True)
         ]
@@ -156,6 +158,8 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = [
             ResponseReviewer(1, 1) # assign reviewer 1 to candidate 1 response
         ]
+        if not active:
+            response_reviewers[0].deactivate()
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -170,17 +174,31 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_remaining_count'], 1)
 
-    def test_one_reviewer_one_candidate_review_summary(self):
+    def test_one_reviewer_one_candidate_inactive(self):
         self.seed_static_data()
-        self.setup_one_reviewer_one_candidate()
+        self.setup_one_reviewer_one_candidate(active=False)
+        header = self.get_auth_header_for('r1@r.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews_remaining_count'], 0)
+        self.assertEqual(data['response']['id'], 0)
+
+    @parameterized.expand([
+        (True,), (False,)
+    ])
+    def test_one_reviewer_one_candidate_review_summary(self, active):
+        self.seed_static_data()
+        self.setup_one_reviewer_one_candidate(active=active)
         header = self.get_auth_header_for('ea@ea.com')
         params = {'event_id': 1}
 
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_unallocated'], 2)
-            
+        self.assertEqual(data['reviews_unallocated'], 2)  
 
     def setup_responses_and_no_reviewers(self):
         responses = [
@@ -217,8 +235,6 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_unallocated'], 3)
         
-        
-    
     def setup_one_reviewer_three_candidates(self):
         responses = [
             Response(application_form_id=1, user_id=5, is_submitted=True),
@@ -244,6 +260,8 @@ class ReviewsApiTest(ApiTestCase):
             ResponseReviewer(2, 1),
             ResponseReviewer(3, 1)
         ]
+        response_reviewers[1].deactivate()
+
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -256,7 +274,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_remaining_count'], 3)
+        self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
         responses = [
@@ -377,8 +395,11 @@ class ReviewsApiTest(ApiTestCase):
             ResponseReviewer(2, 3),
             ResponseReviewer(3, 3),
             ResponseReviewer(4, 3),
-            ResponseReviewer(1, 4)
+
+            ResponseReviewer(1, 4),
+            ResponseReviewer(2, 4)
         ]
+        response_reviewers[-1].deactivate()
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -423,9 +444,9 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['response']['user_id'], 6)
-        self.assertEqual(data['response']['answers'][0]['value'], 'I want to do a PhD.')
-        
+        self.assertEqual(data['response']['user_id'], 7)
+        self.assertEqual(data['response']['answers'][0]['value'], 'I want to solve new problems.')
+
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
@@ -553,6 +574,16 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
 
         self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_can_still_submit_inactive_response_reviewer(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_three_candidates()
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        self.assertEqual(response.status_code, 201)
 
     def setup_response_reviewer(self):
         response = Response(1, 5, True)

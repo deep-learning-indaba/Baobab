@@ -7,6 +7,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormFileUpload from "../../../components/form/FormFileUpload";
+import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
 import { fileService } from "../../../services/file/file.service";
@@ -416,10 +417,9 @@ class RegistrationComponent extends Component {
           );
         case DATE:
           return (
-            <FormTextBox
+            <FormDate
               Id={question.id}
               name={this.id}
-              type="date"
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}

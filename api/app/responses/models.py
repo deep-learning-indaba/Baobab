@@ -99,6 +99,7 @@ class ResponseReviewer(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    active = db.Column(db.Boolean(), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
@@ -106,3 +107,7 @@ class ResponseReviewer(db.Model):
     def __init__(self, response_id, reviewer_user_id):
         self.response_id = response_id
         self.reviewer_user_id = reviewer_user_id
+        self.active = True
+
+    def deactivate(self):
+        self.active = False
