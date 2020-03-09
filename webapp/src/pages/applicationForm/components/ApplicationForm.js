@@ -481,7 +481,7 @@ class Submitted extends React.Component {
           cancelText={"No - Don't withdraw"}
         >
           <p>
-            Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
+            By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
           </p>
         </ConfirmModal>
       </div>
