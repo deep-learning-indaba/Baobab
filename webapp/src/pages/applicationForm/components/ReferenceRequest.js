@@ -1,6 +1,6 @@
 import React from "react";
-import FormGroup from "./FormGroup";
-import FormToolTip from "./FormToolTip";
+import FormGroup from "../../../components/form/FormGroup";
+import FormToolTip from "../../../components/form/FormToolTip";
 
 class ReferenceRequestRow extends React.Component {
     constructor(props) {

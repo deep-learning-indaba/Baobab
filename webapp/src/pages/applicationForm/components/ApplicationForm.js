@@ -38,7 +38,7 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    // React datepicker component's onChange contains the value and not event.target.value
+    // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
 
     if (this.props.onChange) {
