@@ -21,58 +21,69 @@ class ReferenceRequestRow extends React.Component {
 
     render() {
         return (
-            <div className="form-inline">
-                <input
-                    id={this.props.Id + "_title"}
-                    name="title"
-                    className="form-control"
-                    type="text"
-                    placeholder="Title"
-                    value={this.props.referenceRequest.title}
-                    onChange={this.props.onChange}
-                    required="true"
-                />
-                <input
-                    id={this.props.Id + "_firstname"}
-                    name="firstname"
-                    className="form-control"
-                    type="text"
-                    placeholder="Firstname"
-                    value={this.props.referenceRequest.firstname}
-                    onChange={this.props.onChange}
-                    required="true"
-                />
-                <input
-                    id={this.props.Id + "_lastname"}
-                    name="lastname"
-                    className="form-control"
-                    type="text"
-                    placeholder="Lastname"
-                    value={this.props.referenceRequest.lastname}
-                    onChange={this.props.onChange}
-                    required="true"
-                />
-                <input
-                    id={this.props.Id + "_email"}
-                    name="email"
-                    className="form-control"
-                    type="text"
-                    placeholder="Email"
-                    value={this.props.referenceRequest.email}
-                    onChange={this.props.onChange}
-                    required="true"
-                />
-                <input
-                    id={this.props.Id + "_relation"}
-                    name="relation"
-                    className="form-control"
-                    type="text"
-                    placeholder="Relation"
-                    value={this.props.referenceRequest.relation}
-                    onChange={this.props.onChange}
-                    required="true"
-                />
-            </div>
+            
+                <div className="row no-gutters">
+                    <div className="col-sm">
+                        <input
+                            id={this.props.Id + "_title"}
+                            name="title"
+                            className="form-control"
+                            type="text"
+                            placeholder="Title"
+                            value={this.props.referenceRequest.title}
+                            onChange={this.props.onChange}
+                            required="true"
+                        />
+                    </div>
+                    <div className="col-sm">
+                        <input
+                            id={this.props.Id + "_firstname"}
+                            name="firstname"
+                            className="form-control"
+                            type="text"
+                            placeholder="Firstname"
+                            value={this.props.referenceRequest.firstname}
+                            onChange={this.props.onChange}
+                            required="true"
+                        />
+                    </div>
+                    <div className="col-sm">
+                        <input
+                            id={this.props.Id + "_lastname"}
+                            name="lastname"
+                            className="form-control"
+                            type="text"
+                            placeholder="Lastname"
+                            value={this.props.referenceRequest.lastname}
+                            onChange={this.props.onChange}
+                            required="true"
+                        />
+                    </div>
+                    <div className="col-sm">
+                        <input
+                            id={this.props.Id + "_email"}
+                            name="email"
+                            className="form-control"
+                            type="text"
+                            placeholder="Email"
+                            value={this.props.referenceRequest.email}
+                            onChange={this.props.onChange}
+                            required="true"
+                        />
+                    </div>
+                    <div className="col-sm">
+                        <input
+                            id={this.props.Id + "_relation"}
+                            name="relation"
+                            className="form-control"
+                            type="text"
+                            placeholder="Relation"
+                            value={this.props.referenceRequest.relation}
+                            onChange={this.props.onChange}
+                            required="true"
+                        />
+                    </div>
+                </div>
         )
     }
 }
@@ -89,7 +100,7 @@ class FormReferenceRequest extends React.Component {
     componentDidMount() {
         if (this.props.defaultValue) {
             this.setState({
-                referenceRequests: this.props.defaultValue
+                referenceRequests: this.props.defaultValue || []
             })
         }
     }
@@ -119,7 +130,7 @@ class FormReferenceRequest extends React.Component {
     addRow = e => {
         this.setState(prevState => {
             return {
-                referenceRequests: [...prevState, {
+                referenceRequests: [...prevState.referenceRequests, {
                     id: prevState.minId - 1,
                     title: null,
                     firstname: null,
@@ -151,7 +162,7 @@ class FormReferenceRequest extends React.Component {
                             )}
                     </div>
                     <div>{referenceRequests.map(r => <ReferenceRequestRow key={'rr_' + r.id} referenceRequest={r} />)}</div>
-                    <button className="link-style text-success" onClick={this.addRow}><i class="fas fa-plus-circle"></i></button>
+                    <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
                 </FormGroup>
             </div>
         )

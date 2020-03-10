@@ -170,6 +170,10 @@ ol.progtrckr li.progtrckr-done:hover:before {
   margin-right: 1.5em;
 }
 
+button.add-button {
+  margin-top: 0.5em;
+}
+
 @media (max-width: 650px) {
   .progtrckr li span {
     display: none;
