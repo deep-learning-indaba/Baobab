@@ -5,11 +5,13 @@ import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
+import FormDate from "../../../components/form/FormDate";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -17,7 +19,9 @@ const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
+const DATE = "date";
 
 class FieldEditor extends React.Component {
   constructor(props) {
@@ -32,7 +36,9 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    const value = event.target.value;
+    // React datepicker component's onChange contains the value and not event.target.value
+    const value = event && event.target ? event.target.value : event;
+
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -129,6 +135,20 @@ class FieldEditor extends React.Component {
             errorText={validationError}
           />
         );
+      case MULTI_CHECKBOX:
+        return (
+          <FormMultiCheckbox
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || null}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError} />
+        )
       case FILE:
         return (
           <FormFileUpload
@@ -144,6 +164,20 @@ class FieldEditor extends React.Component {
             uploadFile={this.handleUploadFile}
             uploaded={this.state.uploaded}
           />
+        );
+      case DATE:
+        return (
+          <FormDate
+            Id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer ? answer.value : answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} />
         );
       default:
         return (
@@ -463,7 +497,7 @@ class Submitted extends React.Component {
           cancelText={"No - Don't withdraw"}
         >
           <p>
-            Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
+            By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
           </p>
         </ConfirmModal>
       </div>
