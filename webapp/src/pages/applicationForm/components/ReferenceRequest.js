@@ -19,9 +19,15 @@ class ReferenceRequestRow extends React.Component {
         }
     }
 
+    deleteReference = e => {
+        if (this.props.onDelete) {
+            this.props.onDelete(this.props.referenceRequest.id);
+        }
+    }
+
     render() {
         return (
-            
+            <div>
                 <div className="row no-gutters">
                     <div className="col-sm">
                         <input
@@ -83,7 +89,12 @@ class ReferenceRequestRow extends React.Component {
                             required="true"
                         />
                     </div>
+                    <div className="col-auto reference-delete">
+                        {/* Todo: Remove button if not over minimum */}
+                        <button className="link-style" onClick={this.deleteReference}><i className="fas fa-trash text-danger"></i></button>
+                    </div>
                 </div>
+            </div>
         )
     }
 }
@@ -127,6 +138,12 @@ class FormReferenceRequest extends React.Component {
         });
     }
 
+    onDelete = (id) => {
+        this.setState(prevState => {
+            return prevState.referenceRequests.filter(r => r.id != id);
+        })
+    }
+
     addRow = e => {
         this.setState(prevState => {
             return {
@@ -161,7 +178,14 @@ class FormReferenceRequest extends React.Component {
                                 <div />
                             )}
                     </div>
-                    <div>{referenceRequests.map(r => <ReferenceRequestRow key={'rr_' + r.id} referenceRequest={r} />)}</div>
+                    <div>{referenceRequests.map(r =>
+                        <ReferenceRequestRow
+                            key={'rr_' + r.id}
+                            referenceRequest={r}
+                            onChange={this.onChange}
+                            onDelete={this.onDelete}
+                        />)
+                    }</div>
                     <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
                 </FormGroup>
             </div>
