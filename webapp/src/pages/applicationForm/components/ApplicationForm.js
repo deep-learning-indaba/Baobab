@@ -23,6 +23,30 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 
+const dependentQuestionFilter = (entityToCheckIfShouldShow, allQuestions, allAnswers) => {
+  console.log('a');
+  if (entityToCheckIfShouldShow.dependency_question_id && entityToCheckIfShouldShow.show_for_values) {
+    console.log('b');
+    const depedentOnQuestion = allQuestions.find(question => {
+      return question.id === entityToCheckIfShouldShow.dependency_question_id;
+    });
+    console.log('c');
+    if (depedentOnQuestion) {
+      console.log('d');
+      const dependentOnAnswer = allAnswers.find(answer => {
+        return answer.question_id === depedentOnQuestion.id;
+      });
+      console.log('e');
+      if (dependentOnAnswer) {
+        console.log('f');
+        const shouldSectionShow = entityToCheckIfShouldShow.show_for_values.values.indexOf(dependentOnAnswer.value) > -1;
+        return shouldSectionShow;
+      }
+    }
+  }
+  return true;
+}
+
 class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -222,7 +246,9 @@ class Section extends React.Component {
       value: value
     };
 
-    const newQuestionModels = this.state.questionModels.map(q => {
+    const newQuestionModels = this.state.questionModels
+      .filter(this.props.hideQuestionDueToDependentQuestion)
+      .map(q => {
       if (q.question.id !== question.id) {
         return q;
       }
@@ -318,15 +344,21 @@ class Section extends React.Component {
           <p>{section.description}</p>
         </div>
         {questionModels &&
-          questionModels.map(model => (
-            <FieldEditor
-              key={"question_" + model.question.id}
-              question={model.question}
-              answer={model.answer}
-              validationError={model.validationError}
-              onChange={this.onChange}
-            />
-          ))}
+          questionModels.map(model => {
+            console.log('i');
+            console.log(model);
+            console.log('question_' + model.question.id)
+            return (
+              <FieldEditor
+                key={"question_" + model.question.id}
+                question={model.question}
+                answer={model.answer}
+                validationError={model.validationError}
+                onChange={this.onChange}
+              />
+            )
+          })
+        }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
             Save for later...
@@ -526,6 +558,7 @@ class ApplicationForm extends Component {
 
   componentDidMount() {
     applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
+      console.log('event data retreived: ', response);
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -538,6 +571,7 @@ class ApplicationForm extends Component {
 
   loadResponse = () => {
     applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(resp => {
+      console.log('answers: ', resp.response);
       if (resp.response) {
         this.setState({
           responseId: resp.response.id,
@@ -721,9 +755,25 @@ class ApplicationForm extends Component {
       );
     }
 
+    let allQuestions = []
+    if (this.state.formSpec) {
+      allQuestions = this.state.formSpec.sections.reduce((listOfQuestions, sectionToJoin) => {
+        return listOfQuestions.concat(sectionToJoin.questions);
+      }, []);
+    }
+
+    console.log(allQuestions);
+
+    const removeSectionOrQuestionDueToDependentQuestion = (question) => {
+      return dependentQuestionFilter(question, allQuestions, this.state.answers);
+    }
+
     const sections =
       formSpec.sections &&
-      formSpec.sections.slice().sort((a, b) => a.order - b.order);
+      formSpec.sections.slice()
+        .filter((section) => { const keep = removeSectionOrQuestionDueToDependentQuestion(section); console.log(keep); return keep })
+        .sort((a, b) => a.order - b.order);
+    console.log(sections);
     const sectionModels =
       sections &&
       sections.map(section => {
@@ -747,6 +797,7 @@ class ApplicationForm extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
+              hideQuestionDueToDependentQuestion={removeSectionOrQuestionDueToDependentQuestion}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
