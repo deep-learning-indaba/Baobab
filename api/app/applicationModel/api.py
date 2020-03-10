@@ -22,7 +22,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     }
 
     show_for_values_fields = {
-        'values': fields.List(fields.String)
+        'value': fields.String
     }
 
     question_fields = {
@@ -37,7 +37,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'validation_text': fields.String,
         'is_required': fields.Boolean,
         'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Nested(show_for_values_fields)
+        'show_for_values': fields.List(fields.Nested(show_for_values_fields))
     }
 
     section_fields = {
@@ -47,7 +47,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'order': fields.Integer,
         'questions': fields.List(fields.Nested(question_fields)),
         'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Nested(show_for_values_fields)
+        'show_for_values': fields.List(fields.Nested(show_for_values_fields))
     }
 
     form_fields = {
