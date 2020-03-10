@@ -45,6 +45,7 @@ class LoginForm extends Component {
         else {
           //  TODO Fix properly
           // this.props.history.goBack();
+          this.props.history.push('/')
         }
        
       },
