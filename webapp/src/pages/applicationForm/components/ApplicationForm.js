@@ -12,6 +12,7 @@ import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormReferenceRequest from "./ReferenceRequest";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -22,6 +23,7 @@ const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
+const REFERENCE_REQUEST = "reference-request";
 
 class FieldEditor extends React.Component {
   constructor(props) {
@@ -179,6 +181,20 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
+      case REFERENCE_REQUEST:
+        return (
+          <FormReferenceRequest
+            Id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer ? answer.value : answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} />
+        )
       default:
         return (
           <p className="text-danger">
