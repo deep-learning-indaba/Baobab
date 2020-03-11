@@ -193,7 +193,8 @@ class FieldEditor extends React.Component {
             key={"i_" + key}
             showError={validationError}
             errorText={validationError}
-            required={question.is_required} />
+            required={question.is_required} 
+            options={question.options}/>
         )
       default:
         return (

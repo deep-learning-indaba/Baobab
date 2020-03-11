@@ -170,9 +170,10 @@ ol.progtrckr li.progtrckr-done:hover:before {
   margin-right: 1.5em;
 }
 
-button.add-button {
-  margin-top: 0.5em;
+.reference-row {
+  margin-bottom: 0.5em;
 }
+
 
 .reference-delete {
   margin-left: 0.5em;

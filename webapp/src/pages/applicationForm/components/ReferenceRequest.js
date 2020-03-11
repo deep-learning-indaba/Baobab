@@ -28,7 +28,7 @@ class ReferenceRequestRow extends React.Component {
     render() {
         return (
             <div>
-                <div className="row no-gutters">
+                <div className="row no-gutters reference-row">
                     <div className="col-sm">
                         <input
                             id={this.props.Id + "_title"}
@@ -90,8 +90,11 @@ class ReferenceRequestRow extends React.Component {
                         />
                     </div>
                     <div className="col-auto reference-delete">
-                        {/* Todo: Remove button if not over minimum */}
-                        <button className="link-style" onClick={this.deleteReference}><i className="fas fa-trash text-danger"></i></button>
+                        {/* Todo: Remove button if request already sent (add a checkmark instead?) */}
+                        {this.props.minReferences && this.props.referenceNumber > this.props.minReferences
+                            && <button className="link-style" onClick={this.deleteReference}><i className="fas fa-trash text-danger"></i></button>
+                        }
+
                     </div>
                 </div>
             </div>
@@ -109,11 +112,25 @@ class FormReferenceRequest extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.defaultValue) {
-            this.setState({
-                referenceRequests: this.props.defaultValue || []
-            })
+        var initialReferenceRequests = this.props.defaultValue || [];
+        var minId = -1;
+        if (this.props.options.min_num_referrals > initialReferenceRequests.length) {
+            for(var i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
+                initialReferenceRequests.push({
+                    id: minId--,
+                    title: null,
+                    firstname: null,
+                    lastname: null,
+                    email: null,
+                    relation: null
+                });
+            }
         }
+        
+        this.setState({
+            referenceRequests: initialReferenceRequests,
+            minId: minId
+        });
     }
 
     shouldDisplayError = () => {
@@ -178,15 +195,19 @@ class FormReferenceRequest extends React.Component {
                                 <div />
                             )}
                     </div>
-                    <div>{referenceRequests.map(r =>
+                    <div>{referenceRequests.map((r, i) =>
                         <ReferenceRequestRow
                             key={'rr_' + r.id}
                             referenceRequest={r}
                             onChange={this.onChange}
                             onDelete={this.onDelete}
+                            minReferences={this.props.options.min_num_referrals}
+                            referenceNumber={i+1}
                         />)
                     }</div>
-                    <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
+                    {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
+                        <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
+                    }
                 </FormGroup>
             </div>
         )
