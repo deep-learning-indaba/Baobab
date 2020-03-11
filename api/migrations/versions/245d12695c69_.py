@@ -13,10 +13,9 @@ down_revision = '14d53fa0c9c8'
 from alembic import op
 import sqlalchemy as sa
 
-
 def upgrade():
     pass
-
+    
 
 def downgrade():
     pass
