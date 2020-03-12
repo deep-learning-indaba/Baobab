@@ -37,7 +37,7 @@ class ReferenceRequestRow extends React.Component {
                             type="text"
                             placeholder="Title"
                             value={this.props.referenceRequest.title}
-                            onChange={this.props.onChange}
+                            onChange={this.onChange}
                             required="true"
                         />
                     </div>
@@ -49,7 +49,7 @@ class ReferenceRequestRow extends React.Component {
                             type="text"
                             placeholder="Firstname"
                             value={this.props.referenceRequest.firstname}
-                            onChange={this.props.onChange}
+                            onChange={this.onChange}
                             required="true"
                         />
                     </div>
@@ -61,7 +61,7 @@ class ReferenceRequestRow extends React.Component {
                             type="text"
                             placeholder="Lastname"
                             value={this.props.referenceRequest.lastname}
-                            onChange={this.props.onChange}
+                            onChange={this.onChange}
                             required="true"
                         />
                     </div>
@@ -73,7 +73,7 @@ class ReferenceRequestRow extends React.Component {
                             type="text"
                             placeholder="Email"
                             value={this.props.referenceRequest.email}
-                            onChange={this.props.onChange}
+                            onChange={this.onChange}
                             required="true"
                         />
                     </div>
@@ -85,7 +85,7 @@ class ReferenceRequestRow extends React.Component {
                             type="text"
                             placeholder="Relation"
                             value={this.props.referenceRequest.relation}
-                            onChange={this.props.onChange}
+                            onChange={this.onChange}
                             required="true"
                         />
                     </div>
@@ -157,7 +157,9 @@ class FormReferenceRequest extends React.Component {
 
     onDelete = (id) => {
         this.setState(prevState => {
-            return prevState.referenceRequests.filter(r => r.id != id);
+            return {
+                referenceRequests: prevState.referenceRequests.filter(r => r.id !== id)
+            };
         })
     }
 
