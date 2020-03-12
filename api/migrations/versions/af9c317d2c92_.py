@@ -511,7 +511,8 @@ def downgrade():
     event = session.query(Event).filter_by(key='maathai2020').first()
     app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
 
-    session.query(Section).filter_by(name='Nominator Information').first().depends_on_question_id = None
+    nominator = session.query(Section).filter_by(name='Nominator Information').first()
+    nominator.depends_on_question_id = None
 
     session.query(Question).filter_by(application_form_id=app_form.id).delete()
     session.query(Section).filter_by(application_form_id=app_form.id).delete()
