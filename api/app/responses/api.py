@@ -60,11 +60,9 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         response = db.session.query(Response).filter(
             Response.application_form_id == form.id, Response.user_id == current_user_id
             ).order_by(Response.started_timestamp.desc()).first()
+
         if not response:
             return errors.RESPONSE_NOT_FOUND
-        
-        answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
-        response.answers = list(answers)
 
         return response
 
