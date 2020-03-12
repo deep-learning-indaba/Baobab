@@ -60,7 +60,7 @@ class ApiTestCase(unittest.TestCase):
         if len(self.firstnames):
             return self.firstnames, self.lastnames
 
-        with open("/opt/project/api/app/utils/names.txt") as file_with_names:
+        with open("/code/api/app/utils/names.txt") as file_with_names:
             names = file_with_names.readlines()
         for _name in names:
             split_name = _name.strip().split(" ")
