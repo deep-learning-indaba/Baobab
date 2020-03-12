@@ -271,8 +271,10 @@ For any queries, please email awards@deeplearningindaba.com.
     session.commit()
 
     nominator_information = Section(app_form_id, 'Nomination Information', """
-Details of the person nominating the doctoral candidate. Dependency: Only if 'Nominating Capacity' question has answer 'Nomination on behalf a candidate'
-        """,2)    
+Details of the person nominating the doctoral candidate.
+        """,2)
+    nominator_information.depends_on_question_id = q1_nomination_capacity.id
+    nominator_information.show_for_values = ['other']
     session.add(nominator_information)
     session.commit()
 
