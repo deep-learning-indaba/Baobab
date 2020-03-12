@@ -45,36 +45,24 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
 
-        try:
-            event = db.session.query(Event).filter(Event.id == args['event_id']).first()
-            if not event:
-                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
-                return errors.EVENT_NOT_FOUND
+        event = db.session.query(Event).filter(Event.id == args['event_id']).first()
+        if not event:
+            return errors.EVENT_NOT_FOUND
 
-            form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
-            if not form:
-                LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
-                return errors.FORM_NOT_FOUND
-            
-            # Get the latest response (note there may be older withdrawn responses)
-            response = db.session.query(Response).filter(
-                Response.application_form_id == form.id, Response.user_id == g.current_user['id']
-                ).order_by(Response.started_timestamp.desc()).first()
-            if not response:
-                LOGGER.debug("Response not found for event_id: {}".format(args['event_id']))
-                return errors.RESPONSE_NOT_FOUND
-            
-            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
-            response.answers = list(answers)
+        form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
+        if not form:
+            return errors.FORM_NOT_FOUND
+        
+        response = db.session.query(Response).filter(
+            Response.application_form_id == form.id, Response.user_id == g.current_user['id']
+            ).order_by(Response.started_timestamp.desc()).first()
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+        
+        answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
+        response.answers = list(answers)
 
-            return response
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        return response
 
     @auth_required
     @marshal_with(response_fields)
@@ -260,8 +248,3 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         except:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
-
-
-
-            
-
