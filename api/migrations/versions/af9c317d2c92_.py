@@ -260,7 +260,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='',
         order=1,
         questionType='multi-choice',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         options=[
             {'label':'Self-nomination', 'value':'self'},
@@ -285,7 +285,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Affiliation',
         order=1,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         description='(university, institute, company, etc)'
     )
@@ -296,17 +296,17 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Department',
         order=2,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     nominator_q3 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
-        headline='Describe your relationship to the doctoral candidate',
+        headline='Describe your relationship to the nominee',
         placeholder='',
         order=3,
         questionType='long-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     session.add_all([nominator_q1, nominator_q2, nominator_q3])
@@ -325,7 +325,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Title',
         order=1,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     nominee_q1.depends_on_question_id = q1_nomination_capacity.id
@@ -337,7 +337,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Firstname',
         order=2,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     nominee_q2.depends_on_question_id = q1_nomination_capacity.id
@@ -349,7 +349,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Lastname',
         order=3,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     nominee_q3.depends_on_question_id = q1_nomination_capacity.id
@@ -361,7 +361,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Email Address',
         order=4,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True
     )
     nominee_q4.depends_on_question_id = q1_nomination_capacity.id
@@ -373,7 +373,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Affiliation',
         order=5,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         description='(university, institute, company, etc)'
     )
@@ -384,7 +384,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Names of team members',
         order=6,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=False
     )
     nominee_q7 = Question(
@@ -394,7 +394,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Choose an option',
         order=7,
         questionType='multi-choice',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         options=get_country_list(session)
     )
@@ -405,7 +405,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Choose an option',
         order=8,
         questionType='multi-choice',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         options=get_country_list(session)
     )
@@ -416,7 +416,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Enter a URL',
         order=9,
         questionType='short-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=False
     )
     session.add_all([nominee_q1,nominee_q2,nominee_q3,nominee_q4,nominee_q5,
@@ -478,13 +478,10 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='',
         order=1,
         questionType='reference',
-        validation_regex=1,
+        validation_regex=None,
         is_required=True,
         description='Add at least two people if this is a self nomination and at least one if you are nominating someone else.',
-        options=[
-            {'min_num_referral':1},
-            {'max_num_referral':3}
-        ]
+        options={'min_num_referral': 1, 'max_num_referral': 3}
     )
     supporting_docs_q2 = Question(
         application_form_id=app_form_id,
@@ -493,7 +490,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='',
         order=2,
         questionType='long-text',
-        validation_regex=1,
+        validation_regex=None,
         is_required=False,
         description='Use this space to provide any additional details which you feel are relevant to this nomination and have not been captured by this form.'
     )
