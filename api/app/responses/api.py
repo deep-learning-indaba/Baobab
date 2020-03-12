@@ -11,6 +11,7 @@ from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
+from app.events.repository import EventRepository as event_repository
 from app.events.models import Event
 from app.users.models import AppUser
 from app.utils.auth import auth_required
@@ -44,17 +45,20 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
     @marshal_with(response_fields)
     def get(self):
         args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
 
-        event = db.session.query(Event).filter(Event.id == args['event_id']).first()
+        event = event_repository.get_by_id(event_id)
         if not event:
             return errors.EVENT_NOT_FOUND
 
-        form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
-        if not form:
+        if not event.has_application_form():
             return errors.FORM_NOT_FOUND
+
+        form = event.get_application_form()
         
         response = db.session.query(Response).filter(
-            Response.application_form_id == form.id, Response.user_id == g.current_user['id']
+            Response.application_form_id == form.id, Response.user_id == current_user_id
             ).order_by(Response.started_timestamp.desc()).first()
         if not response:
             return errors.RESPONSE_NOT_FOUND

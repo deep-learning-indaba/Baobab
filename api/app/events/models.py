@@ -129,6 +129,9 @@ class Event(db.Model):
     def get_application_form(self):
         return self.application_forms[0]
 
+    def has_application_form(self):
+        return len(self.application_forms) > 0
+
     def add_event_role(self, role, user_id):
         event_role = EventRole(role, user_id, self.id)
         self.event_roles.append(event_role)
