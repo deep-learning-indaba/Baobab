@@ -12,6 +12,7 @@ from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.repository import EventRepository as event_repository
+from app.responses.repository import ResponseRepository as response_repository
 from app.events.models import Event
 from app.users.models import AppUser
 from app.utils.auth import auth_required
@@ -56,15 +57,13 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             return errors.FORM_NOT_FOUND
 
         form = event.get_application_form()
-        
-        response = db.session.query(Response).filter(
-            Response.application_form_id == form.id, Response.user_id == current_user_id
-            ).order_by(Response.started_timestamp.desc()).first()
 
-        if not response:
+        responses = response_repository.get_all_for_user_application(current_user_id, form.id)
+
+        if not responses:
             return errors.RESPONSE_NOT_FOUND
 
-        return response
+        return responses
 
     @auth_required
     @marshal_with(response_fields)
