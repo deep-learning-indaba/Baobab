@@ -270,7 +270,7 @@ For any queries, please email awards@deeplearningindaba.com.
     session.add(q1_nomination_capacity)
     session.commit()
 
-    nominator_information = Section(app_form_id, 'Nomination Information', """
+    nominator_information = Section(app_form_id, 'Nominator Information', """
 Details of the person nominating the doctoral candidate.
         """,2)
     nominator_information.depends_on_question_id = q1_nomination_capacity.id
@@ -278,7 +278,7 @@ Details of the person nominating the doctoral candidate.
     session.add(nominator_information)
     session.commit()
 
-    nomination_q1 = Question(
+    nominator_q1 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
         headline='University',
@@ -289,7 +289,7 @@ Details of the person nominating the doctoral candidate.
         is_required=True,
         description='The university that you (the nominator) are based at.'
     )
-    nomination_q2 = Question(
+    nominator_q2 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
         headline='Department',
@@ -300,7 +300,7 @@ Details of the person nominating the doctoral candidate.
         is_required=True,
         description='The department that you (the nominator) are based at.'
     )
-    nomination_q3 = Question(
+    nominator_q3 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
         headline='Describe your relationship to the doctoral candidate',
@@ -310,7 +310,7 @@ Details of the person nominating the doctoral candidate.
         validation_regex=1,
         is_required=True
     )
-    session.add_all([nomination_q1,nomination_q2,nomination_q3])
+    session.add_all([nominator_q1,nominator_q2,nominator_q3])
     session.commit()
 
     candidate_information = Section(app_form_id, 'Doctoral Candidate Information', 'Details of the nominated doctoral candidate to be considered for the award.',3)
@@ -518,13 +518,17 @@ Details of the person nominating the doctoral candidate.
         placeholder='',
         order=3,
         questionType='reference',
-        validation_regex='{"min_num_referrals": 1, "max_num_referrals": 1}',
+        validation_regex=1,
         is_required=True,
         description="""
         A supporting letter that describes the main theoretical, methodological, and/or applied contributions of the thesis should be submitted by an academic who is in a position to comment on the merits of the work and the candidate, e.g., Doctoral supervisor, thesis examiner, academic mentor, collaborators, etc. The letter should be written by someone other than the person who is nominating the candidate.
 
         Supporting letters should be 600 words at most, written in English, and submitted electronically in PDF format by the closing date, using Baobab
-        """
+        """,
+        options=[
+            {"min_num_referrals": 1},
+            {"max_num_referrals": 1}
+        ]
     )
     supporting_q4 = Question(
         application_form_id=app_form_id,
