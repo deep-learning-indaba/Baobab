@@ -1,25 +1,22 @@
 import datetime
 import traceback
 
-from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from flask import g, request
-
+from flask_restful import fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
+from app import LOGGER, bcrypt, db
 from app.applicationModel.mixins import ApplicationFormMixin
-from app.responses.models import Response, Answer
 from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
-from app.events.repository import EventRepository as event_repository
-from app.responses.repository import ResponseRepository as response_repository
 from app.events.models import Event
+from app.events.repository import EventRepository as event_repository
+from app.responses.models import Answer, Response
+from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
+from app.utils import emailer, errors, strings
 from app.utils.auth import auth_required
-from app.utils import errors, emailer, strings
-from app import LOGGER
-
-from app import db, bcrypt
 
 
 class ResponseAPI(ApplicationFormMixin, restful.Resource):
