@@ -5,6 +5,7 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
@@ -15,6 +16,7 @@ const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 
@@ -393,6 +395,17 @@ class RegistrationComponent extends Component {
               showError={validationError}
               errorText={validationError} />
           );
+        case MULTI_CHECKBOX:
+          return (
+            <FormMultiCheckbox
+              Id={this.id}
+              name={this.id}
+              options={this.options}
+              onChange={this.handleChange}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
         case FILE:
           return (
             <FileUploadComponent

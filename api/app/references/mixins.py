@@ -34,3 +34,7 @@ class ReferenceMixin(object):
     post_req_parser = reqparse.RequestParser()
     post_req_parser.add_argument('token', type=str, required=True)
     post_req_parser.add_argument('uploaded_document', type=str, required=True)
+
+    put_req_parser = reqparse.RequestParser()
+    put_req_parser.add_argument('token', type=str, required=True)
+    put_req_parser.add_argument('uploaded_document', type=str, required=True)
