@@ -42,7 +42,7 @@ class ReferenceRequestRepository():
                          .first()
 
     @staticmethod
-    def get_reference_by_response_id(response_id):
+    def get_references_by_response_id(response_id):
         return db.session.query(ReferenceRequest.response_id, Reference)\
                          .join(ReferenceRequest, ReferenceRequest.id == Reference.reference_request_id)\
                          .filter_by(response_id=ReferenceRequest.response_id)\

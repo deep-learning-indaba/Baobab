@@ -1,3 +1,4 @@
+import copy
 import json
 
 from datetime import datetime, date
@@ -18,12 +19,18 @@ class ReferenceAPITest(ApiTestCase):
 
     def _seed_data(self):
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
-        other_user_data = self.add_user('someuser@mail.com')
+        self.other_user_data = self.add_user('someuser@mail.com')
 
         test_event = self.add_event()
         test_event.add_event_role('admin', 1)
         self.test_event_data = copy.deepcopy(test_event.__dict__)
         self.add_to_db(test_event)
+
+        nomination_event = self.add_event(key="AWARD_NOMINATIONS_ONLY")
+        nomination_event.add_event_role('admin', 1)
+        self.test_nomination_event_data = copy.deepcopy(nomination_event.__dict__)
+        self.add_to_db(nomination_event)
+
         self.test_form = self.create_application_form(test_event.id, True, False)
         self.add_to_db(self.test_form)
 
@@ -51,8 +58,14 @@ class ReferenceAPITest(ApiTestCase):
         db.session.commit()
 
         self.test_response = Response(
-            self.test_form.id, other_user_data.id)
+            self.test_form.id, self.other_user_data.id)
         self.add_to_db(self.test_response)
+        answers = [Answer(self.test_response.id, question.id,
+                          "answer to '{}' from section {}".format(question.headline, question.section_id))
+                   for question in questions]
+        db.session.add_all(answers)
+        db.session.commit()
+
         self.headers = self.get_auth_header_for("someuser@mail.com")
 
         db.session.flush()
@@ -92,10 +105,26 @@ class ReferenceAPITest(ApiTestCase):
         reference_request_repository.create(reference_req2)
         response = self.app.get(
             '/api/v1/reference-request/list', data={'response_id':1}, headers=self.headers)
-        LOGGER.debug(response.data)
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 2)
+
+    def test_get_reference_request_detail_by_token(self):
+        self._seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        response = self.app.get(
+                '/api/v1/reference-request/detail', data={'token': reference_req.token}, headers=self.headers)
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('name' in data['candidate'])
+        self.assertTrue('email' in data['candidate'])
+        self.assertEqual(data['relation'], reference_req.relation)
+        self.assertEqual(data['name'], self.test_event_data['name'])
+        self.assertEqual(data['description'], self.test_event_data['description'])
+        self.assertEqual(data['is_application_open'], True)
+        self.assertEqual(data['email_from'], self.test_event_data['email_from'])
+        self.assertIsNone(data['reference_submitted_timestamp'])
 
     def test_reference_api(self):
         self._seed_data()
