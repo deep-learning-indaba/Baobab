@@ -434,7 +434,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Enter 300-500 words',
         order=1,
         questionType='long-text',
-        validation_regex='^\s*(\S+(\s+|$)){300,500}$',
+        validation_regex=r'^\s*(\S+(\s+|$)){300,500}$',
         is_required=True,
         description='Describe the work/project. In particular, describe the role of machine learning and/or artificial intelligence (300-500 words)'
     )
@@ -445,7 +445,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Enter 150-200 words',
         order=2,
         questionType='long-text',
-        validation_regex='^\s*(\S+(\s+|$)){150,200}$',
+        validation_regex=r'^\s*(\S+(\s+|$)){150,200}$',
         is_required=True,
         description='Describe who is benefitting from this work (location, how many people etc). Describe how this work is positively affecting this group (150-200 words)'
     )
@@ -456,7 +456,7 @@ For any queries, please email awards@deeplearningindaba.com.
         placeholder='Enter 150-200 words',
         order=3,
         questionType='long-text',
-        validation_regex='^\s*(\S+(\s+|$)){150,200}$',
+        validation_regex=r'^\s*(\S+(\s+|$)){150,200}$',
         is_required=True,
         description='Describe the novel parts of the work, what difference it is making, or how it is moving Africa forwards (150-200 words)'
     )
