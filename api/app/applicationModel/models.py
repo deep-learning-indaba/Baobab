@@ -25,7 +25,6 @@ class Section(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    # TODO: add 'key' column that gives the section a "type" such as "nomination" to be easily retrieved
 
     def __init__(self, application_form_id, name, description, order):
         self.application_form_id = application_form_id
