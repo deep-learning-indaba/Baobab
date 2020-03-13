@@ -28,6 +28,7 @@ class Section(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
+    # TODO: add 'key' column that gives the section a "type" such as "nomination" to be easily retrieved
 
     def __init__(self, application_form_id, name, description, order):
         self.application_form_id = application_form_id
