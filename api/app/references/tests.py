@@ -103,7 +103,6 @@ class ReferenceAPITest(ApiTestCase):
         reference_request_repository.create(reference_req2)
         response = self.app.get(
             '/api/v1/reference-request/list', data={'response_id':1}, headers=self.headers)
-        LOGGER.debug(response.data)
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 2)
@@ -114,7 +113,6 @@ class ReferenceAPITest(ApiTestCase):
         reference_request_repository.create(reference_req)
         response = self.app.get(
                 '/api/v1/reference-request/detail', data={'token': reference_req.token}, headers=self.headers)
-        LOGGER.debug(response.data)
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue('name' in data['candidate'])

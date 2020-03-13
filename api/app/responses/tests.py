@@ -14,11 +14,6 @@ from app.organisation.models import Organisation
 from app.responses.repository import ResponseRepository as response_repository
 
 
-def _add_object_to_db(obj):
-    db.session.add(obj)
-    db.session.commit()
-
-
 class ResponseApiTest(ApiTestCase):
     user_data_dict = {
         'email': 'something@email.com',
@@ -59,11 +54,11 @@ class ResponseApiTest(ApiTestCase):
 
         # Add country
         test_country = Country('Indaba Land')
-        _add_object_to_db(test_country)
+        self.add_to_db(test_country)
 
         # Add category
         test_category = UserCategory('Category1')
-        _add_object_to_db(test_category)
+        self.add_to_db(test_category)
 
         # Add users to database
         other_user_data = self.user_data_dict.copy()
@@ -83,22 +78,22 @@ class ResponseApiTest(ApiTestCase):
                 self.test_event.id, True)
         self.test_section = Section(
                 self.test_form.id, 'Test Section', 'Test Description', 1)
-        _add_object_to_db(self.test_section)
+        self.add_to_db(self.test_section)
         self.test_question = Question(self.test_form.id, self.test_section.id,
                                       'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
-        _add_object_to_db(self.test_question)
+        self.add_to_db(self.test_question)
         self.test_question2 = Question(
                 self.test_form.id, self.test_section.id, 'Test Question 2', 'Enter something', 2, 'short-text', None)
-        _add_object_to_db(self.test_question2)
+        self.add_to_db(self.test_question2)
 
         # responses
         self.test_response = Response(
                 self.test_form.id, self.other_user_data['id'])
-        _add_object_to_db(self.test_response)
+        self.add_to_db(self.test_response)
 
         self.test_answer1 = Answer(
                 self.test_response.id, self.test_question.id, 'My Answer')
-        _add_object_to_db(self.test_answer1)
+        self.add_to_db(self.test_answer1)
 
         self.responses = []
         for user in self.test_users:
@@ -115,7 +110,7 @@ class ResponseApiTest(ApiTestCase):
                 self.test_event.id, True, True)
         self.test_nomination_response = Response(
                 self.test_nomination_form.id, self.other_user_data['id'])
-        _add_object_to_db(self.test_nomination_response)
+        self.add_to_db(self.test_nomination_response)
 
         db.session.flush()
 
