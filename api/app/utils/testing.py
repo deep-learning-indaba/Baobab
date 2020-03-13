@@ -58,7 +58,7 @@ class ApiTestCase(unittest.TestCase):
         if len(self.firstnames):
             return self.firstnames, self.lastnames
 
-        if os.file.exists("/code/api/app/utils/names.txt"):
+        if os.path.exists("/code/api/app/utils/names.txt"):
             with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
         else:
