@@ -22,10 +22,11 @@ class ReferenceAPITest(ApiTestCase):
 
         test_event = self.add_event()
         test_event.add_event_role('admin', 1)
+
         self.add_to_db(test_event)
         self.test_form = self.create_application_form(test_event.id, True, False)
         self.add_to_db(self.test_form)
-        
+
         self.test_response = Response(
             self.test_form.id, other_user_data.id)
         self.add_to_db(self.test_response)
@@ -36,10 +37,10 @@ class ReferenceAPITest(ApiTestCase):
     def test_create_reference_request(self):
         self._seed_data()
         REFERENCE_REQUEST_DETAIL = {
-            'response_id':1, 
+            'response_id':1,
             'title': 'Mr',
             'firstname': 'John',
-            'lastname':'Snow', 
+            'lastname':'Snow',
             'relation' : 'Suppervisor',
             'email' :'common@email.com'
         }
@@ -94,3 +95,67 @@ class ReferenceAPITest(ApiTestCase):
         reference_request = reference_request_repository.get_by_id(1)
         self.assertEqual(reference_request.has_reference(), True)
 
+    def test_reference_api_update(self):
+        self._seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        REFERENCE_DETAIL = {
+            'token':reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        REFERENCE_DETAIL_2 = {
+            'token':reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-79000',
+        }
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.headers)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.put(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.get(
+            '/api/v1/reference', data={'response_id':1}, headers=self.headers)
+        LOGGER.debug(response.data)
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 1)
+        reference_request = reference_request_repository.get_by_id(1)
+        self.assertEqual(reference_request.has_reference(), True)
+        reference = reference_request_repository.get_reference_by_reference_request_id(reference_request.id)
+        self.assertEqual(reference.uploaded_document, REFERENCE_DETAIL_2['uploaded_document'])
+
+    def test_reference_application_closed(self):
+
+        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
+        other_user_data = self.add_user('someuser@mail.com')
+
+        test_event = self.add_event()
+        test_event.add_event_role('admin', 1)
+        test_event.set_application_close(datetime.now())
+
+        self.add_to_db(test_event)
+        self.test_form = self.create_application_form(test_event.id, True, False)
+        self.add_to_db(self.test_form)
+
+        self.test_response = Response(
+            self.test_form.id, other_user_data.id)
+        self.add_to_db(self.test_response)
+        self.headers = self.get_auth_header_for("someuser@mail.com")
+
+        db.session.flush()
+
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        REFERENCE_DETAIL = {
+            'token':reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.headers)
+        self.assertEqual(response.status_code, 403)
+
+        response = self.app.put(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.headers)
+        self.assertEqual(response.status_code, 403)

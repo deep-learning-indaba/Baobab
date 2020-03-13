@@ -166,6 +166,10 @@ ol.progtrckr li.progtrckr-done:hover:before {
   margin-top: .25em;
 }
 
+.custom-checkbox {
+  margin-right: 1.5em;
+}
+
 @media (max-width: 650px) {
   .progtrckr li span {
     display: none;
