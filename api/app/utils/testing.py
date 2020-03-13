@@ -57,19 +57,18 @@ class ApiTestCase(unittest.TestCase):
         """Retrieve a list of names from a text file for testing"""
         if len(self.firstnames):
             return self.firstnames, self.lastnames
-        if os.file.exists("/opt/project/api/app/utils/names.txt"):
+
+        if os.file.exists("/code/api/app/utils/names.txt"):
+            with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
         else:
             # why yes, these are names of African Hollywood actors (according to Wikipedia)
             names = ["Mehcad Brooks", "Malcolm Barrett", "Nick Cannon", "Lamorne Morris", "Neil Brown Jr.",
                      "William Jackson Harper", "Marques Houston", "Jennifer Hudson", "Alicia Keys", "Meghan Markle",
-                     "Beyoncé Knowles", "Jesse Williams", "Lance Gross", "Hosea Chanchez", "Daveed Diggs",
+                     "Beyonce Knowles", "Jesse Williams", "Lance Gross", "Hosea Chanchez", "Daveed Diggs",
                      "Damon Wayans Jr.", "Columbus Short", "Terrence Jenkins", "Ron Funches", "Jussie Smollett",
                      "Donald Glover", "Brian Tyree Henry", "Gabourey Sidibe", "Trai Byers", "Robert Ri'chard",
                      "Arjay Smith", "Tessa Thompson", "J.Lee", "Lauren London", "DeVaughn Nixon", "Rob Brown", ]
-            with open("/opt/project/api/app/utils/names.txt") as file_with_names:
-        with open("/code/api/app/utils/names.txt") as file_with_names:
-            names = file_with_names.readlines()
         for _name in names:
             split_name = _name.strip().split(" ")
             self.firstnames.append(split_name[0])
