@@ -1,6 +1,9 @@
 import React from "react";
 import FormGroup from "../../../components/form/FormGroup";
 import FormToolTip from "../../../components/form/FormToolTip";
+import { referenceService } from "../../../services/references/reference.service";
+import find from "lodash.find";
+import ReactToolTip from "react-tooltip";
 
 class ReferenceRequestRow extends React.Component {
     constructor(props) {
@@ -8,9 +11,6 @@ class ReferenceRequestRow extends React.Component {
         this.state = {
 
         }
-    }
-
-    componentDidMount() {
     }
 
     onChange = e => {
@@ -89,9 +89,20 @@ class ReferenceRequestRow extends React.Component {
                             required="true"
                         />
                     </div>
-                    <div className="col-auto reference-delete">
-                        {/* Todo: Remove button if request already sent (add a checkmark instead?) */}
-                        {this.props.minReferences && this.props.referenceNumber > this.props.minReferences
+                    <div className="col-auto reference-status">
+                        {this.props.referenceRequest.loading &&
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        }
+
+                        {this.props.referenceRequest.emailSent &&
+                            (this.props.referenceRequest.referenceSubmitted
+                                ? <div><i className="fas fas-check-double text-success" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>
+                                : <div><i className="fas fas-check" data-top="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
+                        }
+
+                        {(!this.props.emailSent) && this.props.minReferences && this.props.referenceNumber > this.props.minReferences
                             && <button className="link-style" onClick={this.deleteReference}><i className="fas fa-trash text-danger"></i></button>
                         }
 
@@ -111,26 +122,54 @@ class FormReferenceRequest extends React.Component {
         };
     }
 
+    getRequestStatus = () => {
+        if (this.props.responseId) {
+            referenceService.getReferenceRequests(this.props.responseId).then(response => {
+                // Map email_sent and reference_submitted to state.referenceRequests
+                if (response.requests) {
+                    this.setState(prevState => {
+                        let updatedReferenceRequests = prevState.referenceRequests.map(r => {
+                            let requestStatus = find(response.requests, s => s.id === r.id);
+                            return {
+                                ...r,
+                                emailSent: requestStatus ? requestStatus.email_sent : false,
+                                referenceSubmitted: requestStatus ? requestStatus.reference_submitted : false,
+                                loading: false
+                            }
+                        })
+                        return {
+                            referenceRequests: updatedReferenceRequests
+                        };
+                    });
+                }
+            });
+        }
+    }
+
     componentDidMount() {
         var initialReferenceRequests = this.props.defaultValue || [];
+        for (var i = 0; i < initialReferenceRequests.length; i++) {
+            initialReferenceRequests.loading = true;
+        }
         var minId = -1;
         if (this.props.options.min_num_referrals > initialReferenceRequests.length) {
-            for(var i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
+            for (var i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
                 initialReferenceRequests.push({
                     id: minId--,
                     title: null,
                     firstname: null,
                     lastname: null,
                     email: null,
-                    relation: null
+                    relation: null,
+                    loading: false
                 });
             }
         }
-        
+
         this.setState({
             referenceRequests: initialReferenceRequests,
             minId: minId
-        });
+        }, this.getRequestStatus);
     }
 
     shouldDisplayError = () => {
@@ -204,7 +243,7 @@ class FormReferenceRequest extends React.Component {
                             onChange={this.onChange}
                             onDelete={this.onDelete}
                             minReferences={this.props.options.min_num_referrals}
-                            referenceNumber={i+1}
+                            referenceNumber={i + 1}
                         />)
                     }</div>
                     {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
@@ -214,9 +253,6 @@ class FormReferenceRequest extends React.Component {
             </div>
         )
     }
-
-
-
 }
 
 export default FormReferenceRequest;
