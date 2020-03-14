@@ -118,7 +118,8 @@ class FormReferenceRequest extends React.Component {
         super(props);
         this.state = {
             referenceRequests: [],
-            minId: 0
+            minId: 0,
+            error: null
         };
     }
 
@@ -142,6 +143,11 @@ class FormReferenceRequest extends React.Component {
                         };
                     });
                 }
+                else if (response.error) {
+                    this.setState({
+                        error: response.error
+                    });
+                }
             });
         }
     }
@@ -161,7 +167,8 @@ class FormReferenceRequest extends React.Component {
                     lastname: null,
                     email: null,
                     relation: null,
-                    loading: false
+                    loading: false,
+                    error: null
                 });
             }
         }
@@ -218,6 +225,52 @@ class FormReferenceRequest extends React.Component {
         });
     }
 
+    submit = e => {
+        this.setState(prevState => ({
+            referenceRequests: prevState.referenceRequests.map(r => ({
+                ...r,
+                loading: r.id < 0
+            }))
+        }));
+
+        this.state.referenceRequests
+            .filter(r=>r.id < 0 && !r.emailSent)
+            .forEach(rr=>{
+                referenceService.requestReference(this.props.responseId, rr.title, rr.firstname, rr.lastname, rr.email, rr.relation)
+                .then(response => {
+                    this.setState(prevState => ({
+                        referenceRequests: prevState.referenceRequests.map(r=> {
+                            if (r.id == rr.id) {
+                                if (response.referenceRequest) {
+                                    return {
+                                        id: response.referenceRequest.id,
+                                        title: response.referenceRequest.title,
+                                        firstname: response.referenceRequest.firstname,
+                                        lastname: response.referenceRequest.lastname,
+                                        email: response.referenceRequest.email,
+                                        relation: response.referenceRequest.relation,
+                                        loading: false,
+                                        error: null,
+                                        emailSent: response.referenceRequest.email_sent,
+                                        referenceSubmitted: response.referenceRequest.reference_submitted
+                                    };
+                                }
+                                else if (response.error) {
+                                    return {
+                                        ...rr,
+                                        error: response.error
+                                    };
+                                }
+                            }
+                            else {
+                                return r;
+                            }
+                        })
+                    }))
+                });
+            });
+    }
+
     render() {
         const { referenceRequests } = this.state;
         return (
@@ -249,6 +302,7 @@ class FormReferenceRequest extends React.Component {
                     {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
                         <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
                     }
+                    <button className="btn btn-primary btn-sm" onClick={this.submit}>Request References</button>
                 </FormGroup>
             </div>
         )
