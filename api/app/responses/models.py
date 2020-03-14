@@ -20,8 +20,7 @@ class Response(db.Model):
     answers = db.relationship('Answer')
 
     def __init__(self, application_form_id, user_id, is_submitted=False, submitted_timestamp=None,
-                 is_withdrawn=False, withdrawn_timestamp=None
-                 ):
+                 is_withdrawn=False, withdrawn_timestamp=None):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = is_submitted
