@@ -2,7 +2,7 @@ import React from "react";
 import FormGroup from "../../../components/form/FormGroup";
 import FormToolTip from "../../../components/form/FormToolTip";
 import { referenceService } from "../../../services/references/reference.service";
-import find from "lodash.find";
+import _ from "lodash";
 import ReactToolTip from "react-tooltip";
 
 class ReferenceRequestRow extends React.Component {
@@ -130,7 +130,7 @@ class FormReferenceRequest extends React.Component {
                 if (response.requests) {
                     this.setState(prevState => {
                         let updatedReferenceRequests = prevState.referenceRequests.map(r => {
-                            let requestStatus = find(response.requests, s => s.id === r.id);
+                            let requestStatus = _.find(response.requests, s => s.id === r.id);
                             return {
                                 ...r,
                                 emailSent: requestStatus ? requestStatus.email_sent : false,
@@ -154,12 +154,12 @@ class FormReferenceRequest extends React.Component {
 
     componentDidMount() {
         var initialReferenceRequests = this.props.defaultValue || [];
-        for (var i = 0; i < initialReferenceRequests.length; i++) {
+        for (let i = 0; i < initialReferenceRequests.length; i++) {
             initialReferenceRequests.loading = true;
         }
-        var minId = -1;
+        let minId = -1;
         if (this.props.options.min_num_referrals > initialReferenceRequests.length) {
-            for (var i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
+            for (let i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
                 initialReferenceRequests.push({
                     id: minId--,
                     title: null,
@@ -191,7 +191,7 @@ class FormReferenceRequest extends React.Component {
 
     onChange = (id, name, value) => {
         this.setState(prevState => {
-            var updatedReferenceRequest = prevState.referenceRequests.find(r => r.id === id);
+            var updatedReferenceRequest = _.find(prevState.referenceRequests, r => r.id === id);
             updatedReferenceRequest[name] = value;
             return {
                 referenceRequests: prevState.referenceRequests.map(r => {
@@ -240,7 +240,7 @@ class FormReferenceRequest extends React.Component {
                 .then(response => {
                     this.setState(prevState => ({
                         referenceRequests: prevState.referenceRequests.map(r=> {
-                            if (r.id == rr.id) {
+                            if (r.id === rr.id) {
                                 if (response.referenceRequest) {
                                     return {
                                         id: response.referenceRequest.id,
@@ -255,7 +255,7 @@ class FormReferenceRequest extends React.Component {
                                         referenceSubmitted: response.referenceRequest.reference_submitted
                                     };
                                 }
-                                else if (response.error) {
+                                else {
                                     return {
                                         ...rr,
                                         error: response.error

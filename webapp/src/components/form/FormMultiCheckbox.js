@@ -34,7 +34,7 @@ class FormMultiCheckbox extends React.Component {
 
   onCheckChanged = (option, checked) => {
     this.setState(prevState => {
-      var newChecked = prevState.checked.filter(c => c != option.value);
+      var newChecked = prevState.checked.filter(c => c !== option.value);
       if (checked) {
         newChecked.push(option.value);
       }

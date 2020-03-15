@@ -4,7 +4,8 @@ import { authHeader } from "../base.service";
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const referenceService = {
-    getReferenceRequests
+    getReferenceRequests,
+    requestReference
 }
 
 function getReferenceRequests(responseId) {
@@ -35,7 +36,7 @@ function getReferenceRequests(responseId) {
 }
 
 function requestReference(responseId, title, firstname, lastname, email, relation) {
-    data = {
+    let data = {
         response_id: responseId,
         title: title,
         firstname: firstname,
