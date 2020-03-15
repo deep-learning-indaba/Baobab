@@ -5,6 +5,10 @@ import { referenceService } from "../../../services/references/reference.service
 import _ from "lodash";
 import ReactToolTip from "react-tooltip";
 
+// TODO: Add validation to enforce that references must be requested first.
+// TODO: Add validation that fields must be filled in before references can be requested.
+// TODO: Set value in application form after requesting references and trigger saving response (so that reference requests and application form state is set)
+
 class ReferenceRequestRow extends React.Component {
     constructor(props) {
         super(props);
@@ -38,7 +42,8 @@ class ReferenceRequestRow extends React.Component {
                             placeholder="Title"
                             value={this.props.referenceRequest.title}
                             onChange={this.onChange}
-                            required="true"
+                            required={!this.props.referenceRequest.emailSent}
+                            readOnly={this.props.referenceRequest.emailSent}
                         />
                     </div>
                     <div className="col-sm">
@@ -50,7 +55,8 @@ class ReferenceRequestRow extends React.Component {
                             placeholder="Firstname"
                             value={this.props.referenceRequest.firstname}
                             onChange={this.onChange}
-                            required="true"
+                            required={!this.props.referenceRequest.emailSent}
+                            readOnly={this.props.referenceRequest.emailSent}
                         />
                     </div>
                     <div className="col-sm">
@@ -62,7 +68,8 @@ class ReferenceRequestRow extends React.Component {
                             placeholder="Lastname"
                             value={this.props.referenceRequest.lastname}
                             onChange={this.onChange}
-                            required="true"
+                            required={!this.props.referenceRequest.emailSent}
+                            readOnly={this.props.referenceRequest.emailSent}
                         />
                     </div>
                     <div className="col-sm">
@@ -74,7 +81,8 @@ class ReferenceRequestRow extends React.Component {
                             placeholder="Email"
                             value={this.props.referenceRequest.email}
                             onChange={this.onChange}
-                            required="true"
+                            required={!this.props.referenceRequest.emailSent}
+                            readOnly={this.props.referenceRequest.emailSent}
                         />
                     </div>
                     <div className="col-sm">
@@ -86,7 +94,8 @@ class ReferenceRequestRow extends React.Component {
                             placeholder="Relation"
                             value={this.props.referenceRequest.relation}
                             onChange={this.onChange}
-                            required="true"
+                            required={!this.props.referenceRequest.emailSent}
+                            readOnly={this.props.referenceRequest.emailSent}
                         />
                     </div>
                     <div className="col-auto reference-status">
@@ -98,8 +107,8 @@ class ReferenceRequestRow extends React.Component {
 
                         {this.props.referenceRequest.emailSent &&
                             (this.props.referenceRequest.referenceSubmitted
-                                ? <div><i className="fas fas-check-double text-success" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>
-                                : <div><i className="fas fas-check" data-top="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
+                                ? <div><i className="fas fa-check-double text-success" data-top="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
+                                : <div><i className="fas fa-check" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
                         }
 
                         {(!this.props.emailSent) && this.props.minReferences && this.props.referenceNumber > this.props.minReferences
@@ -108,6 +117,9 @@ class ReferenceRequestRow extends React.Component {
 
                     </div>
                 </div>
+                {this.props.referenceRequest.error && <div class="row no-gutters">
+                    <span className="text-danger">ERROR: {JSON.stringify(this.props.referenceRequest.error)}</span>
+                </div>}
             </div>
         )
     }
@@ -153,30 +165,59 @@ class FormReferenceRequest extends React.Component {
     }
 
     componentDidMount() {
-        var initialReferenceRequests = this.props.defaultValue || [];
-        for (let i = 0; i < initialReferenceRequests.length; i++) {
-            initialReferenceRequests.loading = true;
-        }
-        let minId = -1;
-        if (this.props.options.min_num_referrals > initialReferenceRequests.length) {
-            for (let i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
-                initialReferenceRequests.push({
-                    id: minId--,
-                    title: null,
-                    firstname: null,
-                    lastname: null,
-                    email: null,
-                    relation: null,
-                    loading: false,
-                    error: null
-                });
-            }
-        }
-
         this.setState({
-            referenceRequests: initialReferenceRequests,
-            minId: minId
-        }, this.getRequestStatus);
+            loading: true
+        });
+
+        if (this.props.responseId) {
+            referenceService.getReferenceRequests(this.props.responseId).then(response => {
+                // Map email_sent and reference_submitted to state.referenceRequests
+                if (response.requests) {
+                    let initialReferenceRequests = response.requests.map(r => ({
+                        id: r.id,
+                        key: r.id,
+                        title: r.title,
+                        firstname: r.firstname,
+                        lastname: r.lastname,
+                        email: r.email,
+                        relation: r.relation,
+                        loading: false,
+                        error: null,
+                        emailSent: !!r.email_sent,
+                        referenceSubmitted: r.reference_submitted
+                    }));
+
+                    let minId = -1;
+
+                    for (let i = initialReferenceRequests.length; i < this.props.options.min_num_referrals; i++) {
+                        initialReferenceRequests.push({
+                            id: minId - 1,
+                            key: minId - 1,
+                            title: '',
+                            firstname: '',
+                            lastname: '',
+                            email: '',
+                            relation: '',
+                            loading: false,
+                            error: null
+                        });
+                        minId--;
+                    }
+
+                    this.setState({
+                        referenceRequests: initialReferenceRequests,
+                        minId: minId,
+                        loading: false
+                    });
+                }
+                else {
+                    this.setState({
+                        loading: false,
+                        error: response.error
+                    });
+                }
+            });
+        }
     }
 
     shouldDisplayError = () => {
@@ -214,11 +255,14 @@ class FormReferenceRequest extends React.Component {
             return {
                 referenceRequests: [...prevState.referenceRequests, {
                     id: prevState.minId - 1,
-                    title: null,
-                    firstname: null,
-                    lastname: null,
-                    email: null,
-                    relation: null
+                    key: prevState.minId - 1,
+                    title: '',
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    relation: '',
+                    loading: false,
+                    error: null
                 }],
                 minId: prevState.minId - 1
             };
@@ -234,40 +278,41 @@ class FormReferenceRequest extends React.Component {
         }));
 
         this.state.referenceRequests
-            .filter(r=>r.id < 0 && !r.emailSent)
-            .forEach(rr=>{
+            .filter(r => r.id < 0 && !r.emailSent)
+            .forEach(rr => {
                 referenceService.requestReference(this.props.responseId, rr.title, rr.firstname, rr.lastname, rr.email, rr.relation)
-                .then(response => {
-                    this.setState(prevState => ({
-                        referenceRequests: prevState.referenceRequests.map(r=> {
-                            if (r.id === rr.id) {
-                                if (response.referenceRequest) {
-                                    return {
-                                        id: response.referenceRequest.id,
-                                        title: response.referenceRequest.title,
-                                        firstname: response.referenceRequest.firstname,
-                                        lastname: response.referenceRequest.lastname,
-                                        email: response.referenceRequest.email,
-                                        relation: response.referenceRequest.relation,
-                                        loading: false,
-                                        error: null,
-                                        emailSent: response.referenceRequest.email_sent,
-                                        referenceSubmitted: response.referenceRequest.reference_submitted
-                                    };
+                    .then(response => {
+                        this.setState(prevState => ({
+                            referenceRequests: prevState.referenceRequests.map(r => {
+                                if (r.id === rr.id) {
+                                    if (response.referenceRequest) {
+                                        return {
+                                            id: response.referenceRequest.id,
+                                            key: r.key,
+                                            title: response.referenceRequest.title,
+                                            firstname: response.referenceRequest.firstname,
+                                            lastname: response.referenceRequest.lastname,
+                                            email: response.referenceRequest.email,
+                                            relation: response.referenceRequest.relation,
+                                            loading: false,
+                                            error: null,
+                                            emailSent: !!response.referenceRequest.email_sent,
+                                            referenceSubmitted: response.referenceRequest.reference_submitted
+                                        };
+                                    }
+                                    else {
+                                        return {
+                                            ...rr,
+                                            error: response.error
+                                        };
+                                    }
                                 }
                                 else {
-                                    return {
-                                        ...rr,
-                                        error: response.error
-                                    };
+                                    return r;
                                 }
-                            }
-                            else {
-                                return r;
-                            }
-                        })
-                    }))
-                });
+                            })
+                        }))
+                    });
             });
     }
 
@@ -291,7 +336,7 @@ class FormReferenceRequest extends React.Component {
                     </div>
                     <div>{referenceRequests.map((r, i) =>
                         <ReferenceRequestRow
-                            key={'rr_' + r.id}
+                            key={'rr_' + r.key}
                             referenceRequest={r}
                             onChange={this.onChange}
                             onDelete={this.onDelete}
@@ -303,6 +348,10 @@ class FormReferenceRequest extends React.Component {
                         <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
                     }
                     <button className="btn btn-primary btn-sm" onClick={this.submit}>Request References</button>
+                    {this.state.error && <div className="text-danger">ERROR: {JSON.stringify(this.state.error)}</div>}
+                    {this.state.loading && <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>}
                 </FormGroup>
             </div>
         )
