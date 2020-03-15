@@ -51,7 +51,7 @@ class FormMultiCheckbox extends React.Component {
 
   renderFormCheckbox = (option) => {
     return (
-      <div class="custom-control custom-checkbox">
+      <div class="custom-control custom-checkbox" key={option.value}>
         <input
           id={"checkbox_" + option.value}
           className={
@@ -68,7 +68,7 @@ class FormMultiCheckbox extends React.Component {
             this.nameInput = input;
           }}
         />
-        <label class="custom-control-label" for={"checkbox_" + option.value}>{option.label}</label>
+        <label class="custom-control-label" htmlFor={"checkbox_" + option.value}>{option.label}</label>
       </div>
     );
   }
