@@ -235,6 +235,12 @@ class UserProfileView():
         self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
 
 
+class UserProfileListView(UserProfileView):
+    def __init__(self, user_response):
+        super(UserProfileListView, self).__init__(user_response)
+        self.type = None
+
+
 user_profile_list_fields = {
     'user_id': fields.Integer,
     'email': fields.String,

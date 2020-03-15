@@ -107,6 +107,9 @@ class ApiTestCase(unittest.TestCase):
                     is_admin=False,
                     post_create_fn=lambda x: None):
         firstnames, lastnames = self._get_names()
+
+        users = []
+
         for i in range(n):
             title = random.choice(titles)
             firstname = random.choice(firstnames)
@@ -116,10 +119,13 @@ class ApiTestCase(unittest.TestCase):
                                                                        num=len(self.test_users))
             email = strip_accents(email)
             try:
-                self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                users.append(user)
             except ProgrammingError as err:
                 LOGGER.debug("info not added for user: {} {} {} {}".format(email, firstname, lastname, title))
                 db.session.rollback()
+
+        return users
 
     def setUp(self):
         app.config['TESTING'] = True

@@ -368,28 +368,6 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
 
-    def test_user_profile_list(self):
-        self.seed_static_data()
-        self.setup_responses()
-        header = self.get_auth_header_for('ea@ea.com')
-        params = {'event_id': 1}
-
-        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
-
-        data = json.loads(response.data)
-        data = sorted(data, key=lambda k: k['user_id'])
-
-        self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]['user_id'], 1)
-        self.assertEqual(data[0]['is_submitted'], True)
-        self.assertEqual(data[0]['submitted_timestamp'], u'2019-04-10T00:00:00')
-        self.assertEqual(data[0]['is_withdrawn'], False)
-        self.assertEqual(data[0]['withdrawn_timestamp'], None)
-        self.assertEqual(data[1]['user_id'], 2)
-        self.assertEqual(data[1]['is_submitted'], True)
-        self.assertEqual(data[1]['submitted_timestamp'], u'2019-04-09T00:00:00')
-        self.assertEqual(data[1]['is_withdrawn'], True)
-        self.assertEqual(data[1]['withdrawn_timestamp'], u'2019-04-11T00:00:00')
 
 class UserCommentAPITest(ApiTestCase):
 
@@ -471,6 +449,143 @@ class UserCommentAPITest(ApiTestCase):
             self.assertEqual(comment_list[1]['comment_by_user_firstname'], self.user2['firstname'])
             self.assertEqual(comment_list[1]['comment_by_user_lastname'], self.user2['lastname'])
             self.assertEqual(comment_list[1]['comment'], self.comment2.comment)
+
+
+class UserProfileListApiTest(ApiTestCase):
+    def setup_responses(self):
+        application_forms = [
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
+        ]
+        db.session.add_all(application_forms)
+
+        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
+        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+        users = [candidate1, candidate2, candidate3, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_role = EventRole('admin', 4, 1)
+        db.session.add(event_role)
+
+        responses = [
+            Response(1, 1, True, datetime(2019, 4, 10)),
+            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
+            Response(2, 3, True)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+
+    def _setup(self):
+        # Create event and event dependencies
+        org = self.add_organisation('Deep Learning Indaba')
+
+        event = self.add_event(
+            'Indaba',
+            'Indaba Event',
+            datetime.now(),
+            datetime.now(),
+            'SOUTHAFRI2019'
+        )
+        self.event_id = event.id
+
+        self.application_form = self.create_application_form(self.event.id, True, False)
+
+        # Create admin user
+        # self.event_admin =  self.add_user(
+        #     email='ea@ea.com',
+        #     firstname='event_admin',
+        #     lastname='1',
+        #     user_title='Ms',
+        #     password='abc',
+        #     organisation_id=org.id,
+        #     is_admin=True
+        # )
+        self.event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+
+        # event_role = EventRole('admin', self.event_admin.id, self.event.id)
+        # db.session.add(event_role)
+
+        # add users responses + invited guests
+        self.event_admin.verify()
+        db.session.add(self.event_admin)
+
+        self.users = self.add_n_users(5)
+        for user in self.users:
+            user.verify()
+        db.session.add_all(self.users)
+
+        db.session.commit()
+
+
+
+    def test_event_does_not_exist(self):
+        """
+        Test that filtering on a nonexistent event 404s.
+        """
+        self._setup()
+
+        header = self.get_auth_header_for(self.event_admin.email)
+        params = {'event_id': 1337}  # lookup any event that does not exist
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # self.assertEqual(response.status_code, 404)
+
+        self.assertTrue(False)
+
+    def test_is_not_active_or_deleted(self):
+        """
+        Test that inactive or deleted users are not returned.
+        """
+        self._setup()
+
+        self.users[0].active = False
+        self.users[1].deleted = True
+        self.users[2].active = False
+        self.users[2].deleted = True
+
+        # Add resposes for these users so that the response filter does not remove them.
+        responses = [
+            Response(
+                self.application_form.id, self.users[i].id, True, datetime(2019, 4, 10)
+            ) for i in range(3)
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event_admin.email)
+        params = {'event_id': self.event_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {})
+
+        self.assertTrue(False)
+
+    def test_no_response_and_not_invited(self):
+        """
+        Users that are not invited and have not responded should not be returned.
+        """
+        self.assertTrue(False)
+
+    def test_response_and_not_invited(self):
+        pass
+
+    def test_no_response_and_invited(self):
+        pass
+
+    def test_response_and_invited(self):
+        pass
+
+    def test_multiple_users(self):
+        pass
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):
