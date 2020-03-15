@@ -46,7 +46,7 @@ function requestReference(responseId, title, firstname, lastname, email, relatio
     };
 
     return axios
-        .post(baseUrl + "/api/v1/registration-response", data, {
+        .post(baseUrl + "/api/v1/reference-request", data, {
             headers: authHeader()
         })
         .then(function (response) {
@@ -58,7 +58,7 @@ function requestReference(responseId, title, firstname, lastname, email, relatio
         .catch(function (error) {
             return {
                 error:
-                    error.response && error.response.data && error.respose.data.message
+                    error.response && error.response.data && error.response.data.message
                         ? error.response.data.message
                         : error.message,
                 referenceRequest: null
