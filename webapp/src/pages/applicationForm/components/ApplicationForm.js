@@ -23,28 +23,25 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 
-const dependentQuestionFilter = (entityToCheckIfShouldShow, allQuestions, allAnswers) => {
-  console.log('a');
-  if (entityToCheckIfShouldShow.dependency_question_id && entityToCheckIfShouldShow.show_for_values) {
-    console.log('b');
-    const depedentOnQuestion = allQuestions.find(question => {
-      return question.id === entityToCheckIfShouldShow.dependency_question_id;
+const showQuestion = (entityToCheckIfShouldShow, savedAnswers, currentAnswers) => {
+  if (entityToCheckIfShouldShow.depends_on_question_id && entityToCheckIfShouldShow.show_for_values) {
+    const currentAnswer = currentAnswers.find(answer => {
+      answer && answer.id === entityToCheckIfShouldShow.depends_on_question_id
     });
-    console.log('c');
-    if (depedentOnQuestion) {
-      console.log('d');
-      const dependentOnAnswer = allAnswers.find(answer => {
-        return answer.question_id === depedentOnQuestion.id;
+    if (currentAnswer === undefined) {
+      // If the currentAnswer hasn't been changed, check the saved answer
+      const savedAnswer = savedAnswers.find(answer => {
+        answer && answer.id === entityToCheckIfShouldShow.depends_on_question_id
       });
-      console.log('e');
-      if (dependentOnAnswer) {
-        console.log('f');
-        const shouldSectionShow = entityToCheckIfShouldShow.show_for_values.values.indexOf(dependentOnAnswer.value) > -1;
-        return shouldSectionShow;
+      if (savedAnswer === undefined) {
+        return false;
+      } else {
+        return entityToCheckIfShouldShow.map(_ => _.show_for_values).indexOf(savedAnswer) > -1;
       }
+    } else if (answer) {
+      return entityToCheckIfShouldShow.map(_ => _.show_for_values).indexOf(savedAnswer) > -1;
     }
   }
-  return true;
 }
 
 class FieldEditor extends React.Component {
@@ -230,6 +227,8 @@ class FieldEditor extends React.Component {
 class Section extends React.Component {
   constructor(props) {
     super(props);
+    console.log('section');
+    console.log(props.questionModels);
     this.state = {
       section: props.section,
       questionModels: props.questionModels
@@ -247,7 +246,6 @@ class Section extends React.Component {
     };
 
     const newQuestionModels = this.state.questionModels
-      .filter(this.props.hideQuestionDueToDependentQuestion)
       .map(q => {
       if (q.question.id !== question.id) {
         return q;
@@ -259,7 +257,7 @@ class Section extends React.Component {
           : "",
         answer: newAnswer
       };
-    });
+    })
 
     this.setState(
       {
@@ -330,6 +328,12 @@ class Section extends React.Component {
     }
   };
 
+  checkIfDependentQuestionShouldBeShown = (question, savedAnswers, currentAnswers) => {
+    return typeof currentAnswer === undefined ?
+      this.props.showEntityBasedOnSavedAnswers(question) :
+      depe
+  }
+
   render() {
     const {
       section,
@@ -337,6 +341,17 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+    const showQuestionDueToDependentQuestion = (question) => {
+      return (
+        this.props.showEntityBasedOnSavedAnswers(question) ||
+        dependentQuestionFilter(question, allQuestionsInSection, allAnswersInSection)
+      )
+    }
+    const allQuestionsInSection = questionModels.map(q => q.question);
+    const allAnswersInSection = questionModels.map(q => q.answer);
+    console.log(questionModels);
+    console.log(allQuestionsInSection);
+    console.log(allAnswersInSection);
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -344,11 +359,9 @@ class Section extends React.Component {
           <p>{section.description}</p>
         </div>
         {questionModels &&
-          questionModels.map(model => {
-            console.log('i');
-            console.log(model);
-            console.log('question_' + model.question.id)
-            return (
+          questionModels
+            .filter(q => showQuestionDueToDependentQuestion(q.question))
+            .map(model => (
               <FieldEditor
                 key={"question_" + model.question.id}
                 question={model.question}
@@ -357,7 +370,7 @@ class Section extends React.Component {
                 onChange={this.onChange}
               />
             )
-          })
+          )
         }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
@@ -762,18 +775,15 @@ class ApplicationForm extends Component {
       }, []);
     }
 
-    console.log(allQuestions);
-
-    const removeSectionOrQuestionDueToDependentQuestion = (question) => {
+    const includeEntityDueToDependentQuestion = (question) => {
       return dependentQuestionFilter(question, allQuestions, this.state.answers);
     }
 
     const sections =
       formSpec.sections &&
       formSpec.sections.slice()
-        .filter((section) => { const keep = removeSectionOrQuestionDueToDependentQuestion(section); console.log(keep); return keep })
+        .filter((section) => { const keep = includeEntityDueToDependentQuestion(section); /*console.log('ii', keep)*/; return keep })
         .sort((a, b) => a.order - b.order);
-    console.log(sections);
     const sectionModels =
       sections &&
       sections.map(section => {
@@ -797,7 +807,7 @@ class ApplicationForm extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
-              hideQuestionDueToDependentQuestion={removeSectionOrQuestionDueToDependentQuestion}
+              showEntityBasedOnSavedAnswers={includeEntityDueToDependentQuestion}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
