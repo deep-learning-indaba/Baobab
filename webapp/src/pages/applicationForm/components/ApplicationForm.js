@@ -23,25 +23,19 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 
-const showQuestion = (entityToCheckIfShouldShow, savedAnswers, currentAnswers) => {
-  if (entityToCheckIfShouldShow.depends_on_question_id && entityToCheckIfShouldShow.show_for_values) {
-    const currentAnswer = currentAnswers.find(answer => {
-      answer && answer.id === entityToCheckIfShouldShow.depends_on_question_id
-    });
-    if (currentAnswer === undefined) {
-      // If the currentAnswer hasn't been changed, check the saved answer
-      const savedAnswer = savedAnswers.find(answer => {
-        answer && answer.id === entityToCheckIfShouldShow.depends_on_question_id
-      });
-      if (savedAnswer === undefined) {
-        return false;
-      } else {
-        return entityToCheckIfShouldShow.map(_ => _.show_for_values).indexOf(savedAnswer) > -1;
-      }
-    } else if (answer) {
-      return entityToCheckIfShouldShow.map(_ => _.show_for_values).indexOf(savedAnswer) > -1;
-    }
-  }
+/*
+ * Utility functions for the feature where questions are dependent on the answers of other questions
+ */
+const isEntityDependentOnAnswer = (entityToCheck) => {
+  return entityToCheck.depends_on_question_id && entityToCheck.show_for_values;
+}
+
+const findDependentQuestionAnswer = (entityToCheck, answers) => {
+  return answers.find(a => a && a.question_id === entityToCheck.depends_on_question_id);
+}
+
+const doesAnswerMatch = (entityToCheck, answer) => {
+  return entityToCheck.show_for_values.map(_ => _.value).indexOf(answer.value) > -1;
 }
 
 class FieldEditor extends React.Component {
@@ -227,8 +221,6 @@ class FieldEditor extends React.Component {
 class Section extends React.Component {
   constructor(props) {
     super(props);
-    console.log('section');
-    console.log(props.questionModels);
     this.state = {
       section: props.section,
       questionModels: props.questionModels
@@ -292,7 +284,10 @@ class Section extends React.Component {
   };
 
   isValidated = () => {
-    const validatedModels = this.state.questionModels.map(q => {
+    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
+    const validatedModels = this.state.questionModels
+    .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+    .map(q => {
       return {
         ...q,
         validationError: this.validate(q)
@@ -328,10 +323,17 @@ class Section extends React.Component {
     }
   };
 
-  checkIfDependentQuestionShouldBeShown = (question, savedAnswers, currentAnswers) => {
-    return typeof currentAnswer === undefined ?
-      this.props.showEntityBasedOnSavedAnswers(question) :
-      depe
+  /*
+   * Only include questions that depend on other question's answers if they match.
+   * If the value has been set, compare with that. If it hasn't been set, compare with the saved value.
+   */
+  dependentQuestionFilter = (question, sectionCurrentAnswers) => {
+    if (isEntityDependentOnAnswer(question)) {
+      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
+      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
+    } else {
+      return true;
+    }
   }
 
   render() {
@@ -341,17 +343,7 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
-    const showQuestionDueToDependentQuestion = (question) => {
-      return (
-        this.props.showEntityBasedOnSavedAnswers(question) ||
-        dependentQuestionFilter(question, allQuestionsInSection, allAnswersInSection)
-      )
-    }
-    const allQuestionsInSection = questionModels.map(q => q.question);
     const allAnswersInSection = questionModels.map(q => q.answer);
-    console.log(questionModels);
-    console.log(allQuestionsInSection);
-    console.log(allAnswersInSection);
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -360,7 +352,7 @@ class Section extends React.Component {
         </div>
         {questionModels &&
           questionModels
-            .filter(q => showQuestionDueToDependentQuestion(q.question))
+            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
             .map(model => (
               <FieldEditor
                 key={"question_" + model.question.id}
@@ -571,7 +563,7 @@ class ApplicationForm extends Component {
 
   componentDidMount() {
     applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
-      console.log('event data retreived: ', response);
+      console.log(response.formSpec);
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -584,7 +576,6 @@ class ApplicationForm extends Component {
 
   loadResponse = () => {
     applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(resp => {
-      console.log('answers: ', resp.response);
       if (resp.response) {
         this.setState({
           responseId: resp.response.id,
@@ -768,21 +759,19 @@ class ApplicationForm extends Component {
       );
     }
 
-    let allQuestions = []
-    if (this.state.formSpec) {
-      allQuestions = this.state.formSpec.sections.reduce((listOfQuestions, sectionToJoin) => {
-        return listOfQuestions.concat(sectionToJoin.questions);
-      }, []);
-    }
-
-    const includeEntityDueToDependentQuestion = (question) => {
-      return dependentQuestionFilter(question, allQuestions, this.state.answers);
+    const includeEntityDueToDependentQuestion = (entity) => {
+      if (isEntityDependentOnAnswer(entity)) {
+        const answer = findDependentQuestionAnswer(entity, this.state.answers);
+        return answer ? doesAnswerMatch(entity, answer) : false;
+      } else {
+        return true;
+      }
     }
 
     const sections =
       formSpec.sections &&
       formSpec.sections.slice()
-        .filter((section) => { const keep = includeEntityDueToDependentQuestion(section); /*console.log('ii', keep)*/; return keep })
+        .filter(includeEntityDueToDependentQuestion)
         .sort((a, b) => a.order - b.order);
     const sectionModels =
       sections &&
@@ -807,7 +796,7 @@ class ApplicationForm extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
-              showEntityBasedOnSavedAnswers={includeEntityDueToDependentQuestion}
+              showQuestionBasedOnSavedFormAnswers={includeEntityDueToDependentQuestion}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
@@ -840,6 +829,7 @@ class ApplicationForm extends Component {
         />
       )
     });
+    console.log('steps: ', steps);
     return (
       <div class="application-form-container">
         <div className="step-progress">
