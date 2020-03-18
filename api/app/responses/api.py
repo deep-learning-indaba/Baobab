@@ -73,10 +73,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         response = Response(application_form_id, user_id, is_submitted)
         response_repository.save(response)
 
+        answers = []
         for answer_args in args['answers']:
             answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
-            db.session.add(answer)
-        db.session.commit()
+            answers.append(answer)
+        response_repository.save_answers(answers)
 
         try:
             if response.is_submitted:
