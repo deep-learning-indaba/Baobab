@@ -1,5 +1,4 @@
 import React from "react";
-import FormGroup from "../../../components/form/FormGroup";
 import FormToolTip from "../../../components/form/FormToolTip";
 import { referenceService } from "../../../services/references/reference.service";
 import _ from "lodash";
