@@ -15,6 +15,7 @@ from app.responses.mixins import ResponseMixin
 from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
+from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings
 from app.utils.auth import auth_required
 
@@ -82,7 +83,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         try:
             if response.is_submitted:
                 LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
-                user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+                user = user_repository.get_by_id(user_id)
                 self.send_confirmation(user, response)
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
