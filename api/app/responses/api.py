@@ -7,11 +7,11 @@ from flask_restful import fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import LOGGER, bcrypt, db
-from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
+from app.responses.mixins import ResponseMixin
 from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
@@ -19,7 +19,7 @@ from app.utils import emailer, errors, strings
 from app.utils.auth import auth_required
 
 
-class ResponseAPI(ApplicationFormMixin, restful.Resource):
+class ResponseAPI(ResponseMixin, restful.Resource):
 
     answer_fields = {
         'id': fields.Integer,
@@ -42,7 +42,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
     @auth_required
     @marshal_with(response_fields)
     def get(self):
-        args = self.req_parser.parse_args()
+        args = self.get_req_parser.parse_args()
         event_id = args['event_id']
         current_user_id = g.current_user['id']
 
@@ -65,43 +65,30 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
     @auth_required
     @marshal_with(response_fields)
     def post(self):
-        # Save a new response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('is_submitted', type=bool, required=True)
-        req_parser.add_argument('application_form_id', type=int, required=True)
-        req_parser.add_argument('answers', type=list, required=True, location='json')
-        args = req_parser.parse_args()
-
+        args = self.post_req_parser.parse_args()
         user_id = g.current_user['id']
-        try: 
-            response = Response(args['application_form_id'], user_id)
-            response.is_submitted = args['is_submitted']
-            if args['is_submitted']:
-                response.submitted_timestamp = datetime.datetime.now()
-            db.session.add(response)
-            db.session.commit()
 
-            for answer_args in args['answers']:
-                answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
-                db.session.add(answer)
-            db.session.commit()
+        response = Response(args['application_form_id'], user_id)
+        response.is_submitted = args['is_submitted']
+        if args['is_submitted']:
+            response.submitted_timestamp = datetime.datetime.now()
+        db.session.add(response)
+        db.session.commit()
 
-            try:
-                if response.is_submitted:
-                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
-                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
-                    self.send_confirmation(user, response)
-            except:
-                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
-            finally:
-                return response, 201  # 201 is 'CREATED' status code
+        for answer_args in args['answers']:
+            answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
+            db.session.add(answer)
+        db.session.commit()
 
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        try:
+            if response.is_submitted:
+                LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
+                user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
+                self.send_confirmation(user, response)
+        except:
+            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+        finally:
+            return response, 201
 
     @auth_required
     @marshal_with(response_fields)
