@@ -67,11 +67,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
     def post(self):
         args = self.post_req_parser.parse_args()
         user_id = g.current_user['id']
+        is_submitted = args['is_submitted']
 
-        response = Response(args['application_form_id'], user_id)
-        response.is_submitted = args['is_submitted']
-        if args['is_submitted']:
-            response.submitted_timestamp = datetime.datetime.now()
+        response = Response(args['application_form_id'], user_id, is_submitted)
         db.session.add(response)
         db.session.commit()
 

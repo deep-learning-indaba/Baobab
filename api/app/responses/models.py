@@ -1,6 +1,6 @@
 
 from app import db
-from datetime import date
+from datetime import date, datetime
 
 class Response(db.Model):
 
@@ -24,14 +24,14 @@ class Response(db.Model):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = is_submitted
-        self.submitted_timestamp = submitted_timestamp
+        self.submitted_timestamp = datetime.now() if is_submitted else submitted_timestamp
         self.is_withdrawn = is_withdrawn
         self.withdrawn_timestamp = withdrawn_timestamp
         self.started_timestamp = date.today()
 
     def submit_response(self):
         self.is_submitted = True
-        self.submitted_timestamp = date.today()
+        self.submitted_timestamp = datetime.now()
 
     def withdraw_response(self):
         self.is_withdrawn = True
