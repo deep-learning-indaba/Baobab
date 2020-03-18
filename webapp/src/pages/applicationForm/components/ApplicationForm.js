@@ -828,7 +828,6 @@ class ApplicationForm extends Component {
         />
       )
     });
-    console.log('steps: ', steps);
     return (
       <div class="application-form-container">
         <div className="step-progress">
