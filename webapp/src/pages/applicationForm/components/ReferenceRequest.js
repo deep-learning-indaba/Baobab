@@ -5,10 +5,6 @@ import { referenceService } from "../../../services/references/reference.service
 import _ from "lodash";
 import ReactToolTip from "react-tooltip";
 
-// TODO: Add validation to enforce that references must be requested first.
-// TODO: Add validation that fields must be filled in before references can be requested.
-// TODO: Set value in application form after requesting references and trigger saving response (so that reference requests and application form state is set)
-
 class ReferenceRequestRow extends React.Component {
     constructor(props) {
         super(props);
@@ -111,7 +107,7 @@ class ReferenceRequestRow extends React.Component {
                                 : <div><i className="fas fa-check" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
                         }
 
-                        {(!this.props.emailSent) && this.props.minReferences && this.props.referenceNumber > this.props.minReferences
+                        {(!this.props.referenceRequest.emailSent) && this.props.minReferences && this.props.referenceNumber > this.props.minReferences
                             && <button className="link-style" onClick={this.deleteReference}><i className="fas fa-trash text-danger"></i></button>
                         }
 
@@ -133,35 +129,6 @@ class FormReferenceRequest extends React.Component {
             minId: 0,
             error: null
         };
-    }
-
-    getRequestStatus = () => {
-        if (this.props.responseId) {
-            referenceService.getReferenceRequests(this.props.responseId).then(response => {
-                // Map email_sent and reference_submitted to state.referenceRequests
-                if (response.requests) {
-                    this.setState(prevState => {
-                        let updatedReferenceRequests = prevState.referenceRequests.map(r => {
-                            let requestStatus = _.find(response.requests, s => s.id === r.id);
-                            return {
-                                ...r,
-                                emailSent: requestStatus ? requestStatus.email_sent : false,
-                                referenceSubmitted: requestStatus ? requestStatus.reference_submitted : false,
-                                loading: false
-                            }
-                        })
-                        return {
-                            referenceRequests: updatedReferenceRequests
-                        };
-                    });
-                }
-                else if (response.error) {
-                    this.setState({
-                        error: response.error
-                    });
-                }
-            });
-        }
     }
 
     componentDidMount() {
@@ -228,6 +195,14 @@ class FormReferenceRequest extends React.Component {
         if (nextProps.showFocus) {
             this.nameInput.focus();
         }
+    }
+
+    arraysEqual = (first, second) => {
+        if (first.length !== second.length) return false;
+        for (var i = 0; first.length < i; i++) {
+            if (first[i] !== second[i]) return false;
+        }
+        return true;
     }
 
     onChange = (id, name, value) => {
@@ -311,48 +286,60 @@ class FormReferenceRequest extends React.Component {
                                     return r;
                                 }
                             })
-                        }))
+                        }), () => {
+                            let value = '';
+                            if (this.state.referenceRequests.filter(r => r.emailSent).length >= this.props.options.min_num_referrals) {
+                                value = this.state.referenceRequests.map(r => r.email).join(';');
+                            }
+                            if (this.props.onChange) {
+                                this.props.onChange(value);
+                            }
+                        }
+                        );
                     });
             });
+    }
+
+    valid = () => {
+        return this.state.referenceRequests.every(r => r.title && r.firstname && r.lastname && r.email && r.relation)
+            && this.state.referenceRequests.some(r => !r.emailSent);
     }
 
     render() {
         const { referenceRequests } = this.state;
         return (
             <div>
-                <FormGroup
-                    id={this.props.Id + "-group"}
-                    errorText={this.props.errorText}
-                    tabIndex={this.props.tabIndex}
-                    autoFocus={this.props.autoFocus}
-                >
-                    <div className="rowC">
-                        <label htmlFor={this.props.id}>{this.props.label}</label>
-                        {this.props.description ? (
-                            <FormToolTip description={this.props.description} />
-                        ) : (
-                                <div />
-                            )}
-                    </div>
-                    <div>{referenceRequests.map((r, i) =>
-                        <ReferenceRequestRow
-                            key={'rr_' + r.key}
-                            referenceRequest={r}
-                            onChange={this.onChange}
-                            onDelete={this.onDelete}
-                            minReferences={this.props.options.min_num_referrals}
-                            referenceNumber={i + 1}
-                        />)
-                    }</div>
-                    {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
-                        <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
-                    }
-                    <button className="btn btn-primary btn-sm" onClick={this.submit}>Request References</button>
-                    {this.state.error && <div className="text-danger">ERROR: {JSON.stringify(this.state.error)}</div>}
-                    {this.state.loading && <div class="spinner-border" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>}
-                </FormGroup>
+
+                <div className="rowC">
+                    <label htmlFor={this.props.id}>{this.props.label}</label>
+                    {this.props.description ? (
+                        <FormToolTip description={this.props.description} />
+                    ) : (
+                            <div />
+                        )}
+                </div>
+                <div>{referenceRequests.map((r, i) =>
+                    <ReferenceRequestRow
+                        key={'rr_' + r.key}
+                        referenceRequest={r}
+                        onChange={this.onChange}
+                        onDelete={this.onDelete}
+                        minReferences={this.props.options.min_num_referrals}
+                        referenceNumber={i + 1}
+                    />)
+                }</div>
+                {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
+                    <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
+                }
+                <button className="btn btn-primary btn-sm" onClick={this.submit} disabled={!this.valid()}>Request References</button>
+                {this.state.error && <div className="text-danger">ERROR: {JSON.stringify(this.state.error)}</div>}
+                {this.state.loading && <div class="spinner-border" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                }
+                {this.shouldDisplayError() && <div className="text-danger">
+                    {this.props.errorText.replace("An answer is required.", `You must successfully request ${this.props.options.min_num_referrals} references before continuing`)}
+                </div>}
             </div>
         )
     }
