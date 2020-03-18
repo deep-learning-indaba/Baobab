@@ -563,7 +563,6 @@ class ApplicationForm extends Component {
 
   componentDidMount() {
     applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
-      console.log(response.formSpec);
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
