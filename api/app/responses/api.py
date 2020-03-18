@@ -68,10 +68,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         args = self.post_req_parser.parse_args()
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
+        application_form_id = args['application_form_id']
 
-        response = Response(args['application_form_id'], user_id, is_submitted)
-        db.session.add(response)
-        db.session.commit()
+        response = Response(application_form_id, user_id, is_submitted)
+        response_repository.save(response)
 
         for answer_args in args['answers']:
             answer = Answer(response.id, answer_args['question_id'], answer_args['value'])

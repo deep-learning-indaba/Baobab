@@ -10,6 +10,10 @@ class ResponseRepository():
     def get_by_id(response_id):
         return db.session.query(Response).get(response_id)
 
+    @staticmethod
+    def save(response):
+        db.session.add(response)
+        db.session.commit()
 
     @staticmethod
     def get_by_id_and_user_id(response_id, user_id):
