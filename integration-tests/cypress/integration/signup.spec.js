@@ -1,12 +1,12 @@
 // Todo find a way to clean up created users
-describe("Sign up and Login", function() {
+describe("Sign up", function() {
   function testUser() {
     const testUser = {
       firstName: "John",
       lastName: "Snow",
-      email: "john@thewall" + Math.floor(Math.random() * 10000000) + ".com",
-      password: "white_walker_256",
-      confirmPassword: "white_walker_256"
+      email: "john2@thewall.com",
+      password: "whitewalker360",
+      confirmPassword: "whitewalker360"
     };
     return testUser;
   }
@@ -20,31 +20,29 @@ describe("Sign up and Login", function() {
 
   after(function() {
     // stop running containers
-    if (Cypress.env("baseUrl").includes("webapp") == False) {
+    if (Cypress.config().baseUrl.includes("webapp") == false) {
       cy.exec("docker-compose stop");
     }
+    // Delete test user if they exist
+    cy.request({
+      method: "post",
+      url: "http://web:5000/api/v1/integration-tests/deleteUser", // baseUrl is prepended to url
+      headers: {
+        Origin: "webapp"
+      },
+      body: {
+        email: "john2@thewall.com"
+      }
+    }).then(response => {
+      expect(response.status).to.eq(200);
+    });
   });
 
-
-  Cypress.on("uncaught:exception", (err, runnable) => {
-    // returning false here prevents Cypress from
-    // failing the test
-    return false;
-  });
-
-  
   it("Signup page successfully loads.", function() {
     cy.visit("/");
     cy.get("#nav-signup").click();
     // we should be redirected to /createAccount
     cy.url().should("include", "/createAccount");
-  });
-
-  it("Login page successfully loads.", function() {
-    cy.visit("/");
-    cy.get("#nav-login").click();
-    // we should be redirected to /login
-    cy.url().should("include", "/login");
   });
 
   it("Signup form cannot be submitted in if you havent accepted the policy or if you are underage.", function() {
@@ -90,16 +88,5 @@ describe("Sign up and Login", function() {
 
     // account should be created
     cy.get("#account-created").should("exist");
-  });
-
-  it("Login form works.", function() {
-    let user = testUser();
-    cy.visit("/login");
-    cy.get("input[id=email]").type(user.email);
-    cy.get("input[id=password]").type(user.password);
-    cy.get("#btn-login").click();
-
-    // Login should not return error, but email is not verified.
-    cy.get("#error-login").contains("not verified");
   });
 });

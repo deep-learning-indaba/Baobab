@@ -47,6 +47,7 @@ cypress:
   image: "cypress/included:3.2.0"
   links:
     - webapp
+    - web
   environment:
     # pass base url to test pointing at the web application
     - CYPRESS_baseUrl=http://webapp:3000
