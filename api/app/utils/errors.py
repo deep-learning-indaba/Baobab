@@ -98,3 +98,7 @@ POLICY_NOT_AGREED = (
     {'message': 'Privacy policy must be agreed to before continuing.'}, 400)
 POLICY_ALREADY_AGREED = (
     {'message': 'Privacy policy has already been agreed to.'}, 400)
+FAILED_CREATE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to create integration test user.'}, 400)
+FAILED_DELETE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to delete integration test user'}, 400)
