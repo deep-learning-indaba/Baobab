@@ -35,7 +35,8 @@ class ProfileListComponent extends Component {
     }
 
     onSubmit = (user_id) => {
-        window.location = '/viewprofile/:' + user_id;
+        const { eventKey } = this.props.match.params;
+        window.location = eventKey + '/viewprofile/:' + user_id;
     }
 
     render() {
@@ -64,10 +65,7 @@ class ProfileListComponent extends Component {
             minWidth: 150
         },
 
-        { Header: <div className="list-user-category">Category</div>, accessor: "user_category" },
-        { Header: <div className="list-affiliation">Affiliation</div>, accessor: "affiliation" },
-        { Header: <div className="list-department">Department</div>, accessor: "department" },
-        { Header: <div className="list-nationality">Nationality</div>, accessor: "nationality_country" }];
+        { Header: <div className="list-type">Type</div>, accessor: "type" }];
 
         if (loading) {
             return (

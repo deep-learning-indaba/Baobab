@@ -18,6 +18,14 @@ class ReferenceRequestsListMixin(object):
     req_parser.add_argument('response_id', type=int, required=True)
 
 
+class ReferenceRequestDetailMixin(object):
+    get_req_parser = reqparse.RequestParser()
+    get_req_parser.add_argument('response_id', type=int, required=True)
+
+    post_req_parser = reqparse.RequestParser()
+    post_req_parser.add_argument('token', type=str, required=True)
+
+
 class ReferenceMixin(object):
 
     get_req_parser = reqparse.RequestParser()
@@ -26,3 +34,7 @@ class ReferenceMixin(object):
     post_req_parser = reqparse.RequestParser()
     post_req_parser.add_argument('token', type=str, required=True)
     post_req_parser.add_argument('uploaded_document', type=str, required=True)
+
+    put_req_parser = reqparse.RequestParser()
+    put_req_parser.add_argument('token', type=str, required=True)
+    put_req_parser.add_argument('uploaded_document', type=str, required=True)

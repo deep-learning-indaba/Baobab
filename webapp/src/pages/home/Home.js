@@ -10,7 +10,8 @@ class Home extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            events: null,
+            upcomingEvents: null,
+            awards: null,
             organisation: null,
             errors: []
         }
@@ -27,9 +28,12 @@ class Home extends Component {
                         ]
                     }));
                 }
-                this.setState({
-                    events: response.events,
-                });
+                if (response.events) {
+                    this.setState({
+                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT'),
+                        awards: response.events.filter(e => e.event_type === 'AWARD')
+                    });
+                }
             });
         }
 
@@ -85,26 +89,49 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user && <div>
-                    <h3>Upcoming Events</h3>
-                    {this.state.events &&
-                        this.state.events.length > 0 &&
+                {this.props.user &&
+                <div>
+                    {this.state.upcomingEvents &&
+                    this.state.upcomingEvents.length > 0 &&
+                    <div>
+                        <h3>Upcoming Events</h3>
                         <table className="event-table">
                             <tbody>
-                                {this.state.events.map(e => {
-                                    // TODO: Update status based on event stage changes.
-                                    return (<tr>
-                                        <td>
-                                            <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                            {e.start_date + " to " + e.end_date}
-                                        </td>
-                                        <td>{this.statusDisplay(e)}</td>
-                                    </tr>)
-                                })}
+                            {this.state.upcomingEvents.map(e => {
+                                // TODO: Update status based on event stage changes.
+                                return (<tr>
+                                    <td>
+                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {e.start_date + " to " + e.end_date}
+                                    </td>
+                                    <td>{this.statusDisplay(e)}</td>
+                                </tr>)
+                            })}
                             </tbody>
-                        </table>}
-                </div>}
+                        </table>
+                    </div>}
 
+                    {this.state.awards &&
+                    this.state.awards.length > 0 &&
+                    <div>
+                        <h3>Awards</h3>
+                        <table className="event-table">
+                            <tbody>
+                            {this.state.awards.map(e => {
+                                // TODO: Update status based on event stage changes.
+                                return (<tr>
+                                    <td>
+                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {e.start_date + " to " + e.end_date}
+                                    </td>
+                                    <td>{this.statusDisplay(e)}</td>
+                                </tr>)
+                            })}
+                            </tbody>
+                        </table>
+                    </div>}
+
+                </div>}
             </div>
         );
     }

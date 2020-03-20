@@ -29,26 +29,12 @@
     cursor: pointer;
 }
 
-.list-affiliation{
+.list-type{
     font-size: larger;
     font-style: normal;
     font-weight: 600;
 }
-.list-user-category{
-    font-size: larger;
-    font-style: normal;
-    font-weight: 600;
-}
-.list-department{
-    font-size: larger;
-    font-style: normal;
-    font-weight: 600;
-}
-.list-nationality{
-    font-size: larger;
-    font-style: normal;
-    font-weight: 600;
-}
+
 .list-disability{
     font-size: larger;
     font-style: normal;
