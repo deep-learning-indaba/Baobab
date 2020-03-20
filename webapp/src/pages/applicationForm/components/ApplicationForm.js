@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from "../../../services/applicationForm";
-
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
@@ -311,7 +310,6 @@ class Section extends React.Component {
         }
       }
     );
-
     return isValid;
   };
 
@@ -490,6 +488,10 @@ class Submitted extends React.Component {
     });
   };
 
+  handleEditOK = event => {
+    this.props.onCancelSubmit()
+  };
+
   handleWithdrawCancel = event => {
     this.setState({
       withdrawModalVisible: false
@@ -529,27 +531,31 @@ class Submitted extends React.Component {
           Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
+
         <p class="timestamp">
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
+
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             Withdraw Application
           </button>
         </div>
+
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleEdit}>
             Edit Application
           </button>
         </div>
+
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
           okText={"Yes - Withdraw"}
-          cancelText={"No - Don't withdraw"}
-        >
+          cancelText={"No - Don't withdraw"}>
+
           <p>
             By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
           </p>
@@ -560,8 +566,7 @@ class Submitted extends React.Component {
           onOK={this.handleEditOK}
           onCancel={this.cancelEditModal}
           okText={"Yes - Edit application"}
-          cancelText={"No - Don't edit"}
-        >
+          cancelText={"No - Don't edit"}>
           <p>
             Do you want to edit your application: {this.props.event ? this.props.event.name : ""}?
           </p>
@@ -586,7 +591,8 @@ class ApplicationForm extends Component {
       errorMessage: "",
       errors: [],
       answers: [],
-      unsavedChanges: false
+      unsavedChanges: false,
+      startStep: 0
     };
   }
 
@@ -783,6 +789,7 @@ class ApplicationForm extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
+          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 1 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
@@ -832,6 +839,7 @@ class ApplicationForm extends Component {
               changed={() => this.setState({ unsavedChanges: true })}
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
+              stepProgress={i}
             />
           )
         };
@@ -857,6 +865,7 @@ class ApplicationForm extends Component {
         />
       )
     });
+
     return (
       <div class="application-form-container">
         <div className="step-progress">
@@ -865,6 +874,7 @@ class ApplicationForm extends Component {
             onStepChange={this.handleStepChange}
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
+            startAtStep={this.state.startStep}
           />
           <ReactToolTip />
         </div>
