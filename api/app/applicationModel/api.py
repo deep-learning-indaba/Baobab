@@ -15,10 +15,8 @@ from app import LOGGER
 
 
 class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
-
-    option_fields = {
-        'value': fields.String,
-        'label': fields.String
+    show_for_values_fields = {
+        'value': fields.String
     }
 
     question_fields = {
@@ -27,19 +25,23 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'description': fields.String,
         'headline': fields.String,
         'order': fields.Integer,
-        'options': fields.List(fields.Nested(option_fields)),
+        'options': fields.Raw,
         'placeholder': fields.String,
         'validation_regex': fields.String,
         'validation_text': fields.String,
-        'is_required': fields.Boolean
-    } 
+        'is_required': fields.Boolean,
+        'depends_on_question_id': fields.Integer,
+        'show_for_values': fields.List(fields.Nested(show_for_values_fields))
+    }
 
     section_fields = {
         'id': fields.Integer,
         'name': fields.String,
         'description': fields.String,
-        'order': fields.Integer,  
-        'questions': fields.List(fields.Nested(question_fields))   
+        'order': fields.Integer,
+        'questions': fields.List(fields.Nested(question_fields)),
+        'depends_on_question_id': fields.Integer,
+        'show_for_values': fields.List(fields.Nested(show_for_values_fields))
     }
 
     form_fields = {

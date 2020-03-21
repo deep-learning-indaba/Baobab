@@ -11,6 +11,8 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormReferenceRequest from "./ReferenceRequest";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -18,8 +20,25 @@ const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
+const REFERENCE_REQUEST = "reference-request";
+
+/*
+ * Utility functions for the feature where questions are dependent on the answers of other questions
+ */
+const isEntityDependentOnAnswer = (entityToCheck) => {
+  return entityToCheck.depends_on_question_id && entityToCheck.show_for_values;
+}
+
+const findDependentQuestionAnswer = (entityToCheck, answers) => {
+  return answers.find(a => a && a.question_id === entityToCheck.depends_on_question_id);
+}
+
+const doesAnswerMatch = (entityToCheck, answer) => {
+  return entityToCheck.show_for_values.map(_ => _.value).indexOf(answer.value) > -1;
+}
 
 class FieldEditor extends React.Component {
   constructor(props) {
@@ -34,7 +53,7 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    // React datepicker component's onChange contains the value and not event.target.value
+    // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
 
     if (this.props.onChange) {
@@ -70,7 +89,7 @@ class FieldEditor extends React.Component {
     })
   }
 
-  formControl = (key, question, answer, validationError) => {
+  formControl = (key, question, answer, validationError, responseId) => {
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -133,6 +152,20 @@ class FieldEditor extends React.Component {
             errorText={validationError}
           />
         );
+      case MULTI_CHECKBOX:
+        return (
+          <FormMultiCheckbox
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || null}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError} />
+        )
       case FILE:
         return (
           <FormFileUpload
@@ -163,6 +196,22 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
+      case REFERENCE_REQUEST:
+        return (
+          <FormReferenceRequest
+            Id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer ? answer.value : answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} 
+            options={question.options}
+            responseId={responseId}/>
+        )
       default:
         return (
           <p className="text-danger">
@@ -180,7 +229,8 @@ class FieldEditor extends React.Component {
           this.props.key,
           this.props.question,
           this.props.answer ? this.props.answer.value : null,
-          this.props.validationError
+          this.props.validationError,
+          this.props.responseId
         )}
       </div>
     );
@@ -206,7 +256,8 @@ class Section extends React.Component {
       value: value
     };
 
-    const newQuestionModels = this.state.questionModels.map(q => {
+    const newQuestionModels = this.state.questionModels
+      .map(q => {
       if (q.question.id !== question.id) {
         return q;
       }
@@ -217,7 +268,7 @@ class Section extends React.Component {
           : "",
         answer: newAnswer
       };
-    });
+    })
 
     this.setState(
       {
@@ -252,7 +303,10 @@ class Section extends React.Component {
   };
 
   isValidated = () => {
-    const validatedModels = this.state.questionModels.map(q => {
+    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
+    const validatedModels = this.state.questionModels
+    .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+    .map(q => {
       return {
         ...q,
         validationError: this.validate(q)
@@ -288,6 +342,19 @@ class Section extends React.Component {
     }
   };
 
+  /*
+   * Only include questions that depend on other question's answers if they match.
+   * If the value has been set, compare with that. If it hasn't been set, compare with the saved value.
+   */
+  dependentQuestionFilter = (question, sectionCurrentAnswers) => {
+    if (isEntityDependentOnAnswer(question)) {
+      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
+      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
+    } else {
+      return true;
+    }
+  }
+
   render() {
     const {
       section,
@@ -295,6 +362,7 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+    const allAnswersInSection = questionModels.map(q => q.answer);
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -302,15 +370,20 @@ class Section extends React.Component {
           <p>{section.description}</p>
         </div>
         {questionModels &&
-          questionModels.map(model => (
-            <FieldEditor
-              key={"question_" + model.question.id}
-              question={model.question}
-              answer={model.answer}
-              validationError={model.validationError}
-              onChange={this.onChange}
-            />
-          ))}
+          questionModels
+            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+            .map(model => (
+              <FieldEditor
+                key={"question_" + model.question.id}
+                question={model.question}
+                answer={model.answer}
+                validationError={model.validationError}
+                onChange={this.onChange}
+                responseId={this.props.responseId}
+              />
+            )
+          )
+        }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
             Save for later...
@@ -481,7 +554,7 @@ class Submitted extends React.Component {
           cancelText={"No - Don't withdraw"}
         >
           <p>
-            Are you SURE you want to withdraw your application to {this.props.event ? this.props.event.name : ""}? You will NOT be considered for a place at the event if you continue.
+            By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
           </p>
         </ConfirmModal>
       </div>
@@ -705,9 +778,20 @@ class ApplicationForm extends Component {
       );
     }
 
+    const includeEntityDueToDependentQuestion = (entity) => {
+      if (isEntityDependentOnAnswer(entity)) {
+        const answer = findDependentQuestionAnswer(entity, this.state.answers);
+        return answer ? doesAnswerMatch(entity, answer) : false;
+      } else {
+        return true;
+      }
+    }
+
     const sections =
       formSpec.sections &&
-      formSpec.sections.slice().sort((a, b) => a.order - b.order);
+      formSpec.sections.slice()
+        .filter(includeEntityDueToDependentQuestion)
+        .sort((a, b) => a.order - b.order);
     const sectionModels =
       sections &&
       sections.map(section => {
@@ -731,6 +815,7 @@ class ApplicationForm extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
+              showQuestionBasedOnSavedFormAnswers={includeEntityDueToDependentQuestion}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
@@ -738,6 +823,7 @@ class ApplicationForm extends Component {
               changed={() => this.setState({ unsavedChanges: true })}
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
+              responseId={this.state.responseId}
             />
           )
         };
