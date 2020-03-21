@@ -173,7 +173,7 @@ class Question(Base):
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
     
-    def __init__(self, application_form_id, section_id, type, headline, placeholder, description = None, validation_regex, is_required = True, options = None, order)
+    def __init__(self, application_form_id, section_id, questionType, headline, placeholder, description = None, validation_regex, is_required = True, options = None, order):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.headline = headline
