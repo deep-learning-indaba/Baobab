@@ -35,9 +35,11 @@ class Response(db.Model):
         self.is_withdrawn = False
         self.withdrawn_timestamp = None
 
-    def withdraw_response(self):
+    def withdraw(self):
         self.is_withdrawn = True
-        self.withdrawn_timestamp = date.today()
+        self.withdrawn_timestamp = datetime.now()
+        self.is_submitted = False
+        self.submitted_timestamp = None
 
 
 class Answer(db.Model):

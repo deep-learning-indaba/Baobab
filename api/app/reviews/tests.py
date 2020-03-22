@@ -321,7 +321,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
         withdrawn_response = Response(1, 5, True)
-        withdrawn_response.withdraw_response()
+        withdrawn_response.withdraw()
         responses = [
             withdrawn_response,
             Response(1, 6, False),

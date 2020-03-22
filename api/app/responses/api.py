@@ -132,36 +132,21 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
     @auth_required
     def delete(self):
-        # Delete an existing response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('id', type=int, required=True)
-        args = req_parser.parse_args()
+        args = self.del_req_parser.parse_args()
+        current_user_id = g.current_user['id']
+
+        response = response_repository.get_by_id(args['id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
+        if response.user_id != current_user_id:
+            return errors.UNAUTHORIZED
+
+        response.withdraw()
+        response_repository.save(response)      
 
         try:
-            response = db.session.query(Response).filter(Response.id == args['id']).first()
-            if not response:
-                return errors.RESPONSE_NOT_FOUND
-
-            if response.user_id != g.current_user['id']:
-                return errors.UNAUTHORIZED
-            
-            response.is_withdrawn = True
-            response.withdrawn_timestamp = datetime.datetime.now()
-            response.is_submitted = False
-            response.submitted_timestamp = None
-
-            db.session.commit()
-            db.session.flush()
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE            
-
-        try:
-            user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
+            user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
             organisation = event.organisation
             subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
