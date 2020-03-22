@@ -34,7 +34,7 @@ export const ErrorPage = ({ componentStack, error }) => {
         </p>
         <p>
         Please try again and if this issue persists, please{" "}
-          <a href="get in touch"/> with us.<br/>
+          <a href={bug_mailto}>get in touch</a> with us.<br/>
           The bug report will go to the Baobab team at the Deep Learning Indaba who maintain the application.
         </p>
       </div>

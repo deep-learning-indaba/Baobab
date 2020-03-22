@@ -60,6 +60,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         args = self.get_req_parser.parse_args()
         return reference_request_repository.get_by_id(args['id']), 200
 
+    @marshal_with(reference_request_fields)
     @auth_required
     def post(self):
         args = self.post_req_parser.parse_args()
@@ -84,6 +85,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         link = "{host}/{key}/reference?token={token}".format(host=misc.get_baobab_host(),
                                                             key=event.key, token=reference_request.token)
 
+        # TODO: Add details about nomination 
         subject = 'REFERENCE REQUEST - {}'.format(event.name)
         body = REFERENCE_REQUEST_EMAIL_BODY.format(title=title, firstname=firstname,
                                         lastname=lastname, event_description=event.description,
@@ -94,7 +96,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
 
         reference_request.set_email_sent(datetime.now())
         reference_request_repository.add(reference_request)
-        return {}, 201
+        return reference_request, 201
 
 
 class ReferenceRequestListAPI(ReferenceRequestsListMixin, restful.Resource):

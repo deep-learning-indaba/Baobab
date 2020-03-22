@@ -128,7 +128,7 @@ class CreateAccountForm extends Component {
     }
     const passwordErrors = validatePassword(this.state.user.password)
     if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0) {
-      passwordErrors.password.map(i => {
+      passwordErrors.password.foreach(i => {
         this.state.errors.$set.push({ passwords: i });
       });
     }
@@ -320,7 +320,8 @@ class CreateAccountForm extends Component {
               <label class="form-check-label" for="agreePrivacyPolicy">
                 {"I have read and agree to the "}
                 <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
-                  target="_blank">
+                  target="_blank"
+                  rel="noopener noreferrer">
                   privacy policy
                 </a>
               </label>
