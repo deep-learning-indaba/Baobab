@@ -8,3 +8,9 @@ class ResponseMixin(object):
     post_req_parser.add_argument('is_submitted', type=bool, required=True)
     post_req_parser.add_argument('application_form_id', type=int, required=True)
     post_req_parser.add_argument('answers', type=list, required=True, location='json')
+
+    put_req_parser = reqparse.RequestParser()
+    put_req_parser.add_argument('id', type=int, required=True)
+    put_req_parser.add_argument('is_submitted', type=bool, required=True)
+    put_req_parser.add_argument('application_form_id', type=int, required=True)
+    put_req_parser.add_argument('answers', type=list, required=True, location='json')

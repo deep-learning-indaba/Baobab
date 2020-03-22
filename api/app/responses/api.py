@@ -93,59 +93,42 @@ class ResponseAPI(ResponseMixin, restful.Resource):
     @auth_required
     @marshal_with(response_fields)
     def put(self):
-        # Update an existing response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('id', type=int, required=True)
-        req_parser.add_argument('is_submitted', type=bool, required=True)
-        req_parser.add_argument('application_form_id', type=int, required=True)
-        req_parser.add_argument('answers', type=list, required=True, location='json')
-        args = req_parser.parse_args()
-
+        args = self.put_req_parser.parse_args()
         user_id = g.current_user['id']
-        try: 
-            old_response = db.session.query(Response).filter(Response.id == args['id']).first()
-            if not old_response:
-                LOGGER.error("Response not found for id {}".format(args['id']))
-                return errors.RESPONSE_NOT_FOUND
-            if old_response.user_id != user_id:
-                LOGGER.error("Old user id {} does not match user id {}".format(old_response.user_id, user_id))
-                return errors.UNAUTHORIZED
-            if old_response.application_form_id != args['application_form_id']:
-                LOGGER.error("Update conflict for {}".format(args['application_form_id']))
-                return errors.UPDATE_CONFLICT
+        is_submitted = args['is_submitted']
 
-            old_response.is_submitted = args['is_submitted']
-            if args['is_submitted']:
-                old_response.submitted_timestamp = datetime.datetime.now()
-                old_response.is_withdrawn = False
-                old_response.withdrawn_timestamp = None
+        response = response_repository.get_by_id(args['id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+        if response.user_id != user_id:
+            return errors.UNAUTHORIZED
+        if response.application_form_id != args['application_form_id']:
+            return errors.UPDATE_CONFLICT
 
-            for answer_args in args['answers']:
-                old_answer = db.session.query(Answer).filter(Answer.response_id == old_response.id, Answer.question_id == answer_args['question_id']).first()
-                if old_answer:  # Update the existing answer
-                    old_answer.value = answer_args['value']
-                else:
-                    answer = Answer(old_response.id, answer_args['question_id'], answer_args['value'])
-                    db.session.add(answer)
-            db.session.commit()
-            db.session.flush()
+        response.is_submitted = is_submitted
+        if is_submitted:
+            response.submit()
+        response_repository.save(response)
 
-            try:
-                if old_response.is_submitted:
-                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=old_response.id))
-                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
-                    self.send_confirmation(user, old_response)
-            except:                
-                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
-            finally:
-                return old_response, 200
+        answers = []
+        for answer_args in args['answers']:
+            answer = response_repository.get_answer_by_question_id_and_response_id(answer_args['question_id'], response.id)
+            if answer:
+                answer.update(answer_args['value'])
+            else:
+                answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
+            answers.append(answer)
+        response_repository.save_answers(answers)
 
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        try:
+            if response.is_submitted:
+                LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
+                user = user_repository.get_by_id(user_id)
+                self.send_confirmation(user, response)
+        except:                
+            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+        finally:
+            return response, 200
 
     @auth_required
     def delete(self):

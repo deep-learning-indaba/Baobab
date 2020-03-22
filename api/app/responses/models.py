@@ -29,9 +29,11 @@ class Response(db.Model):
         self.withdrawn_timestamp = withdrawn_timestamp
         self.started_timestamp = date.today()
 
-    def submit_response(self):
+    def submit(self):
         self.is_submitted = True
         self.submitted_timestamp = datetime.now()
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
 
     def withdraw_response(self):
         self.is_withdrawn = True
@@ -53,6 +55,9 @@ class Answer(db.Model):
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id
         self.question_id = question_id
+        self.value = value
+
+    def update(self, value):
         self.value = value
     
     @property

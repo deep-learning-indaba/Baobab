@@ -270,7 +270,7 @@ class EventsStatsAPITest(ApiTestCase):
 
         self.test_response2 = Response(
             self.test_form.id, self.test_user2['id'])
-        self.test_response2.submit_response()
+        self.test_response2.submit()
         db.session.add(self.test_response2)
         db.session.commit()
 
