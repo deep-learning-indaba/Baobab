@@ -166,15 +166,15 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
     def send_confirmation(self, user, response):
         try:
-            answers = db.session.query(Answer).join(Question, Answer.question_id == Question.id).filter(Answer.response_id == response.id).order_by(Question.order).all()
+            answers = sorted(response.answers, key=lambda answer: answer.question.order)
             if answers is None:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
 
-            application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == response.application_form_id).first() 
+            application_form = response.application_form
             if application_form is None:
                 LOGGER.warn('Found no application form with id {form_id}'.format(form_id=response.application_form_id))
 
-            event = db.session.query(Event).filter(Event.id == application_form.event_id).first() 
+            event = application_form.event
             if event is None:
                 LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
         except:
