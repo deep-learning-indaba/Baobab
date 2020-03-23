@@ -398,7 +398,7 @@ class RegistrationComponent extends Component {
         case MULTI_CHECKBOX:
           return (
             <FormMultiCheckbox
-              Id={this.id}
+              id={this.id}
               name={this.id}
               options={this.options}
               onChange={this.handleChange}

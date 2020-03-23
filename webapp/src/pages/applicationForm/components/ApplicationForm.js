@@ -185,7 +185,7 @@ class FieldEditor extends React.Component {
       case DATE:
         return (
           <FormDate
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
@@ -199,7 +199,7 @@ class FieldEditor extends React.Component {
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
