@@ -37,6 +37,7 @@ def event_info(user_id, event_org):
         'organisation_name': event_org.Organisation.name,
         'organisation_id': event_org.Organisation.id,
         'url': event_org.Event.url,
+        'event_type': event_org.Event.event_type.value.upper(),
         'is_application_open': event_org.Event.is_application_open,
         'is_review_open': event_org.Event.is_review_open,
         'is_selection_open': event_org.Event.is_selection_open,

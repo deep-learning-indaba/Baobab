@@ -75,6 +75,8 @@ rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
                       '/api/v1/checkIfInvitedGuest')
 rest_api.add_resource(reference_api.ReferenceRequestListAPI,
                       '/api/v1/reference-request/list')
+rest_api.add_resource(reference_api.ReferenceRequestDetailAPI,
+                      '/api/v1/reference-request/detail')
 rest_api.add_resource(reference_api.ReferenceRequestAPI,
                       '/api/v1/reference-request')
 rest_api.add_resource(reference_api.ReferenceAPI,

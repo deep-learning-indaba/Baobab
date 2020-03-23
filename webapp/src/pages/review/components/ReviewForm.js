@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 
 import FormCheckbox from "../../../components/form/FormCheckbox";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormRadio from "../../../components/form/FormRadio";
 
@@ -16,6 +17,7 @@ const LONG_TEXT = "long-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
 const CHECKBOX = "checkbox";
+const MULTI_CHECKBOX = "multi-checkbox";
 
 class ReviewQuestion extends Component {
     constructor(props) {
@@ -70,6 +72,17 @@ class ReviewQuestion extends Component {
                         placeholder={question.placeholder}
                         onChange={this.handleChange}
                         value={score}
+                        key={"i_" + key}
+                        showError={validationError}
+                        errorText={validationError} />
+                )
+            case MULTI_CHECKBOX:
+                return (
+                    <FormMultiCheckbox
+                        Id={this.id}
+                        name={this.id}
+                        options={this.options}
+                        onChange={this.handleChange}
                         key={"i_" + key}
                         showError={validationError}
                         errorText={validationError} />

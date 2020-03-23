@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import FormDate from "../../../components/form/FormDate";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
@@ -86,7 +87,8 @@ class InvitationLetterForm extends Component {
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
+            // React datepicker component's onChange contains the value and not event.target.value
+            [field.name]: event && event.target ? event.target.value : event
           }
         },
         function() {
@@ -308,8 +310,8 @@ class InvitationLetterForm extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
 
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -323,7 +325,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -348,8 +350,8 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
 
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -362,7 +364,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
                 type="text"
@@ -374,7 +376,7 @@ class InvitationLetterForm extends Component {
               />
             </div>
 
-            <div class={passportDetailsStyleLine}>
+            <div className={passportDetailsStyleLine}>
               <div id="labelWorkAddress">
                 {"Are you currently employed ? "}
                 <input
@@ -387,7 +389,7 @@ class InvitationLetterForm extends Component {
             </div>
           </div>
 
-          <div class="row">
+          <div className="row">
             <Address
               onChange={this.handleChange}
               handleChangeDropdown={this.handleChangeDropdown}
@@ -466,7 +468,7 @@ class InvitationLetterForm extends Component {
           >
             {loading && (
               <span
-                class="spinner-grow spinner-grow-sm"
+                className="spinner-grow spinner-grow-sm"
                 role="status"
                 aria-hidden="true"
               />

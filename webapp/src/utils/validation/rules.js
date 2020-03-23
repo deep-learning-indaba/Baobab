@@ -1,4 +1,12 @@
 import * as ErrorMessages from "./errorMessage.js";
+import * as validate from 'validate.js';
+
+validate.validators.regex = (value, options, key, attributes) => {
+  let regExp = new RegExp(options.pattern);  
+  if (!regExp.test(value)) {
+    return options.message;
+  }
+};
 
 export const requiredText = text => {
   if (text) {
@@ -85,3 +93,19 @@ export const validName = text => {
   }
   return ErrorMessages.isNotValid;
 };
+
+export const validatePassword = text => {
+  return validate({password: text}, {
+    password: {
+      presence: true,
+      length: {
+        minimum: 6,
+        message: "must be at least 6 characters"
+      },
+      regex: {
+        pattern: /^(?=.{6,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*\W).*$/,
+        message: "should contain at least 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special character and must be at least 6 characters"
+      },
+    }
+  });
+}

@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+node_modules/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -103,6 +104,10 @@ venv.bak/
 
 # VSCode project settings
 .vscode
+
+
+# IntelliJ/Pycharm/Webstorm/etc. project settings
+.iml
 
 # Rope project settings
 .ropeproject

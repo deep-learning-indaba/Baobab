@@ -64,6 +64,11 @@ footer .btn {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
+}
+
+.nav-link {
+  cursor: pointer;
 }
 
 .navbar-brand .brand-image {

@@ -5,6 +5,7 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
+import FormDate from '../../../components/form/FormDate';
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
 import { fileService } from "../../../services/file/file.service";
@@ -110,10 +111,14 @@ class GuestRegistrationComponent extends Component {
   };
 
   handleChange = event => {
-    const value =
+    // React datepicker component's onChange contains the value and not event.target.value
+    const value = event && event.target ? (
       event.target.type === "checkbox"
         ? event.target.checked | 0
-        : event.target.value;
+        : event.target.value
+    ) : (
+      event
+    );
 
     let id = parseInt(event.target.id);
     this.onChange(id, value);
@@ -394,10 +399,9 @@ class GuestRegistrationComponent extends Component {
 
         case DATE:
           return (
-            <FormTextBox
+            <FormDate
               id={question.id}
               name={this.id}
-              type="date"
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}

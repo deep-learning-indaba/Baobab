@@ -9,7 +9,8 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail
+  validEmail,
+  validatePassword
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -125,6 +126,13 @@ class CreateAccountForm extends Component {
     if (this.state.user.password !== this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
+    const passwordErrors = validatePassword(this.state.user.password)
+    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0) {
+      passwordErrors.password.foreach(i => {
+        this.state.errors.$set.push({ passwords: i });
+      });
+    }
+    
     if (
       this.state.errors &&
       this.state.errors.$set &&
@@ -312,7 +320,8 @@ class CreateAccountForm extends Component {
               <label class="form-check-label" for="agreePrivacyPolicy">
                 {"I have read and agree to the "}
                 <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
-                  target="_blank">
+                  target="_blank"
+                  rel="noopener noreferrer">
                   privacy policy
                 </a>
               </label>
