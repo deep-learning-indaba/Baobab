@@ -1,22 +1,11 @@
-// Todo find a way to clean up created users
+import {login} from "./shared.spec.js"
 describe("Login", function() {
-  function testUser() {
-    const testUser = {
-      firstName: "John",
-      lastName: "Snow",
-      email: "john@thewall.com",
-      password: "whitewalker360",
-      confirmPassword: "whitewalker360"
-    };
-    return testUser;
-  }
-
   before(function() {
     // If running outside of docker, then start container
     if (Cypress.config().baseUrl.includes("webapp") == false) {
       cy.exec("docker-compose up --detach");
     }
-    // Delete test user if they exist
+    // Create test user
     cy.request({
       method: "get",
       url: "http://web:5000/api/v1/integration-tests/createUser", // baseUrl is prepended to url
@@ -58,13 +47,6 @@ describe("Login", function() {
 
  
   it("Login form works.", function() {
-    let user = testUser();
-    cy.visit("/login");
-    cy.get("input[id=email]").type(user.email);
-    cy.get("input[id=password]").type(user.password);
-    cy.get("#btn-login").click();
-    cy.wait(500)
-    // No error.
-    cy.get("#error-login").should('not.exist')
+    login()
   });
 });

@@ -46,6 +46,7 @@ class DeleteIntegrationUser(IntegratoonTestDelete,restful.Resource):
     # Delete test user for integation tests
     def post(self):
         try:
+            user = None
             args = self.req_parser.parse_args()
             user = AppUser.query.filter_by(email=args['email']).first()
             # Already deleted

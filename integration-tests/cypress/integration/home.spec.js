@@ -6,14 +6,10 @@ describe("The Home Page", function() {
     }
   });
 
-  Cypress.on("uncaught:exception", (err, runnable) => {
-    // returning false here prevents Cypress from
-    // failing the test
-    return false;
-  });
-
   it("successfully loads", function() {
     cy.visit("/");
-    cy.wait(60);
+    cy.wait(50);
+    // Home page should show logo with valid source
+    cy.get('img[class="img-fluid large-logo"]').should('have.attr', 'src');
   });
 });
