@@ -15,10 +15,10 @@ Languages can have implementations of both
 
 - Compiled:
 written code is converted directly into machine code that the processor executes
-More control over hardware (memory, CPU usage). Examples are C, C++, Go.
+More control over hardware (memory, CPU usage). Examples are C, C++, Go
 - Interpreted: 
 these languages will run through the programme line by line and execute each.
-Examples include JavaScript, Python.
+Examples include JavaScript, Python
 
 **2. Object-orientated programming**
 - This centres around the creation of objects that are characterised by attributes and behaviour. 
@@ -32,7 +32,7 @@ Examples include JavaScript, Python.
 - Constructs refer to instances of values contained into so-called constructs which exist at runtime. This helps the flow of execution of the programme.
 
 ## The database and ORM
-Databases are used to organise and store information for easy information access and retrieval (essentially create, read, update and delete information). There are varying kinds of databases, viz. [spatial](https://www.tutorialspoint.com/Spatial-Databases), [non-relational](https://docs.microsoft.com/en-us/azure/architecture/data-guide/big-data/non-relational-data), [XML](https://www.tutorialspoint.com/xml/xml_databases.htm) and [graph databases](https://towardsdatascience.com/graph-databases-whats-the-big-deal-ec310b1bc0ed).
+Databases are used to organise and store information for easy information access and retrieval (essentially create, read, update and delete information). There are varying kinds of databases, viz. [spatial](https://www.tutorialspoint.com/Spatial-Databases), [non-relational](https://docs.microsoft.com/en-us/azure/architecture/data-guide/big-data/non-relational-data), [XML](https://www.tutorialspoint.com/xml/xml_databases.htm) and [graph](https://towardsdatascience.com/graph-databases-whats-the-big-deal-ec310b1bc0ed) databases.
 
 The type of database we are interested in is a **relational database**.
 [PostgreSQL](https://www.postgresqltutorial.com/what-is-postgresql/) is an fully object-relational database management system and is the chosen database for Baobab. SQL [(Structured Query Language)](http://www.sqlcourse.com/intro.html) is the language generally used for communication  with the database. However, SQL can be quite complicated, and tricky to work with if you are used to working in Python. Luckily, [ORM](https://www.fullstackpython.com/object-relational-mappers-orms.html) (object-relational mapper) exists for this very reason. ORM allows the programmer to communicate with the database in Python, instead of the database query language (or SQL) which can get quite complicated. [SQLAlchemy](https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91) is a library that allows us to communicate with the relational database more fluent in Python syntax by translating python classes to tables in the database and converts function calls to SQL statements. 
@@ -91,7 +91,7 @@ These can all be easily Googled for further clarity and descriptions as to how t
 
 ## Endpoints
 The [API endpoint](https://smartbear.com/learn/performance-monitoring/api-endpoints/) is the end of a communication channel. When there are two interacting APIs, these interact with each other at the endpoint. This is the location from which APIs can access the network resources they need to carry out their functions.
-APIs work using `requests` and `responses` in that they request information from a web application or web server and then receive a response. Endpoints send the requests and indicate where the resource lives. These are stored in the [routes.py](https://github.com/deep-learning-indaba/Baobab/blob/develop/api/app/routes.py) file in the [Baobab repo](https://github.com/deep-learning-indaba/Baobab).
+APIs work using `requests` and `responses` in that they request information from a web application or web server and then receive a response. Endpoints send the requests and indicate where the resource lives. These are stored in the [routes.py](https://github.com/deep-learning-indaba/Baobab/blob/develop/api/app/routes.py) file in the [Baobab repository](https://github.com/deep-learning-indaba/Baobab).
 
 ## Models
 These are an example of a Python object, specifically a database.
@@ -148,7 +148,7 @@ This summary of [PostgreSQL data types](https://www.postgresql.org/docs/9.5/data
 Protocols to locate and access information. These are used for communication between servers and clients. Examples include: [**HTTP**](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) (hypertext transfer protocols) and [FTP](https://en.wikipedia.org/wiki/File_Transfer_Protocol) (file transfer protocol for file transfers between client and server)
 The general syntax is as you are used to seeing in your browser line:
 
-`initiating protocol//:web resource`
+`initiating protocol://web resource`
 
 #### HTTP error codes
 When there is communication between the **client** and **server**, [HTTP status codes](https://en.wikipedia.org/wiki/List_of_HTTP_status_codes) are issued in response to a client’s request made to a server.
