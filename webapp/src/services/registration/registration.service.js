@@ -83,7 +83,7 @@ function submitResponse(data, shouldUpdate) {
     .catch(function(error) {
       return {
         error:
-          error.response && error.response.data && error.respose.data.message
+          error.response && error.response.data && error.response.data.message
             ? error.response.data.message
             : error.message
       };
@@ -158,7 +158,7 @@ function submitGuestResponse(data, shouldUpdate) {
     .catch(function(error) {
       return {
         error:
-          error.response && error.response.data && error.respose.data.message
+          error.response && error.response.data && error.response.data.message
             ? error.response.data.message
             : error.message
       };

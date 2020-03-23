@@ -166,6 +166,21 @@ ol.progtrckr li.progtrckr-done:hover:before {
   margin-top: .25em;
 }
 
+.custom-checkbox {
+  margin-right: 1.5em;
+}
+
+.reference-row {
+  margin-bottom: 0.5em;
+}
+
+
+.reference-status {
+  margin-left: 0.5em;
+  min-width: 20px;
+  padding-top: 0.5em;
+}
+
 @media (max-width: 650px) {
   .progtrckr li span {
     display: none;

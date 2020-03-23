@@ -141,7 +141,7 @@ class EventNav extends Component {
           this.props.event.is_registration_open && (
             <li className="nav-item dropdown ">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -180,7 +180,7 @@ class EventNav extends Component {
         {this.isEventAdmin(this.props.user, this.props.event) && (
           <li className="nav-item dropdown">
             <div
-              className="nav-link dropdown-toggle link-style"
+              className="nav-link dropdown-toggle"
               id="navbarDropdown"
               role="button"
               data-toggle="dropdown"
@@ -233,7 +233,7 @@ class EventNav extends Component {
           this.props.event.is_review_open && (
             <li className="nav-item dropdown">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -265,7 +265,7 @@ class EventNav extends Component {
           this.props.event.is_registration_open && (
             <li className="nav-item dropdown">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -464,6 +464,7 @@ class App extends Component {
                       : "")
                   }
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Privacy Policy
                 </a>
