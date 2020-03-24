@@ -127,7 +127,7 @@ class CreateAccountForm extends Component {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
     const passwordErrors = validatePassword(this.state.user.password)
-    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0) {
+    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0 && passwordErrors.password.foreach) {
       passwordErrors.password.foreach(i => {
         this.state.errors.$set.push({ passwords: i });
       });
