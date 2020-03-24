@@ -34,7 +34,7 @@ class FormMultiCheckbox extends React.Component {
 
   onCheckChanged = (option, checked) => {
     this.setState(prevState => {
-      var newChecked = prevState.checked.filter(c => c != option.value);
+      var newChecked = prevState.checked.filter(c => c !== option.value);
       if (checked) {
         newChecked.push(option.value);
       }
@@ -51,7 +51,7 @@ class FormMultiCheckbox extends React.Component {
 
   renderFormCheckbox = (option) => {
     return (
-      <div class="custom-control custom-checkbox">
+      <div class="custom-control custom-checkbox" key={option.value}>
         <input
           id={"checkbox_" + option.value}
           className={
@@ -68,7 +68,7 @@ class FormMultiCheckbox extends React.Component {
             this.nameInput = input;
           }}
         />
-        <label class="custom-control-label" for={"checkbox_" + option.value}>{option.label}</label>
+        <label class="custom-control-label" htmlFor={"checkbox_" + option.value}>{option.label}</label>
       </div>
     );
   }

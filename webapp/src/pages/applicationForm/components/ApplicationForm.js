@@ -11,6 +11,7 @@ import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormReferenceRequest from "./ReferenceRequest";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -21,6 +22,7 @@ const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
+const REFERENCE_REQUEST = "reference-request";
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -50,7 +52,7 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    // React datepicker component's onChange contains the value and not event.target.value
+    // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
 
     if (this.props.onChange) {
@@ -86,7 +88,7 @@ class FieldEditor extends React.Component {
     })
   }
 
-  formControl = (key, question, answer, validationError) => {
+  formControl = (key, question, answer, validationError, responseId) => {
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -193,6 +195,22 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
+      case REFERENCE_REQUEST:
+        return (
+          <FormReferenceRequest
+            Id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer ? answer.value : answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} 
+            options={question.options}
+            responseId={responseId}/>
+        )
       default:
         return (
           <p className="text-danger">
@@ -210,7 +228,8 @@ class FieldEditor extends React.Component {
           this.props.key,
           this.props.question,
           this.props.answer ? this.props.answer.value : null,
-          this.props.validationError
+          this.props.validationError,
+          this.props.responseId
         )}
       </div>
     );
@@ -358,6 +377,7 @@ class Section extends React.Component {
                 answer={model.answer}
                 validationError={model.validationError}
                 onChange={this.onChange}
+                responseId={this.props.responseId}
               />
             )
           )
@@ -839,6 +859,7 @@ class ApplicationForm extends Component {
               changed={() => this.setState({ unsavedChanges: true })}
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
+              responseId={this.state.responseId}
               stepProgress={i}
             />
           )
