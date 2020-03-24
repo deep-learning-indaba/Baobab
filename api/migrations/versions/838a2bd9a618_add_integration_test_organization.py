@@ -49,7 +49,7 @@ def upgrade():
                            'email_from': 'Integration Test',
                            'system_url': 'Integration Test',
                            'privacy_policy': 'PrivacyPolicy.pdf',
-                           'system_name': 'integration-test'
+                           'system_name': 'integration_test'
                        }
                    ]
                    )
@@ -58,7 +58,7 @@ def upgrade():
 
 
 def downgrade():
-    op.get_bind().execute('DELETE FROM organisation where system_name = "integration-test"')
+    op.get_bind().execute('DELETE FROM organisation where system_name = integration_test')
 
     op.get_bind().execute(
         """SELECT setval('organisation_id_seq', (SELECT max(id) FROM organisation));""")
