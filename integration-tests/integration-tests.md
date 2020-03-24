@@ -5,7 +5,7 @@ These tests create a test user and do things like login, register, etc. This hap
 
 ## How to Run
 ### Using docker - headless
-Runs part of `docker-compose up`
+Runs only integration tests - `docker-compose run cypress` or part of `docker-compose up`.
 ### Locally - With a UI to click on tests
 Follow [instructions](https://docs.cypress.io/guides/getting-started/installing-cypress.html).
 
