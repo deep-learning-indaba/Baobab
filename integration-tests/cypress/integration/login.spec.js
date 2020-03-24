@@ -10,7 +10,7 @@ describe("Login", function() {
       method: "get",
       url: "http://web:5000/api/v1/integration-tests/createUser", // baseUrl is prepended to url
       headers: {
-        Origin: "webapp"
+        Origin: "webappintegration"
       }
     }).then(response => {
       expect(response.status).to.eq(200);
@@ -27,7 +27,7 @@ describe("Login", function() {
       method: "post",
       url: "http://web:5000/api/v1/integration-tests/deleteUser", // baseUrl is prepended to url
       headers: {
-        Origin: "webapp"
+        Origin: "webappintegration"
       },
       body: {
         email:"john@thewall.com"

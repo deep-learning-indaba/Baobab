@@ -2,7 +2,7 @@
 Creates a test organization to be used by integration tests
 
 Revision ID: 838a2bd9a618
-Revises: 2717ef90a874
+Revises: c3c5ef958ca1
 Create Date: 2020-02-29 10:03:37.020300
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.sql import table, column
 import sqlalchemy as sa
 from alembic import op
 revision = '838a2bd9a618'
-down_revision = '2717ef90a874'
+down_revision = 'c3c5ef958ca1'
 
 
 def upgrade():
@@ -44,7 +44,7 @@ def upgrade():
                            'name': 'Cypress Integration Test',
                            'small_logo': 'logo-32x32-white.png',
                            'large_logo': 'indaba-logo-dark.png',
-                           'domain': 'webapp',
+                           'domain': 'webappintegration',
                            'url': 'www.deeplearningindaba.com',
                            'email_from': 'Integration Test',
                            'system_url': 'Integration Test',
