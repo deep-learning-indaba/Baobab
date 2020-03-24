@@ -14,10 +14,6 @@ class Response(db.Model):
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
-    nomination_title = db.Column(db.String(20), nullable=True)
-    nomination_firstname = db.Column(db.String(100), nullable=True)
-    nomination_lastname = db.Column(db.String(100), nullable=True)
-    nomination_email = db.Column(db.String(255), nullable=True)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
