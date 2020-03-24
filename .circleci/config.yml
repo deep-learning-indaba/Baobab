@@ -24,7 +24,8 @@ jobs:
           command: docker-compose run  web nosetests -v 
       - run:
           name: Run integration tests
-          command: docker-compose run cypress 
+          command:  |
+            docker-compose run cypress 
 
   frontEndTests:
     machine: true
