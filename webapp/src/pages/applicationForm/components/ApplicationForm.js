@@ -544,7 +544,7 @@ class Submitted extends React.Component {
         </div>
 
         <div class="submitted-footer">
-          <button class="btn btn-danger" onClick={this.handleEdit}>
+          <button class="btn btn-primary" onClick={this.handleEdit}>
             Edit Application
           </button>
         </div>
