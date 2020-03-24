@@ -807,7 +807,7 @@ class ApplicationForm extends Component {
         <Submitted
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
-          responseid={this.state.responseId}
+          responseId={this.state.responseId}
           event={this.props.event}
           onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 1 })} // StartStep to jump to steo 1 in the Stepzilla
         />
