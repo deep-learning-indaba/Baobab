@@ -58,7 +58,7 @@ def upgrade():
 
 
 def downgrade():
-    op.get_bind().execute('DELETE FROM organisation where system_name = integration_test')
+    op.get_bind().execute('DELETE FROM organisation where domain = webappintegration')
 
     op.get_bind().execute(
         """SELECT setval('organisation_id_seq', (SELECT max(id) FROM organisation));""")
