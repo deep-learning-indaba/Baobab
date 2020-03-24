@@ -25,6 +25,7 @@ jobs:
       - run:
           name: Run integration tests
           command:  |
+            docker-compose build cypress
             docker-compose run cypress 
 
   frontEndTests:
