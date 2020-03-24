@@ -1,7 +1,7 @@
 # Integration Tests
 We use [Cypress](https://www.cypress.io/) for integration tests. 
 
-These tests create a test user and do things like login, register, etc. This happens by programmeably clicking on front-end components and then confirming the expected result happens. These tests, test the full functionality of features and make real calls to backend apis.
+These tests create a test user and do things like login, register, etc. This happens by programmably clicking on front-end components and then confirming the expected result happens. These tests, test the full functionality of features and make real calls to backend apis.
 
 ## How to Run
 ### Using docker - headless
