@@ -1,4 +1,4 @@
-import {login} from "./shared.spec.js"
+import {login} from "./shared.js"
 describe("Login", function() {
   before(function() {
     // If running outside of docker, then start container
