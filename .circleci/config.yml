@@ -31,7 +31,7 @@ jobs:
           name: Run integration tests
           command: |
             docker-compose build cypress
-            docker-compose up --exit-code-from cypress
+            docker-compose up cypress
 
   front-end-tests:
     machine: true
