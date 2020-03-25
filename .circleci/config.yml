@@ -22,13 +22,18 @@ jobs:
       - run:
           name: Run unit tests
           command: docker-compose run  web nosetests -v 
+            
+  integration-tests:
+    machine: true
+    steps:
+      - checkout
       - run:
           name: Run integration tests
-          command:  |
-            docker-compose build --no-cache
+          command: |
+            docker-compose build cypress
             docker-compose up --exit-code-from cypress
 
-  frontEndTests:
+  front-end-tests:
     machine: true
     steps:
       - checkout
@@ -156,7 +161,8 @@ workflows:
   build_and_test:
     jobs:
       - build
-      - frontEndTests
+      - front-end-tests
+      - integration-tests
       - migrate-test:
           filters:
             branches:
