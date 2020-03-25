@@ -38,7 +38,7 @@ a variable before it is used:
 
 ```buildoutcfg
 /* Example of C code explicitly declaring a variable*/
-static int num, sun; 
+static int num, sum; 
 num = 5
 sum = 10
 sum = sum + num
