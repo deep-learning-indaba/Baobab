@@ -38,7 +38,7 @@ describe("Login", function() {
   });
 
 
-  it("Login page successfully loads.", function() {
+  it("Page Loads", function() {
     cy.visit("/");
     cy.get("#nav-login").click();
     // we should be redirected to /login
@@ -46,7 +46,7 @@ describe("Login", function() {
   });
 
  
-  it("Login form works.", function() {
+  it("Login form works", function() {
     login()
   });
 });

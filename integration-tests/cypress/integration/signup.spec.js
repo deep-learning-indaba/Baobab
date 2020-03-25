@@ -38,7 +38,7 @@ describe("Sign up", function() {
     });
   });
 
-  it("Signup page successfully loads.", function() {
+  it("Page Loads", function() {
     cy.visit("/");
     cy.get("#nav-signup").click();
     // we should be redirected to /createAccount

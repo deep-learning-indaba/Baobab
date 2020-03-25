@@ -6,7 +6,7 @@ describe("The Home Page", function() {
     }
   });
 
-  it("successfully loads", function() {
+  it("Page Loads", function() {
     cy.visit("/");
     cy.wait(50);
     // Home page should show logo with valid source

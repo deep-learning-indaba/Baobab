@@ -39,13 +39,13 @@ describe("Invitation Letter", function() {
     });
   });
 
-  it("Page loads.", function() {
+  it("Page Loads.", function() {
     login()
     let user = testUser();
     cy.visit("/test2021/invitationLetter");
   });
 
-  it("Can fill in form", function() {
+  it("Invitation form can be filled in", function() {
     login()
     let user = testUser();
     cy.visit("/test2021/invitationLetter");
