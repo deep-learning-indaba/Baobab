@@ -11,7 +11,6 @@ RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
 RUN apt-get install -y libreoffice 
 
-
 # Add the application source code.
 RUN mkdir /code
 ADD . /code/
