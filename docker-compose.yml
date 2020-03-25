@@ -65,7 +65,7 @@ webappintegration:
 
 cypress:
   ipc: host
-  image: "cypress/included:3.3.0"
+  image: "cypress/included:4.2.0"
   links:
     - webappintegration
     - web
