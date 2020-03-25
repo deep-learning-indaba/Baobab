@@ -163,7 +163,10 @@ workflows:
     jobs:
       - build
       - front-end-tests
-      - integration-tests
+      - integration-tests:
+          filters:
+            branches:
+              ignore: master
       - migrate-test:
           filters:
             branches:
