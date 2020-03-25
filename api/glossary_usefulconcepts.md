@@ -27,11 +27,13 @@ Examples include JavaScript, Python
 - **Classes** are used in OOP in the creation of objects. 
 - When comparing high-level to low-level languages, this refers to the level of abstraction. Each level is a step away 
 from the base machine 
-    - Abstraction: the degree to which the characteristics of an object are hidden in order to reduce complexity and increase efficiency. The remaining object is a representation of the original with unwanted detail omitted
+    - Abstraction: the degree to which the characteristics of an object are hidden in order to reduce complexity and 
+    increase efficiency. The remaining object is a representation of the original with unwanted detail omitted
     - Higher level languages have greater levels of abstraction 
 
 **3. Dynamic typing (i.e. _data types_)**
-- As a point of [comparison](https://www.sitepoint.com/typing-versus-dynamic-typing/), static typed languages are Java, C and C++. Static typic requires the explicit declaration 
+- As a point of [comparison](https://www.sitepoint.com/typing-versus-dynamic-typing/), static typed languages are Java,
+ C and C++. Static typic requires the explicit declaration 
 a variable before it is used: 
 
 ```buildoutcfg
@@ -51,14 +53,21 @@ sum = num + sum
 - In static typing, type checking is done at [compile-time](https://en.wikipedia.org/wiki/Compile_time) compared to 
 [run-time](https://en.wikipedia.org/wiki/Runtime_(program_lifecycle_phase) for dynamic typed languages
 ## The database and ORM
-Databases are used to organise and store information for easy information access and retrieval (essentially create, read, update and delete information). There are varying kinds of databases, viz. [spatial](https://www.tutorialspoint.com/Spatial-Databases), [non-relational](https://docs.microsoft.com/en-us/azure/architecture/data-guide/big-data/non-relational-data), [XML](https://www.tutorialspoint.com/xml/xml_databases.htm) and [graph](https://towardsdatascience.com/graph-databases-whats-the-big-deal-ec310b1bc0ed) databases.
+Databases are used to organise and store information for easy information access and retrieval (essentially create, 
+read, update and delete information). There are varying kinds of databases, viz. 
+[spatial](https://www.tutorialspoint.com/Spatial-Databases), [non-relational](https://docs.microsoft.com/en-us/azure/architecture/data-guide/big-data/non-relational-data), [XML](https://www.tutorialspoint.com/xml/xml_databases.htm) and [graph](https://towardsdatascience.com/graph-databases-whats-the-big-deal-ec310b1bc0ed) databases.
 
 The type of database we are interested in is a **relational database**.
-[PostgreSQL](https://www.postgresqltutorial.com/what-is-postgresql/) is an fully object-relational database management system and is the chosen database for Baobab. SQL [(Structured Query Language)](http://www.sqlcourse.com/intro.html) is the language generally used for communication  with the database. However, SQL can be quite complicated, and tricky to work with if you are used to working in Python. Luckily, [ORM](https://www.fullstackpython.com/object-relational-mappers-orms.html) (object-relational mapper) exists for this very reason. ORM allows the programmer to communicate with the database in Python, instead of the database query language (or SQL) which can get quite complicated. [SQLAlchemy](https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91) is a library that allows us to communicate with the relational database more fluent in Python syntax by translating python classes to tables in the database and converts function calls to SQL statements. 
+[PostgreSQL](https://www.postgresqltutorial.com/what-is-postgresql/) is an fully object-relational database management 
+system and is the chosen database for Baobab. SQL [(Structured Query Language)](http://www.sqlcourse.com/intro.html) is the language generally used for communication  with the database. However, SQL can be quite complicated, and tricky to work with if you are used to working in Python. Luckily, [ORM](https://www.fullstackpython.com/object-relational-mappers-orms.html) (object-relational mapper) exists for this very reason. ORM allows the programmer to communicate with the database in Python, instead of the database query language (or SQL) which can get quite complicated. [SQLAlchemy](https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91) is a library that allows us to communicate with the relational database more fluent in Python syntax by translating python classes to tables in the database and converts function calls to SQL statements. 
 
 ## Flask 
 The **REST** **API** used is Flask. Flask is a Python micro [web-based framework](https://www.fullstackpython.com/web-frameworks.html) that is flexible and simple to implement when creating web-based applications such as Baobab. The main thing to remember about web-frameworks is that they are essentially code libraries that provide common methods / operations for building reliable, scalable, and maintainable web applications
 The simplicity of Flask, compared to another framework such as [Django](https://www.djangoproject.com/), is particularly advantageous due to Baobab supporting remote contributors who may not have a lot of experience with web-application development. 
+
+[Flask-RESTful](https://flask-restful.readthedocs.io/en/latest/) is a common flask extension, which works with 
+existing ORM libraries and is used to make creating RESTful API calls simpler. An 
+[API call](https://rapidapi.com/blog/api-glossary/api-call/) is essentially a process of sending an request having set up the **API** with the correct **endpoints**. 
 
 Glossary
 ========
@@ -161,15 +170,13 @@ maintaining uniqueness in a table; ensure consistent and valid data as well as a
     - Uniquely identifies each record
     - Cannot be NULL
     - The primary key ensures there are no duplicate records within the table (entity integrity)
-    
+   
 - **Alternate keys:**
     - These are the remaining candidate keys, none of which are currently selected as the primary key
-
 - **Unique keys:**
     - This key is used to place additional unique conditions on columns
     - No duplicates in unique keys, and these are useful for data validation
     - Similar to primary keys, but allow for one NULL value
-
 - **Composite keys:**
     - a.ka. compound keys
     - Composite keys are used when more than column is used to identify a value  
@@ -192,15 +199,23 @@ This summary of [PostgreSQL data types](https://www.postgresql.org/docs/9.5/data
      management system (in the case of Baobab, **PostgreSQL**)
     - These are typically images, audio or multimedia objects  
 
+## URIs versus URLs
+- [**URI:**](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier) 
+    - Universal Resource Identifier
+    - A means of unambiguously identifying a resource (any identifiable thing - digitial, physical etc.) 
+    using a string of characters that follow specific syntactical rules to ensure uniformity
+    
+- [**URL:**](https://en.wikipedia.org/wiki/URL)
+    - Universal Resource Locator
+    - Colloquially referred to as a web address
+    - The URL specifies where the web resource is located on a web network and indicates the mechanism to access it
+    
 ## Web protocols
-### Universal Resource Locators (URLs)
 Protocols to locate and access information. These are used for communication between servers and clients.
-
-### Specifying protocols in the **URL**: 
 Two prominent examples are [**HTTP**](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) (hypertext transfer protocols)
   and [FTP](https://en.wikipedia.org/wiki/File_Transfer_Protocol) (file transfer protocol for file transfers between 
   client and server).
-These are initiated using the general syntax as you are used to seeing in your browser line:
+These protocols are specified in the **URL** using the general syntax as you are used to seeing in your browser line:
 
 `initiating protocol://web resource`
 
