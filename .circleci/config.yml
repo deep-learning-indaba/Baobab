@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Run integration tests
           command:  |
-            docker-compose build
+            docker-compose build --no-cache
             docker-compose up --exit-code-from cypress
 
   frontEndTests:
