@@ -1,4 +1,4 @@
-import {login,selectDropdown} from "./shared.spec.js"
+import {login,selectDropdown} from "./shared.js"
 describe("Invitation Letter", function() {
 
   function testUser() {
