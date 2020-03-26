@@ -295,7 +295,7 @@ def upgrade():
     about_you_q8.depends_on_question_id = about_you_q7.id
     about_you_q8.show_for_values = ['yes']
 
-    about_you_q9 = Question(app_form.id, about_you.id, 'multi-choice', 'Would you be interested in submitting an extended abstract or paper to the Indaba Symposium if you are selected to attend the Indaba?', 'Choose an option', description = "We won’t hold you to this, it’s just to gauge interest.", None, 9)
+    about_you_q9 = Question(app_form.id, about_you.id, 'multi-choice', 'Would you be interested in submitting an extended abstract or paper to the Indaba Symposium if you are selected to attend the Indaba?', 'Choose an option', description = "We won't hold you to this, it's just to gauge interest.", None, 9)
     about_you_q9.depends_on_question_id = about_you_q7.id
     about_you_q9.show_for_values = ['yes']
 
