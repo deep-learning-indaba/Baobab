@@ -278,7 +278,7 @@ def upgrade():
     about_you_q4.depends_on_question_id = main_q1.id
     about_you_q4.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed, academic-faculty']
 
-    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', description = 'Enter up to 80 words, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', 5)
+    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', 5)
     about_you_q5.depends_on_question_id = main_q1.id
     about_you_q5.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
