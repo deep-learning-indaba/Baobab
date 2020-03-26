@@ -327,8 +327,8 @@ def upgrade():
     travel_support_q1 = Question(app_form.id, travel_support.id, 'multi-choice', 'Would you like to be considered for a travel grant?', 'Choose an option', description = 'Travel awards will be used to cover the costs of return flights to the host city and/or accommodation in shared dorm rooms close to the venue.', None,
                         options = [
                            {'label': 'Travel', 'value': 'travel'},
-                           {'label': 'Accommodation', 'value': 'accommodation'}
-                           {'label': 'Travel and Accommodation', 'value': 'travel-and-accommodation'}
+                           {'label': 'Accommodation', 'value': 'accommodation'},
+                           {'label': 'Travel and Accommodation', 'value': 'travel-and-accommodation'},
                            {'label': 'None', 'value': 'none'}
                         ], 1)
     travel_support_q2 = Question(app_form.id, travel_support.id, 'short-text', 'Please state your intended airport of departure.', 'Airport of Departure', description = 'Please note that we will only provide flights in the form of a return ticket to and from a single airport on the continent of Africa.', None, 2)
