@@ -143,7 +143,7 @@ The rows contain the items and the columns contain the properties of the items. 
 written in a language that is part of the web framework language (in our case, Python), allowing us to communicate with 
 the database that is more familiar than SQL.
 
-#### Organisation of the data in a database versus a class:
+### Organisation of the data in a database versus a class:
 
 **Class:**
 
