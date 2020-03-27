@@ -207,7 +207,7 @@ def upgrade():
     session.add(DeepLearningIndaba2020)
     session.commit()
 
-    app_form = ApplicationForm(DeepLearningIndaba2020.id,False)
+    app_form = ApplicationForm(DeepLearningIndaba2020.id,False,True)
     session.add(app_form)
     session.commit()
     
