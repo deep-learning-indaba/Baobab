@@ -23,6 +23,8 @@ Follow [instructions](https://docs.cypress.io/guides/getting-started/installing-
 - Do you need something to happen before all tests (beforeEach) or simple once at the beginning (before) ? - Look at examples.
 - Add integration tests - look at other examples in the integration folder or look at the extensive [Cypress Docs](https://docs.cypress.io/guides/getting-started/writing-your-first-test.html#Write-a-real-test). 
 
+**Please try to stick to using IDs as indentifiers as they are more robust to style changes.**
+
 ## Results of tests
 - When cypress has been run, you will see a cmd screen with the results of tests.
 - You will also see videos in [here](./cypress/videos) - `./cypress/videos`. These show what happened during each test.
