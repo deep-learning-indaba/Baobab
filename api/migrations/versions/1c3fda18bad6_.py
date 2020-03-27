@@ -146,7 +146,7 @@ class Section(Base):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
 
     def __init__(self, application_form_id, name, description, order):
