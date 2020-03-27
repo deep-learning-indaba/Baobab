@@ -172,7 +172,7 @@ class Question(Base):
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
     
-    def __init__(self, application_form_id, section_id, questionType, headline, placeholder, description = None, validation_regex, is_required = True, options = None, order):
+    def __init__(self, application_form_id, section_id, questionType, headline, placeholder, order, description = None, validation_regex, is_required = True, options = None):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.headline = headline
@@ -214,7 +214,7 @@ def upgrade():
     session.add(main_section)
     session.commit()
 
-    main_q1 = Question(app_form.id, main_section.id, 'multi-choice', 'Application Category', 'Category',description = 'Please select the option that best describes you',None,
+    main_q1 = Question(app_form.id, main_section.id, 'multi-choice', 'Application Category', 'Category',1, description = 'Please select the option that best describes you',None,
               options = [
                 {'label': 'An undergraduate student', 'value': 'undergrad'},
                 {'label': 'A masters student', 'value': 'masters'},
@@ -224,7 +224,7 @@ def upgrade():
                 {'label': 'Industry Professional', 'value': 'industry'},
                 {'label': 'Student at a coding academy', 'value': 'student-coding-academy'},
                 {'label': 'Unemployed', 'value': 'unemployed'}
-              ], 1)
+              ])
     session.add(main_q1)
 
     demographics = Section(app_form.id, 'Demographics', '', 2)
@@ -232,17 +232,17 @@ def upgrade():
     session.commit()
 
 
-    demographics_q1 = Question(app_form.id, demographics.id, 'multi-choice', 'Country of nationality', 'Country of nationality', None, options = get_country_list(session), 1)
-    demographics_q2 = Question(app_form.id, demographics.id, 'multi-choice', 'Country of residence', 'Country of residence', None, options=get_country_list(session), 2)
-    demographics_q3 = Question(app_form.id, demographics.id, 'multi-choice', 'Gender', 'Gender', None,
+    demographics_q1 = Question(app_form.id, demographics.id, 'multi-choice', 'Country of nationality', 'Country of nationality', 1, None, options = get_country_list(session))
+    demographics_q2 = Question(app_form.id, demographics.id, 'multi-choice', 'Country of residence', 'Country of residence', 2, None, options=get_country_list(session))
+    demographics_q3 = Question(app_form.id, demographics.id, 'multi-choice', 'Gender', 'Gender', 3, None,
                       options = [
                          {'label': 'Male', 'value': 'male'},
                          {'label': 'Female', 'value': 'female'},
                          {'label': 'Transgender', 'value': 'transgender'},
                          {'label': 'Gender variant/non-conforming', 'value': 'gender-variant/non-conforming'},
                          {'label': 'Prefer not to say', 'value': 'prefer-not-to-say'}
-                     ], 3)
-    demographics_q4 = Question(app_form.id, demographics.id, 'multi-choice', 'Disabilities', 'Disabilities', description = 'We collect this information to ensure that we provide suitable facilities at our venue.', None,
+                     ])
+    demographics_q4 = Question(app_form.id, demographics.id, 'multi-choice', 'Disabilities', 'Disabilities', 4, description = 'We collect this information to ensure that we provide suitable facilities at our venue.', None,
                       options = [
                          {"label": "No disabilities", "value": "none"},
                          {"label": "Sight disability", "value": "sight"},
@@ -252,9 +252,9 @@ def upgrade():
                          {"label": "Mental disability(e.g. difficulty in remembering or concentrating)", "value": "mental"},
                          {"label": "Difficulty in self-care", "value": "self-care"},
                          {"label": "Other", "value": "other"}
-                      ], 4)
-    demographics_q5 = Question(app_form.id, demographics.id, 'short-text', 'Affiliation', 'Affiliation', description = 'The university / institution / company you are based at', None, 5)
-    demographics_q6 = Question(app_form.id, demographics.id, 'short-text', 'Department', 'Department', description = 'The department or field of study you fall under at your affiliation', None, 6)
+                      ])
+    demographics_q5 = Question(app_form.id, demographics.id, 'short-text', 'Affiliation', 'Affiliation', 5, description = 'The university / institution / company you are based at', None)
+    demographics_q6 = Question(app_form.id, demographics.id, 'short-text', 'Department', 'Department', 6, description = 'The department or field of study you fall under at your affiliation', None)
     
     session.add_all([demographics_q1, demographics_q2, demographics_q3, demographics_q4, demographics_q5, demographics_q6])
 
@@ -264,52 +264,52 @@ def upgrade():
     session.add(about_you)
     session.commit()
 
-    about_you_q1 = Question(app_form.id, about_you.id, 'long-text', 'Why is attending the Deep Learning Indaba 2020 important to you?', 'Enter 100 to 200 words', description = 'Enter 100 to 200 words', validation_regex = '^\s*(\S+(\s+|$)){100,200}$', 1)
+    about_you_q1 = Question(app_form.id, about_you.id, 'long-text', 'Why is attending the Deep Learning Indaba 2020 important to you?', 'Enter 100 to 200 words', 1, description = 'Enter 100 to 200 words', validation_regex = '^\s*(\S+(\s+|$)){100,200}$')
    
-    about_you_q2 = Question(app_form.id, about_you.id, 'long-text', 'How will you share what you have learned after the Indaba?', 'Enter 50 to 150 words', description = 'Enter 50 to 150 words', validation_regex = '^\s*(\S+(\s+|$)){50,150}$', 2)
+    about_you_q2 = Question(app_form.id, about_you.id, 'long-text', 'How will you share what you have learned after the Indaba?', 'Enter 50 to 150 words', 2, description = 'Enter 50 to 150 words', validation_regex = '^\s*(\S+(\s+|$)){50,150}$')
     about_you_q2.depends_on_question_id = main_q1.id
     about_you_q2.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
-    about_you_q3 = Question(app_form.id, about_you.id, 'long-text', 'How will you use your experience at the Deep Learning Indaba to impact your teaching, research, supervision, and/or institution?', 'Enter 50 to 150 words', description = 'Enter 50 to 150 words', validation_regex = '^\s*(\S+(\s+|$)){50,150}$', 3)
+    about_you_q3 = Question(app_form.id, about_you.id, 'long-text', 'How will you use your experience at the Deep Learning Indaba to impact your teaching, research, supervision, and/or institution?', 'Enter 50 to 150 words', 3, description = 'Enter 50 to 150 words', validation_regex = '^\s*(\S+(\s+|$)){50,150}$')
     about_you_q3.depends_on_question_id = main_q1.id
     about_you_q3.show_for_values = ['academic-faculty']
     
-    about_you_q4 = Question(app_form.id, about_you.id, 'long-text', 'Share with us a favourite machine learning resource you use: a paper, blog post, algorithm, result, or finding. Tell us why.', 'Enter up to 80 words', description = 'Enter up to 80 words', 'remember to include *why*', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', 4)
+    about_you_q4 = Question(app_form.id, about_you.id, 'long-text', 'Share with us a favourite machine learning resource you use: a paper, blog post, algorithm, result, or finding. Tell us why.', 'Enter up to 80 words', 4, description = 'Enter up to 80 words', 'remember to include *why*', validation_regex = '^\s*(\S+(\s+|$)){0,80}$')
     about_you_q4.depends_on_question_id = main_q1.id
     about_you_q4.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed, academic-faculty']
 
-    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', 5)
+    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', 5, description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$')
     about_you_q5.depends_on_question_id = main_q1.id
     about_you_q5.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
-    about_you_q6 = Question(app_form.id, about_you.id, 'long-text', 'Have you taught any Machine Learning courses at your institution or supervised any postgraduate students on Machine Learning projects?', 'Enter up to 80 words', description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', 6)
+    about_you_q6 = Question(app_form.id, about_you.id, 'long-text', 'Have you taught any Machine Learning courses at your institution or supervised any postgraduate students on Machine Learning projects?', 'Enter up to 80 words', 6, description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$')
     about_you_q6.depends_on_question_id = main_q1.id
     about_you_q6.show_for_values = ['academic-faculty']
 
-    about_you_q7 = Question(app_form.id, about_you.id, 'multi-choice', 'Are you currently actively involved in Machine Learning Research?', 'Choose an option', description = 'Choosing no will not count against you', None,
+    about_you_q7 = Question(app_form.id, about_you.id, 'multi-choice', 'Are you currently actively involved in Machine Learning Research?', 'Choose an option', 7, description = 'Choosing no will not count against you', None,
                    options = [
                       {'label': 'Yes', 'value': 'yes'},
                       {'label': 'No', 'value': 'no'}
-                   ], 7)
-    about_you_q8 = Question(app_form.id, about_you.id, 'long-text', 'Add a short abstract describing your current research', 'Enter 150 to 250 words', description = 'This can be completed research or research in progress. Remember to include a description of your methodology and any key results you have so far.', validation_regex = '^\s*(\S+(\s+|$)){150,250}$', 8)
+                   ])
+    about_you_q8 = Question(app_form.id, about_you.id, 'long-text', 'Add a short abstract describing your current research', 'Enter 150 to 250 words', 8, description = 'This can be completed research or research in progress. Remember to include a description of your methodology and any key results you have so far.', validation_regex = '^\s*(\S+(\s+|$)){150,250}$')
     about_you_q8.depends_on_question_id = about_you_q7.id
     about_you_q8.show_for_values = ['yes']
 
-    about_you_q9 = Question(app_form.id, about_you.id, 'multi-choice', 'Would you be interested in submitting an extended abstract or paper to the Indaba Symposium if you are selected to attend the Indaba?', 'Choose an option', description = "We won't hold you to this, it's just to gauge interest.", None, 9)
+    about_you_q9 = Question(app_form.id, about_you.id, 'multi-choice', 'Would you be interested in submitting an extended abstract or paper to the Indaba Symposium if you are selected to attend the Indaba?', 'Choose an option', 9, description = "We won't hold you to this, it's just to gauge interest.", None)
     about_you_q9.depends_on_question_id = about_you_q7.id
     about_you_q9.show_for_values = ['yes']
 
-    about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', validation_regex = '^\s*(\S+(\s+|$)){0,150}$', 10)
+    about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', 10, validation_regex = '^\s*(\S+(\s+|$)){0,150}$')
    
-    about_you_q11 = Question(app_form.id, about_you.id, 'file', 'Upload CV', None, is_required = True, 11)
+    about_you_q11 = Question(app_form.id, about_you.id, 'file', 'Upload CV', 11,  None, is_required = True)
     about_you_q11.depends_on_question_id = main_q1.id
     about_you_q11.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
-    about_you_q12 = Question(app_form.id, about_you.id, 'multi-choice', 'May we add your CV and email address to a database for sharing with our sponsors?', 'Choose an option', None,
+    about_you_q12 = Question(app_form.id, about_you.id, 'multi-choice', 'May we add your CV and email address to a database for sharing with our sponsors?', 'Choose an option', 12,  None,
                     options = [
                        {'label': 'Yes', 'value': 'yes'},
                        {'label': 'No', 'value': 'no'}
-                    ], 12)
+                    ])
     about_you_q12.depends_on_question_id = main_q1.id
     about_you_q12.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
@@ -324,26 +324,26 @@ def upgrade():
     session.add(travel_support)
     session.commit()
 
-    travel_support_q1 = Question(app_form.id, travel_support.id, 'multi-choice', 'Would you like to be considered for a travel grant?', 'Choose an option', description = 'Travel awards will be used to cover the costs of return flights to the host city and/or accommodation in shared dorm rooms close to the venue.', None,
+    travel_support_q1 = Question(app_form.id, travel_support.id, 'multi-choice', 'Would you like to be considered for a travel grant?', 'Choose an option', 1, description = 'Travel awards will be used to cover the costs of return flights to the host city and/or accommodation in shared dorm rooms close to the venue.', None,
                         options = [
                            {'label': 'Travel', 'value': 'travel'},
                            {'label': 'Accommodation', 'value': 'accommodation'},
                            {'label': 'Travel and Accommodation', 'value': 'travel-and-accommodation'},
                            {'label': 'None', 'value': 'none'}
-                        ], 1)
-    travel_support_q2 = Question(app_form.id, travel_support.id, 'short-text', 'Please state your intended airport of departure.', 'Airport of Departure', description = 'Please note that we will only provide flights in the form of a return ticket to and from a single airport on the continent of Africa.', None, 2)
+                        ])
+    travel_support_q2 = Question(app_form.id, travel_support.id, 'short-text', 'Please state your intended airport of departure.', 'Airport of Departure', 2, description = 'Please note that we will only provide flights in the form of a return ticket to and from a single airport on the continent of Africa.', None)
     travel_support_q2.depends_on_question_id = travel_support_q1.id
     travel_support_q2.show_for_values =['travel, travel-accommodation']
 
-    travel_support_q3 = Question(app_form.id, travel_support.id, 'multi-choice', 'If you do not receive a travel award from us, will you still be able to attend?', 'Choose an option', None,
+    travel_support_q3 = Question(app_form.id, travel_support.id, 'multi-choice', 'If you do not receive a travel award from us, will you still be able to attend?', 'Choose an option', 3, None,
                         options = [
                            {'label': 'Yes', 'value': 'yes'},
                            {'label': 'No', 'value': 'no'}
-                        ], 3)
+                        ])
     travel_support_q3.depends_on_question_id = travel_support_q1.id
     travel_support_q3.show_for_values =['travel', 'accommodation', 'travel-accommodation']
 
-    travel_support_q4 = Question(app_form.id, travel_support.id, 'long-text', 'Would you like to be considered for a registration fee waiver? If so, please provide a motivation', 'Enter up to 80 words', description = 'Enter up to 80 words', None, is_required = False, 4)
+    travel_support_q4 = Question(app_form.id, travel_support.id, 'long-text', 'Would you like to be considered for a registration fee waiver? If so, please provide a motivation', 'Enter up to 80 words', 4, description = 'Enter up to 80 words', None, is_required = False)
     travel_support_q4.depends_on_question_id = main_q1.id
     travel_support_q4.show_for_values = ['academic-faculty']
 
@@ -352,3 +352,59 @@ def upgrade():
     attendance = Section(app_form.id, 'Previous Attendance', 'Help us quantify our progress by giving us some info on your previous Indaba experiences.', 5)
     session.add(attendance)
     session.commit()
+
+    attendance_q1 = Question(app_form.id, attendance.id, 'multi-check box', 'Did you attend a previous edition of the Indaba?', None, 1, None, is_required = False,
+                    options = [
+                       {'label': 'Indaba 2017', 'value': 'indaba-2017'},
+                       {'label': 'Indaba 2018', 'value': 'indaba-2018'},
+                       {'label': 'Indaba 2019', 'value': 'indaba-2019'}
+                    ])
+    attendance_q2 = Question(app_form.id, attendance.id, 'long-text', 'Tell us how your previous attendance has helped you grow or how you have used what you have learned.', 'Enter up to 150 words', 2, description = 'Enter up to 150 words', validation_regex ='^\s*(\S+(\s+|$)){0,150}$')
+    attendance_q2.depends_on_question_id = attendance_q1.id
+    attendance_q2.show_for_values = ['indaba-2017, indaba-2018, indaba-2019, indaba-2017-indaba-2018, indaba-2017-indaba-2019, indaba-2018-indaba-2019, indaba-2017-indaba-2018-indaba-2019']
+
+    session.add_all([attendance_q1, attendance_q2])
+
+    additional_info = Section(app_form.id, 'Additional Information', 'Anything else you may want us to know', 6)
+    session.add(additional_info)
+    session.commit()
+
+    info_q1 = Question(app_form.id, additional_info.id, 'long-text', 'Any additional comments or remarks for the selection committee', 'Enter up to 80 words', 1, description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', is_required = False)
+    info_q2 = Question(app_form.id, additional_info.id, 'long-text', 'Anything else you think relevant, for example links to personal webpage, papers, GitHub/code repositories, community and outreach activities.', 'Enter up to 80 words', 2, description = 'Enter up to 80 words', validation_regex = '^\s*(\S+(\s+|$)){0,80}$', is_required = False)
+    info_q3 = Question(app_form.id, additional_info.id, 'multi-choice', 'If you are selected to attend the Indaba, would you also like to attend the AI Hack Tunisia.', 'Choose an option', 3, description = 'The AI Hack Tunisia will take place in the week of the 31st of August. Accepted Indaba attendees will automatically qualify for a place at the event.', None,
+              options = [
+                 {'label': 'Yes', 'value': 'yes'},
+                 {'label': 'No', 'value': 'no'},
+                 {'label': 'Maybe', 'value': 'maybe'}
+
+              ])
+    session.add_all([info_q1, info_q2, info_q3])
+
+def get_country_list(session):
+    countries = session.query(Country).all()
+    country_list = []
+    for country in countries:
+        country_list.append({
+            'label': country.name,
+            'value': country.name
+        })
+    return country_list
+
+def downgrade():
+    Base.metadata.bind = op.get_bind()
+    session = orm.Session(bind=Base.metadata.bind)
+
+    event = session.query(Event).filter_by(key='indaba2020').first()
+    app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
+    session.query(Question).filter_by(application_form_id=app_form.id).delete()
+    session.query(Section).filter_by(application_form_id=app_form.id).delete()
+
+    session.query(ApplicationForm).filter_by(event_id=event.id).delete()
+    session.query(Event).filter_by(key='indaba2020').delete()
+
+    session.commit()
+
+    op.get_bind().execute("""SELECT setval('event_id_seq', (SELECT max(id) FROM event));""")
+    op.get_bind().execute("""SELECT setval('application_form_id_seq', (SELECT max(id) FROM application_form));""")
+    op.get_bind().execute("""SELECT setval('section_id_seq', (SELECT max(id) FROM section));""")
+    op.get_bind().execute("""SELECT setval('question_id_seq', (SELECT max(id) FROM question));""")
