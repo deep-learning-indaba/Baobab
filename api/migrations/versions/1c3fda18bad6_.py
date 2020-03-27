@@ -129,11 +129,13 @@ class ApplicationForm(Base):
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     nominations = db.Column(db.Boolean(), nullable=False)
+    is_open = db.Column(db.Boolean(), nullable=False)
     
 
-    def __init__(self, event_id, nominations):
+    def __init__(self, event_id, nominations, is_open):
         self.event_id = event_id
         self.nominations = nominations
+        self.is_open = is_open
 
 class Section(Base):
     __tablename__ = 'section'
