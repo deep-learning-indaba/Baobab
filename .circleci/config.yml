@@ -20,10 +20,21 @@ jobs:
             docker-compose run web python api/run.py db downgrade --directory api/migrations
             docker-compose run web python api/run.py db upgrade --directory api/migrations
       - run:
-          name: Run tests
+          name: Run unit tests
           command: docker-compose run  web nosetests -v 
+            
+  integration-tests:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: Run integration tests
+          command: |
+            docker-compose build cypress
+            docker-compose run web python ./api/run.py db upgrade --directory api/migrations
+            docker-compose run cypress
 
-  frontEndTests:
+  front-end-tests:
     machine: true
     steps:
       - checkout
@@ -151,7 +162,11 @@ workflows:
   build_and_test:
     jobs:
       - build
-      - frontEndTests
+      - front-end-tests
+      - integration-tests:
+          filters:
+            branches:
+              ignore: master
       - migrate-test:
           filters:
             branches:

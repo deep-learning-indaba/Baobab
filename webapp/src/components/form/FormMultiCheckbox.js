@@ -77,7 +77,7 @@ class FormMultiCheckbox extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           errorText={this.props.errorText}
           tabIndex={this.props.tabIndex}
           autoFocus={this.props.autoFocus}

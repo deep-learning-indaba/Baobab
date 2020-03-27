@@ -127,7 +127,7 @@ class CreateAccountForm extends Component {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
     const passwordErrors = validatePassword(this.state.user.password)
-    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0) {
+    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0 && passwordErrors.password.foreach) {
       passwordErrors.password.foreach(i => {
         this.state.errors.$set.push({ passwords: i });
       });
@@ -204,7 +204,7 @@ class CreateAccountForm extends Component {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
-          <p className="account-created">
+          <p id="account-created">
             Your {this.props.organisation ? this.props.organisation.name : ""} account
             has been created, but before you can use it, we
             need to verify your email address. Please check your email (and spam
@@ -331,6 +331,7 @@ class CreateAccountForm extends Component {
           <br></br><br></br>
 
           <button
+            id="btn-signup-confirm"
             type="submit"
             class="btn btn-primary"
             disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}>

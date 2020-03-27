@@ -129,3 +129,9 @@ dmypy.json
 # Decrypted environment files
 api/prod.yaml
 api/app.yaml
+
+integration-tests/cypress/support/
+
+integration-tests/cypress/videos/
+
+integration-tests/cypress/screenshots/

@@ -100,3 +100,8 @@ POLICY_ALREADY_AGREED = (
     {'message': 'Privacy policy has already been agreed to.'}, 400)
 REFERENCE_REQUEST_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
+
+FAILED_CREATE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to create integration test user.'}, 500)
+FAILED_DELETE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to delete integration test user'}, 500)

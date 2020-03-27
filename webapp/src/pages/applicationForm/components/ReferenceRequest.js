@@ -30,7 +30,7 @@ class ReferenceRequestRow extends React.Component {
                 <div className="row no-gutters reference-row">
                     <div className="col-sm">
                         <input
-                            id={this.props.Id + "_title"}
+                            id={this.props.id + "_title"}
                             name="title"
                             className="form-control"
                             type="text"
@@ -43,7 +43,7 @@ class ReferenceRequestRow extends React.Component {
                     </div>
                     <div className="col-sm">
                         <input
-                            id={this.props.Id + "_firstname"}
+                            id={this.props.id + "_firstname"}
                             name="firstname"
                             className="form-control"
                             type="text"
@@ -56,7 +56,7 @@ class ReferenceRequestRow extends React.Component {
                     </div>
                     <div className="col-sm">
                         <input
-                            id={this.props.Id + "_lastname"}
+                            id={this.props.id + "_lastname"}
                             name="lastname"
                             className="form-control"
                             type="text"
@@ -69,7 +69,7 @@ class ReferenceRequestRow extends React.Component {
                     </div>
                     <div className="col-sm">
                         <input
-                            id={this.props.Id + "_email"}
+                            id={this.props.id + "_email"}
                             name="email"
                             className="form-control"
                             type="text"
@@ -82,7 +82,7 @@ class ReferenceRequestRow extends React.Component {
                     </div>
                     <div className="col-sm">
                         <input
-                            id={this.props.Id + "_relation"}
+                            id={this.props.id + "_relation"}
                             name="relation"
                             className="form-control"
                             type="text"

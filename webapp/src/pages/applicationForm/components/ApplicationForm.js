@@ -93,7 +93,7 @@ class FieldEditor extends React.Component {
       case SHORT_TEXT:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="text"
             label={question.description}
@@ -108,7 +108,7 @@ class FieldEditor extends React.Component {
       case SINGLE_CHOICE:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="checkbox"
             label={question.description}
@@ -124,7 +124,7 @@ class FieldEditor extends React.Component {
       case LONG_TEXT[1]:
         return (
           <FormTextArea
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             placeholder={question.placeholder}
@@ -168,7 +168,7 @@ class FieldEditor extends React.Component {
       case FILE:
         return (
           <FormFileUpload
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             key={"i_" + key}
@@ -184,7 +184,7 @@ class FieldEditor extends React.Component {
       case DATE:
         return (
           <FormDate
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
@@ -198,7 +198,7 @@ class FieldEditor extends React.Component {
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
