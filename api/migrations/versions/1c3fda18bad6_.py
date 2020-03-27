@@ -303,7 +303,7 @@ def upgrade():
 
     about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', 10, validation_regex = '^\s*(\S+(\s+|$)){0,150}$')
    
-    about_you_q11 = Question(app_form.id, about_you.id, 'file', 'Upload CV', 11,  None, is_required = True)
+    about_you_q11 = Question(app_form.id, about_you.id, 'file', 'Upload CV', None, 11,  None, is_required = True)
     about_you_q11.depends_on_question_id = main_q1.id
     about_you_q11.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
 
