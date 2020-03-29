@@ -496,7 +496,6 @@ class UserProfileListApiTest(ApiTestCase):
 
         event1_id = self.event1.id  #TODO: add comment about why we do this
         db.session.commit()
-        print(self.event1.name)
 
         header = self.get_auth_header_for(self.event1_admin.email)
 
