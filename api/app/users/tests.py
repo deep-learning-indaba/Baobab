@@ -438,11 +438,16 @@ class UserProfileListApiTest(ApiTestCase):
         self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
                             datetime.now(), datetime.now(),
                             'SUDANMO', self.org2.id)
-        db.session.commit()
+        db.session.flush()
 
-        # self.event1_id = self.event1.id
-        # self.event2_id = self.event2.id
+        # Setup the event admins
+        self.event_admin = AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+        self.event_admin.verify()
+        db.session.add(self.event_admin)
+        db.session.flush()
 
+        event_role = EventRole('admin', self.event_admin.id, self.event1.id)
+        db.session.add(event_role)
         db.session.flush()
 
     def test_event_does_not_exist(self):
@@ -473,6 +478,7 @@ class UserProfileListApiTest(ApiTestCase):
         ]
         db.session.add_all(application_forms)
 
+        # Setup the candidates
         candidate1 = AppUser(
             email='c1@c.com',
             firstname='candidate',
@@ -497,19 +503,16 @@ class UserProfileListApiTest(ApiTestCase):
         candidate3.active = False
         candidate3.is_deleted = True
 
-        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
-        users = [candidate1, candidate2, candidate3, event_admin]
+        users = [candidate1, candidate2, candidate3]
         for user in users:
             user.verify()
         db.session.add_all(users)
-
-        event_role = EventRole('admin', 4, 1)
-        db.session.add(event_role)
+        db.session.flush()
 
         responses = [
-            Response(1, 1, True),
-            Response(1, 2, True),
-            Response(1, 3, True)
+            Response(1, candidate1.id, True),
+            Response(1, candidate2.id, True),
+            Response(1, candidate3.id, True)
         ]
         db.session.add_all(responses)
 
