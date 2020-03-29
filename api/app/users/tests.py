@@ -314,34 +314,6 @@ class UserApiTest(ApiTestCase):
         db.session.add(user)
         db.session.commit()
 
-
-    def setup_responses(self):
-        application_forms = [
-            self.create_application_form(1, True, False),
-            self.create_application_form(2, False, False)
-        ]
-        db.session.add_all(application_forms)
-
-        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
-        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
-        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
-        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
-        users = [candidate1, candidate2, candidate3, event_admin]
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
-
-        event_role = EventRole('admin', 4, 1)
-        db.session.add(event_role)
-
-        responses = [
-            Response(1, 1, True, datetime(2019, 4, 10)),
-            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
-            Response(2, 3, True)
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
-
     def test_email_change_gets_new_token_and_is_unverified(self):
         self.seed_static_data()
         self.setup_verified_user()
@@ -452,76 +424,23 @@ class UserCommentAPITest(ApiTestCase):
 
 
 class UserProfileListApiTest(ApiTestCase):
-    def setup_responses(self):
-        application_forms = [
-            self.create_application_form(1, True, False),
-            self.create_application_form(2, False, False)
-        ]
-        db.session.add_all(application_forms)
-
-        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
-        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
-        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
-        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
-        users = [candidate1, candidate2, candidate3, event_admin]
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
-
-        event_role = EventRole('admin', 4, 1)
-        db.session.add(event_role)
-
-        responses = [
-            Response(1, 1, True, datetime(2019, 4, 10)),
-            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
-            Response(2, 3, True)
-        ]
-        db.session.add_all(responses)
+    def seed_static_data(self):
+        self.add_organisation('Deep Learning Indaba')
+        self.add_organisation('Deep Learning IndabaX')
+        db.session.add(UserCategory('Postdoc'))
+        db.session.add(Country('South Africa'))
+        self.event1 = self.add_event('Indaba', 'Indaba Event',
+                            datetime.now(), datetime.now(),
+                            'SOUTHAFRI2019')
+        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
+                            datetime.now(), datetime.now(),
+                            'SUDANMO', 2)
         db.session.commit()
 
+        self.event1_id = self.event1.id
+        self.event2_id = self.event2.id
 
-    def _setup(self):
-        # Create event and event dependencies
-        org = self.add_organisation('Deep Learning Indaba')
-
-        event = self.add_event(
-            'Indaba',
-            'Indaba Event',
-            datetime.now(),
-            datetime.now(),
-            'SOUTHAFRI2019'
-        )
-        self.event_id = event.id
-
-        self.application_form = self.create_application_form(self.event.id, True, False)
-
-        # Create admin user
-        # self.event_admin =  self.add_user(
-        #     email='ea@ea.com',
-        #     firstname='event_admin',
-        #     lastname='1',
-        #     user_title='Ms',
-        #     password='abc',
-        #     organisation_id=org.id,
-        #     is_admin=True
-        # )
-        self.event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
-
-        # event_role = EventRole('admin', self.event_admin.id, self.event.id)
-        # db.session.add(event_role)
-
-        # add users responses + invited guests
-        self.event_admin.verify()
-        db.session.add(self.event_admin)
-
-        self.users = self.add_n_users(5)
-        for user in self.users:
-            user.verify()
-        db.session.add_all(self.users)
-
-        db.session.commit()
-
-
+        db.session.flush()
 
     def test_event_does_not_exist(self):
         """
@@ -542,32 +461,50 @@ class UserProfileListApiTest(ApiTestCase):
         """
         Test that inactive or deleted users are not returned.
         """
-        self._setup()
+        self.seed_static_data()
 
-        self.users[0].active = False
-        self.users[1].deleted = True
-        self.users[2].active = False
-        self.users[2].deleted = True
+        # SETUP TEST SPECIFIC DATA
+        application_forms = [
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
+        ]
+        db.session.add_all(application_forms)
 
-        # Add resposes for these users so that the response filter does not remove them.
+        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        candidate1.active = False
+
+        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        candidate2.is_deleted = True
+
+        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
+        candidate3.active = False
+        candidate3.is_deleted = True
+
+        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+        users = [candidate1, candidate2, candidate3, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_role = EventRole('admin', 4, 1)
+        db.session.add(event_role)
+
         responses = [
-            Response(
-                self.application_form.id, self.users[i].id, True, datetime(2019, 4, 10)
-            ) for i in range(3)
+            Response(1, 1, True),
+            Response(1, 2, True),
+            Response(1, 3, True)
         ]
         db.session.add_all(responses)
-        db.session.commit()
 
-        # Make the request
-        header = self.get_auth_header_for(self.event_admin.email)
-        params = {'event_id': self.event_id}
+        db.session.commit()
+        # DATA IS SET UP
+
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
-
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {})
-
-        self.assertTrue(False)
+        self.assertEqual(response.json, [])
 
     def test_no_response_and_not_invited(self):
         """
