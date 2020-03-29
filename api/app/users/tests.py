@@ -425,20 +425,23 @@ class UserCommentAPITest(ApiTestCase):
 
 class UserProfileListApiTest(ApiTestCase):
     def seed_static_data(self):
-        self.add_organisation('Deep Learning Indaba')
-        self.add_organisation('Deep Learning IndabaX')
-        db.session.add(UserCategory('Postdoc'))
-        db.session.add(Country('South Africa'))
+        # Create organisations to be used in tests
+        self.org1 = self.add_organisation('Deep Learning Indaba')
+        self.org2 = self.add_organisation('Deep Learning IndabaX')
+
+        # db.session.add(UserCategory('Postdoc'))  # what is this used for?
+        # db.session.add(Country('South Africa'))  # what is this used for?
+
         self.event1 = self.add_event('Indaba', 'Indaba Event',
                             datetime.now(), datetime.now(),
-                            'SOUTHAFRI2019')
+                            'SOUTHAFRI2019', self.org1.id)
         self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
                             datetime.now(), datetime.now(),
-                            'SUDANMO', 2)
+                            'SUDANMO', self.org2.id)
         db.session.commit()
 
-        self.event1_id = self.event1.id
-        self.event2_id = self.event2.id
+        # self.event1_id = self.event1.id
+        # self.event2_id = self.event2.id
 
         db.session.flush()
 
@@ -465,18 +468,32 @@ class UserProfileListApiTest(ApiTestCase):
 
         # SETUP TEST SPECIFIC DATA
         application_forms = [
-            self.create_application_form(1, True, False),
-            self.create_application_form(2, False, False)
+            self.create_application_form(self.event1.id, True, False),
+            self.create_application_form(self.event2.id, False, False)
         ]
         db.session.add_all(application_forms)
 
-        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        candidate1 = AppUser(
+            email='c1@c.com',
+            firstname='candidate',
+            lastname='1',
+            user_title='Mr',
+            password='abc',
+            organisation_id=self.org1.id
+        )
         candidate1.active = False
 
-        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        candidate2 = AppUser(
+            email='c2@c.com',
+            firstname='candidate',
+            lastname='2',
+            user_title='Ms',
+            password='abc',
+            organisation_id=self.org1.id
+        )
         candidate2.is_deleted = True
 
-        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
+        candidate3 = AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
         candidate3.active = False
         candidate3.is_deleted = True
 
