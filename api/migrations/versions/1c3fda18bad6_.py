@@ -398,6 +398,7 @@ def downgrade():
 
     event = session.query(Event).filter_by(key='indaba2020').first()
     app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
+    op.get_bind().execute("""UPDATE Section SET depends_on_question_id=NULL WHERE application_form_id={}""".format(app_form.id))
     session.query(Question).filter_by(application_form_id=app_form.id).delete()
     session.query(Section).filter_by(application_form_id=app_form.id).delete()
 
