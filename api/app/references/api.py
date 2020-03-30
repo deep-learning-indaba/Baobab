@@ -61,11 +61,11 @@ def _get_candidate_nominator(response):
         question_answers = response_repository.get_question_answers_by_section_key_and_response_id(
             'nominee_section', response.id)
         
-        nomination_info = **{
+        nomination_info = {
             qa.Question.key: qa.Answer.value
             for qa in question_answers
         }
-        candidate = '{nomination_title} {nomination_firstname} {nomination_lastname}'.format(nomination_info)
+        candidate = '{nomination_title} {nomination_firstname} {nomination_lastname}'.format(**nomination_info)
         candidate_firstname = nomination_info['nomination_firstname']
         nominator = '{} {} {}'.format(response.user.title, response.user.firstname, response.user.lastname)
     else:
