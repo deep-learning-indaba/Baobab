@@ -91,12 +91,13 @@ class Home extends Component {
 
                 {this.props.user &&
                 <div>
-                    {this.state.upcomingEvents &&
-                    this.state.upcomingEvents.length > 0 &&
-                    <div>
-                        <h3>Upcoming Events</h3>
-                        <table className="event-table">
-                            <tbody>
+                    <table className="event-table">
+                        {this.state.upcomingEvents &&
+                        this.state.upcomingEvents.length > 0 &&    
+                        <thead><tr><th colspan="2"><br/><br/><h3 className="text-center">Upcoming Events</h3></th></tr></thead>}
+                        {this.state.upcomingEvents &&
+                        this.state.upcomingEvents.length > 0 && 
+                        <tbody>
                             {this.state.upcomingEvents.map(e => {
                                 // TODO: Update status based on event stage changes.
                                 return (<tr>
@@ -107,16 +108,14 @@ class Home extends Component {
                                     <td>{this.statusDisplay(e)}</td>
                                 </tr>)
                             })}
-                            </tbody>
-                        </table>
-                    </div>}
-
-                    {this.state.awards &&
-                    this.state.awards.length > 0 &&
-                    <div>
-                        <h3>Awards</h3>
-                        <table className="event-table">
-                            <tbody>
+                        </tbody>
+                        }
+                        {this.state.awards &&
+                        this.state.awards.length > 0 &&
+                        <thead><tr><th colspan="2"><br/><h3 className="text-center">Awards</h3></th></tr></thead>}
+                        {this.state.awards &&
+                        this.state.awards.length > 0 &&
+                        <tbody>
                             {this.state.awards.map(e => {
                                 // TODO: Update status based on event stage changes.
                                 return (<tr>
@@ -127,9 +126,10 @@ class Home extends Component {
                                     <td>{this.statusDisplay(e)}</td>
                                 </tr>)
                             })}
-                            </tbody>
-                        </table>
-                    </div>}
+                        </tbody>
+                        }
+
+                    </table>
 
                 </div>}
             </div>
