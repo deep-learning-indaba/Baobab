@@ -36,12 +36,13 @@ reference_request_fields = {
 }
 
 reference_request_details_fields = {
-    'candidate':                     fields.Raw,
-    'relation':                      fields.String,
-    'name':                          fields.String,
-    'description':                   fields.String,
-    'is_application_open':           fields.Boolean,
-    'email_from':                    fields.String,
+    'candidate': fields.String,
+    'nominator': fields.String,
+    'relation': fields.String,
+    'name': fields.String,
+    'description': fields.String,
+    'is_application_open': fields.Boolean,
+    'email_from': fields.String,
     'reference_submitted_timestamp': fields.DateTime,
     }
 
@@ -51,6 +52,29 @@ reference_fields = {
     'uploaded_document': fields.String,
     'timestamp': fields.DateTime
 }
+
+def _get_candidate_nominator(response):
+    nominating_capacity = response_repository.get_answer_by_question_key_and_response_id('nominating_capacity', response.id)
+    is_nomination = nominating_capacity.value == 'other'
+
+    if is_nomination:
+        question_answers = response_repository.get_question_answers_by_section_key_and_response_id(
+            'nominee_section', response.id)
+        
+        nomination_info = **{
+            qa.Question.key: qa.Answer.value
+            for qa in question_answers
+        }
+        candidate = '{nomination_title} {nomination_firstname} {nomination_lastname}'.format(nomination_info)
+        candidate_firstname = nomination_info['nomination_firstname']
+        nominator = '{} {} {}'.format(response.user.title, response.user.firstname, response.user.lastname)
+    else:
+        candidate = '{} {} {}'.format(response.user.title, response.user.firstname, response.user.lastname)
+        candidate_firstname = response.user.firstname
+        nominator = None
+    
+    return candidate, candidate_firstname, nominator
+
 
 class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
 
@@ -78,20 +102,36 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         event = event_repository.get_event_by_response_id(response_id)
         if not event:
             return EVENT_NOT_FOUND
+        
+        response = response_repository.get_by_id(response_id)
+        if not response:
+            return RESPONSE_NOT_FOUND
+
         reference_request = ReferenceRequest(response_id=response_id,title=title,
-                                        firstname=firstname, lastname=lastname, relation=relation, email=email)
+                firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
 
         link = "{host}/{key}/reference/{token}".format(host=misc.get_baobab_host(),
                                                        key=event.key, token=reference_request.token)
 
-        # TODO: Add details about nomination 
+        candidate, candidate_firstname, nominator = _get_candidate_nominator(response)
+        if nominator is None:
+            nomination_text = "has nominated themselves"
+        else:
+            nomination_text = "has been nominated by {}".format(nominator)
+
         subject = 'REFERENCE REQUEST - {}'.format(event.name)
-        body = REFERENCE_REQUEST_EMAIL_BODY.format(title=title, firstname=firstname,
-                                        lastname=lastname, event_description=event.description,
-                                        link=link, candidate_firstname=user.firstname,
-                                        candidate_lastname=user.lastname,
-                                        application_close_date=event.application_close)
+        body = REFERENCE_REQUEST_EMAIL_BODY.format(            
+            title=title,
+            firstname=firstname,
+            lastname=lastname,
+            candidate=candidate,
+            candidate_firstname=candidate_firstname,
+            nomination_text=nomination_text,
+            event_name=event.name,
+            event_url=event.url,
+            application_close_date=event.application_close,
+            link=link)
         send_mail(recipient=email, subject=subject, body_text=body)
 
         reference_request.set_email_sent(datetime.now())
@@ -136,27 +176,17 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
         reference = reference_repository.get_by_reference_request_id(reference_request.id)
         app_form = event.get_application_form()  # type: ApplicationForm
 
-        # get section from appform where nomination
-        name = "Nominations" # TODO: change this to a key
-        section = application_form_repository\
-            .get_section_by_app_id_and_section_name(app_form.id, name)
-
-        candidate = {}
-        if section is not None:
-            question_answers = response_repository.\
-                get_question_answers_by_section_id_and_response_id(section.id, response_id)
-            for qa in question_answers:
-                question = qa.Question
-                answer = qa.Answer
-                candidate[question.headline] = answer.value
+        # Determine whether the response is a nomination
+        candidate, _, nominator = _get_candidate_nominator(response_id)
 
         return_object = {
-            'candidate':                     candidate,
-            'relation':                      reference_request.relation,
-            'name':                          event.name,
-            'description':                   event.description,
-            'is_application_open':           event.is_application_open,
-            'email_from':                    event.email_from,
+            'candidate': candidate,
+            'nominator': nominator,
+            'relation': reference_request.relation,
+            'name': event.name,
+            'description': event.description,
+            'is_application_open': event.is_application_open,
+            'email_from': event.email_from,
             'reference_submitted_timestamp': reference.timestamp if reference is not None else None
             }
 
@@ -166,12 +196,16 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
 REFERENCE_REQUEST_EMAIL_BODY="""
 Dear {title} {firstname} {lastname},
 
-{candidate_firstname} {candidate_lastname} has requested your reference for their application for the {event_description}.
+{candidate} {nomination_text} for the {event_name} ({event_url}). 
+In order for their application to be considered for the award, we require a reference letter from someone who knows {candidate_firstname} in a professional capacity, and they have selected you. 
+Please use the upload link below to submit your reference letter for {candidate_firstname} by {application_close_date}. 
+The reference letter should describe your relationship to {candidate_firstname}, how long you've known them, and should comment on the work {candidate_firstname} has done, and its worthiness of the {event_name}. 
+Their application will NOT be considered if this reference letter is not submitted by the deadline
 
 Please visit {link} to upload your reference by {application_close_date}
 
 Kind regards,
-The {event_description} team.
+The {event_name} team.
 """
 
 
