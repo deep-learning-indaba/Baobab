@@ -6,7 +6,6 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
-import FormFileUpload from "../../../components/form/FormFileUpload";
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
