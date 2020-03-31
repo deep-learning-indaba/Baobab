@@ -14,6 +14,13 @@ class FormDate extends React.Component {
       this.dateInput.focus();
     }
   }
+
+  onChange = value => {
+    if (value && this.props.onChange) {
+      this.props.onChange(value.toISOString());
+    }
+  }
+
   render() {
     return (
       <div>
@@ -35,8 +42,8 @@ class FormDate extends React.Component {
           ref={input => {
             this.dateInput = input;
           }}
-          onChange={this.props.onChange}
-          value={this.props.value}
+          onChange={this.onChange}
+          value={Date.parse(this.props.value)}
           required={this.props.required || null}
           tabIndex={this.props.tabIndex}
           autoFocus={this.props.autoFocus}
