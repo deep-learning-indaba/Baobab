@@ -168,13 +168,14 @@ class Question(Base):
     headline = db.Column(db.String(), nullable=False)
     placeholder = db.Column(db.String(), nullable=True)
     validation_regex = db.Column(db.String(), nullable=True)
+    validation_text = db.Column(db.String(), nullable=True)
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
     
-    def __init__(self, application_form_id, section_id, questionType, headline, placeholder, order, validation_regex, description = None,  is_required = True, options = None):
+    def __init__(self, application_form_id, section_id, questionType, headline, placeholder, order, validation_regex, validation_text=None, description = None,  is_required = True, options = None):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.headline = headline
@@ -185,6 +186,7 @@ class Question(Base):
         self.options = options
         self.is_required = is_required
         self.validation_regex = validation_regex
+        self.validation_text = validation_text
 
 def upgrade():
     Base.metadata.bind = op.get_bind()
@@ -270,7 +272,7 @@ def upgrade():
    
     about_you_q2 = Question(app_form.id, about_you.id, 'long-text', 'How will you share what you have learned after the Indaba?', 'Enter 50 to 150 words', 2, validation_regex = '^\s*(\S+(\s+|$)){50,150}$', description = 'Enter 50 to 150 words')
     about_you_q2.depends_on_question_id = main_q1.id
-    about_you_q2.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
+    about_you_q2.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
     about_you_q3 = Question(app_form.id, about_you.id, 'long-text', 'How will you use your experience at the Deep Learning Indaba to impact your teaching, research, supervision, and/or institution?', 'Enter 50 to 150 words', 3, validation_regex =  '^\s*(\S+(\s+|$)){50,150}$', description = 'Enter 50 to 150 words')
     about_you_q3.depends_on_question_id = main_q1.id
@@ -278,11 +280,11 @@ def upgrade():
     
     about_you_q4 = Question(app_form.id, about_you.id, 'long-text', 'Share with us a favourite machine learning resource you use: a paper, blog post, algorithm, result, or finding. Tell us why.', 'Enter up to 80 words', 4, validation_regex = "^\s*(\S+(\s+|$)){0,80}$", description = 'Enter up to 80 words, remember to include *why*')
     about_you_q4.depends_on_question_id = main_q1.id
-    about_you_q4.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed, academic-faculty']
+    about_you_q4.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed', 'academic-faculty']
 
     about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', 5, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words')
     about_you_q5.depends_on_question_id = main_q1.id
-    about_you_q5.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
+    about_you_q5.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
     about_you_q6 = Question(app_form.id, about_you.id, 'long-text', 'Have you taught any Machine Learning courses at your institution or supervised any postgraduate students on Machine Learning projects?', 'Enter up to 80 words', 6, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words')
     about_you_q6.depends_on_question_id = main_q1.id
@@ -302,10 +304,12 @@ def upgrade():
     about_you_q9.show_for_values = ['yes']
 
     about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', 10, validation_regex = '^\s*(\S+(\s+|$)){0,150}$')
-   
+    about_you_q10.depends_on_question_id = about_you_q7.id
+    about_you_q10.show_for_values = ['no']
+ 
     about_you_q11 = Question(app_form.id, about_you.id, 'file', 'Upload CV', None, 11,  None, is_required = True)
     about_you_q11.depends_on_question_id = main_q1.id
-    about_you_q11.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
+    about_you_q11.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
     about_you_q12 = Question(app_form.id, about_you.id, 'multi-choice', 'May we add your CV and email address to a database for sharing with our sponsors?', 'Choose an option', 12,  None,
                     options = [
@@ -313,7 +317,7 @@ def upgrade():
                        {'label': 'No', 'value': 'no'}
                     ])
     about_you_q12.depends_on_question_id = main_q1.id
-    about_you_q12.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed']
+    about_you_q12.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
     session.add_all([about_you_q1, about_you_q2, about_you_q3, about_you_q4, about_you_q5, about_you_q6, about_you_q7, about_you_q8, about_you_q9, about_you_q10, about_you_q11, about_you_q12])
 
@@ -322,7 +326,7 @@ def upgrade():
                                To help as many people attend as possible, before applying for travel support, please check if your supervisor, department or university is able to support you in any way.
                                """, 4)
     travel_support.depends_on_question_id = main_q1.id
-    travel_support.show_for_values = ['undergraduate, masters, phd, post-doc, student at a coding academy, unemployed, academic-faculty']
+    travel_support.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed', 'academic-faculty']
     session.add(travel_support)
     session.commit()
 
@@ -335,7 +339,7 @@ def upgrade():
                         ])
     travel_support_q2 = Question(app_form.id, travel_support.id, 'short-text', 'Please state your intended airport of departure.', 'Airport of Departure', 2, None, description = 'Please note that we will only provide flights in the form of a return ticket to and from a single airport on the continent of Africa.')
     travel_support_q2.depends_on_question_id = travel_support_q1.id
-    travel_support_q2.show_for_values =['travel, travel-accommodation']
+    travel_support_q2.show_for_values =['travel', 'travel-accommodation']
 
     travel_support_q3 = Question(app_form.id, travel_support.id, 'multi-choice', 'If you do not receive a travel award from us, will you still be able to attend?', 'Choose an option', 3, None,
                         options = [
@@ -355,7 +359,7 @@ def upgrade():
     session.add(attendance)
     session.commit()
 
-    attendance_q1 = Question(app_form.id, attendance.id, 'multi-check box', 'Did you attend a previous edition of the Indaba?', None, 1, None, is_required = False,
+    attendance_q1 = Question(app_form.id, attendance.id, 'multi-checkbox', 'Did you attend a previous edition of the Indaba?', None, 1, None, is_required = False,
                     options = [
                        {'label': 'Indaba 2017', 'value': 'indaba-2017'},
                        {'label': 'Indaba 2018', 'value': 'indaba-2018'},
@@ -363,7 +367,7 @@ def upgrade():
                     ])
     attendance_q2 = Question(app_form.id, attendance.id, 'long-text', 'Tell us how your previous attendance has helped you grow or how you have used what you have learned.', 'Enter up to 150 words', 2, validation_regex ='^\s*(\S+(\s+|$)){0,150}$', description = 'Enter up to 150 words')
     attendance_q2.depends_on_question_id = attendance_q1.id
-    attendance_q2.show_for_values = ['indaba-2017, indaba-2018, indaba-2019, indaba-2017-indaba-2018, indaba-2017-indaba-2019, indaba-2018-indaba-2019, indaba-2017-indaba-2018-indaba-2019']
+    attendance_q2.show_for_values = ['indaba-2017', 'indaba-2018', 'indaba-2019', 'indaba-2017-indaba-2018', 'indaba-2017-indaba-2019', 'indaba-2018-indaba-2019', 'indaba-2017-indaba-2018-indaba-2019']
 
     session.add_all([attendance_q1, attendance_q2])
 
