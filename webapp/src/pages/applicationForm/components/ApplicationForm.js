@@ -23,7 +23,7 @@ const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
-const REFERENCE_REQUEST = "reference-request";
+const REFERENCE_REQUEST = "reference";
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
