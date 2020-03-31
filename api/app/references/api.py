@@ -4,6 +4,8 @@ from flask import g, request
 import flask_restful as restful
 from flask_restful import fields, marshal_with
 
+from app import LOGGER
+
 from app.applicationModel.models import ApplicationForm
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.events.models import Event
@@ -32,7 +34,7 @@ reference_request_fields = {
     'email_sent': fields.DateTime,
     'response_id': fields.Integer,
     'email': fields.String,
-    'reference_submitted': fields.Boolean
+    'reference_submitted': fields.Boolean('has_reference')
 }
 
 reference_request_details_fields = {
@@ -67,9 +69,9 @@ def _get_candidate_nominator(response):
         }
         candidate = '{nomination_title} {nomination_firstname} {nomination_lastname}'.format(**nomination_info)
         candidate_firstname = nomination_info['nomination_firstname']
-        nominator = '{} {} {}'.format(response.user.title, response.user.firstname, response.user.lastname)
+        nominator = '{} {} {}'.format(response.user.user_title, response.user.firstname, response.user.lastname)
     else:
-        candidate = '{} {} {}'.format(response.user.title, response.user.firstname, response.user.lastname)
+        candidate = '{} {} {}'.format(response.user.user_title, response.user.firstname, response.user.lastname)
         candidate_firstname = response.user.firstname
         nominator = None
     
@@ -111,12 +113,12 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
                 firstname=firstname, lastname=lastname, relation=relation, email=email)
         reference_request_repository.create(reference_request)
 
-        link = "{host}/{key}/reference/{token}".format(host=misc.get_baobab_host(),
-                                                       key=event.key, token=reference_request.token)
+        link = "{host}/reference/{token}".format(host=misc.get_baobab_host(),
+                                                 token=reference_request.token)
 
         candidate, candidate_firstname, nominator = _get_candidate_nominator(response)
         if nominator is None:
-            nomination_text = "has nominated themselves"
+            nomination_text = "has nominated themself"
         else:
             nomination_text = "has been nominated by {}".format(nominator)
 
@@ -164,7 +166,6 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
 
         response_id = reference_request.response_id
         response = response_repository.get_by_id(response_id)  # type: Response
-
         if not response:
             return RESPONSE_NOT_FOUND
 
@@ -177,7 +178,7 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
         app_form = event.get_application_form()  # type: ApplicationForm
 
         # Determine whether the response is a nomination
-        candidate, _, nominator = _get_candidate_nominator(response_id)
+        candidate, _, nominator = _get_candidate_nominator(response)
 
         return_object = {
             'candidate': candidate,
@@ -188,7 +189,7 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
             'is_application_open': event.is_application_open,
             'email_from': event.email_from,
             'reference_submitted_timestamp': reference.timestamp if reference is not None else None
-            }
+        }
 
         return return_object, 200
 
