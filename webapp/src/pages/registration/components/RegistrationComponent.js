@@ -277,7 +277,7 @@ class RegistrationComponent extends Component {
         case SHORT_TEXT:
           return (
             <FormTextBox
-              Id={question.id}
+              id={question.id}
               name={this.id}
               type="text"
               label={question.description}
@@ -292,7 +292,7 @@ class RegistrationComponent extends Component {
         case SINGLE_CHOICE:
           return (
             <FormCheckbox
-              Id={question.id}
+              id={question.id}
               name={this.id}
               type="checkbox"
               label={question.description}
@@ -308,7 +308,7 @@ class RegistrationComponent extends Component {
         case LONG_TEXT[1]:
           return (
             <FormTextArea
-              Id={question.id}
+              id={question.id}
               name={this.id}
               label={question.description}
               onChange={this.handleChange}
@@ -337,7 +337,7 @@ class RegistrationComponent extends Component {
         case MULTI_CHECKBOX:
           return (
             <FormMultiCheckbox
-              Id={this.id}
+              id={this.id}
               name={this.id}
               options={this.options}
               onChange={this.handleChange}
@@ -358,7 +358,7 @@ class RegistrationComponent extends Component {
         case DATE:
           return (
             <FormDate
-              Id={question.id}
+              id={question.id}
               name={this.id}
               label={question.description}
               value={answer ? answer.value : answer}

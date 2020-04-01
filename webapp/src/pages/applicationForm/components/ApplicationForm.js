@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from "../../../services/applicationForm";
-
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
@@ -94,7 +93,7 @@ class FieldEditor extends React.Component {
       case SHORT_TEXT:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="text"
             label={question.description}
@@ -109,7 +108,7 @@ class FieldEditor extends React.Component {
       case SINGLE_CHOICE:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="checkbox"
             label={question.description}
@@ -125,7 +124,7 @@ class FieldEditor extends React.Component {
       case LONG_TEXT[1]:
         return (
           <FormTextArea
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             placeholder={question.placeholder}
@@ -169,7 +168,7 @@ class FieldEditor extends React.Component {
       case FILE:
         return (
           <FormFileUpload
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             key={"i_" + key}
@@ -185,7 +184,7 @@ class FieldEditor extends React.Component {
       case DATE:
         return (
           <FormDate
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
@@ -199,7 +198,7 @@ class FieldEditor extends React.Component {
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             value={answer ? answer.value : answer}
@@ -330,7 +329,6 @@ class Section extends React.Component {
         }
       }
     );
-
     return isValid;
   };
 
@@ -510,6 +508,10 @@ class Submitted extends React.Component {
     });
   };
 
+  handleEditOK = event => {
+    this.props.onCancelSubmit()
+  };
+
   handleWithdrawCancel = event => {
     this.setState({
       withdrawModalVisible: false
@@ -519,6 +521,18 @@ class Submitted extends React.Component {
   handleWithdraw = event => {
     this.setState({
       withdrawModalVisible: true
+    });
+  };
+
+  handleEdit = event => {
+    this.setState({
+      editAppModalVisible: true
+    });
+  };
+
+  cancelEditModal = event => {
+    this.setState({
+      editAppModalVisible: false
     });
   };
 
@@ -537,24 +551,44 @@ class Submitted extends React.Component {
           Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
+
         <p class="timestamp">
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
+
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             Withdraw Application
           </button>
         </div>
+
+        <div class="submitted-footer">
+          <button class="btn btn-primary" onClick={this.handleEdit}>
+            Edit Application
+          </button>
+        </div>
+
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
           okText={"Yes - Withdraw"}
-          cancelText={"No - Don't withdraw"}
-        >
+          cancelText={"No - Don't withdraw"}>
+
           <p>
             By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
+          </p>
+        </ConfirmModal>
+
+        <ConfirmModal
+          visible={this.state.editAppModalVisible}
+          onOK={this.handleEditOK}
+          onCancel={this.cancelEditModal}
+          okText={"Yes - Edit application"}
+          cancelText={"No - Don't edit"}>
+          <p>
+            Do you want to edit your application: {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
@@ -577,7 +611,8 @@ class ApplicationForm extends Component {
       errorMessage: "",
       errors: [],
       answers: [],
-      unsavedChanges: false
+      unsavedChanges: false,
+      startStep: 0
     };
   }
 
@@ -774,6 +809,7 @@ class ApplicationForm extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
+          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 1 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
@@ -824,6 +860,7 @@ class ApplicationForm extends Component {
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
               responseId={this.state.responseId}
+              stepProgress={i}
             />
           )
         };
@@ -849,6 +886,7 @@ class ApplicationForm extends Component {
         />
       )
     });
+
     return (
       <div class="application-form-container">
         <div className="step-progress">
@@ -857,6 +895,7 @@ class ApplicationForm extends Component {
             onStepChange={this.handleStepChange}
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
+            startAtStep={this.state.startStep}
           />
           <ReactToolTip />
         </div>

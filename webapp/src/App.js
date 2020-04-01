@@ -490,7 +490,7 @@ class App extends Component {
             buttonStyle={{ fontWeight: "bold" }}
             buttonText="I understand"
             buttonClasses="btn btn-primary"
-            s
+            buttonId="btn-cookieConsent"
             containerClasses="alert alert-warning col-lg-12"
           >
             <h5>This website stores cookies on your computer.</h5>

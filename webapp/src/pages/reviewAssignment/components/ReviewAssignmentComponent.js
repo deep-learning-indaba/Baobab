@@ -165,7 +165,7 @@ class ReviewAssignmentComponent extends Component {
 
           <div>
             <FormTextBox
-              Id={"newReviewEmail"}
+              id={"newReviewEmail"}
               name={'newReviewEmail'}
               label={"Add new reviewer's email"}
               placeholder={"Review email"}

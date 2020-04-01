@@ -50,7 +50,34 @@ webapp:
   environment:
     - NODE_ENV=development
     - CHOKIDAR_USEPOLLING=true
+
 test-ci:
   build: ./webapp
   command: yarn test-ci
   dockerfile: Dockerfile-test
+
+webappintegration:
+  build: ./webapp
+  command: yarn start-integration
+  volumes:
+    - ./webapp:/usr/src/app
+    - ./webapp:/webapp
+  ports:
+    - "8081:3000"
+  environment:
+    - NODE_ENV=development
+    - CHOKIDAR_USEPOLLING=true
+
+cypress:
+  ipc: host
+  image: "cypress/included:4.2.0"
+  links:
+    - webappintegration
+    - web
+  environment:
+    # pass base url to test pointing at the web application
+    - CYPRESS_baseUrl=http://webappintegration:3000
+  # share the current folder as volume to avoid copying
+  working_dir: /integration-tests
+  volumes:
+    - ./integration-tests/:/integration-tests
