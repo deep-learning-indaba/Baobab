@@ -268,25 +268,25 @@ def upgrade():
     session.add(about_you)
     session.commit()
 
-    about_you_q1 = Question(app_form.id, about_you.id, 'long-text', 'Why is attending the Deep Learning Indaba 2020 important to you?', 'Enter 100 to 200 words', 1, validation_regex = '^\s*(\S+(\s+|$)){100,200}$', description = 'Enter 100 to 200 words')
+    about_you_q1 = Question(app_form.id, about_you.id, 'long-text', 'Why is attending the Deep Learning Indaba 2020 important to you?', 'Enter 100 to 200 words', 1, validation_regex = '^\s*(\S+(\s+|$)){100,200}$', validation_text = 'You must enter 100 to 200 words', description = 'Enter 100 to 200 words')
    
-    about_you_q2 = Question(app_form.id, about_you.id, 'long-text', 'How will you share what you have learned after the Indaba?', 'Enter 50 to 150 words', 2, validation_regex = '^\s*(\S+(\s+|$)){50,150}$', description = 'Enter 50 to 150 words')
+    about_you_q2 = Question(app_form.id, about_you.id, 'long-text', 'How will you share what you have learned after the Indaba?', 'Enter 50 to 150 words', 2, validation_regex = '^\s*(\S+(\s+|$)){50,150}$', validation_text = 'You must enter 50 to 150 words', description = 'Enter 50 to 150 words')
     about_you_q2.depends_on_question_id = main_q1.id
     about_you_q2.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
-    about_you_q3 = Question(app_form.id, about_you.id, 'long-text', 'How will you use your experience at the Deep Learning Indaba to impact your teaching, research, supervision, and/or institution?', 'Enter 50 to 150 words', 3, validation_regex =  '^\s*(\S+(\s+|$)){50,150}$', description = 'Enter 50 to 150 words')
+    about_you_q3 = Question(app_form.id, about_you.id, 'long-text', 'How will you use your experience at the Deep Learning Indaba to impact your teaching, research, supervision, and/or institution?', 'Enter 50 to 150 words', 3, validation_regex =  '^\s*(\S+(\s+|$)){50,150}$', validation_text = 'You must enter 50 to 150 words', description = 'Enter 50 to 150 words')
     about_you_q3.depends_on_question_id = main_q1.id
     about_you_q3.show_for_values = ['academic-faculty']
     
-    about_you_q4 = Question(app_form.id, about_you.id, 'long-text', 'Share with us a favourite machine learning resource you use: a paper, blog post, algorithm, result, or finding. Tell us why.', 'Enter up to 80 words', 4, validation_regex = "^\s*(\S+(\s+|$)){0,80}$", description = 'Enter up to 80 words, remember to include *why*')
+    about_you_q4 = Question(app_form.id, about_you.id, 'long-text', 'Share with us a favourite machine learning resource you use: a paper, blog post, algorithm, result, or finding. Tell us why.', 'Enter up to 80 words', 4, validation_regex = "^\s*(\S+(\s+|$)){0,80}$", validation_text = 'You must enter up to 80 words', description = 'Enter up to 80 words, remember to include *why*')
     about_you_q4.depends_on_question_id = main_q1.id
     about_you_q4.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed', 'academic-faculty']
 
-    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', 5, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words')
+    about_you_q5 = Question(app_form.id, about_you.id, 'long-text', 'Are you or have you been a tutor for any relevant course, or part of any machine learning or data science society or meetup? If yes, give details.', 'Enter up to 80 words', 5, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', validation_text = 'You must enter up to 80 words', description = 'Enter up to 80 words')
     about_you_q5.depends_on_question_id = main_q1.id
     about_you_q5.show_for_values = ['undergraduate', 'masters', 'phd', 'post-doc', 'student at a coding academy', 'unemployed']
 
-    about_you_q6 = Question(app_form.id, about_you.id, 'long-text', 'Have you taught any Machine Learning courses at your institution or supervised any postgraduate students on Machine Learning projects?', 'Enter up to 80 words', 6, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words')
+    about_you_q6 = Question(app_form.id, about_you.id, 'long-text', 'Have you taught any Machine Learning courses at your institution or supervised any postgraduate students on Machine Learning projects?', 'Enter up to 80 words', 6, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', validation_text = 'You must enter up to 80 words', description = 'Enter up to 80 words')
     about_you_q6.depends_on_question_id = main_q1.id
     about_you_q6.show_for_values = ['academic-faculty']
 
@@ -295,7 +295,7 @@ def upgrade():
                       {'label': 'Yes', 'value': 'yes'},
                       {'label': 'No', 'value': 'no'}
                    ])
-    about_you_q8 = Question(app_form.id, about_you.id, 'long-text', 'Add a short abstract describing your current research', 'Enter 150 to 250 words', 8, validation_regex = '^\s*(\S+(\s+|$)){150,250}$', description = 'This can be completed research or research in progress. Remember to include a description of your methodology and any key results you have so far.')
+    about_you_q8 = Question(app_form.id, about_you.id, 'long-text', 'Add a short abstract describing your current research', 'Enter 150 to 250 words', 8, validation_regex = '^\s*(\S+(\s+|$)){150,250}$', validation_text = 'You must enter 150 to 250 words', description = 'This can be completed research or research in progress. Remember to include a description of your methodology and any key results you have so far.')
     about_you_q8.depends_on_question_id = about_you_q7.id
     about_you_q8.show_for_values = ['yes']
 
@@ -303,7 +303,7 @@ def upgrade():
     about_you_q9.depends_on_question_id = about_you_q7.id
     about_you_q9.show_for_values = ['yes']
 
-    about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', 10, validation_regex = '^\s*(\S+(\s+|$)){0,150}$')
+    about_you_q10 = Question(app_form.id, about_you.id, 'long-text', 'Have you worked on a project that uses machine learning? Give a short description.', 'Enter upto 150 words', 10, validation_regex = '^\s*(\S+(\s+|$)){0,150}$', validation_text = 'You must enter up to 150 words')
     about_you_q10.depends_on_question_id = about_you_q7.id
     about_you_q10.show_for_values = ['no']
  
@@ -365,7 +365,7 @@ def upgrade():
                        {'label': 'Indaba 2018', 'value': 'indaba-2018'},
                        {'label': 'Indaba 2019', 'value': 'indaba-2019'}
                     ])
-    attendance_q2 = Question(app_form.id, attendance.id, 'long-text', 'Tell us how your previous attendance has helped you grow or how you have used what you have learned.', 'Enter up to 150 words', 2, validation_regex ='^\s*(\S+(\s+|$)){0,150}$', description = 'Enter up to 150 words')
+    attendance_q2 = Question(app_form.id, attendance.id, 'long-text', 'Tell us how your previous attendance has helped you grow or how you have used what you have learned.', 'Enter up to 150 words', 2, validation_regex ='^\s*(\S+(\s+|$)){0,150}$', validation_text = 'You must enter up to 150 words', description = 'Enter up to 150 words')
     attendance_q2.depends_on_question_id = attendance_q1.id
     attendance_q2.show_for_values = ['indaba-2017', 'indaba-2018', 'indaba-2019', 'indaba-2017-indaba-2018', 'indaba-2017-indaba-2019', 'indaba-2018-indaba-2019', 'indaba-2017-indaba-2018-indaba-2019']
 
@@ -375,8 +375,8 @@ def upgrade():
     session.add(additional_info)
     session.commit()
 
-    info_q1 = Question(app_form.id, additional_info.id, 'long-text', 'Any additional comments or remarks for the selection committee', 'Enter up to 80 words', 1, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words',  is_required = False)
-    info_q2 = Question(app_form.id, additional_info.id, 'long-text', 'Anything else you think relevant, for example links to personal webpage, papers, GitHub/code repositories, community and outreach activities.', 'Enter up to 80 words', 2,  validation_regex = '^\s*(\S+(\s+|$)){0,80}$', description = 'Enter up to 80 words', is_required = False)
+    info_q1 = Question(app_form.id, additional_info.id, 'long-text', 'Any additional comments or remarks for the selection committee', 'Enter up to 80 words', 1, validation_regex = '^\s*(\S+(\s+|$)){0,80}$', validation_text = 'You must enter up to 80 words', description = 'Enter up to 80 words',  is_required = False)
+    info_q2 = Question(app_form.id, additional_info.id, 'long-text', 'Anything else you think relevant, for example links to personal webpage, papers, GitHub/code repositories, community and outreach activities.', 'Enter up to 80 words', 2,  validation_regex = '^\s*(\S+(\s+|$)){0,80}$', validation_text = 'You must enter up to 80 words', description = 'Enter up to 80 words', is_required = False)
     info_q3 = Question(app_form.id, additional_info.id, 'multi-choice', 'If you are selected to attend the Indaba, would you also like to attend the AI Hack Tunisia.', 'Choose an option', 3, None, description = 'The AI Hack Tunisia will take place in the week of the 31st of August. Accepted Indaba attendees will automatically qualify for a place at the event.',
               options = [
                  {'label': 'Yes', 'value': 'yes'},
