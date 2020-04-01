@@ -1,6 +1,6 @@
 from app import db
 from app.responses.models import Response, Answer
-from app.applicationModel.models import Question
+from app.applicationModel.models import Question, Section
 from app.users.models import AppUser
 
 
