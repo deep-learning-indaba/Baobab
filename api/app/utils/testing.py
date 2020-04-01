@@ -144,8 +144,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(self.country)
 
         # Add a dummy organisation
-        self.add_organisation(domain='org')
+        dummy_org = self.add_organisation(domain='org')
         db.session.flush()
+        self.dummy_org_id = dummy_org.id
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', domain='com', url='www.org.com',

@@ -425,30 +425,51 @@ class UserCommentAPITest(ApiTestCase):
 
 class UserProfileListApiTest(ApiTestCase):
     def seed_static_data(self):
-        # Create organisations to be used in tests
-        self.org1 = self.add_organisation('Deep Learning Indaba')
-        self.org2 = self.add_organisation('Deep Learning IndabaX')
-
-        # db.session.add(UserCategory('Postdoc'))  # what is this used for?
-        # db.session.add(Country('South Africa'))  # what is this used for?
-
-        self.event1 = self.add_event('Indaba', 'Indaba Event',
-                            datetime.now(), datetime.now(),
-                            'SOUTHAFRI2019', self.org1.id)
-        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
-                            datetime.now(), datetime.now(),
-                            'SUDANMO', self.org2.id)
+        self.event1 = self.add_event(
+            'Indaba',
+            'Indaba Event',
+            datetime.now(),
+            datetime.now(),
+            'SOUTHAFRI2019',
+            self.dummy_org_id
+        )
+        self.event2 = self.add_event(
+            'IndabaX',
+            'IndabaX Sudan',
+            datetime.now(),
+            datetime.now(),
+            'SUDANMO',
+            self.dummy_org_id
+        )
         db.session.flush()
 
         # Setup the event admins
-        self.event1_admin = AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+        self.event1_admin = AppUser(
+            email='ea1@ea.com',
+            firstname='event_admin',
+            lastname='1',
+            user_title='Ms',
+            password='abc',
+            organisation_id=self.dummy_org_id
+        )
+        self.event2_admin = AppUser(
+            email='ea2@ea.com',
+            firstname='event_admin',
+            lastname='1',
+            user_title='Ms',
+            password='abc',
+            organisation_id=self.dummy_org_id
+        )
         self.event1_admin.verify()
-        db.session.add(self.event1_admin)
+        self.event2_admin.verify()
+        db.session.add_all([self.event1_admin, self.event2_admin])
         db.session.flush()
 
-        event_role = EventRole('admin', self.event1_admin.id, self.event1.id)
-        db.session.add(event_role)
+        event1_role = EventRole('admin', self.event1_admin.id, self.event1.id)
+        event2_role = EventRole('admin', self.event2_admin.id, self.event2.id)
+        db.session.add_all([event1_role, event2_role])
 
+        # Set up the application forms
         self.event1_application_form = self.create_application_form(self.event1.id, True, False)
         self.event2_application_form = self.create_application_form(self.event2.id, True, False)
         db.session.add_all([self.event1_application_form, self.event2_application_form])
@@ -477,7 +498,7 @@ class UserProfileListApiTest(ApiTestCase):
         self.seed_static_data()
 
         # Setup the candidates
-        candidates = self.add_n_users(3, organisation_id=self.org1.id)
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         candidates[0].active = False
         candidates[1].is_deleted = True
         candidates[2].active = False
@@ -497,11 +518,13 @@ class UserProfileListApiTest(ApiTestCase):
         event1_id = self.event1.id  #TODO: add comment about why we do this
         db.session.commit()
 
+        # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
-
         params = {'event_id': event1_id}
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert stuff
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [])
 
