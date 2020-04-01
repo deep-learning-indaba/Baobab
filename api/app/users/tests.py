@@ -476,6 +476,18 @@ class UserProfileListApiTest(ApiTestCase):
 
         db.session.flush()
 
+    def test_event2_admin_cant_access_event1(self):
+        """
+        Test that admins can only list the users for their own events.
+        """
+        self.assertTrue(False)
+
+    def test_only_users_from_right_event_present(self):
+        """
+        Test that only users from the correct event are in the returned list.
+        """
+        self.assertTrue(False)
+
     def test_event_does_not_exist(self):
         """
         Test that filtering on a nonexistent event 404s.
