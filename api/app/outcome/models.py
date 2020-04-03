@@ -14,18 +14,22 @@ class Outcome(db.Model):
     status = db.Column(db.Enum(Status), nullable = False)
     timestamp = db.Column(db.DateTime(), nullable = False)
     latest = db.Column(db.Boolean(), nullable = False)
+    updated_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
+    updated_by_user = db.relationship('AppUser', foreign_keys=[updated_by_user_id])
 
     def __init__(self,
                  event_id,
                  user_id,
                  status,
-                 latest
+                 latest,
+                 updated_by_user_id
                  ):
         self.event_id = event_id
         self.user_id = user_id
         self.status = status
         self.timestamp = datetime.now()
         self.latest = latest
+        self.updated_by_user_id = updated_by_user_id
