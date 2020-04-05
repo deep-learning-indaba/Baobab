@@ -78,6 +78,7 @@ class ResponseApiTest(ApiTestCase):
                 self.test_event.id, True)
         self.test_section = Section(
                 self.test_form.id, 'Test Section', 'Test Description', 1)
+        self.test_section.key = 'test_section'
         self.add_to_db(self.test_section)
         self.test_question = Question(self.test_form.id, self.test_section.id,
                                       'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
@@ -183,12 +184,12 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(answer_by_qid_rid_q2.question_id, self.test_question2.id)
 
         # retrieve all (Question, Answer) tuples using section_id and response_id
-        qa_by_sid_rid = response_repository.get_question_answers_by_section_id_and_response_id(
-                self.test_section.id, self.test_response.id)
+        qa_by_sid_rid = response_repository.get_question_answers_by_section_key_and_response_id(
+                self.test_section.key, self.test_response.id)
         self.assertTupleEqual(qa_by_sid_rid[0], (self.test_question, self.test_answer1))
         other_response = self.responses[0]
-        qa_by_sid_rid_dummy = response_repository.get_question_answers_by_section_id_and_response_id(
-                self.test_section.id, other_response.id)
+        qa_by_sid_rid_dummy = response_repository.get_question_answers_by_section_key_and_response_id(
+                self.test_section.key, other_response.id)
         answer1 = response_repository.get_answer_by_question_id_and_response_id(
                 self.test_question.id, other_response.id)
         answer2 = response_repository.get_answer_by_question_id_and_response_id(

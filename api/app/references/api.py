@@ -238,7 +238,7 @@ class ReferenceAPI(ReferenceMixin, restful.Resource):
         if not reference_request:
             return REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND
 
-        if reference_request.has_reference():
+        if reference_request.has_reference:
             return DUPLICATE_REFERENCE_SUBMISSION
 
         if not event.is_application_open:
