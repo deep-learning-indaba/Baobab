@@ -174,7 +174,7 @@ class FormReferenceRequest extends React.Component {
                         referenceRequests: initialReferenceRequests,
                         minId: minId,
                         loading: false
-                    });
+                    }, this.setValue);
                 }
                 else {
                     this.setState({
@@ -285,18 +285,20 @@ class FormReferenceRequest extends React.Component {
                                     return r;
                                 }
                             })
-                        }), () => {
-                            let value = '';
-                            if (this.state.referenceRequests.filter(r => r.emailSent).length >= this.props.options.min_num_referrals) {
-                                value = this.state.referenceRequests.map(r => r.email).join(';');
-                            }
-                            if (this.props.onChange) {
-                                this.props.onChange(value);
-                            }
-                        }
+                        }), this.setValue
                         );
                     });
             });
+    }
+
+    setValue = () => {
+        let value = '';
+        if (this.state.referenceRequests.filter(r => r.emailSent).length >= this.props.options.min_num_referrals) {
+            value = this.state.referenceRequests.map(r => r.email).join(';');
+        }
+        if (this.props.onChange) {
+            this.props.onChange(value);
+        }
     }
 
     valid = () => {

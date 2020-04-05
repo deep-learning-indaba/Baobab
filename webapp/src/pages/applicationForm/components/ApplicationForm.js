@@ -36,7 +36,7 @@ const findDependentQuestionAnswer = (entityToCheck, answers) => {
 }
 
 const doesAnswerMatch = (entityToCheck, answer) => {
-  return entityToCheck.show_for_values.map(_ => _.value).indexOf(answer.value) > -1;
+  return entityToCheck.show_for_values.indexOf(answer.value) > -1;
 }
 
 class FieldEditor extends React.Component {
