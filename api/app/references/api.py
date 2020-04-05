@@ -34,7 +34,7 @@ reference_request_fields = {
     'email_sent': fields.DateTime,
     'response_id': fields.Integer,
     'email': fields.String,
-    'reference_submitted': fields.Boolean('has_reference')
+    'reference_submitted': fields.Boolean(attribute='has_reference')
 }
 
 reference_request_details_fields = {

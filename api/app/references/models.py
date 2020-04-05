@@ -1,7 +1,7 @@
 
 from datetime import datetime
 
-from app import db
+from app import db, LOGGER
 
 class ReferenceRequest(db.Model):
 
@@ -43,7 +43,8 @@ class ReferenceRequest(db.Model):
 
     @property
     def has_reference(self):
-        return len(self.references) == 1
+        LOGGER.debug('NUMBER OF REFERENCES: {}'.format(len(self.references)))
+        return len(self.references) > 0
 
 
 

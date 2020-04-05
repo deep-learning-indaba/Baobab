@@ -102,7 +102,7 @@ class ReferenceRequestRow extends React.Component {
 
                         {this.props.referenceRequest.emailSent &&
                             (this.props.referenceRequest.referenceSubmitted
-                                ? <div><i className="fas fa-check-double text-success" data-top="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
+                                ? <div><i className="fas fa-check-double text-success" data-tip="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
                                 : <div><i className="fas fa-check" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
                         }
 
