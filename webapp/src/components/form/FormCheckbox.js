@@ -17,7 +17,7 @@ class FormCheckbox extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
           <div className="rowC">
@@ -29,7 +29,7 @@ class FormCheckbox extends React.Component {
             )}
           </div>
           <input
-            id={this.props.Id}
+            id={this.props.id}
             className={
               this.shouldDisplayError()
                 ? "form-control is-invalid"

@@ -18,7 +18,7 @@ class FormDate extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
           <div className="rowC">
@@ -31,7 +31,7 @@ class FormDate extends React.Component {
           </div>
 
         <DateTimePicker
-          id={this.props.Id}
+          id={this.props.id}
           ref={input => {
             this.dateInput = input;
           }}

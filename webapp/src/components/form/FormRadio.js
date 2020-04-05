@@ -11,7 +11,7 @@ class FormRadio extends React.Component {
     return (
       <div>
         <FormGroup
-          id={this.props.Id + "-group"}
+          id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
             {this.props.label && <div className="rowC">
@@ -19,10 +19,10 @@ class FormRadio extends React.Component {
             </div>}
             {this.props.options.map(o=>{
                 return (
-                    <div className={"form-check form-check-inline " + (this.shouldDisplayError() ? "is-invalid" : "")} key={this.props.Id + "_" + o.value}>
+                    <div className={"form-check form-check-inline " + (this.shouldDisplayError() ? "is-invalid" : "")} key={this.props.id + "_" + o.value}>
                         <input
-                            id={this.props.Id + "_" + o.value}
-                            name={this.props.Id}
+                            id={this.props.id + "_" + o.value}
+                            name={this.props.id}
                             className={
                             this.shouldDisplayError()
                                 ? "form-check-input is-invalid"
@@ -35,7 +35,7 @@ class FormRadio extends React.Component {
                             tabIndex={this.props.tabIndex}
                             autoFocus={this.props.autoFocus}
                         />
-                        <label class="form-check-label" htmlFor={this.props.Id + "_" + o.value}>{o.label}</label>
+                        <label class="form-check-label" htmlFor={this.props.id + "_" + o.value}>{o.label}</label>
                     </div>
                 );
             })}
