@@ -809,7 +809,7 @@ class ApplicationForm extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 1 })} // StartStep to jump to steo 1 in the Stepzilla
+          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
