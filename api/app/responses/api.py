@@ -71,7 +71,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
 
-        response = Response(application_form_id, user_id, is_submitted)
+        response = Response(application_form_id, user_id)
+        if is_submitted:
+            response.submit()
+            
         response_repository.save(response)
 
         answers = []

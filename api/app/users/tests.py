@@ -334,10 +334,16 @@ class UserApiTest(ApiTestCase):
         event_role = EventRole('admin', 4, 1)
         db.session.add(event_role)
 
+        submitted_response_user1 = Response(1, 1)
+        submitted_response_user1.submit()
+        withdrawn_response = Response(1, 2)
+        withdrawn_response.withdraw()
+        submitted_response_user3 = Response(2, 3)
+        submitted_response_user3.submit()
         responses = [
-            Response(1, 1, True, datetime(2019, 4, 10)),
-            Response(1, 2, True, datetime(2019, 4, 9), True, datetime(2019, 4, 11)),
-            Response(2, 3, True)
+            submitted_response_user1,
+            withdrawn_response,
+            submitted_response_user3
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -377,19 +383,19 @@ class UserApiTest(ApiTestCase):
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
 
         data = json.loads(response.data)
+        print(data)
         data = sorted(data, key=lambda k: k['user_id'])
 
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['user_id'], 1)
         self.assertEqual(data[0]['is_submitted'], True)
-        self.assertEqual(data[0]['submitted_timestamp'], u'2019-04-10T00:00:00')
         self.assertEqual(data[0]['is_withdrawn'], False)
         self.assertEqual(data[0]['withdrawn_timestamp'], None)
+
         self.assertEqual(data[1]['user_id'], 2)
-        self.assertEqual(data[1]['is_submitted'], True)
-        self.assertEqual(data[1]['submitted_timestamp'], u'2019-04-09T00:00:00')
+        self.assertEqual(data[1]['is_submitted'], False)
+        self.assertEqual(data[1]['submitted_timestamp'], None)
         self.assertEqual(data[1]['is_withdrawn'], True)
-        self.assertEqual(data[1]['withdrawn_timestamp'], u'2019-04-11T00:00:00')
 
 class UserCommentAPITest(ApiTestCase):
 
@@ -508,9 +514,11 @@ class UserProfileApiTest(ApiTestCase):
         db.session.add_all(event_roles)
         db.session.commit()
         responses = [
-            Response(1, 1, True, datetime(2019, 4, 10)),
-            Response(2, 2, True, datetime(2019, 4, 9))
+            Response(1, 1),
+            Response(2, 2)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
     

@@ -87,8 +87,7 @@ class ResponseApiTest(ApiTestCase):
         self.add_to_db(self.test_question2)
 
         # responses
-        self.test_response = Response(
-                self.test_form.id, self.other_user_data['id'])
+        self.test_response = Response(self.test_form.id, self.other_user_data['id'])
         self.add_to_db(self.test_response)
 
         self.test_answer1 = Answer(

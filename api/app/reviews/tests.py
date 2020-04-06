@@ -142,8 +142,10 @@ class ReviewsApiTest(ApiTestCase):
         return header
 
     def setup_one_reviewer_one_candidate(self, active=True):
+        response = Response(1, 5)
+        response.submit()
         responses = [
-            Response(1, 5, True)
+            response
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -201,8 +203,10 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_unallocated'], 2)  
 
     def setup_responses_and_no_reviewers(self):
+        response = Response(1, 5)
+        response.submit()
         responses = [
-            Response(1, 5, True)
+            response
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -237,10 +241,12 @@ class ReviewsApiTest(ApiTestCase):
         
     def setup_one_reviewer_three_candidates(self):
         responses = [
-            Response(application_form_id=1, user_id=5, is_submitted=True),
-            Response(application_form_id=1, user_id=6, is_submitted=True),
-            Response(application_form_id=1, user_id=7, is_submitted=True)
+            Response(application_form_id=1, user_id=5),
+            Response(application_form_id=1, user_id=6),
+            Response(application_form_id=1, user_id=7)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -278,10 +284,12 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
         responses = [
-            Response(1, 5, True),
-            Response(1, 6, True),
-            Response(1, 7, True)
+            Response(1, 5),
+            Response(1, 6),
+            Response(1, 7)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -320,12 +328,14 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
-        withdrawn_response = Response(1, 5, True)
+        withdrawn_response = Response(1, 5)
         withdrawn_response.withdraw()
+        submitted_response = Response(1, 7)
+        submitted_response.submit()
         responses = [
             withdrawn_response,
-            Response(1, 6, False),
-            Response(1, 7, True)
+            Response(1, 6),
+            submitted_response
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -362,11 +372,13 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
         responses = [
-            Response(1, 5, True),
-            Response(1, 6, True),
-            Response(1, 7, True),
-            Response(1, 8, True)
+            Response(1, 5),
+            Response(1, 6),
+            Response(1, 7),
+            Response(1, 8)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -462,9 +474,11 @@ class ReviewsApiTest(ApiTestCase):
     def setup_candidate_who_has_applied_to_multiple_events(self):
         user_id = 5
         responses = [
-            Response(application_form_id=1, user_id=user_id, is_submitted=True),
-            Response(application_form_id=2, user_id=user_id, is_submitted=True)
+            Response(application_form_id=1, user_id=user_id),
+            Response(application_form_id=2, user_id=user_id)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -498,7 +512,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
 
     def setup_multi_choice_answer(self):
-        response = Response(1, 5, True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -532,7 +547,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, REVIEW_RESPONSE_NOT_FOUND[1])
 
     def setup_review_response(self):
-        response = Response(1, 5, True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -586,7 +602,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
 
     def setup_response_reviewer(self):
-        response = Response(1, 5, True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -608,7 +625,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(review_scores[0].value, 'test_answer')
 
     def setup_existing_review_response(self):
-        response = Response(1, 5, True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -678,11 +696,13 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_responses_without_reviewers(self):
         responses = [
-            Response(1, 5, True),
-            Response(1, 6, True),
-            Response(1, 7, True),
-            Response(1, 8, True)
+            Response(1, 5),
+            Response(1, 6),
+            Response(1, 7),
+            Response(1, 8)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -710,9 +730,11 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_reviewer_with_own_response(self):
         responses = [
-            Response(1, 3, True), # reviewer
-            Response(1, 5, True) # someone else
+            Response(1, 3), # reviewer
+            Response(1, 5) # someone else
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -729,10 +751,15 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 2)
 
     def setup_withdrawn_and_unsubmitted_responses(self):
+        unsubmitted_response = Response(1, 5)
+        withdrawn_response = Response(1, 6)
+        withdrawn_response.withdraw()
+        submitted_response = Response(1, 7)
+        submitted_response.submit()
         responses = [
-            Response(1, 5, is_submitted=False, is_withdrawn=False),
-            Response(1, 6, is_submitted=True, is_withdrawn=True),
-            Response(1, 7, is_submitted=True, is_withdrawn=False)
+            unsubmitted_response,
+            withdrawn_response,
+            submitted_response
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -750,7 +777,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 3)
 
     def setup_response_with_three_reviewers(self):
-        response = Response(1, 5, True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -774,7 +802,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(response_reviewers), 0)   
 
     def setup_responsereview_with_different_reviewer(self):
-        response = Response(1, 5, is_submitted=True)
+        response = Response(1, 5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -796,7 +825,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[1].reviewer_user_id, 3)
     
     def setup_reviewer_is_not_assigned_to_response_more_than_once(self):
-        response = Response(1,5,is_submitted=True)
+        response = Response(1,5)
+        response.submit()
         db.session.add(response)
         db.session.commit()
 
@@ -809,14 +839,15 @@ class ReviewsApiTest(ApiTestCase):
         ])
         
         responses = [
-            Response(1, 5, True), #1
-            Response(1, 6, True), #2
-            Response(1, 7, True), #3
-            Response(1, 8, True), #4
-            Response(2, 5, True), #5
-            Response(2, 6, True)  #6
+            Response(1, 5), #1
+            Response(1, 6), #2
+            Response(1, 7), #3
+            Response(1, 8), #4
+            Response(2, 5), #5
+            Response(2, 6)  #6
         ]
-
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
 
         response_reviewers = [
@@ -910,10 +941,12 @@ class ReviewsApiTest(ApiTestCase):
 
         users_id = [5,6,7]
         responses = [
-            Response(application_form_id=1, user_id=users_id[0], is_submitted=True),
-            Response(application_form_id=1, user_id=users_id[1], is_submitted=True),
-            Response(application_form_id=1, user_id=users_id[2], is_submitted=True)
+            Response(application_form_id=1, user_id=users_id[0]),
+            Response(application_form_id=1, user_id=users_id[1]),
+            Response(application_form_id=1, user_id=users_id[2])
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -1036,10 +1069,12 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         responses = [
-            Response(1, 5, is_submitted=True),
-            Response(1, 6, is_submitted=True),
-            Response(1, 7, is_submitted=True)
+            Response(1, 5),
+            Response(1, 6),
+            Response(1, 7)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 
@@ -1166,9 +1201,11 @@ class ReviewsApiTest(ApiTestCase):
     def setup_two_extra_responses_for_reviewer3(self):
 
         responses = [
-            Response(1, 8, is_submitted=True),
-            Response(1, 1, is_submitted=True)
+            Response(1, 8),
+            Response(1, 1)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
 

@@ -19,14 +19,13 @@ class Response(db.Model):
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer')
 
-    def __init__(self, application_form_id, user_id, is_submitted=False, submitted_timestamp=None,
-                 is_withdrawn=False, withdrawn_timestamp=None):
+    def __init__(self, application_form_id, user_id):
         self.application_form_id = application_form_id
         self.user_id = user_id
-        self.is_submitted = is_submitted
-        self.submitted_timestamp = datetime.now() if is_submitted else submitted_timestamp
-        self.is_withdrawn = is_withdrawn
-        self.withdrawn_timestamp = withdrawn_timestamp
+        self.is_submitted = False
+        self.submitted_timestamp = None
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
         self.started_timestamp = date.today()
 
     def submit(self):
