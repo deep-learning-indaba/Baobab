@@ -6,22 +6,9 @@ import "./Style.css";
 import * as moment from 'moment';
 
 class FormDate extends React.Component {
-  constructor(props) {
-    super(props);
-  //   this.state = {
-  //     value: new Date()
-  //   }
-  }
-
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
-
-  // componentDidMount() {
-  //   // this.setState({
-  //   //   value: this.props.value ? new Date(this.props.value) : new Date()
-  //   // });
-  // }
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
@@ -29,21 +16,10 @@ class FormDate extends React.Component {
     }
   }
 
-  // componentDidUpdate(prevProps) {
-  //   console.log('Component did update: ');
-  //   console.log(this.props);
-  //   if (prevProps.value !== this.props.value) {
-  //     this.setState({
-  //       value: this.props.value ? new Date(this.props.value) : new Date()
-  //     });
-  //   }
-  // }
-
   onChange = value => {
     if (value && this.props.onChange) {
       this.props.onChange(moment(value).format("YYYY-MM-DD"));
     }
-    //this.setState({value});
   }
 
   render() {
