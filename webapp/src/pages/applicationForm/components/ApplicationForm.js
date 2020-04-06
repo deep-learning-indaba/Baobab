@@ -54,7 +54,7 @@ class FieldEditor extends React.Component {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
-
+    console.log('Value changed to: ' + value);
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -187,7 +187,7 @@ class FieldEditor extends React.Component {
             id={this.id}
             name={this.id}
             label={question.description}
-            value={answer ? answer.value : answer}
+            value={answer}
             placeholder={question.placeholder}
             onChange={this.handleChange}
             key={"i_" + key}
@@ -201,7 +201,7 @@ class FieldEditor extends React.Component {
             id={this.id}
             name={this.id}
             label={question.description}
-            value={answer ? answer.value : answer}
+            value={answer}
             placeholder={question.placeholder}
             onChange={this.handleChange}
             key={"i_" + key}
