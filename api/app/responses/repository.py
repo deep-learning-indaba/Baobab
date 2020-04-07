@@ -18,9 +18,9 @@ class ResponseRepository():
                          .first()
 
     @staticmethod
-    def get_by_user_id(user_id):
+    def get_by_user_id(user_id, application_form_id):
         return db.session.query(Response)\
-            .filter_by(user_id=user_id)\
+            .filter_by(user_id=user_id, application_form_id=application_form_id)\
             .all()
 
     @staticmethod

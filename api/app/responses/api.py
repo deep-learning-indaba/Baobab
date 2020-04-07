@@ -9,7 +9,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.responses.models import Response, Answer
+from app.responses.repository import ResponseRepository as response_repository
 from app.applicationModel.models import ApplicationForm, Question
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.users.models import AppUser
@@ -51,23 +53,14 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
                 LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
                 return errors.EVENT_NOT_FOUND
 
-            form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
+            # TODO: why does this return a list?
+            form = application_form_repository.get_by_event_id(args['event_id'])
             if not form:
                 LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
                 return errors.FORM_NOT_FOUND
             
-            # Get the latest response (note there may be older withdrawn responses)
-            response = db.session.query(Response).filter(
-                Response.application_form_id == form.id, Response.user_id == g.current_user['id']
-                ).order_by(Response.started_timestamp.desc()).first()
-            if not response:
-                LOGGER.debug("Response not found for event_id: {}".format(args['event_id']))
-                return errors.RESPONSE_NOT_FOUND
-            
-            answers = db.session.query(Answer).filter(Answer.response_id == response.id).all()
-            response.answers = list(answers)
-
-            return response
+            responses = response_repository.get_by_user_id(g.current_user['id'], form.id)
+            return responses
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))            
@@ -87,6 +80,13 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
         args = req_parser.parse_args()
 
         user_id = g.current_user['id']
+
+        form = application_form_repository.get_by_id(args['application_form_id'])
+        if not form.nominations:  # Prevent duplicates if the form doesn't allow nominations
+            response = response_repository.get_by_user_id(user_id, form.event_id)
+            if response is not None:
+                return errors.DUPLICATE_RESPONSE
+
         try: 
             response = Response(args['application_form_id'], user_id)
             response.is_submitted = args['is_submitted']

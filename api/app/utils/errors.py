@@ -105,3 +105,4 @@ FAILED_CREATE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to create integration test user.'}, 500)
 FAILED_DELETE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to delete integration test user'}, 500)
+DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for this application form'}, 409)
