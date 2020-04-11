@@ -1,17 +1,18 @@
 import json
+from datetime import date, datetime
+
 import dateutil.parser
+from flask import g
 
 from app import app, db
-from flask import g
-from datetime import date, datetime
-from app.utils.testing import ApiTestCase
+from app.applicationModel.models import ApplicationForm, Question, Section
 from app.email_template.models import EmailTemplate
-from app.responses.models import Response, Answer
 from app.events.models import Event
-from app.users.models import AppUser, Country, UserCategory
-from app.applicationModel.models import ApplicationForm, Section, Question
 from app.organisation.models import Organisation
+from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
+from app.users.models import AppUser, Country, UserCategory
+from app.utils.testing import ApiTestCase
 
 
 class ResponseApiTest(ApiTestCase):
