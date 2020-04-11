@@ -25,26 +25,11 @@ class ResponseApiTest(ApiTestCase):
         'policy_agreed': True
     }
 
-    nominated_data_dict = {
-        'email':     'awesome@email.com',
-        'firstname': 'Awesome',
-        'lastname':  'McAwesomeFace',
-        'title':     'Mx',
-        }
-
-    other_user_email = 'other@user.com'
-    num_dummy_users = 10
-
     def _seed_data(self):
         """Create dummy data for testing"""
-        organisation = self.add_organisation(
-            'Deep Learning Indaba',
-            'Baobab',
-            'blah.png',
-            'blah_big.png',
-            'deeplearningindba',
-            'https://www.deeplearningindaba.com',
-            'from@deeplearningindaba.com')
+        organisation = self.add_organisation(name='Deep Learning Indaba')
+        test_country = self.add_country()
+        test_category = self.add_category()
 
         email_templates = [
             EmailTemplate('withdrawal', None, ''),
@@ -53,24 +38,15 @@ class ResponseApiTest(ApiTestCase):
         db.session.add_all(email_templates)
         db.session.commit()
 
-        # Add country
-        test_country = Country('Indaba Land')
-        self.add_to_db(test_country)
-
-        # Add category
-        test_category = UserCategory('Category1')
-        self.add_to_db(test_category)
-
-        # Add users to database
-        other_user_data = self.user_data_dict.copy()
-        other_user_data['email'] = self.other_user_email
-        response = self.app.post('/api/v1/user', data=other_user_data)
-        self.other_user_data = json.loads(response.data)
-
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.user_data = json.loads(response.data)
 
-        self.add_n_users(self.num_dummy_users)
+        other_user_data = self.user_data_dict.copy()
+        other_user_data['email'] = 'other@user.com'
+        response = self.app.post('/api/v1/user', data=other_user_data)
+        self.other_user_data = json.loads(response.data)
+
+        self.add_n_users(10)
 
         # Add application form data
         self.test_event = self.add_event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24),

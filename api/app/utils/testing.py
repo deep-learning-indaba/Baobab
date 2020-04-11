@@ -150,6 +150,18 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return org
 
+    def add_country(self):
+        country = Country('South Africa')
+        db.session.add(country)
+        db.session.commit()
+        return country
+    
+    def add_category(self):
+        category = UserCategory('Student')
+        db.session.add(category)
+        db.session.commit()
+        return category
+
     def add_event(self, 
                  name ='Test Event', 
                  description = 'Event Description', 
