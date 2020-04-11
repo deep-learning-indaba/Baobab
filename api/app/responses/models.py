@@ -15,11 +15,13 @@ class Response(db.Model):
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
 
-    application_form = db.relationship('ApplicationForm')
+    application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer')
 
-    def __init__(self, application_form_id, user_id, is_submitted = False, submitted_timestamp = None, is_withdrawn = False, withdrawn_timestamp = None):
+    def __init__(self, application_form_id, user_id, is_submitted=False, submitted_timestamp=None,
+                 is_withdrawn=False, withdrawn_timestamp=None
+                 ):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = is_submitted
@@ -29,12 +31,12 @@ class Response(db.Model):
         self.started_timestamp = date.today()
 
     def submit_response(self):
-       self.is_submitted = True
-       self.submitted_timestamp = date.today()
+        self.is_submitted = True
+        self.submitted_timestamp = date.today()
 
     def withdraw_response(self):
-       self.is_withdrawn = True
-       self.withdrawn_timestamp = date.today()
+        self.is_withdrawn = True
+        self.withdrawn_timestamp = date.today()
 
 
 class Answer(db.Model):
@@ -67,6 +69,7 @@ class ResponseReviewer(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    active = db.Column(db.Boolean(), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
@@ -74,3 +77,7 @@ class ResponseReviewer(db.Model):
     def __init__(self, response_id, reviewer_user_id):
         self.response_id = response_id
         self.reviewer_user_id = reviewer_user_id
+        self.active = True
+
+    def deactivate(self):
+        self.active = False

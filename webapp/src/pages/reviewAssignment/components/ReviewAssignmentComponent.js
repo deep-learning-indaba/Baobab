@@ -22,7 +22,7 @@ class ReviewAssignmentComponent extends Component {
 
 
   componentDidMount() {
-    reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0).then(result=>{
+    reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0).then(result => {
       this.setState({
         loading: false,
         reviewers: result.reviewers,
@@ -31,24 +31,22 @@ class ReviewAssignmentComponent extends Component {
       });
       return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
     })
-    .then(result => {
-      this.setState({
-        reviewSummary: result.reviewSummary,
-        error: result.error
-      })
-    });
-
+      .then(result => {
+        this.setState({
+          reviewSummary: result.reviewSummary,
+          error: result.error
+        })
+      });
   }
 
   handleChange = event => {
-    const value =  event.target.value;
-    this.setState({newReviewerEmail: value});
-  
+    const value = event.target.value;
+    this.setState({ newReviewerEmail: value });
   };
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({loading: true});
+    this.setState({ loading: true });
 
     // If new reviewer is specified, add to list.
     if (this.state.newReviewerEmail !== "") {
@@ -63,8 +61,8 @@ class ReviewAssignmentComponent extends Component {
       result => {
         // Get updated reviewers, with updated allocations
         return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0)
-      }, 
-      error => this.setState({ error, loading: false})
+      },
+      error => this.setState({ error, loading: false })
     ).then(
       result => {
         this.setState({
@@ -75,17 +73,17 @@ class ReviewAssignmentComponent extends Component {
         });
         return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
       },
-      error => this.setState({ error, loading: false})
+      error => this.setState({ error, loading: false })
     )
-    .then(
-      result => {
-        this.setState({
-          reviewSummary: result.reviewSummary,
-          error: result.error
-        });
-      },
-      error => this.setState({ error, loading: false})
-    );
+      .then(
+        result => {
+          this.setState({
+            reviewSummary: result.reviewSummary,
+            error: result.error
+          });
+        },
+        error => this.setState({ error, loading: false })
+      );
   }
 
   renderEditable = cellInfo => {
@@ -94,6 +92,7 @@ class ReviewAssignmentComponent extends Component {
         style={{ backgroundColor: "#fafafa" }}
         contentEditable
         suppressContentEditableWarning
+
         onBlur={e => {
           const reviewers = [...this.state.reviewers];
           const reviewSummary = this.state.reviewSummary;
@@ -101,15 +100,15 @@ class ReviewAssignmentComponent extends Component {
           reviewSummary.reviews_unallocated -= parseInt(e.target.innerHTML);
           this.setState({ reviewSummary });
         }}
+
         dangerouslySetInnerHTML={{
           __html: this.state.reviewers[cellInfo.index][cellInfo.column.id]
-        }}
-      />
+        }} />
     );
   }
 
   render() {
-    const {loading, reviewers, error, newReviewerEmail, reviewSummary} = this.state;
+    const { loading, reviewers, error, newReviewerEmail, reviewSummary } = this.state;
 
     const loadingStyle = {
       "width": "3rem",
@@ -129,7 +128,7 @@ class ReviewAssignmentComponent extends Component {
     }, {
       Header: 'No. Allocated',
       accessor: 'reviews_allocated'
-    },{
+    }, {
       Header: 'No. Completed',
       accessor: 'reviews_completed'
     }, {
@@ -149,35 +148,41 @@ class ReviewAssignmentComponent extends Component {
     }
 
     if (error) {
-      return <div class="alert alert-danger">{error}</div>
+      return <div class="alert alert-danger alert-container">
+        {error}
+      </div>
     }
 
     return (
-      <form   onSubmit={this.handleSubmit}>
+      <form onSubmit={this.handleSubmit}>
         <div className={"review-padding"}>
           <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
+
           <ReactTable
-              data={reviewers}
-              columns={columns}
-              minRows={0}
-          />  
+            data={reviewers}
+            columns={columns}
+            minRows={0} />
+
           <div>
-          <FormTextBox
-            Id={"newReviewEmail"}
-            name={'newReviewEmail'}
-            label={"Add new reviewer's email"}
-            placeholder={"Review email"}
-            onChange={this.handleChange}
-            value={newReviewerEmail}
-            key={"i_newReviewEmail"}
-          />
-          <button class="btn btn-primary float-right" type="submit">Assign</button>    
-          </div> 
-          
+            <FormTextBox
+              id={"newReviewEmail"}
+              name={'newReviewEmail'}
+              label={"Add new reviewer's email"}
+              placeholder={"Review email"}
+              onChange={this.handleChange}
+              value={newReviewerEmail}
+              key={"i_newReviewEmail"} />
+
+            <button
+              class="btn btn-primary float-right"
+              type="submit">
+              Assign
+            </button>
+
+          </div>
         </div>
       </form>
     )
-    
   }
 }
 

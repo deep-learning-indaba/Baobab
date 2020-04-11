@@ -14,20 +14,20 @@ class ReviewHistoryComponent extends Component {
       isLoading: true,
       reviewHistory: [],
       isError: false,
-      currentPage : 0,
-      defaultPageSize : 10,
+      currentPage: 0,
+      defaultPageSize: 10,
       selected: null,
       totalPages: null
     };
   }
 
   componentDidMount() {
-    this.loadReviewHistory(this.state.currentPage,this.state.defaultPageSize);
+    this.loadReviewHistory(this.state.currentPage, this.state.defaultPageSize);
   }
 
-  loadReviewHistory = (pageNumber,pageSize,sortColumn) => {
+  loadReviewHistory = (pageNumber, pageSize, sortColumn) => {
     reviewService
-      .getReviewHistory(this.props.event ? this.props.event.id : 0, pageNumber, pageSize,sortColumn)
+      .getReviewHistory(this.props.event ? this.props.event.id : 0, pageNumber, pageSize, sortColumn)
       .then(response => {
         this.setState({
           isLoading: false,
@@ -40,36 +40,43 @@ class ReviewHistoryComponent extends Component {
       });
   };
 
-  fetchData=(state)=> {
+  fetchData = (state) => {
     this.setState({ isLoading: true });
     let sortColumn;
-    if(state.sorted && state.sorted.length > 0){
+    if (state.sorted && state.sorted.length > 0) {
       sortColumn = state.sorted[0].id
     }
-    this.loadReviewHistory(state.page,state.pageSize,sortColumn);
+    this.loadReviewHistory(state.page, state.pageSize, sortColumn);
   }
 
   render() {
-    const { error, isLoading, reviewHistory,defaultPageSize,totalPages } = this.state;
+    const { error,
+      isLoading,
+      reviewHistory,
+      defaultPageSize,
+      totalPages
+    } = this.state;
 
     if (error) {
-      return <div className={"alert alert-danger"}>{error}</div>;
+      return <div className={"alert alert-danger alert-container"}>
+        {error}
+      </div>;
     }
 
     return (
       <div className="ReviewHistory">
         <p className="h5 text-center mb-4">Review History</p>
+
         <div className={"review-padding"}>
-          <ReactTable  
-            loading={isLoading} 
-            defaultPageSize={defaultPageSize} 
-            pages={totalPages} 
-            onFetchData={this.fetchData} 
-            manual 
-            data={reviewHistory} 
-            columns={columns} 
-            minRows={0}
-          />
+          <ReactTable
+            loading={isLoading}
+            defaultPageSize={defaultPageSize}
+            pages={totalPages}
+            onFetchData={this.fetchData}
+            manual
+            data={reviewHistory}
+            columns={columns}
+            minRows={0} />
         </div>
       </div>
     );

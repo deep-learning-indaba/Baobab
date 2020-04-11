@@ -4,17 +4,16 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import {
-  getTitleOptions,
-} from "../../../utils/validation/contentHelpers";
+import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
   validEmail,
+  validatePassword
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
- 
+
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
@@ -32,7 +31,8 @@ class CreateAccountForm extends Component {
       user: {
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        agreePrivacyPolicy: false
       },
       showErrors: false,
       submitted: false,
@@ -41,8 +41,7 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       error: "",
       created: false,
-      over18: false,
-      agreePrivacyPolicy: false
+      over18: false
     };
   }
 
@@ -116,9 +115,8 @@ class CreateAccountForm extends Component {
   };
 
   togglePrivacyPolicy = () => {
-    let currentPrivacyPolicy = this.state.agreePrivacyPolicy;
-    this.setState({ agreePrivacyPolicy: !currentPrivacyPolicy });
-  };
+    let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
+    this.setState({user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy}});};
 
 
   handleSubmit = event => {
@@ -128,6 +126,13 @@ class CreateAccountForm extends Component {
     if (this.state.user.password !== this.state.user.confirmPassword) {
       this.state.errors.$set.push({ passwords: "Passwords do not match" });
     }
+    const passwordErrors = validatePassword(this.state.user.password)
+    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0 && passwordErrors.password.foreach) {
+      passwordErrors.password.foreach(i => {
+        this.state.errors.$set.push({ passwords: i });
+      });
+    }
+    
     if (
       this.state.errors &&
       this.state.errors.$set &&
@@ -162,7 +167,9 @@ class CreateAccountForm extends Component {
     let arr = errors.$set;
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+        </div>
       );
     }
     return errorMessages;
@@ -173,6 +180,7 @@ class CreateAccountForm extends Component {
     const md = 4;
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
+
     const {
       firstName,
       lastName,
@@ -180,16 +188,24 @@ class CreateAccountForm extends Component {
       title,
       password,
       confirmPassword,
+      agreePrivacyPolicy
     } = this.state.user;
 
-    const { loading, errors, showErrors, error, created, over18, agreePrivacyPolicy } = this.state;
+    const {
+      loading,
+      errors,
+      showErrors,
+      error,
+      created,
+      over18
+    } = this.state;
 
     if (created) {
       return (
         <div className="CreateAccount">
           <p className="h5 text-center mb-4">Create Account</p>
-          <p className="account-created">
-            Your {this.props.organisation ? this.props.organisation.name : ""} account 
+          <p id="account-created">
+            Your {this.props.organisation ? this.props.organisation.name : ""} account
             has been created, but before you can use it, we
             need to verify your email address. Please check your email (and spam
             folder) for a message containing a link to verify your email
@@ -216,6 +232,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.title.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
@@ -226,6 +243,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.firstName.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
@@ -237,6 +255,7 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+
           <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
@@ -248,6 +267,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.email.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.password.name}
@@ -258,6 +278,7 @@ class CreateAccountForm extends Component {
                 label={validationFields.password.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.confirmPassword.name}
@@ -269,46 +290,51 @@ class CreateAccountForm extends Component {
               />
             </div>
           </div>
+
           <div>
-              <br/>
-              <h5>Please confirm the following in order to create an account</h5>
-              
-              <div className="form-check">  
-                <input
-                  className="form-check-input"
-                  id="over18"
-                  name="over18"
-                  type="checkbox"
-                  checked={over18}
-                  onChange={this.toggleAge} />  
-                <label class="form-check-label" for="over18">
-                  I am over 18
-                </label>
-              </div>
-                
-              
-              <div className="form-check">
-                <input
-                  className="form-check-input"
-                  name="agreePrivacyPolicy"
-                  id="agreePrivacyPolicy"
-                  type="checkbox"
-                  checked={agreePrivacyPolicy}
-                  onChange={this.togglePrivacyPolicy}
-                />
-                <label class="form-check-label" for="agreePrivacyPolicy">
-                  {"I have read and agree to the "}
-                  <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")} target="_blank">privacy policy </a>
-                </label>
-              </div>
-              
+            <br />
+            <h5>Please confirm the following in order to create an account</h5>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                id="over18"
+                name="over18"
+                type="checkbox"
+                checked={over18}
+                onChange={this.toggleAge} />
+              <label class="form-check-label" for="over18">
+                I am over 18
+              </label>
+            </div>
+
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                name="agreePrivacyPolicy"
+                id="agreePrivacyPolicy"
+                type="checkbox"
+                checked={agreePrivacyPolicy}
+                onChange={this.togglePrivacyPolicy}
+              />
+              <label class="form-check-label" for="agreePrivacyPolicy">
+                {"I have read and agree to the "}
+                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  privacy policy
+                </a>
+              </label>
+            </div>
           </div>
-            <br></br><br></br>
+
+          <br></br><br></br>
+
           <button
+            id="btn-signup-confirm"
             type="submit"
             class="btn btn-primary"
-            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}
-          >
+            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}>
             {loading && (
               <span
                 class="spinner-grow spinner-grow-sm"
@@ -318,8 +344,14 @@ class CreateAccountForm extends Component {
             )}
             Sign Up
           </button>
-          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger">{error}</div>}
+          {errors &&
+            errors.$set &&
+            showErrors &&
+            this.getErrorMessages(errors)}
+          {error &&
+            <div class="alert alert-danger alert-container">
+              {error}
+            </div>}
         </form>
       </div>
     );

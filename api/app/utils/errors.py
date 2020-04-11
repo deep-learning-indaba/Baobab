@@ -11,6 +11,8 @@ RESET_PASSWORD_CODE_NOT_VALID = (
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 EVENT_WITH_KEY_NOT_FOUND = ({'message': 'No event exists with that KEY'}, 404)
+REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
+DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)
 SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
 QUESTION_NOT_FOUND = (
@@ -92,3 +94,14 @@ ERROR_UPDATING_USER_PROFILE = (
     {'message': 'Exception updating user profile.'}, 500)
 ADD_EVENT_ROLE_FAILED = (
     {'message': 'Unable to add event role for the user_id and event_id.'}, 500)
+POLICY_NOT_AGREED = (
+    {'message': 'Privacy policy must be agreed to before continuing.'}, 400)
+POLICY_ALREADY_AGREED = (
+    {'message': 'Privacy policy has already been agreed to.'}, 400)
+REFERENCE_REQUEST_NOT_FOUND = (
+    {'message': 'No response found for the given event and user'}, 404)
+
+FAILED_CREATE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to create integration test user.'}, 500)
+FAILED_DELETE_INTEGRATION_TEST_USER = (
+    {'message': 'Failed to delete integration test user'}, 500)

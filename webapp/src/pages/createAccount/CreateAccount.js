@@ -5,7 +5,10 @@ import CreateAccountForm from "./components/CreateAccountForm";
 export default class CreateAccount extends Component {
   render() {
     return (
-      <CreateAccountForm loggedIn={this.props.loggedIn} organisation={this.props.organisation}></CreateAccountForm> 
+      <CreateAccountForm
+        loggedIn={this.props.loggedIn}
+        organisation={this.props.organisation}>
+      </CreateAccountForm>
     );
   }
 }

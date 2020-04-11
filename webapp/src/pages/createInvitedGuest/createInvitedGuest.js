@@ -9,7 +9,10 @@ export default class CreateInvitedGuests extends Component {
     let params = queryString.parse(url);
     console.log(params);
     return (
-      <CreateInvitedGuestsComponent email={params.email} role={params.role} {...this.props}/>
+      <CreateInvitedGuestsComponent
+        email={params.email}
+        role={params.role}
+        {...this.props} />
     );
   }
 }

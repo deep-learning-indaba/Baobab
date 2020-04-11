@@ -14,6 +14,7 @@ from guestRegistrations import api as guest_registration
 from invitationletter import api as invitation_letter_api
 from attendance import api as attendance_api
 from organisation import api as organisation_api
+from integration_tests import api as integration_tests_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -74,8 +75,12 @@ rest_api.add_resource(invitedGuest_api.CheckIfInvitedGuest,
                       '/api/v1/checkIfInvitedGuest')
 rest_api.add_resource(reference_api.ReferenceRequestListAPI,
                       '/api/v1/reference-request/list')
+rest_api.add_resource(reference_api.ReferenceRequestDetailAPI,
+                      '/api/v1/reference-request/detail')
 rest_api.add_resource(reference_api.ReferenceRequestAPI,
                       '/api/v1/reference-request')
+rest_api.add_resource(reference_api.ReferenceAPI,
+                      '/api/v1/reference')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
@@ -99,3 +104,6 @@ rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
 rest_api.add_resource(attendance_api.AttendanceAPI, '/api/v1/attendance')
 rest_api.add_resource(organisation_api.OrganisationApi, '/api/v1/organisation')
+rest_api.add_resource(users_api.PrivacyPolicyAPI, '/api/v1/privacypolicy')
+rest_api.add_resource(integration_tests_api.CreateIntegrationUser, '/api/v1/integration-tests/createUser')
+rest_api.add_resource(integration_tests_api.DeleteIntegrationUser, '/api/v1/integration-tests/deleteUser')

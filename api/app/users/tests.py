@@ -1,22 +1,24 @@
 import json
-
 from datetime import datetime, timedelta
+import copy
 
 from app import app, db
-from app.utils.testing import ApiTestCase
-from app.users.models import AppUser, PasswordReset, UserCategory, Country, UserComment
-from app.events.models import Event, EventRole
 from app.applicationModel.models import ApplicationForm
-from app.responses.models import Response
+from app.events.models import Event, EventRole
 from app.organisation.models import Organisation
-
+from app.responses.models import Response
+from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
+                              UserComment)
+from app.utils.errors import POLICY_ALREADY_AGREED, POLICY_NOT_AGREED
+from app.utils.testing import ApiTestCase
 
 USER_DATA = {
         'email': 'something@email.com',
         'firstname': 'Some',
         'lastname': 'Thing',
         'user_title': 'Mr',
-        'password': '123456'
+        'password': '123456',
+        'policy_agreed': True
     }
 
 AUTH_DATA = {
@@ -31,20 +33,12 @@ class UserApiTest(ApiTestCase):
         self.add_organisation('Deep Learning IndabaX')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = Event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event('Indaba', 'Indaba Event',
                             datetime.now(), datetime.now(),
-                            'SOUTHAFRI2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
-        self.event2 = Event('IndabaX', 'IndabaX Sudan',
+                            'SOUTHAFRI2019')
+        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
                             datetime.now(), datetime.now(),
-                            'SUDANMO', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
-        db.session.add(self.event1)
-        db.session.add(self.event2)
+                            'SUDANMO', 2)
         db.session.commit()
 
         self.event1_id = self.event1.id
@@ -78,6 +72,14 @@ class UserApiTest(ApiTestCase):
         response = self.app.post('/api/v1/user', data=USER_DATA)
         assert response.status_code == 409
 
+    def test_policy_not_agreed(self):
+        self.seed_static_data()
+        user_data = copy.deepcopy(USER_DATA)
+        user_data['policy_agreed'] = False
+        
+        response = self.app.post('/api/v1/user', data=user_data)
+        self.assertEqual(response.status_code, 400)
+
     def test_get_user(self):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
@@ -96,7 +98,7 @@ class UserApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.post('/api/v1/user', data=USER_DATA)
         data = json.loads(response.data)
-        assert response.status_code == 201
+        self.assertEqual(response.status_code, 201)
 
         headers = {'Authorization': data['token']}
 
@@ -107,14 +109,15 @@ class UserApiTest(ApiTestCase):
             'user_title': 'Mrs',
             'password': ''
         })
-        assert response.status_code == 200
+
+        self.assertEqual(response.status_code, 200)
 
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
-        assert data['email'] == 'something@email.com'
-        assert data['firstname'] == 'Updated'
-        assert data['lastname'] == 'Updated'
-        assert data['user_title'] == 'Mrs'
+        self.assertEqual(data['email'], 'something@email.com')
+        self.assertEqual(data['firstname'], 'Updated')
+        self.assertEqual(data['lastname'], 'Updated')
+        self.assertEqual(data['user_title'], 'Mrs')
 
     def test_authentication_deleted(self):
         self.seed_static_data()
@@ -314,8 +317,8 @@ class UserApiTest(ApiTestCase):
 
     def setup_responses(self):
         application_forms = [
-            ApplicationForm(1, True, datetime(2019, 4, 12)),
-            ApplicationForm(2, False, datetime(2019, 4, 12))
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
         ]
         db.session.add_all(application_forms)
 
@@ -394,12 +397,9 @@ class UserCommentAPITest(ApiTestCase):
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = Event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event('Indaba', 'Indaba Event',
                             datetime.now(), datetime.now(),
-                            'NAGSOLVER', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+                            'NAGSOLVER')
         db.session.add(self.event1)
         db.session.commit()
 
@@ -481,20 +481,13 @@ class UserProfileApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            Event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM', 1, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now()),
-            Event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2, 'abx@indaba.deeplearning','indaba.deeplearning',
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-                           datetime.now(), datetime.now())
+            self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM'),
+            self.add_event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2)
         ]
-        db.session.add_all(events)
 
         application_forms = [
-            ApplicationForm(1, True, datetime.now()),
-            ApplicationForm(2, False, datetime.now())
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
         ]
         db.session.add_all(application_forms)
 
@@ -697,4 +690,34 @@ class OrganisationUserTest(ApiTestCase):
         self.assertEqual(response.status_code, 409)
 
 
-        
+class PrivacyPolicyApiTest(ApiTestCase):
+
+    def test_policy_agreed(self):
+        user = self.add_user()
+        user.policy_agreed_datetime = None
+        db.session.commit()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': True})
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_policy_already_agreed(self):
+        user = self.add_user()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': True})
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['message'], POLICY_ALREADY_AGREED[0]['message'])
+    
+    def test_policy_not_agreed(self):
+        user = self.add_user()
+
+        headers = self.get_auth_header_for('user@user.com')
+        response = self.app.put('/api/v1/privacypolicy', headers=headers, data={'policy_agreed': False})
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['message'], POLICY_NOT_AGREED[0]['message'])

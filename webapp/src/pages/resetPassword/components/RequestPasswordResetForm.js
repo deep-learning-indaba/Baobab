@@ -15,6 +15,7 @@ class RequestPasswordResetForm extends Component {
       resetRequested: false
     };
   }
+
   validateForm() {
     return this.state.email.length > 0;
   }
@@ -27,39 +28,44 @@ class RequestPasswordResetForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ 
+    this.setState({
       submitted: true,
-      loading: true 
+      loading: true
     });
 
-    userService.requestPasswordReset(this.state.email).then(response => {
-      if (response.status === 201) {
-        this.setState({
-          resetRequested: true
-        });
-      } else {
-        this.setState({
-          error: response.message,
-          loading: false
-        });
-      }
-    });
+    userService.requestPasswordReset(this.state.email)
+      .then(response => {
+        if (response.status === 201) {
+          this.setState({
+            resetRequested: true
+          });
+        } else {
+          this.setState({
+            error: response.message,
+            loading: false
+          });
+        }
+      });
   };
 
   render() {
-    const xs = 6;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
+    const xs = 8;
+    const sm = 8;
+    const md = 8;
+    const lg = 8;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const { loading, error, resetRequested } = this.state;
+
+    const { loading,
+      error,
+      resetRequested
+    } = this.state;
 
     if (resetRequested) {
       return (
         <div className={"reset-status text-center"}>
           <p className="h5 text-center mb-4">Reset Password</p>
           <div class="col">
-            Your password reset request has been processed. Please check your email for a link that will allow you to change your password. 
+            Your password reset request has been processed. Please check your email for a link that will allow you to change your password.
           </div>
         </div>
       )
@@ -71,8 +77,10 @@ class RequestPasswordResetForm extends Component {
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset Password</p>
-          <div class="form-group">
+
+          <div class="form-group reset-password-container">
             <label for="email">Email address</label>
+
             <input
               type="email"
               class="form-control"
@@ -80,21 +88,25 @@ class RequestPasswordResetForm extends Component {
               placeholder="Enter email"
               onChange={this.handleChange}
               value={this.state.email}
-              autoFocus="true"
-            />
+              autoFocus="true" />
           </div>
-          <div class="row">
+
+          <div class="row, center">
             <div class={commonColClassName}>
               <button
                 type="submit"
                 class="btn btn-primary"
-                disabled={!this.validateForm() || loading}
-              >
+                disabled={!this.validateForm() || loading}>
+
                 {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
                 Reset password
               </button>
             </div>
-            {error && <div className={"alert alert-danger"}>{error}</div>}
+
+            {error &&
+              <div className={"alert alert-danger alert-container"}>
+                {error}
+              </div>}
           </div>
           <div />
         </form>

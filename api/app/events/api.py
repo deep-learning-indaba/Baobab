@@ -21,6 +21,7 @@ from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
+from app.events.models import EventType
 
 
 def event_info(user_id, event_org):
@@ -36,11 +37,38 @@ def event_info(user_id, event_org):
         'organisation_name': event_org.Organisation.name,
         'organisation_id': event_org.Organisation.id,
         'url': event_org.Event.url,
+        'event_type': event_org.Event.event_type.value.upper(),
         'is_application_open': event_org.Event.is_application_open,
         'is_review_open': event_org.Event.is_review_open,
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
         'is_registration_open': event_org.Event.is_registration_open
+    }
+
+
+def event_details(event_org):
+    date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
+    return {
+        'id': event_org.Event.id,
+        'name': event_org.Event.name,
+        'description': event_org.Event.description,
+        'key': event_org.Event.key,
+        'start_date': event_org.Event.start_date.strftime(date_format),
+        'end_date': event_org.Event.end_date.strftime(date_format),
+        'email_from': event_org.Event.email_from,
+        'organisation_name': event_org.Organisation.name,
+        'organisation_id': event_org.Organisation.id,
+        'url': event_org.Event.url,
+        'application_open': event_org.Event.application_open.strftime(date_format),
+        'application_close': event_org.Event.application_close.strftime(date_format),
+        'review_open': event_org.Event.review_open.strftime(date_format),
+        'review_close': event_org.Event.review_close.strftime(date_format),
+        'selection_open': event_org.Event.selection_open.strftime(date_format),
+        'selection_close': event_org.Event.selection_close.strftime(date_format),
+        'offer_open': event_org.Event.offer_open.strftime(date_format),
+        'offer_close': event_org.Event.offer_close.strftime(date_format),
+        'registration_open': event_org.Event.registration_open.strftime(date_format),
+        'registration_close': event_org.Event.registration_close.strftime(date_format)
     }
 
 
@@ -55,7 +83,7 @@ def get_user_event_response_status(user_id, event_id):
             ApplicationForm.event_id == event_id).first()
 
         if applicationForm:
-            if applicationForm.deadline < datetime.now():
+            if applicationForm.event.application_close < datetime.now():
                 _log_application_status('closed, deadline passed')
                 return "Application closed"
             elif user_id:
@@ -93,6 +121,15 @@ def get_user_event_response_status(user_id, event_id):
 
 
 class EventAPI(EventMixin, restful.Resource):
+    def get(self):
+        event_id = request.args['id']
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+        else:
+            event_org = event_repository.get_by_id_with_organisation(event.id)
+            return event_details(event_org), 200
+
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
@@ -133,6 +170,7 @@ class EventAPI(EventMixin, restful.Resource):
             (args['registration_open']), _date_format)
         registration_close = datetime.strptime(
             (args['registration_close']), _date_format)
+        event_type = args['event_type'].upper()
 
         event = Event(
             name,
@@ -152,7 +190,8 @@ class EventAPI(EventMixin, restful.Resource):
             offer_open,
             offer_close,
             registration_open,
-            registration_close
+            registration_close,
+            EventType[event_type]
         )
         event.add_event_role('admin', user_id)
         try:
@@ -164,7 +203,7 @@ class EventAPI(EventMixin, restful.Resource):
             return EVENT_KEY_IN_USE
 
         event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_info(user_id, event_org), 201
+        return event_details(event_org), 201
 
     @auth_required
     def put(self):
@@ -239,7 +278,7 @@ class EventAPI(EventMixin, restful.Resource):
             return EVENT_KEY_IN_USE
 
         event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_info(user_id, event_org), 200
+        return event_details(event_org), 200
 
 
 class EventsAPI(restful.Resource):
@@ -326,7 +365,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             lastname = user.lastname
             event_name = event.name
             organisation_name = event.organisation.name
-            deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
+            deadline = event.application_close.strftime('%A %-d %B %Y')
 
             subject = 'FINAL REMINDER to submit you application for {}'.format(
                 event_name)
@@ -368,7 +407,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             event_name = event.name
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
-            deadline = event.get_application_form().deadline.strftime('%A %-d %B %Y')
+            deadline = event.application_close.strftime('%A %-d %B %Y')
 
             not_started_body = email_repository.get(event_id, 'application-not-started').template
             subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
