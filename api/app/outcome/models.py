@@ -11,7 +11,7 @@ class Outcome(db.Model):
     id = db.Column(db.Integer(), primary_key = True, nullable = False)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable = False)
     user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable = False)
-    status = db.Column(db.Enum(Status), nullable = False)
+    status = db.Column(db.Enum(Status, name='outcome_status'), nullable = False)
     timestamp = db.Column(db.DateTime(), nullable = False)
     latest = db.Column(db.Boolean(), nullable = False)
     updated_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)

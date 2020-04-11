@@ -20,7 +20,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('event_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('ACCEPTED', 'REJECTED', 'WAITLIST', name='status'), nullable=False),
+    sa.Column('status', sa.Enum('ACCEPTED', 'REJECTED', 'WAITLIST', name='outcome_status'), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=False),
     sa.Column('latest', sa.Boolean(), nullable=False),
     sa.Column('updated_by_user_id', sa.Integer(), nullable=False),
