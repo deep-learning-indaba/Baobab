@@ -16,9 +16,8 @@ class ReferenceRequest(db.Model):
     token = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(50), nullable=True)
     email_sent = db.Column(db.DateTime(), nullable=True)
+
     references = db.relationship('Reference')
-
-
     response = db.relationship('Response', foreign_keys=[response_id])
 
     def __init__(self, 
@@ -42,8 +41,9 @@ class ReferenceRequest(db.Model):
     def set_token(self, token):
         self.token = token
 
+    @property
     def has_reference(self):
-        return len(self.references) == 1
+        return len(self.references) > 0
 
 
 

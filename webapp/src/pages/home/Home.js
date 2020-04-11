@@ -90,48 +90,48 @@ class Home extends Component {
                 }
 
                 {this.props.user &&
-                <div>
-                    {this.state.upcomingEvents &&
-                    this.state.upcomingEvents.length > 0 &&
                     <div>
-                        <h3>Upcoming Events</h3>
                         <table className="event-table">
-                            <tbody>
-                            {this.state.upcomingEvents.map(e => {
-                                // TODO: Update status based on event stage changes.
-                                return (<tr>
-                                    <td>
-                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                        {e.start_date + " to " + e.end_date}
-                                    </td>
-                                    <td>{this.statusDisplay(e)}</td>
-                                </tr>)
-                            })}
-                            </tbody>
-                        </table>
-                    </div>}
+                            {this.state.upcomingEvents &&
+                                this.state.upcomingEvents.length > 0 &&
+                                <thead><tr><th colspan="2"><br /><br /><h3 className="text-center">Upcoming Events</h3></th></tr></thead>}
+                            {this.state.upcomingEvents &&
+                                this.state.upcomingEvents.length > 0 &&
+                                <tbody>
+                                    {this.state.upcomingEvents.map(e => {
+                                        // TODO: Update status based on event stage changes.
+                                        return (<tr>
+                                            <td>
+                                                <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                                {e.start_date + " to " + e.end_date}
+                                            </td>
+                                            <td>{this.statusDisplay(e)}</td>
+                                        </tr>)
+                                    })}
+                                </tbody>
+                            }
+                            {this.state.awards &&
+                                this.state.awards.length > 0 &&
+                                <thead><tr><th colspan="2"><br /><h3 className="text-center">Awards</h3></th></tr></thead>}
+                            {this.state.awards &&
+                                this.state.awards.length > 0 &&
+                                <tbody>
+                                    {this.state.awards.map(e => {
+                                        // TODO: Update status based on event stage changes.
+                                        return (<tr>
+                                            <td>
+                                                <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                                {e.start_date + " to " + e.end_date}
+                                            </td>
+                                            <td>{this.statusDisplay(e)}</td>
+                                        </tr>)
+                                    })}
+                                </tbody>
+                            }
 
-                    {this.state.awards &&
-                    this.state.awards.length > 0 &&
-                    <div>
-                        <h3>Awards</h3>
-                        <table className="event-table">
-                            <tbody>
-                            {this.state.awards.map(e => {
-                                // TODO: Update status based on event stage changes.
-                                return (<tr>
-                                    <td>
-                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                        {e.start_date + " to " + e.end_date}
-                                    </td>
-                                    <td>{this.statusDisplay(e)}</td>
-                                </tr>)
-                            })}
-                            </tbody>
                         </table>
-                    </div>}
 
-                </div>}
+                    </div>}
             </div>
         );
     }
