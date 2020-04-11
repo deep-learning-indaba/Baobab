@@ -68,6 +68,7 @@ from applicationModel.models import Question, Section
 from responses.models import Response, Answer, ResponseReviewer
 from users.models import UserCategory, AppUser, UserComment
 from email_template.models import EmailTemplate
+from outcome.models import Outcome
 from events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
