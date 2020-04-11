@@ -7,6 +7,7 @@ from flask_restful import fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import LOGGER, bcrypt, db
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
@@ -70,6 +71,15 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
+
+        application_form = application_form_repository.get_by_id(application_form_id)
+        if application_form is None:
+            return errors.FORM_NOT_FOUND_BY_ID
+        
+        user = user_repository.get_by_id(user_id)
+
+        if not application_form.nominations and user.has_at_least_one_response():
+            return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id)
         if is_submitted:
