@@ -13,6 +13,7 @@ import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
+import _ from "lodash";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -38,6 +39,17 @@ const findDependentQuestionAnswer = (entityToCheck, answers) => {
 
 const doesAnswerMatch = (entityToCheck, answer) => {
   return entityToCheck.show_for_values.indexOf(answer.value) > -1;
+}
+
+const answerByQuestionKey = (key, allQuestions, answers) => {
+  let question = allQuestions.find(q => q.key === key);
+  if (question) {
+    let answer = answers.find(a => a.question_id === question.id);
+    if (answer) {
+      return answer.value;
+    }
+  }
+  return null;
 }
 
 class FieldEditor extends React.Component {
@@ -874,6 +886,68 @@ class ApplicationFormInstance extends Component {
   }
 }
 
+class ApplicationList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+    }
+  }
+
+  getCandidate = (allQuestions, response) => {
+    const nominating_capacity = answerByQuestionKey("nominating_capacity", allQuestions, response.answers);
+    if (nominating_capacity === "other") {
+      let firstname = answerByQuestionKey("nomination_firstname", allQuestions, response.answers);
+      let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
+      return firstname + " " + lastname;
+    }
+    return "Self Nomination";
+  }
+
+  getStatus = (response) => {
+    if (response.is_submitted) {
+      return <span>Submitted</span>
+    }
+    else {
+      return <span>In Progress</span>
+    }
+  }
+
+  getAction = (response) => {
+    if (response.is_submitted) {
+      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>View</button>
+    }
+    else {
+      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>Continue</button>
+    }
+  }
+
+  render() {
+    let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
+    return <div>
+      <h4>Your Nominations</h4>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Nominee</th>
+            <th scope="col">Status</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.responses.map(response => {
+          return <tr key={"response_" + response.id}>
+            <td>{this.getCandidate(allQuestions, response)}</td>
+            <td>{this.getStatus(response)}</td>
+            <td>{this.getAction(response)}</td>
+          </tr>
+        })}
+        </tbody>
+      </table>
+    </div>
+  }
+
+}
+
 class ApplicationForm extends Component {
   constructor(props) {
     super(props);
@@ -882,7 +956,8 @@ class ApplicationForm extends Component {
       isError: false,
       errorMessage: "",
       formSpec: null,
-      responses: []
+      responses: [],
+      selectedResponse: null
     }
   }
 
@@ -893,40 +968,55 @@ class ApplicationForm extends Component {
       applicationFormService.getResponse(eventId)
     ]).then(responses => {
       let [formResponse, responseResponse] = responses;
+      let selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
       this.setState({
         formSpec: formResponse.formSpec,
         responses: responseResponse.response,
         isError: formResponse.formSpec === null || responseResponse.error,
         errorMessage: (formResponse.error + " " + responseResponse.error).trim(),
-        isLoading: false
+        isLoading: false,
+        selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
+        responseSelected: selectFirstResponse
       });
     });
   }
 
+  responseSelected = response => {
+    this.setState({
+      selectedResponse: response,
+      responseSelected: true
+    });
+  }
+
+  newNomination = () => {
+    this.setState({
+      responseSelected: true
+    });
+  }
+
   render() {
-    const {isLoading, isError, errorMessage, formSpec, responses} = this.state;
+    const { isLoading, isError, errorMessage, formSpec, responses, selectedResponse, responseSelected } = this.state;
     if (isLoading) {
-      return (<Loading/>);
+      return (<Loading />);
     }
 
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
 
-    /*
-    TODO:
-      - If not nominations, pass straight through to ApplicationFormInstance
-      - If nominations and length of responses is > 0, display list of responses with:
-          Continue/View depending on whether it's submitted (maybe an edit button?)
-      - Add a "new nomination" button
-      - If nominations and length of responses == 0, jump straight to applicationFormInstance
-      - Stretch: Add validation to prevent multiple self-nominations
-    */
 
-    return <ApplicationFormInstance
-      formSpec={formSpec}
-      response={responses.length > 0 ? responses[0] : null}
-      event={this.props.event} />
+    if (formSpec.nominations && responses.length > 0 && !responseSelected) {
+      return <div>
+        <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>New Nomination ></button>
+      </div>
+    }
+    else {
+      return <ApplicationFormInstance
+        formSpec={formSpec}
+        response={selectedResponse}
+        event={this.props.event} />
+    }
   }
 
 }
