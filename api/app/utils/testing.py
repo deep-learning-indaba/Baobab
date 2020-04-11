@@ -17,7 +17,7 @@ from app.organisation.models import Organisation
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.events.models import EventType
-from app.applicationModel.models import ApplicationForm
+from app.applicationModel.models import ApplicationForm, Section, Question
 
 
 @event.listens_for(Engine, "connect")
@@ -218,3 +218,28 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(application_form)
         db.session.commit()
         return application_form
+    
+    def add_section(
+        self,
+        application_form_id,
+        name='Section',
+        description='Description',
+        order=1):
+        section = Section(application_form_id, name, description, order)
+        db.session.add(section)
+        db.session.commit()
+        return section
+    
+    def add_question(
+        self,
+        application_form_id,
+        section_id,
+        headline='Question?',
+        placeholder='placeholder',
+        order=1,
+        question_type='short-text',
+        validation_regex=None):
+        question = Question(application_form_id, section_id, headline, placeholder, order, question_type, validation_regex)
+        db.session.add(question)
+        db.session.commit()
+        return question

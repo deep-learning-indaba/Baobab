@@ -48,20 +48,11 @@ class ResponseApiTest(ApiTestCase):
 
         self.add_n_users(10)
 
-        # Add application form data
-        self.test_event = self.add_event('Test Event', 'Event Description', date(2019, 2, 24), date(2019, 3, 24),
-                                         'NAGSOLVER')
-        self.test_form = self.create_application_form(
-                self.test_event.id, True)
-        self.test_section = Section(
-                self.test_form.id, 'Test Section', 'Test Description', 1)
-        self.add_to_db(self.test_section)
-        self.test_question = Question(self.test_form.id, self.test_section.id,
-                                      'Test Question Description', 'Test question placeholder', 1, 'Test Type', None)
-        self.add_to_db(self.test_question)
-        self.test_question2 = Question(
-                self.test_form.id, self.test_section.id, 'Test Question 2', 'Enter something', 2, 'short-text', None)
-        self.add_to_db(self.test_question2)
+        self.test_event = self.add_event('Event Without Nomination')
+        self.test_form = self.create_application_form(self.test_event.id, True)
+        self.test_section = self.add_section(self.test_form.id)
+        self.test_question = self.add_question(self.test_form.id, self.test_section.id, order=1)
+        self.test_question2 = self.add_question(self.test_form.id, self.test_section.id, order=2)
 
         # responses
         self.test_response = Response(self.test_form.id, self.other_user_data['id'])
@@ -101,12 +92,14 @@ class ResponseApiTest(ApiTestCase):
                                 query_string={'event_id': self.test_event.id})
         data = json.loads(response.data)
 
+        self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['application_form_id'], self.test_form.id)
         self.assertEqual(data[0]['user_id'], self.other_user_data['id'])
         self.assertIsNone(data[0]['submitted_timestamp'])
         self.assertFalse(data[0]['is_withdrawn'])
         self.assertTrue(data[0]['answers'])
 
+        self.assertEqual(len(data[0]['answers']), 1)
         answer = data[0]['answers'][0]
         self.assertEqual(answer['id'], self.test_answer1.id)
         self.assertEqual(answer['value'], self.test_answer1.value)
