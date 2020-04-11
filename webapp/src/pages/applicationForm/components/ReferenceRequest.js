@@ -102,7 +102,7 @@ class ReferenceRequestRow extends React.Component {
 
                         {this.props.referenceRequest.emailSent &&
                             (this.props.referenceRequest.referenceSubmitted
-                                ? <div><i className="fas fa-check-double text-success" data-top="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
+                                ? <div><i className="fas fa-check-double text-success" data-tip="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
                                 : <div><i className="fas fa-check" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
                         }
 
@@ -174,7 +174,7 @@ class FormReferenceRequest extends React.Component {
                         referenceRequests: initialReferenceRequests,
                         minId: minId,
                         loading: false
-                    });
+                    }, this.setValue);
                 }
                 else {
                     this.setState({
@@ -285,18 +285,20 @@ class FormReferenceRequest extends React.Component {
                                     return r;
                                 }
                             })
-                        }), () => {
-                            let value = '';
-                            if (this.state.referenceRequests.filter(r => r.emailSent).length >= this.props.options.min_num_referrals) {
-                                value = this.state.referenceRequests.map(r => r.email).join(';');
-                            }
-                            if (this.props.onChange) {
-                                this.props.onChange(value);
-                            }
-                        }
+                        }), this.setValue
                         );
                     });
             });
+    }
+
+    setValue = () => {
+        let value = '';
+        if (this.state.referenceRequests.filter(r => r.emailSent).length >= this.props.options.min_num_referrals) {
+            value = this.state.referenceRequests.map(r => r.email).join(';');
+        }
+        if (this.props.onChange) {
+            this.props.onChange(value);
+        }
     }
 
     valid = () => {

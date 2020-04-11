@@ -1,6 +1,6 @@
 from app import db
 from app.responses.models import Response, Answer
-from app.applicationModel.models import Question
+from app.applicationModel.models import Question, Section
 from app.users.models import AppUser
 
 
@@ -42,9 +42,18 @@ class ResponseRepository():
             .first()
 
     @staticmethod
-    def get_question_answers_by_section_id_and_response_id(section_id, response_id):
+    def get_question_answers_by_section_key_and_response_id(section_key, response_id):
         return db.session.query(Question, Answer)\
             .join(Question, Question.id == Answer.question_id)\
-            .filter(Question.section_id == section_id,
-                    Answer.response_id == response_id)\
+            .join(Section, Question.section_id == Section.id)\
+            .filter(Answer.response_id == response_id,
+                    Section.key == section_key)\
             .all()
+
+    @staticmethod
+    def get_answer_by_question_key_and_response_id(question_key, response_id):
+        return db.session.query(Answer)\
+            .join(Question, Question.id == Answer.question_id)\
+            .filter(Question.key == question_key,
+                    Answer.response_id == response_id)\
+            .first()

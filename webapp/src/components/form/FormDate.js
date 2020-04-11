@@ -3,6 +3,7 @@ import DateTimePicker from 'react-datetime-picker'
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
+import * as moment from 'moment';
 
 class FormDate extends React.Component {
   shouldDisplayError = () => {
@@ -14,6 +15,13 @@ class FormDate extends React.Component {
       this.dateInput.focus();
     }
   }
+
+  onChange = value => {
+    if (value && this.props.onChange) {
+      this.props.onChange(moment(value).format("YYYY-MM-DD"));
+    }
+  }
+
   render() {
     return (
       <div>
@@ -35,11 +43,8 @@ class FormDate extends React.Component {
           ref={input => {
             this.dateInput = input;
           }}
-          onChange={this.props.onChange}
-          value={this.props.value}
-          required={this.props.required || null}
-          tabIndex={this.props.tabIndex}
-          autoFocus={this.props.autoFocus}
+          onChange={this.onChange}
+          value={this.props.value ? new Date(this.props.value) : new Date()}
           format="y-MM-dd"
         />
         </FormGroup>
