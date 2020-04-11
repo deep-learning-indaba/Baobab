@@ -24,12 +24,11 @@ class Outcome(db.Model):
                  event_id,
                  user_id,
                  status,
-                 latest,
                  updated_by_user_id
                  ):
         self.event_id = event_id
         self.user_id = user_id
         self.status = status
         self.timestamp = datetime.now()
-        self.latest = latest
+        self.latest = True
         self.updated_by_user_id = updated_by_user_id
