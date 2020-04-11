@@ -54,7 +54,6 @@ class ResponseApiTest(ApiTestCase):
         self.test_question = self.add_question(self.test_form.id, self.test_section.id, order=1)
         self.test_question2 = self.add_question(self.test_form.id, self.test_section.id, order=2)
 
-        # responses
         self.test_response = Response(self.test_form.id, self.other_user_data['id'])
         self.add_to_db(self.test_response)
 
