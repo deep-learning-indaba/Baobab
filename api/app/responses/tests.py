@@ -61,16 +61,6 @@ class ResponseApiTest(ApiTestCase):
                 self.test_response.id, self.test_question.id, 'My Answer')
         self.add_to_db(self.test_answer1)
 
-        self.responses = []
-        for user in self.test_users:
-            response = Response(self.test_form.id, user.id)
-            self.add_to_db(response)
-            answer1 = Answer(response.id, self.test_question.id, "{}'s Answer for question 1".format(user.firstname))
-            answer2 = Answer(response.id, self.test_question2.id, "{}'s Answer for question 2".format(user.firstname))
-            self.add_to_db(answer1)
-            self.add_to_db(answer2)
-            self.responses.append(response)
-
         db.session.flush()
 
     def test_get_response(self):
@@ -96,48 +86,6 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(answer['id'], self.test_answer1.id)
         self.assertEqual(answer['value'], self.test_answer1.value)
         self.assertEqual(answer['question_id'], 1)
-
-    def test_repo_get_answers(self):
-        self._seed_data()
-
-        # retrieve using response_id
-        #   first answer should have correct response_id and question_id
-        answers_by_response = response_repository.get_answers_by_response_id(self.test_response.id)
-        self.assertEqual(answers_by_response[0].response_id, self.test_response.id)
-        self.assertEqual(answers_by_response[0].question_id, self.test_question.id)
-
-        # retrieve using question_id
-        #   test the first answer here is the same as first answer above
-        #   test_question completed by dummy users and other_user
-        answers_by_question = response_repository.get_answers_by_question_id(self.test_question.id)
-        self.assertEqual(answers_by_question[0], answers_by_response[0])
-        self.assertEqual(len(self.test_users) + 1, len(answers_by_question))  # including other_user response
-
-        # retrieve using response_id and question_id
-        #   use same question_id and response_id as previous test --> can test object is the same
-        answer_by_qid_rid = response_repository.get_answer_by_question_id_and_response_id(
-                self.test_question.id, self.test_response.id)
-        self.assertEqual(answer_by_qid_rid, answers_by_response[0])
-        #   use different ids. Check expected ids are in the returned answer
-        answer_by_qid_rid_q2 = response_repository.get_answer_by_question_id_and_response_id(
-                self.test_question2.id, self.responses[0].id)
-        self.assertEqual(answer_by_qid_rid_q2.response_id, self.responses[0].id)
-        self.assertEqual(answer_by_qid_rid_q2.question_id, self.test_question2.id)
-
-        # retrieve all (Question, Answer) tuples using section_id and response_id
-        qa_by_sid_rid = response_repository.get_question_answers_by_section_id_and_response_id(
-                self.test_section.id, self.test_response.id)
-        self.assertTupleEqual(qa_by_sid_rid[0], (self.test_question, self.test_answer1))
-        other_response = self.responses[0]
-        qa_by_sid_rid_dummy = response_repository.get_question_answers_by_section_id_and_response_id(
-                self.test_section.id, other_response.id)
-        answer1 = response_repository.get_answer_by_question_id_and_response_id(
-                self.test_question.id, other_response.id)
-        answer2 = response_repository.get_answer_by_question_id_and_response_id(
-                self.test_question2.id, other_response.id)
-        self.assertEqual(len(qa_by_sid_rid_dummy), 2)  # answered 2 questions
-        self.assertTupleEqual(qa_by_sid_rid_dummy[0], (self.test_question, answer1))
-        self.assertTupleEqual(qa_by_sid_rid_dummy[1], (self.test_question2, answer2))
 
     def test_get_event(self):
         """Test that we get an error if we try to get a response for an event that doesn't exist."""
