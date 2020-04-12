@@ -12,7 +12,7 @@ from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND, FORBIDDEN,\
                         REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND, DUPLICATE_REFERENCE_SUBMISSION,\
-                        APPLICATIONS_CLOSED, REFERENCE_REQUEST_NOT_FOUND
+                        APPLICATIONS_CLOSED, REFERENCE_REQUEST_NOT_FOUND, BAD_CONFIGURATION
 
 from app.utils.auth import auth_optional, auth_required
 from app.utils.emailer import send_mail
@@ -57,6 +57,8 @@ reference_fields = {
 
 def _get_candidate_nominator(response):
     nominating_capacity = response_repository.get_answer_by_question_key_and_response_id('nominating_capacity', response.id)
+    if not nominating_capacity:
+        raise ValueError('Missing nominating capacity answer')
     is_nomination = nominating_capacity.value == 'other'
 
     if is_nomination:
@@ -116,7 +118,12 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         link = "{host}/reference/{token}".format(host=misc.get_baobab_host(),
                                                  token=reference_request.token)
 
-        candidate, candidate_firstname, nominator = _get_candidate_nominator(response)
+        try:
+            candidate, candidate_firstname, nominator = _get_candidate_nominator(response)
+        except ValueError as e:
+            LOGGER.error(e)
+            return BAD_CONFIGURATION
+
         if nominator is None:
             nomination_text = "has nominated themself"
         else:
@@ -178,7 +185,11 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
         app_form = event.get_application_form()  # type: ApplicationForm
 
         # Determine whether the response is a nomination
-        candidate, _, nominator = _get_candidate_nominator(response)
+        try:
+            candidate, _, nominator = _get_candidate_nominator(response)
+        except ValueError as e:
+            LOGGER.error(e)
+            return BAD_CONFIGURATION
 
         return_object = {
             'candidate': candidate,
