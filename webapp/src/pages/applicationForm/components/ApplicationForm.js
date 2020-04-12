@@ -22,7 +22,7 @@ const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
-const REFERENCE_REQUEST = "reference-request";
+const REFERENCE_REQUEST = "reference";
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -36,7 +36,7 @@ const findDependentQuestionAnswer = (entityToCheck, answers) => {
 }
 
 const doesAnswerMatch = (entityToCheck, answer) => {
-  return entityToCheck.show_for_values.map(_ => _.value).indexOf(answer.value) > -1;
+  return entityToCheck.show_for_values.indexOf(answer.value) > -1;
 }
 
 class FieldEditor extends React.Component {
@@ -54,7 +54,6 @@ class FieldEditor extends React.Component {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
-
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -187,7 +186,7 @@ class FieldEditor extends React.Component {
             id={this.id}
             name={this.id}
             label={question.description}
-            value={answer ? answer.value : answer}
+            value={answer}
             placeholder={question.placeholder}
             onChange={this.handleChange}
             key={"i_" + key}
@@ -201,7 +200,7 @@ class FieldEditor extends React.Component {
             id={this.id}
             name={this.id}
             label={question.description}
-            value={answer ? answer.value : answer}
+            value={answer}
             placeholder={question.placeholder}
             onChange={this.handleChange}
             key={"i_" + key}
@@ -809,7 +808,7 @@ class ApplicationForm extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 1 })} // StartStep to jump to steo 1 in the Stepzilla
+          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }

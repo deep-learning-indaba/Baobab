@@ -6,6 +6,10 @@ db:
   image: orchardup/postgresql
   ports:
     - 5432:5432
+storage:
+  image: fsouza/fake-gcs-server
+  ports:
+    - 4443:4443
 web:
   build: ./api
   command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
@@ -16,6 +20,7 @@ web:
     - 5000:5000
   links:
     - db
+    - storage
   environment:
     DEBUG: "True"
     SECRET_KEY: __filler__
