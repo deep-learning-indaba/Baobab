@@ -52,8 +52,7 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
             if not event:
                 LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
                 return errors.EVENT_NOT_FOUND
-
-            # TODO: why does this return a list?
+            
             form = application_form_repository.get_by_event_id(args['event_id'])
             if not form:
                 LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
@@ -83,8 +82,8 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         form = application_form_repository.get_by_id(args['application_form_id'])
         if not form.nominations:  # Prevent duplicates if the form doesn't allow nominations
-            response = response_repository.get_by_user_id(user_id, form.event_id)
-            if response is not None:
+            response = response_repository.get_by_user_id(user_id, form.id)
+            if response:
                 return errors.DUPLICATE_RESPONSE
 
         try: 
