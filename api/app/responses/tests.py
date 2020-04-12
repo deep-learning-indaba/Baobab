@@ -71,13 +71,6 @@ class ResponseApiTest(ApiTestCase):
             self.add_to_db(answer2)
             self.responses.append(response)
 
-        # add nomination application form
-        self.test_nomination_form = self.create_application_form(
-                self.test_event.id, True, True)
-        self.test_nomination_response = Response(
-                self.test_nomination_form.id, self.other_user_data['id'])
-        self.add_to_db(self.test_nomination_response)
-
         db.session.flush()
 
     def test_get_response(self):
@@ -103,25 +96,6 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(answer['id'], self.test_answer1.id)
         self.assertEqual(answer['value'], self.test_answer1.value)
         self.assertEqual(answer['question_id'], 1)
-
-    def test_repo_get_response(self):
-        """Test for when retrieving a response from the repository and not via the api directly"""
-        self._seed_data()
-
-        response = response_repository.get_by_id_and_user_id(
-                self.test_response.id, self.other_user_data['id'])
-        self.assertEqual(response.application_form_id, self.test_form.id)
-        self.assertEqual(response.user_id, self.other_user_data['id'])
-        self.assertIsNone(response.submitted_timestamp)
-        self.assertFalse(response.is_withdrawn)
-        self.assertTrue(response.answers)
-
-        same_response = response_repository.get_by_id(self.test_response.id)
-        self.assertEqual(response, same_response)
-
-        all_user_responses = response_repository.get_by_user_id(self.other_user_data['id'])
-        self.assertEqual(len(all_user_responses), 2)
-        self.assertEqual(response, all_user_responses[0])
 
     def test_repo_get_answers(self):
         self._seed_data()

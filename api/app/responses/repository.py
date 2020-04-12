@@ -27,12 +27,6 @@ class ResponseRepository():
                          .first()
 
     @staticmethod
-    def get_by_user_id(user_id):
-        return db.session.query(Response)\
-            .filter_by(user_id=user_id)\
-            .all()
-
-    @staticmethod
     def get_by_id(response_id):
         return db.session.query(Response).get(response_id)
 
