@@ -3,7 +3,6 @@
 }
 
 .review-form-container {
-    padding-top: 3em;
     padding-left: 3em;
     padding-right: 3em;
 }
@@ -33,8 +32,6 @@
 }
 
 .flag-category {
-    margin-left: 0.5em;
-    font-size: 0.5em;
     display: inline-block;
     color: darkred;
 }
