@@ -62,6 +62,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         if not responses:
             return errors.RESPONSE_NOT_FOUND
 
+        if not form.nominations:
+            return responses[0]
+
         return responses
 
     @auth_required

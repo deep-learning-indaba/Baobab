@@ -63,8 +63,8 @@ class ResponseApiTest(ApiTestCase):
 
         db.session.flush()
 
-    def test_get_response(self):
-        """Test a typical GET flow."""
+    def test_get_response_without_nomination(self):
+        """Test a GET flow when the applications do not allow nominations"""
         
         self._seed_data()
 
@@ -74,15 +74,14 @@ class ResponseApiTest(ApiTestCase):
                                 query_string={'event_id': self.test_event.id})
         data = json.loads(response.data)
 
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['application_form_id'], self.test_form.id)
-        self.assertEqual(data[0]['user_id'], self.other_user_data['id'])
-        self.assertIsNone(data[0]['submitted_timestamp'])
-        self.assertFalse(data[0]['is_withdrawn'])
-        self.assertTrue(data[0]['answers'])
+        self.assertEqual(data['application_form_id'], self.test_form.id)
+        self.assertEqual(data['user_id'], self.other_user_data['id'])
+        self.assertIsNone(data['submitted_timestamp'])
+        self.assertFalse(data['is_withdrawn'])
+        self.assertTrue(data['answers'])
 
-        self.assertEqual(len(data[0]['answers']), 1)
-        answer = data[0]['answers'][0]
+        self.assertEqual(len(data['answers']), 1)
+        answer = data['answers'][0]
         self.assertEqual(answer['id'], self.test_answer1.id)
         self.assertEqual(answer['value'], self.test_answer1.value)
         self.assertEqual(answer['question_id'], 1)
@@ -157,7 +156,7 @@ class ResponseApiTest(ApiTestCase):
                                 headers={
                                     'Authorization': self.user_data['token']},
                                 query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)[0]
+        data = json.loads(response.data)
 
         self.assertEqual(data['application_form_id'], self.test_form.id)
         self.assertEqual(data['user_id'], self.user_data['id'])
@@ -208,7 +207,7 @@ class ResponseApiTest(ApiTestCase):
             headers={'Authorization': self.other_user_data['token']},
             query_string={'event_id': self.test_event.id})
 
-        data = json.loads(response.data)[0]
+        data = json.loads(response.data)
 
         self.assertEqual(data['application_form_id'], self.test_form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
@@ -303,7 +302,7 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
             query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)[0]
+        data = json.loads(response.data)
         self.assertFalse(data['is_submitted'])
         self.assertTrue(data['is_withdrawn'])
 
