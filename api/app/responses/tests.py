@@ -48,18 +48,13 @@ class ResponseApiTest(ApiTestCase):
 
         self.add_n_users(10)
 
-        self.test_event = self.add_event('Event Without Nomination')
-        self.test_form = self.create_application_form(self.test_event.id, True)
-        self.test_section = self.add_section(self.test_form.id)
-        self.test_question = self.add_question(self.test_form.id, self.test_section.id, order=1)
-        self.test_question2 = self.add_question(self.test_form.id, self.test_section.id, order=2)
-
-        self.test_response = Response(self.test_form.id, self.other_user_data['id'])
-        self.add_to_db(self.test_response)
-
-        self.test_answer1 = Answer(
-                self.test_response.id, self.test_question.id, 'My Answer')
-        self.add_to_db(self.test_answer1)
+        self.event = self.add_event('Event Without Nomination', key='indaba-2025')
+        self.form = self.create_application_form(self.event.id, True, False)
+        self.section = self.add_section(self.form.id)
+        self.question = self.add_question(self.form.id, self.section.id, order=1)
+        self.question2 = self.add_question(self.form.id, self.section.id, order=2)
+        self.response = self.add_response(self.form.id, self.other_user_data['id'])
+        self.answer1 = self.add_answer(self.response.id, self.question.id, 'My Answer')
 
         db.session.flush()
 
@@ -71,10 +66,10 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get('/api/v1/response',
                                 headers={
                                     'Authorization': self.other_user_data['token']},
-                                query_string={'event_id': self.test_event.id})
+                                query_string={'event_id': self.event.id})
         data = json.loads(response.data)
 
-        self.assertEqual(data['application_form_id'], self.test_form.id)
+        self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
         self.assertIsNone(data['submitted_timestamp'])
         self.assertFalse(data['is_withdrawn'])
@@ -82,8 +77,8 @@ class ResponseApiTest(ApiTestCase):
 
         self.assertEqual(len(data['answers']), 1)
         answer = data['answers'][0]
-        self.assertEqual(answer['id'], self.test_answer1.id)
-        self.assertEqual(answer['value'], self.test_answer1.value)
+        self.assertEqual(answer['id'], self.answer1.id)
+        self.assertEqual(answer['value'], self.answer1.value)
         self.assertEqual(answer['question_id'], 1)
 
     def test_get_event(self):
@@ -95,7 +90,7 @@ class ResponseApiTest(ApiTestCase):
                                 headers={
                                     'Authorization': self.other_user_data['token']
                                     },
-                                query_string={'event_id': self.test_event.id + 100})
+                                query_string={'event_id': self.event.id + 100})
 
         self.assertEqual(response.status_code, 404)
 
@@ -121,7 +116,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get('/api/v1/response',
                                 headers={
                                     'Authorization': self.user_data['token']},
-                                query_string={'event_id': self.test_event.id})
+                                query_string={'event_id': self.event.id})
 
         self.assertEqual(response.status_code, 404)
 
@@ -130,15 +125,15 @@ class ResponseApiTest(ApiTestCase):
 
         self._seed_data()
         response_data = {
-            'application_form_id': self.test_form.id,
+            'application_form_id': self.form.id,
             'is_submitted': True,
             'answers': [
                 {
-                    'question_id': self.test_question.id,
+                    'question_id': self.question.id,
                     'value': 'Answer 1'
                 },
                 {
-                    'question_id': self.test_question2.id,
+                    'question_id': self.question2.id,
                     'value': 'Hello world, this is the 2nd answer.'
                 }
             ]
@@ -155,10 +150,10 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get('/api/v1/response',
                                 headers={
                                     'Authorization': self.user_data['token']},
-                                query_string={'event_id': self.test_event.id})
+                                query_string={'event_id': self.event.id})
         data = json.loads(response.data)
 
-        self.assertEqual(data['application_form_id'], self.test_form.id)
+        self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.user_data['id'])
         self.assertIsNotNone(data['submitted_timestamp'])
         self.assertFalse(data['is_withdrawn'])
@@ -166,28 +161,28 @@ class ResponseApiTest(ApiTestCase):
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1')
-        self.assertEqual(answer['question_id'], self.test_question.id)
+        self.assertEqual(answer['question_id'], self.question.id)
 
         answer = data['answers'][1]
         self.assertEqual(
             answer['value'], 'Hello world, this is the 2nd answer.')
-        self.assertEqual(answer['question_id'], self.test_question2.id)
+        self.assertEqual(answer['question_id'], self.question2.id)
 
     def test_update(self):
         """Test a typical PUT flow."""
 
         self._seed_data()
         update_data = {
-            'id': self.test_response.id,
-            'application_form_id': self.test_form.id,
+            'id': self.response.id,
+            'application_form_id': self.form.id,
             'is_submitted': True,  # Set submitted
             'answers': [
                 {
-                    'question_id': self.test_question.id,
+                    'question_id': self.question.id,
                     'value': 'Answer 1 UPDATED'  # Update an existing answer
                 },
                 {
-                    'question_id': self.test_question2.id,  # Add a new answer
+                    'question_id': self.question2.id,  # Add a new answer
                     'value': 'This is the 2nd answer.'
                 }
             ]
@@ -205,11 +200,11 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get(
             'api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'event_id': self.test_event.id})
+            query_string={'event_id': self.event.id})
 
         data = json.loads(response.data)
 
-        self.assertEqual(data['application_form_id'], self.test_form.id)
+        self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
 
         parsed_submitted = dateutil.parser.parse(
@@ -223,19 +218,19 @@ class ResponseApiTest(ApiTestCase):
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1 UPDATED')
-        self.assertEqual(answer['question_id'], self.test_question.id)
+        self.assertEqual(answer['question_id'], self.question.id)
 
         answer = data['answers'][1]
         self.assertEqual(answer['value'], 'This is the 2nd answer.')
-        self.assertEqual(answer['question_id'], self.test_question2.id)
+        self.assertEqual(answer['question_id'], self.question2.id)
 
     def test_update_missing(self):
         """Test that 404 is returned if we try to update a response that doesn't exist."""
         
         self._seed_data()
         update_data = {
-            'id': self.test_response.id + 100,
-            'application_form_id': self.test_form.id,
+            'id': self.response.id + 100,
+            'application_form_id': self.form.id,
             'is_submitted': True,  # Set submitted
             'answers': []
         }
@@ -253,8 +248,8 @@ class ResponseApiTest(ApiTestCase):
         
         self._seed_data()
         update_data = {
-            'id': self.test_response.id,
-            'application_form_id': self.test_form.id,
+            'id': self.response.id,
+            'application_form_id': self.form.id,
             'is_submitted': True,  # Set submitted
             'answers': []
         }
@@ -272,8 +267,8 @@ class ResponseApiTest(ApiTestCase):
         
         self._seed_data()
         update_data = {
-            'id': self.test_response.id,
-            'application_form_id': self.test_form.id + 100,
+            'id': self.response.id,
+            'application_form_id': self.form.id + 100,
             'is_submitted': True,  # Set submitted
             'answers': []
         }
@@ -293,7 +288,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.delete(
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'id': self.test_response.id})
+            query_string={'id': self.response.id})
 
         self.assertEqual(response.status_code, 204)
 
@@ -301,7 +296,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
-            query_string={'event_id': self.test_event.id})
+            query_string={'event_id': self.event.id})
         data = json.loads(response.data)
         self.assertFalse(data['is_submitted'])
         self.assertTrue(data['is_withdrawn'])
@@ -313,7 +308,7 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.delete(
                 '/api/v1/response',
                 headers={'Authorization': self.other_user_data['token']},
-                query_string={'id': self.test_response.id + 1000})
+                query_string={'id': self.response.id + 1000})
         self.assertEqual(response.status_code, 404)  # Not found
 
     def test_delete_permission(self):
@@ -325,6 +320,6 @@ class ResponseApiTest(ApiTestCase):
         response = self.app.delete(
             '/api/v1/response',
             headers={'Authorization': self.user_data['token']},
-            query_string={'id': self.test_response.id})
+            query_string={'id': self.response.id})
 
         self.assertEqual(response.status_code, 401)  # Unauthorized
