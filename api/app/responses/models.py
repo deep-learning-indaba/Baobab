@@ -1,6 +1,12 @@
 
-from app import db
 from datetime import date, datetime
+
+from sqlalchemy import select
+from sqlalchemy.orm import column_property
+
+from app import db
+from app.applicationModel.models import Question
+
 
 class Response(db.Model):
 
@@ -17,7 +23,7 @@ class Response(db.Model):
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
-    answers = db.relationship('Answer')
+    answers = db.relationship('Answer', order_by='Answer.order')
 
     def __init__(self, application_form_id, user_id):
         self.application_form_id = application_form_id
@@ -52,6 +58,7 @@ class Answer(db.Model):
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
+    order = column_property(select([Question.order]).where(Question.id==question_id))
 
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id

@@ -100,6 +100,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             if response.is_submitted:
                 LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
                 user = user_repository.get_by_id(user_id)
+                response = response_repository.get_by_id_and_user_id(response.id, user_id)
                 self.send_confirmation(user, response)
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
@@ -140,6 +141,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             if response.is_submitted:
                 LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
                 user = user_repository.get_by_id(user_id)
+                response = response_repository.get_by_id_and_user_id(response.id, user_id)
                 self.send_confirmation(user, response)
         except:                
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
@@ -182,8 +184,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
     def send_confirmation(self, user, response):
         try:
-            answers = sorted(response.answers, key=lambda answer: answer.question.order)
-            if answers is None:
+            answers = response.answers
+            if not answers:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
 
             application_form = response.application_form
