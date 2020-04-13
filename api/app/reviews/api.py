@@ -12,6 +12,7 @@ from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
@@ -96,8 +97,6 @@ review_fields = {
     'reviews_remaining_count': fields.Integer,
     'review_response': fields.Nested(review_response_fields)
 }
-
-REVIEWS_PER_SUBMISSION = 3
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
@@ -248,9 +247,11 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
+        
+        config = review_configuration_repository.get_configuration_for_event(event_id)
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, config.num_reviews_required)
         }
 
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
@@ -314,7 +315,9 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if not reviewer_user.is_reviewer(event_id):
             self.add_reviewer_role(reviewer_user.id, event_id)
 
-        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
+        config = review_configuration_repository.get_configuration_for_event(event_id)
+
+        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews, config.num_reviews_required)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -339,12 +342,12 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add(event_role)
         db.session.commit()
     
-    def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
+    def get_eligible_response_ids(self, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
                         .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
                         .group_by(Response.id)\
-                        .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
+                        .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required)\
                         .all()
         candidate_response_ids = set([r.id for r in candidate_responses])
 

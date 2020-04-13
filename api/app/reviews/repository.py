@@ -3,7 +3,7 @@ from sqlalchemy import and_
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewConfiguration
 from app.users.models import AppUser
 from app.events.models import EventRole
 
@@ -181,3 +181,21 @@ class ReviewRepository():
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .count())
         return count
+
+class ReviewConfigurationRepository():
+
+    @staticmethod
+    def get_configuration_for_form(review_form_id):
+        config = (db.session.query(ReviewConfiguration)
+                    .filter_by(review_form_id=review_form_id)
+                    .first())
+        return config
+
+    @staticmethod
+    def get_configuration_for_event(event_id):
+        config = (db.session.query(ReviewConfiguration)
+                    .join(ReviewForm, ReviewConfiguration.review_form_id == ReviewForm.id)
+                    .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                    .filter(ApplicationForm.event_id == event_id)
+                    .first())
+        return config
