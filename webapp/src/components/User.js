@@ -51,7 +51,7 @@ class UserDropdown extends Component {
               >
                 Profile
               </a>
-              <button className="dropdown-item nav-link" onClick={this.handleLogout}>
+              <button className="dropdown-item cursor-pointer" onClick={this.handleLogout}>
                 Logout
               </button>
             </div>
