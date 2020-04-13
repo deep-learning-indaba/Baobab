@@ -184,10 +184,10 @@ def upgrade():
     session.commit()
 
     affiliation_question = find_question('Affiliation')
-    affiliation_info = ReviewQuestion(form.id, 'information', False, 1, question_id=affiliation_question.id)
+    affiliation_info = ReviewQuestion(form.id, 'information', False, 1, question_id=affiliation_question.id, headline='Affiliation')
 
     research_interests_question = find_question('Research Interests')
-    research_interests_info = ReviewQuestion(form.id, 'information', False, 2, question_id=research_interests_question.id)
+    research_interests_info = ReviewQuestion(form.id, 'information', False, 2, question_id=research_interests_question.id, headline='Research Interests')
 
     extended_abstract_type = find_question('Extended abstract type')
     extended_abstract_type_info = ReviewQuestion(form.id, 'information', False, 3, question_id=extended_abstract_type.id)
@@ -196,10 +196,10 @@ def upgrade():
     extended_abstract_info = ReviewQuestion(form.id, 'information', False, 4, question_id=extended_abstract_question.id)
 
     cv_question = find_question('CV')
-    cv_info = ReviewQuestion(form.id, 'information', False, 5, question_id=cv_question.id)
+    cv_info = ReviewQuestion(form.id, 'information', False, 5, question_id=cv_question.id, headline='CV')
 
     financial_support_question = find_question('Motivation')
-    financial_support_info = ReviewQuestion(form.id, 'information', False, 6, question_id=financial_support_question.id)
+    financial_support_info = ReviewQuestion(form.id, 'information', False, 6, question_id=financial_support_question.id, headline='Financial Support Motivation')
 
     ten_scale = [
         {'value': 1, 'label': '1'},
