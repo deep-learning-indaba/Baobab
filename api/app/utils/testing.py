@@ -243,8 +243,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return question
     
-    def add_response(self, application_form_id, user_id):
+    def add_response(self, application_form_id, user_id, is_submitted, is_withdrawn):
         response = Response(application_form_id, user_id)
+        if is_submitted:
+            response.submit()
+        if is_withdrawn:
+            response.withdraw()
+
         db.session.add(response)
         db.session.commit()
         return response

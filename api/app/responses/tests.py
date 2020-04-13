@@ -53,8 +53,20 @@ class ResponseApiTest(ApiTestCase):
         self.section = self.add_section(self.form.id)
         self.question = self.add_question(self.form.id, self.section.id, order=1)
         self.question2 = self.add_question(self.form.id, self.section.id, order=2)
-        self.response = self.add_response(self.form.id, self.other_user_data['id'])
+        self.response = self.add_response(self.form.id, self.other_user_data['id'], False, False)
         self.answer1 = self.add_answer(self.response.id, self.question.id, 'My Answer')
+
+        self.event_with_nomination = self.add_event('Event With Nomination', key='eeml-2025')
+        self.form_with_nomination = self.create_application_form(self.event_with_nomination.id, True, True)
+        self.section_with_nomination = self.add_section(self.event_with_nomination.id)
+        self.question1_with_nomination = self.add_question(self.form_with_nomination.id, self.section_with_nomination.id, order=1)
+        self.question2_with_nomination = self.add_question(self.form_with_nomination.id, self.section_with_nomination.id, order=2)
+        self.response1_with_nomination = self.add_response(self.form_with_nomination.id, self.other_user_data['id'], True, False)
+        self.answer2_with_nomination = self.add_answer(self.response1_with_nomination.id, self.question2_with_nomination.id, 'Second nomination answer')
+        self.answer1_with_nomination = self.add_answer(self.response1_with_nomination.id, self.question1_with_nomination.id, 'Another answer')
+        self.response2_with_nomination = self.add_response(self.form_with_nomination.id, self.other_user_data['id'], False, True)
+        self.answer4_with_nomination = self.add_answer(self.response2_with_nomination.id, self.question2_with_nomination.id, 'Second answer for second nomination')
+        self.answer3_with_nomination = self.add_answer(self.response2_with_nomination.id, self.question1_with_nomination.id, 'First answer for second nomination')
 
         db.session.flush()
 
@@ -71,8 +83,11 @@ class ResponseApiTest(ApiTestCase):
 
         self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
+        self.assertFalse(data['is_submitted'])
         self.assertIsNone(data['submitted_timestamp'])
         self.assertFalse(data['is_withdrawn'])
+        self.assertIsNone(data['withdrawn_timestamp'])
+        self.assertIsNotNone(data['started_timestamp'])
         self.assertTrue(data['answers'])
 
         self.assertEqual(len(data['answers']), 1)
@@ -80,6 +95,53 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(answer['id'], self.answer1.id)
         self.assertEqual(answer['value'], self.answer1.value)
         self.assertEqual(answer['question_id'], 1)
+
+    def test_get_response_with_nomination(self):
+        """Test a GET flow when the applications do allow nominations"""
+
+        self._seed_data()
+        response = self.app.get(
+            '/api/v1/response',
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'event_id': self.event_with_nomination.id}
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(data[0]['application_form_id'], self.form_with_nomination.id)
+        self.assertEqual(data[0]['user_id'], self.other_user_data['id'])
+        self.assertIsNotNone(data[0]['submitted_timestamp'])
+        self.assertTrue(data[0]['is_submitted'])
+        self.assertIsNone(data[0]['withdrawn_timestamp'])
+        self.assertFalse(data[0]['is_withdrawn'])
+        self.assertIsNotNone(data[0]['started_timestamp'])
+        self.assertEqual(len(data[0]['answers']), 2)
+        answer1 = data[0]['answers'][0]
+        self.assertEqual(answer1['id'], self.answer1_with_nomination.id)
+        self.assertEqual(answer1['value'], self.answer1_with_nomination.value)
+        self.assertEqual(answer1['question_id'], self.answer1_with_nomination.question_id)
+        answer2 = data[0]['answers'][1]
+        self.assertEqual(answer2['id'], self.answer2_with_nomination.id)
+        self.assertEqual(answer2['value'], self.answer2_with_nomination.value)
+        self.assertEqual(answer2['question_id'], self.answer2_with_nomination.question_id)
+
+        self.assertEqual(data[1]['application_form_id'], self.form_with_nomination.id)
+        self.assertEqual(data[1]['user_id'], self.other_user_data['id'])
+        self.assertIsNone(data[1]['submitted_timestamp'])
+        self.assertFalse(data[1]['is_submitted'])
+        self.assertIsNotNone(data[1]['withdrawn_timestamp'])
+        self.assertTrue(data[1]['is_withdrawn'])
+        self.assertIsNotNone(data[1]['started_timestamp'])
+        self.assertEqual(len(data[1]['answers']), 2)
+        answer3 = data[1]['answers'][0]
+        self.assertEqual(answer3['id'], self.answer3_with_nomination.id)
+        self.assertEqual(answer3['value'], self.answer3_with_nomination.value)
+        self.assertEqual(answer3['question_id'], self.answer3_with_nomination.question_id)
+        answer4 = data[1]['answers'][1]
+        self.assertEqual(answer4['id'], self.answer4_with_nomination.id)
+        self.assertEqual(answer4['value'], self.answer4_with_nomination.value)
+        self.assertEqual(answer4['question_id'], self.answer4_with_nomination.question_id)
 
     def test_get_event(self):
         """Test that we get an error if we try to get a response for an event that doesn't exist."""
