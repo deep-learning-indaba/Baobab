@@ -242,3 +242,15 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(question)
         db.session.commit()
         return question
+    
+    def add_response(self, application_form_id, user_id):
+        response = Response(application_form_id, user_id)
+        db.session.add(response)
+        db.session.commit()
+        return response
+    
+    def add_answer(self, response_id, question_id, answer_value):
+        answer = Answer(response_id, question_id, answer_value)
+        db.session.add(answer)
+        db.session.commit()
+        return answer
