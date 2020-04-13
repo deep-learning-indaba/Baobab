@@ -324,6 +324,11 @@ class App extends Component {
     });
   }
 
+  handleLogout() {
+    this.refreshUser();
+    window.location = '/';
+  }
+
   refreshUser() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
@@ -387,7 +392,7 @@ class App extends Component {
                 <ul className="navbar-nav mr-auto"></ul>
               )}
               <UserDropdown
-                logout={this.refreshUser}
+                logout={this.handleLogout}
                 user={this.state.user}
                 onClick={this.toggleMenu}
               />
