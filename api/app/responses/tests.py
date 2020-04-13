@@ -148,11 +148,11 @@ class ResponseApiTest(ApiTestCase):
 
         self._seed_data()
 
-        response = self.app.get('/api/v1/response',
-                                headers={
-                                    'Authorization': self.other_user_data['token']
-                                    },
-                                query_string={'event_id': self.event.id + 100})
+        response = self.app.get(
+            '/api/v1/response',
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'event_id': self.event.id + 100}
+        )
 
         self.assertEqual(response.status_code, 404)
 
@@ -160,13 +160,13 @@ class ResponseApiTest(ApiTestCase):
         """Test that we get a 404 error if we try to get a response for an event with no application form."""
         
         self._seed_data()
-        test_event2 = self.add_event('Test Event 2', 'Event Description', date(2019, 2, 24), 
-                        date(2019, 3, 24), 'HOLLA', 2, 'mover@indaba.com', 'idb.com')
+        test_event2 = self.add_event('Test Event 2', key='HOLLA')
 
-        response = self.app.get('/api/v1/response',
-                                headers={
-                                    'Authorization': self.other_user_data['token']},
-                                query_string={'event_id': test_event2.id})
+        response = self.app.get(
+            '/api/v1/response',
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'event_id': test_event2.id}
+        )
 
         self.assertEqual(response.status_code, 404)
 
@@ -175,10 +175,11 @@ class ResponseApiTest(ApiTestCase):
         
         self._seed_data()
 
-        response = self.app.get('/api/v1/response',
-                                headers={
-                                    'Authorization': self.user_data['token']},
-                                query_string={'event_id': self.event.id})
+        response = self.app.get(
+            '/api/v1/response',
+            headers={'Authorization': self.user_data['token']},
+            query_string={'event_id': self.event.id}
+        )
 
         self.assertEqual(response.status_code, 404)
 
