@@ -58,7 +58,7 @@ class Answer(db.Model):
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
-    order = column_property(select([Question.order]).where(Question.id==question_id))
+    order = column_property(select([Question.order]).where(Question.id==question_id).correlate_except(Question))
 
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id
