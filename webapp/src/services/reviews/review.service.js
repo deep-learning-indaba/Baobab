@@ -106,30 +106,7 @@ function getReviewAssignments(eventId) {
     });
 }
 
-function assignReviews(eventId, reviewers) {
-  return axios
-    .all(
-      reviewers.map(review =>
-        assignReview(eventId, review.email, review.reviews_to_assign)
-      )
-    )
-    .then(function(response) {
-      return {
-        error: ""
-      };
-    })
-    .catch(function(error) {
-      //TODO: This probably won't work as expected with
-      return {
-        error:
-          error.response && error.response.data
-            ? error.response.data.message
-            : error.message
-      };
-    });
-}
-
-function assignReview(eventId, reviewerUserEmail, numReviews) {
+function assignReviews(eventId, reviewerUserEmail, numReviews) {
   let assignment = {
     event_id: eventId,
     reviewer_user_email: reviewerUserEmail,

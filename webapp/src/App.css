@@ -82,3 +82,7 @@ footer .btn {
 .alert-container{
   margin-top: 16px;
 }
+
+.form-group {
+  white-space: pre-wrap;
+}
