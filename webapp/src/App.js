@@ -324,7 +324,7 @@ class App extends Component {
     });
   }
 
-  handleLogout() {
+  handleLogout = () => {
     this.refreshUser();
     window.location = '/';
   }
