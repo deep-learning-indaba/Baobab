@@ -1,23 +1,22 @@
-import unittest
-import unicodedata
-
 import json
-import random
 import os
+import random
+import unicodedata
+import unittest
+from datetime import datetime, timedelta
+from sqlite3 import Connection as SQLite3Connection
+
 import six
-from datetime import datetime,timedelta
-
-from sqlalchemy.exc import ProgrammingError
-
-from app import db, app, LOGGER
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlite3 import Connection as SQLite3Connection
+from sqlalchemy.exc import ProgrammingError
+
+from app import LOGGER, app, db
+from app.applicationModel.models import ApplicationForm, Question, Section
+from app.events.models import Event, EventType
 from app.organisation.models import Organisation
-from app.users.models import AppUser, UserCategory, Country
-from app.events.models import Event
-from app.events.models import EventType
-from app.applicationModel.models import ApplicationForm, Section, Question
+from app.responses.models import Answer, Response
+from app.users.models import AppUser, Country, UserCategory
 
 
 @event.listens_for(Engine, "connect")
