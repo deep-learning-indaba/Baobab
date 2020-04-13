@@ -317,7 +317,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
 
-        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews, config.num_reviews_required)
+        response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews, config.num_reviews_required)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -342,9 +342,13 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add(event_role)
         db.session.commit()
     
-    def get_eligible_response_ids(self, reviewer_user_id, num_reviews, reviews_required):
+    def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
-                        .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                        .filter(Response.user_id != reviewer_user_id, 
+                                Response.is_submitted==True, 
+                                Response.is_withdrawn==False)\
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)\
+                        .filter(ApplicationForm.event_id == event_id)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
                         .group_by(Response.id)\
                         .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required)\
