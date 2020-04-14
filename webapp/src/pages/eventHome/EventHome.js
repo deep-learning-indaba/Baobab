@@ -136,7 +136,7 @@ class EventStatus extends Component {
                     <p>
                       You've been invited to {event.description} as a guest!
                       Please proceed to registration{" "}
-                      <NavLink to="/registration">here</NavLink>.
+                      <NavLink to={`${this.props.event.key}/registration`}>here</NavLink>.
                     </p>
                   </div>
                 )}
@@ -146,7 +146,7 @@ class EventStatus extends Component {
                     {this.state.offer !== null ? (
                       <p>
                         There is an offer waiting for you,{" "}
-                        <NavLink to="/offer">click here</NavLink> to view it.
+                        <NavLink to={`${this.props.event.key}/offer`}>click here</NavLink> to view it.
                       </p>
                     ) : (
                         <p>
