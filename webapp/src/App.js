@@ -190,13 +190,13 @@ class EventNav extends Component {
               Event Admin
             </div>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventConfig`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Configuration
-              </NavLink>
+              </NavLink> */}
               {/* <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
