@@ -162,14 +162,11 @@ class ReviewRepository():
         
     @staticmethod
     def get_review_history(reviewer_user_id, application_form_id):
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .join(Response, ReviewResponse.response_id == Response.id)
-                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
-                        .filter(ReviewQuestion.headline == 'Final Verdict')
-                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
                         .join(AppUser, Response.user_id == AppUser.id))
         return reviews
 
