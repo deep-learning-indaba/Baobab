@@ -45,13 +45,13 @@ class UserDropdown extends Component {
             </button>
             <div class="dropdown-menu" aria-labelledby="userDropdown">
               <a
-                class="dropdown-item"
+                className="dropdown-item"
                 href="/profile"
                 onClick={this.props.onClick}
               >
                 Profile
               </a>
-              <button class="dropdown-item link-style"  onClick={this.handleLogout}>
+              <button className="dropdown-item cursor-pointer" onClick={this.handleLogout}>
                 Logout
               </button>
             </div>

@@ -377,7 +377,7 @@ class ReviewForm extends Component {
 
         this.setState(prevState => {
             return {
-                flagValue: "I believe this applicant is not a " + prevState.form.user.user_category + ", but rather a ...",
+                flagValue: "",
                 flagModalVisible: true
             };
         });
@@ -425,46 +425,14 @@ class ReviewForm extends Component {
                             All Done!</p><br />
                         You have completed all your reviews! Please let us know if you have any capacity for more :)
                         <br /><br />
-                        Thank you for your contribution to the Deep Learning Indaba!
+                        Thank you for your contribution!
                     </div>
                 </div>
             )
         }
-        // TODO change Baobab to [event]
+
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">
-                    {form.user.user_category}
-                    <small>
-                        <button
-                            onClick={this.addFlag}
-                            className="flag-category link-style ">
-                            <i className="fa fa-flag"></i>
-                        </button>
-                    </small>
-                </h3>
-
-                <div class="row">
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Nationality:</span><br />
-                        {form.user.nationality_country}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Residence:</span><br />
-                        {form.user.residence_country}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Affiliation:</span><br />
-                        {form.user.affiliation}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Field of Study / Department:</span><br />
-                        {form.user.department}
-                    </div>
-                </div>
                 {questionModels && questionModels.map(qm =>
                     <ReviewQuestion
                         model={qm}
@@ -473,8 +441,14 @@ class ReviewForm extends Component {
                 )}
                 <br /><hr />
 
+                <button
+                    onClick={this.addFlag}
+                    className="btn btn-light flag-category">
+                    Flag Response <i className="fa fa-flag"></i>
+                </button>
+                <hr/>
                 <div>
-                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
+                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with event admins outside of the system.
                 </div>
 
                 <hr />
@@ -517,7 +491,7 @@ class ReviewForm extends Component {
                         There are one or more validation errors, please correct before submitting.
                     </div>
                 }
-
+                <br/>
                 {!form.review_response &&
                     <div class="alert alert-info">
                         <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
@@ -535,7 +509,7 @@ class ReviewForm extends Component {
                     title="Flag applicant category">
 
                     <div class="flagModal">
-                        <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
+                        <p>If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.</p>
                         <textarea
                             className="form-control"
                             value={this.state.flagValue}

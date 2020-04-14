@@ -71,10 +71,18 @@ footer .btn {
   cursor: pointer;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
 .navbar-brand .brand-image {
   margin-right: 10px;
 }
 
 .alert-container{
   margin-top: 16px;
+}
+
+.form-group {
+  white-space: pre-wrap;
 }

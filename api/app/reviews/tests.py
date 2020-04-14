@@ -7,7 +7,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
@@ -120,6 +120,13 @@ class ReviewsApiTest(ApiTestCase):
             closed_review
         ]
         db.session.add_all(review_forms)
+        db.session.commit()
+
+        review_configs = [
+            ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
+            ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
+        ]
+        db.session.add_all(review_configs)
         db.session.commit()
 
         review_questions = [
