@@ -124,7 +124,7 @@ class ResponseApiTest(ApiTestCase):
                                 headers={
                                     'Authorization': self.other_user_data['token']},
                                 query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)
+        data = json.loads(response.data)[0]
 
         self.assertEqual(data['application_form_id'], self.test_form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
@@ -152,8 +152,8 @@ class ResponseApiTest(ApiTestCase):
         same_response = response_repository.get_by_id(self.test_response.id)
         self.assertEqual(response, same_response)
 
-        all_user_responses = response_repository.get_by_user_id(self.other_user_data['id'])
-        self.assertEqual(len(all_user_responses), 2)
+        all_user_responses = response_repository.get_by_user_id(self.other_user_data['id'], self.test_form.id)
+        self.assertEqual(len(all_user_responses), 1)
         self.assertEqual(response, all_user_responses[0])
 
     def test_repo_get_answers(self):
@@ -226,7 +226,7 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_get_missing_response(self):
-        """Test that we get a 404 error if there is no response for the event and user combination."""
+        """Test that we get an empty list if there is no response for the event and user combination."""
         
         self._seed_data()
 
@@ -234,8 +234,10 @@ class ResponseApiTest(ApiTestCase):
                                 headers={
                                     'Authorization': self.user_data['token']},
                                 query_string={'event_id': self.test_event.id})
+        data = json.loads(response.data)
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(data)  # Check for empty list
 
     def test_post(self):
         """Test a typical POST flow."""
@@ -268,7 +270,7 @@ class ResponseApiTest(ApiTestCase):
                                 headers={
                                     'Authorization': self.user_data['token']},
                                 query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)
+        data = json.loads(response.data)[0]
 
         self.assertEqual(data['application_form_id'], self.test_form.id)
         self.assertEqual(data['user_id'], self.user_data['id'])
@@ -284,6 +286,77 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(
             answer['value'], 'Hello world, this is the 2nd answer.')
         self.assertEqual(answer['question_id'], self.test_question2.id)
+
+    def test_post_multiple_no_nominations(self):
+        """Test that multiple posts are not allowed for forms without nominations."""
+
+        self._seed_data()
+        response_data = {
+            'application_form_id': self.test_form.id,
+            'is_submitted': True,
+            'answers': [
+                {
+                    'question_id': self.test_question.id,
+                    'value': 'Answer 1'
+                },
+                {
+                    'question_id': self.test_question2.id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                }
+            ]
+        }
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 409)
+
+    def test_post_multiple_nominations(self):
+        """Test that multiple posts are allowed for forms with nominations."""
+
+        self._seed_data()
+        response_data = {
+            'application_form_id': self.test_nomination_form.id,
+            'is_submitted': True,
+            'answers': [
+                {
+                    'question_id': self.test_question.id,
+                    'value': 'Answer 1'
+                },
+                {
+                    'question_id': self.test_question2.id,
+                    'value': 'Hello world, this is the 2nd answer.'
+                }
+            ]
+        }
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201) 
+
 
     def test_update(self):
         """Test a typical PUT flow."""
@@ -319,7 +392,7 @@ class ResponseApiTest(ApiTestCase):
             headers={'Authorization': self.other_user_data['token']},
             query_string={'event_id': self.test_event.id})
 
-        data = json.loads(response.data)
+        data = json.loads(response.data)[0]
 
         self.assertEqual(data['application_form_id'], self.test_form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
@@ -414,7 +487,7 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
             query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)
+        data = json.loads(response.data)[0]
         self.assertFalse(data['is_submitted'])
         self.assertTrue(data['is_withdrawn'])
 
