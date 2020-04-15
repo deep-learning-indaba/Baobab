@@ -32,3 +32,6 @@ class Outcome(db.Model):
         self.timestamp = datetime.now()
         self.latest = True
         self.updated_by_user_id = updated_by_user_id
+
+    def reset_latest(self):
+        self.latest = False
