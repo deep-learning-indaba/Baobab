@@ -9,6 +9,7 @@ from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 
+from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
 from app import db
 from app.utils import errors
@@ -20,8 +21,24 @@ outcome_fields = {
     'timestamp': fields.DateTime(dt_format='iso8601'),
 }
 
+user_fields = {
+    'id': fields.Integer,
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'user_title': fields.String
+}
 
-class OutcomeAPI(ApplicationFormMixin, restful.Resource):
+outcome_list_fields = {
+    'id': fields.Integer,
+    'status': fields.String,
+    'timestamp': fields.DateTime(dt_format='iso8601'),
+    'user': user_fields,
+    'updated_by_user': user_fields
+}
+
+
+class OutcomeAPI(restful.Resource):
     @auth_required
     @marshal_with(outcome_fields)
     def get(self):
@@ -46,11 +63,10 @@ class OutcomeAPI(ApplicationFormMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @auth_required
+    @event_admin_required
     @marshal_with(outcome_fields)
-    def post(self):
+    def post(self, event_id):
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
         args = req_parser.parse_args()
@@ -67,11 +83,6 @@ class OutcomeAPI(ApplicationFormMixin, restful.Resource):
             status = Status[args['outcome']]
         except KeyError:
             return errors.OUTCOME_STATUS_NOT_VALID
-
-        # Check that the current user is admin
-        current_user = user_repository.get_by_id(g.current_user['id'])
-        if not current_user.is_event_admin(args['event_id']):
-            return errors.FORBIDDEN
 
         try:
             # Set existing outcomes to no longer be the latest outcome
@@ -94,3 +105,26 @@ class OutcomeAPI(ApplicationFormMixin, restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+
+
+class OutcomeListAPI(restful.Resource):
+    @event_admin_required
+    @marshal_with(outcome_list_fields)
+    def get(self, event_id):
+        event = event_repository.get_by_id(args['event_id'])
+        if not event:
+            return errors.EVENT_NOT_FOUND
+
+        try:
+            outcomes = outcome_repository.get_latest_for_event(event_id)
+            return outcomes
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))            
+            return errors.DB_NOT_AVAILABLE
+        except: 
+            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
+            return errors.DB_NOT_AVAILABLE
+
+
+
+        
