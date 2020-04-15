@@ -183,7 +183,7 @@ class ResponseApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    def test_post(self):
+    def test_post_without_nomination(self):
         """Test a typical POST flow."""
 
         self._seed_data()
@@ -207,20 +207,18 @@ class ResponseApiTest(ApiTestCase):
             data=json.dumps(response_data),
             content_type='application/json',
             headers={'Authorization': self.user_data['token']})
-
+        
         self.assertEqual(response.status_code, 201)
 
-        response = self.app.get('/api/v1/response',
-                                headers={
-                                    'Authorization': self.user_data['token']},
-                                query_string={'event_id': self.event.id})
         data = json.loads(response.data)
 
         self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.user_data['id'])
         self.assertIsNotNone(data['submitted_timestamp'])
+        self.assertTrue(data['is_submitted'])
         self.assertFalse(data['is_withdrawn'])
-        self.assertTrue(data['answers'])
+        self.assertIsNone(data['withdrawn_timestamp'])
+        self.assertEqual(len(data['answers']), 2)
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1')
@@ -230,6 +228,64 @@ class ResponseApiTest(ApiTestCase):
         self.assertEqual(
             answer['value'], 'Hello world, this is the 2nd answer.')
         self.assertEqual(answer['question_id'], self.question2.id)
+
+    def test_second_response_rejected_without_nomination(self):
+        self._seed_data()
+        response_data = {
+            'application_form_id': self.form.id,
+            'is_submitted': True,
+            'answers': [
+                {
+                    'question_id': self.question.id,
+                    'value': 'Answer 1'
+                }
+            ]
+        }
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_second_response_accepted_with_nomination(self):
+        self._seed_data()
+        response_data = {
+            'application_form_id': self.form_with_nomination.id,
+            'is_submitted': True,
+            'answers': [
+                {
+                    'question_id': self.question1_with_nomination.id,
+                    'value': 'Answer 1'
+                }
+            ]
+        }
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/response',
+            data=json.dumps(response_data),
+            content_type='application/json',
+            headers={'Authorization': self.user_data['token']})
+        
+        self.assertEqual(response.status_code, 201)
 
     def test_update(self):
         """Test a typical PUT flow."""
