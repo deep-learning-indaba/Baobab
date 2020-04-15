@@ -63,6 +63,10 @@ class ReviewHistoryComponent extends Component {
       </div>;
     }
 
+    const eventKey = this.props.match ?
+      this.props.match.params.eventKey : null;
+    console.log('eventKey = ' + eventKey);
+
     return (
       <div className="ReviewHistory">
         <p className="h5 text-center mb-4">Review History</p>
