@@ -59,8 +59,8 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_applied(self):
         self.seed_static_data()
 
-        test_response = Response(
-            self.test_form.id, self.test_user.id, is_submitted=True)
+        test_response = Response(self.test_form.id, self.test_user.id)
+        test_response.submit()
         db.session.add(test_response)
         db.session.commit()
 
@@ -85,8 +85,8 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_withdrawn(self):
         self.seed_static_data()
 
-        test_response = Response(
-            self.test_form.id, self.test_user.id, is_submitted=True, is_withdrawn=True)
+        test_response = Response(self.test_form.id, self.test_user.id)
+        test_response.withdraw()
         db.session.add(test_response)
         db.session.commit()
 
@@ -172,8 +172,7 @@ class EventsAPITest(ApiTestCase):
 
     def test_unsubmitted_response(self):
         self.seed_static_data()
-        test_response = Response(
-            self.test_form.id, self.test_user.id, is_submitted=False, is_withdrawn=False)
+        test_response = Response(self.test_form.id, self.test_user.id)
         db.session.add(test_response)
         db.session.commit()
 
@@ -263,14 +262,12 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        self.test_response = Response(
-            self.test_form.id, self.test_user1['id'])
+        self.test_response = Response(self.test_form.id, self.test_user1['id'])
         db.session.add(self.test_response)
         db.session.commit()
 
-        self.test_response2 = Response(
-            self.test_form.id, self.test_user2['id'])
-        self.test_response2.submit_response()
+        self.test_response2 = Response(self.test_form.id, self.test_user2['id'])
+        self.test_response2.submit()
         db.session.add(self.test_response2)
         db.session.commit()
 
@@ -356,12 +353,15 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(application_form)
         db.session.commit()
 
+        submitted_response = Response(application_form.id, self.test_users[0].id)
+        submitted_response.submit()
+        withdrawn_response = Response(application_form.id, self.test_users[3].id)
+        withdrawn_response.withdraw()
         responses = [
-            Response(application_form.id, self.test_users[0].id, True),
-            Response(application_form.id, self.test_users[1].id, False),
-            Response(application_form.id, self.test_users[3].id, True, datetime.now(
-            ), True, datetime.now()),
-            Response(application_form.id, self.test_users[4].id, False),
+            submitted_response,
+            Response(application_form.id, self.test_users[1].id),
+            withdrawn_response,
+            Response(application_form.id, self.test_users[4].id),
         ]
         db.session.add_all(responses)
 

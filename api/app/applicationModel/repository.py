@@ -11,9 +11,7 @@ class ApplicationFormRepository():
 
     @staticmethod
     def get_by_id(id):
-        return db.session.query(ApplicationForm)\
-            .filter_by(id=id)\
-            .first()
+        return db.session.query(ApplicationForm).get(id)
 
     @staticmethod
     def get_by_event_id(event_id):

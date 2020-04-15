@@ -1,28 +1,27 @@
 import datetime
 import traceback
 
-from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from flask import g, request
-
+from flask_restful import fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.applicationModel.mixins import ApplicationFormMixin
-from app.responses.models import Response, Answer
-from app.responses.repository import ResponseRepository as response_repository
-from app.applicationModel.models import ApplicationForm, Question
+from app import LOGGER, bcrypt, db
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
+from app.applicationModel.models import ApplicationForm, Question
 from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
+from app.events.repository import EventRepository as event_repository
+from app.responses.mixins import ResponseMixin
+from app.responses.models import Answer, Response
+from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
+from app.users.repository import UserRepository as user_repository
+from app.utils import emailer, errors, strings
 from app.utils.auth import auth_required
-from app.utils import errors, emailer, strings
-from app import LOGGER
-
-from app import db, bcrypt
 
 
-class ResponseAPI(ApplicationFormMixin, restful.Resource):
+class ResponseAPI(ResponseMixin, restful.Resource):
 
     answer_fields = {
         'id': fields.Integer,
@@ -45,166 +44,127 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
     @auth_required
     @marshal_with(response_fields)
     def get(self):
-        args = self.req_parser.parse_args()
+        args = self.get_req_parser.parse_args()
+        event_id = args['event_id']
+        current_user_id = g.current_user['id']
 
-        try:
-            event = db.session.query(Event).filter(Event.id == args['event_id']).first()
-            if not event:
-                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
-                return errors.EVENT_NOT_FOUND
-            
-            form = application_form_repository.get_by_event_id(args['event_id'])
-            if not form:
-                LOGGER.warn("Form not found for event_id: {}".format(args['event_id']))
-                return errors.FORM_NOT_FOUND
-            
-            responses = response_repository.get_by_user_id(g.current_user['id'], form.id)
-            return responses
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return errors.EVENT_NOT_FOUND
 
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        if not event.has_application_form():
+            return errors.FORM_NOT_FOUND
+
+        form = event.get_application_form()
+
+        responses = response_repository.get_all_for_user_application(current_user_id, form.id)
+
+        if not responses:
+            return errors.RESPONSE_NOT_FOUND
+
+        if not form.nominations:
+            return responses[0]
+
+        return responses
 
     @auth_required
     @marshal_with(response_fields)
     def post(self):
-        # Save a new response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('is_submitted', type=bool, required=True)
-        req_parser.add_argument('application_form_id', type=int, required=True)
-        req_parser.add_argument('answers', type=list, required=True, location='json')
-        args = req_parser.parse_args()
-
+        args = self.post_req_parser.parse_args()
         user_id = g.current_user['id']
+        is_submitted = args['is_submitted']
+        application_form_id = args['application_form_id']
 
-        form = application_form_repository.get_by_id(args['application_form_id'])
-        if not form.nominations:  # Prevent duplicates if the form doesn't allow nominations
-            response = response_repository.get_by_user_id(user_id, form.id)
-            if response:
-                return errors.DUPLICATE_RESPONSE
+        application_form = application_form_repository.get_by_id(application_form_id)
+        if application_form is None:
+            return errors.FORM_NOT_FOUND_BY_ID
+        
+        user = user_repository.get_by_id(user_id)
 
-        try: 
-            response = Response(args['application_form_id'], user_id)
-            response.is_submitted = args['is_submitted']
-            if args['is_submitted']:
-                response.submitted_timestamp = datetime.datetime.now()
-            db.session.add(response)
-            db.session.commit()
+        if not application_form.nominations and user.has_at_least_one_response():
+            return errors.RESPONSE_ALREADY_SUBMITTED
 
-            for answer_args in args['answers']:
-                answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
-                db.session.add(answer)
-            db.session.commit()
+        response = Response(application_form_id, user_id)
+        if is_submitted:
+            response.submit()
+            
+        response_repository.save(response)
 
-            try:
-                if response.is_submitted:
-                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
-                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
-                    self.send_confirmation(user, response)
-            except:
-                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
-            finally:
-                return response, 201  # 201 is 'CREATED' status code
+        answers = []
+        for answer_args in args['answers']:
+            answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
+            answers.append(answer)
+        response_repository.save_answers(answers)
 
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        try:
+            if response.is_submitted:
+                LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
+                user = user_repository.get_by_id(user_id)
+                response = response_repository.get_by_id_and_user_id(response.id, user_id)
+                self.send_confirmation(user, response)
+        except:
+            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+        finally:
+            return response, 201
 
     @auth_required
     @marshal_with(response_fields)
     def put(self):
-        # Update an existing response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('id', type=int, required=True)
-        req_parser.add_argument('is_submitted', type=bool, required=True)
-        req_parser.add_argument('application_form_id', type=int, required=True)
-        req_parser.add_argument('answers', type=list, required=True, location='json')
-        args = req_parser.parse_args()
-
+        args = self.put_req_parser.parse_args()
         user_id = g.current_user['id']
-        try: 
-            old_response = db.session.query(Response).filter(Response.id == args['id']).first()
-            if not old_response:
-                LOGGER.error("Response not found for id {}".format(args['id']))
-                return errors.RESPONSE_NOT_FOUND
-            if old_response.user_id != user_id:
-                LOGGER.error("Old user id {} does not match user id {}".format(old_response.user_id, user_id))
-                return errors.UNAUTHORIZED
-            if old_response.application_form_id != args['application_form_id']:
-                LOGGER.error("Update conflict for {}".format(args['application_form_id']))
-                return errors.UPDATE_CONFLICT
+        is_submitted = args['is_submitted']
 
-            old_response.is_submitted = args['is_submitted']
-            if args['is_submitted']:
-                old_response.submitted_timestamp = datetime.datetime.now()
-                old_response.is_withdrawn = False
-                old_response.withdrawn_timestamp = None
+        response = response_repository.get_by_id(args['id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+        if response.user_id != user_id:
+            return errors.UNAUTHORIZED
+        if response.application_form_id != args['application_form_id']:
+            return errors.UPDATE_CONFLICT
 
-            for answer_args in args['answers']:
-                old_answer = db.session.query(Answer).filter(Answer.response_id == old_response.id, Answer.question_id == answer_args['question_id']).first()
-                if old_answer:  # Update the existing answer
-                    old_answer.value = answer_args['value']
-                else:
-                    answer = Answer(old_response.id, answer_args['question_id'], answer_args['value'])
-                    db.session.add(answer)
-            db.session.commit()
-            db.session.flush()
+        response.is_submitted = is_submitted
+        if is_submitted:
+            response.submit()
+        response_repository.save(response)
 
-            try:
-                if old_response.is_submitted:
-                    LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=old_response.id))
-                    user = db.session.query(AppUser).filter(AppUser.id==g.current_user['id']).first()
-                    self.send_confirmation(user, old_response)
-            except:                
-                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=old_response.id))
-            finally:
-                return old_response, 200
+        answers = []
+        for answer_args in args['answers']:
+            answer = response_repository.get_answer_by_question_id_and_response_id(answer_args['question_id'], response.id)
+            if answer:
+                answer.update(answer_args['value'])
+            else:
+                answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
+            answers.append(answer)
+        response_repository.save_answers(answers)
 
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
+        try:
+            if response.is_submitted:
+                LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
+                user = user_repository.get_by_id(user_id)
+                response = response_repository.get_by_id_and_user_id(response.id, user_id)
+                self.send_confirmation(user, response)
+        except:                
+            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+        finally:
+            return response, 200
 
     @auth_required
     def delete(self):
-        # Delete an existing response for the logged-in user.
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('id', type=int, required=True)
-        args = req_parser.parse_args()
+        args = self.del_req_parser.parse_args()
+        current_user_id = g.current_user['id']
+
+        response = response_repository.get_by_id(args['id'])
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
+        if response.user_id != current_user_id:
+            return errors.UNAUTHORIZED
+
+        response.withdraw()
+        response_repository.save(response)      
 
         try:
-            response = db.session.query(Response).filter(Response.id == args['id']).first()
-            if not response:
-                return errors.RESPONSE_NOT_FOUND
-
-            if response.user_id != g.current_user['id']:
-                return errors.UNAUTHORIZED
-            
-            response.is_withdrawn = True
-            response.withdrawn_timestamp = datetime.datetime.now()
-            response.is_submitted = False
-            response.submitted_timestamp = None
-
-            db.session.commit()
-            db.session.flush()
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))            
-            return errors.DB_NOT_AVAILABLE
-        except: 
-            LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE            
-
-        try:
-            user = db.session.query(AppUser).filter(AppUser.id == g.current_user['id']).first()
+            user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
             organisation = event.organisation
             subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
@@ -224,15 +184,15 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
     def send_confirmation(self, user, response):
         try:
-            answers = db.session.query(Answer).join(Question, Answer.question_id == Question.id).filter(Answer.response_id == response.id).order_by(Question.order).all()
-            if answers is None:
+            answers = response.answers
+            if not answers:
                 LOGGER.warn('Found no answers associated with response with id {response_id}'.format(response_id=response.id))
 
-            application_form = db.session.query(ApplicationForm).filter(ApplicationForm.id == response.application_form_id).first() 
+            application_form = response.application_form
             if application_form is None:
                 LOGGER.warn('Found no application form with id {form_id}'.format(form_id=response.application_form_id))
 
-            event = db.session.query(Event).filter(Event.id == application_form.event_id).first() 
+            event = application_form.event
             if event is None:
                 LOGGER.warn('Found no event id {event_id}'.format(form_id=application_form.event_id))
         except:
@@ -259,8 +219,3 @@ class ResponseAPI(ApplicationFormMixin, restful.Resource):
 
         except:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
-
-
-
-            
-
