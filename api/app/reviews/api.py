@@ -12,6 +12,7 @@ from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
@@ -96,8 +97,6 @@ review_fields = {
     'reviews_remaining_count': fields.Integer,
     'review_response': fields.Nested(review_response_fields)
 }
-
-REVIEWS_PER_SUBMISSION = 3
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
@@ -248,9 +247,11 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
+        
+        config = review_configuration_repository.get_configuration_for_event(event_id)
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, config.num_reviews_required)
         }
 
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
@@ -288,7 +289,6 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
         views = [ReviewCountView(count) for count in counts]
-        LOGGER.debug(views)
         return views
 
     @auth_required
@@ -314,7 +314,9 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if not reviewer_user.is_reviewer(event_id):
             self.add_reviewer_role(reviewer_user.id, event_id)
 
-        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
+        config = review_configuration_repository.get_configuration_for_event(event_id)
+
+        response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews, config.num_reviews_required)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -339,12 +341,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add(event_role)
         db.session.commit()
     
-    def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
+    def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
-                        .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                        .filter(Response.user_id != reviewer_user_id, 
+                                Response.is_submitted==True, 
+                                Response.is_withdrawn==False)\
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)\
+                        .filter(ApplicationForm.event_id == event_id)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
                         .group_by(Response.id)\
-                        .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
+                        .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required)\
                         .all()
         candidate_response_ids = set([r.id for r in candidate_responses])
 
@@ -357,20 +363,14 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         return random.sample(responses, min(len(responses), num_reviews))
 
-review_fields = {
+_review_history_fields = {
     'review_response_id' : fields.Integer,
     'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
-    'nationality_country' : fields.String,
-    'residence_country' : fields.String, 
-    'affiliation' : fields.String, 
-    'department' : fields.String,
-    'user_category' : fields.String, 
-    'final_verdict' : fields.String,
     'reviewed_user_id': fields.String
 }
 
-review_histroy_fields = {
-    'reviews' : fields.List(fields.Nested(review_fields)),
+review_history_fields = {
+    'reviews' : fields.List(fields.Nested(_review_history_fields)),
     'num_entries' : fields.Integer,
     'current_pagenumber' : fields.Integer,
     'total_pages' : fields.Integer
@@ -381,14 +381,12 @@ class ReviewHistoryModel:
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
         self.reviewed_user_id  = review.AppUser.id
-        final_verdict = [o for o in review.options if str(o['value']) == review.value]
-        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
-        self.final_verdict = final_verdict
+
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
     @auth_required
-    @marshal_with(review_histroy_fields)
+    @marshal_with(review_history_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -410,24 +408,6 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         
         if sort_column == 'submitted_timestamp':
             reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
-        
-        if sort_column == 'nationality_country':
-            reviews = reviews.join(Country, AppUser.nationality_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'residence_country':
-            reviews = reviews.join(Country, AppUser.residence_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'affiliation':
-            reviews = reviews.order_by(AppUser.affiliation)
-
-        if sort_column == 'department':
-            reviews = reviews.order_by(AppUser.department)
-        
-        if sort_column == 'user_category':
-            reviews = reviews.join(UserCategory, AppUser.user_category_id == UserCategory.id).order_by(UserCategory.name)
-  
-        if sort_column == 'final_verdict':
-                reviews = reviews.order_by(ReviewScore.value)
 
         reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
 

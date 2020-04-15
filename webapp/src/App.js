@@ -190,20 +190,20 @@ class EventNav extends Component {
               Event Admin
             </div>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventConfig`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Configuration
-              </NavLink>
-              <NavLink
+              </NavLink> */}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Stats
-              </NavLink>
+              </NavLink> */}
               <NavLink
                 to={`/${this.props.eventKey}/reviewAssignment`}
                 className="dropdown-item"
@@ -211,20 +211,20 @@ class EventNav extends Component {
               >
                 Review Assignment
               </NavLink>
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/invitedGuests`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Invited Guests
-              </NavLink>
-              <NavLink
+              </NavLink> */}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/profile-list`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Applicant Profiles
-              </NavLink>
+              </NavLink> */}
             </div>
           </li>
         )}
@@ -324,6 +324,11 @@ class App extends Component {
     });
   }
 
+  handleLogout = () => {
+    this.refreshUser();
+    window.location = '/';
+  }
+
   refreshUser() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
@@ -387,7 +392,7 @@ class App extends Component {
                 <ul className="navbar-nav mr-auto"></ul>
               )}
               <UserDropdown
-                logout={this.refreshUser}
+                logout={this.handleLogout}
                 user={this.state.user}
                 onClick={this.toggleMenu}
               />

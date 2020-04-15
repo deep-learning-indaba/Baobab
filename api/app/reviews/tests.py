@@ -7,7 +7,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
@@ -120,6 +120,13 @@ class ReviewsApiTest(ApiTestCase):
             closed_review
         ]
         db.session.add_all(review_forms)
+        db.session.commit()
+
+        review_configs = [
+            ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
+            ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
+        ]
+        db.session.add_all(review_configs)
         db.session.commit()
 
         review_questions = [
@@ -1183,20 +1190,6 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
         self.assertEqual(data['reviews'][1]['user_category'], 'MSc')
         self.assertEqual(data['reviews'][2]['user_category'], 'Student')
-
-    def test_order_by_finalverdict(self):
-        self.seed_static_data()
-        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
-
-        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'final_verdict'}
-        header = self.get_auth_header_for('r3@r.com')
-
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
-        data = json.loads(response.data)
-
-        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][1]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][2]['final_verdict'], 'Yes')
 
     def setup_two_extra_responses_for_reviewer3(self):
 

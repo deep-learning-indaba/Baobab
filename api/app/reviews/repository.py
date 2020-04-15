@@ -3,7 +3,7 @@ from sqlalchemy import and_
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewConfiguration
 from app.users.models import AppUser
 from app.events.models import EventRole
 
@@ -162,14 +162,11 @@ class ReviewRepository():
         
     @staticmethod
     def get_review_history(reviewer_user_id, application_form_id):
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .join(Response, ReviewResponse.response_id == Response.id)
-                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
-                        .filter(ReviewQuestion.headline == 'Final Verdict')
-                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
                         .join(AppUser, Response.user_id == AppUser.id))
         return reviews
 
@@ -181,3 +178,21 @@ class ReviewRepository():
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .count())
         return count
+
+class ReviewConfigurationRepository():
+
+    @staticmethod
+    def get_configuration_for_form(review_form_id):
+        config = (db.session.query(ReviewConfiguration)
+                    .filter_by(review_form_id=review_form_id)
+                    .first())
+        return config
+
+    @staticmethod
+    def get_configuration_for_event(event_id):
+        config = (db.session.query(ReviewConfiguration)
+                    .join(ReviewForm, ReviewConfiguration.review_form_id == ReviewForm.id)
+                    .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                    .filter(ApplicationForm.event_id == event_id)
+                    .first())
+        return config
