@@ -100,6 +100,10 @@ POLICY_ALREADY_AGREED = (
     {'message': 'Privacy policy has already been agreed to.'}, 400)
 REFERENCE_REQUEST_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
+OUTCOME_NOT_FOUND = (
+    {'message': 'No outcome found for the given event'}, 404)
+OUTCOME_STATUS_NOT_VALID = (
+    {'message': 'Invalid outcome status specified'}, 400)
 
 FAILED_CREATE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to create integration test user.'}, 500)
