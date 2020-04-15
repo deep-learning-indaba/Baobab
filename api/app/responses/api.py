@@ -56,15 +56,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.FORM_NOT_FOUND
 
         form = event.get_application_form()
-
         responses = response_repository.get_all_for_user_application(current_user_id, form.id)
-
-        if not responses:
-            return errors.RESPONSE_NOT_FOUND
-
-        if not form.nominations:
-            return responses[0]
-
         return responses
 
     @auth_required

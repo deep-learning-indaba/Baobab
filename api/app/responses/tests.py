@@ -81,6 +81,8 @@ class ResponseApiTest(ApiTestCase):
                                 query_string={'event_id': self.event.id})
         data = json.loads(response.data)
 
+        self.assertEqual(len(data), 1)
+        data = data[0]
         self.assertEqual(data['application_form_id'], self.form.id)
         self.assertEqual(data['user_id'], self.other_user_data['id'])
         self.assertFalse(data['is_submitted'])
@@ -180,6 +182,7 @@ class ResponseApiTest(ApiTestCase):
             headers={'Authorization': self.user_data['token']},
             query_string={'event_id': self.event.id}
         )
+        data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(data)  # Check for empty list
@@ -287,77 +290,6 @@ class ResponseApiTest(ApiTestCase):
             headers={'Authorization': self.user_data['token']})
         
         self.assertEqual(response.status_code, 201)
-
-    def test_post_multiple_no_nominations(self):
-        """Test that multiple posts are not allowed for forms without nominations."""
-
-        self._seed_data()
-        response_data = {
-            'application_form_id': self.test_form.id,
-            'is_submitted': True,
-            'answers': [
-                {
-                    'question_id': self.test_question.id,
-                    'value': 'Answer 1'
-                },
-                {
-                    'question_id': self.test_question2.id,
-                    'value': 'Hello world, this is the 2nd answer.'
-                }
-            ]
-        }
-
-        response = self.app.post(
-            '/api/v1/response',
-            data=json.dumps(response_data),
-            content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
-        
-        self.assertEqual(response.status_code, 201)
-
-        response = self.app.post(
-            '/api/v1/response',
-            data=json.dumps(response_data),
-            content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
-        
-        self.assertEqual(response.status_code, 409)
-
-    def test_post_multiple_nominations(self):
-        """Test that multiple posts are allowed for forms with nominations."""
-
-        self._seed_data()
-        response_data = {
-            'application_form_id': self.test_nomination_form.id,
-            'is_submitted': True,
-            'answers': [
-                {
-                    'question_id': self.test_question.id,
-                    'value': 'Answer 1'
-                },
-                {
-                    'question_id': self.test_question2.id,
-                    'value': 'Hello world, this is the 2nd answer.'
-                }
-            ]
-        }
-
-        response = self.app.post(
-            '/api/v1/response',
-            data=json.dumps(response_data),
-            content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
-        
-        self.assertEqual(response.status_code, 201)
-
-        response = self.app.post(
-            '/api/v1/response',
-            data=json.dumps(response_data),
-            content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
-        
-        self.assertEqual(response.status_code, 201) 
-
 
     def test_update(self):
         """Test a typical PUT flow."""
@@ -488,7 +420,7 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             headers={'Authorization': self.other_user_data['token']},
             query_string={'event_id': self.event.id})
-        data = json.loads(response.data)
+        data = json.loads(response.data)[0]
         self.assertFalse(data['is_submitted'])
         self.assertTrue(data['is_withdrawn'])
 
