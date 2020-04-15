@@ -15,6 +15,7 @@ from invitationletter import api as invitation_letter_api
 from attendance import api as attendance_api
 from organisation import api as organisation_api
 from integration_tests import api as integration_tests_api
+from outcome import api as outcome_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -107,3 +108,4 @@ rest_api.add_resource(organisation_api.OrganisationApi, '/api/v1/organisation')
 rest_api.add_resource(users_api.PrivacyPolicyAPI, '/api/v1/privacypolicy')
 rest_api.add_resource(integration_tests_api.CreateIntegrationUser, '/api/v1/integration-tests/createUser')
 rest_api.add_resource(integration_tests_api.DeleteIntegrationUser, '/api/v1/integration-tests/deleteUser')
+rest_api.add_resource(outcome_api.OutcomeAPI, '/api/v1/outcome')
