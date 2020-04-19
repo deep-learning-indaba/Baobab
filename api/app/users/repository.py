@@ -66,11 +66,15 @@ class UserRepository():
 
     @staticmethod
     def get_all_with_responses_or_invited_guests_for(event_id):
-        return db.session.query(AppUser, Response)\
-                         .filter_by(active=True, is_deleted=False)\
-                         .join(Response, Response.user_id==AppUser.id)\
-                         .join(InvitedGuest, InvitedGuest.user_id==AppUser.id)\
-                         .filter(or_(InvitedGuest.isnot(None), Response.isnot(None)))\
-                         .join(ApplicationForm, ApplicationForm.id==Response.application_form_id)\
-                         .filter_by(event_id=event_id)\
-                         .all()
+        return (
+            db.session.query(AppUser, Response, InvitedGuest)
+                .filter_by(active=True, is_deleted=False)
+                .join(Response, Response.user_id==AppUser.id, isouter=True)
+                .join(InvitedGuest, InvitedGuest.user_id==AppUser.id, isouter=True)
+                .filter(or_(InvitedGuest != None, Response != None))
+                .join(ApplicationForm, ApplicationForm.id==Response.application_form_id, isouter=True)
+
+                # Since both InvitedGuest and ApplicationForm have an event_id we need to include
+                # both in the filter.
+                .filter(or_(InvitedGuest.event_id==event_id, ApplicationForm.event_id==event_id))
+        ).all()

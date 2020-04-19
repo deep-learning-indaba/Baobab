@@ -5,6 +5,7 @@ import copy
 from app import app, db
 from app.applicationModel.models import ApplicationForm
 from app.events.models import Event, EventRole
+from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
@@ -476,6 +477,8 @@ class UserProfileListApiTest(ApiTestCase):
 
         db.session.flush()
 
+        self.event1_id = self.event1.id  #TODO: add comment about why we do this
+
     def test_event2_admin_cant_access_event1(self):
         """
         Test that admins can only list the users for their own events.
@@ -525,14 +528,11 @@ class UserProfileListApiTest(ApiTestCase):
             Response(self.event1_application_form.id, candidates[2].id, True)
         ]
         db.session.add_all(responses)
-
-
-        event1_id = self.event1.id  #TODO: add comment about why we do this
         db.session.commit()
 
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
-        params = {'event_id': event1_id}
+        params = {'event_id': self.event1_id}
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
 

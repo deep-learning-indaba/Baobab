@@ -268,7 +268,7 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        user_responses = user_repository.get_all_with_responses_for(event_id)
+        user_responses = user_repository.get_all_with_responses_or_invited_guests_for(event_id)
 
         views = [UserProfileView(user_response)
                  for user_response in user_responses]
