@@ -490,18 +490,18 @@ class UserProfileListApiTest(ApiTestCase):
 
     def test_event_does_not_exist(self):
         """
-        Test that filtering on a nonexistent event 404s.
+        Test that filtering on a nonexistent event 403s. It 403s because the user does
+        not have the required auth which is checked before the event is searched for.
         """
-        self._setup()
+        self.seed_static_data()
 
-        header = self.get_auth_header_for(self.event_admin.email)
-        params = {'event_id': 1337}  # lookup any event that does not exist
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': 1337}
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
 
-        # self.assertEqual(response.status_code, 404)
-
-        self.assertTrue(False)
+        self.assertEqual(response.status_code, 403)
 
     def test_is_not_active_or_deleted(self):
         """
