@@ -479,18 +479,6 @@ class UserProfileListApiTest(ApiTestCase):
 
         self.event1_id = self.event1.id  #TODO: add comment about why we do this
 
-    def test_event2_admin_cant_access_event1(self):
-        """
-        Test that admins can only list the users for their own events.
-        """
-        self.assertTrue(False)
-
-    def test_only_users_from_right_event_present(self):
-        """
-        Test that only users from the correct event are in the returned list.
-        """
-        self.assertTrue(False)
-
     def test_event_does_not_exist(self):
         """
         Test that filtering on a nonexistent event 403s. It 403s because the user does
@@ -544,19 +532,64 @@ class UserProfileListApiTest(ApiTestCase):
         """
         Users that are not invited and have not responded should not be returned.
         """
-        self.assertTrue(False)
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert that request succeeds and no users are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, [])
 
     def test_response_and_not_invited(self):
+        """
+        Users that have responded (but are not invited guests) should be returned.
+        """
         pass
 
     def test_no_response_and_invited(self):
-        pass
+        """
+        Users that are Invited Guests that have not responded should be returned.
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        invitation = InvitedGuest(
+            event_id=self.event1_id,
+            user_id=candidates[0].id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert that request succeeds and no users are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
+
+        self.assertTrue(False)
 
     def test_response_and_invited(self):
+        """
+        Users that are Invited Guests and that have responded should be returned.
+        """
         pass
 
-    def test_multiple_users(self):
-        pass
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):
