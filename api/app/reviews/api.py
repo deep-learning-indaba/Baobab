@@ -256,7 +256,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
 
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
 
-You have been assigned {num_reviews} reviews on {system_name}. Please log in to {baobab_host} and visit the review page to begin.
+You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
 Note that if you were already logged in to {system_name}, you will need to log out and log in again to pick up the changes to your profile. 
 
 Thank you for assisting us review applications for {event}!
@@ -331,6 +331,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         num_reviews=len(response_ids),
                         baobab_host=misc.get_baobab_host(),
                         system_name=g.organisation.system_name,
+                        event_key=event.key,
                         event=event.name))
 
         return {}, 201
