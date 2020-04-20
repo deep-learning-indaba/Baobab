@@ -69,7 +69,7 @@ class ReviewQuestion extends Component {
             case FILE:
                 return <div>
                     {answer && answer.value && answer.value.trim()
-                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}></a>
+                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>View File</a>
                         : <p>NO FILE UPLOADED</p>}
                 </div>
 
