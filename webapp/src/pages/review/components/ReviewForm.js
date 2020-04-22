@@ -18,6 +18,9 @@ const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
 const CHECKBOX = "checkbox";
 const MULTI_CHECKBOX = "multi-checkbox";
+const FILE = "file";
+
+const baseUrl = process.env.REACT_APP_API_URL;
 
 class ReviewQuestion extends Component {
     constructor(props) {
@@ -63,6 +66,13 @@ class ReviewQuestion extends Component {
                 return (
                     <p>{this.getDescription(question, answer)}</p>
                 )
+            case FILE:
+                return <div>
+                    {answer && answer.value && answer.value.trim()
+                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>View File</a>
+                        : <p>NO FILE UPLOADED</p>}
+                </div>
+
             case CHECKBOX:
                 return (
                     <FormCheckbox
@@ -446,7 +456,7 @@ class ReviewForm extends Component {
                     className="btn btn-light flag-category">
                     Flag Response <i className="fa fa-flag"></i>
                 </button>
-                <hr/>
+                <hr />
                 <div>
                     Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with event admins outside of the system.
                 </div>
@@ -491,7 +501,7 @@ class ReviewForm extends Component {
                         There are one or more validation errors, please correct before submitting.
                     </div>
                 }
-                <br/>
+                <br />
                 {!form.review_response &&
                     <div class="alert alert-info">
                         <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining

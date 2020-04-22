@@ -190,20 +190,20 @@ class EventNav extends Component {
               Event Admin
             </div>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventConfig`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Configuration
-              </NavLink>
-              <NavLink
+              </NavLink> */}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Stats
-              </NavLink>
+              </NavLink> */}
               <NavLink
                 to={`/${this.props.eventKey}/reviewAssignment`}
                 className="dropdown-item"
@@ -211,20 +211,20 @@ class EventNav extends Component {
               >
                 Review Assignment
               </NavLink>
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/invitedGuests`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Invited Guests
-              </NavLink>
-              <NavLink
+              </NavLink> */}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/profile-list`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Applicant Profiles
-              </NavLink>
+              </NavLink> */}
             </div>
           </li>
         )}

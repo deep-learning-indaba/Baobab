@@ -60,7 +60,7 @@ class Answer(db.Model):
     def value_display(self):
         if self.question.type == 'multi-choice' and self.question.options is not None:
             option = [option for option in self.question.options if option['value'] == self.value]
-            if option is not None:
+            if option:
                 return option[0]['label']
         return self.value
 

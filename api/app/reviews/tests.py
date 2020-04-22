@@ -1156,20 +1156,6 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][1]['user_category'], 'MSc')
         self.assertEqual(data['reviews'][2]['user_category'], 'Student')
 
-    def test_order_by_finalverdict(self):
-        self.seed_static_data()
-        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
-
-        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'final_verdict'}
-        header = self.get_auth_header_for('r3@r.com')
-
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
-        data = json.loads(response.data)
-
-        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][1]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][2]['final_verdict'], 'Yes')
-
     def setup_two_extra_responses_for_reviewer3(self):
 
         responses = [

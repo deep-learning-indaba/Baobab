@@ -402,7 +402,7 @@ function AnswerValue(props) {
     switch (props.qm.question.type) {
       case MULTI_CHOICE:
         const options = props.qm.question.options.filter(o => o.value === props.qm.answer.value);
-        if (options) {
+        if (options && options.length > 0) {
           return options[0].label;
         }
         else {

@@ -256,7 +256,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
 
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
 
-You have been assigned {num_reviews} reviews on {system_name}. Please log in to {baobab_host} and visit the review page to begin.
+You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
 Note that if you were already logged in to {system_name}, you will need to log out and log in again to pick up the changes to your profile. 
 
 Thank you for assisting us review applications for {event}!
@@ -331,6 +331,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         num_reviews=len(response_ids),
                         baobab_host=misc.get_baobab_host(),
                         system_name=g.organisation.system_name,
+                        event_key=event.key,
                         event=event.name))
 
         return {}, 201
@@ -363,20 +364,14 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         return random.sample(responses, min(len(responses), num_reviews))
 
-review_fields = {
+_review_history_fields = {
     'review_response_id' : fields.Integer,
     'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
-    'nationality_country' : fields.String,
-    'residence_country' : fields.String, 
-    'affiliation' : fields.String, 
-    'department' : fields.String,
-    'user_category' : fields.String, 
-    'final_verdict' : fields.String,
     'reviewed_user_id': fields.String
 }
 
-review_histroy_fields = {
-    'reviews' : fields.List(fields.Nested(review_fields)),
+review_history_fields = {
+    'reviews' : fields.List(fields.Nested(_review_history_fields)),
     'num_entries' : fields.Integer,
     'current_pagenumber' : fields.Integer,
     'total_pages' : fields.Integer
@@ -387,14 +382,12 @@ class ReviewHistoryModel:
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
         self.reviewed_user_id  = review.AppUser.id
-        final_verdict = [o for o in review.options if str(o['value']) == review.value]
-        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
-        self.final_verdict = final_verdict
+
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
     @auth_required
-    @marshal_with(review_histroy_fields)
+    @marshal_with(review_history_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -416,24 +409,6 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         
         if sort_column == 'submitted_timestamp':
             reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
-        
-        if sort_column == 'nationality_country':
-            reviews = reviews.join(Country, AppUser.nationality_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'residence_country':
-            reviews = reviews.join(Country, AppUser.residence_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'affiliation':
-            reviews = reviews.order_by(AppUser.affiliation)
-
-        if sort_column == 'department':
-            reviews = reviews.order_by(AppUser.department)
-        
-        if sort_column == 'user_category':
-            reviews = reviews.join(UserCategory, AppUser.user_category_id == UserCategory.id).order_by(UserCategory.name)
-  
-        if sort_column == 'final_verdict':
-                reviews = reviews.order_by(ReviewScore.value)
 
         reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
 

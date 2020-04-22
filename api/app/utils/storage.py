@@ -43,10 +43,15 @@ def _create_dummy_storage_client():
 
 
 def _create_real_storage_client():
-    credentials = service_account.Credentials.from_service_account_info(
-        GCP_CREDENTIALS_DICT
-    )
-    storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        # Running on GCP, so no credentials needed
+        storage_client = storage.Client(project=GCP_PROJECT_NAME)
+    else:
+        # Create credentials to access from anywhere
+        credentials = service_account.Credentials.from_service_account_info(
+            GCP_CREDENTIALS_DICT
+        )
+        storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
     return storage_client
 
 
