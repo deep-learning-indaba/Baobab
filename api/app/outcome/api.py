@@ -15,9 +15,14 @@ from app import db
 from app.utils import errors
 
 
+def _extract_status(outcome):
+    if not isinstance(outcome, Outcome):
+        return None
+    return outcome.status.name
+
 outcome_fields = {
     'id': fields.Integer,
-    'status': fields.String,
+    'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
 }
 
@@ -31,10 +36,10 @@ user_fields = {
 
 outcome_list_fields = {
     'id': fields.Integer,
-    'status': fields.String,
+    'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
-    'user': user_fields,
-    'updated_by_user': user_fields
+    'user': fields.Nested(user_fields),
+    'updated_by_user': fields.Nested(user_fields)
 }
 
 
@@ -71,7 +76,7 @@ class OutcomeAPI(restful.Resource):
         req_parser.add_argument('outcome', type=str, required=True)
         args = req_parser.parse_args()
 
-        event = event_repository.get_by_id(args['event_id'])
+        event = event_repository.get_by_id(event_id)
         if not event:
             return errors.EVENT_NOT_FOUND
 
@@ -86,19 +91,22 @@ class OutcomeAPI(restful.Resource):
 
         try:
             # Set existing outcomes to no longer be the latest outcome
-            existing_outcomes = outcome_repository.get_all_by_user_for_event(args['user_id'], args['event_id'])
+            existing_outcomes = outcome_repository.get_all_by_user_for_event(args['user_id'], event_id)
             for existing_outcome in existing_outcomes:
                 existing_outcome.reset_latest()
 
             # Add new outcome
             outcome = Outcome(
-                    args['event_id'],
+                    event_id,
                     args['user_id'],
                     status,
                     g.current_user['id'])
 
             outcome_repository.add(outcome)
             db.session.commit()
+
+            return outcome, 201
+
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))            
             return errors.DB_NOT_AVAILABLE
@@ -111,7 +119,7 @@ class OutcomeListAPI(restful.Resource):
     @event_admin_required
     @marshal_with(outcome_list_fields)
     def get(self, event_id):
-        event = event_repository.get_by_id(args['event_id'])
+        event = event_repository.get_by_id(event_id)
         if not event:
             return errors.EVENT_NOT_FOUND
 

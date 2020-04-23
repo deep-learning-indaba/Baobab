@@ -82,7 +82,6 @@ def event_admin_required(func):
         user = _get_user_from_request()
         if user:
             user_info = user_repository.get_by_id(user['id'])
-
             if user_info.is_event_admin(args['event_id']):
                 g.current_user = user
                 return func(*args, event_id=args['event_id'], **kwargs)
