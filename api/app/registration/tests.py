@@ -9,6 +9,8 @@ from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
 from app.organisation.models import Organisation
+from app.outcome.repository import OutcomeRepository as outcome_repository
+from app.outcome.models import Status
 
 
 OFFER_DATA = {
@@ -112,6 +114,9 @@ class OfferApiTest(ApiTestCase):
         self.assertTrue(data['payment_required'])
         self.assertTrue(data['travel_award'])
         self.assertTrue(data['accommodation_award'])
+
+        outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
+        self.assertEqual(outcome.status, Status.ACCEPTED)
 
     def test_create_offer_with_template(self):
         self.seed_static_data(add_offer=False)

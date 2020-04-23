@@ -104,6 +104,8 @@ OUTCOME_NOT_FOUND = (
     {'message': 'No outcome found for the given event'}, 404)
 OUTCOME_STATUS_NOT_VALID = (
     {'message': 'Invalid outcome status specified'}, 400)
+CANDIDATE_REJECTED = (
+    {'message': 'The candidate has already been rejected for the event'}, 400)
 
 FAILED_CREATE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to create integration test user.'}, 500)
