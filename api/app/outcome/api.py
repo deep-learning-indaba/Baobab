@@ -105,6 +105,8 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
+            # TODO: Send email to the candidate
+
             return outcome, 201
 
         except SQLAlchemyError as e:
