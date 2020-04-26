@@ -34,5 +34,6 @@ psycopg2-binary
 docx-mailmerge
 requests
 google
+requests-file==1.4.3
 tldextract
 parameterized

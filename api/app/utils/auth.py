@@ -1,10 +1,12 @@
 from functools import wraps
 
 from flask import request, g
+from flask_restful import reqparse
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired, BadSignature
 
 from app import app
+from app.users.repository import UserRepository as user_repository
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
 
 
@@ -29,15 +31,21 @@ def verify_token(token):
     return data
 
 
+def _get_user_from_request():
+    token = request.headers.get('Authorization', '')
+    if token:
+        user = verify_token(token)
+        return user
+    return None
+
+
 def auth_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        token = request.headers.get('Authorization', '')
-        if token:
-            user = verify_token(token)
-            if user:
-                g.current_user = user
-                return func(*args, **kwargs)
+        user = _get_user_from_request()
+        if user:
+            g.current_user = user
+            return func(*args, **kwargs)
         return UNAUTHORIZED
     return wrapper
 
@@ -45,9 +53,8 @@ def auth_required(func):
 def auth_optional(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        token = request.headers.get('Authorization', '')
-        if token:
-            user = verify_token(token)
+        user = _get_user_from_request()
+        if user:
             g.current_user = user
 
         return func(*args, **kwargs)
@@ -57,11 +64,28 @@ def auth_optional(func):
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        token = request.headers.get('Authorization', '')
-        if token:
-            user = verify_token(token)
-            if user and user['is_admin']:
-                g.current_user = user
-                return func(*args, **kwargs)
+        user = _get_user_from_request()
+        if user and user['is_admin']:
+            g.current_user = user
+            return func(*args, **kwargs)
         return FORBIDDEN
+    return wrapper
+
+
+def event_admin_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        user = _get_user_from_request()
+        if user:
+            user_info = user_repository.get_by_id(user['id'])
+            if user_info.is_event_admin(args['event_id']):
+                g.current_user = user
+                return func(*args, event_id=args['event_id'], **kwargs)
+        
+        return FORBIDDEN
+
     return wrapper
