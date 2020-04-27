@@ -621,7 +621,7 @@ class UserProfileListApiTest(ApiTestCase):
         params = {'event_id': self.event1_id}
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
-        `
+        
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json), 1)
