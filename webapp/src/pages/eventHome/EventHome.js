@@ -97,6 +97,8 @@ class EventStatus extends Component {
       <div className="event-home">
         <h1>{event.description}</h1>
 
+        {/* TODO: Clean up this mess! */}
+
         {this.state.applicationStatus && (
           <div>
             <div class="status2019 row text-center">
