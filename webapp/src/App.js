@@ -211,13 +211,13 @@ class EventNav extends Component {
               >
                 Review Assignment
               </NavLink>
-              {/* <NavLink
+              {<NavLink
                 to={`/${this.props.eventKey}/invitedGuests`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Invited Guests
-              </NavLink> */}
+              </NavLink>}
               {/* <NavLink
                 to={`/${this.props.eventKey}/profile-list`}
                 className="dropdown-item"
