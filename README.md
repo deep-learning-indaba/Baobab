@@ -99,7 +99,11 @@ Common errors you may get when running the ```docker-compose build``` or ```dock
 
 * **I can’t help right now, but I should free up in a month or two - can I still help?**
 
-    Baobab will log a continuous stream of new issues, bugs that creep in, or new features needed. 
+    Baobab will log a continuous stream of new issues, bugs that creep in, or new features needed. Keep checking on the repository once you have capacity to start or continue contributing on a regular basis. 
+
+* **I am struggling to install docker**
+
+	This sometimes happens when using old versions of Mac, or Windows Home Edition. A possible solution is to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/).
 
 * **My country doesn’t allow for docker to installed**
 
