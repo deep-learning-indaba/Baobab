@@ -19,6 +19,7 @@ const INFORMATION = "information";
 const CHECKBOX = "checkbox";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
+const SECTION_DIVIDER = "section-divider";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -110,6 +111,10 @@ class ReviewQuestion extends Component {
                         showError={validationError}
                         errorText={validationError} />
                 )
+            case SECTION_DIVIDER:
+                return (
+                    <hr/>
+                )
             default:
                 return (
                     <p className="text-danger">
@@ -132,7 +137,10 @@ class ReviewQuestion extends Component {
     render() {
         return (
             <div className={"question"}>
-                <h4>{this.getHeadline(this.props.model)}</h4>
+                {this.props.model.question.type === "section-divider" 
+                    ? <div><hr/><h3>{this.getHeadline(this.props.model)}</h3></div>
+                    : <h4>{this.getHeadline(this.props.model)}</h4>}
+                
                 <Linkify properties={{ target: '_blank' }}>
                     {this.formControl(
                         this.props.model.question.id,
