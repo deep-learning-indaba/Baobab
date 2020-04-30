@@ -594,7 +594,7 @@ class UserProfileListApiTest(ApiTestCase):
 
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json, [])
 
         self.assertTrue(False)
 
@@ -627,6 +627,7 @@ class UserProfileListApiTest(ApiTestCase):
         self.assertEqual(len(response.json), 1)
 
         self.assertTrue(False)
+
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):
