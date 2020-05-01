@@ -9,6 +9,8 @@ from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
 from app.organisation.models import Organisation
+from app.outcome.repository import OutcomeRepository as outcome_repository
+from app.outcome.models import Status
 
 
 OFFER_DATA = {
@@ -64,27 +66,13 @@ class OfferApiTest(ApiTestCase):
         db.session.add(Country('Suid Afrika'))
         db.session.commit()
 
-        event = Event(
+        event = self.add_event(
             name="Tech Talk",
             description="tech talking",
             start_date=datetime(2019, 12, 12),
             end_date=datetime(2020, 12, 12),
-            key='SPEEDNET', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning',
-            application_open=datetime.now(), 
-            application_close=datetime.now(),
-            review_open=datetime.now(),
-            review_close=datetime.now(),
-            selection_open=datetime.now(),
-            selection_close=datetime.now(),
-            offer_open=datetime.now(),
-            offer_close=datetime.now(),
-            registration_open=datetime.now(),
-            registration_close=datetime.now()
+            key='SPEEDNET'
         )
-        db.session.add(event)
         db.session.commit()
 
         if add_offer:
@@ -126,6 +114,9 @@ class OfferApiTest(ApiTestCase):
         self.assertTrue(data['payment_required'])
         self.assertTrue(data['travel_award'])
         self.assertTrue(data['accommodation_award'])
+
+        outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
+        self.assertEqual(outcome.status, Status.ACCEPTED)
 
     def test_create_offer_with_template(self):
         self.seed_static_data(add_offer=False)
@@ -208,27 +199,13 @@ class RegistrationTest(ApiTestCase):
         db.session.add(Country('South Africa'))
         db.session.commit()
 
-        event = Event(
+        event = self.add_event(
             name="Tech Talk",
             description="tech talking",
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
-            key='SPEEDNET', 
-            organisation_id=1, 
-            email_from='abx@indaba.deeplearning',
-            url='indaba.deeplearning',
-            application_open=datetime.now(), 
-            application_close=datetime.now(),
-            review_open=datetime.now(),
-            review_close=datetime.now(),
-            selection_open=datetime.now(),
-            selection_close=datetime.now(),
-            offer_open=datetime.now(),
-            offer_close=datetime.now(),
-            registration_open=datetime.now(),
-            registration_close=datetime.now()
+            key='SPEEDNET'
         )
-        db.session.add(event)
         db.session.commit()
 
         self.event_id = event.id

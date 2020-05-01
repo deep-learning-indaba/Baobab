@@ -1,20 +1,21 @@
 from app import db, bcrypt
 import app
 
+
 class ApplicationForm(db.Model):
     __tablename__ = 'application_form'
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
-    deadline = db.Column(db.DateTime(), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
+    nominations = db.Column(db.Boolean(), nullable=False)
 
-    def __init__(self, event_id, is_open, deadline):
+    def __init__(self, event_id, is_open, nominations):
         self.event_id = event_id
         self.is_open = is_open
-        self.deadline = deadline
+        self.nominations = nominations
 
 
 class Section(db.Model):
@@ -25,12 +26,16 @@ class Section(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
+    show_for_values = db.Column(db.JSON(), nullable=True)
+    key = db.Column(db.String(255), nullable=True)
 
     def __init__(self, application_form_id, name, description, order):
         self.application_form_id = application_form_id
         self.name = name
         self.description = description
         self.order = order
+
 
 class Question(db.Model):
     __tablename__ = 'question'
@@ -47,6 +52,9 @@ class Question(db.Model):
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
+    show_for_values = db.Column(db.JSON(), nullable=True)
+    key = db.Column(db.String(255), nullable=True)
 
     def __init__(self, application_form_id, section_id, headline, placeholder, order, questionType, validation_regex, validation_text=None, is_required = True, description = None, options = None):
         self.application_form_id = application_form_id

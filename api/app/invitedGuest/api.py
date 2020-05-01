@@ -32,35 +32,31 @@ def invitedGuest_info(invitedGuest, user):
         'role': invitedGuest.role,
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
-# TODO change your Baobab to [event] 
+
 GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
-We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 
-To assist with our planning process, please complete our guest registration form in Baobab, by visiting {host}/registration 
-After completing this, you will also be able to generate an official invitation letter, should you require one for visa or other purposes.
+We are pleased to invite you to attend {event_name} as a {role}. 
+To assist with our planning process, please complete our guest registration form in {system_name}, by visiting {host}/{event_key}/registration 
 
 Please reply to this email should you have any questions or concerns.  
 
 Kind Regards,
-The Deep Learning Indaba Organising Committee
+The {event_name} Organisers
 """
 
 NEW_GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
-We are pleased to invite you to attend the Deep Learning Indaba 2019 as a {role}. 
-To assist with our planning process, please complete our guest registration form in our portal, Baobab, by following these instructions:
+We are pleased to invite you to attend {event_name} as a {role}. 
+To assist with our planning process, please complete our guest registration form in our portal, {system_name}, by following these instructions:
 
 1. Visit {host}/resetPassword?resetToken={reset_code} to set your account password.
 2. Log in using your email address (the one you received this email on!) and new password.
-3. Visit {host}/registration to complete the registration form.
-4. Update your user profile by visiting {host}/profile - while this step is optional, we highly value this data for reporting purposes! 
-
-After completing the registration form, you will also be able to generate an official invitation letter, should you require one for visa or other purposes.
+3. Visit {host}/{event_key}registration to complete the registration form.
 
 Please reply to this email should you have any questions or concerns. 
 
 Kind Regards,
-The Deep Learning Indaba Organising Committee
+The {event_name} Organisers
 """
 
 
@@ -113,6 +109,9 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
                         firstname=user.firstname, 
                         lastname=user.lastname,
                         role=role,
+                        event_name=event.name,
+                        event_key=event.key,
+                        system_name=g.organisation.system_name,
                         host=misc.get_baobab_host()))
             except Exception as e:
                 LOGGER.error('Failed to send email to invited guest with user Id {}, due to {}'.format(user.id, e))
@@ -155,6 +154,9 @@ class CreateUser(SignupMixin, restful.Resource):
                             firstname=user.firstname, 
                             lastname=user.lastname,
                             role=role,
+                            event_name=event.name,
+                            event_key=event.key,
+                            system_name=g.organisation.system_name,
                             host=misc.get_baobab_host(),
                             reset_code=password_reset.code))
             except Exception as e:
@@ -194,16 +196,6 @@ class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
         'firstname': fields.String,
         'lastname': fields.String,
         'user_title': fields.String,
-        'nationality_country': fields.String,
-        'residence_country': fields.String,
-        'user_gender': fields.String,
-        'user_dateOfBirth': fields.DateTime('iso8601'),
-        'user_primaryLanguage': fields.String,
-        'affiliation': fields.String,
-        'department': fields.String,
-        'user_disability': fields.String,
-        'user_category_id': fields.Integer,
-        'user_category': fields.String,
     }
 
     invited_guest = {

@@ -4,14 +4,12 @@ import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
-import {
-  getTitleOptions,
-} from "../../../utils/validation/contentHelpers";
+import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   requiredDropdown,
-  validEmail,
+  validEmail
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -113,8 +111,10 @@ class creatreInvitedGuestComponent extends Component {
 
     //TODO review this workflow, it seems dodgy. 
     //createInvitedGuest always returns 400 (no role). Then addInvitedGuest creates the invitedguest.
-    invitedGuestServices
-      .createInvitedGuest(this.state.user, this.props.event ? this.props.event.id : 0)
+    invitedGuestServices.createInvitedGuest(
+      this.state.user,
+      this.props.event ?
+        this.props.event.id : 0)
       .then(user => {
         this.setState({
           created: true
@@ -126,7 +126,8 @@ class creatreInvitedGuestComponent extends Component {
         } else if (this.state.created === true) {
           invitedGuestServices.addInvitedGuest(
             this.state.user.email,
-            this.props.event ? this.props.event.id : 0,
+            this.props.event ?
+              this.props.event.id : 0,
             this.state.user.role
           );
           this.props.history.push("/invitedGuests");
@@ -156,6 +157,7 @@ class creatreInvitedGuestComponent extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Create Guest</p>
           <div class="row">
+
             <div class={commonColClassName}>
               <FormSelect
                 options={this.state.titleOptions}
@@ -166,6 +168,7 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.title.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.firstName.name}
@@ -176,6 +179,7 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.firstName.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormTextBox
                 id={validationFields.lastName.name}
@@ -187,6 +191,7 @@ class creatreInvitedGuestComponent extends Component {
               />
             </div>
           </div>
+
           <div class="row">
             <div class={commonColClassName}>
               <FormTextBox
@@ -198,6 +203,7 @@ class creatreInvitedGuestComponent extends Component {
                 label={validationFields.email.display}
               />
             </div>
+
             <div class={commonColClassName}>
               <FormSelect
                 defaultValue={this.state.user.role}
@@ -208,6 +214,7 @@ class creatreInvitedGuestComponent extends Component {
               />
             </div>
           </div>
+
           <button
             type="submit"
             class="btn btn-primary"
@@ -216,7 +223,9 @@ class creatreInvitedGuestComponent extends Component {
             Create guest
           </button>
           {this.state.conflict && (
-            <div class="alert alert-danger">Email is already taken</div>
+            <div class="alert alert-danger alert-container">
+              Email is already taken
+            </div>
           )}
         </form>
       </div>

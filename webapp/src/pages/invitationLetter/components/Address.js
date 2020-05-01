@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
-import { getCounties } from "../../../utils/validation/contentHelpers";
+import { getCountries } from "../../../utils/validation/contentHelpers";
+
 class Address extends Component {
   constructor(props) {
     super(props);
@@ -27,10 +28,12 @@ class Address extends Component {
   checkOptionsList(optionsList) {
     if (Array.isArray(optionsList)) {
       return optionsList;
-    } else return [];
+    } else
+      return [];
   }
+
   componentWillMount() {
-    getCounties.then(result => {
+    getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
       });
@@ -45,6 +48,7 @@ class Address extends Component {
       postalCode,
       country
     } = this.state;
+
     const {
       streetAddress1Value,
       streetAddress2Value,
@@ -52,7 +56,9 @@ class Address extends Component {
       postalCodeValue,
       countryValue
     } = this.state.addressText;
+
     const addressStyle = createColClassName(12, 4, 6, 6);
+
     return (
       <div class={addressStyle}>
         <div>
@@ -62,9 +68,9 @@ class Address extends Component {
             placeholder={streetAddress1.display}
             onChange={this.props.onChange(streetAddress1)}
             value={streetAddress1Value}
-            label={streetAddress1.display}
-          />
+            label={streetAddress1.display} />
         </div>
+
         <div>
           <FormTextBox
             id={streetAddress2.name}
@@ -72,9 +78,9 @@ class Address extends Component {
             placeholder={streetAddress2.display}
             onChange={this.props.onChange(streetAddress2)}
             value={streetAddress2Value}
-            label={streetAddress2.display}
-          />
+            label={streetAddress2.display} />
         </div>
+
         <div>
           <FormTextBox
             id={city.name}
@@ -82,9 +88,9 @@ class Address extends Component {
             placeholder={city.display}
             onChange={this.props.onChange(city)}
             value={cityValue}
-            label={city.display}
-          />
+            label={city.display} />
         </div>
+
         <div>
           <FormTextBox
             id={postalCode.name}
@@ -92,17 +98,16 @@ class Address extends Component {
             placeholder={postalCode.display}
             onChange={this.props.onChange(postalCode)}
             value={postalCodeValue}
-            label={postalCode.display}
-          />
+            label={postalCode.display} />
         </div>
+
         <FormSelect
           options={this.state.countryOptions}
           id={country.name}
           placeholder={country.display}
           onChange={this.props.handleChangeDropdown}
           value={countryValue}
-          label={country.display}
-        />
+          label={country.display} />
       </div>
     );
   }

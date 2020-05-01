@@ -21,6 +21,8 @@ from app.utils import errors
 from app.utils.auth import auth_required, admin_required
 from app.utils.emailer import send_mail
 from app.utils import misc
+from app.outcome.models import Outcome, Status
+from app.outcome.repository import OutcomeRepository as outcome_repository
 
 OFFER_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
@@ -148,6 +150,20 @@ class OfferAPI(OfferMixin, restful.Resource):
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
         if existing_offer:
             return errors.DUPLICATE_OFFER
+
+        existing_outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
+        if existing_outcome:
+            if existing_outcome.status == Status.REJECTED:
+                return errors.CANDIDATE_REJECTED
+            existing_outcome.reset_latest()
+
+        new_outcome = Outcome(
+            event_id,
+            user_id,
+            Status.ACCEPTED,
+            g.current_user['id']
+        )
+        outcome_repository.add(new_outcome)
 
         offer_entity = Offer(
             user_id=user_id,

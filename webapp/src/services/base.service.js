@@ -12,6 +12,13 @@ export function authHeader() {
   }
 }
 
+export function extractErrorMessage(error) {
+  // Extract error message from error objects sent by the back-end
+  return error.response && error.response.data
+      ? error.response.data.message
+      : error.message
+}
+
 axios.interceptors.response.use(
   response => {
     return response;

@@ -2,14 +2,15 @@ import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import FormDate from "../../../components/form/FormDate";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   isValidDate,
   requiredDropdown
 } from "../../../utils/validation/rules.js";
-import { userService } from "../../../services/user";
-import { getCounties } from "../../../utils/validation/contentHelpers";
+import FormSelect from "../../../components/form/FormSelect";
+import { getCountries } from "../../../utils/validation/contentHelpers";
 import Address from "./Address.js";
 import { registrationService } from "../../../services/registration";
 
@@ -50,31 +51,19 @@ class InvitationLetterForm extends Component {
       return optionsList;
     } else return [];
   }
+
   getContentValue(options, value) {
     if (options && options.filter) {
-      let optionsObject = options.filter(option => {
+      return options.filter(option => {
         return option.value === value;
       });
-      if (optionsObject && optionsObject[0]) return optionsObject[0].label;
     } else return null;
   }
+
   componentWillMount() {
-    getCounties.then(result => {
+    getCountries.then(result => {
       this.setState({
         countryOptions: this.checkOptionsList(result)
-      });
-    });
-
-    userService.get().then(result => {
-      var date = result.user_dateOfBirth;
-      if (date) date = date.split("T")[0];
-      this.setState({
-        user: {
-          ...this.state.user,
-          nationality: result.nationality_country_id,
-          residence: result.residence_country_id,
-          dateOfBirth: date
-        }
       });
     });
   }
@@ -98,7 +87,8 @@ class InvitationLetterForm extends Component {
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
+            // React datepicker component's onChange contains the value and not event.target.value
+            [field.name]: event && event.target ? event.target.value : event
           }
         },
         function() {
@@ -120,7 +110,9 @@ class InvitationLetterForm extends Component {
       this.state.user.residentialPostalCode &&
       this.state.user.residentialPostalCode.length > 0 &&
       this.state.user.residentialCountry &&
-      this.state.user.letterAddressedTo.length > 0
+      this.state.user.letterAddressedTo.length > 0 &&
+      this.state.user.residence > 0 &&
+      this.state.user.dateOfBirth != null
     );
   }
   convertAddressField = (street1, street2, city, postalCode, country) => {
@@ -210,7 +202,10 @@ class InvitationLetterForm extends Component {
       () => {
         this.setState({ loading: true });
         registrationService
-          .requestInvitationLetter(this.state.user, this.props.event ? this.props.event.id : 0)
+          .requestInvitationLetter(
+            this.state.user,
+            this.props.event ? this.props.event.id : 0
+          )
           .then(
             response => {
               this.setState({
@@ -235,28 +230,38 @@ class InvitationLetterForm extends Component {
       }
     );
   };
+
   toggleWork = () => {
     let currentShowAddressState = this.state.showWorkAddress;
     this.setState({ showWorkAddress: !currentShowAddressState });
   };
+
   toggleBringingAPoster = () => {
     let currentBringingAPoster = this.state.user.bringingAPoster;
     this.setState({
-      user: { ...this.state.user, bringingAPoster: !currentBringingAPoster }
+      user: {
+        ...this.state.user,
+        bringingAPoster: !currentBringingAPoster
+      }
     });
   };
+
   getErrorMessages = errors => {
     let errorMessages = [];
     if (errors.$set === null) return;
 
     let arr = errors.$set;
+
     for (let i = 0; i < arr.length; i++) {
       errorMessages.push(
-        <div className={"alert alert-danger"}>{Object.values(arr[i])}</div>
+        <div className={"alert alert-danger alert-container"}>
+          {Object.values(arr[i])}
+        </div>
       );
     }
     return errorMessages;
   };
+
   render() {
     const {
       passportNumber,
@@ -292,6 +297,7 @@ class InvitationLetterForm extends Component {
       this.state.countryOptions,
       nationality
     );
+
     const residenceValue = this.getContentValue(
       this.state.countryOptions,
       residence
@@ -303,8 +309,9 @@ class InvitationLetterForm extends Component {
       <div className="InvitationLetter">
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Invitation Letter</p>
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.fullNameOnPassport.name}
                 type="text"
@@ -317,7 +324,8 @@ class InvitationLetterForm extends Component {
                 description={validationFields.fullNameOnPassport.description}
               />
             </div>
-            <div class={passportDetailsStyleLine}>
+
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportNumber.name}
                 type="text"
@@ -327,6 +335,7 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportNumber.display}
               />
             </div>
+
             <div class={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportExpiryDate.name}
@@ -340,8 +349,9 @@ class InvitationLetterForm extends Component {
               />
             </div>
           </div>
-          <div class="row">
-            <div class={passportDetailsStyleLine}>
+
+          <div className="row">
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.passportIssuedByAuthority.name}
                 type="text"
@@ -353,7 +363,8 @@ class InvitationLetterForm extends Component {
                 label={validationFields.passportIssuedByAuthority.display}
               />
             </div>
-            <div class={passportDetailsStyleLine}>
+
+            <div className={passportDetailsStyleLine}>
               <FormTextBox
                 id={validationFields.letterAddressedTo.name}
                 type="text"
@@ -364,7 +375,8 @@ class InvitationLetterForm extends Component {
                 description={validationFields.letterAddressedTo.description}
               />
             </div>
-            <div class={passportDetailsStyleLine}>
+
+            <div className={passportDetailsStyleLine}>
               <div id="labelWorkAddress">
                 {"Are you currently employed ? "}
                 <input
@@ -376,7 +388,8 @@ class InvitationLetterForm extends Component {
               </div>
             </div>
           </div>
-          <div class="row">
+
+          <div className="row">
             <Address
               onChange={this.handleChange}
               handleChangeDropdown={this.handleChangeDropdown}
@@ -392,6 +405,7 @@ class InvitationLetterForm extends Component {
               countryValue={residentialCountry}
               countryOptions={countryOptions}
             />
+
             {showWorkAddress && (
               <Address
                 onChange={this.handleChange}
@@ -411,28 +425,26 @@ class InvitationLetterForm extends Component {
             )}
           </div>
 
-          <p>
-            We have the following values required for your invitation from your
-            user profile. Please go to the user profile page if you need to
-            update them.
-          </p>
           <div class="row">
             <div class={nationResidenceDetailsStyle}>
-              <FormTextBox
-                type="text"
+              <FormSelect
+                options={countryOptions}
                 id={validationFields.nationality.name}
                 placeholder={validationFields.nationality.display}
                 value={nationalityValue}
                 label={validationFields.nationality.display}
+                onChange={this.handleChangeDropdown}
               />
             </div>
+
             <div class={nationResidenceDetailsStyle}>
-              <FormTextBox
-                type="text"
+              <FormSelect
+                options={countryOptions}
                 id={validationFields.residence.name}
                 placeholder={validationFields.residence.display}
                 value={residenceValue}
                 label={validationFields.residence.display}
+                onChange={this.handleChangeDropdown}
               />
             </div>
 
@@ -443,27 +455,43 @@ class InvitationLetterForm extends Component {
                 placeholder={validationFields.dateOfBirth.display}
                 value={dateOfBirth}
                 label={validationFields.dateOfBirth.display}
+                onChange={this.handleChange(validationFields.dateOfBirth)}
               />
             </div>
           </div>
+
           <button
             type="submit"
             class="btn btn-primary"
+            id="btn-invitationLetter-submit"
             disabled={!this.validateForm() || loading}
           >
             {loading && (
               <span
-                class="spinner-grow spinner-grow-sm"
+                className="spinner-grow spinner-grow-sm"
                 role="status"
                 aria-hidden="true"
               />
             )}
             Request Invitation Letter
           </button>
+
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
-          {error && <div class="alert alert-danger">{error}</div>}
+
+          {error && (
+            <div
+              class="alert alert-danger alert-container"
+              id="alert-invitation-letter-failure"
+            >
+              {error}
+            </div>
+          )}
+
           {this.state.invitationLetterId && (
-            <div className={"alert alert-success"}>
+            <div
+              class="alert alert-success alert-container"
+              id="alert-invitation-letter-success"
+            >
               Invitation Letter request has been received. Invitation Letter
               Request ID : {this.state.invitationLetterId}, for future
               enquiries.

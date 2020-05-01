@@ -1,10 +1,9 @@
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-from sqlalchemy.sql import func
-from sqlalchemy import and_, or_
 from math import ceil
 import random
+from sqlalchemy.sql import func, exists
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
@@ -13,6 +12,7 @@ from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
@@ -98,8 +98,6 @@ review_fields = {
     'review_response': fields.Nested(review_response_fields)
 }
 
-REVIEWS_PER_SUBMISSION = 3
-
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
         self.review_form = review_form
@@ -116,32 +114,15 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         
-        review_form = db.session.query(ReviewForm)\
-                        .join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)\
-                        .filter_by(event_id=event_id)\
-                        .first()
+        review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return EVENT_NOT_FOUND
 
-        reviews_remaining_count = db.session.query(func.count(ResponseReviewer.id))\
-                        .filter_by(reviewer_user_id=g.current_user['id'])\
-                        .join(Response)\
-                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
-                        .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
-                        .filter_by(id=None)\
-                        .all()[0][0]
+        reviews_remaining_count = review_repository.get_remaining_reviews_count(g.current_user['id'], review_form.application_form_id)
 
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
-        response = db.session.query(Response)\
-                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
-                        .join(ResponseReviewer)\
-                        .filter_by(reviewer_user_id=g.current_user['id'])\
-                        .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==g.current_user['id']))\
-                        .filter_by(id=None)\
-                        .order_by(ResponseReviewer.response_id)\
-                        .offset(skip)\
-                        .first()
+        response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
         
         return ReviewResponseUser(review_form, response, reviews_remaining_count)
 
@@ -169,24 +150,14 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         id = args['id']
         reviewer_user_id = g.current_user['id']
 
-        review_form_response = db.session.query(ReviewForm, ReviewResponse)\
-                                            .join(ReviewResponse)\
-                                            .filter_by(id=id, reviewer_user_id=reviewer_user_id)\
-                                            .first()
+        review_form_response = review_repository.get_review_response_with_form(id, reviewer_user_id)
 
         if review_form_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
 
-
         review_form, review_response = review_form_response
 
-        response = db.session.query(Response)\
-                        .filter_by(is_withdrawn=False, application_form_id=review_form.application_form_id, is_submitted=True)\
-                        .join(ResponseReviewer)\
-                        .filter_by(reviewer_user_id=g.current_user['id'])\
-                        .join(ReviewResponse)\
-                        .filter_by(id=id)\
-                        .first()
+        response = review_repository.get_response_by_review_response(id, reviewer_user_id, review_form.application_form_id)
 
         return ReviewResponseUser(review_form, response, 0, review_response)
 
@@ -202,14 +173,13 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
 
-        response_reviewer = self.get_response_reviewer(response_id, reviewer_user_id)
+        response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
             return FORBIDDEN
 
         review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
         review_response.review_scores = self.get_review_scores(scores)
-        db.session.add(review_response)
-        db.session.commit()
+        review_repository.add_model(review_response)
 
         return {}, 201
 
@@ -225,11 +195,11 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
 
-        response_reviewer = self.get_response_reviewer(response_id, reviewer_user_id)
+        response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
             return FORBIDDEN
 
-        review_response = self.get_review_response(review_form_id, response_id, reviewer_user_id)
+        review_response = review_repository.get_review_response(review_form_id, response_id, reviewer_user_id)
         if review_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
         
@@ -238,16 +208,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         db.session.commit()
 
         return {}, 200
-    
-    def get_response_reviewer(self, response_id, reviewer_user_id):
-        return db.session.query(ResponseReviewer)\
-                         .filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id)\
-                         .first()
 
-    def get_review_response(self, review_form_id, response_id, reviewer_user_id):
-        return db.session.query(ReviewResponse)\
-                         .filter_by(review_form_id=review_form_id, response_id=response_id, reviewer_user_id=reviewer_user_id)\
-                         .first()
     
     def get_review_scores(self, scores):
         review_scores = []
@@ -286,15 +247,17 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
+        
+        config = review_configuration_repository.get_configuration_for_event(event_id)
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, REVIEWS_PER_SUBMISSION)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, config.num_reviews_required)
         }
 
 ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
 
-You have been assigned {num_reviews} reviews on Baobab. Please log in to {baobab_host} and visit the review page to begin.
-Note that if you were already logged in to Baobab, you will need to log out and log in again to pick up the changes to your profile. 
+You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
+Note that if you were already logged in to {system_name}, you will need to log out and log in again to pick up the changes to your profile. 
 
 Thank you for assisting us review applications for {event}!
 
@@ -326,7 +289,6 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
         views = [ReviewCountView(count) for count in counts]
-        LOGGER.debug(views)
         return views
 
     @auth_required
@@ -352,7 +314,9 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if not reviewer_user.is_reviewer(event_id):
             self.add_reviewer_role(reviewer_user.id, event_id)
 
-        response_ids = self.get_eligible_response_ids(reviewer_user.id, num_reviews)
+        config = review_configuration_repository.get_configuration_for_event(event_id)
+
+        response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews, config.num_reviews_required)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -366,6 +330,8 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         lastname=reviewer_user.lastname,
                         num_reviews=len(response_ids),
                         baobab_host=misc.get_baobab_host(),
+                        system_name=g.organisation.system_name,
+                        event_key=event.key,
                         event=event.name))
 
         return {}, 201
@@ -376,12 +342,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add(event_role)
         db.session.commit()
     
-    def get_eligible_response_ids(self, reviewer_user_id, num_reviews):
+    def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
-                        .filter(Response.user_id != reviewer_user_id, Response.is_submitted==True, Response.is_withdrawn==False)\
+                        .filter(Response.user_id != reviewer_user_id, 
+                                Response.is_submitted==True, 
+                                Response.is_withdrawn==False)\
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)\
+                        .filter(ApplicationForm.event_id == event_id)\
                         .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
                         .group_by(Response.id)\
-                        .having(func.count(ResponseReviewer.reviewer_user_id) < REVIEWS_PER_SUBMISSION)\
+                        .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required)\
                         .all()
         candidate_response_ids = set([r.id for r in candidate_responses])
 
@@ -394,20 +364,14 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         return random.sample(responses, min(len(responses), num_reviews))
 
-review_fields = {
+_review_history_fields = {
     'review_response_id' : fields.Integer,
     'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
-    'nationality_country' : fields.String,
-    'residence_country' : fields.String, 
-    'affiliation' : fields.String, 
-    'department' : fields.String,
-    'user_category' : fields.String, 
-    'final_verdict' : fields.String,
     'reviewed_user_id': fields.String
 }
 
-review_histroy_fields = {
-    'reviews' : fields.List(fields.Nested(review_fields)),
+review_history_fields = {
+    'reviews' : fields.List(fields.Nested(_review_history_fields)),
     'num_entries' : fields.Integer,
     'current_pagenumber' : fields.Integer,
     'total_pages' : fields.Integer
@@ -418,21 +382,12 @@ class ReviewHistoryModel:
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
         self.reviewed_user_id  = review.AppUser.id
-        # TODO get this information outside of AppUser - e.g. a question asking for nationality,residence etc 
-        # self.nationality_country = review.AppUser.nationality_country.name
-        # self.residence_country = review.AppUser.residence_country.name
-        # self.affiliation = review.AppUser.affiliation
-        # self.department = review.AppUser.department
-        # self.user_category = review.AppUser.user_category.name
 
-        final_verdict = [o for o in review.options if str(o['value']) == review.value]
-        final_verdict = final_verdict[0]['label'] if final_verdict else "Unknown"
-        self.final_verdict = final_verdict
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     
     @auth_required
-    @marshal_with(review_histroy_fields)
+    @marshal_with(review_history_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -447,50 +402,19 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
 
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, ReviewScore.value, ReviewQuestion.options)
-                        .filter(ReviewResponse.reviewer_user_id == user_id)
-                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == form_id)
-                        .join(Response, ReviewResponse.response_id == Response.id)
-                        .join(ReviewQuestion, ReviewForm.id == ReviewQuestion.review_form_id)
-                        .filter(ReviewQuestion.headline == 'Final Verdict')
-                        .join(ReviewScore, and_(ReviewQuestion.id == ReviewScore.review_question_id, ReviewResponse.id == ReviewScore.review_response_id))
-                        .join(AppUser, Response.user_id == AppUser.id))
+        reviews = review_repository.get_review_history(user_id, form_id)
 
         if sort_column == 'review_response_id':
             reviews = reviews.order_by(ReviewResponse.id)
         
         if sort_column == 'submitted_timestamp':
             reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
-        
-        if sort_column == 'nationality_country':
-            reviews = reviews.join(Country, AppUser.nationality_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'residence_country':
-            reviews = reviews.join(Country, AppUser.residence_country_id == Country.id).order_by(Country.name)
-
-        if sort_column == 'affiliation':
-            reviews = reviews.order_by(AppUser.affiliation)
-
-        if sort_column == 'department':
-            reviews = reviews.order_by(AppUser.department)
-        
-        if sort_column == 'user_category':
-            reviews = reviews.join(UserCategory, AppUser.user_category_id == UserCategory.id).order_by(UserCategory.name)
-  
-        if sort_column == 'final_verdict':
-                reviews = reviews.order_by(ReviewScore.value)
 
         reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
 
-        num_entries = (db.session.query(ReviewResponse)
-                        .filter(ReviewResponse.reviewer_user_id == user_id)
-                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == form_id)
-                        .count())
+        num_entries = review_repository.get_review_history_count(user_id, form_id)
 
         total_pages = ceil(float(num_entries)/limit)
 
-        LOGGER.debug(reviews)
         reviews = [ReviewHistoryModel(review) for review in reviews]
         return {'reviews': reviews, 'num_entries': num_entries, 'current_pagenumber': page_number, 'total_pages': total_pages}

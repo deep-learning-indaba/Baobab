@@ -64,8 +64,25 @@ footer .btn {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
+}
+
+.nav-link {
+  cursor: pointer;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .navbar-brand .brand-image {
   margin-right: 10px;
+}
+
+.alert-container{
+  margin-top: 16px;
+}
+
+.form-group {
+  white-space: pre-wrap;
 }

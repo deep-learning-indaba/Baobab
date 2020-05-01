@@ -7,10 +7,12 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
+
+from parameterized import parameterized
 
 class ReviewsApiTest(ApiTestCase):
     
@@ -55,14 +57,11 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            Event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
-            'KENYADABA2019', 1, 'abx@indaba.deeplearning','indaba.deeplearning', datetime.now(), datetime.now(), datetime.now(), datetime.now(),
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now()),
-            Event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
-            'INDABA2020', 2, 'abx@indaba.deeplearning','indaba.deeplearning', datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now(), 
-            datetime.now(), datetime.now(), datetime.now(), datetime.now(), datetime.now())
+            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            'KENYADABA2019'),
+            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            'INDABA2020', 2)
         ]
-        db.session.add_all(events)
         db.session.commit()
 
         event_roles = [
@@ -73,8 +72,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         application_forms = [
-            ApplicationForm(1, True, datetime(2019, 4, 30)),
-            ApplicationForm(2, False, datetime(2018, 4, 30))
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
         ]
         db.session.add_all(application_forms)
         db.session.commit()
@@ -123,6 +122,13 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
+        review_configs = [
+            ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
+            ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
+        ]
+        db.session.add_all(review_configs)
+        db.session.commit()
+
         review_questions = [
             ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
             ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
@@ -142,7 +148,7 @@ class ReviewsApiTest(ApiTestCase):
         header = {'Authorization': data['token']}
         return header
 
-    def setup_one_reviewer_one_candidate(self):
+    def setup_one_reviewer_one_candidate(self, active=True):
         responses = [
             Response(1, 5, True)
         ]
@@ -159,6 +165,8 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = [
             ResponseReviewer(1, 1) # assign reviewer 1 to candidate 1 response
         ]
+        if not active:
+            response_reviewers[0].deactivate()
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -173,17 +181,31 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_remaining_count'], 1)
 
-    def test_one_reviewer_one_candidate_review_summary(self):
+    def test_one_reviewer_one_candidate_inactive(self):
         self.seed_static_data()
-        self.setup_one_reviewer_one_candidate()
+        self.setup_one_reviewer_one_candidate(active=False)
+        header = self.get_auth_header_for('r1@r.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['reviews_remaining_count'], 0)
+        self.assertEqual(data['response']['id'], 0)
+
+    @parameterized.expand([
+        (True,), (False,)
+    ])
+    def test_one_reviewer_one_candidate_review_summary(self, active):
+        self.seed_static_data()
+        self.setup_one_reviewer_one_candidate(active=active)
         header = self.get_auth_header_for('ea@ea.com')
         params = {'event_id': 1}
 
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_unallocated'], 2)
-            
+        self.assertEqual(data['reviews_unallocated'], 2)  
 
     def setup_responses_and_no_reviewers(self):
         responses = [
@@ -220,8 +242,6 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews_unallocated'], 3)
         
-        
-    
     def setup_one_reviewer_three_candidates(self):
         responses = [
             Response(application_form_id=1, user_id=5, is_submitted=True),
@@ -247,6 +267,8 @@ class ReviewsApiTest(ApiTestCase):
             ResponseReviewer(2, 1),
             ResponseReviewer(3, 1)
         ]
+        response_reviewers[1].deactivate()
+
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -259,7 +281,7 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_remaining_count'], 3)
+        self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
         responses = [
@@ -380,8 +402,11 @@ class ReviewsApiTest(ApiTestCase):
             ResponseReviewer(2, 3),
             ResponseReviewer(3, 3),
             ResponseReviewer(4, 3),
-            ResponseReviewer(1, 4)
+
+            ResponseReviewer(1, 4),
+            ResponseReviewer(2, 4)
         ]
+        response_reviewers[-1].deactivate()
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -426,9 +451,9 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['response']['user_id'], 6)
-        self.assertEqual(data['response']['answers'][0]['value'], 'I want to do a PhD.')
-        
+        self.assertEqual(data['response']['user_id'], 7)
+        self.assertEqual(data['response']['answers'][0]['value'], 'I want to solve new problems.')
+
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
@@ -556,6 +581,16 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
 
         self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_can_still_submit_inactive_response_reviewer(self):
+        self.seed_static_data()
+        self.setup_one_reviewer_three_candidates()
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
+
+        self.assertEqual(response.status_code, 201)
 
     def setup_response_reviewer(self):
         response = Response(1, 5, True)
@@ -1120,20 +1155,6 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][0]['user_category'], 'Honours')
         self.assertEqual(data['reviews'][1]['user_category'], 'MSc')
         self.assertEqual(data['reviews'][2]['user_category'], 'Student')
-
-    def test_order_by_finalverdict(self):
-        self.seed_static_data()
-        self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
-
-        params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'final_verdict'}
-        header = self.get_auth_header_for('r3@r.com')
-
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
-        data = json.loads(response.data)
-
-        self.assertEqual(data['reviews'][0]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][1]['final_verdict'], 'Maybe')
-        self.assertEqual(data['reviews'][2]['final_verdict'], 'Yes')
 
     def setup_two_extra_responses_for_reviewer3(self):
 

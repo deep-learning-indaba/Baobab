@@ -11,7 +11,11 @@ Error Message:
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
   if (errorHandler){
-    errorHandler.report(error.toString());
+    var errorMessage= new Object();
+    errorMessage.componentStack = componentStack;
+    errorMessage.error  = error;
+    var jsonString= JSON.stringify(errorMessage);
+    errorHandler.report(jsonString);
   } 
 
   const bug_mailto =
@@ -34,7 +38,7 @@ export const ErrorPage = ({ componentStack, error }) => {
         </p>
         <p>
         Please try again and if this issue persists, please{" "}
-          <a href="get in touch"/> with us.<br/>
+          <a href={bug_mailto}>get in touch</a> with us.<br/>
           The bug report will go to the Baobab team at the Deep Learning Indaba who maintain the application.
         </p>
       </div>

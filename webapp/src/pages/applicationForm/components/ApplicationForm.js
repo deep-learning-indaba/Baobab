@@ -1,15 +1,17 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { applicationFormService } from "../../../services/applicationForm";
-
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
+import FormDate from "../../../components/form/FormDate";
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
 import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormReferenceRequest from "./ReferenceRequest";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -17,7 +19,25 @@ const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
+const DATE = "date";
+const REFERENCE_REQUEST = "reference";
+
+/*
+ * Utility functions for the feature where questions are dependent on the answers of other questions
+ */
+const isEntityDependentOnAnswer = (entityToCheck) => {
+  return entityToCheck.depends_on_question_id && entityToCheck.show_for_values;
+}
+
+const findDependentQuestionAnswer = (entityToCheck, answers) => {
+  return answers.find(a => a && a.question_id === entityToCheck.depends_on_question_id);
+}
+
+const doesAnswerMatch = (entityToCheck, answer) => {
+  return entityToCheck.show_for_values.indexOf(answer.value) > -1;
+}
 
 class FieldEditor extends React.Component {
   constructor(props) {
@@ -32,7 +52,8 @@ class FieldEditor extends React.Component {
   }
 
   handleChange = event => {
-    const value = event.target.value;
+    // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
+    const value = event && event.target ? event.target.value : event;
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -47,13 +68,13 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true
-    }, ()=> {
-      fileService.uploadFile(file, progressEvent=> {
+    }, () => {
+      fileService.uploadFile(file, progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         this.setState({
           uploadPercentComplete: percentCompleted
         });
-      }).then(response=>{
+      }).then(response => {
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
         }
@@ -66,12 +87,12 @@ class FieldEditor extends React.Component {
     })
   }
 
-  formControl = (key, question, answer, validationError) => {
+  formControl = (key, question, answer, validationError, responseId) => {
     switch (question.type) {
       case SHORT_TEXT:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="text"
             label={question.description}
@@ -86,7 +107,7 @@ class FieldEditor extends React.Component {
       case SINGLE_CHOICE:
         return (
           <FormTextBox
-            Id={this.id}
+            id={this.id}
             name={this.id}
             type="checkbox"
             label={question.description}
@@ -102,7 +123,7 @@ class FieldEditor extends React.Component {
       case LONG_TEXT[1]:
         return (
           <FormTextArea
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             placeholder={question.placeholder}
@@ -129,10 +150,24 @@ class FieldEditor extends React.Component {
             errorText={validationError}
           />
         );
+      case MULTI_CHECKBOX:
+        return (
+          <FormMultiCheckbox
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || null}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError} />
+        )
       case FILE:
         return (
           <FormFileUpload
-            Id={this.id}
+            id={this.id}
             name={this.id}
             label={question.description}
             key={"i_" + key}
@@ -145,6 +180,36 @@ class FieldEditor extends React.Component {
             uploaded={this.state.uploaded}
           />
         );
+      case DATE:
+        return (
+          <FormDate
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} />
+        );
+      case REFERENCE_REQUEST:
+        return (
+          <FormReferenceRequest
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} 
+            options={question.options}
+            responseId={responseId}/>
+        )
       default:
         return (
           <p className="text-danger">
@@ -162,7 +227,8 @@ class FieldEditor extends React.Component {
           this.props.key,
           this.props.question,
           this.props.answer ? this.props.answer.value : null,
-          this.props.validationError
+          this.props.validationError,
+          this.props.responseId
         )}
       </div>
     );
@@ -188,7 +254,8 @@ class Section extends React.Component {
       value: value
     };
 
-    const newQuestionModels = this.state.questionModels.map(q => {
+    const newQuestionModels = this.state.questionModels
+      .map(q => {
       if (q.question.id !== question.id) {
         return q;
       }
@@ -199,7 +266,7 @@ class Section extends React.Component {
           : "",
         answer: newAnswer
       };
-    });
+    })
 
     this.setState(
       {
@@ -234,7 +301,10 @@ class Section extends React.Component {
   };
 
   isValidated = () => {
-    const validatedModels = this.state.questionModels.map(q => {
+    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
+    const validatedModels = this.state.questionModels
+    .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+    .map(q => {
       return {
         ...q,
         validationError: this.validate(q)
@@ -252,13 +322,12 @@ class Section extends React.Component {
       () => {
         if (this.props.answerChanged) {
           this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a), 
+            this.state.questionModels.map(q => q.answer).filter(a => a),
             isValid
           );
         }
       }
     );
-
     return isValid;
   };
 
@@ -270,6 +339,19 @@ class Section extends React.Component {
     }
   };
 
+  /*
+   * Only include questions that depend on other question's answers if they match.
+   * If the value has been set, compare with that. If it hasn't been set, compare with the saved value.
+   */
+  dependentQuestionFilter = (question, sectionCurrentAnswers) => {
+    if (isEntityDependentOnAnswer(question)) {
+      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
+      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
+    } else {
+      return true;
+    }
+  }
+
   render() {
     const {
       section,
@@ -277,6 +359,7 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+    const allAnswersInSection = questionModels.map(q => q.answer);
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -284,15 +367,20 @@ class Section extends React.Component {
           <p>{section.description}</p>
         </div>
         {questionModels &&
-          questionModels.map(model => (
-            <FieldEditor
-              key={"question_" + model.question.id}
-              question={model.question}
-              answer={model.answer}
-              validationError={model.validationError}
-              onChange={this.onChange}
-            />
-          ))}
+          questionModels
+            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+            .map(model => (
+              <FieldEditor
+                key={"question_" + model.question.id}
+                question={model.question}
+                answer={model.answer}
+                validationError={model.validationError}
+                onChange={this.onChange}
+                responseId={this.props.responseId}
+              />
+            )
+          )
+        }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
             Save for later...
@@ -300,7 +388,7 @@ class Section extends React.Component {
         )}
         {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
         {hasValidated && !validationStale && (
-          <div class="alert alert-danger">
+          <div class="alert alert-danger alert-container">
             Please fix the errors before continuing.
           </div>
         )}
@@ -311,10 +399,10 @@ class Section extends React.Component {
 
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
-    switch(props.qm.question.type) {
+    switch (props.qm.question.type) {
       case MULTI_CHOICE:
-        const options = props.qm.question.options.filter(o=>o.value === props.qm.answer.value);
-        if (options) {
+        const options = props.qm.question.options.filter(o => o.value === props.qm.answer.value);
+        if (options && options.length > 0) {
           return options[0].label;
         }
         else {
@@ -339,14 +427,14 @@ class Confirmation extends React.Component {
             <h2>Review your Answers</h2>
             <p>
               Please confirm that your answers are correct. Use the previous
-              button to correct them if they are not. You can also exit and come back 
-              later as they have all been saved. 
+              button to correct them if they are not. You can also exit and come back
+              later as they have all been saved.
 
               Click the SUBMIT button once you are happy to submit your answers to the committee.
             </p>
 
             <div class="alert alert-warning">
-            <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
+              <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
             </div>
 
             <div class="text-center">
@@ -373,7 +461,7 @@ class Confirmation extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm}/></p>
+                      <p><AnswerValue qm={qm} /></p>
                     </div>
                   </div>
                 </div>
@@ -419,6 +507,10 @@ class Submitted extends React.Component {
     });
   };
 
+  handleEditOK = event => {
+    this.props.onCancelSubmit()
+  };
+
   handleWithdrawCancel = event => {
     this.setState({
       withdrawModalVisible: false
@@ -431,37 +523,71 @@ class Submitted extends React.Component {
     });
   };
 
+  handleEdit = event => {
+    this.setState({
+      editAppModalVisible: true
+    });
+  };
+
+  cancelEditModal = event => {
+    this.setState({
+      editAppModalVisible: false
+    });
+  };
+
   render() {
     return (
       <div class="submitted">
         <h2>Thank you for applying!</h2>
         {this.state.isError && (
-          <div className={"alert alert-danger"}>{this.state.errorMessage}</div>
+          <div className={"alert alert-danger alert-container"}>
+            {this.state.errorMessage}
+          </div>
         )}
 
         <p class="thank-you">
-          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}. 
+          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}.
           Your application will be reviewed by our committee and we will get back to you as soon as
           possible.
         </p>
+
         <p class="timestamp">
           You submitted your application on{" "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
+
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             Withdraw Application
           </button>
         </div>
+
+        <div class="submitted-footer">
+          <button class="btn btn-primary" onClick={this.handleEdit}>
+            Edit Application
+          </button>
+        </div>
+
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
           okText={"Yes - Withdraw"}
-          cancelText={"No - Don't withdraw"}
-        >
+          cancelText={"No - Don't withdraw"}>
+
           <p>
             By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
+          </p>
+        </ConfirmModal>
+
+        <ConfirmModal
+          visible={this.state.editAppModalVisible}
+          onOK={this.handleEditOK}
+          onCancel={this.cancelEditModal}
+          okText={"Yes - Edit application"}
+          cancelText={"No - Don't edit"}>
+          <p>
+            Do you want to edit your application: {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
@@ -484,12 +610,13 @@ class ApplicationForm extends Component {
       errorMessage: "",
       errors: [],
       answers: [],
-      unsavedChanges: false
+      unsavedChanges: false,
+      startStep: 0
     };
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(this.props.event ? this.props.event.id: 0).then(response => {
+    applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
       this.setState({
         formSpec: response.formSpec,
         isError: response.formSpec === null,
@@ -627,7 +754,7 @@ class ApplicationForm extends Component {
       this.setState(prevState => {
         return {
           answers: prevState.answers
-            .filter(a => !answers.map(a=>a.question_id).includes(a.question_id))
+            .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
             .concat(answers)
         };
       }, () => {
@@ -669,7 +796,9 @@ class ApplicationForm extends Component {
     }
 
     if (isError) {
-      return <div className={"alert alert-danger"}>{errorMessage}</div>;
+      return <div className={"alert alert-danger alert-container"}>{
+        errorMessage}
+      </div>;
     }
 
     if (isSubmitted) {
@@ -679,13 +808,25 @@ class ApplicationForm extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
+          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
 
+    const includeEntityDueToDependentQuestion = (entity) => {
+      if (isEntityDependentOnAnswer(entity)) {
+        const answer = findDependentQuestionAnswer(entity, this.state.answers);
+        return answer ? doesAnswerMatch(entity, answer) : false;
+      } else {
+        return true;
+      }
+    }
+
     const sections =
       formSpec.sections &&
-      formSpec.sections.slice().sort((a, b) => a.order - b.order);
+      formSpec.sections.slice()
+        .filter(includeEntityDueToDependentQuestion)
+        .sort((a, b) => a.order - b.order);
     const sectionModels =
       sections &&
       sections.map(section => {
@@ -709,6 +850,7 @@ class ApplicationForm extends Component {
           component: (
             <Section
               key={"section_" + model.section.id}
+              showQuestionBasedOnSavedFormAnswers={includeEntityDueToDependentQuestion}
               section={model.section}
               questionModels={model.questionModels}
               answerChanged={this.handleAnswerChanged}
@@ -716,6 +858,8 @@ class ApplicationForm extends Component {
               changed={() => this.setState({ unsavedChanges: true })}
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
+              responseId={this.state.responseId}
+              stepProgress={i}
             />
           )
         };
@@ -741,6 +885,7 @@ class ApplicationForm extends Component {
         />
       )
     });
+
     return (
       <div class="application-form-container">
         <div className="step-progress">
@@ -749,6 +894,7 @@ class ApplicationForm extends Component {
             onStepChange={this.handleStepChange}
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
+            startAtStep={this.state.startStep}
           />
           <ReactToolTip />
         </div>

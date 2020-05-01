@@ -1,5 +1,11 @@
 # Baobab
 
+
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+[![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://join.slack.com/t/baobab-space/shared_invite/enQtOTc1MzUzNjAyODY0LTM2YmJiOTRiNWEyZWRjMjY5ZmNlYTNjY2Y3ODA4MjZjNDljZTFkZWU3YjU5OTk1MTI5MDQwYzI4YzQ0YjFiYzQ)
+![Slack Status](https://img.shields.io/twitter/follow/DeepIndaba?label=Follow&style=social)
+
+
 Baobab is an open source multi-tenant web application designed to facilitate the application and selection process for large scale meetings within the machine learning and artificial intelligence communities globally.
 
 ## Application Lifecycle
@@ -70,6 +76,7 @@ It will take a fair bit of time the first time you do it, subsequently it will b
 
 7. The first time you run the app, you may need to run the **migrations** to ensure that all the tables are created in the database. While the app is running (after following the previous step), run the following in **another terminal/command prompt**: ```docker-compose run web python ./api/run.py db upgrade --directory api/migrations```
 
+8. Read the respective docs for [backend](./api/README.md) and [frontend](./webapp/README.md). 
 ## Troubleshooting
 Common errors you may get when running the ```docker-compose build``` or ```docker-compose up``` commands.
 
@@ -92,7 +99,11 @@ Common errors you may get when running the ```docker-compose build``` or ```dock
 
 * **I can’t help right now, but I should free up in a month or two - can I still help?**
 
-    Baobab will log a continuous stream of new issues, bugs that creep in, or new features needed. 
+    Baobab will log a continuous stream of new issues, bugs that creep in, or new features needed. Keep checking on the repository once you have capacity to start or continue contributing on a regular basis. 
+
+* **I am struggling to install docker**
+
+	This sometimes happens when using old versions of Mac, or Windows Home Edition. A possible solution is to install [Docker Toolbox](https://docs.docker.com/toolbox/toolbox_install_windows/).
 
 * **My country doesn’t allow for docker to installed**
 
