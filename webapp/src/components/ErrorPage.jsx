@@ -11,7 +11,11 @@ Error Message:
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
   if (errorHandler){
-    errorHandler.report(error.toString());
+    var errorMessage= new Object();
+    errorMessage.componentStack = componentStack;
+    errorMessage.error  = error;
+    var jsonString= JSON.stringify(errorMessage);
+    errorHandler.report(jsonString);
   } 
 
   const bug_mailto =
