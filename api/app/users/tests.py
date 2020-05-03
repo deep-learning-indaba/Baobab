@@ -566,7 +566,7 @@ class UserProfileListApiTest(ApiTestCase):
 
         # Assert that request succeeds and that users that responded are returned.
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json), 1)
+        self.assertEqual(len(response.json), 0)
 
     def test_no_response_and_invited(self):
         """
@@ -594,9 +594,7 @@ class UserProfileListApiTest(ApiTestCase):
 
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json, [])
-
-        self.assertTrue(False)
+        self.assertEqual(len(response.json), 1)
 
     def test_response_and_invited(self):
         """
@@ -625,8 +623,6 @@ class UserProfileListApiTest(ApiTestCase):
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json), 1)
-
-        self.assertTrue(False)
 
 
 class UserProfileApiTest(ApiTestCase):
