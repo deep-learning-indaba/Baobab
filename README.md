@@ -1,5 +1,4 @@
-# Baobab
-
+<p align="center"><a href="https://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer"><img width="100" src="https://github.com/deep-learning-indaba/Baobab/raw/develop/baobab_logo_small.png" alt="Baobab Logo"></a></p>
 
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 [![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://join.slack.com/t/baobab-space/shared_invite/enQtOTc1MzUzNjAyODY0LTM2YmJiOTRiNWEyZWRjMjY5ZmNlYTNjY2Y3ODA4MjZjNDljZTFkZWU3YjU5OTk1MTI5MDQwYzI4YzQ0YjFiYzQ)
