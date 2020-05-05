@@ -16,10 +16,13 @@ Following the selection process, applicants are informed of the decision and rel
 
 Lastly, successful applicants can then register to confirm they will attend as well as check-in at the event itself.
 
-# Structure
+## Structure
 
 - `api/` contains the flask-based web api
 - `webapp/` contains the react front-end
+
+## Hall of Fame
+[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/0)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/0)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/1)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/1)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/2)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/2)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/3)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/3)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/4)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/4)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/5)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/5)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/6)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/6)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/7)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/7)
 
 ## Contributing
 
