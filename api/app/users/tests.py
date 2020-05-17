@@ -552,7 +552,21 @@ class UserProfileListApiTest(ApiTestCase):
         """
         Users that have responded (but are not invited guests) should be returned.
         """
-        pass
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert that request succeeds and that users that responded are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 0)
 
     def test_no_response_and_invited(self):
         """
@@ -582,13 +596,33 @@ class UserProfileListApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json), 1)
 
-        self.assertTrue(False)
-
     def test_response_and_invited(self):
         """
         Users that are Invited Guests and that have responded should be returned.
         """
-        pass
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        invitation = InvitedGuest(
+            event_id=self.event1_id,
+            user_id=candidates[0].id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+        
+        # Assert that request succeeds and no users are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
 
 
 class UserProfileApiTest(ApiTestCase):
