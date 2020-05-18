@@ -22,7 +22,7 @@ from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
-
+import app.events.status as event_status
 
 def event_info(user_id, event_org):
     return {
