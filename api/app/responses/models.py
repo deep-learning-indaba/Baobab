@@ -31,10 +31,14 @@ class Response(db.Model):
         self.started_timestamp = date.today()
 
     def submit_response(self):
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
         self.is_submitted = True
         self.submitted_timestamp = date.today()
 
     def withdraw_response(self):
+        self.is_submitted = False
+        self.submitted_timestamp = None
         self.is_withdrawn = True
         self.withdrawn_timestamp = date.today()
 
