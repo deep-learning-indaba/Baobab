@@ -18,11 +18,23 @@ class EventStatus():
         if invited_guest is None and registration_status is not None and offer_status is None:
             raise ValueError('Non-invited guest must have an offer to have a registration status')
         
+        if invited_guest is None and outcome_status is not None and application_status is None:
+            raise ValueError('User must have applied to have an outcome')
+
         self.invited_guest=invited_guest 
         self.application_status = application_status
         self.registration_status=registration_status
         self.offer_status=offer_status
         self.outcome_status=outcome_status
+
+
+def _get_registration_status(registration):
+    if registration is None:
+        return None
+    if registration.confirmed:
+        return 'Confirmed'
+    else:
+        return 'Not Confirmed'
 
 
 def get_event_status(event, user):
@@ -31,11 +43,11 @@ def get_event_status(event, user):
         registration = invited_guest_repository.get_registration_for_event_and_user(event.id, user.id)
         # If they're an invited guest, we don't bother with whether they applied or not
         return EventStatus(invited_guest=invited_guest.role, 
-                           registration_status=True if registration is not None else False)
+                           registration_status=_get_registration_status(registration))
     
     response = response_repository.get_by_user_id_for_event(user.id, event.id)
     if response is None:
-        application_status = 'Not Started'
+        application_status = None
     elif response.is_submitted:
         application_status = 'Submitted'
     elif response.is_withdrawn:
@@ -62,7 +74,7 @@ def get_event_status(event, user):
         offer_status = 'Pending'
 
     registration = registration_repository.get_by_user_id(user.id, event.id)
-    registration_status = registration is not None
+    registration_status = _get_registration_status(registration)
 
     return EventStatus(application_status=application_status,
                        outcome_status=outcome_status,

@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from app import app, db, LOGGER
 from app.events.models import Event
 from app.utils.testing import ApiTestCase
@@ -12,7 +12,11 @@ from app.applicationModel.models import ApplicationForm, Section, Question
 from app.utils.errors import FORBIDDEN
 from app.organisation.models import Organisation
 from app.events.models import EventType
-
+from app.outcome.models import Outcome
+from app.outcome.models import Status as OutcomeStatus
+from app.invitedGuest.models import InvitedGuest, GuestRegistration
+import app.events.status as event_status
+from app.registration.models import RegistrationForm, Offer, Registration
 
 class EventsAPITest(ApiTestCase):
 
@@ -545,3 +549,277 @@ class EventAPITest(ApiTestCase):
         response = self.app.put(
             'api/v1/event', headers=header, data=self.test_event_data_dict)
         self.assertEqual(response.status_code, 403)
+
+
+class EventStatusTest(ApiTestCase):
+    def seed_static_data(self):
+        self.event_admin = self.add_user('event@admin.co.za', 'event', 'admin')
+        self.user1 = self.add_user('applicant@mail.co.za', 'applicant')
+        self.user2 = self.add_user('applicant2@mail.co.za', 'applicant2')
+        self.event = self.add_event()
+        self.event2 = self.add_event('Second event', key='second_event')
+
+        self.application_form = self.create_application_form()
+
+        self.registration_form = self.create_registration_form(self.event.id) 
+        db.session.add(self.registration_form)
+        db.session.commit()
+
+
+    def test_invited_guest_unregistered(self):
+        """Check that un-registred invited guest statuses are correct."""
+        self.seed_static_data()
+        invited = InvitedGuest(event_id=self.event.id, user_id=self.user1.id, role='Mentor')
+        db.session.add(invited)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.invited_guest, 'Mentor')
+        self.assertIsNone(status.registration_status)
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        # Check no interference with other user and other event
+        status = event_status.get_event_status(self.event, self.user2)
+        self.assertIsNone(status.invited_guest)
+
+        status = event_status.get_event_status(self.event2, self.user1)
+        self.assertIsNone(status.invited_guest)
+
+    def test_registered_invited_guest(self):
+        """Check that statuses are correct for a registered invited guest."""
+        self.seed_static_data()
+        invited = InvitedGuest(event_id=self.event.id, user_id=self.user1.id, role='Mentor')
+        db.session.add(invited)
+
+        # Check un-confirmed guest registration
+        guest_registration = GuestRegistration(
+            user_id=self.user1.id, 
+            registration_form_id=self.registration_form.id,
+            confirmed=False)
+
+        db.session.add(guest_registration)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.invited_guest, 'Mentor')
+        self.assertEqual(status.registration_status, 'Not Confirmed')
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        # Check confirmed guest registration
+        guest_registration.confirm(datetime.now())
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.invited_guest, 'Mentor')
+        self.assertEqual(status.registration_status, 'Confirmed')
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+    def test_invited_guest_and_applied(self):
+        """Check invited guest status when the user also applied."""
+        self.seed_static_data()
+        invited = InvitedGuest(event_id=self.event.id, user_id=self.user1.id, role='Mentor')
+        db.session.add(invited)
+
+        response = Response(self.application_form.id, self.user1.id)
+        db.session.add(response)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+
+        self.assertEqual(status.invited_guest, 'Mentor')
+        self.assertIsNone(status.registration_status)
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+    def test_applied(self):
+        """Test statuses when the user has applied."""
+        self.seed_static_data()
+        # Candidate has not submitted or withdrawn
+        response = Response(
+            self.application_form.id, 
+            self.user1.id, 
+            is_submitted=False, 
+            is_withdrawn=False)
+        db.session.add(response)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Not Submitted')
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        # Submitted
+        response.submit_response()
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Submitted')
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        # Withdrawn
+        response.withdraw_response()
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Withdrawn')
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        status = event_status.get_event_status(self.event, self.user2)
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+        status = event_status.get_event_status(self.event2, self.user1)
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertIsNone(status.application_status)
+        self.assertIsNone(status.outcome_status)
+        self.assertIsNone(status.offer_status)
+
+    def test_outcome(self):
+        """Check statuses when the user has an outcome."""
+        self.seed_static_data()
+
+        # Check that status is invalid if there is an outcome with not application (response)
+        outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
+        db.session.add(outcome)
+
+        with self.assertRaises(ValueError):
+            event_status.get_event_status(self.event, self.user1)
+        
+        # Check status when user has applied and has an outcome
+        response = Response(
+            self.application_form.id, 
+            self.user1.id)
+        response.submit_response()
+        db.session.add(response)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Submitted')
+        self.assertEqual(status.outcome_status, outcome.status.name)
+        self.assertIsNone(status.offer_status)
+
+    def test_offer(self):
+        """Test statuses when offer."""
+        self.seed_static_data()
+
+        outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
+        db.session.add(outcome)
+
+        response = Response(
+            self.application_form.id, 
+            self.user1.id)
+        response.submit_response()
+        db.session.add(response)
+
+        # Test pending offer
+        offer = Offer(
+            user_id=self.user1.id, 
+            event_id=self.event.id, 
+            offer_date=date.today(), 
+            expiry_date=date.today() + timedelta(days=1),
+            payment_required=False,
+            travel_award=False,
+            accommodation_award=False)
+        db.session.add(offer)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Submitted')
+        self.assertEqual(status.outcome_status, outcome.status.name)
+        self.assertEqual(status.offer_status, 'Pending')
+
+        # Test accepted offer
+        offer.candidate_response = True
+        db.session.commit()
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertIsNone(status.invited_guest)
+        self.assertIsNone(status.registration_status)
+        self.assertEqual(status.application_status, 'Submitted')
+        self.assertEqual(status.outcome_status, outcome.status.name)
+        self.assertEqual(status.offer_status, 'Accepted')
+
+        # Should still be accepted when past the expiry date
+        offer.expiry_date = date.today() - timedelta(days=2)
+        db.session.commit()
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.offer_status, 'Accepted')
+
+        # Test expired offer
+        offer.candidate_response = None
+        db.session.commit()
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.offer_status, 'Expired')
+
+        # Test rejected offer
+        offer.candidate_response = False
+        db.session.commit()
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.offer_status, 'Rejected')
+
+    def test_registered(self):
+        """Test statusess for registered attendees."""
+        self.seed_static_data()
+
+        outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
+        db.session.add(outcome)
+
+        response = Response(
+            self.application_form.id, 
+            self.user1.id)
+        response.submit_response()
+        db.session.add(response)
+
+        offer = Offer(
+            user_id=self.user1.id, 
+            event_id=self.event.id, 
+            offer_date=date.today(), 
+            expiry_date=date.today() + timedelta(days=1),
+            payment_required=False,
+            travel_award=False,
+            accommodation_award=False,
+            candidate_response=True)
+        db.session.add(offer)
+        db.session.commit()
+
+        registration = Registration(offer.id, self.registration_form.id)
+        db.session.add(registration)
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertIsNone(status.invited_guest)
+        self.assertEqual(status.registration_status, 'Not Confirmed')
+        self.assertEqual(status.application_status, 'Submitted')
+        self.assertEqual(status.outcome_status, outcome.status.name)
+        self.assertEqual(status.offer_status, 'Accepted')
+
+        registration.confirm()
+        db.session.commit()
+
+        status = event_status.get_event_status(self.event, self.user1)
+        self.assertEqual(status.registration_status, 'Confirmed')
