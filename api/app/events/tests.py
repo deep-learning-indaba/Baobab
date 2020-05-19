@@ -573,7 +573,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(invited)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.invited_guest, 'Mentor')
         self.assertIsNone(status.registration_status)
         self.assertIsNone(status.application_status)
@@ -581,10 +581,10 @@ class EventStatusTest(ApiTestCase):
         self.assertIsNone(status.offer_status)
 
         # Check no interference with other user and other event
-        status = event_status.get_event_status(self.event, self.user2)
+        status = event_status.get_event_status(self.event.id, self.user2.id)
         self.assertIsNone(status.invited_guest)
 
-        status = event_status.get_event_status(self.event2, self.user1)
+        status = event_status.get_event_status(self.event2.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
 
     def test_registered_invited_guest(self):
@@ -602,7 +602,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(guest_registration)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.invited_guest, 'Mentor')
         self.assertEqual(status.registration_status, 'Not Confirmed')
         self.assertIsNone(status.application_status)
@@ -613,7 +613,7 @@ class EventStatusTest(ApiTestCase):
         guest_registration.confirm(datetime.now())
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.invited_guest, 'Mentor')
         self.assertEqual(status.registration_status, 'Confirmed')
         self.assertIsNone(status.application_status)
@@ -630,7 +630,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(response)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
 
         self.assertEqual(status.invited_guest, 'Mentor')
         self.assertIsNone(status.registration_status)
@@ -650,7 +650,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(response)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
 
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
@@ -662,7 +662,7 @@ class EventStatusTest(ApiTestCase):
         response.submit_response()
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
 
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
@@ -674,7 +674,7 @@ class EventStatusTest(ApiTestCase):
         response.withdraw_response()
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
 
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
@@ -682,14 +682,14 @@ class EventStatusTest(ApiTestCase):
         self.assertIsNone(status.outcome_status)
         self.assertIsNone(status.offer_status)
 
-        status = event_status.get_event_status(self.event, self.user2)
+        status = event_status.get_event_status(self.event.id, self.user2.id)
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
         self.assertIsNone(status.application_status)
         self.assertIsNone(status.outcome_status)
         self.assertIsNone(status.offer_status)
 
-        status = event_status.get_event_status(self.event2, self.user1)
+        status = event_status.get_event_status(self.event2.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
         self.assertIsNone(status.application_status)
@@ -705,7 +705,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(outcome)
 
         with self.assertRaises(ValueError):
-            event_status.get_event_status(self.event, self.user1)
+            event_status.get_event_status(self.event.id, self.user1.id)
         
         # Check status when user has applied and has an outcome
         response = Response(
@@ -715,7 +715,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(response)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
         self.assertEqual(status.application_status, 'Submitted')
@@ -747,7 +747,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(offer)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
         self.assertEqual(status.application_status, 'Submitted')
@@ -757,7 +757,7 @@ class EventStatusTest(ApiTestCase):
         # Test accepted offer
         offer.candidate_response = True
         db.session.commit()
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
         self.assertIsNone(status.registration_status)
         self.assertEqual(status.application_status, 'Submitted')
@@ -767,19 +767,19 @@ class EventStatusTest(ApiTestCase):
         # Should still be accepted when past the expiry date
         offer.expiry_date = date.today() - timedelta(days=2)
         db.session.commit()
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.offer_status, 'Accepted')
 
         # Test expired offer
         offer.candidate_response = None
         db.session.commit()
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.offer_status, 'Expired')
 
         # Test rejected offer
         offer.candidate_response = False
         db.session.commit()
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.offer_status, 'Rejected')
 
     def test_registered(self):
@@ -811,7 +811,7 @@ class EventStatusTest(ApiTestCase):
         db.session.add(registration)
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
         self.assertEqual(status.registration_status, 'Not Confirmed')
         self.assertEqual(status.application_status, 'Submitted')
@@ -821,5 +821,5 @@ class EventStatusTest(ApiTestCase):
         registration.confirm()
         db.session.commit()
 
-        status = event_status.get_event_status(self.event, self.user1)
+        status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.registration_status, 'Confirmed')

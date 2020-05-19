@@ -37,15 +37,15 @@ def _get_registration_status(registration):
         return 'Not Confirmed'
 
 
-def get_event_status(event, user):
-    invited_guest = invited_guest_repository.get_for_event_and_user(event.id, user.id)
+def get_event_status(event_id, user_id):
+    invited_guest = invited_guest_repository.get_for_event_and_user(event_id, user_id)
     if invited_guest:
-        registration = invited_guest_repository.get_registration_for_event_and_user(event.id, user.id)
+        registration = invited_guest_repository.get_registration_for_event_and_user(event_id, user_id)
         # If they're an invited guest, we don't bother with whether they applied or not
         return EventStatus(invited_guest=invited_guest.role, 
                            registration_status=_get_registration_status(registration))
     
-    response = response_repository.get_by_user_id_for_event(user.id, event.id)
+    response = response_repository.get_by_user_id_for_event(user_id, event_id)
     if response is None:
         application_status = None
     elif response.is_submitted:
@@ -55,13 +55,13 @@ def get_event_status(event, user):
     else:
         application_status = 'Not Submitted'
 
-    outcome = outcome_repository.get_latest_by_user_for_event(user.id, event.id)
+    outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
     if outcome is None:
         outcome_status = None
     else:
         outcome_status = outcome.status.name
 
-    offer = offer_repository.get_by_user_id_for_event(user.id, event.id)
+    offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
     if offer is None:
         offer_status = None
     elif offer.candidate_response:
@@ -73,7 +73,7 @@ def get_event_status(event, user):
     else:
         offer_status = 'Pending'
 
-    registration = registration_repository.get_by_user_id(user.id, event.id)
+    registration = registration_repository.get_by_user_id(user_id, event_id)
     registration_status = _get_registration_status(registration)
 
     return EventStatus(application_status=application_status,
