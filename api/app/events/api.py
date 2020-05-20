@@ -306,7 +306,7 @@ class EventsAPI(restful.Resource):
         returnEvents = []
 
         for event in events:
-            status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
+            status = None if user_id == 0 else event_status.get_event_status(event.Event.id, user_id)
             returnEvents.append(event_info(user_id, event, status))
 
         return returnEvents, 200
@@ -356,7 +356,7 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         info = event_info(
             g.current_user['id'], 
             event, 
-            event_status.get_event_status(event.id, user_id))
+            event_status.get_event_status(event.Event.id, user_id))
         return info, 200
 
 
