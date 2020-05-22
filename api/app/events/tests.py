@@ -58,7 +58,7 @@ class EventsAPITest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["id"], 1)
         self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Apply now')
+        self.assertIsNone(data[0]["status"])
 
     def test_get_events_applied(self):
         self.seed_static_data()
@@ -84,13 +84,13 @@ class EventsAPITest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["id"], 1)
         self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Applied')
+        self.assertEqual(data[0]["status"]['application_status'], 'Submitted')
 
     def test_get_events_withdrawn(self):
         self.seed_static_data()
 
         test_response = Response(
-            self.test_form.id, self.test_user.id, is_submitted=True, is_withdrawn=True)
+            self.test_form.id, self.test_user.id, is_submitted=False, is_withdrawn=True)
         db.session.add(test_response)
         db.session.commit()
 
@@ -110,69 +110,7 @@ class EventsAPITest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["id"], 1)
         self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Application withdrawn')
-
-    def test_get_events_closed(self):
-        self.seed_static_data()
-
-        self.test_form.event.application_close = datetime.now()
-        db.session.commit()
-
-        response = self.app.post('/api/v1/authenticate', data={
-            'email': 'something@email.com',
-            'password': 'abc'
-        })
-
-        self.assertEqual(response.status_code, 200)
-
-        data = json.loads(response.data)
-
-        response = self.app.get(
-            '/api/v1/events', headers={'Authorization': data["token"]})
-        data = json.loads(response.data)
-
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["id"], 1)
-        self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Application closed')
-
-    def test_get_events_unauthed_closed(self):
-        self.seed_static_data()
-
-        self.test_form.event.application_close = datetime.now()
-        db.session.commit()
-
-        response = self.app.get('/api/v1/events')
-        data = json.loads(response.data)
-
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["id"], 1)
-        self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Application closed')
-
-    def test_get_events_not_available(self):
-        self.seed_static_data()
-
-        db.session.delete(self.test_form)
-        db.session.commit()
-
-        response = self.app.post('/api/v1/authenticate', data={
-            'email': 'something@email.com',
-            'password': 'abc'
-        })
-
-        self.assertEqual(response.status_code, 200)
-
-        data = json.loads(response.data)
-
-        response = self.app.get(
-            '/api/v1/events', headers={'Authorization': data["token"]})
-        data = json.loads(response.data)
-
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["id"], 1)
-        self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Application not available')
+        self.assertEqual(data[0]["status"]['application_status'], 'Withdrawn')
 
     def test_unsubmitted_response(self):
         self.seed_static_data()
@@ -197,21 +135,7 @@ class EventsAPITest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["id"], 1)
         self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Continue application')
-
-    def test_get_events_unauthed_not_available(self):
-        self.seed_static_data()
-
-        db.session.delete(self.test_form)
-        db.session.commit()
-
-        response = self.app.get('/api/v1/events')
-        data = json.loads(response.data)
-
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["id"], 1)
-        self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertEqual(data[0]["status"], 'Application not available')
+        self.assertEqual(data[0]["status"]['application_status'], 'Not Submitted')
 
     def test_get_event_type(self):
         self.seed_static_data()
