@@ -245,8 +245,7 @@ class ReferenceAPITest(ApiTestCase):
         self.test_form = self.create_application_form(test_event.id, True, False)
         self.add_to_db(self.test_form)
 
-        self.test_response = Response(
-            self.test_form.id, other_user_data.id)
+        self.test_response = Response(self.test_form.id, other_user_data.id)
         self.add_to_db(self.test_response)
         self.headers = self.get_auth_header_for("someuser@mail.com")
 
