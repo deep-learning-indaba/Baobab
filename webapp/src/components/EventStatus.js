@@ -13,8 +13,8 @@ class EventStatus extends Component {
       }
   }
 
-  registeredStatus = (registration_status, event) => {
-    if (registration_status === "Confirmed") {
+  registeredStatus = (event) => {
+    if (event.stats.registration_status === "Confirmed") {
         return {
             title: "Registered",
             titleClass: "text-success",
@@ -22,7 +22,7 @@ class EventStatus extends Component {
             shortText: "Registered"
         };
     }
-    else if (registration_status === "Not Confirmed") {
+    else if (event.status.registration_status === "Not Confirmed") {
         return {
             title: "Pending Confirmation",
             titleClass: "text-warning",
@@ -31,16 +31,16 @@ class EventStatus extends Component {
         };
     }
     else {
-        return this.unknownStatus("registration status", registration_status);
+        return this.unknownStatus("registration status", event.status.registration_status);
     }
   }
 
-  invitedGuestStatus = (status, event) => {
-    if (!status.registration_status) {
+  invitedGuestStatus = (event) => {
+    if (!event.status.registration_status) {
         return {
             title: "Invited Guest",
             titleClass: "text-success",
-            longText: `You have been invited as a ${status.invited_guest}, please proceed to registration.`,
+            longText: `You have been invited as a ${event.status.invited_guest}, please proceed to registration.`,
             shortText: "Register",
             linkClass: 'btn-success',
             link: `${event.key}/registration`
@@ -51,19 +51,19 @@ class EventStatus extends Component {
     }
   }
 
-  applicationStatus = (application_status, event) => {
+  applicationStatus = (event) => {
       const applyLink = `${event.key}/apply`
-      if (application_status === "Submitted") {
+      if (event.status.application_status === "Submitted") {
           return {
               title: "Application Submitted",
               titleClass: "text-success",
               longText: "You have submitted your application, you may still edit it before the deadline.",
               shortText: "View Application",
-              linkClass: 'btn-info',
+              linkClass: 'btn-secondary',
               link: applyLink
           };
       }
-      else if (application_status === "Withdrawn") {
+      else if (event.status.application_status === "Withdrawn") {
         return {
             title: "Application Withdrawn",
             titleClass: "text-danger",
@@ -73,7 +73,7 @@ class EventStatus extends Component {
             link: applyLink
         };
       }
-      else if (application_status === "Not Submitted") {
+      else if (event.status.application_status === "Not Submitted") {
           return {
               title: "In Progress",
               titleClass: "text-warning",
@@ -95,9 +95,9 @@ class EventStatus extends Component {
       }
   }
 
-  offerStatus = (status, event) => {
-    if (status.offer_status === "Accepted") {
-        if (status.registration_status) {
+  offerStatus = (event) => {
+    if (event.status.offer_status === "Accepted") {
+        if (event.status.registration_status) {
             return this.registeredStatus();
         }
         else {
@@ -111,7 +111,7 @@ class EventStatus extends Component {
             };
         }
     }
-    else if (status.offer_status === "Rejected") {
+    else if (event.status.offer_status === "Rejected") {
         return {
             title: "Offer Rejected",
             titleClass: "text-danger",
@@ -119,7 +119,7 @@ class EventStatus extends Component {
             shortText: "Offer Rejected"
         };
     }
-    else if (status.offer_status === "Expired") {
+    else if (event.status.offer_status === "Expired") {
         return {
             title: "Offer Expired",
             titleClass: "text-danger",
@@ -127,7 +127,7 @@ class EventStatus extends Component {
             shortText: "Offer Expired"
         };
     }
-    else if (status.offer_status === "Pending") {
+    else if (event.status.offer_status === "Pending") {
         return {
             title: "Application Successful",
             titleClass: "text-success",
@@ -138,12 +138,12 @@ class EventStatus extends Component {
         };
     }
     else {
-        return this.unknownStatus("offer status", status.offer_status);
+        return this.unknownStatus("offer status", event.status.offer_status);
     }
   }
 
-  outcomeStatus = (status, event) => {
-      if (status.outcome_status === "ACCEPTED") {
+  outcomeStatus = (event) => {
+      if (event.status.outcome_status === "ACCEPTED") {
           return {
             title: "Application Successful",
             titleClass: "text-success",
@@ -151,7 +151,7 @@ class EventStatus extends Component {
             shortText: "Application Successful"
           };
       }
-      else if (status.outcome_status === "REJECTED") {
+      else if (event.status.outcome_status === "REJECTED") {
           return {
               title: "Application Unsuccessful",
               titleClass: "text-danger",
@@ -159,7 +159,7 @@ class EventStatus extends Component {
               shortText: "Application unsuccessful"
           };
       }
-      else if (status.outcome_status === "WAITLIST") {
+      else if (event.status.outcome_status === "WAITLIST") {
         return {
             title: "Waitlist",
             titleClass: "text-warning",
@@ -168,12 +168,12 @@ class EventStatus extends Component {
         };
       }
       else {
-          return unknownStatus("outcome status", status.outcome_status);
+          return this.unknownStatus("outcome status", event.status.outcome_status);
       }
   }
 
-  applicationClosedStatus = (status, event) => {
-      if (status.application_status === "Submitted") {
+  applicationClosedStatus = (event) => {
+      if (event.status.application_status === "Submitted") {
           return {
               title: "Application Submitted",
               titleClass: "text-success",
@@ -181,7 +181,7 @@ class EventStatus extends Component {
               shortText: "Applied"
           }
       }
-      else if (status.application_status === "Withdrawn") {
+      else if (event.status.application_status === "Withdrawn") {
           return {
               title: "Application Withdrawn",
               titleClass: "text-danger",
@@ -189,7 +189,7 @@ class EventStatus extends Component {
               shortText: "Application Withdrawn"
           }
       }
-      else if (status.application_status === "Not Submitted") {
+      else if (event.status.application_status === "Not Submitted") {
           return {
               title: "Applications Closed",
               titleClass: "text-danger",
@@ -207,24 +207,24 @@ class EventStatus extends Component {
       }
   }
 
-  mapStatus = (status, event) => {
-      if (status.invited_guest) {
-        return this.invitedGuestStatus(status, event);
+  mapStatus = (event) => {
+      if (event.status.invited_guest) {
+        return this.invitedGuestStatus(event);
       }
       
       if (event.is_application_open) {
-          return this.applicationStatus(status, event);
+          return this.applicationStatus(event);
       }
 
-      if (status.offer_status) {
-          return this.offerStatus(status, event);
+      if (event.status.offer_status) {
+          return this.offerStatus(event);
       }
 
-      if (status.outcome_status) {
-          return this.outcomeStatus(status, event);
+      if (event.status.outcome_status) {
+          return this.outcomeStatus(event);
       }
 
-      return this.applicationClosedStatus(status, event);
+      return this.applicationClosedStatus(event);
 
   }
 
@@ -233,16 +233,21 @@ class EventStatus extends Component {
   }
 
   render() {
-    const definition = this.mapStatus(this.props.status, this.props.event);
+    const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {
         return <div>
             <h3 className={definition.titleClass}>{definition.title}</h3>
             <p>{definition.longText}</p><br/>
-            {definition.shortText && definition.link && this.renderButton()}
+            {definition.shortText && definition.link && this.renderButton(definition)}
         </div>
     }
     else {
-        if (definition.shortText && definition.link) {
+        if (definition.shortText && definition.link && definition.title !== definition.shortText) {
+            return <div>
+                <span>{definition.title}</span><br/>{this.renderButton(definition)}
+            </div>
+        }
+        else if (definition.shortText && definition.link) {
             return this.renderButton(definition);
         }
         else {
@@ -252,4 +257,4 @@ class EventStatus extends Component {
   }
 }
 
-export default withRouter(UserDropdown);
+export default withRouter(EventStatus);
