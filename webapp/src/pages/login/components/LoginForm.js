@@ -140,7 +140,7 @@ class LoginForm extends Component {
                     role="status"
                     aria-hidden="true" />
                 )}
-                  Login
+                  Sign In
                 </button>
 
             </div>
