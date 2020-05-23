@@ -15,10 +15,11 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('organisation', sa.Column('icon_logo', sa.String(length=100), nullable=False))
+    op.add_column('organisation', sa.Column('icon_logo', sa.String(length=100), nullable=True))
     op.execute("""UPDATE organisation SET icon_logo=small_logo""")
     op.execute("""UPDATE organisation SET small_logo='indaba_logo_cufflink_small.png' WHERE system_name IN ('Baobab', 'Baobab Dev', 'integration_test')""")
     op.execute("""UPDATE organisation SET small_logo='eeml_logo_black_small.png' WHERE system_name IN ('EEML Portal')""")
+    op.alter_column('organisation', 'icon_logo', existing_type=sa.String(), nullable=False)
 
 
 def downgrade():
