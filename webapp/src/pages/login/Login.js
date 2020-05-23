@@ -7,7 +7,8 @@ export default class Login extends Component {
   render() {
     return (
       <LoginForm
-        loggedIn={this.props.loggedIn}>
+        loggedIn={this.props.loggedIn}
+        organisation={this.props.organisation}>
       </LoginForm>
     );
   }

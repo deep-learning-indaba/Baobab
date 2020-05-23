@@ -39,7 +39,7 @@ class LoginForm extends Component {
           this.props.loggedIn(user);
         }
         // Login was successful, redirect to referring location.
-        if(this.props.location.state){
+        if (this.props.location.state) {
           this.props.history.push(this.props.location.state);
         }
         else {
@@ -47,7 +47,7 @@ class LoginForm extends Component {
           // this.props.history.goBack();
           this.props.history.push('/')
         }
-       
+
       },
       e =>
         this.setState({
@@ -97,7 +97,7 @@ class LoginForm extends Component {
           onSubmit={this.handleSubmit}>
 
           <div class="login-header-logo">
-            <img src={require("../../../images/indaba_logo_cufflink_small.png")}/>
+            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} />
             <h3>Sign in to your account</h3>
             <h6>Or <Link to="/createAccount" className="sign-up">Sign Up</Link> for a new one</h6>
           </div>
@@ -122,30 +122,30 @@ class LoginForm extends Component {
                 id="password"
                 onChange={this.handleChange}
                 value={password} />
-                <div class="forgot-password">
-                  <Link to="/resetPassword">Forgot your password?</Link>
-                </div>
+              <div class="forgot-password">
+                <Link to="/resetPassword">Forgot your password?</Link>
+              </div>
             </div>
 
             <div class="row">
-              
-                <button
-                  id="btn-login"
-                  type="submit"
-                  class="btn btn-primary"
-                  disabled={!this.validateForm() || loading}>
-                  {loading && (
-                    <span
-                      class="spinner-grow spinner-grow-sm"
-                      role="status"
-                      aria-hidden="true" />
-                  )}
+
+              <button
+                id="btn-login"
+                type="submit"
+                class="btn btn-primary"
+                disabled={!this.validateForm() || loading}>
+                {loading && (
+                  <span
+                    class="spinner-grow spinner-grow-sm"
+                    role="status"
+                    aria-hidden="true" />
+                )}
                   Login
                 </button>
-              
+
             </div>
 
-            
+
 
             {error &&
               <div id="error-login" className={"alert alert-danger alert-container"}>
@@ -162,7 +162,7 @@ class LoginForm extends Component {
                 {resendStatus}
               </div>}
 
-            
+
           </div>
         </form>
       </div>
