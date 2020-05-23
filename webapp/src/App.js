@@ -475,7 +475,7 @@ class App extends Component {
                 </a>
                 {this.state.organisation &&
                   this.state.organisation.system_name !== "Baobab" && (
-                    <div className="float-right">
+                    <div className="float-right powered-by">
                       Powered by{" "}
                       <a
                         href="http://www.deeplearningindaba.com"

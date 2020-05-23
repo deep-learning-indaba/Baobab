@@ -91,76 +91,78 @@ class LoginForm extends Component {
 
     return (
       <div className="Login">
+
         <form
           style={{ margin: "10px" }}
           onSubmit={this.handleSubmit}>
 
-          <p className="h5 text-center mb-4">Login</p>
-
-          <div class="form-group">
-            <label for="email">Email address</label>
-            <input
-              type="email"
-              class="form-control"
-              id="email"
-              onChange={this.handleChange}
-              value={email}
-              autoFocus="true" />
+          <div class="login-header-logo">
+            <img src={require("../../../images/indaba_logo_cufflink_small.png")}/>
+            <h3>Sign in to your account</h3>
+            <h6>Or <Link to="/createAccount" className="sign-up">Sign Up</Link> for a new one</h6>
           </div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              class="form-control"
-              id="password"
-              onChange={this.handleChange}
-              value={password} />
-          </div>
-
-          <div class="row">
-            <div class={commonColClassName + " text-center"}>
-              <button
-                id="btn-login"
-                type="submit"
-                class="btn btn-primary"
-                disabled={!this.validateForm() || loading}>
-                {loading && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true" />
-                )}
-                Login
-              </button>
+          <div class="card">
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                onChange={this.handleChange}
+                value={email}
+                autoFocus="true" />
             </div>
 
-            <div class={commonColClassName + " text-center"}>
-              <Link to="/createAccount">
-                <button type="submit" class="btn btn-primary">
-                  Sign Up
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                onChange={this.handleChange}
+                value={password} />
+                <div class="forgot-password">
+                  <Link to="/resetPassword">Forgot your password?</Link>
+                </div>
+            </div>
+
+            <div class="row">
+              
+                <button
+                  id="btn-login"
+                  type="submit"
+                  class="btn btn-primary"
+                  disabled={!this.validateForm() || loading}>
+                  {loading && (
+                    <span
+                      class="spinner-grow spinner-grow-sm"
+                      role="status"
+                      aria-hidden="true" />
+                  )}
+                  Login
                 </button>
-              </Link>
+              
             </div>
-          </div>
 
-          {error &&
-            <div id="error-login" className={"alert alert-danger alert-container"}>
-              {error}
-              {notVerified &&
-                <button className="link-style"
-                  onClick={this.resendVerification}>
-                  Resend Verification Email
-              </button>}
-            </div>}
+            
 
-          {resendStatus &&
-            <div className={"alert alert-success alert-container"}>
-              {resendStatus}
-            </div>}
+            {error &&
+              <div id="error-login" className={"alert alert-danger alert-container"}>
+                {error}
+                {notVerified &&
+                  <button className="link-style"
+                    onClick={this.resendVerification}>
+                    Resend Verification Email
+                </button>}
+              </div>}
 
-          <div class="forgot-password text-center">
-            <Link to="/resetPassword">Forgot password</Link>
+            {resendStatus &&
+              <div className={"alert alert-success alert-container"}>
+                {resendStatus}
+              </div>}
+
+            
           </div>
         </form>
       </div>
