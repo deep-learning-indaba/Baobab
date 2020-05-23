@@ -637,6 +637,28 @@ class UserProfileListApiTest(ApiTestCase):
         self.assertEqual(len(response.json), 1)
         self.assertEqual(response.json[0]['type'], 'Invited Guest')
 
+    def test_response_and_candidate(self):
+        """
+        Users that have applied (there is a response) and are of type 'candidate'
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        application = Response(self.event1_application_form.id, candidates[0].id, True)
+        db.session.add(application)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['type'], 'Candidate')
 
 
 class UserProfileApiTest(ApiTestCase):
