@@ -37,10 +37,10 @@ class EventStatus extends Component {
   getApplicationResponse(event_id) {
     applicationFormService.getResponse(event_id).then(resp => {
       let applicationStatus = null;
-      if (resp.response) {
-        if (resp.response.is_submitted) {
+      if (resp.response && resp.response.length > 0) {
+        if (resp.response[0].is_submitted) {
           applicationStatus = "Submitted";
-        } else if (resp.response.is_withdrawn) {
+        } else if (resp.response[0].is_withdrawn) {
           applicationStatus = "Withdrawn";
         } else {
           applicationStatus = "NOT Submitted";
