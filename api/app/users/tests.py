@@ -479,6 +479,9 @@ class UserProfileListApiTest(ApiTestCase):
 
         self.event1_id = self.event1.id  #TODO: add comment about why we do this
 
+        # self.user1 = self.add_user(email='person@mail.com')
+
+
     def test_event_does_not_exist(self):
         """
         Test that filtering on a nonexistent event 403s. It 403s because the user does
@@ -577,9 +580,10 @@ class UserProfileListApiTest(ApiTestCase):
         candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         db.session.add_all(candidates)
 
+        user_id = candidates[0].id
         invitation = InvitedGuest(
             event_id=self.event1_id,
-            user_id=candidates[0].id,
+            user_id=user_id,
             role='EveryRole'
         )
 
@@ -595,10 +599,13 @@ class UserProfileListApiTest(ApiTestCase):
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['user_id'], user_id)
+        self.assertEqual(response.json[0]['type'], 'Invited Guest')
 
     def test_response_and_invited(self):
         """
         Users that are Invited Guests and that have responded should be returned.
+        (In the event they initially applied (response) and then became an invited guest)
         """
         self.seed_static_data()
 
@@ -614,6 +621,11 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.add(invitation)
         db.session.commit()
 
+        application = Response(self.event1_application_form.id, candidates[0].id, True)
+
+        db.session.add(application)
+        db.session.commit()
+
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
         params = {'event_id': self.event1_id}
@@ -623,6 +635,8 @@ class UserProfileListApiTest(ApiTestCase):
         # Assert that request succeeds and no users are returned.
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['type'], 'Invited Guest')
+
 
 
 class UserProfileApiTest(ApiTestCase):
