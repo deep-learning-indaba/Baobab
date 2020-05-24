@@ -35,6 +35,7 @@ class Event(db.Model):
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
+    travel_grant = db.Column(db.Boolean(), nullable=False)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
