@@ -221,14 +221,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(application_form)
         db.session.commit()
         return application_form
-<<<<<<< HEAD
 
     def create_registration_form(self, event_id=1):
         registration_form = RegistrationForm(event_id)
         db.session.add(registration_form)
         db.session.commit()
         return registration_form
-=======
     
     def add_section(
         self,
@@ -271,4 +269,3 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(answer)
         db.session.commit()
         return answer
->>>>>>> develop
