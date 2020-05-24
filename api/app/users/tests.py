@@ -548,26 +548,6 @@ class UserProfileListApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, [])
 
-    def test_response_and_not_invited(self):
-        """
-        Users that have responded (but are not invited guests) should be returned.
-        """
-        self.seed_static_data()
-
-        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
-        db.session.add_all(candidates)
-        db.session.commit()
-
-        # Make the request
-        header = self.get_auth_header_for(self.event1_admin.email)
-        params = {'event_id': self.event1_id}
-
-        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
-
-        # Assert that request succeeds and that users that responded are returned.
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json), 0)
-
     def test_no_response_and_invited(self):
         """
         Users that are Invited Guests that have not responded should be returned.
