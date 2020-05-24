@@ -476,7 +476,8 @@ class UserProfileListApiTest(ApiTestCase):
 
         db.session.flush()
 
-        self.event1_id = self.event1.id  #TODO: add comment about why we do this
+        self.event1_id = self.event1.id
+        self.event2_id = self.event2.id #TODO: add comment about why we do this
 
     def test_event_does_not_exist(self):
         """
@@ -672,6 +673,34 @@ class UserProfileListApiTest(ApiTestCase):
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
         params = {'event_id': self.event1_id} # Not event2 as with the application
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+        print(response.json)
+        # Assert that request succeeds as they applied to the same event.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 0)
+
+    def test_invited_different_event(self):
+        """
+        Invited guests for one event, should not be returned from another event
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        invitation = InvitedGuest(
+            event_id=self.event2_id,
+            user_id=candidates[0].id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}  # Not event2 as with the application
 
         response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
         print(response.json)
