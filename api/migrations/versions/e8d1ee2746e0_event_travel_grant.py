@@ -19,7 +19,7 @@ def upgrade():
     op.add_column('event', sa.Column('travel_grant', sa.Boolean(), nullable=True))
     op.execute("""UPDATE event SET travel_grant=True WHERE name IN ('indaba 2019', 'Test Event')""")
     op.execute("""UPDATE event SET travel_grant=False WHERE name NOT IN ('indaba 2019', 'Test Event')""")
-    op.alter_column('event', existing_type=sa.Boolean(), nullable=False)
+    op.alter_column('event', 'travel_grant', existing_type=sa.Boolean(), nullable=False)
     # ### end Alembic commands ###
 
 
