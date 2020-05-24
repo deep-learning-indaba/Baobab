@@ -12,6 +12,8 @@ import FormFileUpload from "../../../components/form/FormFileUpload";
 import { fileService } from "../../../services/file/file.service";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
+import Loading from "../../../components/Loading";
+import _ from "lodash";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -37,6 +39,17 @@ const findDependentQuestionAnswer = (entityToCheck, answers) => {
 
 const doesAnswerMatch = (entityToCheck, answer) => {
   return entityToCheck.show_for_values.indexOf(answer.value) > -1;
+}
+
+const answerByQuestionKey = (key, allQuestions, answers) => {
+  let question = allQuestions.find(q => q.key === key);
+  if (question) {
+    let answer = answers.find(a => a.question_id === question.id);
+    if (answer) {
+      return answer.value;
+    }
+  }
+  return null;
 }
 
 class FieldEditor extends React.Component {
@@ -206,9 +219,9 @@ class FieldEditor extends React.Component {
             key={"i_" + key}
             showError={validationError}
             errorText={validationError}
-            required={question.is_required} 
+            required={question.is_required}
             options={question.options}
-            responseId={responseId}/>
+            responseId={responseId} />
         )
       default:
         return (
@@ -256,17 +269,17 @@ class Section extends React.Component {
 
     const newQuestionModels = this.state.questionModels
       .map(q => {
-      if (q.question.id !== question.id) {
-        return q;
-      }
-      return {
-        ...q,
-        validationError: this.state.hasValidated
-          ? this.validate(q, newAnswer)
-          : "",
-        answer: newAnswer
-      };
-    })
+        if (q.question.id !== question.id) {
+          return q;
+        }
+        return {
+          ...q,
+          validationError: this.state.hasValidated
+            ? this.validate(q, newAnswer)
+            : "",
+          answer: newAnswer
+        };
+      })
 
     this.setState(
       {
@@ -303,13 +316,13 @@ class Section extends React.Component {
   isValidated = () => {
     const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
-    .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-    .map(q => {
-      return {
-        ...q,
-        validationError: this.validate(q)
-      };
-    });
+      .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+      .map(q => {
+        return {
+          ...q,
+          validationError: this.validate(q)
+        };
+      });
 
     const isValid = !validatedModels.some(v => v.validationError);
 
@@ -379,7 +392,7 @@ class Section extends React.Component {
                 responseId={this.props.responseId}
               />
             )
-          )
+            )
         }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
@@ -595,13 +608,11 @@ class Submitted extends React.Component {
   }
 }
 
-class ApplicationForm extends Component {
+class ApplicationFormInstance extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      formSpec: null,
-      isLoading: true,
       isSubmitting: false,
       isError: false,
       isSubmitted: false,
@@ -616,36 +627,23 @@ class ApplicationForm extends Component {
   }
 
   componentDidMount() {
-    applicationFormService.getForEvent(this.props.event ? this.props.event.id : 0).then(response => {
+    if (this.props.response) {
       this.setState({
-        formSpec: response.formSpec,
-        isError: response.formSpec === null,
-        errorMessage: response.error,
-        isLoading: false,
+        responseId: this.props.response.id,
+        new_response: false,
+        isSubmitted: this.props.response.is_submitted,
+        submittedTimestamp: this.props.response.submitted_timestamp,
+        answers: this.props.response.answers,
+        unsavedChanges: false
       });
-    });
-    this.loadResponse();
+    }
+    else {
+      this.setState({
+        new_response: true,
+        unsavedChanges: false
+      });
+    }
   }
-
-  loadResponse = () => {
-    applicationFormService.getResponse(this.props.event ? this.props.event.id : 0).then(resp => {
-      if (resp.response) {
-        this.setState({
-          responseId: resp.response.id,
-          new_response: false,
-          isSubmitted: resp.response.is_submitted,
-          submittedTimestamp: resp.response.submitted_timestamp,
-          answers: resp.response.answers,
-          unsavedChanges: false
-        });
-      } else {
-        this.setState({
-          new_response: true,
-          unsavedChanges: false
-        });
-      }
-    });
-  };
 
   handleSubmit = event => {
     event.preventDefault();
@@ -656,7 +654,7 @@ class ApplicationForm extends Component {
       () => {
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.state.formSpec.id, true, this.state.answers)
+            .submit(this.props.formSpec.id, true, this.state.answers)
             .then(resp => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -674,7 +672,7 @@ class ApplicationForm extends Component {
           applicationFormService
             .updateResponse(
               this.state.responseId,
-              this.state.formSpec.id,
+              this.props.formSpec.id,
               true,
               this.state.answers
             )
@@ -707,7 +705,7 @@ class ApplicationForm extends Component {
       () => {
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.state.formSpec.id, false, this.state.answers)
+            .submit(this.props.formSpec.id, false, this.state.answers)
             .then(resp => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -725,7 +723,7 @@ class ApplicationForm extends Component {
           applicationFormService
             .updateResponse(
               this.state.responseId,
-              this.state.formSpec.id,
+              this.props.formSpec.id,
               false,
               this.state.answers
             )
@@ -771,29 +769,12 @@ class ApplicationForm extends Component {
 
   render() {
     const {
-      formSpec,
-      isLoading,
       isError,
       isSubmitted,
       errorMessage,
       answers,
       isSubmitting
     } = this.state;
-
-    const loadingStyle = {
-      "width": "3rem",
-      "height": "3rem"
-    }
-
-    if (isLoading) {
-      return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      );
-    }
 
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{
@@ -823,8 +804,8 @@ class ApplicationForm extends Component {
     }
 
     const sections =
-      formSpec.sections &&
-      formSpec.sections.slice()
+      this.props.formSpec.sections &&
+      this.props.formSpec.sections.slice()
         .filter(includeEntityDueToDependentQuestion)
         .sort((a, b) => a.order - b.order);
     const sectionModels =
@@ -902,6 +883,141 @@ class ApplicationForm extends Component {
       </div>
     );
   }
+}
+
+class ApplicationList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+    }
+  }
+
+  getCandidate = (allQuestions, response) => {
+    const nominating_capacity = answerByQuestionKey("nominating_capacity", allQuestions, response.answers);
+    if (nominating_capacity === "other") {
+      let firstname = answerByQuestionKey("nomination_firstname", allQuestions, response.answers);
+      let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
+      return firstname + " " + lastname;
+    }
+    return "Self Nomination";
+  }
+
+  getStatus = (response) => {
+    if (response.is_submitted) {
+      return <span>Submitted</span>
+    }
+    else {
+      return <span>In Progress</span>
+    }
+  }
+
+  getAction = (response) => {
+    if (response.is_submitted) {
+      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>View</button>
+    }
+    else {
+      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>Continue</button>
+    }
+  }
+
+  render() {
+    let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
+    return <div>
+      <h4>Your Nominations</h4>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Nominee</th>
+            <th scope="col">Status</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.responses.map(response => {
+          return <tr key={"response_" + response.id}>
+            <td>{this.getCandidate(allQuestions, response)}</td>
+            <td>{this.getStatus(response)}</td>
+            <td>{this.getAction(response)}</td>
+          </tr>
+        })}
+        </tbody>
+      </table>
+    </div>
+  }
+
+}
+
+class ApplicationForm extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoading: true,
+      isError: false,
+      errorMessage: "",
+      formSpec: null,
+      responses: [],
+      selectedResponse: null
+    }
+  }
+
+  componentDidMount() {
+    const eventId = this.props.event ? this.props.event.id : 0;
+    Promise.all([
+      applicationFormService.getForEvent(eventId),
+      applicationFormService.getResponse(eventId)
+    ]).then(responses => {
+      let [formResponse, responseResponse] = responses;
+      let selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
+      this.setState({
+        formSpec: formResponse.formSpec,
+        responses: responseResponse.response,
+        isError: formResponse.formSpec === null || responseResponse.error,
+        errorMessage: (formResponse.error + " " + responseResponse.error).trim(),
+        isLoading: false,
+        selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
+        responseSelected: selectFirstResponse
+      });
+    });
+  }
+
+  responseSelected = response => {
+    this.setState({
+      selectedResponse: response,
+      responseSelected: true
+    });
+  }
+
+  newNomination = () => {
+    this.setState({
+      responseSelected: true
+    });
+  }
+
+  render() {
+    const { isLoading, isError, errorMessage, formSpec, responses, selectedResponse, responseSelected } = this.state;
+    if (isLoading) {
+      return (<Loading />);
+    }
+
+    if (isError) {
+      return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
+    }
+
+
+    if (formSpec.nominations && responses.length > 0 && !responseSelected) {
+      return <div>
+        <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>New Nomination ></button>
+      </div>
+    }
+    else {
+      return <ApplicationFormInstance
+        formSpec={formSpec}
+        response={selectedResponse}
+        event={this.props.event} />
+    }
+  }
+
 }
 
 export default withRouter(ApplicationForm);

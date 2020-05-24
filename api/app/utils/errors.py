@@ -18,8 +18,10 @@ SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
 QUESTION_NOT_FOUND = (
     {'message': 'No question exists with that Event ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
+FORM_NOT_FOUND_BY_ID = ({'message': 'No application form exists with that Application Form ID'}, 404)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
+RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted'}, 400)
 UPDATE_CONFLICT = (
     {'message': 'The requested update conflicts with the existing resource'}, 409)
 DB_NOT_AVAILABLE = ({'message': 'Unable to access the database'}, 500)
@@ -111,3 +113,5 @@ FAILED_CREATE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to create integration test user.'}, 500)
 FAILED_DELETE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to delete integration test user'}, 500)
+DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for this application form'}, 409)
+BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)

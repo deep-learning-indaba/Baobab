@@ -41,6 +41,7 @@ class AppUser(db.Model, UserMixin):
     residence_country = db.relationship('Country', foreign_keys=[residence_country_id])
     user_category = db.relationship('UserCategory')
     event_roles = db.relationship('EventRole')
+    responses = db.relationship('Response')
 
     def __init__(self,
                  email,
@@ -124,6 +125,9 @@ class AppUser(db.Model, UserMixin):
             or self._has_admin_role(event_id, 'admin')
             or self._has_admin_role(event_id,'registration-volunteer')
         )
+    
+    def has_at_least_one_response(self):
+        return len(self.responses) >= 1
          
 class PasswordReset(db.Model):
 
