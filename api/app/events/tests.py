@@ -568,9 +568,7 @@ class EventStatusTest(ApiTestCase):
         # Candidate has not submitted or withdrawn
         response = Response(
             self.application_form.id, 
-            self.user1.id, 
-            is_submitted=False, 
-            is_withdrawn=False)
+            self.user1.id)
         db.session.add(response)
         db.session.commit()
 
