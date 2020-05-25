@@ -593,7 +593,7 @@ class EventStatusTest(ApiTestCase):
         self.assertIsNone(status.offer_status)
 
         # Withdrawn
-        response.withdraw_response()
+        response.withdraw()
         db.session.commit()
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
