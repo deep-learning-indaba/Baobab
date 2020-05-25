@@ -45,6 +45,8 @@ class ResponseRepository():
         return db.session.query(Answer)\
             .filter_by(question_id=question_id)\
             .all()
+
+    @staticmethod
     def get_all_for_user_application(user_id, application_form_id):
         return (db.session.query(Response)
             .filter(Response.application_form_id == application_form_id, Response.user_id == user_id)
