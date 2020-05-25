@@ -3,6 +3,7 @@ import './Home.css';
 import { NavLink } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
+import EventStatus from "../../components/EventStatus";
 
 
 class Home extends Component {
@@ -57,18 +58,7 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        if (e.status === "Apply now" && e.is_application_open) {
-            return <NavLink to={`${e.key}/apply`} className="btn btn-success">Apply Now</NavLink>
-        } else if (e.status === "Continue application" && e.is_application_open) {
-            return <NavLink to={`${e.key}/apply`} className="btn btn-warning">Continue Application</NavLink>
-        } else if (e.status === "Application withdrawn" && e.is_application_open) {
-            return <div>
-                Application Withdrawn<br />
-                <NavLink to={`${e.key}/apply`} className="btn btn-warning">Re-apply</NavLink>
-            </div>
-        } else {
-            return e.status
-        }
+        return <EventStatus longForm={false} event={e}/>;
     }
 
     render() {

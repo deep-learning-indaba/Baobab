@@ -30,6 +30,10 @@ class GuestRegistration(db.Model):
     created_at = db.Column(db.DateTime(), nullable=True)
     confirmation_email_sent_at = db.Column(db.DateTime(), nullable=True)
 
+    def confirm(self, timestamp):
+        self.confirmed = True
+        self.confirmation_email_sent_at = timestamp
+
 
 class GuestRegistrationAnswer(db.Model):
     __tablename__ = "guest_registration_answer"

@@ -15,8 +15,12 @@ from app import LOGGER, app, db
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.events.models import Event, EventType
 from app.organisation.models import Organisation
+from app.users.models import AppUser, UserCategory, Country
+from app.events.models import Event
+from app.events.models import EventType
+from app.applicationModel.models import ApplicationForm
+from app.registration.models import RegistrationForm
 from app.responses.models import Answer, Response
-from app.users.models import AppUser, Country, UserCategory
 
 
 @event.listens_for(Engine, "connect")
@@ -217,6 +221,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(application_form)
         db.session.commit()
         return application_form
+
+    def create_registration_form(self, event_id=1):
+        registration_form = RegistrationForm(event_id)
+        db.session.add(registration_form)
+        db.session.commit()
+        return registration_form
     
     def add_section(
         self,
