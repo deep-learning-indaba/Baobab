@@ -72,8 +72,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.FORM_NOT_FOUND_BY_ID
         
         user = user_repository.get_by_id(user_id)
+        responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        if not application_form.nominations and user.has_at_least_one_response():
+        if not application_form.nominations and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id)
