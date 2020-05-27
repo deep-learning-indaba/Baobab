@@ -14,7 +14,7 @@ export function login() {
   cy.visit("/login");
   cy.get("input[id=email]").type(user.email);
   cy.get("input[id=password]").type(user.password);
-  cy.get("#btn-login").click();
+  cy.get("#btn-login").click({force: true});  // Forcing because the button can be hidden by the cookie consent.
   cy.wait(500);
   // No error.
   cy.get("#error-login").should("not.exist");
