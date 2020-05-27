@@ -40,6 +40,7 @@
 
 .section .headline p {
   text-align: left;
+  white-space: pre-wrap;
 }
 
 .confirmation.answer {
