@@ -240,6 +240,9 @@ We are specifically looking to support research projects or segments of larger r
 - that could reach deliverable outcomes by the end of 2020.
 
 Supported projects will have access to additional project-specific mentorship from the Deep Learning Indaba network.
+
+APPLICATOIN DEADLINE: 19 June 2020
+
     """, 1)
     session.add(main_section)
     session.commit()
