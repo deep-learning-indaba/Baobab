@@ -1,6 +1,12 @@
 
+from datetime import date, datetime
+
+from sqlalchemy import select
+from sqlalchemy.orm import column_property
+
 from app import db
-from datetime import date
+from app.applicationModel.models import Question
+
 
 class Response(db.Model):
 
@@ -17,30 +23,28 @@ class Response(db.Model):
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
-    answers = db.relationship('Answer')
+    answers = db.relationship('Answer', order_by='Answer.order')
 
-    def __init__(self, application_form_id, user_id, is_submitted=False, submitted_timestamp=None,
-                 is_withdrawn=False, withdrawn_timestamp=None
-                 ):
+    def __init__(self, application_form_id, user_id):
         self.application_form_id = application_form_id
         self.user_id = user_id
-        self.is_submitted = is_submitted
-        self.submitted_timestamp = submitted_timestamp
-        self.is_withdrawn = is_withdrawn
-        self.withdrawn_timestamp = withdrawn_timestamp
-        self.started_timestamp = date.today()
-
-    def submit_response(self):
-        self.is_withdrawn = False
-        self.withdrawn_timestamp = None
-        self.is_submitted = True
-        self.submitted_timestamp = date.today()
-
-    def withdraw_response(self):
         self.is_submitted = False
         self.submitted_timestamp = None
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
+        self.started_timestamp = date.today()
+
+    def submit(self):
+        self.is_submitted = True
+        self.submitted_timestamp = datetime.now()
+        self.is_withdrawn = False
+        self.withdrawn_timestamp = None
+
+    def withdraw(self):
         self.is_withdrawn = True
-        self.withdrawn_timestamp = date.today()
+        self.withdrawn_timestamp = datetime.now()
+        self.is_submitted = False
+        self.submitted_timestamp = None
 
 
 class Answer(db.Model):
@@ -54,10 +58,14 @@ class Answer(db.Model):
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
+    order = column_property(select([Question.order]).where(Question.id==question_id).correlate_except(Question))
 
     def __init__(self, response_id, question_id, value):
         self.response_id = response_id
         self.question_id = question_id
+        self.value = value
+
+    def update(self, value):
         self.value = value
     
     @property

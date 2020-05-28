@@ -45,7 +45,7 @@ class ReferenceRequestRepository():
     def get_references_by_response_id(response_id):
         return db.session.query(ReferenceRequest.response_id, Reference)\
                          .join(ReferenceRequest, ReferenceRequest.id == Reference.reference_request_id)\
-                         .filter_by(response_id=ReferenceRequest.response_id)\
+                         .filter_by(response_id=response_id)\
                          .all()
 
     @staticmethod
@@ -74,11 +74,11 @@ class ReferenceRepository():
     def get_by_response_id(response_id):
         return db.session.query(ReferenceRequest.response_id, Reference)\
             .join(ReferenceRequest, ReferenceRequest.id == Reference.reference_request_id)\
-            .filter_by(response_id=ReferenceRequest.response_id)\
+            .filter_by(response_id=response_id)\
             .all()
 
     @staticmethod
     def get_by_reference_request_id(reference_request_id):
         return db.session.query(Reference)\
-            .filter_by(reference_request_id=Reference.reference_request_id)\
+            .filter_by(reference_request_id=reference_request_id)\
             .first()
