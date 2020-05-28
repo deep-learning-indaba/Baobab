@@ -355,7 +355,7 @@ class App extends Component {
               <img
                 src={
                   this.state.organisation &&
-                  require("./images/" + this.state.organisation.small_logo)
+                  require("./images/" + this.state.organisation.icon_logo)
                 }
                 width="30"
                 height="30"
@@ -416,7 +416,7 @@ class App extends Component {
                   exact
                   path="/login"
                   render={props => (
-                    <Login {...props} loggedIn={this.refreshUser} />
+                    <Login {...props} loggedIn={this.refreshUser} organisation={this.state.organisation}/>
                   )}
                 />
                 <Route
@@ -475,7 +475,7 @@ class App extends Component {
                 </a>
                 {this.state.organisation &&
                   this.state.organisation.system_name !== "Baobab" && (
-                    <div className="float-right">
+                    <div className="float-right powered-by">
                       Powered by{" "}
                       <a
                         href="http://www.deeplearningindaba.com"
