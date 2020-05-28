@@ -61,7 +61,8 @@ class Event(db.Model):
                  offer_close,
                  registration_open,
                  registration_close,
-                 event_type
+                 event_type,
+                 travel_grant
                  ):
 
         self.name = name
@@ -84,6 +85,7 @@ class Event(db.Model):
         self.registration_close = registration_close
         self.event_roles = []
         self.event_type = event_type
+        self.travel_grant = travel_grant
 
     def set_name(self, new_name):
         self.name = new_name

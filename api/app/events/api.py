@@ -204,7 +204,8 @@ class EventAPI(EventMixin, restful.Resource):
             offer_close,
             registration_open,
             registration_close,
-            EventType[event_type]
+            EventType[event_type],
+            travel_grant=False   # TODO: Add to incoming request
         )
         event.add_event_role('admin', user_id)
         try:
