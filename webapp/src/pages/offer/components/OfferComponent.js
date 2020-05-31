@@ -335,14 +335,11 @@ class Offer extends Component {
   componentDidMount() {
     applicationFormService.getResponse(this.props.event ? this.props.event.id : 0)
       .then(results => {
-        console.log(results);
         if (results.response && results.response.length > 0 && results.response[0].is_submitted && !results.response[0].is_withdrawn) {
-          console.log("Setting applicationExist to TRUE");
           this.setState({
             applicationExist: true
           });
         } else {
-          console.log("Setting applicationExist to FALSE");
           this.setState({
             applicationExist: false
           });
