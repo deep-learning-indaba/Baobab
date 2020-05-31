@@ -18,12 +18,13 @@ class RegistrationRepository():
         ).one_or_none()
 
     @staticmethod
-    def get_by_user_id(user_id):
+    def get_by_user_id(user_id, event_id):
         """Get the registration for a given user id."""
         return db.session.query(Registration).join(
             Offer, Registration.offer_id == Offer.id
         ).filter(
-            Offer.user_id == user_id
+            Offer.user_id == user_id,
+            Offer.event_id == event_id
         ).first()
 
     @staticmethod

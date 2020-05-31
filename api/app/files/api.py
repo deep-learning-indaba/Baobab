@@ -29,7 +29,6 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
             return send_file(temp.name, as_attachment=True, attachment_filename=args['filename'], mimetype='application/pdf')
 
 
-    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
 

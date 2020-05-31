@@ -27,7 +27,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'validation_text': fields.String,
         'is_required': fields.Boolean,
         'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Raw
+        'show_for_values': fields.Raw,
+        'key': fields.String
     }
 
     section_fields = {

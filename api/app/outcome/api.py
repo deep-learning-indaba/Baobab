@@ -112,7 +112,7 @@ class OutcomeAPI(restful.Resource):
                 email_template = email_repository.get(event_id, 'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist')
                 if email_template:
                     send_mail(recipient=user.email, subject='{} Application Status Update'.format(event.name),
-                    body_text=email_template.format(
+                    body_text=email_template.template.format(
                         user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
                         event_name=event.name, host=misc.get_baobab_host()))
                     LOGGER.debug("Sent an outcome email to {}".format(user.email))

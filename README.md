@@ -1,9 +1,9 @@
-# Baobab
-
+<p align="center"><a href="https://www.deeplearningindaba.com" target="_blank" rel="noopener noreferrer"><img src="https://github.com/deep-learning-indaba/Baobab/raw/develop/baobab_logo_small.png" alt="Baobab Logo"></a></p>
 
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 [![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://join.slack.com/t/baobab-space/shared_invite/enQtOTc1MzUzNjAyODY0LTM2YmJiOTRiNWEyZWRjMjY5ZmNlYTNjY2Y3ODA4MjZjNDljZTFkZWU3YjU5OTk1MTI5MDQwYzI4YzQ0YjFiYzQ)
 ![Slack Status](https://img.shields.io/twitter/follow/DeepIndaba?label=Follow&style=social)
+[![deep-learning-indaba](https://circleci.com/gh/deep-learning-indaba/Baobab.svg?style=shield)](https://app.circleci.com/pipelines/github/deep-learning-indaba/Baobab?branch=develop)
 
 
 Baobab is an open source multi-tenant web application designed to facilitate the application and selection process for large scale meetings within the machine learning and artificial intelligence communities globally.
@@ -16,10 +16,13 @@ Following the selection process, applicants are informed of the decision and rel
 
 Lastly, successful applicants can then register to confirm they will attend as well as check-in at the event itself.
 
-# Structure
+## Structure
 
 - `api/` contains the flask-based web api
 - `webapp/` contains the react front-end
+
+## Hall of Fame
+[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/0)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/0)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/1)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/1)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/2)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/2)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/3)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/3)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/4)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/4)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/5)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/5)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/6)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/6)[![](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/images/7)](https://sourcerer.io/fame/avishkar58/deep-learning-indaba/Baobab/links/7)
 
 ## Contributing
 

@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+from flask import g, request
 
 def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
               file_path='', sender_name=None, sender_email=None):
@@ -24,8 +25,8 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
     Raises:
         e -- [description]
     '''
-    sender_name = sender_name or SMTP_SENDER_NAME
-    sender_email = sender_email or SMTP_SENDER_EMAIL
+    sender_name = sender_name or g.organisation.name
+    sender_email = sender_email or g.organisation.email_from
 
     if (not DEBUG):
         if mail_type == 'AMZ':

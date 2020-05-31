@@ -1,11 +1,11 @@
 @media all and (min-width: 480px) {
     .Login {
-      padding: 60px 0;
+      padding: 1em 0;
     }
   
     .Login form {
       margin: 0 auto;
-      max-width: 320px;
+      max-width: 375px;
     }
 }
 
@@ -14,5 +14,22 @@
 }
 
 .forgot-password {
-  margin-top: 1.5em;
+  margin-top: 0.2em;
+}
+
+.login-header-logo img {
+  width: 100px;
+}
+
+.login-header-logo h3 {
+  font-weight: bold;
+}
+
+.login-header-logo h6 .sign-up {
+  font-weight: bold;
+}
+
+#btn-login {
+  width: 100%;
+  margin-top: 1em;
 }

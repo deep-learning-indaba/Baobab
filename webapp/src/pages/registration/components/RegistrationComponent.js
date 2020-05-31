@@ -39,7 +39,8 @@ class RegistrationComponent extends Component {
       registrationId: false,
       registrationFormId: false,
       formSuccess: false,
-      formFailure: false
+      formFailure: false,
+      registrationNotAvailable: false
     };
   }
 
@@ -147,6 +148,18 @@ class RegistrationComponent extends Component {
               } else {
                 if (result.statusCode === 409) {
                   this.props.history.push("/offer");
+                }
+                if (result.statusCode === 404) {
+                  this.setState({
+                    registrationNotAvailable: true,
+                    isLoading: false
+                  });
+                }
+                else {
+                  this.setStats({
+                    error: result.error,
+                    isLoading: false
+                  });
                 }
               }
             });
@@ -260,7 +273,8 @@ class RegistrationComponent extends Component {
       hasValidated,
       validationStale,
       isValid,
-      isSubmitting
+      isSubmitting,
+      registrationNotAvailable
     } = this.state;
 
     this.getDropdownDescription = (options, answer) => {
@@ -390,6 +404,12 @@ class RegistrationComponent extends Component {
       </div>;
     }
 
+    if (registrationNotAvailable) {
+      return <div className={"alert alert-warning alert-container"}>
+        Registration is not yet available, we will contact you by email as soon as it is.
+      </div>;
+    }
+
     return (
       <div className="registration container-fluid pad-top-30-md">
         {this.state.formSuccess ? (
@@ -494,7 +514,7 @@ class RegistrationComponent extends Component {
               {this.state.formSuccess !== true &&
                 this.state.formFailure !== true && (
                   <div className="alert alert-danger alert-container">
-                    No registration form available
+                    Registration not available
                 </div>
                 )}
             </div>

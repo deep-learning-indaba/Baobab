@@ -6,7 +6,12 @@ from app.organisation.models import Organisation
 
 class OrganisationApiTest(ApiTestCase):
     def seed_static_data(self):
-        self.add_organisation('Deep Learning Indaba', 'Baobab', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+        self.add_organisation(
+            name='Deep Learning Indaba', 
+            system_name='Baobab', 
+            small_logo='blah.png', 
+            large_logo='blah_big.png', 
+            domain='deeplearningindaba')
         db.session.flush()
 
     def setUp(self):

@@ -23,22 +23,23 @@ from app.utils.emailer import send_mail
 from app.utils import misc
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
+from app.responses.repository import ResponseRepository as response_repository
 
 OFFER_EMAIL_BODY = """
 Dear {user_title} {first_name} {last_name},
 
-Congratulations! You've been selected to attend the {event_name}!
+Congratulations! You've been selected to attend {event_name}!
 
 Please follow the link below to see details and accept your offer: {host}/offer
-You have up until the {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
+You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
 
 If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
-We will read all of these and if there is anything we can do to accommodate you (for example if more funding for travel becomes available), we may extend you a new offer in a subsequent round.
+We will read all of these and if there is anything we can do to accommodate you, we may extend you a new offer in a subsequent round.
 
-If you have any queries, please forward them to info@deeplearningindaba.com  
+If you have any queries, please contact us at {event_email_from}
 
 Kind Regards,
-The Deep Learning Indaba Team
+The {event_name} organisers
 """
 
 def offer_info(offer_entity, requested_travel=None):
@@ -145,7 +146,9 @@ class OfferAPI(OfferMixin, restful.Resource):
         travel_award = args['travel_award']
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
-        event_name = db.session.query(Event).filter(Event.id == event_id).first().name
+        event = db.session.query(Event).filter(Event.id == event_id).first()
+        event_name = event.name
+        event_email_from = event.email_from
 
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
         if existing_offer:
@@ -184,7 +187,8 @@ class OfferAPI(OfferMixin, restful.Resource):
                       body_text=email_body_template.format(
                             user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
                             event_name=event_name, host=misc.get_baobab_host(),
-                            expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d")))
+                            expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
+                            event_email_from=event_email_from))
 
             LOGGER.debug("Sent an offer email to {}".format(user.email))
 
@@ -198,15 +202,11 @@ class OfferAPI(OfferMixin, restful.Resource):
 
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
-
-            request_travel = db.session.query(Answer).join(
-                Question, Question.id == Answer.question_id
-            ).filter(
-                Question.headline == 'Would you like to be considered for a travel award?'
-            ).join(Response, Answer.response_id == Response.id).filter(
-                Response.user_id == user_id, Response.is_submitted == True
-            ).first()
-
+            response = response_repository.get_submitted_by_user_id_for_event(user_id, event_id)
+            if not response:
+                return errors.RESPONSE_NOT_FOUND
+            request_travel = response_repository.get_answer_by_question_key_and_response_id('travel_grant', response.id)
+            
             if not offer:
                 return errors.OFFER_NOT_FOUND
             elif offer.is_expired():

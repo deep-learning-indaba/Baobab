@@ -63,7 +63,7 @@ class ApplicationFormApiTest(ApiTestCase):
 
     def test_repo_get_by_event(self):
         app = application_form_repository.get_by_event_id(self.test_event.id)
-        self.assertEqual(app[0], self.test_form)
+        self.assertEqual(app, self.test_form)
 
     def test_repo_get_sections(self):
         sections_by_app_id = application_form_repository.get_sections_by_app_id(self.test_form.id)

@@ -1,23 +1,26 @@
-import unittest
-import unicodedata
-
 import json
-import random
 import os
+import random
+import unicodedata
+import unittest
+from datetime import datetime, timedelta
+from sqlite3 import Connection as SQLite3Connection
+
 import six
-from datetime import datetime,timedelta
-
-from sqlalchemy.exc import ProgrammingError
-
-from app import db, app, LOGGER
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
-from sqlite3 import Connection as SQLite3Connection
+from sqlalchemy.exc import ProgrammingError
+
+from app import LOGGER, app, db
+from app.applicationModel.models import ApplicationForm, Question, Section
+from app.events.models import Event, EventType
 from app.organisation.models import Organisation
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.events.models import EventType
 from app.applicationModel.models import ApplicationForm
+from app.registration.models import RegistrationForm
+from app.responses.models import Answer, Response
 
 
 @event.listens_for(Engine, "connect")
@@ -142,13 +145,25 @@ class ApiTestCase(unittest.TestCase):
         db.session.flush()
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', domain='com', url='www.org.com',
+                                    large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
                                     email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
                                     privacy_policy='PrivacyPolicy.pdf'):
-        org = Organisation(name, system_name, small_logo, large_logo, domain, url, email_from, system_url, privacy_policy)
+        org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy)
         db.session.add(org)
         db.session.commit()
         return org
+
+    def add_country(self):
+        country = Country('South Africa')
+        db.session.add(country)
+        db.session.commit()
+        return country
+    
+    def add_category(self):
+        category = UserCategory('Student')
+        db.session.add(category)
+        db.session.commit()
+        return category
 
     def add_event(self, 
                  name ='Test Event', 
@@ -169,11 +184,13 @@ class ApiTestCase(unittest.TestCase):
                  offer_close = datetime.now(),
                  registration_open = datetime.now(),
                  registration_close = datetime.now() + timedelta(days=15),
-                 event_type = EventType.EVENT):
+                 event_type = EventType.EVENT,
+                 travel_grant = False):
 
         event = Event(name, description, start_date,  end_date, key,  organisation_id,  email_from,  url, 
                       application_open, application_close, review_open, review_close, selection_open, 
-                      selection_close, offer_open,  offer_close, registration_open, registration_close, event_type)
+                      selection_close, offer_open,  offer_close, registration_open, registration_close, event_type,
+                      travel_grant)
         db.session.add(event)
         db.session.commit()
         return event
@@ -206,3 +223,51 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(application_form)
         db.session.commit()
         return application_form
+
+    def create_registration_form(self, event_id=1):
+        registration_form = RegistrationForm(event_id)
+        db.session.add(registration_form)
+        db.session.commit()
+        return registration_form
+    
+    def add_section(
+        self,
+        application_form_id,
+        name='Section',
+        description='Description',
+        order=1):
+        section = Section(application_form_id, name, description, order)
+        db.session.add(section)
+        db.session.commit()
+        return section
+    
+    def add_question(
+        self,
+        application_form_id,
+        section_id,
+        headline='Question?',
+        placeholder='placeholder',
+        order=1,
+        question_type='short-text',
+        validation_regex=None):
+        question = Question(application_form_id, section_id, headline, placeholder, order, question_type, validation_regex)
+        db.session.add(question)
+        db.session.commit()
+        return question
+    
+    def add_response(self, application_form_id, user_id, is_submitted, is_withdrawn):
+        response = Response(application_form_id, user_id)
+        if is_submitted:
+            response.submit()
+        if is_withdrawn:
+            response.withdraw()
+
+        db.session.add(response)
+        db.session.commit()
+        return response
+    
+    def add_answer(self, response_id, question_id, answer_value):
+        answer = Answer(response_id, question_id, answer_value)
+        db.session.add(answer)
+        db.session.commit()
+        return answer
