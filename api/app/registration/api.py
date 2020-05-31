@@ -203,6 +203,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         try:
             offer = db.session.query(Offer).filter(Offer.event_id == event_id).filter(Offer.user_id == user_id).first()
             response = response_repository.get_submitted_by_user_id_for_event(user_id, event_id)
+            if not response:
+                return errors.RESPONSE_NOT_FOUND
             request_travel = response_repository.get_answer_by_question_key_and_response_id('travel_grant', response.id)
             
             if not offer:
