@@ -75,7 +75,7 @@ class Home extends Component {
                     <div>
                         {this.state.organisation &&
                             <h2 className="Blurb">Welcome to {this.state.organisation.system_name}</h2>}
-                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">Sign up</NavLink> for an account in order to apply for an event, or <NavLink id="nav-login" to="/login">login</NavLink> if you already have one.</p>
+                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">Sign up</NavLink> for an account in order to apply for an event, or <NavLink id="nav-login" to="/login">sign in</NavLink> if you already have one.</p>
                     </div>
                 }
 

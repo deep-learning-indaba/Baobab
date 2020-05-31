@@ -54,7 +54,8 @@ def event_info(user_id, event_org, status):
         'is_review_open': event_org.Event.is_review_open,
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
-        'is_registration_open': event_org.Event.is_registration_open
+        'is_registration_open': event_org.Event.is_registration_open,
+        'travel_grant': event_org.Event.travel_grant
     }
 
 
@@ -203,7 +204,8 @@ class EventAPI(EventMixin, restful.Resource):
             offer_close,
             registration_open,
             registration_close,
-            EventType[event_type]
+            EventType[event_type],
+            travel_grant=False   # TODO: Add to incoming request
         )
         event.add_event_role('admin', user_id)
         try:

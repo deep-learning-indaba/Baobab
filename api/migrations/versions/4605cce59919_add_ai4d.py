@@ -77,6 +77,7 @@ class Event(Base):
         'organisation.id'), nullable=False)
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
+    travel_grant = db.Column(db.Boolean(), nullable=False)
 
     application_open = db.Column(db.DateTime(), nullable=False)
     application_close = db.Column(db.DateTime(), nullable=False)
@@ -109,7 +110,8 @@ class Event(Base):
                  offer_close,
                  registration_open,
                  registration_close,
-                 event_type
+                 event_type,
+                 travel_grant
                  ):
 
         self.name = name
@@ -131,6 +133,7 @@ class Event(Base):
         self.registration_open = registration_open
         self.registration_close = registration_close
         self.event_type = event_type
+        self.travel_grant = travel_grant
 
 class ApplicationForm(Base):
     __tablename__ = 'application_form'
@@ -220,7 +223,8 @@ def upgrade():
         datetime.date(2021, 1, 31), datetime.date(2021, 1, 31), 'ai4d2020', 1, 'baobab@deeplearningindaba.com',
         'https://deeplearningindaba.com/2020/grand-challenge', datetime.date(2020, 5, 27), datetime.date(2020, 6, 20), datetime.date(2020, 12, 31), 
         datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), datetime.date(2020, 12, 31),
-        datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), EventType.EVENT)
+        datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), datetime.date(2020, 12, 31), EventType.EVENT,
+        False)
     
     session.add(ai4d)
     session.commit()

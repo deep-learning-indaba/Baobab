@@ -35,6 +35,7 @@ class Event(db.Model):
     registration_open = db.Column(db.DateTime(), nullable=False)
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
+    travel_grant = db.Column(db.Boolean(), nullable=False)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
@@ -60,7 +61,8 @@ class Event(db.Model):
                  offer_close,
                  registration_open,
                  registration_close,
-                 event_type
+                 event_type,
+                 travel_grant
                  ):
 
         self.name = name
@@ -83,6 +85,7 @@ class Event(db.Model):
         self.registration_close = registration_close
         self.event_roles = []
         self.event_type = event_type
+        self.travel_grant = travel_grant
 
     def set_name(self, new_name):
         self.name = new_name

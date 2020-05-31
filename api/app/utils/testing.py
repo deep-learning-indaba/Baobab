@@ -184,11 +184,13 @@ class ApiTestCase(unittest.TestCase):
                  offer_close = datetime.now(),
                  registration_open = datetime.now(),
                  registration_close = datetime.now() + timedelta(days=15),
-                 event_type = EventType.EVENT):
+                 event_type = EventType.EVENT,
+                 travel_grant = False):
 
         event = Event(name, description, start_date,  end_date, key,  organisation_id,  email_from,  url, 
                       application_open, application_close, review_open, review_close, selection_open, 
-                      selection_close, offer_open,  offer_close, registration_open, registration_close, event_type)
+                      selection_close, offer_open,  offer_close, registration_open, registration_close, event_type,
+                      travel_grant)
         db.session.add(event)
         db.session.commit()
         return event
