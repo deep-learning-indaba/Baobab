@@ -134,7 +134,7 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <NavLink className="btn btn-primary" to="/registration">
+              <NavLink className="btn btn-primary" to={`${this.props.event.key}/registration`}>
                 Proceed to Registration >
               </NavLink>
             </div>
