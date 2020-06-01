@@ -209,7 +209,7 @@ class EventStatus extends Component {
 
   mapStatus = (event) => {
       if (event.status === null) {
-        return self.unknownStatus("Status", "Please try refresh the page and/or clear your cookies");
+        return this.unknownStatus("Status", "Please try refresh the page and/or clear your cookies");
       }
       if (event.status.invited_guest) {
         return this.invitedGuestStatus(event);
