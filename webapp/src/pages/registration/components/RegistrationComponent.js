@@ -6,11 +6,11 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
-import FormFileUpload from "../../../components/form/FormFileUpload";
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
-import { fileService } from "../../../services/file/file.service";
+import FileUploadComponent from "../../../components/FileUpload";
+import Loading from "../../../components/Loading";
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -19,62 +19,6 @@ const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
-
-class FileUploadComponent extends Component {
-  //TODO: Move to central place and share with application form
-  constructor(props) {
-    super(props);
-    this.state = {
-      uploadPercentComplete: 0,
-      uploading: false,
-      uploaded: false,
-      uploadError: ""
-    };
-  }
-
-  handleUploadFile = file => {
-    this.setState({
-      uploading: true
-    }, () => {
-      fileService
-        .uploadFile(file, progressEvent => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total);
-          this.setState({
-            uploadPercentComplete: percentCompleted
-          });
-        })
-        .then(response => {
-          if (response.fileId && this.props.onChange) {
-            this.props.onChange(this.props.question.id, response.fileId);
-          }
-          this.setState({
-            uploaded: response.fileId !== "",
-            uploadError: response.error,
-            uploading: false
-          });
-        });
-    }
-    );
-  };
-
-  render() {
-    return (
-      <FormFileUpload
-        Id={this.props.question.id}
-        name={this.id}
-        label={this.props.question.description}
-        key={"i_" + this.props.key}
-        value={(this.props.answer && this.props.answer.value) || ""}
-        showError={this.props.validationError || this.state.uploadError}
-        errorText={this.props.validationError || this.state.uploadError}
-        uploading={this.state.uploading}
-        uploadPercentComplete={this.state.uploadPercentComplete}
-        uploadFile={this.handleUploadFile}
-        uploaded={this.state.uploaded} />
-    );
-  }
-}
 
 class RegistrationComponent extends Component {
   constructor(props) {
@@ -95,7 +39,8 @@ class RegistrationComponent extends Component {
       registrationId: false,
       registrationFormId: false,
       formSuccess: false,
-      formFailure: false
+      formFailure: false,
+      registrationNotAvailable: false
     };
   }
 
@@ -203,6 +148,18 @@ class RegistrationComponent extends Component {
               } else {
                 if (result.statusCode === 409) {
                   this.props.history.push("/offer");
+                }
+                if (result.statusCode === 404) {
+                  this.setState({
+                    registrationNotAvailable: true,
+                    isLoading: false
+                  });
+                }
+                else {
+                  this.setStats({
+                    error: result.error,
+                    isLoading: false
+                  });
                 }
               }
             });
@@ -316,13 +273,9 @@ class RegistrationComponent extends Component {
       hasValidated,
       validationStale,
       isValid,
-      isSubmitting
+      isSubmitting,
+      registrationNotAvailable
     } = this.state;
-
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
 
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
@@ -338,7 +291,7 @@ class RegistrationComponent extends Component {
         case SHORT_TEXT:
           return (
             <FormTextBox
-              Id={question.id}
+              id={question.id}
               name={this.id}
               type="text"
               label={question.description}
@@ -353,7 +306,7 @@ class RegistrationComponent extends Component {
         case SINGLE_CHOICE:
           return (
             <FormCheckbox
-              Id={question.id}
+              id={question.id}
               name={this.id}
               type="checkbox"
               label={question.description}
@@ -369,7 +322,7 @@ class RegistrationComponent extends Component {
         case LONG_TEXT[1]:
           return (
             <FormTextArea
-              Id={question.id}
+              id={question.id}
               name={this.id}
               label={question.description}
               onChange={this.handleChange}
@@ -398,7 +351,7 @@ class RegistrationComponent extends Component {
         case MULTI_CHECKBOX:
           return (
             <FormMultiCheckbox
-              Id={this.id}
+              id={this.id}
               name={this.id}
               options={this.options}
               onChange={this.handleChange}
@@ -409,8 +362,9 @@ class RegistrationComponent extends Component {
         case FILE:
           return (
             <FileUploadComponent
-              question={question}
-              answer={answer}
+              id={question.id}
+              description={question.description}
+              value={this.props.answer && this.props.answer.value}
               validationError={validationError}
               onChange={this.onChange}
               key={"i_" + key} />
@@ -418,7 +372,7 @@ class RegistrationComponent extends Component {
         case DATE:
           return (
             <FormDate
-              Id={question.id}
+              id={question.id}
               name={this.id}
               label={question.description}
               value={answer ? answer.value : answer}
@@ -440,19 +394,19 @@ class RegistrationComponent extends Component {
 
     if (isLoading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border"
-            style={loadingStyle}
-            role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
+        <Loading/>
       );
     }
 
     if (error) {
       return <div className={"alert alert-danger alert-container"}>
         {error}
+      </div>;
+    }
+
+    if (registrationNotAvailable) {
+      return <div className={"alert alert-warning alert-container"}>
+        Thank you! Your confirmation has been recorded and your place is confirmed. We will contact you by email when the event registration form is available.
       </div>;
     }
 
@@ -560,7 +514,7 @@ class RegistrationComponent extends Component {
               {this.state.formSuccess !== true &&
                 this.state.formFailure !== true && (
                   <div className="alert alert-danger alert-container">
-                    No registration form available
+                    Registration not available
                 </div>
                 )}
             </div>

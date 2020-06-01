@@ -15,8 +15,7 @@ import {
   validEmail
 } from "../../../utils/validation/rules.js";
 import {
-  getTitleOptions,
-  getGenderOptions
+  getTitleOptions
 } from "../../../utils/validation/contentHelpers";
 
 const baseFieldValidations = [
@@ -28,11 +27,7 @@ const extraFieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
   ruleRunner(validationFields.firstName, requiredText),
   ruleRunner(validationFields.lastName, requiredText),
-  ruleRunner(validationFields.gender, requiredDropdown),
-  ruleRunner(validationFields.affiliation, requiredText)
 ]
-
-const MENTOR_ATTENDEE_CATEGORY_ID = 8;
 
 class InvitedGuests extends Component {
   constructor(props) {
@@ -78,13 +73,9 @@ class InvitedGuests extends Component {
 
   componentDidMount() {
     this.setState({ loading: true }, () => this.getGuestList());
-    Promise.all([
-      getTitleOptions,
-      getGenderOptions,
-    ]).then(result => {
+    getTitleOptions.then(result => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0]),
-        genderOptions: this.checkOptionsList(result[1]),
+        titleOptions: this.checkOptionsList(result)
       });
     });
   }
@@ -127,11 +118,11 @@ class InvitedGuests extends Component {
   };
 
   convertToCsv = (guestList) => {
-    var str = "NAME,EMAIL,AFFILIATION,ROLE\r\n";
+    var str = "NAME,EMAIL,ROLE\r\n";
 
     for (var i = 0; i < guestList.length; i++) {
       let fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
-      str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].user.affiliation + ',' + guestList[i].role;
+      str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].role;
       str += "\r\n";
     }
     return str;
@@ -267,10 +258,7 @@ class InvitedGuests extends Component {
         this.setState({ showErrors: true });
         return;
       }
-      const user = {
-        ...this.state.user,
-        category: MENTOR_ATTENDEE_CATEGORY_ID
-      };
+      const user = this.state.user;
 
       this.setState({ adding: true });
 
@@ -299,7 +287,6 @@ class InvitedGuests extends Component {
     return "";
   }
 
-  // TODO change Baobab to [event]
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
 
@@ -330,10 +317,6 @@ class InvitedGuests extends Component {
       Header: <div className="invitedguest-email">Email</div>,
       accessor: u => u.user.email
     }, {
-      id: "affiliation",
-      Header: <div className="invitedguest-affiliation">Affiliation</div>,
-      accessor: u => u.user.affiliation
-    }, {
       id: "role",
       Header: <div className="invitedguest-role">Role</div>,
       accessor: u => u.role
@@ -347,7 +330,7 @@ class InvitedGuests extends Component {
           </div>}
 
         <div class="card no-padding-h">
-          <p className="h5 text-center mb-4 ">Invited Guests</p>
+          <p className="h5 text-center mb-4">Invited Guests</p>
 
           <div className="row">
             <div className={threeColClassName}>
@@ -455,7 +438,7 @@ class InvitedGuests extends Component {
 
                 {!this.state.addedSucess && this.state.notFound &&
                   <span className="text-warning not-found">
-                    User does not exist in Baobab, please add these details:
+                    User does not exist, please add these details:
                   </span>}
               </div>
             </div>
@@ -502,31 +485,6 @@ class InvitedGuests extends Component {
                 </div>
 
                 <div class="row">
-                  <div className={threeColClassName}>
-                    <FormSelect
-                      options={this.state.genderOptions}
-                      id={validationFields.gender.name}
-                      placeholder={validationFields.gender.display}
-                      onChange={this.handleChangeDropdown}
-                      label={validationFields.gender.display}
-                      showError={this.getError(validationFields.gender.name)}
-                      errorText={this.getError(validationFields.gender.name)}
-                      defaultValue={this.state.user[validationFields.gender.name] || ""}
-                      value={this.state.user[validationFields.gender.name] || ""} />
-                  </div>
-
-                  <div className={threeColClassName}>
-                    <FormTextBox
-                      id={validationFields.affiliation.name}
-                      type="text"
-                      placeholder={validationFields.affiliation.display}
-                      onChange={this.handleChange(validationFields.affiliation)}
-                      label={validationFields.affiliation.display}
-                      showError={this.getError(validationFields.affiliation.name)}
-                      errorText={this.getError(validationFields.affiliation.name)}
-                      value={this.state.user[validationFields.affiliation.name] || ""} />
-                  </div>
-
                   <div className={threeColClassName}>
                     <button
                       type="button"

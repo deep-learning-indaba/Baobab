@@ -6,6 +6,10 @@ db:
   image: orchardup/postgresql
   ports:
     - 5432:5432
+storage:
+  image: fsouza/fake-gcs-server
+  ports:
+    - 4443:4443
 web:
   build: ./api
   command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
@@ -16,6 +20,7 @@ web:
     - 5000:5000
   links:
     - db
+    - storage
   environment:
     DEBUG: "True"
     SECRET_KEY: __filler__
@@ -45,7 +50,34 @@ webapp:
   environment:
     - NODE_ENV=development
     - CHOKIDAR_USEPOLLING=true
+
 test-ci:
   build: ./webapp
   command: yarn test-ci
   dockerfile: Dockerfile-test
+
+webappintegration:
+  build: ./webapp
+  command: yarn start-integration
+  volumes:
+    - ./webapp:/usr/src/app
+    - ./webapp:/webapp
+  ports:
+    - "8081:3000"
+  environment:
+    - NODE_ENV=development
+    - CHOKIDAR_USEPOLLING=true
+
+cypress:
+  ipc: host
+  image: "cypress/included:4.2.0"
+  links:
+    - webappintegration
+    - web
+  environment:
+    # pass base url to test pointing at the web application
+    - CYPRESS_baseUrl=http://webappintegration:3000
+  # share the current folder as volume to avoid copying
+  working_dir: /integration-tests
+  volumes:
+    - ./integration-tests/:/integration-tests

@@ -26,14 +26,19 @@
 }
 
 body {
-  background: #E8ECEE;
+  background: #F9fafb;
+  font-family: 'Open Sans', sans-serif;
 }
 
 .Body{
-  background: #E8ECEE;
+  background: #F9fafb;;
   min-height: 85vh;
   padding-bottom: 1em;
   padding-top: 2em;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: 'Roboto', sans-serif;
 }
 
 .HomeNavBar{
@@ -64,6 +69,20 @@ footer .btn {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0;
+}
+
+.nav-link {
+  cursor: pointer;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.navbar-brand {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .navbar-brand .brand-image {
@@ -72,4 +91,22 @@ footer .btn {
 
 .alert-container{
   margin-top: 16px;
+}
+
+.form-group {
+  white-space: pre-wrap;
+}
+
+.card {
+  box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+label {
+  margin-bottom: .2rem;
+}
+
+.powered-by a {
+  font-weight: bold;
 }

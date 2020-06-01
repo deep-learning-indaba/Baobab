@@ -9,6 +9,9 @@ from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.registration.models import Offer
 from app.organisation.models import Organisation
+from app.outcome.repository import OutcomeRepository as outcome_repository
+from app.outcome.models import Status
+from app.responses.models import Response
 
 
 OFFER_DATA = {
@@ -73,6 +76,9 @@ class OfferApiTest(ApiTestCase):
         )
         db.session.commit()
 
+        app_form = self.create_application_form()
+        self.add_response(app_form.id, test_user.id, True, False)
+
         if add_offer:
             offer = Offer(
                 user_id=test_user.id,
@@ -97,7 +103,6 @@ class OfferApiTest(ApiTestCase):
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
-        LOGGER.debug("<<auth>> {}".format(data))
         header = {'Authorization': data['token']}
         return header
 
@@ -112,6 +117,9 @@ class OfferApiTest(ApiTestCase):
         self.assertTrue(data['payment_required'])
         self.assertTrue(data['travel_award'])
         self.assertTrue(data['accommodation_award'])
+
+        outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
+        self.assertEqual(outcome.status, Status.ACCEPTED)
 
     def test_create_offer_with_template(self):
         self.seed_static_data(add_offer=False)
@@ -130,10 +138,10 @@ class OfferApiTest(ApiTestCase):
                                  headers=self.adminHeaders)
         data = json.loads(response.data)
 
-        assert response.status_code == 201
-        assert data['payment_required']
-        assert data['travel_award']
-        assert data['accommodation_award']
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(data['payment_required'])
+        self.assertTrue(data['travel_award'])
+        self.assertTrue(data['accommodation_award'])
 
     def test_create_duplicate_offer(self):
         self.seed_static_data(add_offer=True)
@@ -145,15 +153,15 @@ class OfferApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 409)
 
     def test_get_offer(self):
-        self.seed_static_data()
+        self.seed_static_data(add_offer=True)
 
         event_id = 1
         url = "/api/v1/offer?event_id=%d" % (
             event_id)
-        LOGGER.debug(url)
+
         response = self.app.get(url, headers=self.headers)
 
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
 
     def test_get_offer_not_found(self):
         self.seed_static_data()
@@ -161,10 +169,10 @@ class OfferApiTest(ApiTestCase):
         event_id = 12
         url = "/api/v1/offer?event_id=%d" % (
             event_id)
-        LOGGER.debug(url)
+
         response = self.app.get(url, headers=self.headers)
 
-        assert response.status_code == 404
+        self.assertEqual(response.status_code, 404)
 
     def test_update_offer(self):
         self.seed_static_data()
@@ -174,14 +182,14 @@ class OfferApiTest(ApiTestCase):
         rejected_reason = "the reason for rejection"
         url = "/api/v1/offer?offer_id=%d&event_id=%d&candidate_response=%s&rejected_reason=%s" % (
             offer_id, event_id, candidate_response, rejected_reason)
-        LOGGER.debug(url)
+
         response = self.app.put(url, headers=self.headers)
 
         data = json.loads(response.data)
         LOGGER.debug("Offer-PUT: {}".format(response.data))
 
-        assert response.status_code == 201
-        assert data['candidate_response']
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(data['candidate_response'])
 
 
 class RegistrationTest(ApiTestCase):

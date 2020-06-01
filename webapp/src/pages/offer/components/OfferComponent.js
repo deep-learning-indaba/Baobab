@@ -62,8 +62,8 @@ class Offer extends Component {
               showReasonBox: false
             }, () => {
               this.displayOfferResponse();
-              if (candidate_response) {
-                this.props.history.push("/registration");
+              if (candidate_response && this.props.event) {
+                this.props.history.push(`/${this.props.event.key}/registration`);
               }
             });
           } else if (response.error) {
@@ -97,21 +97,23 @@ class Offer extends Component {
 
   displayOfferResponse = () => {
     const { offer } = this.state;
+    const event = this.props.event;
     let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
 
     return (
       <div className="container">
         <p className="h5 pt-5">
           {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-          {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at the Indaba on {responded_date} for the following reason:<br /><br />{offer.rejected_reason}</span>}
+          {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at {event ? event.name : ""} on {responded_date} for the following reason:<br /><br />{offer.rejected_reason}</span>}
         </p>
 
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
           {this.row("Registration fee", offer.payment_required ? "Payment of 350 USD Required to confirm your place" : "Fee Waived")}
-          {this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Nairobi will be arranged by the Indaba" : "You are responsible for your own travel to and from Nairobi.")}
-          {this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August" : "You are responsible for your own accommodation in Nairobi.")}
+
+          {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Nairobi will be arranged by the Indaba" : "You are responsible for your own travel to and from Nairobi.")}
+          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August" : "You are responsible for your own accommodation in Nairobi.")}
         </div>}
 
         {offer.candidate_response &&
@@ -132,7 +134,7 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <NavLink className="btn btn-primary" to="/registration">
+              <NavLink className="btn btn-primary" to={`${this.props.event.key}/registration`}>
                 Proceed to Registration >
               </NavLink>
             </div>
@@ -163,11 +165,62 @@ class Offer extends Component {
       </div>);
   }
 
+  renderTravelAward = (offer, accepted_travel_award) => {
+    return <div class="row mb-4">
+      <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
+      <div class="col-md-6" align="left">
+        {offer && offer.travel_award && accepted_travel_award &&
+          "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
+        {offer && offer.travel_award && !accepted_travel_award &&
+          <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Nairobi!</span>}
+        {offer && offer.requested_travel && !offer.travel_award &&
+          "Unfortunately we are unable to grant you the travel award you requested in your application."}
+        {offer && !offer.requested_travel && !offer.travel_award &&
+          "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
+      </div>
 
+      <div class="col-md-3">
+        {offer.travel_award &&
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
+              id="CheckTravel" />
+            <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
+          </div>}
+      </div>
+    </div>
+  }
+
+  renderAccommodationAward = (offer, accepted_accommodation_award) => {
+    return <div class="row mb-2">
+      <div class="col-md-3 font-weight-bold pr-2" align="center">Accommodation:</div>
+
+      <div class="col-md-6" align="left">
+        {offer && offer.accommodation_award && accepted_accommodation_award &&
+          "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
+        {offer && offer.accommodation_award && !accepted_accommodation_award &&
+          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Nairobi during the Indaba!</span>}
+        {offer && offer.requested_accommodation && !offer.accommodation_award &&
+          <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
+                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/accommodation-2019">here</a> for more details</span>}
+        {offer && !offer.requested_accommodation && !offer.accommodation_award &&
+          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
+      </div>
+
+      <div class="col-md-3">
+        {offer.accommodation_award &&
+          <div class="form-check accommodation-container">
+            <input type="checkbox" class="form-check-input"
+              checked={accepted_accommodation_award}
+              onChange={this.onChangeAccommodation}
+              id="CheckAccommodation" />
+            <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
+          </div>}
+      </div>
+    </div>
+  }
 
   displayOfferContent = e => {
     const { offer,
-      userProfile,
       rejected_reason,
       accepted_accommodation_award,
       accepted_travel_award
@@ -180,68 +233,17 @@ class Offer extends Component {
           :
           <div className="container">
             <p className="h5 pt-5">
-              We are pleased to offer you a place at the Deep Learning Indaba 2019.
+              We are pleased to offer you a place at {this.props.event ? this.props.event.name : ""}.
           Please see the details of this offer below{" "}
             </p>
 
             <form class="form pt-2 ">
-              <p className="card p">
-                You have been accepted as a{" "}
-                {userProfile !== null ? userProfile.user_category : "<Category>"}{" "}
-              </p>
 
               <div className="white-background card form">
                 <p class="font-weight-bold">Offer Details</p>
 
-                <div class="row mb-4">
-                  <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
-                  <div class="col-md-6" align="left">
-                    {offer && offer.travel_award && accepted_travel_award &&
-                      "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
-                    {offer && offer.travel_award && !accepted_travel_award &&
-                      <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Nairobi!</span>}
-                    {offer && offer.requested_travel && !offer.travel_award &&
-                      "Unfortunately we are unable to grant you the travel award you requested in your application."}
-                    {offer && !offer.requested_travel && !offer.travel_award &&
-                      "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
-                  </div>
-
-                  <div class="col-md-3">
-                    {offer.travel_award &&
-                      <div class="form-check">
-                        <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
-                          id="CheckTravel" />
-                        <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
-                      </div>}
-                  </div>
-                </div>
-
-                <div class="row mb-2">
-                  <div class="col-md-3 font-weight-bold pr-2" align="center">Accommodation:</div>
-
-                  <div class="col-md-6" align="left">
-                    {offer && offer.accommodation_award && accepted_accommodation_award &&
-                      "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
-                    {offer && offer.accommodation_award && !accepted_accommodation_award &&
-                      <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Nairobi during the Indaba!</span>}
-                    {offer && offer.requested_accommodation && !offer.accommodation_award &&
-                      <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/accommodation-2019">here</a> for more details</span>}
-                    {offer && !offer.requested_accommodation && !offer.accommodation_award &&
-                      "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
-                  </div>
-
-                  <div class="col-md-3">
-                    {offer.accommodation_award &&
-                      <div class="form-check accommodation-container">
-                        <input type="checkbox" class="form-check-input"
-                          checked={accepted_accommodation_award}
-                          onChange={this.onChangeAccommodation}
-                          id="CheckAccommodation" />
-                        <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
-                      </div>}
-                  </div>
-                </div>
+                {this.props.event && this.props.event.travel_grant && this.renderTravelAward(offer, accepted_travel_award)}
+                {this.props.event && this.props.event.travel_grant && this.renderAccommodationAward(offer, accepted_accommodation_award)}
 
                 <div class="row mb-3">
                   <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
@@ -333,15 +335,14 @@ class Offer extends Component {
   componentDidMount() {
     applicationFormService.getResponse(this.props.event ? this.props.event.id : 0)
       .then(results => {
-        console.log(results)
-        if (results.is_submitted && !results.is_withdrawn) {
+        if (results.response && results.response.length > 0 && results.response[0].is_submitted && !results.response[0].is_withdrawn) {
           this.setState({
             applicationExist: true
-          })
+          });
         } else {
           this.setState({
             applicationExist: false
-          })
+          });
         }
       });
   }
@@ -374,11 +375,14 @@ class Offer extends Component {
 
   render() {
 
-    const { loading, offer, error, applicationExist } = this.state;
+    const { loading, offer, error, applicationExist, noOffer } = this.state;
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
     };
+
+    console.log('applicationExist: ' + applicationExist);
+    console.log('offer: ' + offer);
 
     if (loading) {
       return (
@@ -392,28 +396,32 @@ class Offer extends Component {
       );
     }
 
-    if (error)
+    if (error) {
       return (
         <div class="alert alert-danger" align="center">
           {error}
         </div>
       );
-    else if (offer !== null) return this.displayOfferContent();
-    else if (offer === null && !applicationExist)
+    }
+    else if (offer !== null) {
+      return this.displayOfferContent();
+    }
+    else if ((noOffer || offer === null) && !applicationExist) {
       return (
         <div className="h5 pt-5" align="center">
           {" "}
           You did not apply to attend.
         </div>
       );
-    else
+    }
+    else {
       return (
         <div className="h5 pt-5" align="center">
           {" "}
-          You are currently on the waiting list for the Deep Learning Indaba
-          2019. Please await further communication
+          Please await further communication
         </div>
       );
+    }
   }
 }
 

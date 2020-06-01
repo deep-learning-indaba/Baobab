@@ -44,43 +44,36 @@ class ReviewAssignmentComponent extends Component {
     this.setState({ newReviewerEmail: value });
   };
 
-  handleSubmit = event => {
-    event.preventDefault();
+  assignReviewers = (email, toAssign) => {
     this.setState({ loading: true });
 
-    // If new reviewer is specified, add to list.
-    if (this.state.newReviewerEmail !== "") {
-      this.state.reviewers.push({
-        email: this.state.newReviewerEmail,
-        reviews_to_assign: 0
-      });
-    }
-
     // Assign the reviews
-    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, this.state.reviewers).then(
+    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, email, toAssign).then(
       result => {
         // Get updated reviewers, with updated allocations
+        this.setState({
+          error: result.error
+        })
         return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0)
       },
-      error => this.setState({ error, loading: false })
     ).then(
       result => {
-        this.setState({
+        this.setState(prevState => ({
           loading: false,
           reviewers: result.reviewers,
-          error: result.error,
+          error: prevState.error + result.error,
           newReviewerEmail: ""
-        });
+        }));
         return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
       },
       error => this.setState({ error, loading: false })
     )
       .then(
         result => {
-          this.setState({
+          this.setState(prevState => ({
             reviewSummary: result.reviewSummary,
-            error: result.error
-          });
+            error: prevState.error + result.error
+          }));
         },
         error => this.setState({ error, loading: false })
       );
@@ -105,6 +98,17 @@ class ReviewAssignmentComponent extends Component {
           __html: this.state.reviewers[cellInfo.index][cellInfo.column.id]
         }} />
     );
+  }
+
+  renderButton = cellInfo => {
+    return (
+      <button
+        className="btn btn-primary btn-sm"
+        onClick={() => this.assignReviewers(cellInfo.row.email, cellInfo.row.reviews_to_assign)}
+        disabled={!Number.isInteger(cellInfo.row.reviews_to_assign)}>
+        Assign
+      </button>
+    )
   }
 
   render() {
@@ -135,6 +139,9 @@ class ReviewAssignmentComponent extends Component {
       Header: 'No. to Assign',
       accessor: 'reviews_to_assign',
       Cell: this.renderEditable
+    }, {
+      Header: 'Assign',
+      Cell: this.renderButton
     }]
 
     if (loading) {
@@ -147,41 +154,37 @@ class ReviewAssignmentComponent extends Component {
       )
     }
 
-    if (error) {
-      return <div class="alert alert-danger alert-container">
-        {error}
-      </div>
-    }
-
     return (
-      <form onSubmit={this.handleSubmit}>
-        <div className={"review-padding"}>
-          <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
+      <div className={"review-padding"}>
+        {error && <div class="alert alert-danger alert-container">
+          {error}
+        </div>}
 
-          <ReactTable
-            data={reviewers}
-            columns={columns}
-            minRows={0} />
+        <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
 
-          <div>
-            <FormTextBox
-              Id={"newReviewEmail"}
-              name={'newReviewEmail'}
-              label={"Add new reviewer's email"}
-              placeholder={"Review email"}
-              onChange={this.handleChange}
-              value={newReviewerEmail}
-              key={"i_newReviewEmail"} />
+        <ReactTable
+          data={reviewers}
+          columns={columns}
+          minRows={0} />
+        <br />
+        <div>
+          <FormTextBox
+            id={"newReviewEmail"}
+            name={'newReviewEmail'}
+            label={"Add new reviewer's email (they must already have an account)"}
+            placeholder={"Review email"}
+            onChange={this.handleChange}
+            value={newReviewerEmail}
+            key={"i_newReviewEmail"} />
 
-            <button
-              class="btn btn-primary float-right"
-              type="submit">
-              Assign
+          <button
+            class="btn btn-primary float-right"
+            onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0) }}>
+            Add
             </button>
 
-          </div>
         </div>
-      </form>
+      </div>
     )
   }
 }

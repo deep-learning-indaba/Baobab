@@ -315,6 +315,39 @@ class UserApiTest(ApiTestCase):
         db.session.add(user)
         db.session.commit()
 
+    def setup_responses(self):
+        application_forms = [
+            self.create_application_form(1, True, False),
+            self.create_application_form(2, False, False)
+        ]
+        db.session.add_all(application_forms)
+
+        candidate1 =   AppUser(email='c1@c.com', firstname='candidate',   lastname='1', user_title='Mr', password='abc', organisation_id=1)
+        candidate2 =   AppUser(email='c2@c.com', firstname='candidate',   lastname='2', user_title='Ms', password='abc', organisation_id=1)
+        candidate3 =   AppUser(email='c3@c.com', firstname='candidate',   lastname='3', user_title='Mr', password='abc', organisation_id=1)
+        event_admin =  AppUser(email='ea@ea.com',firstname='event_admin', lastname='1', user_title='Ms', password='abc', organisation_id=1)
+        users = [candidate1, candidate2, candidate3, event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+
+        event_role = EventRole('admin', 4, 1)
+        db.session.add(event_role)
+
+        submitted_response_user1 = Response(1, 1)
+        submitted_response_user1.submit()
+        withdrawn_response = Response(1, 2)
+        withdrawn_response.withdraw()
+        submitted_response_user3 = Response(2, 3)
+        submitted_response_user3.submit()
+        responses = [
+            submitted_response_user1,
+            withdrawn_response,
+            submitted_response_user3
+        ]
+        db.session.add_all(responses)
+        db.session.commit()
+
     def test_email_change_gets_new_token_and_is_unverified(self):
         self.seed_static_data()
         self.setup_verified_user()
@@ -340,6 +373,29 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(user.user_title, 'Mr')
         self.assertEqual(user.verified_email, False)
         self.assertNotEqual(user.verify_token, 'existing token')
+
+    def test_user_profile_list(self):
+        self.seed_static_data()
+        self.setup_responses()
+        header = self.get_auth_header_for('ea@ea.com')
+        params = {'event_id': 1}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        data = json.loads(response.data)
+        print(data)
+        data = sorted(data, key=lambda k: k['user_id'])
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['user_id'], 1)
+        self.assertEqual(data[0]['is_submitted'], True)
+        self.assertEqual(data[0]['is_withdrawn'], False)
+        self.assertEqual(data[0]['withdrawn_timestamp'], None)
+
+        self.assertEqual(data[1]['user_id'], 2)
+        self.assertEqual(data[1]['is_submitted'], False)
+        self.assertEqual(data[1]['submitted_timestamp'], None)
+        self.assertEqual(data[1]['is_withdrawn'], True)
 
 
 class UserCommentAPITest(ApiTestCase):
@@ -725,9 +781,11 @@ class UserProfileApiTest(ApiTestCase):
         db.session.add_all(event_roles)
         db.session.commit()
         responses = [
-            Response(1, 1, True, datetime(2019, 4, 10)),
-            Response(2, 2, True, datetime(2019, 4, 9))
+            Response(1, 1),
+            Response(2, 2)
         ]
+        for response in responses:
+            response.submit()
         db.session.add_all(responses)
         db.session.commit()
     

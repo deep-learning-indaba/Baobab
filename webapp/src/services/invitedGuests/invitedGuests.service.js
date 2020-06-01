@@ -119,6 +119,7 @@ function createInvitedGuest(user, event_Id, role) {
     lastname: user.lastName,
     user_title: user.title,
     role: role,
+    policy_agreed: true
   };
   
   return axios

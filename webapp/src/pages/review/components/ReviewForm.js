@@ -18,6 +18,10 @@ const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
 const CHECKBOX = "checkbox";
 const MULTI_CHECKBOX = "multi-checkbox";
+const FILE = "file";
+const SECTION_DIVIDER = "section-divider";
+
+const baseUrl = process.env.REACT_APP_API_URL;
 
 class ReviewQuestion extends Component {
     constructor(props) {
@@ -48,7 +52,7 @@ class ReviewQuestion extends Component {
             case LONG_TEXT:
                 return (
                     <FormTextArea
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
@@ -63,10 +67,17 @@ class ReviewQuestion extends Component {
                 return (
                     <p>{this.getDescription(question, answer)}</p>
                 )
+            case FILE:
+                return <div>
+                    {answer && answer.value && answer.value.trim()
+                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>View File</a>
+                        : <p>NO FILE UPLOADED</p>}
+                </div>
+
             case CHECKBOX:
                 return (
                     <FormCheckbox
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
@@ -79,7 +90,7 @@ class ReviewQuestion extends Component {
             case MULTI_CHECKBOX:
                 return (
                     <FormMultiCheckbox
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         options={this.options}
                         onChange={this.handleChange}
@@ -90,7 +101,7 @@ class ReviewQuestion extends Component {
             case RADIO:
                 return (
                     <FormRadio
-                        Id={this.id}
+                        id={this.id}
                         name={this.id}
                         label={this.getDescription(question, answer)}
                         onChange={this.handleChange}
@@ -99,6 +110,10 @@ class ReviewQuestion extends Component {
                         key={"i_" + key}
                         showError={validationError}
                         errorText={validationError} />
+                )
+            case SECTION_DIVIDER:
+                return (
+                    <hr/>
                 )
             default:
                 return (
@@ -122,7 +137,10 @@ class ReviewQuestion extends Component {
     render() {
         return (
             <div className={"question"}>
-                <h4>{this.getHeadline(this.props.model)}</h4>
+                {this.props.model.question.type === "section-divider" 
+                    ? <div><hr/><h3>{this.getHeadline(this.props.model)}</h3></div>
+                    : <h4>{this.getHeadline(this.props.model)}</h4>}
+                
                 <Linkify properties={{ target: '_blank' }}>
                     {this.formControl(
                         this.props.model.question.id,
@@ -377,7 +395,7 @@ class ReviewForm extends Component {
 
         this.setState(prevState => {
             return {
-                flagValue: "I believe this applicant is not a " + prevState.form.user.user_category + ", but rather a ...",
+                flagValue: "",
                 flagModalVisible: true
             };
         });
@@ -425,46 +443,14 @@ class ReviewForm extends Component {
                             All Done!</p><br />
                         You have completed all your reviews! Please let us know if you have any capacity for more :)
                         <br /><br />
-                        Thank you for your contribution to the Deep Learning Indaba!
+                        Thank you for your contribution!
                     </div>
                 </div>
             )
         }
-        // TODO change Baobab to [event]
+
         return (
             <div class="review-form-container">
-                <h3 class="text-center mb-4">
-                    {form.user.user_category}
-                    <small>
-                        <button
-                            onClick={this.addFlag}
-                            className="flag-category link-style ">
-                            <i className="fa fa-flag"></i>
-                        </button>
-                    </small>
-                </h3>
-
-                <div class="row">
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Nationality:</span><br />
-                        {form.user.nationality_country}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Residence:</span><br />
-                        {form.user.residence_country}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Affiliation:</span><br />
-                        {form.user.affiliation}
-                    </div>
-
-                    <div className={createColClassName(12, 6, 3, 3)}>
-                        <span class="font-weight-bold">Field of Study / Department:</span><br />
-                        {form.user.department}
-                    </div>
-                </div>
                 {questionModels && questionModels.map(qm =>
                     <ReviewQuestion
                         model={qm}
@@ -473,8 +459,14 @@ class ReviewForm extends Component {
                 )}
                 <br /><hr />
 
+                <button
+                    onClick={this.addFlag}
+                    className="btn btn-light flag-category">
+                    Flag Response <i className="fa fa-flag"></i>
+                </button>
+                <hr />
                 <div>
-                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with Baobab admins.
+                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with event admins outside of the system.
                 </div>
 
                 <hr />
@@ -517,7 +509,7 @@ class ReviewForm extends Component {
                         There are one or more validation errors, please correct before submitting.
                     </div>
                 }
-
+                <br />
                 {!form.review_response &&
                     <div class="alert alert-info">
                         <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
@@ -535,7 +527,7 @@ class ReviewForm extends Component {
                     title="Flag applicant category">
 
                     <div class="flagModal">
-                        <p>If you believe the applicant is not a {form.user.user_category}, please complete the message below and submit.</p>
+                        <p>If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.</p>
                         <textarea
                             className="form-control"
                             value={this.state.flagValue}

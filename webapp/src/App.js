@@ -10,6 +10,7 @@ import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
+import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
 
 import ReactGA from "react-ga";
@@ -140,7 +141,7 @@ class EventNav extends Component {
           this.props.event.is_registration_open && (
             <li className="nav-item dropdown ">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -179,7 +180,7 @@ class EventNav extends Component {
         {this.isEventAdmin(this.props.user, this.props.event) && (
           <li className="nav-item dropdown">
             <div
-              className="nav-link dropdown-toggle link-style"
+              className="nav-link dropdown-toggle"
               id="navbarDropdown"
               role="button"
               data-toggle="dropdown"
@@ -189,20 +190,20 @@ class EventNav extends Component {
               Event Admin
             </div>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              <NavLink
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventConfig`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Configuration
-              </NavLink>
-              <NavLink
+              </NavLink> */}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Stats
-              </NavLink>
+              </NavLink> */}
               <NavLink
                 to={`/${this.props.eventKey}/reviewAssignment`}
                 className="dropdown-item"
@@ -210,20 +211,20 @@ class EventNav extends Component {
               >
                 Review Assignment
               </NavLink>
-              <NavLink
+              {<NavLink
                 to={`/${this.props.eventKey}/invitedGuests`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Invited Guests
-              </NavLink>
-              <NavLink
+              </NavLink>}
+              {/* <NavLink
                 to={`/${this.props.eventKey}/profile-list`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Applicant Profiles
-              </NavLink>
+              </NavLink> */}
             </div>
           </li>
         )}
@@ -232,7 +233,7 @@ class EventNav extends Component {
           this.props.event.is_review_open && (
             <li className="nav-item dropdown">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -264,7 +265,7 @@ class EventNav extends Component {
           this.props.event.is_registration_open && (
             <li className="nav-item dropdown">
               <div
-                className="nav-link dropdown-toggle link-style"
+                className="nav-link dropdown-toggle"
                 id="navbarDropdown"
                 role="button"
                 data-toggle="dropdown"
@@ -323,6 +324,11 @@ class App extends Component {
     });
   }
 
+  handleLogout = () => {
+    this.refreshUser();
+    window.location = '/';
+  }
+
   refreshUser() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
@@ -349,7 +355,7 @@ class App extends Component {
               <img
                 src={
                   this.state.organisation &&
-                  require("./images/" + this.state.organisation.small_logo)
+                  require("./images/" + this.state.organisation.icon_logo)
                 }
                 width="30"
                 height="30"
@@ -386,7 +392,7 @@ class App extends Component {
                 <ul className="navbar-nav mr-auto"></ul>
               )}
               <UserDropdown
-                logout={this.refreshUser}
+                logout={this.handleLogout}
                 user={this.state.user}
                 onClick={this.toggleMenu}
               />
@@ -410,7 +416,7 @@ class App extends Component {
                   exact
                   path="/login"
                   render={props => (
-                    <Login {...props} loggedIn={this.refreshUser} />
+                    <Login {...props} loggedIn={this.refreshUser} organisation={this.state.organisation}/>
                   )}
                 />
                 <Route
@@ -434,6 +440,7 @@ class App extends Component {
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />
+                <Route exact path="/reference/:token" component={Reference} />
                 <Route
                   path="/:eventKey"
                   render={props => (
@@ -462,12 +469,13 @@ class App extends Component {
                       : "")
                   }
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Privacy Policy
                 </a>
                 {this.state.organisation &&
                   this.state.organisation.system_name !== "Baobab" && (
-                    <div className="float-right">
+                    <div className="float-right powered-by">
                       Powered by{" "}
                       <a
                         href="http://www.deeplearningindaba.com"
@@ -487,7 +495,7 @@ class App extends Component {
             buttonStyle={{ fontWeight: "bold" }}
             buttonText="I understand"
             buttonClasses="btn btn-primary"
-            s
+            buttonId="btn-cookieConsent"
             containerClasses="alert alert-warning col-lg-12"
           >
             <h5>This website stores cookies on your computer.</h5>

@@ -13,6 +13,8 @@
 - Your pull request will need to be approved by Jade, Kale-ab, Amrit, or Avishkar before it can be merged.
 
 - Don't worry if you are not too familiar with the technologies or conventions used - we can iterate during the pull request review process. This is intended to be a learning opportunity for all of us! 
-
+    - If you aren't sure how to even get started, we have some tutorials to help narrow the search space:
+    - [How to write your first line of code for Baobab](https://github.com/deep-learning-indaba/Baobab/blob/develop/api/baobab_tutorial.md): a summary of how to get your PC up and running to be able to access the code
+    - [Glossary of useful concepts](https://github.com/deep-learning-indaba/Baobab/blob/develop/api/glossary_usefulconcepts.md): This is currently focused on the back-end technologies, to help familiarise you with some the concepts used to create and maintain Baobab
 ## Code of Conduct
 Please familiarise yourself with our [Code of Conduct](https://github.com/deep-learning-indaba/Baobab/blob/develop/CODE_OF_CONDUCT.md).

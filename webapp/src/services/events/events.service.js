@@ -13,7 +13,7 @@ export const eventService = {
 
 export function getEvent(event_id) {
   return axios
-    .get(baseUrl + `/api/v1/event?id=` + event_id)
+    .get(baseUrl + `/api/v1/event?id=` + event_id + "&cache_bust=1")
     .then(response => {
       return {
         event: response.data,
@@ -126,7 +126,7 @@ export function update(event) {
 
 function getEvents() {
   return axios
-    .get(baseUrl + `/api/v1/events`, { headers: authHeader() })
+    .get(baseUrl + `/api/v1/events?cache_bust=1`, { headers: authHeader() })
     .then(function(response) {
       return {
         events: response.data,
@@ -148,7 +148,7 @@ function getEvents() {
 
 function getByKey(event_key) {
   return axios
-    .get(baseUrl + `/api/v1/event-by-key?event_key=${event_key}`, {
+    .get(baseUrl + `/api/v1/event-by-key?event_key=${event_key}&cache_bust=1`, {
       headers: authHeader()
     })
     .then(function(response) {

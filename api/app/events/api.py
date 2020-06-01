@@ -22,9 +22,21 @@ from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
+import app.events.status as event_status
 
+def status_info(status):
+    if status is None:
+        return None
 
-def event_info(user_id, event_org):
+    return {
+        'invited_guest': status.invited_guest,
+        'application_status': status.application_status,
+        'registration_status': status.registration_status,
+        'offer_status': status.offer_status,
+        'outcome_status': status.outcome_status
+    }
+
+def event_info(user_id, event_org, status):
     return {
         'id': event_org.Event.id,
         'name': event_org.Event.name,
@@ -32,7 +44,7 @@ def event_info(user_id, event_org):
         'key': event_org.Event.key,
         'start_date': event_org.Event.start_date.strftime("%d %B %Y"),
         'end_date': event_org.Event.end_date.strftime("%d %B %Y"),
-        'status': get_user_event_response_status(user_id, event_org.Event.id),
+        'status': status_info(status),
         'email_from': event_org.Event.email_from,
         'organisation_name': event_org.Organisation.name,
         'organisation_id': event_org.Organisation.id,
@@ -42,7 +54,8 @@ def event_info(user_id, event_org):
         'is_review_open': event_org.Event.is_review_open,
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
-        'is_registration_open': event_org.Event.is_registration_open
+        'is_registration_open': event_org.Event.is_registration_open,
+        'travel_grant': event_org.Event.travel_grant
     }
 
 
@@ -191,7 +204,8 @@ class EventAPI(EventMixin, restful.Resource):
             offer_close,
             registration_open,
             registration_close,
-            EventType[event_type]
+            EventType[event_type],
+            travel_grant=False   # TODO: Add to incoming request
         )
         event.add_event_role('admin', user_id)
         try:
@@ -283,18 +297,16 @@ class EventAPI(EventMixin, restful.Resource):
 
 class EventsAPI(restful.Resource):
 
-    @auth_optional
+    @auth_required
     def get(self):
-        user_id = 0
-
-        if g and hasattr(g, 'current_user') and g.current_user:
-            user_id = g.current_user["id"]
+        user_id = g.current_user["id"]
 
         events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
 
         for event in events:
-            returnEvents.append(event_info(user_id, event))
+            status = None if user_id == 0 else event_status.get_event_status(event.Event.id, user_id)
+            returnEvents.append(event_info(user_id, event, status))
 
         return returnEvents, 200
 
@@ -334,12 +346,17 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
 
+        user_id = g.current_user['id']
+
         event = event_repository.get_by_key_with_organisation(
             args['event_key'])
         if not event:
             return EVENT_WITH_KEY_NOT_FOUND
-
-        return event_info(g.current_user['id'], event), 200
+        info = event_info(
+            g.current_user['id'], 
+            event, 
+            event_status.get_event_status(event.Event.id, user_id))
+        return info, 200
 
 
 class NotSubmittedReminderAPI(EventsMixin, restful.Resource):

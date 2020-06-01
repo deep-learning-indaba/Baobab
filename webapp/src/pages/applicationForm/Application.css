@@ -40,6 +40,7 @@
 
 .section .headline p {
   text-align: left;
+  white-space: pre-wrap;
 }
 
 .confirmation.answer {
@@ -168,6 +169,17 @@ ol.progtrckr li.progtrckr-done:hover:before {
 
 .custom-checkbox {
   margin-right: 1.5em;
+}
+
+.reference-row {
+  margin-bottom: 0.5em;
+}
+
+
+.reference-status {
+  margin-left: 0.5em;
+  min-width: 20px;
+  padding-top: 0.5em;
 }
 
 @media (max-width: 650px) {
