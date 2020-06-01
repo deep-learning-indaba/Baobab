@@ -406,7 +406,7 @@ class RegistrationComponent extends Component {
 
     if (registrationNotAvailable) {
       return <div className={"alert alert-warning alert-container"}>
-        Registration is not yet available, we will contact you by email as soon as it is.
+        Thank you! Your confirmation has been recorded and your place is confirmed. We will contact you by email when the event registration form is available.
       </div>;
     }
 
