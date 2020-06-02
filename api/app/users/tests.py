@@ -567,9 +567,9 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.flush()
 
         responses = [
-            Response(self.event1_application_form.id, candidates[0].id, True),
-            Response(self.event1_application_form.id, candidates[1].id, True),
-            Response(self.event1_application_form.id, candidates[2].id, True)
+            Response(self.event1_application_form.id, candidates[0].id),
+            Response(self.event1_application_form.id, candidates[1].id),
+            Response(self.event1_application_form.id, candidates[2].id)
         ]
         db.session.add_all(responses)
         db.session.commit()
@@ -654,7 +654,7 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.add(invitation)
         db.session.commit()
 
-        application = Response(self.event1_application_form.id, candidates[0].id, True)
+        application = Response(self.event1_application_form.id, candidates[0].id)
 
         db.session.add(application)
         db.session.commit()
@@ -679,7 +679,7 @@ class UserProfileListApiTest(ApiTestCase):
         candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         db.session.add_all(candidates)
 
-        application = Response(self.event1_application_form.id, candidates[0].id, True)
+        application = Response(self.event1_application_form.id, candidates[0].id)
         db.session.add(application)
         db.session.commit()
 
@@ -702,7 +702,7 @@ class UserProfileListApiTest(ApiTestCase):
         candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         db.session.add_all(candidates)
 
-        application = Response(self.event2_application_form.id, candidates[0].id, True)
+        application = Response(self.event2_application_form.id, candidates[0].id)
         db.session.add(application)
         db.session.commit()
 
