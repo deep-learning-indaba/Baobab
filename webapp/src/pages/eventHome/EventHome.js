@@ -53,7 +53,7 @@ class EventHome extends Component {
     };
   }
 
-  componentDidMount() {
+  loadEvent = () => {
     const eventKey = this.props.match ?
       this.props.match.params.eventKey : null;
 
@@ -74,6 +74,10 @@ class EventHome extends Component {
         }
       );
     });
+  }
+
+  componentDidMount() {
+    this.loadEvent();
   }
 
   render() {
