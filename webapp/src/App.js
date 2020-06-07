@@ -158,13 +158,13 @@ class EventNav extends Component {
                 >
                   Registration Form
                 </NavLink>
-                <NavLink
+                {/* <NavLink
                   to={`/${this.props.eventKey}/invitationLetter`}
                   className="dropdown-item"
                   onClick={this.props.toggleMenu}
                 >
                   Invitation Letter
-                </NavLink>
+                </NavLink> */}
                 {this.isRegistrationVolunteer(this.state.user) && (
                   <NavLink
                     to={`/${this.props.eventKey}/eventAttendance`}
