@@ -49,17 +49,6 @@ class EventsAPITest(ApiTestCase):
 
         db.session.flush()
 
-    def test_get_events_unauthed(self):
-        self.seed_static_data()
-
-        response = self.app.get('/api/v1/events')
-        data = json.loads(response.data)
-
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["id"], 1)
-        self.assertEqual(data[0]["description"], 'Event Description')
-        self.assertIsNone(data[0]["status"])
-
     def test_get_events_applied(self):
         self.seed_static_data()
 
@@ -142,9 +131,7 @@ class EventsAPITest(ApiTestCase):
         db.session.commit()
 
         response = self.app.get('/api/v1/events')
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.data)
-        self.assertEqual(data[0]['event_type'], 'EVENT')
+        self.assertEqual(response.status_code, 401)  # Unauthorized
 
 
 class EventsStatsAPITest(ApiTestCase):

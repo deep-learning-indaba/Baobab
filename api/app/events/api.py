@@ -297,12 +297,9 @@ class EventAPI(EventMixin, restful.Resource):
 
 class EventsAPI(restful.Resource):
 
-    @auth_optional
+    @auth_required
     def get(self):
-        user_id = 0
-
-        if g and hasattr(g, 'current_user') and g.current_user:
-            user_id = g.current_user["id"]
+        user_id = g.current_user["id"]
 
         events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
