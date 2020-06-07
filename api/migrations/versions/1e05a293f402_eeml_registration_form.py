@@ -25,6 +25,8 @@ from enum import Enum
 Base = declarative_base()
 
 
+
+
 class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
@@ -306,11 +308,6 @@ def upgrade():
         {'value': 'yoga', 'label': 'Yoga'},
     ])
     session.add_all([other_q1, other_q2])
-    session.commit()
-
-    event.registration_open = datetime.date(2020, 6, 7)
-    event.registration_close = datetime.datetime(2020, 6, 16, 11, 0, 0)
-
     session.commit()
 
 
