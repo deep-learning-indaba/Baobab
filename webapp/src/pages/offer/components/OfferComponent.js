@@ -134,7 +134,7 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <NavLink className="btn btn-primary" to={`${this.props.event.key}/registration`}>
+              <NavLink className="btn btn-primary" to={`/${this.props.event.key}/registration`}>
                 Proceed to Registration >
               </NavLink>
             </div>
@@ -380,9 +380,6 @@ class Offer extends Component {
       width: "3rem",
       height: "3rem"
     };
-
-    console.log('applicationExist: ' + applicationExist);
-    console.log('offer: ' + offer);
 
     if (loading) {
       return (

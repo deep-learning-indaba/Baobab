@@ -14,7 +14,7 @@ class EventStatus extends Component {
   }
 
   registeredStatus = (event) => {
-    if (event.stats.registration_status === "Confirmed") {
+    if (event.status.registration_status === "Confirmed") {
         return {
             title: "Registered",
             titleClass: "text-success",
@@ -47,7 +47,7 @@ class EventStatus extends Component {
         };
     }
     else {
-        return this.registeredStatus();   
+        return this.registeredStatus(event);   
     }
   }
 
@@ -98,7 +98,7 @@ class EventStatus extends Component {
   offerStatus = (event) => {
     if (event.status.offer_status === "Accepted") {
         if (event.status.registration_status) {
-            return this.registeredStatus();
+            return this.registeredStatus(event);
         }
         else {
             return {

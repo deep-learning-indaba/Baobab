@@ -166,6 +166,9 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
                                    event_name)
 
+            # 201 is 'CREATED' status code
+            return marshal(registration, self.registration_fields), 201
+
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
@@ -173,9 +176,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
-        finally:
-            # 201 is 'CREATED' status code
-            return marshal(registration, self.registration_fields), 201
+        
+            
 
     @auth_required
     def put(self):
@@ -219,6 +221,24 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
                     db.session.add(answer)
             db.session.commit()
+
+            current_user = user_repository.get_by_id(user_id)
+
+            registration_answers = db.session.query(RegistrationAnswer).filter(
+                RegistrationAnswer.registration_id == registration.id).all()
+                
+            registration_questions = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
+
+            registration_form = db.session.query(RegistrationForm).filter(
+                RegistrationForm.id == args['registration_form_id']).first()
+
+            event_name = db.session.query(Event).filter(
+                Event.id == registration_form.event_id).first().name
+
+            self.send_confirmation(
+                current_user, registration_questions, registration_answers, registration.confirmed, event_name)
+
             return 200
         except Exception as e:
             return 'Could not access DB', 400
@@ -237,8 +257,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             for answer in answers:
                 for question in questions:
                     if answer.registration_question_id == question.id:
-                        summary += "Question heading :" + question.headline + "\nQuestion Description :" + \
-                            question.description + "\nAnswer :" + _get_answer_value(
+                        summary += "Question:" + question.headline + "\nAnswer:" + _get_answer_value(
                                 answer, question) + "\n"
 
             subject = event_name + ' Registration'
@@ -260,7 +279,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         if not confirmed:
             return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
         else:
-            return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
+            return 'Your spot is now confirmed and we look forward to welcoming you at the event!'
 
 
 def map_registration_info(registration_info):
