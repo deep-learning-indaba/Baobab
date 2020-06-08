@@ -25,21 +25,26 @@ class FormSelectOther extends React.Component {
             });
         }
 
-        let defaultValue = this.props.defaultValue;
         let otherText = "";
         let showOther = false;
         if (this.props.defaultValue && !options.some(o=>o.value === this.props.defaultValue)) {
-            defaultValue = 'other';
             otherText = this.props.defaultValue;
             showOther = true;
         }
 
         this.setState({
             options: options,
-            defaultValue: defaultValue,
             otherText: otherText,
             showOther: showOther
         });
+    }
+
+    getDefaultValue = ()=>{
+        let defaultValue = this.props.defaultValue;
+        if (this.props.defaultValue && !this.props.options.some(o=>o.value === this.props.defaultValue)) {
+            defaultValue = "other";
+        }
+        return defaultValue;
     }
 
     notifyValueChanged = () => {
@@ -73,7 +78,7 @@ class FormSelectOther extends React.Component {
                 id={this.props.id}
                 name={this.props.name}
                 onChange={this.onChange}
-                defaultValue={this.state.defaultValue}
+                defaultValue={this.getDefaultValue()}
                 placeholder={this.props.placeholder}
                 label={this.props.label}
                 required={this.props.required}
