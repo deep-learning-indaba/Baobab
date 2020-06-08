@@ -499,7 +499,6 @@ class RegistrationComponent extends Component {
                     .sort((a, b) => a.order - b.order)
                     .filter(question => {
                       if (question.depends_on_question_id) {
-                        console.log('this.state.answers: ', this.state.answers);
                         let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
                         return answer && (answer.value !== question.hide_for_dependent_value)
                       }
