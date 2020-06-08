@@ -51,7 +51,8 @@ To assist with our planning process, please complete our guest registration form
 
 1. Visit {host}/resetPassword?resetToken={reset_code} to set your account password.
 2. Log in using your email address (the one you received this email on!) and new password.
-3. Visit {host}/{event_key}registration to complete the registration form.
+3. Visit {host}/{event_key}/registration to complete the registration form.
+4. Update your details in {host}/profile
 
 Please reply to this email should you have any questions or concerns. 
 
