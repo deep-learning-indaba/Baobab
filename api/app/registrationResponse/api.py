@@ -166,6 +166,9 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
                                    event_name)
 
+            # 201 is 'CREATED' status code
+            return marshal(registration, self.registration_fields), 201
+
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
@@ -173,9 +176,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
-        finally:
-            # 201 is 'CREATED' status code
-            return marshal(registration, self.registration_fields), 201
+        
+            
 
     @auth_required
     def put(self):
@@ -260,7 +262,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
         if not confirmed:
             return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
         else:
-            return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
+            return 'Your spot is now confirmed and we look forward to welcoming you at the event!'
 
 
 def map_registration_info(registration_info):
