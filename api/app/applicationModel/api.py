@@ -94,3 +94,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return DB_NOT_AVAILABLE
+
+    def post(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        json = args['json']
