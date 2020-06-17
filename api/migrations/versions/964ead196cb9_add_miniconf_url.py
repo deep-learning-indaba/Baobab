@@ -28,4 +28,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column('Event', 'miniconf_url')
+    op.drop_column('event', 'miniconf_url')
