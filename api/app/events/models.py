@@ -64,7 +64,7 @@ class Event(db.Model):
                  registration_close,
                  event_type,
                  travel_grant,
-                 miniconf_url
+                 miniconf_url=None
                  ):
 
         self.name = name
@@ -164,7 +164,7 @@ class Event(db.Model):
                offer_close,
                registration_open,
                registration_close,
-               miniconf_url):
+               miniconf_url=None):
         self.name = name
         self.description = description
         self.start_date = start_date
