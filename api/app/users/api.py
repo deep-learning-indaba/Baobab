@@ -552,3 +552,11 @@ class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
         db.session.commit()
 
         return {}, 200
+
+
+class TokenVerificationAPI(AuthenticateMixin, restful.Resource):
+
+    # If auth succeeds, return 200.
+    @auth_required
+    def post(self):
+        return 200

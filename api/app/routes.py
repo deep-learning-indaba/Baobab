@@ -110,3 +110,4 @@ rest_api.add_resource(integration_tests_api.CreateIntegrationUser, '/api/v1/inte
 rest_api.add_resource(integration_tests_api.DeleteIntegrationUser, '/api/v1/integration-tests/deleteUser')
 rest_api.add_resource(outcome_api.OutcomeAPI, '/api/v1/outcome')
 rest_api.add_resource(outcome_api.OutcomeListAPI, '/api/v1/outcome-list')
+rest_api.add_resource(users_api.TokenVerificationAPI, '/api/v1/verify-token')
