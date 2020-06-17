@@ -55,7 +55,8 @@ def event_info(user_id, event_org, status):
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
         'is_registration_open': event_org.Event.is_registration_open,
-        'travel_grant': event_org.Event.travel_grant
+        'travel_grant': event_org.Event.travel_grant,
+        "miniconf_url": event_org.Event.miniconf_url
     }
 
 
