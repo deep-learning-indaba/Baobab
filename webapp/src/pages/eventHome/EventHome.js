@@ -39,8 +39,20 @@ class MiniConf extends Component {
       currentdate <= new Date(event.end_date)
     ) {
       return (
-        <div className="event-home">
-          Connect to <a href={event.miniconf_url}>mini-conf</a> .{" "}
+        <div>
+          Connect to{" "}
+          <a
+            href={
+              event.miniconf_url +
+              "/token?" +
+              JSON.parse(localStorage.getItem("user"))["token"] +
+              "&organisation_id=" +
+              event.organisation_id
+            }
+          >
+            mini-conf
+          </a>{" "}
+          .{" "}
         </div>
       );
     }
