@@ -43,3 +43,8 @@ class PrivacyPolicyMixin(object):
 
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('policy_agreed', type=boolean, required=True)
+
+class ValidateUserForOrganisationMixin(object):
+
+    req_parser = reqparse.RequestParser()
+    req_parser.add_argument('organisation_id', type=int, required=True)

@@ -41,6 +41,7 @@ class Event(db.Model):
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
+    miniconf_url = db.Column(db.String(100), nullable=True)
 
     def __init__(self,
                  name,
@@ -62,7 +63,8 @@ class Event(db.Model):
                  registration_open,
                  registration_close,
                  event_type,
-                 travel_grant
+                 travel_grant,
+                 miniconf_url=None
                  ):
 
         self.name = name
@@ -86,6 +88,10 @@ class Event(db.Model):
         self.event_roles = []
         self.event_type = event_type
         self.travel_grant = travel_grant
+        self.miniconf_url = miniconf_url
+
+    def set_miniconf_url(self, new_miniconf_url):
+        self.miniconf_url = new_miniconf_url
 
     def set_name(self, new_name):
         self.name = new_name
@@ -157,7 +163,8 @@ class Event(db.Model):
                offer_open,
                offer_close,
                registration_open,
-               registration_close):
+               registration_close,
+               miniconf_url=None):
         self.name = name
         self.description = description
         self.start_date = start_date
@@ -176,6 +183,7 @@ class Event(db.Model):
         self.offer_close = offer_close
         self.registration_open = registration_open
         self.registration_close = registration_close
+        self.miniconf_url = miniconf_url
 
     @property
     def is_application_open(self):

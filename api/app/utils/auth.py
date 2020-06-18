@@ -31,7 +31,7 @@ def verify_token(token):
     return data
 
 
-def _get_user_from_request():
+def get_user_from_request():
     token = request.headers.get('Authorization', '')
     if token:
         user = verify_token(token)
@@ -42,7 +42,7 @@ def _get_user_from_request():
 def auth_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user = _get_user_from_request()
+        user = get_user_from_request()
         if user:
             g.current_user = user
             return func(*args, **kwargs)
@@ -53,7 +53,7 @@ def auth_required(func):
 def auth_optional(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user = _get_user_from_request()
+        user = get_user_from_request()
         if user:
             g.current_user = user
 
@@ -64,7 +64,7 @@ def auth_optional(func):
 def admin_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user = _get_user_from_request()
+        user = get_user_from_request()
         if user and user['is_admin']:
             g.current_user = user
             return func(*args, **kwargs)
@@ -79,7 +79,7 @@ def event_admin_required(func):
         req_parser.add_argument('event_id', type=int, required=True)
         args = req_parser.parse_args()
 
-        user = _get_user_from_request()
+        user = get_user_from_request()
         if user:
             user_info = user_repository.get_by_id(user['id'])
             if user_info.is_event_admin(args['event_id']):
