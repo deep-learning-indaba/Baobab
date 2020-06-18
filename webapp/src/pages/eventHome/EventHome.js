@@ -43,8 +43,9 @@ class MiniConf extends Component {
           Connect to{" "}
           <a
             href={
+              "https://" +
               event.miniconf_url +
-              "/token?" +
+              "/index.html?token=" +
               JSON.parse(localStorage.getItem("user"))["token"] +
               "&organisation_id=" +
               event.organisation_id +
@@ -52,7 +53,7 @@ class MiniConf extends Component {
               window.location.href +
               "&verify_token_url=" +
               process.env.REACT_APP_API_URL +
-              "/api/v1/verify-token" +
+              "/api/v1/validate-user-for-organization" +
               "&origin=" +
               window.location.origin
             }

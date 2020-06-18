@@ -12,7 +12,7 @@ from app import LOGGER, bcrypt, db
 from app.events.models import EventRole
 from app.users.mixins import (AuthenticateMixin, PrivacyPolicyMixin,
                               SignupMixin, UserProfileListMixin,
-                              UserProfileMixin,TokenVerificationMixin)
+                              UserProfileMixin,ValidateUserForOrganisationMixin)
 from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
@@ -555,7 +555,7 @@ class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
         return {}, 200
 
 
-class TokenVerificationAPI(TokenVerificationMixin, restful.Resource):
+class ValidateUserForOrganisationAPI(ValidateUserForOrganisationMixin, restful.Resource):
     # Check if User is part of Org.
     @auth_required
     def post(self):
@@ -563,8 +563,8 @@ class TokenVerificationAPI(TokenVerificationMixin, restful.Resource):
         organisation_id = args['organisation_id']
         
         user = get_user_from_request()
-        user_for_this_event = user_repository.get_by_email(user['email'],organisation_id)
+        user_for_this_organization = user_repository.get_by_email(user['email'],organisation_id)
         
-        if(not user_for_this_event):
+        if(not user_for_this_organization):
             return UNAUTHORIZED
         return 200
