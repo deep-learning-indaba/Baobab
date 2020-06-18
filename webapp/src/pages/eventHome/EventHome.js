@@ -47,7 +47,9 @@ class MiniConf extends Component {
               "/token?" +
               JSON.parse(localStorage.getItem("user"))["token"] +
               "&organisation_id=" +
-              event.organisation_id
+              event.organisation_id +
+              "&redirect_back_url=" +
+              window.location.href
             }
           >
             mini-conf
