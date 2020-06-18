@@ -49,7 +49,12 @@ class MiniConf extends Component {
               "&organisation_id=" +
               event.organisation_id +
               "&redirect_back_url=" +
-              window.location.href
+              window.location.href +
+              "&verify_token_url=" +
+              process.env.REACT_APP_API_URL +
+              "/api/v1/verify-token" +
+              "&origin=" +
+              window.location.origin
             }
           >
             mini-conf
