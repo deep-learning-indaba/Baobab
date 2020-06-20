@@ -19,6 +19,7 @@ import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 
+
 class MiniConf extends Component {
   constructor(props) {
     super(props);

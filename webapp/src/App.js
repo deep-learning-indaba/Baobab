@@ -28,6 +28,7 @@ history.listen(location => {
   ReactGA.pageview(location.pathname + location.search);
 });
 
+
 class EventNav extends Component {
   constructor(props) {
     super(props);
@@ -98,197 +99,204 @@ class EventNav extends Component {
 
   render() {
     return (
-      <ul className="navbar-nav mr-auto">
-        <li className={"nav-item"}>
-          <NavLink
-            exact
-            to={`/${this.props.eventKey}`}
-            activeClassName="nav-link active"
-            className="nav-link"
-            onClick={this.props.toggleMenu}
-          >
-            Home
-          </NavLink>
-        </li>
-        {this.props.user &&
-          this.props.event &&
-          this.props.event.is_application_open && (
-            <li className="nav-item">
+      <nav class="navbar navbar-expand-sm bg-white navbar-light">
+        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
+        <div class="navbar-collapse collapse navbars" id="navbar1">
+          <ul className="navbar-nav">
+            <li className={"nav-item"}>
               <NavLink
-                to={`/${this.props.eventKey}/apply`}
+                exact
+                to={`/${this.props.eventKey}`}
                 activeClassName="nav-link active"
                 className="nav-link"
                 onClick={this.props.toggleMenu}
               >
-                Apply
-              </NavLink>
+                Home
+          </NavLink>
             </li>
-          )}
-        {this.props.user && this.props.event && this.props.event.is_offer_open && (
-          <li className="nav-item">
-            <NavLink
-              to={`/${this.props.eventKey}/offer`}
-              activeClassName="nav-link active"
-              className="nav-link"
-              onClick={this.props.toggleMenu}
-            >
-              Offer
-            </NavLink>
-          </li>
-        )}
-        {this.props.user &&
-          this.props.event &&
-          this.props.event.is_registration_open && (
-            <li className="nav-item dropdown ">
-              <div
-                className="nav-link dropdown-toggle"
-                id="navbarDropdown"
-                role="button"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Registration
-              </div>
-              <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+            {this.props.user &&
+              this.props.event &&
+              this.props.event.is_application_open && (
+                <li className="nav-item">
+                  <NavLink
+                    to={`/${this.props.eventKey}/apply`}
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.props.toggleMenu}
+                  >
+                    Apply
+              </NavLink>
+                </li>
+              )}
+            {this.props.user && this.props.event && this.props.event.is_offer_open && (
+              <li className="nav-item">
                 <NavLink
-                  to={`/${this.props.eventKey}/registration`}
-                  className="dropdown-item"
+                  to={`/${this.props.eventKey}/offer`}
+                  activeClassName="nav-link active"
+                  className="nav-link"
                   onClick={this.props.toggleMenu}
                 >
-                  Registration Form
+                  Offer
+            </NavLink>
+              </li>
+            )}
+            {this.props.user &&
+              this.props.event &&
+              this.props.event.is_registration_open && (
+                <li className="nav-item dropdown ">
+                  <div
+                    className="nav-link dropdown-toggle"
+                    id="navbarDropdown"
+                    role="button"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    Registration
+              </div>
+                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <NavLink
+                      to={`/${this.props.eventKey}/registration`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      Registration Form
                 </NavLink>
-                {/* <NavLink
+                    {/* <NavLink
                   to={`/${this.props.eventKey}/invitationLetter`}
                   className="dropdown-item"
                   onClick={this.props.toggleMenu}
                 >
                   Invitation Letter
                 </NavLink> */}
-                {this.isRegistrationVolunteer(this.state.user) && (
-                  <NavLink
-                    to={`/${this.props.eventKey}/eventAttendance`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    Event Attendance
-                  </NavLink>
-                )}
-              </div>
-            </li>
-          )}
-        {this.isEventAdmin(this.props.user, this.props.event) && (
-          <li className="nav-item dropdown">
-            <div
-              className="nav-link dropdown-toggle"
-              id="navbarDropdown"
-              role="button"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="false"
-            >
-              Event Admin
+                    {this.isRegistrationVolunteer(this.state.user) && (
+                      <NavLink
+                        to={`/${this.props.eventKey}/eventAttendance`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        Event Attendance
+                      </NavLink>
+                    )}
+                  </div>
+                </li>
+              )}
+            {this.isEventAdmin(this.props.user, this.props.event) && (
+              <li className="nav-item dropdown">
+                <div
+                  className="nav-link dropdown-toggle"
+                  id="navbarDropdown"
+                  role="button"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  Event Admin
             </div>
-            <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              {/* <NavLink
+                <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  {/* <NavLink
                 to={`/${this.props.eventKey}/eventConfig`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Configuration
               </NavLink> */}
-              {/* <NavLink
+                  {/* <NavLink
                 to={`/${this.props.eventKey}/eventStats`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Event Stats
               </NavLink> */}
-              <NavLink
-                to={`/${this.props.eventKey}/reviewAssignment`}
-                className="dropdown-item"
-                onClick={this.props.toggleMenu}
-              >
-                Review Assignment
+                  <NavLink
+                    to={`/${this.props.eventKey}/reviewAssignment`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    Review Assignment
               </NavLink>
-              {<NavLink
-                to={`/${this.props.eventKey}/invitedGuests`}
-                className="dropdown-item"
-                onClick={this.props.toggleMenu}
-              >
-                Invited Guests
+                  {<NavLink
+                    to={`/${this.props.eventKey}/invitedGuests`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    Invited Guests
               </NavLink>}
-              {/* <NavLink
+                  {/* <NavLink
                 to={`/${this.props.eventKey}/profile-list`}
                 className="dropdown-item"
                 onClick={this.props.toggleMenu}
               >
                 Applicant Profiles
               </NavLink> */}
-            </div>
-          </li>
-        )}
-        {this.isEventReviewer(this.props.user, this.props.event) &&
-          this.props.event &&
-          this.props.event.is_review_open && (
-            <li className="nav-item dropdown">
-              <div
-                className="nav-link dropdown-toggle"
-                id="navbarDropdown"
-                role="button"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Reviews
+                </div>
+              </li>
+            )}
+            {this.isEventReviewer(this.props.user, this.props.event) &&
+              this.props.event &&
+              this.props.event.is_review_open && (
+                <li className="nav-item dropdown">
+                  <div
+                    className="nav-link dropdown-toggle"
+                    id="navbarDropdown"
+                    role="button"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    Reviews
               </div>
-              <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                <NavLink
-                  to={`/${this.props.eventKey}/review`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  Review
+                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <NavLink
+                      to={`/${this.props.eventKey}/review`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      Review
                 </NavLink>
-                <NavLink
-                  to={`/${this.props.eventKey}/reviewHistory`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  Review History
+                    <NavLink
+                      to={`/${this.props.eventKey}/reviewHistory`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      Review History
                 </NavLink>
+                  </div>
+                </li>
+              )}
+            {this.isRegistrationAdmin(this.props.user, this.props.event) &&
+              this.props.event &&
+              this.props.event.is_registration_open && (
+                <li className="nav-item dropdown">
+                  <div
+                    className="nav-link dropdown-toggle"
+                    id="navbarDropdown"
+                    role="button"
+                    data-toggle="dropdown"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
+                    Registration Admin
               </div>
-            </li>
-          )}
-        {this.isRegistrationAdmin(this.props.user, this.props.event) &&
-          this.props.event &&
-          this.props.event.is_registration_open && (
-            <li className="nav-item dropdown">
-              <div
-                className="nav-link dropdown-toggle"
-                id="navbarDropdown"
-                role="button"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                Registration Admin
-              </div>
-              <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                <NavLink
-                  to={`/${this.props.eventKey}/registrationAdmin`}
-                  className="dropdown-item"
-                  onClick={this.props.toggleMenu}
-                >
-                  Unconfirmed Registrations
+                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <NavLink
+                      to={`/${this.props.eventKey}/registrationAdmin`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      Unconfirmed Registrations
                 </NavLink>
-              </div>
-            </li>
-          )}
-      </ul>
+                  </div>
+                </li>
+              )}
+          </ul>
+        </div>
+      </nav>
+
     );
   }
 }
+
 
 class App extends Component {
   constructor(props) {
@@ -351,7 +359,7 @@ class App extends Component {
       <Router history={history}>
         <div>
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a className="navbar-brand" href="/">
+            <a className="navbar-brand navbar-brand-main" href="/">
               <img
                 src={
                   this.state.organisation &&
@@ -382,22 +390,21 @@ class App extends Component {
               }
               id="navbarNav"
             >
-              {this.state.currentEvent ? (
-                <EventNav
-                  eventKey={this.state.eventKey}
-                  event={this.state.currentEvent}
-                  user={this.state.user}
-                />
-              ) : (
-                <ul className="navbar-nav mr-auto"></ul>
-              )}
+              <ul className="navbar-nav mr-auto"></ul>
               <UserDropdown
                 logout={this.handleLogout}
                 user={this.state.user}
                 onClick={this.toggleMenu}
               />
             </div>
+            <div>
+              <ul className="navbar-nav mr-auto"></ul>
+            </div>
           </nav>
+          {this.state.currentEvent && <EventNav
+              eventKey={this.state.eventKey}
+              event={this.state.currentEvent}
+              user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
               <Switch>
@@ -416,7 +423,7 @@ class App extends Component {
                   exact
                   path="/login"
                   render={props => (
-                    <Login {...props} loggedIn={this.refreshUser} organisation={this.state.organisation}/>
+                    <Login {...props} loggedIn={this.refreshUser} organisation={this.state.organisation} />
                   )}
                 />
                 <Route
@@ -444,7 +451,11 @@ class App extends Component {
                 <Route
                   path="/:eventKey"
                   render={props => (
-                    <EventHome {...props} setEvent={this.setEvent} />
+                    <EventHome {...props}
+                      setEvent={this.setEvent}
+                      user={this.state.user}
+                      eventKey={this.state.eventKey}
+                      event={this.state.currentEvent} />
                   )}
                 />
               </Switch>

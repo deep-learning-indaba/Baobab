@@ -48,6 +48,12 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 footer {
   padding: 1em;
   background: white;
+  border-top-color: rgb(221, 221, 221);
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-bottom-color: rgb(221, 221, 221);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
 }
 
 footer .btn {
@@ -80,7 +86,29 @@ footer .btn {
   cursor: pointer;
 }
 
-.navbar-brand {
+.navbar-light .navbar-nav .nav-link.active {
+  background: #f9fafb;  
+}
+
+.navbar-light .navbar-nav .nav-item .nav-link{
+  padding-bottom: 0.5em;
+  padding-top: 0.5em;
+}
+
+.navbar-light {
+  padding-left: 2em;
+  padding-top: 0;
+  padding-right: 2em;
+  padding-bottom: 0;
+}
+
+.navbar-light .navbar-brand {
+  color: rgba(0, 0, 0, 0.95);
+  padding-bottom: 0.5em;
+  padding-top: 0.5em;
+}
+
+.navbar-brand-main {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
