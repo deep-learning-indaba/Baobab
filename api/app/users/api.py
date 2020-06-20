@@ -10,9 +10,10 @@ from sqlalchemy.exc import IntegrityError
 
 from app import LOGGER, bcrypt, db
 from app.events.models import EventRole
+import app.events.status as event_status
 from app.users.mixins import (AuthenticateMixin, PrivacyPolicyMixin,
                               SignupMixin, UserProfileListMixin,
-                              UserProfileMixin,ValidateUserForOrganisationMixin)
+                              UserProfileMixin, EventAttendeeMixin)
 from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
@@ -555,16 +556,16 @@ class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
         return {}, 200
 
 
-class ValidateUserForOrganisationAPI(ValidateUserForOrganisationMixin, restful.Resource):
-    # Check if User is part of Org.
+class EventAttendeeAPI(EventAttendeeMixin, restful.Resource):
+    # Check if User is an event attendee
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
-        organisation_id = args['organisation_id']
-        
+        event_id = args['event_id']
         user = get_user_from_request()
-        user_for_this_organization = user_repository.get_by_email(user['email'],organisation_id)
+        status = event_status.get_event_status(event_id, user.id)
         
-        if(not user_for_this_organization):
+        if(not status.is_event_attendee):
             return UNAUTHORIZED
+
         return 200
