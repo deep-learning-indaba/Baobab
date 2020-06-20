@@ -207,10 +207,51 @@ class EventStatus extends Component {
       }
   }
 
+  eventStatus = (event) => {
+      if (event.miniconf_url) {
+        const link = 
+            "https://" +
+            event.miniconf_url +
+            "/index.html?token=" +
+            JSON.parse(localStorage.getItem("user"))["token"] +
+            "&event_id=" + 
+            event.id +
+            "&redirect_back_url=" +
+            window.location.href +
+            "&verify_token_url=" +
+            process.env.REACT_APP_API_URL +
+            "/api/v1/validate-user-event-attendee" +
+            "&origin=" +
+            window.location.origin;
+
+        return {
+            title: "Virtual Event Now Open",
+            titleClass: "text-success",
+            longText: `${event.name} is now open! Please visit our virtual event site to attend.`,
+            shortText: 'Go To Virtual Event >',
+            linkClass: "btn-success",
+            link: link
+        }
+      }
+      else {
+          return {
+              title: "Enjoy the Event!",
+              titleClass: "text-success",
+              shortText: 'Now Live'
+          }
+      }
+      
+  }
+
   mapStatus = (event) => {
       if (event.status === null) {
         return this.unknownStatus("Status", "Please try refresh the page and/or clear your cookies");
       }
+
+      if (event.is_event_open && event.status.is_event_attendee) {
+          return this.eventStatus(event);
+      }
+
       if (event.status.invited_guest) {
         return this.invitedGuestStatus(event);
       }
