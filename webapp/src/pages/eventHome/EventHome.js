@@ -20,60 +20,6 @@ import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 
 
-class MiniConf extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      event: this.props.event,
-    };
-  }
-
-  showMiniConf = (event) => {
-    var currentdate = new Date();
-    if (
-      event.miniconf_url &&
-      event.status &&
-      (event.status.invited_guest ||
-        event.status.offer_status === "Accepted") &&
-      new Date(event.start_date) <= currentdate &&
-      currentdate <= new Date(event.end_date)
-    ) {
-      return (
-        <div>
-          Connect to{" "}
-          <a
-            href={
-              "https://" +
-              event.miniconf_url +
-              "/index.html?token=" +
-              JSON.parse(localStorage.getItem("user"))["token"] +
-              "&organisation_id=" +
-              event.organisation_id +
-              "&redirect_back_url=" +
-              window.location.href +
-              "&verify_token_url=" +
-              process.env.REACT_APP_API_URL +
-              "/api/v1/validate-user-for-organization" +
-              "&origin=" +
-              window.location.origin
-            }
-          >
-            mini-conf
-          </a>{" "}
-          .{" "}
-        </div>
-      );
-    }
-    return <div />;
-  };
-
-  render() {
-    const { event } = this.state;
-    return this.showMiniConf(event);
-  }
-}
-
 class EventInfo extends Component {
   constructor(props) {
     super(props);
@@ -92,7 +38,6 @@ class EventInfo extends Component {
       <div className="event-home">
         <h1>{event.description}</h1>
         <EventStatus longForm={true} event={event} />
-        <MiniConf event={event} />
       </div>
     );
   }

@@ -27,6 +27,10 @@ class EventStatus():
         self.offer_status=offer_status
         self.outcome_status=outcome_status
 
+    @property
+    def is_event_attendee(self):
+        return self.invited_guest or self.offer_status == "Accepted"
+
 
 def _get_registration_status(registration):
     if registration is None:

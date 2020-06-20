@@ -44,7 +44,7 @@ class EventRepository():
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
         return db.session.query(Event, Organisation)\
-                         .filter(Event.start_date > datetime.now())\
+                         .filter(Event.end_date >= datetime.now())\
                          .filter_by(organisation_id=organisation_id)\
                          .join(Organisation, Organisation.id==Event.organisation_id)\
                          .all()
