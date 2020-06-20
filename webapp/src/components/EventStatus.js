@@ -237,7 +237,6 @@ class EventStatus extends Component {
           return {
               title: "Enjoy the Event!",
               titleClass: "text-success",
-              longText: `${event.name} is now running!`,
               shortText: 'Now Live'
           }
       }
