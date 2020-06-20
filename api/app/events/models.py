@@ -210,6 +210,11 @@ class Event(db.Model):
         now = datetime.now()
         return now >= self.registration_open and now < self.registration_close
 
+    @property
+    def is_event_open(self):
+        now = datetime.now()
+        return now >= self.start_date and now <= self.end_date
+
 
 class EventRole(db.Model):
 
