@@ -214,13 +214,13 @@ class EventStatus extends Component {
             event.miniconf_url +
             "/index.html?token=" +
             JSON.parse(localStorage.getItem("user"))["token"] +
-            "&organisation_id=" +
-            event.organisation_id +
+            "&event_id=" + 
+            event.id +
             "&redirect_back_url=" +
             window.location.href +
             "&verify_token_url=" +
             process.env.REACT_APP_API_URL +
-            "/api/v1/validate-user-for-organization" +
+            "/api/v1/validate-user-event-attendee" +
             "&origin=" +
             window.location.origin;
 
