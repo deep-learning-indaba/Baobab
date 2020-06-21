@@ -15,15 +15,15 @@ export function authHeader() {
 export function extractErrorMessage(error) {
   // Extract error message from error objects sent by the back-end
   return error.response && error.response.data
-      ? error.response.data.message
-      : error.message
+    ? error.response.data.message
+    : error.message;
 }
 
 axios.interceptors.response.use(
-  response => {
+  (response) => {
     return response;
   },
-  function(error) {
+  function (error) {
     if (
       error &&
       error.response &&
@@ -31,8 +31,11 @@ axios.interceptors.response.use(
       error.response.data &&
       error.response.data.type === "UNAUTHORIZED"
     ) {
-      localStorage.removeItem("user");
-      history.push("/login");
+      // Redirect if you receive unauth, but only if you aren't on the home page
+      if (history && history.location && history.location.pathname != "/") {
+        localStorage.removeItem("user");
+        history.push("/login");
+      }
     } else throw error;
   }
 );

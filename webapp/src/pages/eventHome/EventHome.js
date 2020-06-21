@@ -17,7 +17,8 @@ import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
-import EventStatus from "../../components/EventStatus"
+import EventStatus from "../../components/EventStatus";
+
 
 class EventInfo extends Component {
   constructor(props) {
@@ -27,7 +28,7 @@ class EventInfo extends Component {
       event: this.props.event,
       error: null,
       offer: null,
-      invitedGuest: null
+      invitedGuest: null,
     };
   }
 
@@ -36,7 +37,7 @@ class EventInfo extends Component {
     return (
       <div className="event-home">
         <h1>{event.description}</h1>
-        <EventStatus longForm={true} event={event}/>
+        <EventStatus longForm={true} event={event} />
       </div>
     );
   }
@@ -49,32 +50,31 @@ class EventHome extends Component {
     this.state = {
       event: null,
       error: null,
-      isLoading: true
+      isLoading: true,
     };
   }
 
   loadEvent = () => {
-    const eventKey = this.props.match ?
-      this.props.match.params.eventKey : null;
+    const eventKey = this.props.match ? this.props.match.params.eventKey : null;
 
     this.setState({
-      isLoading: true
+      isLoading: true,
     });
 
-    eventService.getByKey(eventKey).then(response => {
+    eventService.getByKey(eventKey).then((response) => {
       this.setState(
         {
           event: response.event,
           error: response.error,
           eventKey: eventKey,
-          isLoading: false
+          isLoading: false,
         },
         () => {
           this.props.setEvent(eventKey, this.state.event);
         }
       );
     });
-  }
+  };
 
   componentDidMount() {
     this.loadEvent();
@@ -86,15 +86,13 @@ class EventHome extends Component {
 
     const loadingStyle = {
       width: "3rem",
-      height: "3rem"
+      height: "3rem",
     };
 
     if (isLoading) {
       return (
         <div class="d-flex justify-content-center">
-          <div class="spinner-border"
-            style={loadingStyle}
-            role="status">
+          <div class="spinner-border" style={loadingStyle} role="status">
             <span class="sr-only">Loading...</span>
           </div>
         </div>
@@ -122,122 +120,88 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/`}
-          render={props => <EventInfo
-            {...props}
-            event={event} />}
+          render={(props) => <EventInfo {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/invitationLetter`}
-          render={props => <InvitedLetter
-            {...props}
-            event={event} />}
+          render={(props) => <InvitedLetter {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/apply`}
-          render={props => <Application
-            {...props}
-            event={event} />}
+          render={(props) => <Application {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/eventAttendance`}
-          render={props => <Attendance
-            {...props}
-            event={event} />}
+          render={(props) => <Attendance {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/eventConfig`}
-          render={props => <EventConfig {
-            ...props}
-            event={event} />}
+          render={(props) => <EventConfig {...props} event={event} />}
         />
 
         <Route
           exact
           path={`${match.path}/eventStats`}
-          render={props => <EventStats
-            {...props}
-            event={event} />}
+          render={(props) => <EventStats {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/reviewAssignment`}
-          render={props => <ReviewAssignment
-            {...props}
-            event={event} />}
+          render={(props) => <ReviewAssignment {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/reviewHistory`}
-          render={props => <ReviewHistory
-            {...props}
-            event={event} />}
+          render={(props) => <ReviewHistory {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/invitedGuests`}
-          render={props => <InvitedGuests
-            {...props}
-            event={event} />}
+          render={(props) => <InvitedGuests {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/invitedGuests/create`}
-          render={props => <CreateInvitedGuests
-            {...props}
-            event={event} />}
+          render={(props) => <CreateInvitedGuests {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/review`}
-          render={props => <Review
-            {...props}
-            event={event} />}
+          render={(props) => <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/review/:id`}
-          render={props => <Review
-            {...props}
-            event={event} />}
+          render={(props) => <Review {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/profile-list`}
-          render={props => <ProfileList
-            {...props}
-            event={event} />}
+          render={(props) => <ProfileList {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/offer`}
-          render={props => <Offer
-            {...props}
-            event={event} />}
+          render={(props) => <Offer {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/registration`}
-          render={props => <Registration
-            {...props}
-            event={event} />}
+          render={(props) => <Registration {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/viewprofile/:id`}
-          render={props => <ViewProfile
-            {...props}
-            event={event} />}
+          render={(props) => <ViewProfile {...props} event={event} />}
         />
         <Route
           exact
           path={`${match.path}/registrationAdmin`}
-          render={props => <RegistrationAdmin
-            {...props}
-            event={event} />}
+          render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
       </div>
     );

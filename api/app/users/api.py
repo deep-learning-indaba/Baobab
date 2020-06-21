@@ -10,13 +10,14 @@ from sqlalchemy.exc import IntegrityError
 
 from app import LOGGER, bcrypt, db
 from app.events.models import EventRole
+import app.events.status as event_status
 from app.users.mixins import (AuthenticateMixin, PrivacyPolicyMixin,
                               SignupMixin, UserProfileListMixin,
-                              UserProfileMixin)
+                              UserProfileMixin, EventAttendeeMixin)
 from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
-from app.utils.auth import admin_required, auth_required, generate_token
+from app.utils.auth import admin_required, auth_required, generate_token, get_user_from_request
 from app.utils.emailer import send_mail
 from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
                               EMAIL_IN_USE, EMAIL_NOT_VERIFIED,
@@ -27,6 +28,7 @@ from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
                               RESET_PASSWORD_CODE_NOT_VALID, USER_DELETED,
                               USER_NOT_FOUND, VERIFY_EMAIL_INVITED_GUEST)
 from app.utils.misc import make_code
+from app.utils.errors import UNAUTHORIZED
 
 VERIFY_EMAIL_BODY = """
 Dear {title} {firstname} {lastname},
@@ -552,3 +554,18 @@ class PrivacyPolicyAPI(PrivacyPolicyMixin, restful.Resource):
         db.session.commit()
 
         return {}, 200
+
+
+class EventAttendeeAPI(EventAttendeeMixin, restful.Resource):
+    # Check if User is an event attendee
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        user = get_user_from_request()
+        status = event_status.get_event_status(event_id, user.id)
+        
+        if(not status.is_event_attendee):
+            return UNAUTHORIZED
+
+        return 200

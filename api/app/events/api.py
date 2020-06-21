@@ -33,7 +33,8 @@ def status_info(status):
         'application_status': status.application_status,
         'registration_status': status.registration_status,
         'offer_status': status.offer_status,
-        'outcome_status': status.outcome_status
+        'outcome_status': status.outcome_status,
+        'is_event_attendee': status.is_event_attendee
     }
 
 def event_info(user_id, event_org, status):
@@ -55,7 +56,9 @@ def event_info(user_id, event_org, status):
         'is_selection_open': event_org.Event.is_selection_open,
         'is_offer_open': event_org.Event.is_offer_open,
         'is_registration_open': event_org.Event.is_registration_open,
-        'travel_grant': event_org.Event.travel_grant
+        'is_event_open': event_org.Event.is_event_open,
+        'travel_grant': event_org.Event.travel_grant,
+        "miniconf_url": event_org.Event.miniconf_url
     }
 
 
