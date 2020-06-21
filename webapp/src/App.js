@@ -101,19 +101,11 @@ class EventNav extends Component {
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
         <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class="navbar-collapse collapse navbars" id="navbar1">
+        <div class={
+          "collapse navbar-collapse" +
+          (this.state.collapsed ? " collapsed" : "")
+        } id="eventNavbar">
           <ul className="navbar-nav">
-            <li className={"nav-item"}>
-              <NavLink
-                exact
-                to={`/${this.props.eventKey}`}
-                activeClassName="nav-link active"
-                className="nav-link"
-                onClick={this.props.toggleMenu}
-              >
-                Home
-          </NavLink>
-            </li>
             {this.props.user &&
               this.props.event &&
               this.props.event.is_application_open && (
@@ -291,6 +283,17 @@ class EventNav extends Component {
               )}
           </ul>
         </div>
+        <button
+          className="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#eventNavbar"
+          aria-controls="eventNavbar"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span className="navbar-toggler-icon" />
+        </button>
       </nav>
 
     );
@@ -372,17 +375,6 @@ class App extends Component {
               />
               {this.state.organisation && this.state.organisation.system_name}
             </a>
-            <button
-              className="navbar-toggler"
-              type="button"
-              data-toggle="collapse"
-              data-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span className="navbar-toggler-icon" />
-            </button>
             <div
               class={
                 "collapse navbar-collapse" +
@@ -400,11 +392,22 @@ class App extends Component {
             <div>
               <ul className="navbar-nav mr-auto"></ul>
             </div>
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-toggle="collapse"
+              data-target="#navbarNav"
+              aria-controls="navbarNav"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span className="navbar-toggler-icon" />
+            </button>
           </nav>
           {this.state.currentEvent && <EventNav
-              eventKey={this.state.eventKey}
-              event={this.state.currentEvent}
-              user={this.state.user} />}
+            eventKey={this.state.eventKey}
+            event={this.state.currentEvent}
+            user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
               <Switch>

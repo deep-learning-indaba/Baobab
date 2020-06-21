@@ -32,7 +32,7 @@ body {
 
 .Body{
   background: #F9fafb;;
-  min-height: 85vh;
+  min-height: 80vh;
   padding-bottom: 1em;
   padding-top: 2em;
 }
@@ -87,12 +87,13 @@ footer .btn {
 }
 
 .navbar-light .navbar-nav .nav-link.active {
-  background: #f9fafb;  
+  background: #f1f2f3;  
+  font-weight: bold;
 }
 
 .navbar-light .navbar-nav .nav-item .nav-link{
-  padding-bottom: 0.5em;
-  padding-top: 0.5em;
+  padding-bottom: 0.75em;
+  padding-top: 0.75em;
 }
 
 .navbar-light {
@@ -100,12 +101,19 @@ footer .btn {
   padding-top: 0;
   padding-right: 2em;
   padding-bottom: 0;
+  border-bottom-color: rgb(221, 221, 221);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
 }
 
 .navbar-light .navbar-brand {
-  color: rgba(0, 0, 0, 0.95);
+  color: rgba(0, 0, 0);
   padding-bottom: 0.5em;
   padding-top: 0.5em;
+}
+
+.navbar-light .navbar-nav .nav-link {
+  color: rgba(0,0,0,.75);
 }
 
 .navbar-brand-main {
@@ -137,4 +145,8 @@ label {
 
 .powered-by a {
   font-weight: bold;
+}
+
+.bg-dark {
+  background-color: #1f2d3e !important;
 }
