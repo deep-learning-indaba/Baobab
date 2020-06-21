@@ -37,14 +37,24 @@ class EventStatus extends Component {
 
   invitedGuestStatus = (event) => {
     if (!event.status.registration_status) {
-        return {
-            title: "Invited Guest",
-            titleClass: "text-success",
-            longText: `You have been invited as a ${event.status.invited_guest}, please proceed to registration.`,
-            shortText: "Register",
-            linkClass: 'btn-success',
-            link: `${event.key}/registration`
-        };
+        if (event.registration_open) {
+            return {
+                title: "Invited Guest",
+                titleClass: "text-success",
+                longText: `You have been invited as a ${event.status.invited_guest}, please proceed to registration.`,
+                shortText: "Register",
+                linkClass: 'btn-success',
+                link: `${event.key}/registration`
+            };
+        }
+        else {
+            return {
+                title: "Registration Closed",
+                titleClass: "text-danger",
+                longText: `Registration is now closed.`,
+                shortText: "Registration Closed"
+            };
+        }
     }
     else {
         return this.registeredStatus(event);   
@@ -100,7 +110,7 @@ class EventStatus extends Component {
         if (event.status.registration_status) {
             return this.registeredStatus(event);
         }
-        else {
+        else if (event.registration_open) {
             return {
                 title: "Register Now",
                 titleClass: "text-success",
@@ -108,6 +118,14 @@ class EventStatus extends Component {
                 shortText: "Register Now",
                 linkClass: "btn-success",
                 link: `${event.key}/registration`
+            };
+        }
+        else {
+            return {
+                title: "Registration Closed",
+                titleClass: "text-danger",
+                longText: `Registration is now closed.`,
+                shortText: "Registration Closed"
             };
         }
     }
