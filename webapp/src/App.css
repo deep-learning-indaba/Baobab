@@ -150,3 +150,7 @@ label {
 .bg-dark {
   background-color: #1f2d3e !important;
 }
+
+.disabled-form-control {
+  color: rgba(0, 0, 0, 0.3);
+}
