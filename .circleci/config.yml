@@ -61,6 +61,9 @@ jobs:
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
+            echo "Current setuptools v- $(pip --setuptools)"
+            pip install --upgrade setuptools==44.0.0 
+            echo "Updated setuptools v - $(pip --setuptools)"
             pip install -r requirements.txt
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
@@ -81,6 +84,12 @@ jobs:
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
+            echo "Current pip v- $(pip --version)"
+            pip install --upgrade pip==20.0.1
+            echo "Updated pip v - $(pip --version)"
+            echo "Current setuptools v- $(pip --setuptools)"
+            pip install --upgrade setuptools==44.0.0 
+            echo "Updated setuptools v - $(pip --setuptools)"
             pip install -r requirements.txt
             DATABASE_URL=$PROD_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
