@@ -1,5 +1,11 @@
 @media all and (min-width: 480px) {
   .CreateAccount {
-    padding: 60px 0;
+    padding: 1em 0;
+  }
+
+  .CreateAccount form {
+    margin: 0 auto;
+    max-width: 430px;
   }
 }
+
