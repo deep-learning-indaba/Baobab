@@ -64,7 +64,7 @@ jobs:
             echo "Current pip v- $(pip --version)"
             pip install --upgrade pip==20.0.1
             echo "Updated pip v - $(pip --version)"
-            pip install -r requirements.txt
+            pip install -r requirements.txt --no-use-pep517
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
   migrate-prod:
@@ -87,7 +87,7 @@ jobs:
             echo "Current pip v- $(pip --version)"
             pip install --upgrade pip==20.0.1
             echo "Updated pip v - $(pip --version)"
-            pip install -r requirements.txt
+            pip install -r requirements.txt --no-use-pep517
             DATABASE_URL=$PROD_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
 
   deploy-backend-test:
