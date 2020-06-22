@@ -4,6 +4,11 @@
   }
 }
 
+.Profile form {
+  margin: 0 auto;
+  max-width: 430px;
+}
+
 .Button {
   margin: 10px 0;
 }
