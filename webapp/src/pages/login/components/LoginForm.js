@@ -75,12 +75,6 @@ class LoginForm extends Component {
   }
 
   render() {
-    const xs = 6;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
-
     const { email,
       password,
       loading,
@@ -144,8 +138,6 @@ class LoginForm extends Component {
                 </button>
 
             </div>
-
-
 
             {error &&
               <div id="error-login" className={"alert alert-danger alert-container"}>

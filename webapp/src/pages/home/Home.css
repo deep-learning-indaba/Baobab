@@ -6,7 +6,8 @@
 
 img.large-logo {
     margin-bottom: 2em;
-    max-width: 600px;
+    max-width: 80%;
+    max-height: 250px;
 }
 
 table.event-table {
@@ -20,4 +21,8 @@ table.event-table td {
 
 table.event-table tbody {
     background-color: transparent;
+}
+
+.event-table-container {
+    max-width: 90%;
 }

@@ -196,76 +196,62 @@ class ProfileForm extends Component {
       <div className="Profile">
         <form onSubmit={this.handleSubmit}>
 
-          <p className="h5 text-center mb-4">Profile</p>
-
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.titleOptions}
-                id={validationFields.title.name}
-                placeholder={validationFields.title.display}
-                onChange={this.handleChangeDropdown}
-                value={titleValue}
-                label={validationFields.title.display} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.firstName.name}
-                type="text"
-                placeholder={validationFields.firstName.display}
-                onChange={this.handleChange(validationFields.firstName)}
-                value={firstName}
-                label={validationFields.firstName.display} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.lastName.name}
-                type="text"
-                placeholder={validationFields.lastName.display}
-                onChange={this.handleChange(validationFields.lastName)}
-                value={lastName}
-                label={validationFields.lastName.display}
-                editable={false} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.email.name}
-                type="email"
-                value={email}
-                label={validationFields.email.display}
-                description={"Read-only"} />
-            </div>
+          <div class="Profile-Header">
+            <h3>Your Profile</h3>
           </div>
 
-          <div class="row">
-            <div class={commonColClassName}>
-              <button
-                type="button"
-                class="btn btn-primary Button"
-                disabled={loading}
-                onClick={() => this.setState({ confirmResetVisible: true })}>
-                Reset password
-              </button>
-            </div>
+          <div class="card">
 
-            <div class={commonColClassName}>
-              <button
-                type="submit"
-                class="btn btn-primary Button"
-                disabled={loading}>
-                {loading && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true" />
-                )}
+            <FormSelect
+              options={this.state.titleOptions}
+              id={validationFields.title.name}
+              onChange={this.handleChangeDropdown}
+              value={titleValue}
+              label={validationFields.title.display} />
+            <FormTextBox
+              id={validationFields.firstName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.firstName)}
+              value={firstName}
+              label={validationFields.firstName.display} />
+            <FormTextBox
+              id={validationFields.lastName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.lastName)}
+              value={lastName}
+              label={validationFields.lastName.display}
+              editable={false} />
+            <FormTextBox
+              isDisabled={true}
+              id={validationFields.email.name}
+              type="email"
+              value={email}
+              label={validationFields.email.display}
+              description={"Read-only"} />
+
+            <br /><br />
+
+            <button
+              type="submit"
+              class="btn btn-primary Button"
+              disabled={loading}>
+              {loading && (
+                <span
+                  class="spinner-grow spinner-grow-sm"
+                  role="status"
+                  aria-hidden="true" />
+              )}
                 Save profile
               </button>
-            </div>
           </div>
+          <br/>
+          <button
+            type="button"
+            class="link-style App-link"
+            disabled={loading}
+            onClick={() => this.setState({ confirmResetVisible: true })}>
+            Reset Your Password
+          </button>
 
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
         </form>
