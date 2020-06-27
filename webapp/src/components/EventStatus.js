@@ -261,9 +261,31 @@ class EventStatus extends Component {
       
   }
 
+  eventComingSoonStatus = (event) => {
+    if (event.miniconf_url) {
+        return {
+            title: "Virtual Event Opening Soon!",
+            titleClass: "text-success",
+            longText: `${event.name} is opening soon - our virtual event site will be live on ${event.start_date}.`,
+            shortText: `Virtual Event Opens ${event.start_date}`,
+        }
+    }
+    else {
+        return {
+            title: "Enjoy the Event",
+            titleClass: "text-success",
+            shortText: `Starts ${event.start_date}!`
+        }
+    }
+  }
+
   mapStatus = (event) => {
       if (event.status === null) {
         return this.unknownStatus("Status", "Please try refresh the page and/or clear your cookies");
+      }
+
+      if (!event.is_registration_open && event.is_event_opening && event.status.is_event_attendee) {
+          return this.eventComingSoonStatus(event);
       }
 
       if (event.is_event_open && event.status.is_event_attendee) {
