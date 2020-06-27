@@ -224,7 +224,6 @@ class EventsStatsAPITest(ApiTestCase):
                                     'Authorization': self.test_user1['token']},
                                 query_string={'event_id': self.test_event.id})
         data = json.loads(response.data)
-        self.assertEqual(data['num_users'], 2)
         self.assertEqual(data['num_responses'], 2)
         self.assertEqual(data['num_submitted_responses'], 1)
 
