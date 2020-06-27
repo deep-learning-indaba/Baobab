@@ -37,7 +37,7 @@ class EventStatus extends Component {
 
   invitedGuestStatus = (event) => {
     if (!event.status.registration_status) {
-        if (event.registration_open) {
+        if (event.is_registration_open) {
             return {
                 title: "Invited Guest",
                 titleClass: "text-success",
@@ -110,7 +110,7 @@ class EventStatus extends Component {
         if (event.status.registration_status) {
             return this.registeredStatus(event);
         }
-        else if (event.registration_open) {
+        else if (event.is_registration_open) {
             return {
                 title: "Register Now",
                 titleClass: "text-success",
