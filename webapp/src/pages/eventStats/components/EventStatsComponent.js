@@ -12,7 +12,6 @@ class EventStatsComponent extends Component {
       buttonLoading: false,
       stats: null,
       error: "",
-      emailSendStatus: ""
     };
   }
 
@@ -24,35 +23,47 @@ class EventStatsComponent extends Component {
             loading: false,
             buttonLoading: false,
             stats: result.stats,
-            error: result.error,
-            emailSendStatus: ""
+            error: result.error
           });
         });
   }
 
-  handleSubmit = event => {
-    event.preventDefault();
-    this.setState({ buttonLoading: true });
+  getStatus = (isOpen, isOpening) => {
+    if (isOpen) {
+      return <span class="badge badge-pill badge-success">Open</span>
+    }
+    if (isOpening) {
+      return <span class="badge badge-pill badge-secondary">Not Open</span>
+    }
+    return <span class="badge badge-pill badge-warning">Closed</span>
+  }
 
-    eventStatsService.sendReminderToSubmit(this.props.event ?
-      this.props.event.id : 0).then(
-        result => {
-          return eventStatsService.sendReminderToBegin(this.props.event ? this.props.event.id : 0)
-        },
-        error => this.setState({ error, buttonLoading: false })
-      ).then(
-        result => {
-          this.setState({ buttonLoading: false, emailSendStatus: "Reminders sent!" })
-        },
-        error => this.setState({ error, buttonLoading: false })
-      );
+  plotTimeSeries = (name, timeseries) => {
+    if (!timeseries) {
+      return <div></div>
+    }
+
+    return <div className="chart">
+      <Chart
+        chartType="ColumnChart"
+        width="100%"
+        data={[["Date", name], ...timeseries]}
+        options={
+          {
+            legend: { position: "none" }
+          }
+        }
+        loader={
+          <div className="spinner-border" role="status">
+            <span class="sr-only">Loading Chart</span>
+          </div>}
+      />
+    </div>
   }
 
   render() {
     const {
       loading,
-      buttonLoading,
-      emailSendStatus,
       stats,
       error
     } = this.state;
@@ -79,52 +90,58 @@ class EventStatsComponent extends Component {
       </div>
     }
 
-    const submitted = stats.num_submitted_responses;
-    const not_submitted = stats.num_responses - submitted;
-    const not_started = stats.num_users - stats.num_responses;
-
     return (
       <div className={"event-stats text-center"}>
-        <p className="h5">Statistics for {stats.event_description}</p>
+        <div className="row">
+          <div className="col-md">
+            <div className="stats-title">Applications
+              {this.getStatus(this.props.event.is_applications_open, this.props.event.is_applications_opening)}
+            </div>
 
-        <Chart
-          chartType="PieChart"
-          loader={
-            <div class="spinner-border" role="status">
-              <span class="sr-only">Loading Chart</span>
-            </div>}
+            <div className="card">
+              {/* TODO: Add dates so we can distinguish between closed and not open yet */}
 
-          data={[
-            ['Phase', 'Number'],
-            ['Not Started', not_started],
-            ['Not Submitted', not_submitted],
-            ['Complete', submitted],
-          ]}
-
-          options={{
-            title: 'Number of applications',
-          }} />
-
-        <form onSubmit={this.handleSubmit}>
-          <div class="text-center">
-
-            <button type="submit" class="event-action btn btn-primary"
-              visible={!emailSendStatus} >
-              {buttonLoading && (
-                <span
-                  class="spinner-grow spinner-grow-sm"
-                  role="status"
-                  aria-hidden="true" />
-              )}
-              Send Reminders to Applicants
-              </button>
-
-            {emailSendStatus &&
-              <div className={"alert alert-success alert-container"}>
-                {emailSendStatus}
-              </div>}
+              <h1>{stats.num_submitted_responses}</h1>
+              <div className="stats-description">Submitted</div>
+              <br />
+              <div className="row">
+                <div className="col-sm">
+                  <h3>{stats.num_responses - stats.num_submitted_responses - stats.num_withdrawn_responses}</h3>
+                  <div className="stats-description">Un-submitted</div>
+                </div>
+                <div className="col-sm">
+                  <h3>{stats.num_withdrawn_responses}</h3>
+                  <div className="stats-description">Withdrawn</div>
+                </div>
+              </div>
+              {this.plotTimeSeries("Submitted", stats.submitted_timeseries)}
+            </div>
           </div>
-        </form>
+          <div className="col-md">
+            <div className="stats-title">Reviews
+              {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
+            </div>
+            <div className="card">
+
+            </div>
+          </div>
+          <div className="col-md">
+            <div className="stats-title">Offers
+              {this.getStatus(this.props.event.is_offer_open, this.props.event.is_offer_opening)}
+            </div>
+            <div className="card">
+
+            </div>
+          </div>
+          <div className="col-md">
+            <div className="stats-title">Registration
+              {this.getStatus(this.props.event.is_registration_open, this.props.event.is_registration_opening)}
+            </div>
+            <div className="card">
+
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

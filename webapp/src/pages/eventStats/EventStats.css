@@ -5,3 +5,38 @@
 .event-action {
     margin: 1em;
 }
+
+.event-stats h1, .event-stats h3 {
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.event-stats h1 {
+    font-size: 3rem;
+    
+}
+
+.event-stats .stats-description {
+    font-size: 0.8em;
+}
+
+.event-stats h1 +  .stats-description {
+    margin-top: -0.4em;
+}
+
+.event-stats .card {
+    margin-top: 0;
+    padding: 1em;
+}
+
+.event-stats .stats-title .badge {
+    position: absolute;
+    right: 0.5em;
+    top: 0.5em;
+    font-size: .6em;
+}
+
+.event-stats .stats-title {
+    font-size: 1.3em;
+    position: relative;
+}
