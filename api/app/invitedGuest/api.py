@@ -33,10 +33,13 @@ def invitedGuest_info(invitedGuest, user):
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
 
+GUEST_REGISTRATION_TEXT = """
+To assist with our planning process, please complete our guest registration form in {system_name}, by visiting {host}/{event_key}/registration"""
+
 GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
 We are pleased to invite you to attend {event_name} as a {role}. 
-To assist with our planning process, please complete our guest registration form in {system_name}, by visiting {host}/{event_key}/registration 
+{guest_registration_text}
 
 Please reply to this email should you have any questions or concerns.  
 
@@ -44,15 +47,21 @@ Kind Regards,
 The {event_name} Organisers
 """
 
+NEW_GUEST_REGISTRATION_TEXT = """3. Visit {host}/{event_key}/registration to complete the registration form.
+4. Update your details in {host}/profile
+"""
+
+NEW_GUEST_NO_REGISTRATION_TEXT = """3. Update your details in {host}/profile
+"""
+
 NEW_GUEST_EMAIL_TEMPLATE = """Dear {user_title} {firstname} {lastname},
 
 We are pleased to invite you to attend {event_name} as a {role}. 
-To assist with our planning process, please complete our guest registration form in our portal, {system_name}, by following these instructions:
+Please follow these instructions to gain access to our event management system, {system_name}:
 
 1. Visit {host}/resetPassword?resetToken={reset_code} to set your account password.
 2. Log in using your email address (the one you received this email on!) and new password.
-3. Visit {host}/{event_key}/registration to complete the registration form.
-4. Update your details in {host}/profile
+{registration_text}
 
 Please reply to this email should you have any questions or concerns. 
 
@@ -102,6 +111,13 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
         if send_email:
             try:
+                registration_text = (
+                    GUEST_REGISTRATION_TEXT.format(
+                        system_name=g.organisation.system_name,
+                        host=misc.get_baobab_host(),
+                        event_key=event.key) if event.is_registration_open
+                    else '')
+
                 send_mail(
                     recipient=user.email,
                     subject='Your invitation to {}'.format(event.name),
@@ -111,9 +127,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
                         lastname=user.lastname,
                         role=role,
                         event_name=event.name,
-                        event_key=event.key,
-                        system_name=g.organisation.system_name,
-                        host=misc.get_baobab_host()))
+                        guest_registration_text=registration_text))
             except Exception as e:
                 LOGGER.error('Failed to send email to invited guest with user Id {}, due to {}'.format(user.id, e))
                 return INVITED_GUEST_EMAIL_FAILED
@@ -147,6 +161,17 @@ class CreateUser(SignupMixin, restful.Resource):
             db.session.commit()
 
             try:
+                if event.is_registration_open:
+                    registration_text = NEW_GUEST_REGISTRATION_TEXT.format(
+                        event_key=event.key,
+                        system_name=g.organisation.system_name,
+                        host=misc.get_baobab_host())
+                else:
+                    registration_text = NEW_GUEST_NO_REGISTRATION_TEXT.format(
+                        event_key=event.key,
+                        system_name=g.organisation.system_name,
+                        host=misc.get_baobab_host())
+
                 send_mail(
                         recipient=user.email,
                         subject='Your invitation to {}'.format(event.name),
@@ -159,7 +184,8 @@ class CreateUser(SignupMixin, restful.Resource):
                             event_key=event.key,
                             system_name=g.organisation.system_name,
                             host=misc.get_baobab_host(),
-                            reset_code=password_reset.code))
+                            reset_code=password_reset.code,
+                            registration_text=registration_text))
             except Exception as e:
                 LOGGER.error('Failed to send email for invited guest with user Id {} due to: {}'.format(user.id, e))
                 return INVITED_GUEST_EMAIL_FAILED
