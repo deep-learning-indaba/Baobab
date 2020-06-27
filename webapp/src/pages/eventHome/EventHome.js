@@ -36,7 +36,7 @@ class EventInfo extends Component {
     const { event } = this.state;
     return (
       <div className="event-home">
-        <h1>{event.description}</h1>
+        <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
       </div>
     );

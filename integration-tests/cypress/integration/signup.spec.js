@@ -82,8 +82,10 @@ describe("Sign up", function() {
     cy.get("input[id=confirmPassword]").type(user.confirmPassword);
 
     cy.get("#btn-cookieConsent").click();
-    cy.get("#over18").click();
-    cy.get("#agreePrivacyPolicy").click();
+    // Forcing the below because Bootstrap custom control checkboxes hide the input control
+    cy.get("#over18").click({force: true});
+    cy.get("#agreePrivacyPolicy").click({force: true});
+
     cy.get("#btn-signup-confirm").click();
 
     // account should be created

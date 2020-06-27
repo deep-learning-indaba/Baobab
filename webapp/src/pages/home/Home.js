@@ -58,7 +58,7 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        return <EventStatus longForm={false} event={e}/>;
+        return <EventStatus longForm={false} event={e} />;
     }
 
     render() {
@@ -79,17 +79,13 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user &&
-                    <div>
-                        <table className="event-table">
-                            {this.state.upcomingEvents &&
-                                this.state.upcomingEvents.length > 0 &&
-                                <thead><tr><th colspan="2"><br /><br /><h3 className="text-center">Upcoming Events</h3></th></tr></thead>}
-                            {this.state.upcomingEvents &&
-                                this.state.upcomingEvents.length > 0 &&
+                {this.props.user && this.state.upcomingEvents && this.state.upcomingEvents.length > 0
+                    && <div class="event-table-container">
+                        <h3 className="text-center">Upcoming Events</h3>
+                        <div class="card">
+                            <table className="event-table">
                                 <tbody>
                                     {this.state.upcomingEvents.map(e => {
-                                        // TODO: Update status based on event stage changes.
                                         return (<tr>
                                             <td>
                                                 <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
@@ -99,15 +95,17 @@ class Home extends Component {
                                         </tr>)
                                     })}
                                 </tbody>
-                            }
-                            {this.state.awards &&
-                                this.state.awards.length > 0 &&
-                                <thead><tr><th colspan="2"><br /><h3 className="text-center">Awards</h3></th></tr></thead>}
-                            {this.state.awards &&
-                                this.state.awards.length > 0 &&
+                        </table>
+                        </div>
+                    </div>}
+
+                {this.props.user && this.state.awards && this.state.awards.length > 0 &&
+                    <div class="event-table-container">
+                        <h3 className="text-center">Awards</h3>
+                        <div class="card">
+                            <table className="event-table">
                                 <tbody>
                                     {this.state.awards.map(e => {
-                                        // TODO: Update status based on event stage changes.
                                         return (<tr>
                                             <td>
                                                 <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
@@ -117,13 +115,12 @@ class Home extends Component {
                                         </tr>)
                                     })}
                                 </tbody>
-                            }
-
-                        </table>
-
+                            </table>
+                        </div>
                     </div>}
-            </div>
-        );
+
+
+            </div >)
     }
 }
 

@@ -209,25 +209,6 @@ class EventsStatsAPITest(ApiTestCase):
                                 query_string={'someparam': self.test_event.id})
         self.assertEqual(response.status_code, 400)
 
-    def test_event_id_missing(self):
-        self.seed_static_data()
-        response = self.app.get('/api/v1/eventstats',
-                                headers={
-                                    'Authorization': self.test_user2['token']},
-                                query_string={'event_id': self.test_event.id + 100})
-        self.assertEqual(response.status_code, 404)
-
-    def test_event_stats_accurate(self):
-        self.seed_static_data()
-        response = self.app.get('/api/v1/eventstats',
-                                headers={
-                                    'Authorization': self.test_user1['token']},
-                                query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)
-        self.assertEqual(data['num_users'], 2)
-        self.assertEqual(data['num_responses'], 2)
-        self.assertEqual(data['num_submitted_responses'], 1)
-
 
 class RemindersAPITest(ApiTestCase):
     def seed_static_data(self):

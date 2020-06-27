@@ -21,19 +21,27 @@ class FormTextBox extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <label htmlFor={this.props.id}>{this.props.label}</label>
+            <label htmlFor={this.props.id} className={
+              (this.props.isDisabled
+                ? " disabled-form-control"
+                : "")
+            }>{this.props.label}</label>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-              <div />
-            )}
+                <div />
+              )}
           </div>
           <input
             id={this.props.id}
             className={
-              this.shouldDisplayError()
-                ? "form-control is-invalid"
-                : "form-control"
+              "form-control"
+              + (this.shouldDisplayError()
+                ? " is-invalid"
+                : "")
+              + (this.props.isDisabled
+                ? " disabled-form-control"
+                : "")
             }
             type={this.props.type || "text"}
             placeholder={this.props.placeholder}

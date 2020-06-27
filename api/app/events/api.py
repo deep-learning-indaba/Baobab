@@ -13,11 +13,12 @@ from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
+from app.responses.repository import ResponseRepository as response_repository
 
 from app import db, bcrypt, LOGGER
 from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE
 
-from app.utils.auth import auth_optional, auth_required
+from app.utils.auth import auth_optional, auth_required, event_admin_required
 from app.utils.emailer import send_mail
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
@@ -52,11 +53,17 @@ def event_info(user_id, event_org, status):
         'url': event_org.Event.url,
         'event_type': event_org.Event.event_type.value.upper(),
         'is_application_open': event_org.Event.is_application_open,
+        'is_application_opening': event_org.Event.is_application_opening,
         'is_review_open': event_org.Event.is_review_open,
+        'is_review_opening': event_org.Event.is_review_opening,
         'is_selection_open': event_org.Event.is_selection_open,
+        'is_selection_opening': event_org.Event.is_selection_opening,
         'is_offer_open': event_org.Event.is_offer_open,
+        'is_offer_opening': event_org.Event.is_offer_opening,
         'is_registration_open': event_org.Event.is_registration_open,
+        'is_registration_opening': event_org.Event.is_registration_opening,
         'is_event_open': event_org.Event.is_event_open,
+        'is_event_opening': event_org.Event.is_event_opening,
         'travel_grant': event_org.Event.travel_grant,
         "miniconf_url": event_org.Event.miniconf_url
     }
@@ -316,30 +323,30 @@ class EventsAPI(restful.Resource):
 
 class EventStatsAPI(EventsMixin, restful.Resource):
 
-    @auth_required
-    def get(self):
-        args = self.req_parser.parse_args()
-
-        event = event_repository.get_by_id_with_organisation(args['event_id'])
+    @event_admin_required
+    def get(self, event_id):
+        event = event_repository.get_by_id_with_organisation(event_id)
         if not event:
             return EVENT_NOT_FOUND
 
-        user_id = g.current_user["id"]
-        event_id = args['event_id']
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
+        num_responses = response_repository.get_total_count_by_event(event_id)
+        num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
+        num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
+        submitted_response_timeseries = response_repository.get_submitted_timeseries_by_event(event_id)
+        submitted_response_timeseries = [
+            (d.strftime('%Y-%m-%d'), c) for (d, c) in submitted_response_timeseries
+        ]
 
-        num_users = db.session.query(AppUser.id).count()
-        num_responses = db.session.query(Response.id).count()
-        num_submitted_respones = db.session.query(
-            Response).filter(Response.is_submitted == True).count()
+        # TODO: Add number of total reviews + reviews completed + number unallocated + completed timeseries  ( display completed/total )
+        # TODO: Add number of offers allocated, number of acceptances + number of rejections + accepted timeseries
+        # TODO: Add number of registrations submitted + number guest registrations + number guests + timeseries of candidates and guests registrations submitted
+        
 
         return {
-            'event_description': event.Event.description,
-            'num_users': num_users,
             'num_responses': num_responses,
-            'num_submitted_responses': num_submitted_respones
+            'num_submitted_responses': num_submitted_respones,
+            'num_withdrawn_responses': num_withdrawn_responses,
+            'submitted_timeseries': submitted_response_timeseries
         }, 200
 
 
