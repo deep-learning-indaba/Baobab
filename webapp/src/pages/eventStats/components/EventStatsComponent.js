@@ -122,7 +122,9 @@ class EventStatsComponent extends Component {
               {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
             </div>
             <div className="card">
-
+              <span class="coming-soon">
+                Stats Coming Soon
+              </span>
             </div>
           </div>
           <div className="col-md">
@@ -130,7 +132,9 @@ class EventStatsComponent extends Component {
               {this.getStatus(this.props.event.is_offer_open, this.props.event.is_offer_opening)}
             </div>
             <div className="card">
-
+              <span class="coming-soon">
+                Stats Coming Soon
+              </span>
             </div>
           </div>
           <div className="col-md">
@@ -138,7 +142,9 @@ class EventStatsComponent extends Component {
               {this.getStatus(this.props.event.is_registration_open, this.props.event.is_registration_opening)}
             </div>
             <div className="card">
-
+              <span class="coming-soon">
+                Stats Coming Soon
+              </span>
             </div>
           </div>
         </div>

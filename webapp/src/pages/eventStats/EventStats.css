@@ -40,3 +40,9 @@
     font-size: 1.3em;
     position: relative;
 }
+
+.event-stats .coming-soon {
+    font-size: 3em;
+    color: rgba(0, 0, 0, 0.2);
+    line-height: 1.2em;
+}
