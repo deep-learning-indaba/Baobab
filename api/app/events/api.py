@@ -24,6 +24,8 @@ from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
 import app.events.status as event_status
+from app.reviews.repository import ReviewRepository as review_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_config_repository
 
 def status_info(status):
     if status is None:
@@ -337,10 +339,15 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             (d.strftime('%Y-%m-%d'), c) for (d, c) in submitted_response_timeseries
         ]
 
+        review_config = review_config_repository.get_configuration_for_event(event_id)
+        required_reviews = 1 if review_config is None else review_config.required_reviews_per_response
+        reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
+        reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
+
+
         # TODO: Add number of total reviews + reviews completed + number unallocated + completed timeseries  ( display completed/total )
         # TODO: Add number of offers allocated, number of acceptances + number of rejections + accepted timeseries
-        # TODO: Add number of registrations submitted + number guest registrations + number guests + timeseries of candidates and guests registrations submitted
-        
+        # TODO: Add number of registrations submitted + number guest registrations + number guests + timeseries of candidates and guests registrations submitted        
 
         return {
             'num_responses': num_responses,
