@@ -19,8 +19,9 @@ from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
 from app.events.models import EventType
 from app.applicationModel.models import ApplicationForm
-from app.registration.models import RegistrationForm
+from app.registration.models import RegistrationForm, Offer
 from app.responses.models import Answer, Response
+from app.invitedGuest.models import InvitedGuest
 
 
 @event.listens_for(Engine, "connect")
@@ -271,3 +272,26 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(answer)
         db.session.commit()
         return answer
+
+    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False):
+        offer_date = offer_date or datetime.now()
+        expiry_date = expiry_date or datetime.now() + timedelta(10)
+
+        offer = Offer(
+            user_id=user_id, 
+            event_id=event_id, 
+            offer_date=offer_date, 
+            expiry_date=expiry_date,
+            payment_required=payment_required,
+            travel_award=travel_award,
+            accommodation_award=accommodation_award)
+        db.session.add(offer)
+        db.session.commit()
+        return offer
+
+    def add_invited_guest(self, user_id, event_id=1, role='Guest'):
+        print('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role))
+        guest = InvitedGuest(event_id, user_id, role)
+        db.session.add(guest)
+        db.session.commit()
+        return guest

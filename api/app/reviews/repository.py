@@ -179,6 +179,16 @@ class ReviewRepository():
                         .count())
         return count
 
+    @staticmethod
+    def get_count_reviews_completed_for_event(event_id):
+        count = (db.session.query(ReviewResponse)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                        .filter(ApplicationForm.event_id == event_id)
+                        .count())
+        return count
+
+
 class ReviewConfigurationRepository():
 
     @staticmethod

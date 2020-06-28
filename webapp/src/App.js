@@ -17,6 +17,7 @@ import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
 import { organisationService } from "./services/organisation/organisation.service";
+import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
@@ -37,65 +38,6 @@ class EventNav extends Component {
       collapsed: true
     };
   }
-
-  isEventAdmin = (user, event) => {
-    if (!user) {
-      return false;
-    }
-    return (
-      user.is_admin ||
-      (user.roles &&
-        user.roles.some(
-          r => r.role === "admin" && event && r.event_id === event.id
-        ))
-    );
-  };
-
-  isRegistrationAdmin = (user, event) => {
-    if (!user) {
-      return false;
-    }
-    return (
-      user.is_admin ||
-      (user.roles &&
-        user.roles.some(
-          r =>
-            (r.role === "admin" || r.role === "registration-admin") &&
-            event &&
-            r.event_id === event.id
-        ))
-    );
-  };
-
-  isRegistrationVolunteer = (user, event) => {
-    if (!user) {
-      return false;
-    }
-    return (
-      user.is_admin ||
-      (user.roles &&
-        user.roles.some(
-          r =>
-            (r.role === "admin" ||
-              r.role === "registration-admin" ||
-              r.role === "registration-volunteer") &&
-            event &&
-            r.event_id === event.id
-        ))
-    );
-  };
-
-  isEventReviewer = (user, event) => {
-    if (!user) {
-      return false;
-    }
-    return (
-      user.roles &&
-      user.roles.some(
-        r => r.role === "reviewer" && event && r.event_id === event.id
-      )
-    );
-  };
 
   render() {
     return (
@@ -161,7 +103,7 @@ class EventNav extends Component {
                 >
                   Invitation Letter
                 </NavLink> */}
-                    {this.isRegistrationVolunteer(this.state.user) && (
+                    {isRegistrationVolunteer(this.state.user) && (
                       <NavLink
                         to={`/${this.props.eventKey}/eventAttendance`}
                         className="dropdown-item"
@@ -173,7 +115,7 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {this.isEventAdmin(this.props.user, this.props.event) && (
+            {isEventAdmin(this.props.user, this.props.event) && (
               <li className="nav-item dropdown">
                 <div
                   className="nav-link dropdown-toggle"
@@ -224,7 +166,7 @@ class EventNav extends Component {
                 </div>
               </li>
             )}
-            {this.isEventReviewer(this.props.user, this.props.event) &&
+            {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_review_open && (
                 <li className="nav-item dropdown">
@@ -256,7 +198,7 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {this.isRegistrationAdmin(this.props.user, this.props.event) &&
+            {isRegistrationAdmin(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_registration_open && (
                 <li className="nav-item dropdown">

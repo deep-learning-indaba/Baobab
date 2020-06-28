@@ -729,3 +729,72 @@ class PrivacyPolicyApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data['message'], POLICY_NOT_AGREED[0]['message'])
+
+
+class EventAttendeeAPITest(ApiTestCase):
+    def seed_static_data(self):
+        self.event = self.add_event()
+        self.user1 = self.add_user()
+        self.app_form = self.create_application_form()
+        self.response = self.add_response(self.app_form.id, self.user1.id, True, False)
+    
+    def test_auth_required(self):
+        """Check that response is 401 when no auth token provided."""
+        self.seed_static_data()
+        response = self.app.post('/api/v1/validate-user-event-attendee', data={'event_id': 1})
+        self.assertEqual(response.status_code, 401)
+
+    def test_non_attendee(self):
+        """Check that response is 401 when user is not an attendee."""
+        self.seed_static_data()
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email),
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_non_attendee_with_offer(self):
+        """Check that response is 401 when user hasn't responded or rejected their offer."""
+        self.seed_static_data()
+        offer = self.add_offer(self.user1.id)
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+        offer.candidate_response = False
+        db.session.commit()
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email),
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_attendee_offer(self):
+        """Check that response is 200 when user has accepted an offer."""
+        self.seed_static_data()
+        offer = self.add_offer(self.user1.id)
+        offer.candidate_response = True
+        db.session.commit()
+
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_invited_guest(self):
+        """Check that response is 200 when user is an invited guest."""
+        self.seed_static_data()
+        self.add_invited_guest(self.user1.id)
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 200)
