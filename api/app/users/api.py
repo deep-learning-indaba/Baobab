@@ -563,7 +563,7 @@ class EventAttendeeAPI(EventAttendeeMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user = get_user_from_request()
-        status = event_status.get_event_status(event_id, user.id)
+        status = event_status.get_event_status(event_id, user['id'])
         
         if(not status.is_event_attendee):
             return UNAUTHORIZED

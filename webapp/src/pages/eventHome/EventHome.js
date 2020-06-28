@@ -18,6 +18,7 @@ import RegistrationAdmin from "../registrationAdmin";
 import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
+import { isEventAdmin } from "../../utils/user";
 
 
 class EventInfo extends Component {
@@ -34,10 +35,13 @@ class EventInfo extends Component {
 
   render() {
     const { event } = this.state;
+
     return (
       <div className="event-home">
         <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
+        {isEventAdmin(this.props.user, this.props.event) 
+        && <EventStats event={this.props.event}/>}
       </div>
     );
   }
@@ -120,7 +124,7 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/`}
-          render={(props) => <EventInfo {...props} event={event} />}
+          render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
