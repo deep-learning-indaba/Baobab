@@ -337,10 +337,11 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         submitted_response_timeseries = response_repository.get_submitted_timeseries_by_event(event_id)
         submitted_response_timeseries = [
             (d.strftime('%Y-%m-%d'), c) for (d, c) in submitted_response_timeseries
+            if d is not None
         ]
 
         review_config = review_config_repository.get_configuration_for_event(event_id)
-        required_reviews = 1 if review_config is None else review_config.required_reviews_per_response
+        required_reviews = 1 if review_config is None else review_config.num_reviews_required
         reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
         reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
 
