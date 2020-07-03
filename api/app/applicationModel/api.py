@@ -2,13 +2,20 @@ from datetime import datetime
 import traceback
 
 import flask_restful as restful
+import applicationModel.repository as app_repository
 from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
+from flask import g
 
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
+from app.users.repository import UserRepository as user_repository
+from app.events.models import Event
 
-from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
+from app.utils.auth import auth_required
+
+from app.utils.errors import EVENT_NOT_FOUND, FORM_NOT_FOUND_BY_ID, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, \
+    APPLICATIONS_CLOSED, FORBIDDEN
 
 from app import db, bcrypt
 from app import LOGGER
@@ -44,10 +51,10 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     form_fields = {
         'id': fields.Integer,
         'event_id': fields.Integer,
-        'is_open':  fields.Boolean,
+        'is_open': fields.Boolean,
         'deadline': fields.DateTime,
         'sections': fields.List(fields.Nested(section_fields)),
-        'nominations': fields.Boolean  
+        'nominations': fields.Boolean
     }
 
     def get(self):
@@ -56,21 +63,23 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         LOGGER.debug('Parsed Args for event_id: {}'.format(args))
 
         try:
-            form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()     
-            if(not form):
+            form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()
+            if (not form):
                 LOGGER.warn('Form not found for event_id: {}'.format(args['event_id']))
                 return FORM_NOT_FOUND
 
             if not form.is_open:
                 return APPLICATIONS_CLOSED
 
-            sections = db.session.query(Section).filter(Section.application_form_id == form.id).all()   #All sections in our form
-            if(not sections):
+            sections = db.session.query(Section).filter(
+                Section.application_form_id == form.id).all()  # All sections in our form
+            if (not sections):
                 LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
                 return SECTION_NOT_FOUND
 
-            questions = db.session.query(Question).filter(Question.application_form_id == form.id).all() #All questions in our form        
-            if(not questions):
+            questions = db.session.query(Question).filter(
+                Question.application_form_id == form.id).all()  # All questions in our form
+            if (not questions):
                 LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
                 return QUESTION_NOT_FOUND
 
@@ -79,23 +88,67 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             for s in form.sections:
                 s.questions = []
                 for q in questions:
-                    if(q.section_id == s.id):
+                    if (q.section_id == s.id):
                         s.questions.append(q)
 
-            if (form): 
+            if (form):
                 return marshal(form, self.form_fields)
             else:
-                LOGGER.warn("Event not found for event_id: {}".format(args['event_id'])) 
+                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
                 return EVENT_NOT_FOUND
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return DB_NOT_AVAILABLE
-        except: 
+        except:
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return DB_NOT_AVAILABLE
 
+    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        json = args['json']
+
+        event = db.session.query(Event).get(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_admin:
+            return FORBIDDEN
+
+        app_form = app_repository.get_by_event_id(event_id)
+        if not app_form:
+            app_form = ApplicationForm, Section, Question
+            app_form = app_repository.add(app_form)
+
+        db.session.commit()
+
+        app_id = app_repository.get_by_id(app_form.id)
+        return app_form(app_id), 201
+
+
+    @auth_required
+    def put(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+
+        event = db.session.query(Event).get(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_admin:
+            return FORBIDDEN
+
+        app_form = app_repository.get_by_event_id(event_id)
+        try:
+            app_form.update(ApplicationForm, Section, Question)
+
+        except IntegrityError:
+            LOGGER.error("Application with id: {} does not exist".format(app_form.id))
+            return FORM_NOT_FOUND_BY_ID
+
+        return {'new_app_form': len(app_form)}, 201
