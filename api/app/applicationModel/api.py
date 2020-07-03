@@ -14,8 +14,8 @@ from app.events.models import Event
 
 from app.utils.auth import auth_required
 
-from app.utils.errors import EVENT_NOT_FOUND, FORM_NOT_FOUND_BY_ID, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, \
-    APPLICATIONS_CLOSED, FORBIDDEN
+from app.utils.errors import EVENT_NOT_FOUND, FORM_NOT_FOUND_BY_ID, APPLICATION_FORM_EXISTS, QUESTION_NOT_FOUND, \
+    SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED, FORBIDDEN
 
 from app import db, bcrypt
 from app import LOGGER
@@ -119,15 +119,15 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
-        if not app_form:
+        if app_form:
+            return APPLICATION_FORM_EXISTS
+        else:
             app_form = ApplicationForm, Section, Question
             app_form = app_repository.add(app_form)
+            db.session.commit()
 
-        db.session.commit()
-
-        app_id = app_repository.get_by_id(app_form.id)
-        return app_form(app_id), 201
-
+        app_form = app_repository.get_by_id(app_form.id)
+        return app_form, 201
 
     @auth_required
     def put(self):
@@ -147,8 +147,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         try:
             app_form.update(ApplicationForm, Section, Question)
 
-        except IntegrityError:
-            LOGGER.error("Application with id: {} does not exist".format(app_form.id))
+        except IntegrityError as e:
+            LOGGER.error("Application with id: {} already exists".format(app_form.id))
             return FORM_NOT_FOUND_BY_ID
 
-        return {'new_app_form': len(app_form)}, 201
+        return {'new_app_form': app_form}, 201
