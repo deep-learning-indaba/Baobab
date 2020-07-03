@@ -19,7 +19,7 @@ QUESTION_NOT_FOUND = (
     {'message': 'No question exists with that Event ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 FORM_NOT_FOUND_BY_ID = ({'message': 'No application form exists with that Application Form ID'}, 404)
-APPLICATION_FORM_EXISTS = ({'message': 'An application form exists with that Application Form ID'}, 403)
+APPLICATION_FORM_EXISTS = ({'message': 'An application form exists with that event ID'}, 403)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
 RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted'}, 400)
