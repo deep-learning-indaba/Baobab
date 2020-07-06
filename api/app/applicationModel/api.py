@@ -122,9 +122,29 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         if app_form:
             return APPLICATION_FORM_EXISTS
         else:
-            app_form = ApplicationForm, Section, Question
-            app_form = app_repository.add(app_form)
-            db.session.commit()
+            is_open = args['is_open']
+            nominations = args['nominations']
+
+            app_form = ApplicationForm(
+                event_id,
+                is_open,
+                nominations
+            )
+            db.session.add()
+
+        section_args = args['section']
+        section = Section(section_args)
+
+        question_args = args['question']
+        question = Question(question_args)
+
+        for s in section: # TODO: Confirm what is being looped over: is this all the new sections coming in from the front end?
+            section = section(app_form.id)
+            db.session.add()
+
+        for q in question: # TODO: reassess logic for loop (same question as above)
+            question = q(app_form.id, section.id)
+            db.session.add()
 
         app_form = app_repository.get_by_id(app_form.id)
         return app_form, 201
@@ -144,8 +164,22 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
+
+        section =  Section(app_form.id)
+        question = Question(app_form.id, section.id)
+
+        section.update #TODO Update to new session for section and question
+
         try:
-            app_form.update(ApplicationForm, Section, Question)
+            db.session.commit()
+
+        except IntegrityError as e: # TODO confirm error messages / notification
+            LOGGER.error("Application with id: {} already exists".format(app_form.id))
+            return FORM_NOT_FOUND_BY_ID
+
+        question.update
+        try:
+            db.session.commit()
 
         except IntegrityError as e:
             LOGGER.error("Application with id: {} already exists".format(app_form.id))
