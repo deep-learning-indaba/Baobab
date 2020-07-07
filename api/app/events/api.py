@@ -343,7 +343,13 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         review_config = review_config_repository.get_configuration_for_event(event_id)
         required_reviews = 1 if review_config is None else review_config.num_reviews_required
         reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
+        reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
         reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
+        reviews_timeseries = review_repository.get_review_complete_timeseries_by_event(event_id)
+        reviews_timeseries = [
+            (d.strftime('%Y-%m-%d'), c) for (d, c) in reviews_timeseries
+            if d is not None
+        ]
 
 
         # TODO: Add number of total reviews + reviews completed + number unallocated + completed timeseries  ( display completed/total )
@@ -354,7 +360,12 @@ class EventStatsAPI(EventsMixin, restful.Resource):
             'num_responses': num_responses,
             'num_submitted_responses': num_submitted_respones,
             'num_withdrawn_responses': num_withdrawn_responses,
-            'submitted_timeseries': submitted_response_timeseries
+            'submitted_timeseries': submitted_response_timeseries,
+            'reviews_completed': reviews_completed,
+            'review_incomplete': reviews_incomplete,
+            'reviews_unallocated': reviews_unallocated,
+            'reviews_complete_timeseries': reviews_timeseries
+
         }, 200
 
 

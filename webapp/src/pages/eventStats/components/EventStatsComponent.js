@@ -39,7 +39,7 @@ class EventStatsComponent extends Component {
   }
 
   plotTimeSeries = (name, timeseries) => {
-    if (!timeseries) {
+    if (!timeseries || timeseries.length == 0) {
       return <div></div>
     }
 
@@ -122,9 +122,20 @@ class EventStatsComponent extends Component {
               {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
             </div>
             <div className="card">
-              <span class="coming-soon">
-                Stats Coming Soon
-              </span>
+            <h1>{stats.reviews_completed}</h1>
+              <div className="stats-description">Completed</div>
+              <br />
+              <div className="row">
+                <div className="col-sm">
+                  <h3>{stats.review_incomplete}</h3>
+                  <div className="stats-description">Incomplete</div>
+                </div>
+                <div className="col-sm">
+                  <h3>{stats.reviews_unallocated}</h3>
+                  <div className="stats-description">Not Allocated</div>
+                </div>
+              </div>
+              {/*this.plotTimeSeries("Complete", stats.reviews_complete_timeseries)*/}
             </div>
           </div>
           <div className="col-md">
