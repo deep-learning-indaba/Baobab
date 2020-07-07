@@ -130,21 +130,19 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 is_open,
                 nominations
             )
-            db.session.add()
+            db.session.add(app_form)
 
         section_args = args['section']
-        section = Section(section_args)
+        for s in section_args: # TODO: Confirm this makes sense / works
+            section = Section(s)
+            section = section(app_form.id)
+            db.session.add(section)
 
         question_args = args['question']
-        question = Question(question_args)
-
-        for s in section: # TODO: Confirm what is being looped over: is this all the new sections coming in from the front end?
-            section = section(app_form.id)
-            db.session.add()
-
-        for q in question: # TODO: reassess logic for loop (same question as above)
-            question = q(app_form.id, section.id)
-            db.session.add()
+        for q in question_args: # TODO: Confirm this makes sense / works
+            question = Question(q)
+            question = question(app_form.id, section.id)
+            db.session.add(question)
 
         app_form = app_repository.get_by_id(app_form.id)
         return app_form, 201
@@ -165,24 +163,26 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         app_form = app_repository.get_by_event_id(event_id)
 
-        section =  Section(app_form.id)
-        question = Question(app_form.id, section.id)
+        old_section = app_repository.get_sections_by_app_id(app_form.id)
+        new_section_args = args['section']
 
-        section.update #TODO Update to new session for section and question
-
-        try:
+        for s in new_section_args:  # TODO: Confirm this makes sense / works. Repeat for questions
+            section = Section(s)
+            new_section = section(app_form.id)
+        if old_section(app_form.id) == new_section(app_form.id):
+            old_section.update(new_section)
             db.session.commit()
 
-        except IntegrityError as e: # TODO confirm error messages / notification
-            LOGGER.error("Application with id: {} already exists".format(app_form.id))
-            return FORM_NOT_FOUND_BY_ID
-
-        question.update
-        try:
-            db.session.commit()
-
-        except IntegrityError as e:
-            LOGGER.error("Application with id: {} already exists".format(app_form.id))
-            return FORM_NOT_FOUND_BY_ID
+        # except IntegrityError as e: # TODO confirm error messages / notification
+        #     LOGGER.error("Application with id: {} already exists".format(app_form.id))
+        #     return FORM_NOT_FOUND_BY_ID
+        #
+        # question.update
+        # try:
+        #     db.session.commit()
+        #
+        # except IntegrityError as e:
+        #     LOGGER.error("Application with id: {} already exists".format(app_form.id))
+        #     return FORM_NOT_FOUND_BY_ID
 
         return {'new_app_form': app_form}, 201
