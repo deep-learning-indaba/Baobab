@@ -8,4 +8,3 @@ class ApplicationFormMixin(object):
     req_parser.add_argument('is_open', type=bool, required=True)
     req_parser.add_argument('nominations', type=bool, required=True)
     req_parser.add_argument('sections', type=dict, required=True, action='append')
-    req_parser.add_argument('questions', type=dict, required=True, action='append')
