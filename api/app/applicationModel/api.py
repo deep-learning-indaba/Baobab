@@ -133,15 +133,13 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             db.session.add(app_form)
 
         section_args = args['section']
-        for s in section_args: # TODO: Confirm this makes sense / works
+        for s in section_args:
             section = Section(s)
-            section = section(app_form.id)
             db.session.add(section)
 
         question_args = args['question']
-        for q in question_args: # TODO: Confirm this makes sense / works
+        for q in question_args:
             question = Question(q)
-            question = question(app_form.id, section.id)
             db.session.add(question)
 
         app_form = app_repository.get_by_id(app_form.id)
@@ -163,17 +161,38 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         app_form = app_repository.get_by_event_id(event_id)
 
-        old_section = app_repository.get_sections_by_app_id(app_form.id)
-        new_section_args = args['section']
+        section = app_repository.get_sections_by_app_id(app_form.id)
+        if not section:
+            LOGGER.error('Sections not found for event_id: {}'.format(args['event_id']))
+            return SECTION_NOT_FOUND
+        else:
+            new_sections = args['section']
+            for new_s in new_sections:
+                section.update(new_s)
+                db.session.commit()
 
-        for s in new_section_args:  # TODO: Confirm this makes sense / works. Repeat for questions
-            section = Section(s)
-            new_section = section(app_form.id)
-        if old_section(app_form.id) == new_section(app_form.id):
-            old_section.update(new_section)
-            db.session.commit()
+        question = app_repository.get_questions_by_id(question_id) # Confirm correct ID
+        if not question:
+            LOGGER.error('Questions not found for event_id: {}'.format(args['event_id']))
+            return QUESTION_NOT_FOUND
+        # else:
+        #     new_questions = args['question']
+        #     for new_q in new_questions:
+        #         question.update(new_q)
+        #         db.session.commit()
 
-        # except IntegrityError as e: # TODO confirm error messages / notification
+        db.session.add(app_form)
+
+        # SECTION_NOT_FOUND
+        # QUESTION_NOT_FOUND
+        # for s in new_section_args:
+        #     section = Section(s)
+        #     new_section = section(app_form.id)
+        # if old_section(app_form.id) == new_section(app_form.id):
+        #     old_section.update(new_section)
+        #     db.session.commit()
+
+        # except IntegrityError as e:
         #     LOGGER.error("Application with id: {} already exists".format(app_form.id))
         #     return FORM_NOT_FOUND_BY_ID
         #
