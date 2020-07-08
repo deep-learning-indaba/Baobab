@@ -171,7 +171,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 section.update(new_s)
                 db.session.commit()
 
-        question = app_repository.get_questions_by_id(question_id) # Confirm correct ID
+        question = app_repository.get_questions_by_id(section.id, app_form.id) # Confirm correct ID
         if not question:
             LOGGER.error('Questions not found for event_id: {}'.format(args['event_id']))
             return QUESTION_NOT_FOUND
