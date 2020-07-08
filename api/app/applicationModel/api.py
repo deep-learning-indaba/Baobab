@@ -2,13 +2,14 @@ from datetime import datetime
 import traceback
 
 import flask_restful as restful
-import applicationModel.repository as app_repository
+
 from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from flask import g
 
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.repository import ApplicationFormRepository as app_repository
 from app.users.repository import UserRepository as user_repository
 from app.events.models import Event
 
@@ -132,7 +133,9 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             )
             db.session.add(app_form)
 
-        section_args = args['section']
+        section_args = args['sections']
+        print('SECTION ARGS: ', section_args)
+
         for s in section_args:
             section = Section(s)
             db.session.add(section)
