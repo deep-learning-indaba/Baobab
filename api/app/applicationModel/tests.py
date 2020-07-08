@@ -87,6 +87,53 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(question2, self.test_question2)
 
 
+APPLICATION_FORM_POST_DATA = {
+  "event_id": 1, 
+  "is_open": True, 
+  "nominations": False, 
+  "sections": [
+    {
+      "description": "Description of the section", 
+      "order": 1, 
+      "questions": [
+        {
+          "validation_regex": None, 
+          "options": [
+              {"value": "undergrad", "label": "An undergraduate student"}, 
+              {"value": "masters", "label": "A masters student"}, 
+           ], 
+          "description": None, 
+          "headline": "Question 1", 
+          "placeholder": "Select an Option...", 
+          "is_required": True, 
+          "type": "multi-choice", 
+          "validation_text": None, 
+          "order": 1
+        }
+      ], 
+      "name": "Section 1"
+    }, 
+    {
+      "description": "Description of the section", 
+      "order": 2, 
+      "questions": [
+        {
+          "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$", 
+          "options": None, 
+          "description": "Question description", 
+          "headline": "Section 2, question 1", 
+          "placeholder": "Some question", 
+          "is_required": True, 
+          "type": "long-text", 
+          "validation_text": "You must enter no more than 150 words", 
+          "order": 1
+        }
+      ], 
+      "name": "Section 2"
+    }
+  ]
+}
+
 class ApplicationFormCreateTest(ApiTestCase):
     """
     Test that an application form is created by an event admin
@@ -95,7 +142,9 @@ class ApplicationFormCreateTest(ApiTestCase):
         """
         Mock data used for test simulation
         """
-        pass
+        self.event = self.add_event()
+        self.system_admin = self.add_user(is_admin=True)
+
 
     def test_event_admin_permission(self):
         """
@@ -107,7 +156,44 @@ class ApplicationFormCreateTest(ApiTestCase):
         """
         Tests that the application form is created and an ID is returned
         """
-        pass
+        self._seed_data_create()
+
+        response = self.app.post(
+            '/api/v1/application-form', 
+            data=json.dumps(APPLICATION_FORM_POST_DATA),
+            content_type='application/json',
+            headers=self.get_auth_header_for(self.system_admin.email)
+        )
+        response_data = json.loads(response.data)
+        print('Response Data:', response_data)
+        # Check that the ID is populated
+        self.assertIsNotNone(response_data['id'])
+
+        # Check that the fields are populated correctly in the response
+        self.assertEqual(response_data['event_id'], APPLICATION_FORM_POST_DATA['event_id'])
+        self.assertEqual(response_data['is_open'], APPLICATION_FORM_POST_DATA['is_open'])
+        self.assertEqual(response_data['nominations'], APPLICATION_FORM_POST_DATA['nominations'])
+
+        self.assertEqual(len(response_data['sections']), len(APPLICATION_FORM_POST_DATA['sections']))
+
+        # Check a few fields in the sections themselves
+        section0 = response_data['sections'][0]
+        self.assertIsNotNone(section0['id'])
+        self.assertEqual(section0['name'], APPLICATION_FORM_POST_DATA['sections'][0]['name'])
+        self.assertEqual(len(section0['questions']), len(APPLICATION_FORM_POST_DATA['sections'][0]['questions']))
+        section0_question0 = section0['questions'][0]
+        self.assertIsNotNone(section0_question0['id'])
+        self.assertEqual(section0_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
+
+        section1 = response_data['sections'][1]
+        self.assertIsNotNone(section1['id'])
+        self.assertEqual(section1['name'], APPLICATION_FORM_POST_DATA['sections'][1]['name'])
+        self.assertEqual(len(section1['questions']), len(APPLICATION_FORM_POST_DATA['sections'][1]['questions']))
+        section1_question0 = section1['questions'][0]
+        self.assertIsNotNone(section1_question0['id'])
+        self.assertEqual(section1_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
+
+
 
     def test_sections_are_created(self):
         """
