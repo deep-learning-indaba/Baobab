@@ -72,26 +72,6 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             if not form.is_open:
                 return APPLICATIONS_CLOSED
 
-            sections = db.session.query(Section).filter(
-                Section.application_form_id == form.id).all()  # All sections in our form
-            if (not sections):
-                LOGGER.warn('Sections not found for event_id: {}'.format(args['event_id']))
-                return SECTION_NOT_FOUND
-
-            questions = db.session.query(Question).filter(
-                Question.application_form_id == form.id).all()  # All questions in our form
-            if (not questions):
-                LOGGER.warn('Questions not found for  event_id: {}'.format(args['event_id']))
-                return QUESTION_NOT_FOUND
-
-            form.sections = sections
-
-            for s in form.sections:
-                s.questions = []
-                for q in questions:
-                    if (q.section_id == s.id):
-                        s.questions.append(q)
-
             if (form):
                 return marshal(form, self.form_fields)
             else:
