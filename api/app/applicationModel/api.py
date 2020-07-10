@@ -86,6 +86,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return DB_NOT_AVAILABLE
 
     @auth_required
+    @marshal_with(form_fields)
     def post(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -118,27 +119,29 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         for s in section_args:
             section = Section(
-                app_form.id,
+                app_form.event_id,
                 s['name'],
                 s['description'],
                 s['order']
             )
             db.session.add(section)
-            
-            question = Question(
-                app_form.id,
-                section.id,
-                s['questions'][0]['headline'],
-                s['questions'][0]['placeholder'],
-                s['questions'][0]['order'],
-                s['questions'][0]['type'],
-                s['questions'][0]['validation_regex'],
-                s['questions'][0]['validation_text'],
-                s['questions'][0]['is_required'],
-                s['questions'][0]['description'],
-                s['questions'][0]['options'],
-            )
-            db.session.add(question)
+            for q in s['questions']:
+                print("Check q:", q) # Continue from here 
+                question = Question(
+                    app_form.event_id,
+                    section.application_form_id,
+                    q['headline'],
+                    q['placeholder'],
+                    q['order'],
+                    q['type'],
+                    q['validation_regex'],
+                    q['validation_text'],
+                    q['is_required'],
+                    q['description'],
+                    q['options'],
+                )
+                db.session.add(question)
+        db.session.commit()
         app_form = app_repository.get_by_id(app_form.id)
         return app_form, 201
 
