@@ -127,6 +127,17 @@ APPLICATION_FORM_POST_DATA = {
           "type": "long-text", 
           "validation_text": "You must enter no more than 150 words", 
           "order": 1
+        },
+        {
+          "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$", 
+          "options": None, 
+          "description": "Question description", 
+          "headline": "Section 2, question 2", 
+          "placeholder": "Some question", 
+          "is_required": False, 
+          "type": "long-text", 
+          "validation_text": "You must enter no more than 10 words", 
+          "order": 2
         }
       ], 
       "name": "Section 2"
@@ -144,13 +155,24 @@ class ApplicationFormCreateTest(ApiTestCase):
         """
         self.event = self.add_event()
         self.system_admin = self.add_user(is_admin=True)
-
+        self.event_admin = self.add_user(email='user2@user.com')
+        self.event.add_event_role('admin', self.event_admin.id)
+        db.session.commit()
 
     def test_event_admin_permission(self):
         """
         Tests that the application form is being created by a user with the correct permissions
         """
-        pass
+        self._seed_data_create()
+
+        response = self.app.post(
+            '/api/v1/application-form', 
+            data=json.dumps(APPLICATION_FORM_POST_DATA),
+            content_type='application/json',
+            headers=self.get_auth_header_for(self.event_admin.email)
+        )
+
+        self.assertEqual(response.status_code, 201)
 
     def test_app_form_is_created(self):
         """
@@ -181,6 +203,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self.assertIsNotNone(section0['id'])
         self.assertEqual(section0['name'], APPLICATION_FORM_POST_DATA['sections'][0]['name'])
         self.assertEqual(len(section0['questions']), len(APPLICATION_FORM_POST_DATA['sections'][0]['questions']))
+
         section0_question0 = section0['questions'][0]
         self.assertIsNotNone(section0_question0['id'])
         self.assertEqual(section0_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
@@ -189,11 +212,14 @@ class ApplicationFormCreateTest(ApiTestCase):
         self.assertIsNotNone(section1['id'])
         self.assertEqual(section1['name'], APPLICATION_FORM_POST_DATA['sections'][1]['name'])
         self.assertEqual(len(section1['questions']), len(APPLICATION_FORM_POST_DATA['sections'][1]['questions']))
+
         section1_question0 = section1['questions'][0]
         self.assertIsNotNone(section1_question0['id'])
         self.assertEqual(section1_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
 
-
+        section1_question1 = section1['questions'][1]
+        self.assertIsNotNone(section1_question1['id'])
+        self.assertEqual(section1_question1['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
 
     def test_sections_are_created(self):
         """
