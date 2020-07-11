@@ -95,7 +95,7 @@ class EventStatsComponent extends Component {
         <div className="row">
           <div className="col-md">
             <div className="stats-title">Applications
-              {this.getStatus(this.props.event.is_applications_open, this.props.event.is_applications_opening)}
+              {this.getStatus(this.props.event.is_application_open, this.props.event.is_application_opening)}
             </div>
 
             <div className="card">
