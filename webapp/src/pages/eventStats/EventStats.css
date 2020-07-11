@@ -46,3 +46,7 @@
     color: rgba(0, 0, 0, 0.2);
     line-height: 1.2em;
 }
+
+.stats-not-open {
+    color: #bbb !important;
+}

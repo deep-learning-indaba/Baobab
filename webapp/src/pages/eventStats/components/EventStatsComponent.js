@@ -98,9 +98,7 @@ class EventStatsComponent extends Component {
               {this.getStatus(this.props.event.is_application_open, this.props.event.is_application_opening)}
             </div>
 
-            <div className="card">
-              {/* TODO: Add dates so we can distinguish between closed and not open yet */}
-
+            <div className={"card" + (this.props.event.is_application_opening ? " stats-not-open" : "")}>
               <h1>{stats.num_submitted_responses}</h1>
               <div className="stats-description">Submitted</div>
               <br />
@@ -121,8 +119,8 @@ class EventStatsComponent extends Component {
             <div className="stats-title">Reviews
               {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
             </div>
-            <div className="card">
-            <h1>{stats.reviews_completed}</h1>
+            <div className={"card" + (this.props.event.is_review_opening ? " stats-not-open" : "")}>
+              <h1>{stats.reviews_completed}</h1>
               <div className="stats-description">Completed</div>
               <br />
               <div className="row">
@@ -135,27 +133,49 @@ class EventStatsComponent extends Component {
                   <div className="stats-description">Not Allocated</div>
                 </div>
               </div>
-              {/*this.plotTimeSeries("Complete", stats.reviews_complete_timeseries)*/}
+              {this.plotTimeSeries("Complete", stats.reviews_complete_timeseries)}
             </div>
           </div>
           <div className="col-md">
             <div className="stats-title">Offers
               {this.getStatus(this.props.event.is_offer_open, this.props.event.is_offer_opening)}
             </div>
-            <div className="card">
-              <span class="coming-soon">
-                Stats Coming Soon
-              </span>
+            <div className={"card" + (this.props.event.is_offer_opening ? " stats-not-open" : "")}>
+              <h1>{stats.offers_allocated}</h1>
+              <div className="stats-description">Offers Allocated</div>
+              <br />
+              <div className="row">
+                <div className="col-sm">
+                  <h3>{stats.offers_accepted}</h3>
+                  <div className="stats-description">Accepted</div>
+                </div>
+                <div className="col-sm">
+                  <h3>{stats.offers_rejected}</h3>
+                  <div className="stats-description">Rejected</div>
+                </div>
+              </div>
+              {this.plotTimeSeries("Accepted", stats.offers_accepted_timeseries)}
             </div>
           </div>
           <div className="col-md">
             <div className="stats-title">Registration
               {this.getStatus(this.props.event.is_registration_open, this.props.event.is_registration_opening)}
             </div>
-            <div className="card">
-              <span class="coming-soon">
-                Stats Coming Soon
-              </span>
+            <div className={"card" + (this.props.event.is_registration_opening ? " stats-not-open" : "")}>
+              <h1>{stats.num_registrations}</h1>
+              <div className="stats-description">Registrations</div>
+              <br />
+              <div className="row">
+                <div className="col-sm">
+                  <h3>{stats.num_guests}</h3>
+                  <div className="stats-description">Total Guests</div>
+                </div>
+                <div className="col-sm">
+                  <h3>{stats.num_registered_guests}</h3>
+                  <div className="stats-description">Registered Guests</div>
+                </div>
+              </div>
+              {this.plotTimeSeries("Accepted", stats.registration_timeseries)}
             </div>
           </div>
         </div>
