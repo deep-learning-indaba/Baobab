@@ -118,29 +118,31 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         print('SECTION ARGS: ', section_args)
 
         for s in section_args:
+            print("Check s_args:", type(section_args))
             section = Section(
-                app_form.event_id,
+                app_form.id,
                 s['name'],
                 s['description'],
                 s['order']
             )
             db.session.add(section)
-            for q in s['questions']:
-                print("Check q:", q) # Continue from here 
-                question = Question(
-                    app_form.event_id,
-                    section.application_form_id,
-                    q['headline'],
-                    q['placeholder'],
-                    q['order'],
-                    q['type'],
-                    q['validation_regex'],
-                    q['validation_text'],
-                    q['is_required'],
-                    q['description'],
-                    q['options'],
-                )
-                db.session.add(question)
+        for q in s['questions']:
+            print("Check Q:", type(q), len(q))
+            print(q)
+            question = Question(
+                app_form.event_id,
+                section.id,
+                q['headline'],
+                q['placeholder'],
+                q['order'],
+                q['type'],
+                q['validation_regex'],
+                q['validation_text'],
+                q['is_required'],
+                q['description'],
+                q['options'],
+            )
+            db.session.add(question)
         db.session.commit()
         app_form = app_repository.get_by_id(app_form.id)
         return app_form, 201
