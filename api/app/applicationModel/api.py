@@ -113,12 +113,10 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 nominations
             )
             db.session.add(app_form)
-
+            db.session.commit()
         section_args = args['sections']
-        print('SECTION ARGS: ', section_args)
 
         for s in section_args:
-            print("Check s_args:", type(section_args))
             section = Section(
                 app_form.id,
                 s['name'],
@@ -126,24 +124,24 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 s['order']
             )
             db.session.add(section)
-        for q in s['questions']:
-            print("Check Q:", type(q), len(q))
-            print(q)
-            question = Question(
-                app_form.event_id,
-                section.id,
-                q['headline'],
-                q['placeholder'],
-                q['order'],
-                q['type'],
-                q['validation_regex'],
-                q['validation_text'],
-                q['is_required'],
-                q['description'],
-                q['options'],
-            )
-            db.session.add(question)
-        db.session.commit()
+            db.session.commit()
+
+            for q in s['questions']:
+                question = Question(
+                    app_form.id,
+                    section.id,
+                    q['headline'],
+                    q['placeholder'],
+                    q['order'],
+                    q['type'],
+                    q['validation_regex'],
+                    q['validation_text'],
+                    q['is_required'],
+                    q['description'],
+                    q['options'],
+                )
+                db.session.add(question)
+                db.session.commit()
         app_form = app_repository.get_by_id(app_form.id)
         return app_form, 201
 
