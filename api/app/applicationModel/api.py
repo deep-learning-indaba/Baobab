@@ -97,7 +97,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_admin:
+        if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
@@ -149,14 +149,14 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     def put(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
+        user_id = g.current_user['id']
 
         event = db.session.query(Event).get(event_id)
         if not event:
             return EVENT_NOT_FOUND
 
-        user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_admin:
+        if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
@@ -168,8 +168,11 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         else:
             new_sections = args['section']
             for new_s in new_sections:
-                section.update(new_s)
-                db.session.commit()
+                Section.update(new_s)
+
+                for new_q in new_s['questions']:
+                    Question.update(new_q)
+            db.session.commit()
 
         question = app_repository.get_questions_by_id(section.id, app_form.id) # Confirm correct ID
         if not question:
@@ -183,25 +186,5 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         db.session.add(app_form)
 
-        # SECTION_NOT_FOUND
-        # QUESTION_NOT_FOUND
-        # for s in new_section_args:
-        #     section = Section(s)
-        #     new_section = section(app_form.id)
-        # if old_section(app_form.id) == new_section(app_form.id):
-        #     old_section.update(new_section)
-        #     db.session.commit()
-
-        # except IntegrityError as e:
-        #     LOGGER.error("Application with id: {} already exists".format(app_form.id))
-        #     return FORM_NOT_FOUND_BY_ID
-        #
-        # question.update
-        # try:
-        #     db.session.commit()
-        #
-        # except IntegrityError as e:
-        #     LOGGER.error("Application with id: {} already exists".format(app_form.id))
-        #     return FORM_NOT_FOUND_BY_ID
 
         return {'new_app_form': app_form}, 201
