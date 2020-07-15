@@ -147,12 +147,10 @@ APPLICATION_FORM_POST_DATA = {
 
 class ApplicationFormCreateTest(ApiTestCase):
     """
-    Test that an application form is created by an event admin
+    Test that an application form is created by an event admin with the correct permission
     """
     def _seed_data_create(self):
-        """
-        Mock data used for test simulation
-        """
+
         self.event = self.add_event()
         self.system_admin = self.add_user(is_admin=True)
         self.event_admin = self.add_user(email='user2@user.com')
@@ -221,34 +219,34 @@ class ApplicationFormCreateTest(ApiTestCase):
         self.assertIsNotNone(section1_question1['id'])
         self.assertEqual(section1_question1['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
 
-    def test_sections_are_created(self):
-        """
-        Tests that the correct sections are added and can be accessed by the respective app id
-        """
-        pass
 
 
 class ApplicationFormUpdateTest(ApiTestCase):
     """
-    Test that an application form's sections and question are updated
+    Test that an application form's sections and question are updated by an admin with the correct permissions
     """
     def _seed_data_update(self):
-        """
-        Mock data used for test simulation
-        """
-        pass
 
-    def test_section_id_matches_app_id(self):
-        """
-        Confirm the sections to be updated belong to the respective application form
-        """
-        pass
+        self.event = self.add_event()
+        self.system_admin = self.add_user(is_admin=True)
+        self.event_admin = self.add_user(email='user2@user.com')
+        self.event.add_event_role('admin', self.event_admin.id)
+        db.session.commit()
 
-    def test_question_matches_app_sesction_id(self):
-        pass
+    def test_event_admin_permission(self):
+        """
+        Tests that the application form is being created by a user with the correct permissions
+        """
+        self._seed_data_create()
 
-    def test_updated_app_form_returned(self):
-        """
-        Tests that the new, updated application form is returned
-        """
-        pass
+        response = self.app.post(
+            '/api/v1/application-form',
+            # data=json.dumps(APPLICATION_FORM_POST_DATA),
+            content_type='application/json',
+            headers=self.get_auth_header_for(self.event_admin.email)
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_app_form_updated(self):
+
