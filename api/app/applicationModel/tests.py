@@ -88,69 +88,70 @@ class ApplicationFormApiTest(ApiTestCase):
 
 
 APPLICATION_FORM_POST_DATA = {
-  "event_id": 1, 
-  "is_open": True, 
-  "nominations": False, 
-  "sections": [
-    {
-      "description": "Description of the section", 
-      "order": 1, 
-      "questions": [
+    "event_id": 1,
+    "is_open": True,
+    "nominations": False,
+    "sections": [
         {
-          "validation_regex": None, 
-          "options": [
-              {"value": "undergrad", "label": "An undergraduate student"}, 
-              {"value": "masters", "label": "A masters student"}, 
-           ], 
-          "description": None, 
-          "headline": "Question 1", 
-          "placeholder": "Select an Option...", 
-          "is_required": True, 
-          "type": "multi-choice", 
-          "validation_text": None, 
-          "order": 1
-        }
-      ], 
-      "name": "Section 1"
-    }, 
-    {
-      "description": "Description of the section", 
-      "order": 2, 
-      "questions": [
-        {
-          "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$", 
-          "options": None, 
-          "description": "Question description", 
-          "headline": "Section 2, question 1", 
-          "placeholder": "Some question", 
-          "is_required": True, 
-          "type": "long-text", 
-          "validation_text": "You must enter no more than 150 words", 
-          "order": 1
+            "description": "Description of the section",
+            "order": 1,
+            "questions": [
+                {
+                    "validation_regex": None,
+                    "options": [
+                        {"value": "undergrad", "label": "An undergraduate student"},
+                        {"value": "masters", "label": "A masters student"},
+                    ],
+                    "description": None,
+                    "headline": "Question 1",
+                    "placeholder": "Select an Option...",
+                    "is_required": True,
+                    "type": "multi-choice",
+                    "validation_text": None,
+                    "order": 1
+                }
+            ],
+            "name": "Section 1"
         },
         {
-          "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$", 
-          "options": None, 
-          "description": "Question description", 
-          "headline": "Section 2, question 2", 
-          "placeholder": "Some question", 
-          "is_required": False, 
-          "type": "long-text", 
-          "validation_text": "You must enter no more than 10 words", 
-          "order": 2
+            "description": "Description of the section",
+            "order": 2,
+            "questions": [
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 2, question 1",
+                    "placeholder": "Some question",
+                    "is_required": True,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 150 words",
+                    "order": 1
+                },
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 2, question 2",
+                    "placeholder": "Some question",
+                    "is_required": False,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 10 words",
+                    "order": 2
+                }
+            ],
+            "name": "Section 2"
         }
-      ], 
-      "name": "Section 2"
-    }
-  ]
+    ]
 }
+
 
 class ApplicationFormCreateTest(ApiTestCase):
     """
     Test that an application form is created by an event admin with the correct permission
     """
-    def _seed_data_create(self):
 
+    def _seed_data_create(self):
         self.event = self.add_event()
         self.system_admin = self.add_user(is_admin=True)
         self.event_admin = self.add_user(email='user2@user.com')
@@ -164,7 +165,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self._seed_data_create()
 
         response = self.app.post(
-            '/api/v1/application-form', 
+            '/api/v1/application-form',
             data=json.dumps(APPLICATION_FORM_POST_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.event_admin.email)
@@ -179,7 +180,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self._seed_data_create()
 
         response = self.app.post(
-            '/api/v1/application-form', 
+            '/api/v1/application-form',
             data=json.dumps(APPLICATION_FORM_POST_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.system_admin.email)
@@ -204,7 +205,8 @@ class ApplicationFormCreateTest(ApiTestCase):
 
         section0_question0 = section0['questions'][0]
         self.assertIsNotNone(section0_question0['id'])
-        self.assertEqual(section0_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
+        self.assertEqual(section0_question0['headline'],
+                         APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
 
         section1 = response_data['sections'][1]
         self.assertIsNotNone(section1['id'])
@@ -213,20 +215,120 @@ class ApplicationFormCreateTest(ApiTestCase):
 
         section1_question0 = section1['questions'][0]
         self.assertIsNotNone(section1_question0['id'])
-        self.assertEqual(section1_question0['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
+        self.assertEqual(section1_question0['headline'],
+                         APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
 
         section1_question1 = section1['questions'][1]
         self.assertIsNotNone(section1_question1['id'])
-        self.assertEqual(section1_question1['headline'], APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
+        self.assertEqual(section1_question1['headline'],
+                         APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
 
+
+APPLICATION_FORM_PUT_DATA = {
+    "event_id": 1,
+    "is_open": True,
+    "nominations": False,
+    "sections": [
+        {
+            "description": "Description of the section",
+            "order": 1,
+            "questions": [
+                {
+                    "validation_regex": None,
+                    "options": [
+                        {"value": "undergrad", "label": "An undergraduate student"},
+                        {"value": "masters", "label": "A masters student"},
+                    ],
+                    "description": None,
+                    "headline": "Question 1",
+                    "placeholder": "Select an Option...",
+                    "is_required": True,
+                    "type": "multi-choice",
+                    "validation_text": None,
+                    "order": 1
+                }
+            ],
+            "name": "Section 1"
+        },
+        {
+            "description": "Description of the section",
+            "order": 2,
+            "questions": [
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 2, question 1",
+                    "placeholder": "Some question",
+                    "is_required": True,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 150 words",
+                    "order": 1
+                },
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 2, question 2",
+                    "placeholder": "Some question",
+                    "is_required": False,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 10 words",
+                    "order": 2
+                },
+                {  # New
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 2, question 3",
+                    "placeholder": "Some question",
+                    "is_required": True,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 80 words",
+                    "order": 3
+                },
+            ],
+            "name": "Section 2"
+        },
+        {
+            "description": "Description of the section",
+            "order": 2,
+            "questions": [
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 3, question 1",
+                    "placeholder": "Some question",
+                    "is_required": True,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 150 words",
+                    "order": 1
+                },
+                {
+                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$",
+                    "options": None,
+                    "description": "Question description",
+                    "headline": "Section 3, question 2",
+                    "placeholder": "Some question",
+                    "is_required": False,
+                    "type": "long-text",
+                    "validation_text": "You must enter no more than 10 words",
+                    "order": 2
+                }
+            ],
+            "name": "Section 3"  # New
+        }
+    ]
+}
 
 
 class ApplicationFormUpdateTest(ApiTestCase):
     """
     Test that an application form's sections and question are updated by an admin with the correct permissions
     """
-    def _seed_data_update(self):
 
+    def _seed_data_update(self):
         self.event = self.add_event()
         self.system_admin = self.add_user(is_admin=True)
         self.event_admin = self.add_user(email='user2@user.com')
@@ -241,12 +343,19 @@ class ApplicationFormUpdateTest(ApiTestCase):
 
         response = self.app.post(
             '/api/v1/application-form',
-            # data=json.dumps(APPLICATION_FORM_POST_DATA),
+            data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.event_admin.email)
         )
 
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
 
     def test_app_form_updated(self):
+        self._seed_data_create()
 
+        response = self.app.post(
+            '/api/v1/application-form',
+            data=json.dumps(APPLICATION_FORM_PUT_DATA),
+            content_type='application/json',
+            headers=self.get_auth_header_for(self.system_admin.email)
+        )
