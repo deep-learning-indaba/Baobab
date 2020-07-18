@@ -178,7 +178,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         """
         Test that the application form can't be created by a non event-admin
         """
-        self._seed_data_update()
+        self._seed_data_create()
 
         response = self.app.post(
             '/api/v1/application-form',
