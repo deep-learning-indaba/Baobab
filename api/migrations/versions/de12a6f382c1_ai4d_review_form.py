@@ -265,12 +265,12 @@ def upgrade():
         {'value': 2, 'label': '2'},
         {'value': 1, 'label': '1'}])
 
-    overall = ReviewQuestion(form.id, 'multi-choice', True, 10, description="""Your overall assessment of the application""", headline='Overall evaluation', 
+    overall = ReviewQuestion(form.id, 'multi-choice', True, 10, description="""Overall evaluation - Do you recommend this proposal for funding?""", headline='Overall evaluation', 
     options=[
-        {'value': 3, 'label': 'Strong Accept'},
-        {'value': 2, 'label': 'Accept'},
-        {'value': 1, 'label': 'Weak Accept'},
-        {'value': 0, 'label': 'Borderline'},
+        {'value': 3, 'label': 'Strong Recommend'},
+        {'value': 2, 'label': 'Recommend'},
+        {'value': 1, 'label': 'Weak Recommend'},
+        {'value': 0, 'label': 'Borderline Submission'},
         {'value': -1, 'label': 'Weak Reject'},
         {'value': -2, 'label': 'Reject'},
         {'value': -3, 'label': 'Strong Reject'}])
