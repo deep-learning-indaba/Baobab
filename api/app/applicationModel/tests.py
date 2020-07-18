@@ -250,6 +250,9 @@ APPLICATION_FORM_PUT_DATA = {
             "id": 1,   # Existing section, just updates
             "description": "Updated description of the section",
             "order": 1,
+            # "depends_on_question_id": 1,
+            "show_for_values": None,
+            "key": None,
             "questions": [
                 {
                     "id": 1,
@@ -274,6 +277,9 @@ APPLICATION_FORM_PUT_DATA = {
             "id": 2,  # Existing section with 1 new question
             "description": "Description of the section (UPDATED)",  # Updated
             "order": 3,  # Updated
+            # "depends_on_question_id": 1,
+            "show_for_values": None,
+            "key": None,
             "questions": [
                 {
                     "id": 2,
@@ -304,6 +310,9 @@ APPLICATION_FORM_PUT_DATA = {
         {   # New section
             "description": "Description of the NEW section",
             "order": 2,
+            # "depends_on_question_id": 1,
+            "show_for_values": None,
+            "key": None,
             "questions": [
                 {
                     "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
@@ -401,6 +410,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
 
         response_data = json.loads(response.data)
+        print("Response data:", response_data)
 
         self.assertEqual(response_data['id'], 1)
         self.assertEqual(response_data['event_id'], 1)
@@ -414,7 +424,8 @@ class ApplicationFormUpdateTest(ApiTestCase):
         for key in section1_expected.keys():
             if key == 'questions':
                 continue
-            self.assertEqual(section1_actual[key], section1_expected[key])
+            self.assertEqual(section1_actual[key], section1_expected[key],
+                             '{}: actual "{}" vs expected "{}"'.format(key, section1_actual[key], section1_expected[key]))
 
         self.assertEqual(len(section1_actual['questions']), 1)
 
@@ -424,7 +435,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         for key in section1_question1_expected.keys():
             if key == 'options':
                 continue
-            self.assertEqual(section1_question1_actual[key], section1_question1_expected[key])
+            self.assertEqual(section1_question1_actual[key], section1_question1_expected[key], key)
 
         section1_question1_options_actual = response_data['sections'][0]['questions'][0]['options']
         section1_question1_options_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][0]['options']
@@ -444,14 +455,14 @@ class ApplicationFormUpdateTest(ApiTestCase):
         section2_question1_actual = response_data['sections'][1]['questions'][0]
         section2_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][0]
         for key in section2_question1_expected.keys():
-            self.assertEqual(section2_question1_actual[key], section2_question1_expected[key])
+            self.assertEqual(section2_question1_actual[key], section2_question1_expected[key], key)
 
         # Check question 2 in section 2 (NEW)
         section2_question2_actual = response_data['sections'][1]['questions'][1]
         section2_question2_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][1]
         self.assertIsNotNone(section2_question1_actual['id'])
         for key in section2_question2_expected.keys():
-            self.assertEqual(section2_question2_actual[key], section2_question2_expected[key])
+            self.assertEqual(section2_question2_actual[key], section2_question2_expected[key], key)
 
         # Check section 3 (NEW)
         section3_actual = response_data['sections'][2]
@@ -460,7 +471,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         for key in section3_expected.keys():
             if key == 'questions':
                 continue
-            self.assertEqual(section3_actual[key], section3_expected[key])
+            self.assertEqual(section3_actual[key], section3_expected[key], key)
 
         self.assertEqual(len(section3_actual['questions']), len(section3_expected['questions']))
 
@@ -469,4 +480,4 @@ class ApplicationFormUpdateTest(ApiTestCase):
         section3_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][2]['questions'][0]
         self.assertIsNotNone(section3_question1_actual['id'])
         for key in section3_question1_expected.keys():
-            self.assertEqual(section3_question1_actual[key], section3_question1_expected[key])
+            self.assertEqual(section3_question1_actual[key], section3_question1_expected[key], key)
