@@ -146,6 +146,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         return app_form, 201
 
     @auth_required
+    @marshal_with(form_fields)
     def put(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
@@ -160,31 +161,17 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
+        print("app_form:", app_form)
 
         section = app_repository.get_sections_by_app_id(app_form.id)
+        print("section:", section)
         if not section:
             LOGGER.error('Sections not found for event_id: {}'.format(args['event_id']))
             return SECTION_NOT_FOUND
-        else:
-            new_sections = args['section']
-            for new_s in new_sections:
-                Section.update(new_s)
 
-                for new_q in new_s['questions']:
-                    Question.update(new_q)
-            db.session.commit()
+        new_sections = args['sections']
+        print("new sections:", new_sections)
+        for new_s in new_sections:
+            print(type(new_s))
 
-        question = app_repository.get_questions_by_id(section.id, app_form.id) # Confirm correct ID
-        if not question:
-            LOGGER.error('Questions not found for event_id: {}'.format(args['event_id']))
-            return QUESTION_NOT_FOUND
-        # else:
-        #     new_questions = args['question']
-        #     for new_q in new_questions:
-        #         question.update(new_q)
-        #         db.session.commit()
-
-        db.session.add(app_form)
-
-
-        return {'new_app_form': app_form}, 201
+        return {'updated_app_form': app_form}, 200
