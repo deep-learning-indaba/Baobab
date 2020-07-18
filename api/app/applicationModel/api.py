@@ -16,7 +16,7 @@ from app.events.models import Event
 from app.utils.auth import auth_required
 
 from app.utils.errors import EVENT_NOT_FOUND, FORM_NOT_FOUND_BY_ID, APPLICATION_FORM_EXISTS, QUESTION_NOT_FOUND, \
-    SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED, FORBIDDEN
+    SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED, FORBIDDEN, UPDATE_CONFLICT
 
 from app import db, bcrypt
 from app import LOGGER
@@ -46,7 +46,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         'order': fields.Integer,
         'questions': fields.List(fields.Nested(question_fields)),
         'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Raw
+        'show_for_values': fields.Raw,
+        'key': fields.String
     }
 
     form_fields = {
@@ -59,8 +60,12 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     }
 
     def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True,
+                                help='Invalid event_id requested. Event_id\'s should be of type int.')
+
         LOGGER.debug('Received get request for application form')
-        args = self.req_parser.parse_args()
+        args = req_parser.parse_args()
         LOGGER.debug('Parsed Args for event_id: {}'.format(args))
 
         try:
@@ -88,7 +93,13 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     @auth_required
     @marshal_with(form_fields)
     def post(self):
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True,
+                                help='Invalid event_id requested. Event_id\'s should be of type int.')
+        req_parser.add_argument('is_open', type=bool, required=True)
+        req_parser.add_argument('nominations', type=bool, required=True)
+        req_parser.add_argument('sections', type=dict, required=True, action='append')
+        args = req_parser.parse_args()
         event_id = args['event_id']
 
         event = db.session.query(Event).get(event_id)
@@ -148,9 +159,18 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
     @auth_required
     @marshal_with(form_fields)
     def put(self):
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True,
+                                help='Invalid event_id requested. Event_id\'s should be of type int.')
+        req_parser.add_argument('is_open', type=bool, required=True)
+        req_parser.add_argument('nominations', type=bool, required=True)
+        req_parser.add_argument('id', type=int, required=True)
+        req_parser.add_argument('sections', type=dict, required=True, action='append')
+
+        args = req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
+        app_id = args['id']
 
         event = db.session.query(Event).get(event_id)
         if not event:
@@ -160,18 +180,55 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        app_form = app_repository.get_by_event_id(event_id)
-        print("app_form:", app_form)
+        app_form = app_repository.get_by_id(app_id)
+        #TO DO : add error
 
-        section = app_repository.get_sections_by_app_id(app_form.id)
-        print("section:", section)
-        if not section:
-            LOGGER.error('Sections not found for event_id: {}'.format(args['event_id']))
-            return SECTION_NOT_FOUND
+        if not event_id == app_form.event_id:
+            return UPDATE_CONFLICT
 
+        app_form.is_open = args['is_open']
+        app_form.nominations = args['nominations']
+
+        current_sections = app_form.sections
         new_sections = args['sections']
-        print("new sections:", new_sections)
+        # print("new sections:", new_sections)
         for new_s in new_sections:
-            print(type(new_s))
+            # print(type(new_s))
+            if 'id' in new_s:
+                #If ID is populated, then compare to the new section and update
+                for current_s in current_sections:
+                    if current_s.id == new_s['id']:
+                        current_s.description = new_s['description']
+                        current_s.order = new_s['order']
+                        # current_s.depends_on_question_id = new_s['depends_on_question_id']
+                        current_s.show_for_values = new_s['show_for_values']
+                        current_s.key = new_s['key']
+                        current_s.name = new_s['name']
+            else:
+            #if not populated, then add new section
+                section = Section(
+                    app_form.id,
+                    new_s['name'],
+                    new_s['description'],
+                    new_s['order']
+                )
+                
 
-        return {'updated_app_form': app_form}, 200
+                for q in new_s['questions']:
+                    question = Question(
+                        app_form.id,
+                        section.id,
+                        q['headline'],
+                        q['placeholder'],
+                        q['order'],
+                        q['type'],
+                        q['validation_regex'],
+                        q['validation_text'],
+                        q['is_required'],
+                        q['description'],
+                        q['options'],
+                    )
+
+
+
+        return app_form, 200
