@@ -7,7 +7,6 @@ from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from flask import g
 
-from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.applicationModel.repository import ApplicationFormRepository as app_repository
 from app.users.repository import UserRepository as user_repository
@@ -22,7 +21,7 @@ from app import db, bcrypt
 from app import LOGGER
 
 
-class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
+class ApplicationFormAPI(restful.Resource):
     question_fields = {
         'id': fields.Integer,
         'type': fields.String,
@@ -181,7 +180,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return FORBIDDEN
 
         app_form = app_repository.get_by_id(app_id)
-        #TO DO : add error
+        if not app_repository.get_by_id(app_id):
+            return FORM_NOT_FOUND_BY_ID
 
         if not event_id == app_form.event_id:
             return UPDATE_CONFLICT
@@ -191,11 +191,9 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         current_sections = app_form.sections
         new_sections = args['sections']
-        # print("new sections:", new_sections)
         for new_s in new_sections:
-            # print(type(new_s))
             if 'id' in new_s:
-                #If ID is populated, then compare to the new section and update
+                # If ID is populated, then compare to the new section and update
                 for current_s in current_sections:
                     if current_s.id == new_s['id']:
                         current_s.description = new_s['description']
@@ -204,16 +202,47 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                         current_s.show_for_values = new_s['show_for_values']
                         current_s.key = new_s['key']
                         current_s.name = new_s['name']
+
+                        for new_q in new_s['questions']:  # new_q - questions from new_s section
+                            if 'id' in new_q:
+                                for idx in current_s.questions:
+                                    if idx.id == new_q['id']:
+                                        idx.headline = new_q['headline']
+                                        idx.placeholder = new_q['placeholder']
+                                        idx.order = new_q['order']
+                                        idx.type = new_q['type']
+                                        idx.validation_regex = new_q['validation_regex']
+                                        idx.validation_text = new_q['validation_text']
+                                        idx.is_required = new_q['is_required']
+                                        idx.description = new_q['description']
+                                        idx.options = new_q['options']
+                            else:
+                                new_question = Question(
+                                    app_form.id,
+                                    current_s.id,
+                                    new_q['headline'],
+                                    new_q['placeholder'],
+                                    new_q['order'],
+                                    new_q['type'],
+                                    new_q['validation_regex'],
+                                    new_q['validation_text'],
+                                    new_q['is_required'],
+                                    new_q['description'],
+                                    new_q['options']
+                                )
+                                db.session.add(new_question)
+                                db.session.commit()
+
             else:
-            #if not populated, then add new section
+                # if not populated, then add new section
                 section = Section(
                     app_form.id,
                     new_s['name'],
                     new_s['description'],
                     new_s['order']
                 )
-                
-
+                db.session.add(section)
+                db.session.commit()
                 for q in new_s['questions']:
                     question = Question(
                         app_form.id,
@@ -226,9 +255,20 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                         q['validation_text'],
                         q['is_required'],
                         q['description'],
-                        q['options'],
+                        q['options']
                     )
+                    db.session.add(question)
+                    db.session.commit()
 
+        for c in current_sections:
+            match = False
+            for new in new_sections:
+                if 'id' in new:
+                    if c.id == new['id']:
+                        match = True
+            if not match:
+                app_repository.delete_section_by_id(c.id)
 
+        db.session.commit()
 
         return app_form, 200
