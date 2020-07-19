@@ -331,9 +331,6 @@ APPLICATION_FORM_PUT_DATA = {
     ]
 }
 
-# TODO: What about a deleted section or deleted question? 
-
-
 class ApplicationFormUpdateTest(ApiTestCase):
     """
     Test that an application form's sections and question are updated by an admin with the correct permissions
@@ -351,7 +348,8 @@ class ApplicationFormUpdateTest(ApiTestCase):
         application_form = self.create_application_form(event_id=1, is_open=True, nominations=False)
         section1 = Section(application_form.id, 'Section 1', 'Old description of the section', 1)
         section2 = Section(application_form.id, 'Section 2', 'Description of the section', 2)
-        db.session.add_all([section1, section2])
+        section_deleted = Section(application_form.id, 'Section deleted', 'Description of the section', 3)
+        db.session.add_all([section1, section2, section_deleted])
         db.session.commit()
 
         section1_question1 = Question(application_form.id, section1.id, 'Question 1', 'Select an Option...',
@@ -365,7 +363,6 @@ class ApplicationFormUpdateTest(ApiTestCase):
         
         db.session.add_all([section1_question1, section2_question1])
         db.session.commit()
-
 
     def test_event_admin_permission(self):
         """
