@@ -39,3 +39,8 @@ class ApplicationFormRepository():
     @staticmethod
     def get_question_by_id(question_id):
         return db.session.query(Question).get(question_id)
+
+    @staticmethod
+    def delete_section_by_id(section_id):
+        db.session.query(Question).filter_by(section_id=section_id).delete()
+        db.session.query(Section).filter_by(id=section_id).delete()
