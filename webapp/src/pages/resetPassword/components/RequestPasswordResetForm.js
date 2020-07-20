@@ -40,11 +40,14 @@ class RequestPasswordResetForm extends Component {
             resetRequested: true
           });
         } else {
+          // error message variable
+          let errorMessage = response.message;
           this.setState({
-            error: response.message,
+            error: errorMessage,
             loading: false
           });
         }
+        console.log(response)
       });
   };
 
