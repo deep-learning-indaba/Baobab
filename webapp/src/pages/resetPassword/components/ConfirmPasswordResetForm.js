@@ -62,10 +62,9 @@ class ConfirmPasswordResetForm extends Component {
           const { from } = { from: { pathname: "/login" } };
           this.props.history.push(from);
         } else {
-          // error message variable
-          let errorMessage = response.message;
+
           this.setState({
-            error: errorMessage,
+            error: response.message,
             loading: false
           });
         }
