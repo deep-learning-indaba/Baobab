@@ -14,6 +14,9 @@ from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 from app.responses.repository import ResponseRepository as response_repository
+from app.registration.repository import OfferRepository as offer_repository
+from app.registration.repository import RegistrationRepository as registration_repository
+from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 
 from app import db, bcrypt, LOGGER
 from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE
@@ -323,6 +326,40 @@ class EventsAPI(restful.Resource):
         return returnEvents, 200
 
 
+def _process_timeseries(timeseries):
+    timeseries = [
+            (d.strftime('%Y-%m-%d'), c) for (d, c) in timeseries
+            if d is not None
+        ]
+    return timeseries
+
+def _combine_timeseries(first_timeseries, second_timeseries):
+    output = []
+    i, j = 0, 0
+    while i < len(first_timeseries) and j < len(second_timeseries):
+        first_date, first_count = first_timeseries[i]
+        second_date, second_count = second_timeseries[j]
+        if first_date == second_date:
+            output.append((first_date, first_count + second_count))
+            i += 1
+            j += 1
+        if first_date < second_date:
+            output.append((first_date, first_count))
+            i += 1
+        else:
+            output.append((second_date, second_count))
+
+    while i < len(first_timeseries):
+        output.append(first_timeseries[i])
+        i += 1
+
+    while j < len(second_timeseries):
+        output.append(second_timeseries[j])
+        j += 1
+
+    return output
+
+
 class EventStatsAPI(EventsMixin, restful.Resource):
 
     @event_admin_required
@@ -334,26 +371,44 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         num_responses = response_repository.get_total_count_by_event(event_id)
         num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
         num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
-        submitted_response_timeseries = response_repository.get_submitted_timeseries_by_event(event_id)
-        submitted_response_timeseries = [
-            (d.strftime('%Y-%m-%d'), c) for (d, c) in submitted_response_timeseries
-        ]
+        submitted_response_timeseries = _process_timeseries(response_repository.get_submitted_timeseries_by_event(event_id))
 
         review_config = review_config_repository.get_configuration_for_event(event_id)
-        required_reviews = 1 if review_config is None else review_config.required_reviews_per_response
+        required_reviews = 1 if review_config is None else review_config.num_reviews_required
         reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
+        reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
         reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
+        reviews_timeseries = _process_timeseries(review_repository.get_review_complete_timeseries_by_event(event_id))
 
+        offers_allocated = offer_repository.count_offers_allocated(event_id)
+        offers_accepted = offer_repository.count_offers_accepted(event_id)
+        offers_rejected = offer_repository.count_offers_rejected(event_id)
+        offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
-        # TODO: Add number of total reviews + reviews completed + number unallocated + completed timeseries  ( display completed/total )
-        # TODO: Add number of offers allocated, number of acceptances + number of rejections + accepted timeseries
-        # TODO: Add number of registrations submitted + number guest registrations + number guests + timeseries of candidates and guests registrations submitted        
+        num_registrations = registration_repository.count_registrations(event_id)
+        num_guests = guest_registration_repository.count_guests(event_id)
+        num_registered_guests = guest_registration_repository.count_registered_guests(event_id)
+        registration_timeseries = _process_timeseries(registration_repository.timeseries_registrations(event_id))
+        guest_registration_timeseries = _process_timeseries(guest_registration_repository.timeseries_guest_registrations(event_id))
+        registration_timeseries = _combine_timeseries(registration_timeseries, guest_registration_timeseries)
 
         return {
             'num_responses': num_responses,
             'num_submitted_responses': num_submitted_respones,
             'num_withdrawn_responses': num_withdrawn_responses,
-            'submitted_timeseries': submitted_response_timeseries
+            'submitted_timeseries': submitted_response_timeseries,
+            'reviews_completed': reviews_completed,
+            'review_incomplete': reviews_incomplete,
+            'reviews_unallocated': reviews_unallocated,
+            'reviews_complete_timeseries': reviews_timeseries,
+            'offers_allocated': offers_allocated,
+            'offers_accepted': offers_accepted,
+            'offers_rejected': offers_rejected,
+            'offers_accepted_timeseries': offers_timeseries,
+            'num_registrations': num_registrations,
+            'num_guests': num_guests,
+            'num_registered_guests': num_registered_guests,
+            'registration_timeseries': registration_timeseries
         }, 200
 
 
