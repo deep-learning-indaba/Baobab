@@ -40,11 +40,13 @@ class RequestPasswordResetForm extends Component {
             resetRequested: true
           });
         } else {
+
           this.setState({
-            error: response.message,
+            error: response.message, 
             loading: false
           });
         }
+
       });
   };
 

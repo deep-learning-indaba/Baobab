@@ -48,8 +48,10 @@ class ConfirmPasswordResetForm extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
-    this.setState({ submitted: true });
-    this.setState({ loading: true });
+    this.setState({
+      submitted: true,
+      loading: true
+    });
 
     userService
       .confirmPasswordReset(this.state.password, this.state.token)
@@ -60,8 +62,9 @@ class ConfirmPasswordResetForm extends Component {
           const { from } = { from: { pathname: "/login" } };
           this.props.history.push(from);
         } else {
+
           this.setState({
-            error: response.messsage,
+            error: response.message,
             loading: false
           });
         }
