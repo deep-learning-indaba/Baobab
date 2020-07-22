@@ -46,7 +46,7 @@ class RequestPasswordResetForm extends Component {
             loading: false
           });
         }
-        console.log(response)
+
       });
   };
 

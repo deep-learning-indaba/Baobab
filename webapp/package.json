@@ -18,7 +18,7 @@
     "react-bootstrap4-modal": "^1.7.0",
     "react-cookie-consent": "^3.0.0",
     "react-datetime-picker": "^2.9.0",
-    "react-dom": "^16.13.1",
+    "react-dom": "^16.7.0",
     "react-error-boundary": "^1.2.3",
     "react-ga": "^2.5.7",
     "react-google-charts": "^3.0.11",
