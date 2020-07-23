@@ -11,7 +11,8 @@ class OrganisationApiTest(ApiTestCase):
             system_name='Baobab', 
             small_logo='blah.png', 
             large_logo='blah_big.png', 
-            domain='deeplearningindaba')
+            domain='deeplearningindaba',
+            languages=[{"code": "en", "description": "English"}])
         db.session.flush()
 
     def setUp(self):
@@ -30,6 +31,8 @@ class OrganisationApiTest(ApiTestCase):
             self.assertEqual(data['small_logo'], 'blah.png')
             self.assertEqual(data['large_logo'], 'blah_big.png')
             self.assertEqual(data['domain'], 'deeplearningindaba')
+            self.assertEqual(data['languages'][0]['code'], 'en')
+            self.assertEqual(data['languages'][0]['description'], 'English')
 
     def test_organisation_from_referer(self):
         with app.app_context():
@@ -43,6 +46,8 @@ class OrganisationApiTest(ApiTestCase):
             self.assertEqual(data['small_logo'], 'blah.png')
             self.assertEqual(data['large_logo'], 'blah_big.png')
             self.assertEqual(data['domain'], 'deeplearningindaba')
+            self.assertEqual(data['languages'][0]['code'], 'en')
+            self.assertEqual(data['languages'][0]['description'], 'English')
 
     def test_organisation_error(self):
         with app.app_context():

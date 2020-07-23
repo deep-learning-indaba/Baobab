@@ -148,8 +148,8 @@ class ApiTestCase(unittest.TestCase):
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
                                     email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
-                                    privacy_policy='PrivacyPolicy.pdf'):
-        org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy)
+                                    privacy_policy='PrivacyPolicy.pdf', languages=[{"code": "en", "description": "English"}]):
+        org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages)
         db.session.add(org)
         db.session.commit()
         return org
