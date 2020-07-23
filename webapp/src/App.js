@@ -42,11 +42,13 @@ class EventNav extends Component {
   render() {
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
+        
         <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
         <div class={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
+
           <ul className="navbar-nav">
             {this.props.user &&
               this.props.event &&

@@ -15,7 +15,9 @@ import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
 
+
 const baseUrl = process.env.REACT_APP_API_URL;
+let errorMessage = false;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -25,6 +27,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -62,6 +65,7 @@ class FieldEditor extends React.Component {
       uploadError: "",
       uploaded: false
     }
+
   }
 
   handleChange = event => {
@@ -205,7 +209,11 @@ class FieldEditor extends React.Component {
             key={"i_" + key}
             showError={validationError}
             errorText={validationError}
-            required={question.is_required} />
+            required={question.is_required}
+            error={errorMessage}
+          />
+
+
         );
       case REFERENCE_REQUEST:
         return (
@@ -267,6 +275,9 @@ class Section extends React.Component {
       value: value
     };
 
+    // setting error to false in global
+    errorMessage = false;
+
     const newQuestionModels = this.state.questionModels
       .map(q => {
         if (q.question.id !== question.id) {
@@ -301,7 +312,10 @@ class Section extends React.Component {
 
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
+      // sharing global data FieldEditor/FormDate component.
+      errorMessage = true;
     }
+
     if (
       answer &&
       question.validation_regex &&
@@ -341,6 +355,7 @@ class Section extends React.Component {
         }
       }
     );
+    console.log(this.props)
     return isValid;
   };
 
@@ -777,8 +792,8 @@ class ApplicationFormInstance extends Component {
     } = this.state;
 
     if (isError) {
-      return <div className={"alert alert-danger alert-container"}>{
-        errorMessage}
+      return <div className={"alert alert-danger alert-container"}>
+        {errorMessage}
       </div>;
     }
 
@@ -877,6 +892,7 @@ class ApplicationFormInstance extends Component {
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
           />
+
           <ReactToolTip />
         </div>
         {isSubmitting && <h2 class="submitting">Saving Responses...</h2>}
@@ -934,17 +950,16 @@ class ApplicationList extends Component {
         </thead>
         <tbody>
           {this.props.responses.map(response => {
-          return <tr key={"response_" + response.id}>
-            <td>{this.getCandidate(allQuestions, response)}</td>
-            <td>{this.getStatus(response)}</td>
-            <td>{this.getAction(response)}</td>
-          </tr>
-        })}
+            return <tr key={"response_" + response.id}>
+              <td>{this.getCandidate(allQuestions, response)}</td>
+              <td>{this.getStatus(response)}</td>
+              <td>{this.getAction(response)}</td>
+            </tr>
+          })}
         </tbody>
       </table>
     </div>
   }
-
 }
 
 class ApplicationForm extends Component {
@@ -994,7 +1009,15 @@ class ApplicationForm extends Component {
   }
 
   render() {
-    const { isLoading, isError, errorMessage, formSpec, responses, selectedResponse, responseSelected } = this.state;
+    const {
+      isLoading,
+      isError,
+      errorMessage,
+      formSpec,
+      responses,
+      selectedResponse,
+      responseSelected } = this.state;
+
     if (isLoading) {
       return (<Loading />);
     }
@@ -1002,7 +1025,6 @@ class ApplicationForm extends Component {
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
-
 
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
       return <div>
