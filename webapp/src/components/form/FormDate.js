@@ -44,7 +44,7 @@ class FormDate extends React.Component {
               )}
           </div>
 
-          <div className={ this.props.error ? "datePicker error" : "datePicker"} >
+          <div className={ this.props.emptyField ? "datePicker error" : "datePicker"} >
             <DateTimePicker
               id={this.props.id}
               ref={input => {

@@ -17,7 +17,6 @@ import _ from "lodash";
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
-let errorMessage = false;
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
@@ -63,7 +62,7 @@ class FieldEditor extends React.Component {
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
-      uploaded: false
+      uploaded: false,
     }
 
   }
@@ -210,7 +209,7 @@ class FieldEditor extends React.Component {
             showError={validationError}
             errorText={validationError}
             required={question.is_required}
-            error={errorMessage}
+            emptyField={this.props.emptyField}
           />
 
 
@@ -265,18 +264,18 @@ class Section extends React.Component {
         .slice()
         .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
-      validationStale: false
+      validationStale: false,
+
     };
   }
 
+  // onchange
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
       value: value
     };
 
-    // setting error to false in global
-    errorMessage = false;
 
     const newQuestionModels = this.state.questionModels
       .map(q => {
@@ -305,6 +304,8 @@ class Section extends React.Component {
     );
   };
 
+
+  // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
     const question = questionModel.question;
@@ -312,8 +313,14 @@ class Section extends React.Component {
 
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
-      // sharing global data FieldEditor/FormDate component.
-      errorMessage = true;
+      this.setState({
+        emptyField: true
+      })
+    }
+    else {
+      this.setState({
+        emptyField: false
+      })
     }
 
     if (
@@ -327,6 +334,8 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
+
+  // isValidated
   isValidated = () => {
     const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
@@ -355,7 +364,7 @@ class Section extends React.Component {
         }
       }
     );
-    console.log(this.props)
+
     return isValid;
   };
 
@@ -387,7 +396,9 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+
     const allAnswersInSection = questionModels.map(q => q.answer);
+
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -405,6 +416,7 @@ class Section extends React.Component {
                 validationError={model.validationError}
                 onChange={this.onChange}
                 responseId={this.props.responseId}
+                emptyField={this.state.emptyField}
               />
             )
             )
