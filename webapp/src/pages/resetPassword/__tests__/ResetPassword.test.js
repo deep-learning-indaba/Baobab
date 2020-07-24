@@ -1,15 +1,20 @@
 import React from 'react';
-import Enzyme, { shallow, mount } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-import ResetPassword from '../ResetPassword.js';
+import Enzyme, { shallow } from 'enzyme';
+import ConfirmPasswordResetForm from '../components/ConfirmPasswordResetForm';
 
 
-Enzyme.configure({ adapter: new Adapter() })
-
-test('Check if ResetPassword component renders.', () => {
+describe('ResetPassword error message', () => {
   // Render ResetPassword main component.
-  const wrapper = shallow(<ResetPassword />);
-  expect(wrapper.length).toEqual(1);
+  it('Check if ResetPassword component renders error message in UI', () => {
+    const wrapper = shallow(
+      <ConfirmPasswordResetForm.WrappedComponent />
+    );
+    wrapper.setState({ error: true });
+
+    let errorDiv = wrapper.find(".alert");
+
+     expect(errorDiv.text());
+  })
 });
 
 
