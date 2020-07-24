@@ -81,6 +81,7 @@ def user_info(user, roles):
         'lastname': user.lastname,
         'title': user.user_title,
         'is_admin': user.is_admin,
+        'primary_language': user.user_primaryLanguage,
         'roles': [{'event_id': event_role.event_id, 'role': event_role.role} for event_role in roles]
     }
 
@@ -166,6 +167,7 @@ class UserAPI(SignupMixin, restful.Resource):
         lastname = args['lastname']
         user_title = args['user_title']
         email = args['email']
+        user_primaryLanguage = args['user_primaryLanguage']
 
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
@@ -176,6 +178,7 @@ class UserAPI(SignupMixin, restful.Resource):
         user.firstname = firstname
         user.lastname = lastname
         user.user_title = user_title
+        user.user_primaryLanguage = user_primaryLanguage
 
         try:
             db.session.commit()

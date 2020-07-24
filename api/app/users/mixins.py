@@ -17,6 +17,7 @@ class SignupMixin(object):
     put_req_parser.add_argument('firstname', type=str, required=True)
     put_req_parser.add_argument('lastname', type=str, required=True)
     put_req_parser.add_argument('user_title', type=str, required=True)
+    put_req_parser.add_argument('user_primaryLanguage', type=str, required=True)
     put_req_parser.add_argument('password', type=str, required=False)
 
 
