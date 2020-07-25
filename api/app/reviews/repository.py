@@ -213,6 +213,41 @@ class ReviewRepository():
                         .all())
         return timeseries
 
+    @staticmethod
+    def get_candidate_response_ids(event_id, reviewer_user_id, reviews_required):
+        candidate_responses = db.session.query(Response.id) \
+            .filter(Response.user_id != reviewer_user_id,
+                    Response.is_submitted == True,
+                    Response.is_withdrawn == False) \
+            .join(ApplicationForm, Response.application_form_id == ApplicationForm.id) \
+            .filter(ApplicationForm.event_id == event_id) \
+            .outerjoin(ResponseReviewer, Response.id == ResponseReviewer.response_id) \
+            .group_by(Response.id) \
+            .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required) \
+            .all()
+        return candidate_responses
+
+    @staticmethod
+    def get_already_assigned(reviewer_user_id):
+        already_assigned = db.session.query(ResponseReviewer.response_id) \
+            .filter(ResponseReviewer.reviewer_user_id == reviewer_user_id) \
+            .all()
+        return already_assigned
+
+    @staticmethod
+    def get_reviewer(event_id, user_id):
+        reviewer = db.session.query(AppUser).get(user_id).is_reviewer(event_id)
+        return reviewer
+
+    @staticmethod
+    def get_form_id(event_id):
+        form_id = db.session.query(ApplicationForm.id).filter_by(event_id=event_id).first()[0]
+        return form_id
+
+    @staticmethod
+    def delete_review(review_response):
+        db.session.query(ReviewScore).filter(ReviewScore.review_response_id == review_response.id).delete()
+
 
 class ReviewConfigurationRepository():
 
@@ -231,3 +266,4 @@ class ReviewConfigurationRepository():
                     .filter(ApplicationForm.event_id == event_id)
                     .first())
         return config
+
