@@ -6,7 +6,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 i18n
   .use(Backend)
-  .use(LanguageDetector)
+  .use(LanguageDetector)  // TODO: We need to configure this to only set to a language supported by the organisation
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
