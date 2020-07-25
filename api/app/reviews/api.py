@@ -15,6 +15,7 @@ from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
@@ -202,8 +203,8 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         review_response = review_repository.get_review_response(review_form_id, response_id, reviewer_user_id)
         if review_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
-        
-        db.session.query(ReviewScore).filter(ReviewScore.review_response_id==review_response.id).delete()
+
+        review_repository.delete_review(review_response)
         review_response.review_scores = self.get_review_scores(scores)
         db.session.commit()
 
@@ -299,7 +300,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
 
-        event = db.session.query(Event).filter(Event.id == event_id).first()
+        event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
 
@@ -336,29 +337,17 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         return {}, 201
 
-    
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
         db.session.add(event_role)
         db.session.commit()
     
     def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
-        candidate_responses = db.session.query(Response.id)\
-                        .filter(Response.user_id != reviewer_user_id, 
-                                Response.is_submitted==True, 
-                                Response.is_withdrawn==False)\
-                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)\
-                        .filter(ApplicationForm.event_id == event_id)\
-                        .outerjoin(ResponseReviewer, Response.id==ResponseReviewer.response_id)\
-                        .group_by(Response.id)\
-                        .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required)\
-                        .all()
+        candidate_responses = review_repository.get_candidate_response_ids(event_id, reviewer_user_id, reviews_required)
         candidate_response_ids = set([r.id for r in candidate_responses])
 
         # Now remove any responses that the reviewer is already assigned to
-        already_assigned = db.session.query(ResponseReviewer.response_id)\
-                        .filter(ResponseReviewer.reviewer_user_id == reviewer_user_id)\
-                        .all()
+        already_assigned = review_repository.get_already_assigned(reviewer_user_id)
         already_assigned_ids = set([r.response_id for r in already_assigned])
         responses = list(candidate_response_ids - already_assigned_ids)
 
@@ -396,11 +385,11 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         limit = args['limit']
         sort_column = args['sort_column']
 
-        reviewer = db.session.query(AppUser).get(user_id).is_reviewer(event_id)
+        reviewer = review_repository.get_reviewer(event_id, user_id)
         if not reviewer:
             return FORBIDDEN
 
-        form_id = db.session.query(ApplicationForm.id).filter_by(event_id = event_id).first()[0]
+        form_id = review_repository.get_form_id(event_id)
 
         reviews = review_repository.get_review_history(user_id, form_id)
 
