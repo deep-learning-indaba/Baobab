@@ -1,5 +1,6 @@
 import axios from "axios";
 import history from "../History";
+import i18n from 'i18next';
 
 export function authHeader() {
   // return authorization header with basic auth credentials
@@ -39,3 +40,11 @@ axios.interceptors.response.use(
     } else throw error;
   }
 );
+
+axios.interceptors.request.use(
+  request => {
+    request.params = request.params || {};
+    request.params['language'] = i18n.language;
+    return request;
+  }
+)
