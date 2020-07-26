@@ -7,6 +7,7 @@ import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import { ErrorPage } from "./components/ErrorPage";
 import { ErrorBoundary } from "react-error-boundary";
+import './i18n';
 require("dotenv").config();
 
 ReactDOM.render(
