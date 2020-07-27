@@ -6,3 +6,8 @@
 .fa-question-circle {
   padding-left: 15px;
 }
+
+.react-datetime-picker.error {
+  border-radius: 5px;
+  border: 1px solid red !important;
+}
