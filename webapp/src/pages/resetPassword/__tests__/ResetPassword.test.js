@@ -27,7 +27,7 @@ describe('ResetPassword error message', () => {
 
     expect(response.length > 0).toEqual(true);
     expect(wrapper.state().error.length > 0).toEqual(true);
-    expect(wrapper.find('.alert').text()).toEqual(true);
+    expect(wrapper.find('.alert').text().length > 0).toEqual(true);
   })
 });
 
