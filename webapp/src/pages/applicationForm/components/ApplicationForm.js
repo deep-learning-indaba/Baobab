@@ -54,7 +54,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
-class FieldEditor extends React.Component {
+ class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
@@ -255,7 +255,7 @@ class FieldEditor extends React.Component {
   }
 }
 
-class Section extends React.Component {
+export class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
