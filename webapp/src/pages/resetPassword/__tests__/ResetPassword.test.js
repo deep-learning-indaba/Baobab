@@ -4,29 +4,39 @@ import ResetPassword from '../ResetPassword.js';
 import ConfirmPasswordResetForm from '../components/ConfirmPasswordResetForm';
 
 
+
 describe('ResetPassword render', () => {
   it("ResetPassword render", () => {
     // Render ResetPassword main component.
     const wrapper = shallow(<ResetPassword />);
     expect(wrapper.length).toEqual(1);
   })
-
-
 });
 
-
 describe('ResetPassword error message', () => {
-  it('Check if ResetPassword component renders error message in UI', () => {
+  it('Check if ResetPassword component renders error message in UI', async () => {
     const wrapper = shallow(
       <ConfirmPasswordResetForm.WrappedComponent />
     );
-    wrapper.setState({ error: true });
 
-    let errorDiv = wrapper.find(".alert");
+    wrapper.setState({ password: "123", token: "123" });
 
-    expect(errorDiv.text());
+    const event = { preventDefault: () => {} }
+
+    var response = await wrapper.instance().handleSubmit(event);
+
+    expect(response.length > 0).toEqual(true);
+    expect(wrapper.state().error.length > 0).toEqual(true);
+    expect(wrapper.find('.alert').text()).toEqual(true);
   })
 });
+
+
+
+
+
+
+
 
 
 
