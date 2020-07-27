@@ -15,7 +15,6 @@ describe('ResetPassword error message', () => {
 
      expect(errorDiv.text());
   })
- 
 
 });
 
