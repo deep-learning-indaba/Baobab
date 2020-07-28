@@ -314,14 +314,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
 
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
-      this.setState({
-        emptyField: true
-      })
-    }
-    else {
-      this.setState({
-        emptyField: false
-      })
     }
 
     if (
@@ -417,7 +409,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
                 validationError={model.validationError}
                 onChange={this.onChange}
                 responseId={this.props.responseId}
-                emptyField={this.state.emptyField}
               />
             )
             )
