@@ -8,8 +8,6 @@ import * as moment from 'moment';
 class FormDate extends React.Component {
   constructor(props) {
     super(props);
-
-    this.datePicker = React.createRef();
   }
 
   shouldDisplayError = () => {
