@@ -14,8 +14,6 @@ class Event(db.Model):
     __tablename__ = "event"
 
     id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
@@ -41,11 +39,10 @@ class Event(db.Model):
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
+    event_translations = db.relationship('EventTranslation')
     miniconf_url = db.Column(db.String(100), nullable=True)
 
     def __init__(self,
-                 name,
-                 description,
                  start_date,
                  end_date,
                  key,
@@ -67,8 +64,6 @@ class Event(db.Model):
                  miniconf_url=None
                  ):
 
-        self.name = name
-        self.description = description
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
@@ -92,12 +87,6 @@ class Event(db.Model):
 
     def set_miniconf_url(self, new_miniconf_url):
         self.miniconf_url = new_miniconf_url
-
-    def set_name(self, new_name):
-        self.name = new_name
-
-    def set_description(self, new_description):
-        self.description = new_description
 
     def set_start_date(self, new_start_date):
         self.start_date = new_start_date
@@ -146,8 +135,6 @@ class Event(db.Model):
         self.event_roles.append(event_role)
 
     def update(self,
-               name,
-               description,
                start_date,
                end_date,
                key,
@@ -165,8 +152,6 @@ class Event(db.Model):
                registration_open,
                registration_close,
                miniconf_url=None):
-        self.name = name
-        self.description = description
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
@@ -245,6 +230,19 @@ class Event(db.Model):
         now = datetime.now()
         return now < self.start_date
 
+
+class EventTranslation(db.Model):
+
+    __tablename__ = "event_translation"
+    __table_args__ = tuple([db.UniqueConstraint('event_id', 'language', name='uq_event_id_language')])
+
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    language = db.Column(db.String(2))
+
+    event = db.relationship('Event', foreign_keys=[event_id])
 
 class EventRole(db.Model):
 
