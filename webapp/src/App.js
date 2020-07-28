@@ -20,6 +20,7 @@ import history from "./History";
 import { organisationService } from "./services/organisation/organisation.service";
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
+import { userService } from "./services/user";
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
@@ -226,7 +227,18 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang);
+      this.props.i18n.changeLanguage(lang).then(()=>{
+        // We send a put request to the user service to update the language on the back-end. 
+        // Note the language is automatically sent with every request through axios
+        userService.get().then(result => {
+          userService.update({
+            email: result.email,
+            firstName: result.firstname,
+            lastName: result.lastName,
+            title: result.user_title
+          });
+        })
+      });
     }
   }
 
