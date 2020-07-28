@@ -1,6 +1,5 @@
 import React from 'react';
 import { shallow, mount } from 'enzyme';
-import AppicationForm from '../../../pages/applicationForm/components/ApplicationForm';
 import FormDate from '../FormDate'
 
 describe('FormDate Componenet Tests', () => {
@@ -9,15 +8,11 @@ describe('FormDate Componenet Tests', () => {
         expect(wrapper.length).toEqual(1);
     })
 
-    it('Check if AppicationFor renders', () => {
-        const wrapper = shallow(<AppicationForm.WrappedComponent />);
-        expect(wrapper.length).toEqual(1);
-    })
+    it('Check if FormDate renders error in IU', () => {
+        const wrapper = shallow(<FormDate />);
 
-     it('loads profile', async () => { 
-        const wrapper = mount(<AppicationForm.WrappedComponent />);
-        let result = await wrapper.instance().componentDidMount();
-        expect(result).toEqual("something_different");
+        wrapper.setProps({ id: "123", errorText: "There is an error" })
+        expect(wrapper.exists('.react-datetime-picker.error')).toEqual(true);
     })
 
 });
