@@ -4,6 +4,7 @@ import React from "react";
 import "./Style.css";
 import _ from "lodash";
 import FormSelect from "./FormSelect";
+import { withTranslation } from 'react-i18next';
 
 class FormSelectOther extends React.Component {
     constructor(props) {
@@ -21,7 +22,7 @@ class FormSelectOther extends React.Component {
         if (!options.some(o => o.value === "other")) {
             options.push({
                 'value': 'other',
-                'label': 'Other...'
+                'label': this.props.t("Other") + '...'
             });
         }
 
@@ -71,6 +72,7 @@ class FormSelectOther extends React.Component {
     }
 
     render() {
+        const t = this.props.t;
         return <div>
 
             <FormSelect
@@ -88,7 +90,7 @@ class FormSelectOther extends React.Component {
             />
             {this.state.showOther &&
                 <div class="form-group row">
-                    <label for="inputPassword" class="col-sm-2 col-form-label">Other - Please Specify:</label>
+                    <label for="inputPassword" class="col-sm-2 col-form-label">{t("Other - Please Specify")}:</label>
                     <div class="col-sm-10">
                         <input 
                             type="text" 
@@ -104,4 +106,4 @@ class FormSelectOther extends React.Component {
 
 }
 
-export default FormSelectOther;
+export default withTranslation()(FormSelectOther);
