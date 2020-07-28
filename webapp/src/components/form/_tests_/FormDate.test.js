@@ -9,19 +9,15 @@ describe('FormDate Componenet Tests', () => {
         expect(wrapper.length).toEqual(1);
     })
 
-    it('Check if FormDate renders', () => {
-        const wrapper = shallow(<AppicationForm />);
+    it('Check if AppicationFor renders', () => {
+        const wrapper = shallow(<AppicationForm.WrappedComponent />);
         expect(wrapper.length).toEqual(1);
     })
 
-    /*
-     it('loads profile', () => { 
-        const wrapper = mount(<AppicationForm />);
-        wrapper.setProps({ person: "something_different" });
-        expect(wrapper.props().person).toEqual("something_different");
+     it('loads profile', async () => { 
+        const wrapper = mount(<AppicationForm.WrappedComponent />);
+        let result = await wrapper.instance().componentDidMount();
+        expect(result).toEqual("something_different");
     })
-    */
-
-   
 
 });
