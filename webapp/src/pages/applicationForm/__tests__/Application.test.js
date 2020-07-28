@@ -1,7 +1,8 @@
 import React from 'react';
 import {shallow, mount} from 'enzyme';
 import Application from '../Application.js';
-import Section from '../components/ApplicationForm';
+import ApplicationForm from '../components/ApplicationForm';
+import FormDate from '../../../components/form/FormDate';
 
 test('Check if Application Form Page renders.', () => {
   // Render Application Form Page.
@@ -12,10 +13,18 @@ test('Check if Application Form Page renders.', () => {
 describe('Check if validate failure renders error in FormDate component UI', () => {
   it('FormDate error', () => {
 
-  const wrapper = shallow(<Section.WrappedComponent />);
+  const wrapper = shallow(<FormDate />);
 
-  let result = wrapper.instance().validate();
+  wrapper.setProps({ errorText: "error"})
 
-  expect(result).toEqual("error")
-  })
+  expect(wrapper.props().errorText).toEqual("error")
+});
+
 })
+
+/*
+  setImmediate(() => {
+    wrapper.update();
+    expect(wrapper.state().errorMessage).toEqual("error")
+});
+*/

@@ -255,7 +255,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   }
 }
 
-export class Section extends React.Component {
+  class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -268,6 +268,7 @@ export class Section extends React.Component {
 
     };
   }
+
 
   // onchange
   onChange = (question, value) => {
@@ -437,6 +438,7 @@ export class Section extends React.Component {
   }
 }
 
+
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
@@ -456,6 +458,7 @@ function AnswerValue(props) {
   }
   return "No answer provided.";
 }
+
 
 class Confirmation extends React.Component {
 
@@ -1054,4 +1057,4 @@ class ApplicationForm extends Component {
 
 }
 
-export default withRouter(ApplicationForm);
+ export default withRouter(ApplicationForm);
