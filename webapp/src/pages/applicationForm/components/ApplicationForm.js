@@ -209,7 +209,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             showError={validationError}
             errorText={validationError}
             required={question.is_required}
-            emptyField={this.props.emptyField}
           />
 
 
