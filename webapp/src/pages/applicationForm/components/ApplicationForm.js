@@ -269,7 +269,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   }
 
 
-  // onchange
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
