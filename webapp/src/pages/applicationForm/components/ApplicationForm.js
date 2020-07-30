@@ -5,7 +5,9 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
-import FormMarkDown from '../../../components/form/FormMarkDown';
+import MarkdownIt from 'markdown-it'
+import MdEditor from 'react-markdown-editor-lite'
+import 'react-markdown-editor-lite/lib/index.css';
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -54,11 +56,14 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
+const mdParser = new MarkdownIt();
+
 class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
     this.state = {
+      inputValue: "",
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
@@ -66,9 +71,11 @@ class FieldEditor extends React.Component {
     }
   }
 
+
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
+    console.log(value)
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -80,7 +87,29 @@ class FieldEditor extends React.Component {
     }
   };
 
+
+  handleEditorChange({ html, text }) {
+    this.setState({
+      inputValue: text
+    })
+    this.handleChange({ html, text })
+  }
+
+
+  onImageUpload(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = data => {
+
+        this.handleUploadFile(file)
+        resolve(data.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   handleUploadFile = (file) => {
+
     this.setState({
       uploading: true
     }, () => {
@@ -98,8 +127,12 @@ class FieldEditor extends React.Component {
           uploadError: response.error,
           uploading: false
         });
+
+         let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
+         return fileUrl
       })
     })
+
   }
 
   formControl = (key, question, answer, validationError, responseId) => {
@@ -209,10 +242,22 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
-        case MARK_DOWN:
-          return (
-            <FormMarkDown />
-          );
+      case MARK_DOWN:
+        return (
+          <div className={validationError ? "rc-md-editor-wrapper error" : "rc-md-editor-wrapper"}>
+            <MdEditor
+              value={this.state.inputValue}
+              style={{ height: "300px" }}
+              renderHTML={(text) => mdParser.render(text)}
+              onChange={(e) => this.handleEditorChange(e)}
+              onImageUpload={(e) => this.onImageUpload(e)}
+              config={{
+                imageAccept: ['.png', '.jpg', '.gif']
+              }}
+            />
+          </div>
+
+        );
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
@@ -713,6 +758,7 @@ class ApplicationFormInstance extends Component {
           applicationFormService
             .submit(this.props.formSpec.id, false, this.state.answers)
             .then(resp => {
+
               let submitError = resp.response_id === null;
               this.setState({
                 isError: submitError,
@@ -940,12 +986,12 @@ class ApplicationList extends Component {
         </thead>
         <tbody>
           {this.props.responses.map(response => {
-          return <tr key={"response_" + response.id}>
-            <td>{this.getCandidate(allQuestions, response)}</td>
-            <td>{this.getStatus(response)}</td>
-            <td>{this.getAction(response)}</td>
-          </tr>
-        })}
+            return <tr key={"response_" + response.id}>
+              <td>{this.getCandidate(allQuestions, response)}</td>
+              <td>{this.getStatus(response)}</td>
+              <td>{this.getAction(response)}</td>
+            </tr>
+          })}
         </tbody>
       </table>
     </div>
