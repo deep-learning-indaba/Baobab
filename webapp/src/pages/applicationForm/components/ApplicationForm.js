@@ -55,224 +55,225 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
 }
 
 
-class FieldEditor extends React.Component {
-    constructor(props) {
-      super(props);
-      this.id = "question_" + props.question.id;
-      this.state = {
-        uploading: false,
-        uploadPercentComplete: 0,
-        uploadError: "",
-        uploaded: false
-      }
-    }
-  
-  
-    handleChange = event => {
-      // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
-      const value = event && event.target ? event.target.value : event;
-      if (this.props.onChange) {
-        this.props.onChange(this.props.question, value);
-      }
-    };
-  
-    handleChangeDropdown = (name, dropdown) => {
-      if (this.props.onChange) {
-        this.props.onChange(this.props.question, dropdown.value);
-      }
-    };
-  
-  
-    handleEditorChange({ html, text }) {
-      this.setState({
-        inputValue: text
-      })
-      this.handleChange({ html, text })
-    }
-  
-  
-    handleUploadFile = (file) => {
-      this.setState({
-        uploading: true
-      }, () => {
-        fileService.uploadFile(file, progressEvent => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          this.setState({
-            uploadPercentComplete: percentCompleted
-          });
-        }).then(response => {
-          if (response.fileId && this.props.onChange) {
-            this.props.onChange(this.props.question, response.fileId);
-          }
-          this.setState({
-            uploaded: response.fileId !== "",
-            uploadError: response.error,
-            uploading: false
-          });
-  
-          let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
-          return fileUrl
-        })
-      })
-    }
-  
-    formControl = (key, question, answer, validationError, responseId) => {
-      switch (question.type) {
-        case SHORT_TEXT:
-          return (
-            <FormTextBox
-              id={this.id}
-              name={this.id}
-              type="text"
-              label={question.description}
-              placeholder={question.placeholder}
-              onChange={this.handleChange}
-              value={answer}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-            />
-          );
-        case SINGLE_CHOICE:
-          return (
-            <FormTextBox
-              id={this.id}
-              name={this.id}
-              type="checkbox"
-              label={question.description}
-              placeholder={question.placeholder}
-              onChange={this.handleChange}
-              value={answer}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-            />
-          );
-        case LONG_TEXT[0]:
-        case LONG_TEXT[1]:
-          return (
-            <FormTextArea
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              placeholder={question.placeholder}
-              onChange={this.handleChange}
-              value={answer}
-              rows={5}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-            />
-          );
-        case MULTI_CHOICE:
-          return (
-            <FormSelect
-              options={question.options}
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              placeholder={question.placeholder}
-              onChange={this.handleChangeDropdown}
-              defaultValue={answer || null}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-            />
-          );
-        case MULTI_CHECKBOX:
-          return (
-            <FormMultiCheckbox
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              placeholder={question.placeholder}
-              options={question.options}
-              defaultValue={answer || null}
-              onChange={this.handleChange}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError} />
-          )
-        case FILE:
-          return (
-            <FormFileUpload
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              key={"i_" + key}
-              value={answer}
-              showError={validationError || this.state.uploadError}
-              errorText={validationError || this.state.uploadError}
-              uploading={this.state.uploading}
-              uploadPercentComplete={this.state.uploadPercentComplete}
-              uploadFile={this.handleUploadFile}
-              uploaded={this.state.uploaded}
-            />
-          );
-        case DATE:
-          return (
-            <FormDate
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              value={answer}
-              placeholder={question.placeholder}
-              onChange={this.handleChange}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-              required={question.is_required} />
-          );
-        case MARK_DOWN:
-          return (
-            <div className={validationError ? "rc-md-editor-wrapper error" : "rc-md-editor-wrapper"}>
-              <MarkDownForm
-                onChange={(e) => this.handleChange(e)}
-                onImageUpload={(e) => this.handleUploadFile(e)}
-              />
-            </div>
-  
-          );
-        case REFERENCE_REQUEST:
-          return (
-            <FormReferenceRequest
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              value={answer}
-              placeholder={question.placeholder}
-              onChange={this.handleChange}
-              key={"i_" + key}
-              showError={validationError}
-              errorText={validationError}
-              required={question.is_required}
-              options={question.options}
-              responseId={responseId} />
-          )
-        default:
-          return (
-            <p className="text-danger">
-              WARNING: No control found for type {question.type}!
-            </p>
-          );
-      }
-    };
-  
-    render() {
-      return (
-        <div className={"question"}>
-          <h4>{this.props.question.headline}</h4>
-          {this.formControl(
-            this.props.key,
-            this.props.question,
-            this.props.answer ? this.props.answer.value : null,
-            this.props.validationError,
-            this.props.responseId
-          )}
-        </div>
-      );
-    }
+class FieldEditor extends React.Component {
+  constructor(props) {
+    super(props);
+    this.id = "question_" + props.question.id;
+    this.state = {
+      inputValue: "",
+      uploading: false,
+      uploadPercentComplete: 0,
+      uploadError: "",
+      uploaded: false
+    }
   }
+
+
+  handleChange = event => {
+    // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
+    const value = event && event.target ? event.target.value : event;
+    if (this.props.onChange) {
+      this.props.onChange(this.props.question, value);
+    }
+  };
+
+  handleChangeDropdown = (name, dropdown) => {
+    if (this.props.onChange) {
+      this.props.onChange(this.props.question, dropdown.value);
+    }
+  };
+
+
+  handleEditorChange({ html, text }) {
+    this.setState({
+      inputValue: text
+    })
+    this.handleChange({ html, text })
+  }
+
+
+  handleUploadFile = (file) => {
+    this.setState({
+      uploading: true
+    }, () => {
+      fileService.uploadFile(file, progressEvent => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        this.setState({
+          uploadPercentComplete: percentCompleted
+        });
+      }).then(response => {
+        if (response.fileId && this.props.onChange) {
+          this.props.onChange(this.props.question, response.fileId);
+        }
+        this.setState({
+          uploaded: response.fileId !== "",
+          uploadError: response.error,
+          uploading: false
+        });
+
+        let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
+        return fileUrl
+      })
+    })
+  }
+
+  formControl = (key, question, answer, validationError, responseId) => {
+    switch (question.type) {
+      case SHORT_TEXT:
+        return (
+          <FormTextBox
+            id={this.id}
+            name={this.id}
+            type="text"
+            label={question.description}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            value={answer}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+          />
+        );
+      case SINGLE_CHOICE:
+        return (
+          <FormTextBox
+            id={this.id}
+            name={this.id}
+            type="checkbox"
+            label={question.description}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            value={answer}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+          />
+        );
+      case LONG_TEXT[0]:
+      case LONG_TEXT[1]:
+        return (
+          <FormTextArea
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            value={answer}
+            rows={5}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+          />
+        );
+      case MULTI_CHOICE:
+        return (
+          <FormSelect
+            options={question.options}
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            onChange={this.handleChangeDropdown}
+            defaultValue={answer || null}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+          />
+        );
+      case MULTI_CHECKBOX:
+        return (
+          <FormMultiCheckbox
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            options={question.options}
+            defaultValue={answer || null}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError} />
+        )
+      case FILE:
+        return (
+          <FormFileUpload
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            key={"i_" + key}
+            value={answer}
+            showError={validationError || this.state.uploadError}
+            errorText={validationError || this.state.uploadError}
+            uploading={this.state.uploading}
+            uploadPercentComplete={this.state.uploadPercentComplete}
+            uploadFile={this.handleUploadFile}
+            uploaded={this.state.uploaded}
+          />
+        );
+      case DATE:
+        return (
+          <FormDate
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required} />
+        );
+      case MARK_DOWN:
+        return (
+          <div className={validationError ? "rc-md-editor-wrapper error" : "rc-md-editor-wrapper"}>
+            <MarkDownForm
+              onChange={(e) => this.handleChange(e)}
+              onImageUpload={(e) => this.handleUploadFile(e)}
+            />
+          </div>
+
+        );
+      case REFERENCE_REQUEST:
+        return (
+          <FormReferenceRequest
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}
+            required={question.is_required}
+            options={question.options}
+            responseId={responseId} />
+        )
+      default:
+        return (
+          <p className="text-danger">
+            WARNING: No control found for type {question.type}!
+          </p>
+        );
+    }
+  };
+
+  render() {
+    return (
+      <div className={"question"}>
+        <h4>{this.props.question.headline}</h4>
+        {this.formControl(
+          this.props.key,
+          this.props.question,
+          this.props.answer ? this.props.answer.value : null,
+          this.props.validationError,
+          this.props.responseId
+        )}
+      </div>
+    );
+  }
+}
 
 class Section extends React.Component {
   constructor(props) {
