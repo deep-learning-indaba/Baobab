@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import FormMarkDown from '../../../components/form/FormMarkDown';
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -25,6 +26,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const MARK_DOWN = "markdown";
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -207,6 +209,10 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
+        case MARK_DOWN:
+          return (
+            <FormMarkDown />
+          );
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest

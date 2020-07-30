@@ -6,3 +6,10 @@
 .fa-question-circle {
   padding-left: 15px;
 }
+
+/* FormMarkDown Component */
+.formmarkdown-main-wrapper {
+border: 1px solid hsl(0, 0%, 61%);
+width: 60%;
+min-height: 400px;
+}
