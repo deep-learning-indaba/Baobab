@@ -342,4 +342,4 @@ class EventStatus extends Component {
   }
 }
 
-export default withRouter(EventStatus);
+export default withRouter(withTranslation()(EventStatus));
