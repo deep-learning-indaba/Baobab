@@ -155,6 +155,12 @@
     "Residential Postal Code": "Residential Postal Code",
     "Residential Country": "Residential Country",
     "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy": "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy",
-    "Addressed to ": "Addressed to "
+    "Addressed to ": "Addressed to ",
+    "Passwords do not match": "Passwords do not match",
+    "Sign Up": "Sign Up",
+    "Your": "Your",
+    "account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.": "account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.",
+    "if you already have an account": "if you already have an account",
+    
 
 }
