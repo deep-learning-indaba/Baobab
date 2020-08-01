@@ -120,7 +120,19 @@
     "Your Nominations": "Your Nominations",
     "Nominee": "Nominee",
     "Status": "Status",
-    "New Nomination": "New Nomination"
-
+    "New Nomination": "New Nomination",
+    "Title": "Title",
+    "Firstname": "Firstname",
+    "Lastname": "Lastname",
+    "Email": "Email",
+    "Relation": "Relation",
+    "Reference has been received.": "Reference has been received.",
+    "Email has been sent": "Email has been sent",
+    "ERROR": "ERROR",
+    "Add": "Add",
+    "Request References": "Request References",
+    "You must successfully request": "You must successfully request",
+    "references before continuing": "references before continuing",
+    
 
 }

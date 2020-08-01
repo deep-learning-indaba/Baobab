@@ -3,8 +3,9 @@ import FormToolTip from "../../../components/form/FormToolTip";
 import { referenceService } from "../../../services/references/reference.service";
 import _ from "lodash";
 import ReactToolTip from "react-tooltip";
+import { withTranslation } from 'react-i18next';
 
-class ReferenceRequestRow extends React.Component {
+class ReferenceRequestRowComponent extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -25,6 +26,7 @@ class ReferenceRequestRow extends React.Component {
     }
 
     render() {
+        const t = this.props.t;
         return (
             <div>
                 <div className="row no-gutters reference-row">
@@ -34,7 +36,7 @@ class ReferenceRequestRow extends React.Component {
                             name="title"
                             className="form-control"
                             type="text"
-                            placeholder="Title"
+                            placeholder={t("Title")}
                             value={this.props.referenceRequest.title}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -47,7 +49,7 @@ class ReferenceRequestRow extends React.Component {
                             name="firstname"
                             className="form-control"
                             type="text"
-                            placeholder="Firstname"
+                            placeholder={t("Firstname")}
                             value={this.props.referenceRequest.firstname}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -60,7 +62,7 @@ class ReferenceRequestRow extends React.Component {
                             name="lastname"
                             className="form-control"
                             type="text"
-                            placeholder="Lastname"
+                            placeholder={t("Lastname")}
                             value={this.props.referenceRequest.lastname}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -73,7 +75,7 @@ class ReferenceRequestRow extends React.Component {
                             name="email"
                             className="form-control"
                             type="text"
-                            placeholder="Email"
+                            placeholder={t("Email")}
                             value={this.props.referenceRequest.email}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -86,7 +88,7 @@ class ReferenceRequestRow extends React.Component {
                             name="relation"
                             className="form-control"
                             type="text"
-                            placeholder="Relation"
+                            placeholder={t("Relation")}
                             value={this.props.referenceRequest.relation}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -102,8 +104,8 @@ class ReferenceRequestRow extends React.Component {
 
                         {this.props.referenceRequest.emailSent &&
                             (this.props.referenceRequest.referenceSubmitted
-                                ? <div><i className="fas fa-check-double text-success" data-tip="Reference has been received."></i><ReactToolTip type="info" place="right" effect="solid" /></div>
-                                : <div><i className="fas fa-check" data-tip="Email has been sent"></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
+                                ? <div><i className="fas fa-check-double text-success" data-tip={t("Reference has been received.")}></i><ReactToolTip type="info" place="right" effect="solid" /></div>
+                                : <div><i className="fas fa-check" data-tip={t("Email has been sent")}></i><ReactToolTip type="info" place="right" effect="solid" /></div>)
                         }
 
                         {(!this.props.referenceRequest.emailSent) && this.props.minReferences && this.props.referenceNumber > this.props.minReferences
@@ -113,12 +115,16 @@ class ReferenceRequestRow extends React.Component {
                     </div>
                 </div>
                 {this.props.referenceRequest.error && <div class="row no-gutters">
-                    <span className="text-danger">ERROR: {JSON.stringify(this.props.referenceRequest.error)}</span>
+                    <span className="text-danger">{t("ERROR")}: {JSON.stringify(this.props.referenceRequest.error)}</span>
                 </div>}
             </div>
         )
     }
 }
+
+
+const ReferenceRequestRow = withTranslation()(ReferenceRequestRowComponent);
+
 
 class FormReferenceRequest extends React.Component {
     constructor(props) {
@@ -330,20 +336,20 @@ class FormReferenceRequest extends React.Component {
                     />)
                 }</div>
                 {this.props.options && this.props.options.max_num_referrals && this.props.options.max_num_referrals > this.state.referenceRequests.length &&
-                    <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> Add</span></button>
+                    <button className="link-style text-success float-right add-button" onClick={this.addRow}><i class="fas fa-plus-circle"></i><span> {this.props.t("Add")}</span></button>
                 }
-                <button className="btn btn-primary btn-sm" onClick={this.submit} disabled={!this.valid()}>Request References</button>
-                {this.state.error && <div className="text-danger">ERROR: {JSON.stringify(this.state.error)}</div>}
+                <button className="btn btn-primary btn-sm" onClick={this.submit} disabled={!this.valid()}>{this.props.t("Request References")}</button>
+                {this.state.error && <div className="text-danger">{this.props.t("ERROR")}: {JSON.stringify(this.state.error)}</div>}
                 {this.state.loading && <div class="spinner-border" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
                 }
                 {this.shouldDisplayError() && <div className="text-danger">
-                    {this.props.errorText.replace("An answer is required.", `You must successfully request ${this.props.options.min_num_referrals} references before continuing`)}
+                    {this.props.errorText.replace(this.props.t("An answer is required."), this.props.t("You must successfully request") + ` ${this.props.options.min_num_referrals} ` + this.props.t("references before continuing"))}
                 </div>}
             </div>
         )
     }
 }
 
-export default FormReferenceRequest;
+export default withTranslation()(FormReferenceRequest);
