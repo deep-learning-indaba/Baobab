@@ -84,14 +84,6 @@ class FieldEditor extends React.Component {
   };
 
 
-  handleEditorChange({ html, text }) {
-    this.setState({
-      inputValue: text
-    })
-    this.handleChange({ html, text })
-  }
-
-
   handleUploadFile = (file) => {
     this.setState({
       uploading: true
@@ -226,13 +218,15 @@ class FieldEditor extends React.Component {
         );
       case MARK_DOWN:
         return (
-          <div className={validationError ? "rc-md-editor-wrapper error" : "rc-md-editor-wrapper"}>
-            <MarkDownForm
-              onChange={(e) => this.handleChange(e)}
-              onImageUpload={(e) => this.handleUploadFile(e)}
-            />
+          <div className="mark-down-form-wrapper">
+            <div id="md-editor" className={validationError && !answer ? "select-control is-invalid" : "md-editor select-control"}>
+              <MarkDownForm
+                onChange={(e) => this.handleChange(e)}
+                onImageUpload={(e) => this.handleUploadFile(e)}
+              />
+            </div>
+            <div className="invalid-feedback">An anwserer is required</div>
           </div>
-
         );
       case REFERENCE_REQUEST:
         return (
@@ -289,6 +283,7 @@ class Section extends React.Component {
   }
 
   onChange = (question, value) => {
+
     const newAnswer = {
       question_id: question.id,
       value: value
@@ -299,10 +294,11 @@ class Section extends React.Component {
         if (q.question.id !== question.id) {
           return q;
         }
+
         return {
           ...q,
           validationError: this.state.hasValidated
-            ? this.validate(q, newAnswer)
+            ? this.validate(q, newAnswer) 
             : "",
           answer: newAnswer
         };
@@ -322,9 +318,10 @@ class Section extends React.Component {
   };
 
   validate = (questionModel, updatedAnswer) => {
+
     let errors = [];
     const question = questionModel.question;
-    const answer = updatedAnswer || questionModel.answer;
+    const answer = updatedAnswer || questionModel.answer ;
 
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");

@@ -30,12 +30,11 @@ class MarkDownEditor extends React.Component {
     return new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = data => {
-          console.log(data.target.result.text)
         this.props.onImageUpload(file)
         resolve(data.target.result);
       };
       reader.readAsDataURL(file);
-    });
+    })
   }
 
 
@@ -43,7 +42,7 @@ class MarkDownEditor extends React.Component {
     return (
         <MdEditor
           value={this.state.inputValue}
-          style={{ height: "200px" }}
+          style={{ height: "300px" }}
           renderHTML={(text) => mdParser.render(text)}
           onChange={(e) => this.handleEditorChange(e)}
           onImageUpload={(e) => this.onImageUpload(e)}
