@@ -14,6 +14,7 @@ import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
+import { withTranslation } from 'react-i18next';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -248,7 +249,7 @@ class FieldEditor extends React.Component {
   }
 }
 
-class Section extends React.Component {
+class SectionComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -410,6 +411,8 @@ class Section extends React.Component {
   }
 }
 
+const Section = withTranslation()(SectionComponent);
+
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
@@ -422,7 +425,7 @@ function AnswerValue(props) {
           return props.qm.answer.value;
         }
       case FILE:
-        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{this.props.t("Uploaded File")}</a>
+        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
       default:
         return props.qm.answer.value;
     }
@@ -430,7 +433,7 @@ function AnswerValue(props) {
   return this.props.t("No answer provided.");
 }
 
-class Confirmation extends React.Component {
+class ConfirmationComponent extends React.Component {
 
   render() {
     const t = this.props.t;
@@ -471,7 +474,7 @@ class Confirmation extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm} /></p>
+                      <p><AnswerValue qm={qm} t={t} /></p>
                     </div>
                   </div>
                 </div>
@@ -490,7 +493,11 @@ class Confirmation extends React.Component {
   }
 }
 
-class Submitted extends React.Component {
+
+const Confirmation = withTranslation()(ConfirmationComponent);
+
+
+class SubmittedComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -605,7 +612,10 @@ class Submitted extends React.Component {
   }
 }
 
-class ApplicationFormInstance extends Component {
+const Submitted = withTranslation()(SubmittedComponent);
+
+
+class ApplicationFormInstanceComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -882,6 +892,10 @@ class ApplicationFormInstance extends Component {
   }
 }
 
+
+const ApplicationFormInstance = withTranslation()(ApplicationFormInstanceComponent);
+
+
 class ApplicationList extends Component {
   constructor(props) {
     super(props);
@@ -1017,4 +1031,4 @@ class ApplicationForm extends Component {
 
 }
 
-export default withRouter(ApplicationForm);
+export default withRouter(withTranslation()(ApplicationForm));
