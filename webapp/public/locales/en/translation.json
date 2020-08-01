@@ -161,6 +161,9 @@
     "Your": "Your",
     "account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.": "account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.",
     "if you already have an account": "if you already have an account",
-    
+    "I am over 18": "I am over 18",
+    "I have read and agree to the ": "I have read and agree to the ",
+    "Create Guest": "Create Guest",
+    "An account with this email address already exists": "An account with this email address already exists"
 
 }
