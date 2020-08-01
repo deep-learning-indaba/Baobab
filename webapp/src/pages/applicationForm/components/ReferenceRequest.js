@@ -49,7 +49,7 @@ class ReferenceRequestRowComponent extends React.Component {
                             name="firstname"
                             className="form-control"
                             type="text"
-                            placeholder={t("Firstname")}
+                            placeholder={t("First Name")}
                             value={this.props.referenceRequest.firstname}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}
@@ -62,7 +62,7 @@ class ReferenceRequestRowComponent extends React.Component {
                             name="lastname"
                             className="form-control"
                             type="text"
-                            placeholder={t("Lastname")}
+                            placeholder={t("Last Name")}
                             value={this.props.referenceRequest.lastname}
                             onChange={this.onChange}
                             required={!this.props.referenceRequest.emailSent}

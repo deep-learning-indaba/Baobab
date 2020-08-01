@@ -133,6 +133,31 @@
     "Request References": "Request References",
     "You must successfully request": "You must successfully request",
     "references before continuing": "references before continuing",
-    
+    "Email Address": "Email Address",
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Country of Nationality": "Country of Nationality",
+    "Country of Residence": "Country of Residence",
+    "Password": "Password",
+    "Confirm Password": "Confirm Password",
+    "Date of Birth": "Date of Birth",
+    "Role": "Role",
+    "Passport Number": "Passport Number",
+    "Full Name as it appears on Passport.": "Full Name as it appears on Passport.",
+    "Full Name": "Full Name",
+    "Passport Date of Expiry.": "Passport Date of Expiry.",
+    "Authority that issued Passport": "Authority that issued Passport",
+    "Work Street Address 1": "Work Street Address 1",
+    "Work Street Address 2": "Work Street Address 2",
+    "Work City": "Work City",
+    "Work Postal Code": "Work Postal Code",
+    "Work Country": "Work Country",
+    "Residential Street Address 1": "Residential Street Address 1",
+    "Residential Street Address 2": "Residential Street Address 2",
+    "Residential Postal Code": "Residential Postal Code",
+    "Residential Country": "Residential Country",
+    "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy": "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy",
+    "Addressed to ": "Addressed to "
+
 
 }
