@@ -269,7 +269,9 @@
     "Total Unallocated Reviews:": "Total Unallocated Reviews:",
     "Add new reviewer's email (they must already have an account)": "Add new reviewer's email (they must already have an account)",
     "Review email": "Review email",
-    "Submitted Timestamp": "Submitted Timestamp"
+    "Submitted Timestamp": "Submitted Timestamp",
+    "Verify Email Address": "Verify Email Address",
+    "verified": "Your email address has been verified. <1>Click here</1> to login if you are not automatically redirected."
     
 
 

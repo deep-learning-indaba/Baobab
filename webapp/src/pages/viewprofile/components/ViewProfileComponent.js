@@ -4,6 +4,7 @@ import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import { Trans, withTranslation } from 'react-i18next'
 
 class ViewProfileComponent extends Component {
   constructor(props) {
