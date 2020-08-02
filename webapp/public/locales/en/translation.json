@@ -164,6 +164,27 @@
     "I am over 18": "I am over 18",
     "I have read and agree to the ": "I have read and agree to the ",
     "Create Guest": "Create Guest",
-    "An account with this email address already exists": "An account with this email address already exists"
+    "An account with this email address already exists": "An account with this email address already exists",
+    "Organisation": "Organisation",
+    "Event Name": "Event Name",
+    "Description": "Description",
+    "Key": "Key",
+    "Email From": "Email From",
+    "URL": "URL",
+    "Start Date": "Start Date",
+    "End Date": "End Date",
+    "Application Open": "Application Open",
+    "Application Close": "Application Close",
+    "Review Open": "Review Open",
+    "Review Close": "Review Close",
+    "Selection Open": "Selection Open",
+    "Selection Close": "Selection Close",
+    "Offer Open": "Offer Open",
+    "Offer Close": "Offer Close",
+    "Registration Open": "Registration Open",
+    "Registration Close": "Registration Close",
+    "Cancel": "Cancel",
+    "Update Event": "Update Event"
+
 
 }

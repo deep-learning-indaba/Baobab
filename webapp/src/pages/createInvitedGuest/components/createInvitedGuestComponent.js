@@ -235,4 +235,4 @@ class CreateInvitedGuestComponent extends Component {
   }
 }
 
-export default withRouter(withTranslation()(creatreInvitedGuestComponent));
+export default withRouter(withTranslation()(CreateInvitedGuestComponent));
