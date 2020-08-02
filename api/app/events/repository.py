@@ -26,13 +26,6 @@ class EventRepository():
                          .first()
 
     @staticmethod
-    def get_by_id_with_organisation(event_id):
-        return db.session.query(Event, Organisation)\
-                         .filter_by(id=event_id)\
-                         .join(Organisation, Organisation.id == Event.organisation_id)\
-                         .one_or_none()
-
-    @staticmethod
     def get_event_by_response_id(response_id):
         result = db.session.query(Response.application_form_id, ApplicationForm.event_id, Event)\
                          .filter_by(id=response_id)\

@@ -364,7 +364,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
     @event_admin_required
     def get(self, event_id):
-        event = event_repository.get_by_id_with_organisation(event_id)
+        event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
 
