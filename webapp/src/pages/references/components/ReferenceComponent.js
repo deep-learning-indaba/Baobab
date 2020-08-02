@@ -3,6 +3,7 @@ import { withRouter } from "react-router";
 import { referenceService } from "../../../services/references";
 import Loading from "../../../components/Loading";
 import FileUploadComponent from "../../../components/FileUpload";
+import { Trans, useTranslation } from 'react-i18next'
 
 class ReferenceComponent extends Component {
     constructor(props) {
@@ -38,7 +39,7 @@ class ReferenceComponent extends Component {
         }
         else {
             this.setState({
-                error: "No token specified.",
+                error: this.props.t("No token specified."),
                 isLoading: false
             });
         }
@@ -77,31 +78,36 @@ class ReferenceComponent extends Component {
             );
         }
 
+        const candidateName = requestDetails.candidate;
+
         if (!requestDetails.is_application_open) {
+            const eventName = requestDetails.name;
             return (
                 <div className={"alert alert-danger alert-container"}>
-                    Unfortunately applications for {requestDetails.name} are now closed. If you still need to submit a reference for {requestDetails.candidate}, please <a href={`mailto:${requestDetails.email_from}`}>contact the event organisers</a>.
+                    <Trans i18nKey="referencesClosed">Unfortunately applications for {{eventName}} are now closed. If you still need to submit a reference for {{candidateName}}, please <a href={`mailto:${requestDetails.email_from}`}>contact the organisers</a></Trans>.
                 </div>
             );
         }
 
         const nominationText = requestDetails.nominator
-            ? `has been nominated by ${requestDetails.nominator}`
-            : "has nominated themself"
+            ? t("has been nominated by") + ` ${requestDetails.nominator}`
+            : t("has nominated themselves")
 
+        const submittedTimestamp = requestDetails.reference_submitted_timestamp;
+        
         return (
             <div>
-                <h1>Reference</h1>
+                <h1>{t("Reference")}</h1>
 
-                {requestDetails.reference_submitted_timestamp
+                {submittedTimestamp
                     && <div className="alert alert-success alert-container">
-                        Thank you! You submitted your reference on {requestDetails.reference_submitted_timestamp}. You may update it below if you like.
+                        <Trans>Thank you! You submitted your reference on {{submittedTimestamp}}. You may update it below if you like.</Trans>
                     </div>
                 }
 
-                <p>{requestDetails.candidate} {nominationText} for the {requestDetails.description}. Kindly upload your reference in support of their application in the form of a PDF (max 10Mb) below.</p>
+                <p>{candidateName} {nominationText} {t("for")} {requestDetails.description}. {t("Kindly upload your reference in support of their application in the form of a PDF (max 10Mb) below.")}</p>
                 <div className="card stretched">
-                    <h5>Upload Reference (PDF, 10Mb max)</h5>
+                    <h5>{t("Upload Reference (PDF, 10Mb max)")}</h5>
                     <FileUploadComponent
                         id="file"
                         value={uploadedDocument}
@@ -111,7 +117,7 @@ class ReferenceComponent extends Component {
 
                 {success &&
                     <div className={"alert alert-success alert-container"}>
-                        Thank you! Your reference has been received and will be reviewed by our selection committee.
+                        {t("Thank you! Your reference has been received and will be reviewed by our selection committee.")}
                     </div>
                 }
 
@@ -127,7 +133,7 @@ class ReferenceComponent extends Component {
                             role="status"
                             aria-hidden="true" />
                     )}
-                    Submit reference
+                    {t("Submit reference")}
                     </button>
             </div>
         );
@@ -135,4 +141,4 @@ class ReferenceComponent extends Component {
     }
 }
 
-export default withRouter(ReferenceComponent); 
+export default withRouter(withTranslation()(ReferenceComponent)); 

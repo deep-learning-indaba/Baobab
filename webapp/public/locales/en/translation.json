@@ -233,7 +233,18 @@
     "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.": "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.",
     "Type": "Type",
     "There are currently no user profiles to display!": "There are currently no user profiles to display!",
-    "Total Profiles": "Total Profiles"
+    "Total Profiles": "Total Profiles",
+    "No token specified.": "No token specified.",
+    "referencesClosed": "Unfortunately applications for {{eventName}} are now closed. If you still need to submit a reference for {candidateName}, please <5>contact the organisers</5>",
+    "has been nominated by": "has been nominated by",
+    "has nominated themselves": "has nominated themselves",
+    "Reference": "Reference",
+    "Thank you! You submitted your reference on {{submittedTimestamp}}. You may update it below if you like.": "Thank you! You submitted your reference on {{submittedTimestamp}}. You may update it below if you like.",
+    "for": "for",
+    "Kindly upload your reference in support of their application in the form of a PDF (max 10Mb) below.": "Kindly upload your reference in support of their application in the form of a PDF (max 10Mb) below.",
+    "Upload Reference (PDF, 10Mb max)": "Upload Reference (PDF, 10Mb max)",
+    "Thank you! Your reference has been received and will be reviewed by our selection committee.": "Thank you! Your reference has been received and will be reviewed by our selection committee.",
+    "Submit reference": "Submit reference"
 
 
 
