@@ -8,6 +8,7 @@ import "react-table/react-table.css";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import ReactTable from 'react-table';
+import { withTranslation } from 'react-i18next';
 
 import {
   requiredText,
@@ -192,7 +193,7 @@ class InvitedGuests extends Component {
 
   getSearchRoles(roles) {
     let temp = roles.slice();
-    let role = { value: "all", label: "All" };
+    let role = { value: "all", label: this.props.t("All") };
     temp.push(role);
     return temp;
   }
@@ -203,7 +204,7 @@ class InvitedGuests extends Component {
         addedSucess: true,
         conflict: false,
         notFound: false,
-        successMessage: "Added " + response.response.data.fullname + " to the guest list",
+        successMessage: this.props.t("Added") + " " + response.response.data.fullname + " " + this.props.t("to the guest list"),
         user: {},
         showErrors: false,
         adding: false
@@ -289,7 +290,7 @@ class InvitedGuests extends Component {
 
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
-
+    const t = this.props.t;
     const { loading, error } = this.state;
     const roleOptions = invitedGuestServices.getRoles()
     const searchRoleOptions = this.getSearchRoles(roleOptions);
@@ -306,7 +307,7 @@ class InvitedGuests extends Component {
 
     const columns = [{
       id: "user",
-      Header: <div className="invitedguest-fullname">Full-Name</div>,
+      Header: <div className="invitedguest-fullname">{t("Full Name")}</div>,
       accessor: u =>
         <div className="invitedguest-fullname">
           {u.user.user_title + " " + u.user.firstname + " " + u.user.lastname}
@@ -314,11 +315,11 @@ class InvitedGuests extends Component {
       minWidth: 150
     }, {
       id: "email",
-      Header: <div className="invitedguest-email">Email</div>,
+      Header: <div className="invitedguest-email">{t("Email")}</div>,
       accessor: u => u.user.email
     }, {
       id: "role",
-      Header: <div className="invitedguest-role">Role</div>,
+      Header: <div className="invitedguest-role">{t("Role")}</div>,
       accessor: u => u.role
     }];
 
@@ -330,7 +331,7 @@ class InvitedGuests extends Component {
           </div>}
 
         <div class="card no-padding-h">
-          <p className="h5 text-center mb-4">Invited Guests</p>
+          <p className="h5 text-center mb-4">{t("Invited Guests")}</p>
 
           <div className="row">
             <div className={threeColClassName}>
@@ -339,7 +340,7 @@ class InvitedGuests extends Component {
                 type="text"
                 placeholder="Search"
                 onChange={this.filterByName}
-                label="Filter by name"
+                label={t("Filter by name")}
                 name=""
                 value={this.state.searchTerm} />
             </div>
@@ -350,7 +351,7 @@ class InvitedGuests extends Component {
                 id="RoleFilter"
                 placeholder="search"
                 onChange={this.filterByRole}
-                label="Filter by role"
+                label={t("Filter by role")}
                 defaultValue={this.state.roleSearch || "all"} />
             </div>
           </div>
@@ -365,7 +366,7 @@ class InvitedGuests extends Component {
 
           {(!this.state.guestList || this.state.guestList.length === 0) &&
             <div class="alert alert-danger alert-container">
-              No invited guests
+              {t("No invited guests")}
               </div>
           }
 
@@ -373,7 +374,7 @@ class InvitedGuests extends Component {
             <button
               className="pull-right link-style"
               onClick={() => this.downloadCsv()}>
-              Download csv
+              {t("Download csv")}
               </button>
           </div>
         </div>
@@ -386,22 +387,22 @@ class InvitedGuests extends Component {
 
         {this.state.addedSucess === false && this.state.conflict && (
           <div class="card flat-card conflict">
-            Invited guest with this email already exists.
+            {t("Invited guest with this email already exists.")}
           </div>
         )}
 
         <form>
           <div class="card">
-            <p className="h5 text-center mb-4">Add Guest</p>
+            <p className="h5 text-center mb-4">{t("Add Guest")}</p>
 
             <div class="row">
               <div class={threeColClassName}>
                 <FormTextBox
                   id={validationFields.email.name}
                   type="email"
-                  placeholder={validationFields.email.display}
+                  placeholder={t(validationFields.email.display)}
                   onChange={this.handleChange(validationFields.email)}
-                  label={validationFields.email.display}
+                  label={t(validationFields.email.display)}
                   showError={this.getError(validationFields.email.name)}
                   errorText={this.getError(validationFields.email.name)}
                   value={this.state.user[validationFields.email.name] || ""} />
@@ -411,9 +412,9 @@ class InvitedGuests extends Component {
                 <FormSelect
                   options={roleOptions}
                   id={validationFields.role.name}
-                  placeholder={validationFields.role.display}
+                  placeholder={t(validationFields.role.display)}
                   onChange={this.handleChangeDropdown}
-                  label={validationFields.role.display}
+                  label={t(validationFields.role.display)}
                   showError={this.getError(validationFields.role.name)}
                   errorText={this.getError(validationFields.role.name)}
                   defaultValue={this.state.user[validationFields.role.name] || ""}
@@ -433,12 +434,12 @@ class InvitedGuests extends Component {
                         role="status"
                         aria-hidden="true" />
                     )}
-                    Add
+                    {t("Add")}
                   </button>}
 
                 {!this.state.addedSucess && this.state.notFound &&
                   <span className="text-warning not-found">
-                    User does not exist, please add these details:
+                    {t("User does not exist, please add these details")}:
                   </span>}
               </div>
             </div>
@@ -450,9 +451,9 @@ class InvitedGuests extends Component {
                     <FormSelect
                       options={this.state.titleOptions}
                       id={validationFields.title.name}
-                      placeholder={validationFields.title.display}
+                      placeholder={t(validationFields.title.display)}
                       onChange={this.handleChangeDropdown}
-                      label={validationFields.title.display}
+                      label={t(validationFields.title.display)}
                       showError={this.getError(validationFields.title.name)}
                       errorText={this.getError(validationFields.title.name)}
                       defaultValue={this.state.user[validationFields.title.name] || ""}
@@ -463,9 +464,9 @@ class InvitedGuests extends Component {
                     <FormTextBox
                       id={validationFields.firstName.name}
                       type="text"
-                      placeholder={validationFields.firstName.display}
+                      placeholder={t(validationFields.firstName.display)}
                       onChange={this.handleChange(validationFields.firstName)}
-                      label={validationFields.firstName.display}
+                      label={t(validationFields.firstName.display)}
                       showError={this.getError(validationFields.firstName.name)}
                       errorText={this.getError(validationFields.firstName.name)}
                       value={this.state.user[validationFields.firstName.name] || ""} />
@@ -475,9 +476,9 @@ class InvitedGuests extends Component {
                     <FormTextBox
                       id={validationFields.lastName.name}
                       type="text"
-                      placeholder={validationFields.lastName.display}
+                      placeholder={t(validationFields.lastName.display)}
                       onChange={this.handleChange(validationFields.lastName)}
-                      label={validationFields.lastName.display}
+                      label={t(validationFields.lastName.display)}
                       showError={this.getError(validationFields.lastName.name)}
                       errorText={this.getError(validationFields.lastName.name)}
                       value={this.state.user[validationFields.lastName.name] || ""} />
@@ -497,7 +498,7 @@ class InvitedGuests extends Component {
                           role="status"
                           aria-hidden="true" />
                       )}
-                      Create Invited Guest
+                      {t("Create Invited Guest")}
                     </button>
                   </div>
                 </div>
@@ -509,4 +510,4 @@ class InvitedGuests extends Component {
   }
 }
 
-export default withRouter(InvitedGuests);
+export default withRouter(withTranslation()(InvitedGuests));

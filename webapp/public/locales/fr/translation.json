@@ -206,6 +206,17 @@
     "if you already have one.": "if you already have one.",
     "Upcoming Events": "Upcoming Events",
     "Awards": "Awards",
-    "Calls for Proposals": "Calls for Proposals"
+    "Calls for Proposals": "Calls for Proposals",
+    "All": "All",
+    "Added": "Added",
+    "to the guest list": "to the guest list",
+    "Filter by name": "Filter by name",
+    "Filter by role": "Filter by role",
+    "No invited guests": "No invited guests",
+    "Download csv": "Download csv",
+    "Invited guest with this email already exists.": "Invited guest with this email already exists.",
+    "Add Guest": "Add Guest",
+    "User does not exist, please add these details": "User does not exist, please add these details",
+    "Create Invited Guest": "Create Invited Guest"
 
 }

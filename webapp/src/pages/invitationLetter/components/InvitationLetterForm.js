@@ -1,3 +1,4 @@
+// TOOD: ADD TRANSLATION
 import React, { Component } from "react";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
