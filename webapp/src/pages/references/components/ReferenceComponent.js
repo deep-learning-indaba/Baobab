@@ -3,7 +3,7 @@ import { withRouter } from "react-router";
 import { referenceService } from "../../../services/references";
 import Loading from "../../../components/Loading";
 import FileUploadComponent from "../../../components/FileUpload";
-import { Trans, useTranslation } from 'react-i18next'
+import { Trans, withTranslation } from 'react-i18next'
 
 class ReferenceComponent extends Component {
     constructor(props) {
