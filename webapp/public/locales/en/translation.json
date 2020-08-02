@@ -225,7 +225,13 @@
     "Email address": "Email address",
     "Forgot your password?": "Forgot your password?",
     "Resend Verification Email": "Resend Verification Email",
-    
+    "Your Profile": "Your Profile",
+    "Read-only": "Read-only",
+    "Save profile": "Save profile",
+    "Reset Your Password": "Reset Your Password",
+    "Reset Password": "Reset Password",
+    "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.": "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password."
+
 
 
 }
