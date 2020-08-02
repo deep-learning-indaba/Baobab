@@ -289,19 +289,22 @@ class Section extends React.Component {
       value: value
     };
 
+
     const newQuestionModels = this.state.questionModels
       .map(q => {
+
         if (q.question.id !== question.id) {
           return q;
         }
 
-        return {
-          ...q,
-          validationError: this.state.hasValidated
-            ? this.validate(q, newAnswer) 
-            : "",
-          answer: newAnswer
-        };
+          return {
+            ...q,
+            validationError: this.state.hasValidated
+              ? this.validate(q, newAnswer)
+              : "",
+            answer: newAnswer
+          };
+
       })
 
     this.setState(
@@ -321,13 +324,22 @@ class Section extends React.Component {
 
     let errors = [];
     const question = questionModel.question;
-    const answer = updatedAnswer || questionModel.answer ;
+    const answer = updatedAnswer || questionModel.answer;
+
 
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
     }
+
+    if (answer && answer.value.text) {
+      if (question.validation_regex &&
+        !answer.value.text.match(question.validation_regex)) {
+          errors.push(question.validation_text);
+        }
+  }
+
     if (
-      answer &&
+      answer && typeof answer.value != 'object' &&
       question.validation_regex &&
       !answer.value.match(question.validation_regex)
     ) {
@@ -335,6 +347,8 @@ class Section extends React.Component {
     }
 
     return errors.join("; ");
+
+
   };
 
   isValidated = () => {
