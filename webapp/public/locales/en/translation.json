@@ -260,7 +260,16 @@
     "Skip": "Skip",
     "There are one or more validation errors, please correct before submitting.": "There are one or more validation errors, please correct before submitting.",
     "reviewsRemaining": "You have {{reviewsRemainingCount}} reviews remaining",
-    "If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.": "If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below."
+    "If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.": "If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.",
+    "Assign": "Assign",
+    "Name": "Name",
+    "No. Allocated": "No. Allocated",
+    "No. Completed": "No. Completed",
+    "No. to Assign": "No. to Assign",
+    "Total Unallocated Reviews:": "Total Unallocated Reviews:",
+    "Add new reviewer's email (they must already have an account)": "Add new reviewer's email (they must already have an account)",
+    "Review email": "Review email"
+    
 
 
 
