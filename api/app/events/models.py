@@ -136,13 +136,13 @@ class Event(db.Model):
 
     def get_name(self, language):
         event_translation = self.event_translations.filter_by(language=language).first()
-        if not None:
+        if event_translation is not None:
             return event_translation.name
         return None
 
     def get_description(self, language):
         event_translation = self.event_translations.filter_by(language=language).first()
-        if not None:
+        if event_translation is not None:
             return event_translation.description
         return None
     
