@@ -39,7 +39,7 @@ class Event(db.Model):
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
-    event_translations = db.relationship('EventTranslation')
+    event_translations = db.relationship('EventTranslation', lazy='dynamic')
     miniconf_url = db.Column(db.String(100), nullable=True)
 
     def __init__(self,
@@ -133,6 +133,37 @@ class Event(db.Model):
     def add_event_role(self, role, user_id):
         event_role = EventRole(role, user_id, self.id)
         self.event_roles.append(event_role)
+
+    def get_name(self, language):
+        event_translation = self.event_translations.filter_by(language=language).first()
+        if not None:
+            return event_translation.name
+        return None
+
+    def get_description(self, language):
+        event_translation = self.event_translations.filter_by(language=language).first()
+        if not None:
+            return event_translation.description
+        return None
+    
+    def get_all_name_translations(self):
+        name_translation_map = {}
+        for event_translation in self.event_translations.all():
+            name_translation_map[event_translation.language] = event_translation.name
+        return name_translation_map
+
+    def get_all_description_translations(self):
+        description_translation_map = {}
+        for event_translation in self.event_translations.all():
+            description_translation_map[event_translation.language] = event_translation.description
+        return description_translation_map
+
+    def has_at_least_one_translation(self):
+        num_translations = self.event_translations.count()
+        return True if num_translations > 0 else False
+
+    def has_specific_translation(self, language):
+        return self.event_translations.filter_by(language=language).exists()
 
     def update(self,
                start_date,
