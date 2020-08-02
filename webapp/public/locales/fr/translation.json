@@ -230,6 +230,9 @@
     "Save profile": "Save profile",
     "Reset Your Password": "Reset Your Password",
     "Reset Password": "Reset Password",
-    "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.": "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password."
+    "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.": "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.",
+    "Type": "Type",
+    "There are currently no user profiles to display!": "There are currently no user profiles to display!",
+    "Total Profiles": "Total Profiles"
 
 }
