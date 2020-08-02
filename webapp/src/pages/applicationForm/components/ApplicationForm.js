@@ -60,7 +60,6 @@ class FieldEditor extends React.Component {
     super(props);
     this.id = "question_" + props.question.id;
     this.state = {
-      inputValue: "",
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
