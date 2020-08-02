@@ -158,12 +158,8 @@ class Event(db.Model):
             description_translation_map[event_translation.language] = event_translation.description
         return description_translation_map
 
-    def has_at_least_one_translation(self):
-        num_translations = self.event_translations.count()
-        return True if num_translations > 0 else False
-
     def has_specific_translation(self, language):
-        return self.event_translations.filter_by(language=language).exists()
+        return self.event_translations.filter_by(language=language).count() == 1
 
     def update(self,
                start_date,

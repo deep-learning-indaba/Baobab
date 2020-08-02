@@ -11,6 +11,7 @@ RESET_PASSWORD_CODE_NOT_VALID = (
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 EVENT_WITH_KEY_NOT_FOUND = ({'message': 'No event exists with that KEY'}, 404)
+EVENT_WITH_TRANSLATION_NOT_FOUND = ({'message': 'Translation for event not found'}, 404)
 REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
 DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)

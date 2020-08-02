@@ -19,10 +19,9 @@ class EventRepository():
                          .first() is not None
 
     @staticmethod
-    def get_by_key_with_organisation(event_key):
-        return db.session.query(Event, Organisation)\
+    def get_by_key(event_key):
+        return db.session.query(Event)\
                          .filter_by(key=event_key)\
-                         .join(Organisation, Organisation.id == Event.organisation_id)\
                          .first()
 
     @staticmethod
@@ -36,10 +35,9 @@ class EventRepository():
 
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
-        return db.session.query(Event, Organisation)\
+        return db.session.query(Event)\
                          .filter(Event.end_date >= datetime.now())\
                          .filter_by(organisation_id=organisation_id)\
-                         .join(Organisation, Organisation.id==Event.organisation_id)\
                          .all()
 
     @staticmethod

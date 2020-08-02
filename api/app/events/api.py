@@ -19,7 +19,7 @@ from app.registration.repository import RegistrationRepository as registration_r
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE
+from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE, EVENT_WITH_TRANSLATION_NOT_FOUND
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
 from app.utils.emailer import send_mail
@@ -43,34 +43,34 @@ def status_info(status):
         'is_event_attendee': status.is_event_attendee
     }
 
-def event_info(user_id, event_org, status):
+def event_info(user_id, event, status, language):
     return {
-        'id': event_org.Event.id,
-        'name': event_org.Event.name,
-        'description': event_org.Event.description,
-        'key': event_org.Event.key,
-        'start_date': event_org.Event.start_date.strftime("%d %B %Y"),
-        'end_date': event_org.Event.end_date.strftime("%d %B %Y"),
+        'id': event.id,
+        'name': event.get_name(language),
+        'description': event.get_description(language),
+        'key': event.key,
+        'start_date': event.start_date.strftime("%d %B %Y"),
+        'end_date': event.end_date.strftime("%d %B %Y"),
         'status': status_info(status),
-        'email_from': event_org.Event.email_from,
-        'organisation_name': event_org.Organisation.name,
-        'organisation_id': event_org.Organisation.id,
-        'url': event_org.Event.url,
-        'event_type': event_org.Event.event_type.value.upper(),
-        'is_application_open': event_org.Event.is_application_open,
-        'is_application_opening': event_org.Event.is_application_opening,
-        'is_review_open': event_org.Event.is_review_open,
-        'is_review_opening': event_org.Event.is_review_opening,
-        'is_selection_open': event_org.Event.is_selection_open,
-        'is_selection_opening': event_org.Event.is_selection_opening,
-        'is_offer_open': event_org.Event.is_offer_open,
-        'is_offer_opening': event_org.Event.is_offer_opening,
-        'is_registration_open': event_org.Event.is_registration_open,
-        'is_registration_opening': event_org.Event.is_registration_opening,
-        'is_event_open': event_org.Event.is_event_open,
-        'is_event_opening': event_org.Event.is_event_opening,
-        'travel_grant': event_org.Event.travel_grant,
-        "miniconf_url": event_org.Event.miniconf_url
+        'email_from': event.email_from,
+        'organisation_name': event.organisation.name,
+        'organisation_id': event.organisation.id,
+        'url': event.url,
+        'event_type': event.event_type.value.upper(),
+        'is_application_open': event.is_application_open,
+        'is_application_opening': event.is_application_opening,
+        'is_review_open': event.is_review_open,
+        'is_review_opening': event.is_review_opening,
+        'is_selection_open': event.is_selection_open,
+        'is_selection_opening': event.is_selection_opening,
+        'is_offer_open': event.is_offer_open,
+        'is_offer_opening': event.is_offer_opening,
+        'is_registration_open': event.is_registration_open,
+        'is_registration_opening': event.is_registration_opening,
+        'is_event_open': event.is_event_open,
+        'is_event_opening': event.is_event_opening,
+        'travel_grant': event.travel_grant,
+        "miniconf_url": event.miniconf_url
     }
 
 
@@ -315,13 +315,16 @@ class EventsAPI(restful.Resource):
     @auth_required
     def get(self):
         user_id = g.current_user["id"]
+        language = request.args['language']
 
         events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
 
         for event in events:
-            status = None if user_id == 0 else event_status.get_event_status(event.Event.id, user_id)
-            returnEvents.append(event_info(user_id, event, status))
+            if not event.has_specific_translation(language):
+                return EVENT_WITH_TRANSLATION_NOT_FOUND
+            status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
+            returnEvents.append(event_info(user_id, event, status, language))
 
         return returnEvents, 200
 
@@ -419,15 +422,20 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         args = self.req_parser.parse_args()
 
         user_id = g.current_user['id']
+        language = request.args['language']
 
-        event = event_repository.get_by_key_with_organisation(
-            args['event_key'])
+        event = event_repository.get_by_key(args['event_key'])
         if not event:
             return EVENT_WITH_KEY_NOT_FOUND
+        
+        if not event.has_specific_translation(language):
+            return EVENT_WITH_TRANSLATION_NOT_FOUND
+            
         info = event_info(
             g.current_user['id'], 
             event, 
-            event_status.get_event_status(event.Event.id, user_id))
+            event_status.get_event_status(event.id, user_id),
+            language)
         return info, 200
 
 
