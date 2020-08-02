@@ -271,7 +271,14 @@
     "Review email": "Review email",
     "Submitted Timestamp": "Submitted Timestamp",
     "Verify Email Address": "Verify Email Address",
-    "verified": "Your email address has been verified. <1>Click here</1> to login if you are not automatically redirected."
+    "verified": "Your email address has been verified. <1>Click here</1> to login if you are not automatically redirected.",
+    "No user profile to display!": "No user profile to display!",
+    "Profile For": "Profile For",
+    "Personal Information": "Personal Information",
+    "User Application Info": "User Application Info",
+    "Submitted on": "Submitted on",
+    "Withdrawn on": "Withdrawn on"
+
     
 
 
