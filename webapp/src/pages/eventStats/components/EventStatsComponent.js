@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Chart } from "react-google-charts";
 import { eventStatsService } from "../../../services/eventStats";
 import { withRouter } from "react-router";
+import { withTranslation } from 'react-i18next';
 
 class EventStatsComponent extends Component {
   constructor(props) {
@@ -30,12 +31,12 @@ class EventStatsComponent extends Component {
 
   getStatus = (isOpen, isOpening) => {
     if (isOpen) {
-      return <span class="badge badge-pill badge-success">Open</span>
+      return <span class="badge badge-pill badge-success">{this.props.t("Open")}</span>
     }
     if (isOpening) {
-      return <span class="badge badge-pill badge-secondary">Not Open</span>
+      return <span class="badge badge-pill badge-secondary">{this.props.t("Not Open")}</span>
     }
-    return <span class="badge badge-pill badge-warning">Closed</span>
+    return <span class="badge badge-pill badge-warning">{this.props.t("Closed")}</span>
   }
 
   plotTimeSeries = (name, timeseries) => {
@@ -90,92 +91,94 @@ class EventStatsComponent extends Component {
       </div>
     }
 
+    const t = this.props.t;
+
     return (
       <div className={"event-stats text-center"}>
         <div className="row">
           <div className="col-md">
-            <div className="stats-title">Applications
+            <div className="stats-title">{t("Applications")}
               {this.getStatus(this.props.event.is_application_open, this.props.event.is_application_opening)}
             </div>
 
             <div className={"card" + (this.props.event.is_application_opening ? " stats-not-open" : "")}>
               <h1>{stats.num_submitted_responses}</h1>
-              <div className="stats-description">Submitted</div>
+              <div className="stats-description">{t("Submitted")}</div>
               <br />
               <div className="row">
                 <div className="col-sm">
                   <h3>{stats.num_responses - stats.num_submitted_responses - stats.num_withdrawn_responses}</h3>
-                  <div className="stats-description">Un-submitted</div>
+                  <div className="stats-description">{t("Un-submitted")}</div>
                 </div>
                 <div className="col-sm">
                   <h3>{stats.num_withdrawn_responses}</h3>
-                  <div className="stats-description">Withdrawn</div>
+                  <div className="stats-description">{t("Withdrawn")}</div>
                 </div>
               </div>
-              {this.plotTimeSeries("Submitted", stats.submitted_timeseries)}
+              {this.plotTimeSeries(t("Submitted"), stats.submitted_timeseries)}
             </div>
           </div>
           <div className="col-md">
-            <div className="stats-title">Reviews
+            <div className="stats-title">{t("Reviews")}
               {this.getStatus(this.props.event.is_review_open, this.props.event.is_review_opening)}
             </div>
             <div className={"card" + (this.props.event.is_review_opening ? " stats-not-open" : "")}>
               <h1>{stats.reviews_completed}</h1>
-              <div className="stats-description">Completed</div>
+              <div className="stats-description">{t("Completed")}</div>
               <br />
               <div className="row">
                 <div className="col-sm">
                   <h3>{stats.review_incomplete}</h3>
-                  <div className="stats-description">Incomplete</div>
+                  <div className="stats-description">{t("Incomplete")}</div>
                 </div>
                 <div className="col-sm">
                   <h3>{stats.reviews_unallocated}</h3>
-                  <div className="stats-description">Not Allocated</div>
+                  <div className="stats-description">{t("Not Allocated")}</div>
                 </div>
               </div>
-              {this.plotTimeSeries("Complete", stats.reviews_complete_timeseries)}
+              {this.plotTimeSeries(t("Completed"), stats.reviews_complete_timeseries)}
             </div>
           </div>
           <div className="col-md">
-            <div className="stats-title">Offers
+            <div className="stats-title">{t("Offers")}
               {this.getStatus(this.props.event.is_offer_open, this.props.event.is_offer_opening)}
             </div>
             <div className={"card" + (this.props.event.is_offer_opening ? " stats-not-open" : "")}>
               <h1>{stats.offers_allocated}</h1>
-              <div className="stats-description">Offers Allocated</div>
+              <div className="stats-description">{t("Offers Allocated")}</div>
               <br />
               <div className="row">
                 <div className="col-sm">
                   <h3>{stats.offers_accepted}</h3>
-                  <div className="stats-description">Accepted</div>
+                  <div className="stats-description">{t("Accepted")}</div>
                 </div>
                 <div className="col-sm">
                   <h3>{stats.offers_rejected}</h3>
-                  <div className="stats-description">Rejected</div>
+                  <div className="stats-description">{t("Rejected")}</div>
                 </div>
               </div>
-              {this.plotTimeSeries("Accepted", stats.offers_accepted_timeseries)}
+              {this.plotTimeSeries(t("Accepted"), stats.offers_accepted_timeseries)}
             </div>
           </div>
           <div className="col-md">
-            <div className="stats-title">Registration
+            <div className="stats-title">{t("Registration")}
               {this.getStatus(this.props.event.is_registration_open, this.props.event.is_registration_opening)}
             </div>
             <div className={"card" + (this.props.event.is_registration_opening ? " stats-not-open" : "")}>
               <h1>{stats.num_registrations}</h1>
-              <div className="stats-description">Registrations</div>
+              <div className="stats-description">{t("Registrations")}</div>
               <br />
               <div className="row">
                 <div className="col-sm">
                   <h3>{stats.num_guests}</h3>
-                  <div className="stats-description">Total Guests</div>
+                  <div className="stats-description">{t("Total Guests")}</div>
                 </div>
                 <div className="col-sm">
                   <h3>{stats.num_registered_guests}</h3>
-                  <div className="stats-description">Registered Guests</div>
+                  <div className="stats-description">{t("Registered Guests")}</div>
                 </div>
               </div>
-              {this.plotTimeSeries("Accepted", stats.registration_timeseries)}
+              {this.plotTimeSeries(t("Accepted"), stats.registration_timeseries)}
             </div>
           </div>
         </div>
@@ -184,4 +187,4 @@ class EventStatsComponent extends Component {
   }
 }
 
-export default withRouter(EventStatsComponent);
+export default withRouter(withTranslation()(EventStatsComponent));

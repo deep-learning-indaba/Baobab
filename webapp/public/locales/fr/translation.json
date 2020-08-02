@@ -184,6 +184,22 @@
     "Registration Open": "Registration Open",
     "Registration Close": "Registration Close",
     "Cancel": "Cancel",
-    "Update Event": "Update Event"
+    "Update Event": "Update Event",
+    "Open": "Open",
+    "Not Open": "Not Open",
+    "Closed": "Closed",
+    "Applications": "Applications",
+    "Un-submitted": "Un-submitted",
+    "Withdrawn": "Withdrawn",
+    "Completed": "Completed",
+    "Incomplete": "Incomplete",
+    "Not Allocated": "Not Allocated",
+    "Offers": "Offers",
+    "Offers Allocated": "Offers Allocated",
+    "Accepted": "Accepted",
+    "Rejected": "Rejected",
+    "Registrations": "Registrations",
+    "Total Guests": "Total Guests",
+    "Registered Guests": "Registered Guests"
 
 }
