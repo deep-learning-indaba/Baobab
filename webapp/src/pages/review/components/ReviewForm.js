@@ -8,10 +8,10 @@ import FormRadio from "../../../components/form/FormRadio";
 
 import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
-import { createColClassName } from "../../../utils/styling/styling";
 
 import Linkify from 'react-linkify';
 import { ConfirmModal } from "react-bootstrap4-modal";
+import { Trans, withTranslation } from 'react-i18next'
 
 const LONG_TEXT = "long-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
@@ -44,7 +44,7 @@ class ReviewQuestion extends Component {
         if (answer && answer.value && answer.value.trim()) {
             return answer.value;
         }
-        return "<No Answer Provided>";
+        return this.props.t("No Answer Provided");
     }
 
     formControl = (key, question, answer, score, validationError) => {
@@ -70,8 +70,8 @@ class ReviewQuestion extends Component {
             case FILE:
                 return <div>
                     {answer && answer.value && answer.value.trim()
-                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>View File</a>
-                        : <p>NO FILE UPLOADED</p>}
+                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{t("View File")}</a>
+                        : <p>{t("NO FILE UPLOADED")}</p>}
                 </div>
 
             case CHECKBOX:
@@ -261,7 +261,7 @@ class ReviewForm extends Component {
         const score = updatedScore || questionModel.score;
 
         if (question.is_required && (!score || !score.value)) {
-            errors.push("An answer/rating is required.");
+            errors.push(this.props.t("An answer/rating is required."));
         }
 
         if (
@@ -419,6 +419,8 @@ class ReviewForm extends Component {
             "height": "3rem"
         }
 
+        const t = this.props.t;
+
         if (isLoading) {
             return (
                 <div class="d-flex justify-content-center">
@@ -439,15 +441,16 @@ class ReviewForm extends Component {
             return (
                 <div class="review-form-container">
                     <div class="alert alert-success alert-container">
-                        <p class="complete-title">
-                            All Done!</p><br />
-                        You have completed all your reviews! Please let us know if you have any capacity for more :)
+                        <p class="complete-title">{t("All Done!")}</p><br />
+                        {t("You have completed all your reviews! Please let us know if you have any capacity for more")}
                         <br /><br />
-                        Thank you for your contribution!
+                        {t("Thank you for your contribution!")}
                     </div>
                 </div>
             )
         }
+
+        const reviewsRemainingCount = form.reviews_remaining_count;
 
         return (
             <div class="review-form-container">
@@ -462,11 +465,11 @@ class ReviewForm extends Component {
                 <button
                     onClick={this.addFlag}
                     className="btn btn-light flag-category">
-                    Flag Response <i className="fa fa-flag"></i>
+                    {t("Flag Response")} <i className="fa fa-flag"></i>
                 </button>
                 <hr />
                 <div>
-                    Response ID: <span className="font-weight-bold">{form.response.id}</span> - Please quote this in any correspondence with event admins outside of the system.
+                    {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with event admins outside of the system.")}
                 </div>
 
                 <hr />
@@ -478,7 +481,7 @@ class ReviewForm extends Component {
                             className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
                             style={{ marginRight: "1em" }}
                             onClick={this.goBack}>
-                            Go Back
+                            {t("Go Back")}
                         </button>
                     }
                     {currentSkip < form.reviews_remaining_count &&
@@ -486,7 +489,7 @@ class ReviewForm extends Component {
                             disabled={form.review_response || isSubmitting}
                             className={"btn btn-secondary " + (form.review_response ? "hidden" : "")}
                             onClick={this.skip}>
-                            Skip
+                            {t("Skip")}
                         </button>
                     }
                     <button disabled={isSubmitting}
@@ -500,19 +503,19 @@ class ReviewForm extends Component {
                                 aria-hidden="true"
                             />
                         )}
-                        Submit
+                        {t("Submit")}
                     </button>
                 </div>
 
                 {(hasValidated && !validationStale && !isValid) &&
                     <div class="alert alert-danger alert-container">
-                        There are one or more validation errors, please correct before submitting.
+                        {t("There are one or more validation errors, please correct before submitting.")}
                     </div>
                 }
                 <br />
                 {!form.review_response &&
                     <div class="alert alert-info">
-                        <span class="fa fa-info-circle"></span> You have {form.reviews_remaining_count} reviews remaining
+                        <span class="fa fa-info-circle"></span> <Trans i18nKey="reviewsRemaining">You have {{reviewsRemainingCount}} reviews remaining</Trans>
                     </div>
                 }
 
@@ -527,7 +530,7 @@ class ReviewForm extends Component {
                     title="Flag applicant category">
 
                     <div class="flagModal">
-                        <p>If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.</p>
+                        <p>{t("If reviewing this response revealed an issue that should be considered if this candidate were accepted, please describe it below.")}</p>
                         <textarea
                             className="form-control"
                             value={this.state.flagValue}
@@ -545,4 +548,4 @@ class ReviewForm extends Component {
     }
 }
 
-export default withRouter(ReviewForm);
+export default withRouter(withTranslation()(ReviewForm));
