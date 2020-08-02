@@ -217,7 +217,15 @@
     "Invited guest with this email already exists.": "Invited guest with this email already exists.",
     "Add Guest": "Add Guest",
     "User does not exist, please add these details": "User does not exist, please add these details",
-    "Create Invited Guest": "Create Invited Guest"
+    "Create Invited Guest": "Create Invited Guest",
+    "We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address.": "We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address.",
+    "Sign in to your account": "Sign in to your account",
+    "Or": "Or",
+    "for a new one": "for a new one",
+    "Email address": "Email address",
+    "Forgot your password?": "Forgot your password?",
+    "Resend Verification Email": "Resend Verification Email",
+    
 
 
 }
