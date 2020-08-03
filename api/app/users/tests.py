@@ -18,7 +18,7 @@ USER_DATA = {
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': '123456',
-        'user_primaryLanguage': 'en',
+        'language': 'en',
         'policy_agreed': True
     }
 
@@ -108,7 +108,7 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Updated',
             'lastname': 'Updated',
             'user_title': 'Mrs',
-            'user_primaryLanguage': 'zu',
+            'language': 'zu',
             'password': ''
         })
 
@@ -364,7 +364,7 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Some',
             'lastname': 'Thing',
             'user_title': 'Mr',
-            'user_primaryLanguage': 'en',
+            'language': 'en',
             'password':''
         })
 
