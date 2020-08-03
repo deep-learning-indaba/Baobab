@@ -70,8 +70,8 @@ class ReviewQuestion extends Component {
             case FILE:
                 return <div>
                     {answer && answer.value && answer.value.trim()
-                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{t("View File")}</a>
-                        : <p>{t("NO FILE UPLOADED")}</p>}
+                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{this.props.t("View File")}</a>
+                        : <p>{this.props.t("NO FILE UPLOADED")}</p>}
                 </div>
 
             case CHECKBOX:

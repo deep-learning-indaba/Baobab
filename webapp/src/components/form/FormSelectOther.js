@@ -2,7 +2,6 @@
 
 import React from "react";
 import "./Style.css";
-import _ from "lodash";
 import FormSelect from "./FormSelect";
 import { withTranslation } from 'react-i18next';
 

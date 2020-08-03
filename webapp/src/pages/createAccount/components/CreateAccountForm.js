@@ -216,7 +216,7 @@ class CreateAccountForm extends Component {
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
           <div class="login-header-logo">
-            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} />
+            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} alt="Logo"/>
             <h3>{t("Sign Up")}</h3>
             <h6><Link to="/login" className="sign-up">{t("Sign In")}</Link> {t("if you already have an account")}</h6>
           </div>

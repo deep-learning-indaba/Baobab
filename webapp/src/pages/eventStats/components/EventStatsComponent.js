@@ -40,7 +40,7 @@ class EventStatsComponent extends Component {
   }
 
   plotTimeSeries = (name, timeseries) => {
-    if (!timeseries || timeseries.length == 0) {
+    if (!timeseries || timeseries.length === 0) {
       return <div></div>
     }
 

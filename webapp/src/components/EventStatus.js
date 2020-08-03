@@ -115,7 +115,7 @@ class EventStatus extends Component {
             return {
                 title: this.props.t("Register Now"),
                 titleClass: "text-success",
-                longText: this.props.t("You have accepted your offer to attend") + ` ${event.name}. ` + "Please complete your event registration as soon as possible.",
+                longText: this.props.t("You have accepted your offer to attend") + ` ${event.name}. Please complete your event registration as soon as possible.`,
                 shortText: this.props.t("Register Now"),
                 linkClass: "btn-success",
                 link: `${event.key}/registration`
@@ -213,7 +213,7 @@ class EventStatus extends Component {
               title: this.props.t("Applications Closed"),
               titleClass: "text-danger",
               longText: this.props.t("You started, but did not submit your application before the deadline. Your application will therefore not be considered"),
-              shortText: this.props.t("Applications Closed)"
+              shortText: this.props.t("Applications Closed")
           }
       }
       else {
@@ -275,7 +275,7 @@ class EventStatus extends Component {
         return {
             title: this.props.t("Enjoy the Event"),
             titleClass: "text-success",
-            shortText: "Starts" + ` ${event.start_date}!`
+            shortText: `Starts ${event.start_date}!`
         }
     }
   }

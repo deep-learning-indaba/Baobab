@@ -68,6 +68,8 @@ class ReferenceComponent extends Component {
 
     render() {
         const { requestDetails, error, isLoading, uploadedDocument, isSubmitting, enableSubmit, success } = this.state;
+        const t = this.props.t;
+        
         if (isLoading) { return <Loading />; }
 
         if (error) {

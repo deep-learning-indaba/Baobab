@@ -259,11 +259,6 @@ class GuestRegistrationComponent extends Component {
       isSubmitting
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
         if (item.value === answer.value) return item.label;

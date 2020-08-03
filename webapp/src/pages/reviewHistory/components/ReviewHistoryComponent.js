@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import ReactTable from "react-table";
-
+import { Link } from "react-router-dom";
 import "react-table/react-table.css";
 
 import { reviewService } from "../../../services/reviews";
