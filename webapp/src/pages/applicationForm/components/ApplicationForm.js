@@ -411,8 +411,6 @@ class Section extends React.Component {
   }
 }
 
-// const Section = withTranslation()(SectionComponent);
-
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
