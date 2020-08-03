@@ -106,6 +106,7 @@ class UserAPI(SignupMixin, restful.Resource):
         lastname = args['lastname']
         user_title = args['user_title']
         policy_agreed = args['policy_agreed']
+        user_primaryLanguage = args['language']
 
         if(invitedGuest):
             password = self.randomPassword()
@@ -127,6 +128,7 @@ class UserAPI(SignupMixin, restful.Resource):
             user_title=user_title,
             password=password,
             organisation_id=g.organisation.id)
+        user.user_primaryLanguage = user_primaryLanguage
 
         db.session.add(user)
 
@@ -167,7 +169,7 @@ class UserAPI(SignupMixin, restful.Resource):
         lastname = args['lastname']
         user_title = args['user_title']
         email = args['email']
-        user_primaryLanguage = args['user_primaryLanguage']
+        user_primaryLanguage = args['language']
 
         user = db.session.query(AppUser).filter(
             AppUser.id == g.current_user['id']).first()
