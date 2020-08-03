@@ -43,7 +43,7 @@
     "You have submitted your application, you may still edit it before the deadline.": "You have submitted your application, you may still edit it before the deadline.",
     "View Application": "View Application",
     "Application Withdrawn": "Application Withdrawn",
-    "Your application has been withdrawn, you will not be considered for a place at": "Your application has been withdrawn, you will not be considered for a place at",
+    "Your application has been withdrawn, you will not be considered for": "Your application has been withdrawn, you will not be considered for",
     "unless you re-submit by the deadline.": "unless you re-submit by the deadline.",
     "Re-apply": "Re-apply",
     "In Progress": "In Progress",
@@ -278,10 +278,4 @@
     "User Application Info": "User Application Info",
     "Submitted on": "Submitted on",
     "Withdrawn on": "Withdrawn on"
-
-    
-
-
-
-
 }

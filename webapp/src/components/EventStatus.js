@@ -78,7 +78,7 @@ class EventStatus extends Component {
         return {
             title: this.props.t("Application Withdrawn"),
             titleClass: "text-danger",
-            longText: this.props.t("Your application has been withdrawn, you will not be considered for a place at") + ` ${event.name} ` + this.props.t("unless you re-submit by the deadline."),
+            longText: this.props.t("Your application has been withdrawn, you will not be considered for") + ` ${event.name} ` + this.props.t("unless you re-submit by the deadline."),
             shortText: this.props.t("Re-apply"),
             linkClass: "btn-warning",
             link: applyLink
