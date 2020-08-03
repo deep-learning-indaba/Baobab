@@ -249,7 +249,7 @@ class FieldEditor extends React.Component {
   }
 }
 
-class SectionComponent extends React.Component {
+class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -411,7 +411,7 @@ class SectionComponent extends React.Component {
   }
 }
 
-const Section = withTranslation()(SectionComponent);
+// const Section = withTranslation()(SectionComponent);
 
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
@@ -430,7 +430,7 @@ function AnswerValue(props) {
         return props.qm.answer.value;
     }
   }
-  return this.props.t("No answer provided.");
+  return props.t("No answer provided.");
 }
 
 class ConfirmationComponent extends React.Component {
@@ -848,6 +848,7 @@ class ApplicationFormInstanceComponent extends Component {
               isSaving={this.state.isSaving}
               responseId={this.state.responseId}
               stepProgress={i}
+              t={this.props.t}
             />
           )
         };
@@ -893,7 +894,7 @@ class ApplicationFormInstanceComponent extends Component {
 }
 
 
-const ApplicationFormInstance = withTranslation()(ApplicationFormInstanceComponent);
+const ApplicationFormInstance = withRouter(withTranslation()(ApplicationFormInstanceComponent));
 
 
 class ApplicationList extends Component {
