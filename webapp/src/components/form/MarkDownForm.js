@@ -1,9 +1,11 @@
 import * as React from 'react'
-import * as ReactDOM from 'react-dom'
 import MarkdownIt from 'markdown-it'
 import MdEditor from 'react-markdown-editor-lite'
-
+import Editor, { Plugins } from 'react-markdown-editor-lite';
 import 'react-markdown-editor-lite/lib/index.css';
+
+// Remove underline from React Markdown Editor Lite because MarkdownIt doesn't render it.
+Editor.unuse(Plugins.FontUnderline);
 
 
 const mdParser = new MarkdownIt();
@@ -27,15 +29,8 @@ class MarkDownEditor extends React.Component {
 
 
  onImageUpload(file) {
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = data => {
-        this.props.onImageUpload(file)
-        resolve(data.target.result);
-      };
-      reader.readAsDataURL(file);
-    })
-  }
+    return this.props.onImageUpload(file);
+ }
 
 
  render () {
@@ -47,7 +42,8 @@ class MarkDownEditor extends React.Component {
           onChange={(e) => this.handleEditorChange(e)}
           onImageUpload={(e) => this.onImageUpload(e)}
           config={{
-            imageAccept: ['.png', '.jpg', '.gif']
+            imageAccept: ['.png', '.jpg', '.gif'],
+            view: { menu: true, md: true }
           }}
           />
       )
