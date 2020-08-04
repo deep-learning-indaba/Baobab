@@ -18,7 +18,7 @@ describe('ResetPassword render', () => {
 describe('ResetPassword error message', () => {
   it('Check if ResetPassword component renders error message in UI', () => {
     const wrapper = shallow(
-      <ConfirmPasswordResetForm />
+      <ConfirmPasswordResetForm.WrappedComponent />
     );
     wrapper.setState({ error: true });
 
