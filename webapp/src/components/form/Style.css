@@ -8,12 +8,6 @@
 }
 
 /* FormMarkDown Component */
-.formmarkdown-main-wrapper {
-border: 1px solid hsl(0, 0%, 61%);
-width: 60%;
-min-height: 300px;
-}
-
 #md-editor.select-control.is-invalid {
     padding: 0;
     background-image: none;

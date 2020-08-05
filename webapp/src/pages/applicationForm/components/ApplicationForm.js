@@ -60,7 +60,6 @@ class FieldEditor extends React.Component {
     super(props);
     this.id = "question_" + props.question.id;
     this.state = {
-      inputValue: "",
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
@@ -218,15 +217,12 @@ class FieldEditor extends React.Component {
         );
       case MARK_DOWN:
         return (
-          <div className="mark-down-form-wrapper">
-            <div id="md-editor" className={validationError && !answer ? "select-control is-invalid" : "md-editor select-control"}>
               <MarkDownForm
                 onChange={(e) => this.handleChange(e)}
                 onImageUpload={(e) => this.handleUploadFile(e)}
+                errorText={validationError}
+                value={answer}
               />
-            </div>
-            <div className="invalid-feedback">An anwserer is required</div>
-          </div>
         );
       case REFERENCE_REQUEST:
         return (
@@ -289,10 +285,8 @@ class Section extends React.Component {
       value: value
     };
 
-
     const newQuestionModels = this.state.questionModels
       .map(q => {
-
         if (q.question.id !== question.id) {
           return q;
         }
@@ -304,7 +298,6 @@ class Section extends React.Component {
               : "",
             answer: newAnswer
           };
-
       })
 
     this.setState(
@@ -326,28 +319,18 @@ class Section extends React.Component {
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
 
-
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
     }
 
-    if (answer && answer.value.text) {
-      if (question.validation_regex &&
-        !answer.value.text.match(question.validation_regex)) {
-          errors.push(question.validation_text);
-        }
-  }
-
     if (
-      answer && typeof answer.value != 'object' &&
+      answer && 
       question.validation_regex &&
       !answer.value.match(question.validation_regex)
     ) {
       errors.push(question.validation_text);
     }
-
     return errors.join("; ");
-
 
   };
 
