@@ -1,59 +1,53 @@
-import React from 'react'
-import MarkdownIt from 'markdown-it'
-import MdEditor, { Plugins } from 'react-markdown-editor-lite'
-import 'react-markdown-editor-lite/lib/index.css';
+import React, { Component } from "react";
+import MarkdownIt from 'markdown-it'
+import MdEditor from 'react-markdown-editor-lite'
+import Editor, { Plugins } from 'react-markdown-editor-lite';
+import 'react-markdown-editor-lite/lib/index.css';
 
-const mdParser = new MarkdownIt();
-MdEditor.unuse(Plugins.FontUnderline);
+// Remove underline from React Markdown Editor Lite because MarkdownIt doesn't render it.
+Editor.unuse(Plugins.FontUnderline);
 
- class MarkDownEditor extends React.Component {
-       constructor(props) {
-              super(props)
-              this.state = {
-                     inputValue: ""
-              }
-       }
+const mdParser = new MarkdownIt();
 
-       handleEditorChange({ text }) {
-              
-              this.setState({
-                     inputValue: text
-              })
-              this.props.onChange(text)
-       }
+class MarkDownEditor extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            inputValue: ""
+        }
+    }
+    
 
-       onImageUpload(file) {
-              return new Promise(resolve => {
-                     const reader = new FileReader();
-                     reader.onload = data => {
-                            this.props.onImageUpload(file)
-                            resolve(data.target.result)
-                     };
-                     reader.readAsDataURL(file);
-              })
-       }
+ handleEditorChange({text}) {    
+  this.setState({
+    inputValue: text
+  })
+
+  this.props.onChange(text)
+}
 
 
-       render() {
-              return (
-                     <div className="mark-down-form-wrapper">
-                            <div id="md-editor" className={this.props.errorText && !this.props.value ? "select-control is-invalid" : "md-editor select-control"}>
-                                   <MdEditor
-                                          value={this.state.inputValue}
-                                          style={{ height: "300px" }}
-                                          renderHTML={(text) => mdParser.render(text)}
-                                          onChange={(e) => this.handleEditorChange(e)}
-                                          onImageUpload={(e) => this.onImageUpload(e)}
-                                          config={{
-                                                 imageAccept: ['.png', '.jpg', '.gif'],
-                                                 imageUrl: 'image'
-                                          }}
-                                   />
-                            </div>
-                            <div className="invalid-feedback">{this.props.errorText}</div>
-                     </div>
-              )
-       }
+ onImageUpload(file) {
+    return this.props.onImageUpload(file);
+ }
+
+
+ render () {
+    return (
+        <MdEditor
+          value={this.state.inputValue}
+          style={{ height: "300px" }}
+          renderHTML={(text) => mdParser.render(text)}
+          onChange={(e) => this.handleEditorChange(e)}
+          onImageUpload={(e) => this.onImageUpload(e)}
+          config={{
+            imageAccept: ['.png', '.jpg', '.gif'],
+            view: { menu: true, md: true }
+          }}
+          />
+      )
+ }
+
 }
 
 export default MarkDownEditor

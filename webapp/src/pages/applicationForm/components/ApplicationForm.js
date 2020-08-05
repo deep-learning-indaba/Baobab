@@ -86,26 +86,26 @@ class FieldEditor extends React.Component {
   handleUploadFile = (file) => {
     this.setState({
       uploading: true
-    }, () => {
-      fileService.uploadFile(file, progressEvent => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        this.setState({
-          uploadPercentComplete: percentCompleted
-        });
-      }).then(response => {
-        if (response.fileId && this.props.onChange) {
-          this.props.onChange(this.props.question, response.fileId);
-        }
-        this.setState({
-          uploaded: response.fileId !== "",
-          uploadError: response.error,
-          uploading: false
-        });
+    });
 
-        let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
-        return fileUrl
-      })
-    })
+    return fileService.uploadFile(file, progressEvent => {
+      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      this.setState({
+        uploadPercentComplete: percentCompleted
+      });
+    }).then(response => {
+      if (response.fileId && this.props.onChange) {
+        this.props.onChange(this.props.question, response.fileId);
+      }
+      this.setState({
+        uploaded: response.fileId !== "",
+        uploadError: response.error,
+        uploading: false
+      });
+
+      let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
+      return fileUrl
+    });
   }
 
   formControl = (key, question, answer, validationError, responseId) => {
