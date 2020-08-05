@@ -47,7 +47,7 @@ class FormDate extends React.Component {
             ref={input => {
               this.dateInput = input;
             }}
-            className={this.props.id && this.props.errorText.length > 0 ? "react-datetime-picker error" : "react-datetime-picker"}
+            className={this.props.id && this.props.errorText && this.props.errorText.length > 0  ? "react-datetime-picker error" : "react-datetime-picker"}
             onChange={this.onChange}
             value={this.props.value ? new Date(this.props.value) : null}
             format="y-MM-dd"
