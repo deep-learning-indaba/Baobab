@@ -238,8 +238,8 @@ class RemindersAPITest(ApiTestCase):
         db.session.commit()
 
         email_templates = [
-            EmailTemplate('application-not-submitted', None, ''),
-            EmailTemplate('application-not-started', None, '')]
+            EmailTemplate('application-not-submitted', None, '', 'en'),
+            EmailTemplate('application-not-started', None, '', 'en')]
         db.session.add_all(email_templates)
         db.session.commit()
 
