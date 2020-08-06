@@ -6,6 +6,10 @@ import "./Style.css";
 import * as moment from 'moment';
 
 class FormDate extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -34,19 +38,23 @@ class FormDate extends React.Component {
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-              <div />
-            )}
+                <div />
+              )}
           </div>
 
-        <DateTimePicker
-          id={this.props.id}
-          ref={input => {
-            this.dateInput = input;
-          }}
-          onChange={this.onChange}
-          value={this.props.value ? new Date(this.props.value) : new Date()}
-          format="y-MM-dd"
-        />
+          <div>
+            <DateTimePicker
+              id={this.props.id}
+              ref={input => {
+                this.dateInput = input;
+              }}
+              className={this.props.id && this.props.errorText.length > 0 ? "react-datetime-picker error" : "react-datetime-picker"}
+              onChange={this.onChange}
+              value={this.props.value ? new Date(this.props.value) : null}
+              format="y-MM-dd"
+            />
+          </div>
+
         </FormGroup>
       </div>
     );

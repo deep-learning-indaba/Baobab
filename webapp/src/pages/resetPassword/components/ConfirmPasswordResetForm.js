@@ -47,7 +47,8 @@ class ConfirmPasswordResetForm extends Component {
   };
 
   handleSubmit = event => {
-    event.preventDefault();
+  event.preventDefault();
+
     this.setState({
       submitted: true,
       loading: true
@@ -57,18 +58,16 @@ class ConfirmPasswordResetForm extends Component {
       .confirmPasswordReset(this.state.password, this.state.token)
       .then(response => {
         console.log("Response from user service: ", response);
-
         if (response.status === 201) {
           const { from } = { from: { pathname: "/login" } };
           this.props.history.push(from);
         } else {
-
           this.setState({
             error: response.message,
             loading: false
           });
         }
-      });
+      })
   };
 
   render() {
@@ -89,7 +88,7 @@ class ConfirmPasswordResetForm extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset password</p>
 
-          <div class="col">
+          <div className="col">
             <div>
               <FormTextBox
                 id={validationFields.password.name}
@@ -113,9 +112,9 @@ class ConfirmPasswordResetForm extends Component {
             <div>
               <button
                 type="submit"
-                class="btn btn-primary"
+                className="btn btn-primary"
                 disabled={!this.validateForm() || loading}>
-                {loading && <span class="spinner-grow spinner-grow-sm"
+                {loading && <span className="spinner-grow spinner-grow-sm"
                   role="status"
                   aria-hidden="true"></span>}
                 Submit

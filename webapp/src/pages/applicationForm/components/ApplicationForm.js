@@ -15,6 +15,7 @@ import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
 
+
 const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
@@ -25,6 +26,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -52,7 +54,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
-class FieldEditor extends React.Component {
+ class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
@@ -62,6 +64,7 @@ class FieldEditor extends React.Component {
       uploadError: "",
       uploaded: false
     }
+
   }
 
   handleChange = event => {
@@ -205,7 +208,10 @@ class FieldEditor extends React.Component {
             key={"i_" + key}
             showError={validationError}
             errorText={validationError}
-            required={question.is_required} />
+            required={question.is_required}
+          />
+
+
         );
       case REFERENCE_REQUEST:
         return (
@@ -248,7 +254,7 @@ class FieldEditor extends React.Component {
   }
 }
 
-class Section extends React.Component {
+  class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -257,15 +263,18 @@ class Section extends React.Component {
         .slice()
         .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
-      validationStale: false
+      validationStale: false,
+
     };
   }
+
 
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
       value: value
     };
+
 
     const newQuestionModels = this.state.questionModels
       .map(q => {
@@ -294,6 +303,8 @@ class Section extends React.Component {
     );
   };
 
+
+  // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
     const question = questionModel.question;
@@ -302,6 +313,7 @@ class Section extends React.Component {
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
     }
+
     if (
       answer &&
       question.validation_regex &&
@@ -313,6 +325,8 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
+
+  // isValidated
   isValidated = () => {
     const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
@@ -341,6 +355,7 @@ class Section extends React.Component {
         }
       }
     );
+
     return isValid;
   };
 
@@ -372,7 +387,9 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+
     const allAnswersInSection = questionModels.map(q => q.answer);
+
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -410,6 +427,7 @@ class Section extends React.Component {
   }
 }
 
+
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
@@ -429,6 +447,7 @@ function AnswerValue(props) {
   }
   return "No answer provided.";
 }
+
 
 class Confirmation extends React.Component {
 
@@ -777,8 +796,8 @@ class ApplicationFormInstance extends Component {
     } = this.state;
 
     if (isError) {
-      return <div className={"alert alert-danger alert-container"}>{
-        errorMessage}
+      return <div className={"alert alert-danger alert-container"}>
+        {errorMessage}
       </div>;
     }
 
@@ -877,6 +896,7 @@ class ApplicationFormInstance extends Component {
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
           />
+
           <ReactToolTip />
         </div>
         {isSubmitting && <h2 class="submitting">Saving Responses...</h2>}
@@ -934,17 +954,16 @@ class ApplicationList extends Component {
         </thead>
         <tbody>
           {this.props.responses.map(response => {
-          return <tr key={"response_" + response.id}>
-            <td>{this.getCandidate(allQuestions, response)}</td>
-            <td>{this.getStatus(response)}</td>
-            <td>{this.getAction(response)}</td>
-          </tr>
-        })}
+            return <tr key={"response_" + response.id}>
+              <td>{this.getCandidate(allQuestions, response)}</td>
+              <td>{this.getStatus(response)}</td>
+              <td>{this.getAction(response)}</td>
+            </tr>
+          })}
         </tbody>
       </table>
     </div>
   }
-
 }
 
 class ApplicationForm extends Component {
@@ -994,7 +1013,15 @@ class ApplicationForm extends Component {
   }
 
   render() {
-    const { isLoading, isError, errorMessage, formSpec, responses, selectedResponse, responseSelected } = this.state;
+    const {
+      isLoading,
+      isError,
+      errorMessage,
+      formSpec,
+      responses,
+      selectedResponse,
+      responseSelected } = this.state;
+
     if (isLoading) {
       return (<Loading />);
     }
@@ -1002,7 +1029,6 @@ class ApplicationForm extends Component {
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
-
 
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
       return <div>
@@ -1020,4 +1046,4 @@ class ApplicationForm extends Component {
 
 }
 
-export default withRouter(ApplicationForm);
+ export default withRouter(ApplicationForm);
