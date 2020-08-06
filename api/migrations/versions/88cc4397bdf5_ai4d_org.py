@@ -57,7 +57,7 @@ def upgrade():
     session = orm.Session(bind=Base.metadata.bind)
 
     ai4d = Organisation('AI4D Africa', 'Baobab', small_logo='ai4d_square_logo.png', large_logo='ai4d_logo.png',
-        icon_logo='ai4d_white.png', domain='ai4d', url='http://www.ai4d.ai', email_from='AI4DAfrica@idrc.ca', 
+        icon_logo='ai4d_white.png', domain='ai4d', url='http://www.ai4d.ai', email_from='calls@ai4d.ai', 
         system_url='https://baobab.ai4d.ai', privacy_policy='AI4D_privacy_policy_en_fr.pdf', 
         languages=[{"code": "en", "description": "English"}, {"code": "fr", "description": "French"}])
 
