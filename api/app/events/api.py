@@ -458,7 +458,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
 
             subject = 'FINAL REMINDER to submit you application for {}'.format(
                 event_name)
-            not_submitted_body = email_repository.get(event_id, 'application-not-submitted').template
+            not_submitted_body = email_repository.get(event_id, 'application-not-submitted', 'en').template
             body = not_submitted_body.format(
                 title=title,
                 firstname=firstname,
@@ -498,7 +498,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             system_name = event.organisation.system_name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
-            not_started_body = email_repository.get(event_id, 'application-not-started').template
+            not_started_body = email_repository.get(event_id, 'application-not-started', 'en').template
             subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
                 event_name)
             body = not_started_body.format(

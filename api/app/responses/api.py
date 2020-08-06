@@ -162,7 +162,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             organisation = event.organisation
             subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
             
-            withdrawal_template = email_repository.get(event.id, 'withdrawal').template
+            withdrawal_template = email_repository.get(event.id, 'withdrawal', 'en').template
             body_text = withdrawal_template.format(
                 title=user.user_title,
                 firstname=user.firstname,
@@ -195,7 +195,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             subject = 'Your application to {}'.format(event.description)
             question_answer_summary = strings.build_response_email_body(answers)
 
-            template = email_repository.get(event.id, 'confirmation-response').template
+            template = email_repository.get(event.id, 'confirmation-response', 'en').template
             body_text = template.format(
                 title=user.user_title,
                 firstname=user.firstname,

@@ -109,7 +109,7 @@ class OutcomeAPI(restful.Resource):
             db.session.commit()
 
             if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates    
-                email_template = email_repository.get(event_id, 'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist')
+                email_template = email_repository.get(event_id, 'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist', 'en')
                 if email_template:
                     send_mail(recipient=user.email, subject='{} Application Status Update'.format(event.name),
                     body_text=email_template.template.format(

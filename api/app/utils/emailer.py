@@ -8,6 +8,17 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from flask import g, request
+from app.email_template.repository import EmailRepository as email_repository
+from app.users.repository import UserRepository as user_repository
+
+# TODO: ADD SUBJECT TO EMAIL TEMPLATE! 
+def email_user(event_id, user_id, email_template_key, template_parameters):
+    user = user_repository.get_by_id(user_id)
+    language = user.user_primaryLanguage
+    email_template = email_repository.get(event_id, email_template_key, language)
+    body_text = email_template.template.format(**template_parameters)
+    send_mail(recipient=user.email, subject='SUBJECT', body_text=body_text)
+
 
 def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
               file_path='', sender_name=None, sender_email=None):
