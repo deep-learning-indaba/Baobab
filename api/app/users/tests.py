@@ -18,6 +18,7 @@ USER_DATA = {
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': '123456',
+        'language': 'en',
         'policy_agreed': True
     }
 
@@ -107,10 +108,13 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Updated',
             'lastname': 'Updated',
             'user_title': 'Mrs',
+            'language': 'zu',
             'password': ''
         })
 
         self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['primary_language'], 'zu')
 
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
@@ -360,8 +364,9 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Some',
             'lastname': 'Thing',
             'user_title': 'Mr',
+            'language': 'en',
             'password':''
-            })
+        })
 
         self.assertEqual(response.status_code,  200)
 
