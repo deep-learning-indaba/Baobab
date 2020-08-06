@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -25,6 +26,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const MULTI_FILE = 'multi-file';
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -67,6 +69,7 @@ class FieldEditor extends React.Component {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
+    console.log(value)
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -207,6 +210,17 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
+        case MULTI_FILE:
+          return (
+            <FormMultiFile
+              id={this.id}
+              name={this.id}
+              label={question.description}
+              value={answer}
+              onChange={this.handleChange}
+              errorText={validationError}
+               />
+          );
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
