@@ -46,6 +46,7 @@ class ConfirmPasswordResetForm extends Component {
     };
   };
 
+
   handleSubmit = event => {
   event.preventDefault();
 
@@ -54,20 +55,28 @@ class ConfirmPasswordResetForm extends Component {
       loading: true
     });
 
-    userService
-      .confirmPasswordReset(this.state.password, this.state.token)
-      .then(response => {
-        console.log("Response from user service: ", response);
-        if (response.status === 201) {
-          const { from } = { from: { pathname: "/login" } };
-          this.props.history.push(from);
-        } else {
-          this.setState({
-            error: response.message,
-            loading: false
-          });
-        }
-      })
+
+   const _this = this;
+
+    return new Promise(function (resolve) {
+      userService
+        .confirmPasswordReset(_this.state.password, _this.state.token)
+        .then(response => {
+          console.log("Response from user service: ", response);
+
+          if (response.status === 201) {
+            const { from } = { from: { pathname: "/login" } };
+            _this.props.history.push(from);
+          } else {
+
+            _this.setState({
+              error: response.message,
+              loading: false
+            });
+          }
+          resolve(response.message)
+        });
+    })
   };
 
   render() {
