@@ -28,6 +28,15 @@
 
 /* MultiFileComponent */
 
+.errorText{
+display: none;
+color: red;
+}
+
+.errorText.display{
+display: block;
+}
+
 .upload-item-container {
   display: flex;
   flex-direction: column;

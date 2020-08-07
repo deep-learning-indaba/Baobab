@@ -35,12 +35,13 @@ class FormMultiFile extends React.Component {
             <div>
                 <FormGroup>
                     {this.state.uploads.map((val) => {
-                        return <MultiFileComponent
+                        return <MultiFileComponent className="multi-file-component"
                             handleUpload={(file, description) => this.handleUpload(file, description)}
                         />
                     })}
 
                     <button className="add-file-btn" onClick={(e) => this.addFile(e)}>+</button>
+                    <div className={this.props.errorText ? "errorText display" : "errorText"}> <p>{this.props.errorText}</p> </div>
                 </FormGroup>
             </div>
         );
