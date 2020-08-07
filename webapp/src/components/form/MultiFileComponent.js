@@ -40,7 +40,7 @@ class MultiFileComponent extends React.Component {
             <form className="upload-item-wrapper">
                 <label>Upload File</label>
                 <div className="upload-item-container">
-                <input className={this.state.lockDiscription ? "discription lock" : "discription"} onChange={this.handleChange} placeholder="Please add a description" type="text"></input>
+                <input className={this.state.lockDiscription ? "description lock" : "description"} onChange={this.handleChange} placeholder="Please add a description" type="text"></input>
                 <input onChange={this.handleUpload} type="file"></input>
                 </div>
             </form>
