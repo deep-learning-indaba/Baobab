@@ -1,4 +1,4 @@
-import React, { Component, Suspense} from "react";
+import React, { Component, Suspense } from "react";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import EventHome from "./pages/eventHome";
@@ -43,14 +43,16 @@ class EventNav extends Component {
 
   render() {
     const t = this.props.t;
-    
+
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
+        
         <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
         <div class={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
+
           <ul className="navbar-nav">
             {this.props.user &&
               this.props.event &&
@@ -91,7 +93,7 @@ class EventNav extends Component {
                     aria-expanded="false"
                   >
                     {t('Registration')}
-              </div>
+                  </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
                       to={`/${this.props.eventKey}/registration`}
@@ -123,7 +125,7 @@ class EventNav extends Component {
                   aria-expanded="false"
                 >
                   {t('Event Admin')}
-            </div>
+                </div>
                 <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                   <NavLink
                     to={`/${this.props.eventKey}/reviewAssignment`}
@@ -155,7 +157,7 @@ class EventNav extends Component {
                     aria-expanded="false"
                   >
                     {t('Reviews')}
-              </div>
+                  </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
                       to={`/${this.props.eventKey}/review`}
@@ -187,7 +189,7 @@ class EventNav extends Component {
                     aria-expanded="false"
                   >
                     {t('Registration Admin')}
-              </div>
+                  </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
                       to={`/${this.props.eventKey}/registrationAdmin`}
@@ -220,6 +222,45 @@ class EventNav extends Component {
 
 
 const EventNavTranslation = withTranslation()(EventNav);
+
+
+class LanguageSelectorComponent extends Component {
+  changeLanguage = (lang) => {
+    // Change the language using i18next
+    if (this.props.i18n) {
+      this.props.i18n.changeLanguage(lang);
+    }
+  }
+
+  render() {
+    if (this.props.organisation && this.props.organisation.languages.length > 1) {
+      return (
+        <ul class="navbar-nav language-navbar">
+          <li class="nav-item dropdown">
+            <button
+              class="nav-link dropdown-toggle link-style"
+              id="userDropdown"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              <i class="fas fa-globe menu-icon" />{" "}
+              {this.props.i18n.language}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="userDropdown">
+              {this.props.organisation.languages.map(lang => (
+                <button className="dropdown-item cursor-pointer" onClick={()=>this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+              ))}
+            </div>
+          </li>
+        </ul>)
+    }
+
+    return <div></div>
+  }
+}
+
+const LanguageSelector = withTranslation()(LanguageSelectorComponent);
 
 class AppComponent extends Component {
   constructor(props) {
@@ -305,6 +346,7 @@ class AppComponent extends Component {
               id="navbarNav"
             >
               <ul className="navbar-nav mr-auto"></ul>
+              <LanguageSelector organisation={this.state.organisation} />
               <UserDropdown
                 logout={this.handleLogout}
                 user={this.state.user}
@@ -429,7 +471,7 @@ class AppComponent extends Component {
             cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}
             buttonStyle={{ fontWeight: "bold" }}
-            buttonText={t("I understand")} 
+            buttonText={t("I understand")}
             buttonClasses="btn btn-primary"
             buttonId="btn-cookieConsent"
             containerClasses="alert alert-warning col-lg-12"
@@ -458,7 +500,7 @@ class AppComponent extends Component {
 const AppTranslation = withTranslation()(AppComponent);
 
 export default function App() {
-  return <Suspense fallback={<Loading/>}>
+  return <Suspense fallback={<Loading />}>
     <AppTranslation />
   </Suspense>
 }

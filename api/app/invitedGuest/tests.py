@@ -35,7 +35,8 @@ USER_DATA = {
     'user_title': 'Mr',
     'role': 'mentor',
     'event_id': 1,
-    'policy_agreed': True
+    'policy_agreed': True,
+    'language': 'en'
 }
 
 

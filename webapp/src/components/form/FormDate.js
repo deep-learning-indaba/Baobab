@@ -6,6 +6,10 @@ import "./Style.css";
 import * as moment from 'moment';
 
 class FormDate extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
 
@@ -40,6 +44,7 @@ class FormDate extends React.Component {
             ) : (
                 <div />
               )}
+
           </div>
 
           <DateTimePicker
@@ -52,6 +57,7 @@ class FormDate extends React.Component {
             value={this.props.value ? new Date(this.props.value) : null}
             format="y-MM-dd"
           />
+
         </FormGroup>
       </div>
     );
