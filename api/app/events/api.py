@@ -316,15 +316,18 @@ class EventsAPI(restful.Resource):
     def get(self):
         user_id = g.current_user["id"]
         language = request.args['language']
+        default_language = 'en'
 
         events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
 
         for event in events:
             if not event.has_specific_translation(language):
-                return EVENT_WITH_TRANSLATION_NOT_FOUND
+                LOGGER.error('Missing {} translation for event {}.'.format(language, event.id))
+                language = default_language
             status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
             returnEvents.append(event_info(user_id, event, status, language))
+            language = request.args['language']
 
         return returnEvents, 200
 
