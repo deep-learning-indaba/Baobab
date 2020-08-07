@@ -11,3 +11,47 @@
   border-radius: 5px;
   border: 1px solid red !important;
 }
+
+/* FormMulitFile */
+
+.add-file-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid lightgrey;
+  border-radius: 50%;
+  background: hsl(214deg 32% 18%);
+  color: white;
+  font-size: 1.5rem;
+  transition: 500ms;
+}
+
+
+/* MultiFileComponent */
+
+.upload-item-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-item-container input[type=text] {
+  width: 40%;
+  padding: 3px 5px;
+  border: 1px solid lightgrey;
+  outline: none;
+  border-radius: 5px;
+}
+
+.upload-item-container input[type=file] {
+margin: 10px 0;
+}
+
+.upload-item-container input#file-upload-button {
+  background: hsl(211deg 100% 50%);
+  color: white;
+}
+
+/*
+
+*/
+
+

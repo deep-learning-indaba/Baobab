@@ -93,6 +93,7 @@ class FieldEditor extends React.Component {
       }).then(response => {
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
+          return response
         }
         this.setState({
           uploaded: response.fileId !== "",
@@ -217,7 +218,7 @@ class FieldEditor extends React.Component {
               name={this.id}
               label={question.description}
               value={answer}
-              onChange={this.handleChange}
+              uploadFile={(file) => this.handleUploadFile(file)}
               errorText={validationError}
                />
           );
