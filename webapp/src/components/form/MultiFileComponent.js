@@ -7,6 +7,7 @@ class MultiFileComponent extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            lockDiscription: false,
             description: "",
             file: {},
         }
@@ -14,7 +15,7 @@ class MultiFileComponent extends React.Component {
 
     handleChange = event => {
         const value = event.target.value;
-        console.log(value)
+   
         this.setState({
             description: value
         })
@@ -22,12 +23,15 @@ class MultiFileComponent extends React.Component {
 
     handleUpload = event => {
         const value = event.target.files[0];
+ 
         this.setState({
-            file: value
+            file: value,
+            lockDiscription: true
         })
 
         this.props.handleUpload(value, this.state.description)
     };
+
 
 
     render() {
@@ -36,7 +40,7 @@ class MultiFileComponent extends React.Component {
             <form className="upload-item-wrapper">
                 <label>Upload File</label>
                 <div className="upload-item-container">
-                <input className="description" onChange={this.handleChange} placeholder="Please add a description" type="text"></input>
+                <input className={this.state.lockDiscription ? "discription lock" : "discription"} onChange={this.handleChange} placeholder="Please add a description" type="text"></input>
                 <input onChange={this.handleUpload} type="file"></input>
                 </div>
             </form>

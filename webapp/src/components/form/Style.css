@@ -59,8 +59,10 @@ margin: 10px 0;
   color: white;
 }
 
-/*
+.discription.lock {
+  opacity: 0.5;
+  pointer-events: none;
+}
 
-*/
 
 

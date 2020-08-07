@@ -21,14 +21,14 @@ class FormMultiFile extends React.Component {
     }
 
     handleUpload(file, description) {
+
         var newFile = { name: `${file}`, file: file, description: description }
 
         this.setState({
             fileList: this.state.fileList.concat(newFile)
-        }, () => this.props.uploadFile(file)) 
+        }, () => this.props.uploadFile(file))
 
     }
-
 
     render() {
         return (
@@ -36,7 +36,7 @@ class FormMultiFile extends React.Component {
                 <FormGroup>
                     {this.state.uploads.map((val) => {
                         return <MultiFileComponent className="multi-file-component"
-                            handleUpload={(file, description) => this.handleUpload(file, description)}
+                            handleUpload={(file, description, paramType) => this.handleUpload(file, description)}
                         />
                     })}
 
