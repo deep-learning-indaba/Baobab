@@ -449,25 +449,16 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
 
         users = user_repository.get_all_with_unsubmitted_response()
         for user in users:
-            title = user.user_title
-            firstname = user.firstname
-            lastname = user.lastname
-            event_name = event.name
             organisation_name = event.organisation.name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
             email_user(
                 'application-not-submitted', 
                 dict(
-                    title=title,
-                    firstname=firstname,
-                    lastname=lastname,
-                    event=event_name,
                     organisation_name=organisation_name,
                     deadline=deadline), 
-                event_id=event_id,
-                user=user, 
-                subject_parameters={'event_name': event_name})
+                event=event,
+                user=user)
 
         return {'unsubmitted_responses': len(users)}, 201
 
@@ -489,10 +480,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             return FORBIDDEN
 
         users = user_repository.get_all_without_responses()
-        for user in users:
-            title = user.user_title
-            firstname = user.firstname
-            lastname = user.lastname
+        for user in users:            
             event_name = event.name
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
@@ -501,17 +489,13 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             email_user(
                 'application-not-started', 
                 dict(
-                    title=title,
-                    firstname=firstname,
-                    lastname=lastname,
                     event=event_name,
                     organisation_name=organisation_name,
                     system_name=system_name,
                     deadline=deadline
                 ),
                 event_id=event_id,
-                user=user,
-                subject_parameters={'event_name': event_name}
+                user=user
             )
 
         return {'not_started_responses': len(users)}, 201

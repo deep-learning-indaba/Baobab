@@ -106,15 +106,8 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
 
         email_user(
             'attendance-confirmation',
-            dict(
-                user_title=user.user_title,
-                first_name=user.firstname,
-                last_name=user.lastname,
-                event_name=event.name
-            ),
-            event_id=event.id,
-            user=user,
-            subject_parameters={'event_name': event.name}
+            event=event,
+            user=user
         )
 
         # Other Fields

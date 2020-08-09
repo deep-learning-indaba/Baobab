@@ -163,15 +163,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             emailer.email_user(
                 'withdrawal',
                 dict(
-                    title=user.user_title,
-                    firstname=user.firstname,
-                    lastname=user.lastname,
-                    organisation_name=organisation.name,
-                    event_name=event.name
+                    organisation_name=organisation.name
                 ),
                 event_id=event.id,
-                user=user,
-                subject_parameters={'event_name': event.name}
+                user=user
             )
 
         except:                
@@ -201,16 +196,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             emailer.email_user(
                 'confirmation-response',
                 dict(
-                    title=user.user_title,
-                    firstname=user.firstname,
-                    lastname=user.lastname,
                     event_description=event.description,
                     question_answer_summary=question_answer_summary,
-                    event_name=event.name
                 ),
                 event_id=event.id,
-                user=user,
-                subject_parameters={'event_name': event.name}
+                user=user
             )
 
         except:

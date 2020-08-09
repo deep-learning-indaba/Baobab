@@ -121,15 +121,8 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     try:
         emailer.email_user(
             'invitation-letter',
-            dict(
-                user_title=user_title, 
-                first_name=firstname, 
-                last_name=lastname,
-                event_name=event.name
-            ),
-            event_id=event.id,
+            event=event,
             user_id=user_id,
-            subject_parameters={'event_name': event.name},
             file_name="InvitationLetter.pdf",
             file_path=template_pdf
         )

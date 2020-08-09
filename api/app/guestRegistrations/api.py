@@ -236,15 +236,10 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             emailer.email_user(
                 'guest-registration-confirmation',
                 dict(
-                    user_title=user.user_title,
-                    first_name=user.firstname,
-                    last_name=user.lastname,
                     summary=summary,
-                    event_name=event_name
                 ),
                 event_id=event_id,
                 user=user,
-                subject_parameters={'event_name': event_name}
             )
 
             return True

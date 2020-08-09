@@ -10,11 +10,13 @@ from email import encoders
 from flask import g, request
 from app.email_template.repository import EmailRepository as email_repository
 from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
 
 def email_user(
     email_template_key, 
-    template_parameters, 
-    event_id=None, 
+    template_parameters=None, 
+    event_id=None,
+    event=None,
     user_id=None, 
     user=None, 
     subject_parameters=None, 
@@ -25,16 +27,33 @@ def email_user(
     if user_id is None and user is None:
         raise ValueError('You must specify one of user_id or user')
     
+    if event_id is None and event is None:
+        raise ValueError('You must specify one of event or event_id')
+
     user = user or user_repository.get_by_id(user_id)
+    event = event or event_repository.get_by_id(event_id)
     language = user.user_primaryLanguage
-    email_template = email_repository.get(event_id, email_template_key, language)
+    email_template = email_repository.get(event.id, email_template_key, language)
 
     if email_template is None:
         raise ValueError('Could not find email template with key {}'.format(email_template_key))
+    
+    subject_parameters = subject_parameters or {}
+    if 'event_name' not in subject_parameters:
+        subject_parameters['event_name'] = event.name
 
-    subject = email_template.subject
-    if subject_parameters is not None:
-        subject = subject.format(**subject_parameters)
+    subject = email_template.subject.format(**subject_parameters)
+
+    template_parameters = template_parameters or {}
+    if 'title' not in template_parameters:
+        template_parameters['title'] = user.user_title
+    if 'firstname' not in template_parameters:
+        template_parameters['firstname'] = user.firstname
+    if 'lastname' not in template_parameters:
+        template_parameters['lastname'] = user.lastname
+    if 'event_name' not in template_parameters:
+        template_parameters['event_name'] = event.name
+
     body_text = email_template.template.format(**template_parameters)
     send_mail(recipient=user.email, subject=subject, body_text=body_text)
 

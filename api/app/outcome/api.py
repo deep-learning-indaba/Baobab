@@ -111,15 +111,10 @@ class OutcomeAPI(restful.Resource):
                 email_user(
                     'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
                     dict(
-                        user_title=user.user_title, 
-                        first_name=user.firstname, 
-                        last_name=user.lastname,
-                        event_name=event.name, 
                         host=misc.get_baobab_host()
                     ),
                     event_id=event.id,
                     user=user,
-                    subject_parameters={'event_name': event.name}
                 )
 
             return outcome, 201
