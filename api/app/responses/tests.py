@@ -33,8 +33,8 @@ class ResponseApiTest(ApiTestCase):
         test_category = self.add_category()
 
         email_templates = [
-            EmailTemplate('withdrawal', None, '', 'en'),
-            EmailTemplate('confirmation-response', None, '{question_answer_summary}', 'en')
+            EmailTemplate('withdrawal', None, 'Withdrawal', '', 'en'),
+            EmailTemplate('confirmation-response', None, 'Confirmation', '{question_answer_summary}', 'en')
         ]
         db.session.add_all(email_templates)
         db.session.commit()
