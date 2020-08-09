@@ -184,6 +184,8 @@ class EventAPI(EventMixin, restful.Resource):
             return EVENT_TRANSLATION_MISMATCH
 
         event = Event(
+            args['name'],
+            args['description'],
             args['start_date'],
             args['end_date'],
             args['key'],

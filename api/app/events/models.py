@@ -42,6 +42,8 @@ class Event(db.Model):
 
     def __init__(
         self,
+        names,
+        descriptions,
         start_date,
         end_date,
         key,
@@ -82,6 +84,12 @@ class Event(db.Model):
         self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
+
+        for language in names:
+            name = names[language]
+            description = descriptions[language]
+            event_translation = EventTranslation(name, description, language)
+            self.event_translations.append(event_translation)
 
     def set_miniconf_url(self, new_miniconf_url):
         self.miniconf_url = new_miniconf_url
@@ -268,6 +276,11 @@ class EventTranslation(db.Model):
     language = db.Column(db.String(2))
 
     event = db.relationship('Event', foreign_keys=[event_id])
+
+    def __init__(self, name, description, language):
+        self.name = name
+        self.description = description
+        self.language = language
 
 class EventRole(db.Model):
 
