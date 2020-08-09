@@ -167,8 +167,8 @@ class ApiTestCase(unittest.TestCase):
         return category
 
     def add_event(self, 
-                 name ='Test Event', 
-                 description = 'Event Description', 
+                 name ={'en': 'Test Event'}, 
+                 description = {'en': 'Event Description'}, 
                  start_date = datetime.now() + timedelta(days=30), 
                  end_date = datetime.now() + timedelta(days=60),
                  key = 'INDABA2025',

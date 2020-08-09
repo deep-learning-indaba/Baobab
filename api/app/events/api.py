@@ -414,7 +414,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             title = user.user_title
             firstname = user.firstname
             lastname = user.lastname
-            event_name = event.name
+            event_name = event.get_name('en') # TODO figure out how to get users language preference
             organisation_name = event.organisation.name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
@@ -455,7 +455,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             title = user.user_title
             firstname = user.firstname
             lastname = user.lastname
-            event_name = event.name
+            event_name = event.get_name('en')
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
             deadline = event.application_close.strftime('%A %-d %B %Y')
