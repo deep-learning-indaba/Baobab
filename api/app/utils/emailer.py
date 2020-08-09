@@ -26,12 +26,10 @@ def email_user(
     """Send an email to a specified user using an email template. Handles resolving the correct language."""
     if user_id is None and user is None:
         raise ValueError('You must specify one of user_id or user')
-    
-    if event_id is None and event is None:
-        raise ValueError('You must specify one of event or event_id')
 
     user = user or user_repository.get_by_id(user_id)
-    event = event or event_repository.get_by_id(event_id)
+    if event is None and event_id is not None:
+        event = event_repository.get_by_id(event_id)
     language = user.user_primaryLanguage
     email_template = email_repository.get(event.id, email_template_key, language)
 
@@ -39,7 +37,7 @@ def email_user(
         raise ValueError('Could not find email template with key {}'.format(email_template_key))
     
     subject_parameters = subject_parameters or {}
-    if 'event_name' not in subject_parameters:
+    if event is not None and 'event_name' not in subject_parameters:
         subject_parameters['event_name'] = event.name
 
     subject = email_template.subject.format(**subject_parameters)
@@ -51,7 +49,7 @@ def email_user(
         template_parameters['firstname'] = user.firstname
     if 'lastname' not in template_parameters:
         template_parameters['lastname'] = user.lastname
-    if 'event_name' not in template_parameters:
+    if event is not None and 'event_name' not in template_parameters:
         template_parameters['event_name'] = event.name
 
     body_text = email_template.template.format(**template_parameters)
