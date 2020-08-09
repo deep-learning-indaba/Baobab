@@ -11,13 +11,19 @@ from flask import g, request
 from app.email_template.repository import EmailRepository as email_repository
 from app.users.repository import UserRepository as user_repository
 
-# TODO: ADD SUBJECT TO EMAIL TEMPLATE! 
-def email_user(event_id, user_id, email_template_key, template_parameters):
-    user = user_repository.get_by_id(user_id)
+def email_user(email_template_key, template_parameters, event_id=None, user_id=None, user=None, subject_parameters=None):
+    """Send an email to a specified user using an email template. Handles resolving the correct language."""
+    if user_id is None and user is None:
+        raise ValueError('You must specify one of user_id or user')
+    
+    user = user or user_repository.get_by_id(user_id)
     language = user.user_primaryLanguage
     email_template = email_repository.get(event_id, email_template_key, language)
+    subject = email_template.subject
+    if subject_parameters is not None:
+        subject = subject.format(**subject_parameters)
     body_text = email_template.template.format(**template_parameters)
-    send_mail(recipient=user.email, subject='SUBJECT', body_text=body_text)
+    send_mail(recipient=user.email, subject=subject, body_text=body_text)
 
 
 def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
