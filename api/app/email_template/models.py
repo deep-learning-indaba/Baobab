@@ -11,11 +11,13 @@ class EmailTemplate(db.Model):
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=True)
     language = db.Column(db.String(2), nullable=False)
     template = db.Column(db.String(), nullable=False)
+    subject = db.Column(db.String(), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
 
-    def __init__(self, key, event_id, template, language):
+    def __init__(self, key, event_id, subject, template, language):
         self.key = key
         self.event_id = event_id
+        self.subject = subject
         self.template = template
         self.language = language
