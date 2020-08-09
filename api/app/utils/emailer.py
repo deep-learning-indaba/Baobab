@@ -11,7 +11,16 @@ from flask import g, request
 from app.email_template.repository import EmailRepository as email_repository
 from app.users.repository import UserRepository as user_repository
 
-def email_user(email_template_key, template_parameters, event_id=None, user_id=None, user=None, subject_parameters=None):
+def email_user(
+    email_template_key, 
+    template_parameters, 
+    event_id=None, 
+    user_id=None, 
+    user=None, 
+    subject_parameters=None, 
+    file_name='',
+    file_path=''
+):
     """Send an email to a specified user using an email template. Handles resolving the correct language."""
     if user_id is None and user is None:
         raise ValueError('You must specify one of user_id or user')
