@@ -19,7 +19,15 @@ from app.registration.repository import RegistrationRepository as registration_r
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE, EVENT_WITH_TRANSLATION_NOT_FOUND
+from app.utils.errors import (
+    EVENT_NOT_FOUND,
+    FORBIDDEN,
+    EVENT_WITH_KEY_NOT_FOUND,
+    EVENT_KEY_IN_USE,
+    EVENT_WITH_TRANSLATION_NOT_FOUND,
+    EVENT_MUST_CONTAIN_TRANSLATION,
+    EVENT_TRANSLATION_MISMATCH
+)
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
 from app.utils.emailer import send_mail
@@ -164,11 +172,16 @@ class EventAPI(EventMixin, restful.Resource):
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_admin:
-            LOGGER.error('alksdjflkasj')
             return FORBIDDEN
 
         if event_repository.exists_by_key(args['key']):
             return EVENT_KEY_IN_USE
+        
+        if len(args['name']) == 0 or len(args['description']) == 0:
+            return EVENT_MUST_CONTAIN_TRANSLATION
+        
+        if set(args['name']) != set(args['description']):
+            return EVENT_TRANSLATION_MISMATCH
 
         event = Event(
             args['start_date'],
@@ -209,6 +222,12 @@ class EventAPI(EventMixin, restful.Resource):
 
         if event_repository.exists_by_key(args['key']):
             return EVENT_KEY_IN_USE
+
+        if len(args['name']) == 0 or len(args['description']) == 0:
+            return EVENT_MUST_CONTAIN_TRANSLATION
+        
+        if set(args['name']) != set(args['description']):
+            return EVENT_TRANSLATION_MISMATCH
 
         event = event_repository.get_by_id(args['id'])
         if not event:
