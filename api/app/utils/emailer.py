@@ -19,6 +19,10 @@ def email_user(email_template_key, template_parameters, event_id=None, user_id=N
     user = user or user_repository.get_by_id(user_id)
     language = user.user_primaryLanguage
     email_template = email_repository.get(event_id, email_template_key, language)
+
+    if email_template is None:
+        raise ValueError('Could not find email template with key {}'.format(email_template_key))
+
     subject = email_template.subject
     if subject_parameters is not None:
         subject = subject.format(**subject_parameters)
