@@ -17,11 +17,9 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey(
-        'organisation.id'), nullable=False)
+    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
-
     application_open = db.Column(db.DateTime(), nullable=False)
     application_close = db.Column(db.DateTime(), nullable=False)
     review_open = db.Column(db.DateTime(), nullable=False)
@@ -34,36 +32,36 @@ class Event(db.Model):
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
     travel_grant = db.Column(db.Boolean(), nullable=False)
+    miniconf_url = db.Column(db.String(100), nullable=True)
 
     organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
     application_forms = db.relationship('ApplicationForm')
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
     event_translations = db.relationship('EventTranslation', lazy='dynamic')
-    miniconf_url = db.Column(db.String(100), nullable=True)
 
-    def __init__(self,
-                 start_date,
-                 end_date,
-                 key,
-                 organisation_id,
-                 email_from,
-                 url,
-                 application_open,
-                 application_close,
-                 review_open,
-                 review_close,
-                 selection_open,
-                 selection_close,
-                 offer_open,
-                 offer_close,
-                 registration_open,
-                 registration_close,
-                 event_type,
-                 travel_grant,
-                 miniconf_url=None
-                 ):
-
+    def __init__(
+        self,
+        start_date,
+        end_date,
+        key,
+        organisation_id,
+        email_from,
+        url,
+        application_open,
+        application_close,
+        review_open,
+        review_close,
+        selection_open,
+        selection_close,
+        offer_open,
+        offer_close,
+        registration_open,
+        registration_close,
+        event_type,
+        travel_grant,
+        miniconf_url=None
+    ):
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
