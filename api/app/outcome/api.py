@@ -8,8 +8,7 @@ from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils.emailer import send_mail
-from app.email_template.repository import EmailRepository as email_repository
+from app.utils.emailer import email_user
 
 from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
@@ -108,16 +107,20 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
-            if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates    
-                email_template = email_repository.get(event_id, 'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist', 'en')
-                if email_template:
-                    send_mail(recipient=user.email, subject='{} Application Status Update'.format(event.name),
-                    body_text=email_template.template.format(
-                        user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
-                        event_name=event.name, host=misc.get_baobab_host()))
-                    LOGGER.debug("Sent an outcome email to {}".format(user.email))
-                else:
-                    LOGGER.warn('No outcome email sent to {} due to missing email template'.format(user.email))
+            if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates  
+                email_user(
+                    'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
+                    dict(
+                        user_title=user.user_title, 
+                        first_name=user.firstname, 
+                        last_name=user.lastname,
+                        event_name=event.name, 
+                        host=misc.get_baobab_host()
+                    ),
+                    event_id=event.id,
+                    user=user,
+                    subject_parameters={'event_name': event.name}
+                )
 
             return outcome, 201
 
