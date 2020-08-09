@@ -76,8 +76,8 @@ def event_info(user_id, event, status, language):
 
 event_fields = {
     'id': fields.Integer,
-    'name': fields.Raw(attribute=lambda event: event.get_all_name_translations()),
-    'description': fields.Raw(attribute=lambda event: event.get_all_description_translations()),
+    'name': fields.Raw(attribute=lambda event: event.get_all_name_translations() if isinstance(event, Event) else {}),
+    'description': fields.Raw(attribute=lambda event: event.get_all_description_translations() if isinstance(event, Event) else {}),
     'key': fields.String,
     'start_date': fields.DateTime(dt_format='iso8601'),
     'end_date': fields.DateTime(dt_format='iso8601'),
@@ -164,71 +164,35 @@ class EventAPI(EventMixin, restful.Resource):
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_admin:
+            LOGGER.error('alksdjflkasj')
             return FORBIDDEN
 
-        _date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-        name = args['name']
-        description = args['description']
-        start_date = datetime.strptime(
-            (args['start_date']), _date_format)
-        end_date = datetime.strptime(
-            (args['end_date']), _date_format)
-        key = args['key']
-        organisation_id = args['organisation_id']
-        email_from = args['email_from']
-        url = args['url']
-        application_open = datetime.strptime(
-            (args['application_open']), _date_format)
-        application_close = datetime.strptime(
-            (args['application_close']), _date_format)
-        review_open = datetime.strptime(
-            (args['review_open']), _date_format)
-        review_close = datetime.strptime(
-            (args['review_close']), _date_format)
-        selection_open = datetime.strptime(
-            (args['selection_open']), _date_format)
-        selection_close = datetime.strptime(
-            (args['selection_close']), _date_format)
-        offer_open = datetime.strptime(
-            (args['offer_open']), _date_format)
-        offer_close = datetime.strptime(
-            (args['offer_close']), _date_format)
-        registration_open = datetime.strptime(
-            (args['registration_open']), _date_format)
-        registration_close = datetime.strptime(
-            (args['registration_close']), _date_format)
-        event_type = args['event_type'].upper()
+        if event_repository.exists_by_key(args['key']):
+            return EVENT_KEY_IN_USE
 
         event = Event(
-            name,
-            description,
-            start_date,
-            end_date,
-            key,
-            organisation_id,
-            email_from,
-            url,
-            application_open,
-            application_close,
-            review_open,
-            review_close,
-            selection_open,
-            selection_close,
-            offer_open,
-            offer_close,
-            registration_open,
-            registration_close,
-            EventType[event_type],
-            travel_grant=False   # TODO: Add to incoming request
+            args['start_date'],
+            args['end_date'],
+            args['key'],
+            args['organisation_id'],
+            args['email_from'],
+            args['url'],
+            args['application_open'],
+            args['application_close'],
+            args['review_open'],
+            args['review_close'],
+            args['selection_open'],
+            args['selection_close'],
+            args['offer_open'],
+            args['offer_close'],
+            args['registration_open'],
+            args['registration_close'],
+            EventType[args['event_type'].upper()],
+            args['travel_grant'] # TODO bring up in PR whether this is fine to update
         )
-        event.add_event_role('admin', user_id)
-        try:
-            event = event_repository.add(event)
-        except IntegrityError as e:
 
-            LOGGER.error("Event with KEY: {} already exists".format(key))
-            LOGGER.error(e)
-            return EVENT_KEY_IN_USE
+        event.add_event_role('admin', user_id)
+        event = event_repository.add(event)
 
         event = event_repository.get_by_id(event.id)
         return event, 201
@@ -238,73 +202,37 @@ class EventAPI(EventMixin, restful.Resource):
     def put(self):
         args = self.req_parser.parse_args()
 
-        event = event_repository.get_by_id(args['id'])
-        if not event:
-            return EVENT_NOT_FOUND
-
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event.id):
             return FORBIDDEN
 
-        _date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-        name = args['name']
-        description = args['description']
-        start_date = datetime.strptime(
-            (args['start_date']), _date_format)
-        end_date = datetime.strptime(
-            (args['end_date']), _date_format)
-        key = args['key']
-        organisation_id = args['organisation_id']
-        email_from = args['email_from']
-        url = args['url']
-        application_open = datetime.strptime(
-            (args['application_open']), _date_format)
-        application_close = datetime.strptime(
-            (args['application_close']), _date_format)
-        review_open = datetime.strptime(
-            (args['review_open']), _date_format)
-        review_close = datetime.strptime(
-            (args['review_close']), _date_format)
-        selection_open = datetime.strptime(
-            (args['selection_open']), _date_format)
-        selection_close = datetime.strptime(
-            (args['selection_close']), _date_format)
-        offer_open = datetime.strptime(
-            (args['offer_open']), _date_format)
-        offer_close = datetime.strptime(
-            (args['offer_close']), _date_format)
-        registration_open = datetime.strptime(
-            (args['registration_open']), _date_format)
-        registration_close = datetime.strptime(
-            (args['registration_close']), _date_format)
+        if event_repository.exists_by_key(args['key']):
+            return EVENT_KEY_IN_USE
+
+        event = event_repository.get_by_id(args['id'])
+        if not event:
+            return EVENT_NOT_FOUND
 
         event.update(
-            name,
-            description,
-            start_date,
-            end_date,
-            key,
-            organisation_id,
-            email_from,
-            url,
-            application_open,
-            application_close,
-            review_open,
-            review_close,
-            selection_open,
-            selection_close,
-            offer_open,
-            offer_close,
-            registration_open,
-            registration_close
+            args['start_date'],
+            args['end_date'],
+            args['key'],
+            args['organisation_id'],
+            args['email_from'],
+            args['url'],
+            args['application_open'],
+            args['application_close'],
+            args['review_open'],
+            args['review_close'],
+            args['selection_open'],
+            args['selection_close'],
+            args['offer_open'],
+            args['offer_close'],
+            args['registration_open'],
+            args['registration_close'] # TODO figure out how to handle mini conf url
         )
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error("Event with KEY: {} already exists".format(key))
-            return EVENT_KEY_IN_USE
+        db.session.commit()
 
         event = event_repository.get_by_id(event.id)
         return event, 200
