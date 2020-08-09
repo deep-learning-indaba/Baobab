@@ -40,7 +40,7 @@ class UserDropdown extends Component {
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-user" />{" "}
+              <i class="fas fa-user menu-icon" />{" "}
               {this.state.user.firstname + " " + this.state.user.lastname}
             </button>
             <div class="dropdown-menu" aria-labelledby="userDropdown">

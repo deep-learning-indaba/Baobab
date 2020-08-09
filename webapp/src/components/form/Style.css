@@ -12,7 +12,6 @@
   border: 1px solid red !important;
 }
 
-/* FormMulitFile */
 
 .add-file-btn {
   width: 40px;
@@ -63,6 +62,4 @@ margin: 10px 0;
   opacity: 0.5;
   pointer-events: none;
 }
-
-
 

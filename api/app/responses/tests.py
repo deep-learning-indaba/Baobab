@@ -22,7 +22,8 @@ class ResponseApiTest(ApiTestCase):
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': '123456',
-        'policy_agreed': True
+        'policy_agreed': True,
+        'language': 'en'
     }
 
     def _seed_data(self):
