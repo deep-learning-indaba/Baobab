@@ -85,11 +85,7 @@ class Event(db.Model):
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 
-        for language in names:
-            name = names[language]
-            description = descriptions[language]
-            event_translation = EventTranslation(name, description, language)
-            self.event_translations.append(event_translation)
+        self.add_event_translations(names, descriptions)
 
     def set_miniconf_url(self, new_miniconf_url):
         self.miniconf_url = new_miniconf_url
@@ -164,10 +160,19 @@ class Event(db.Model):
             description_translation_map[event_translation.language] = event_translation.description
         return description_translation_map
 
+    def add_event_translations(self, names, descriptions):
+        for language in names:
+            name = names[language]
+            description = descriptions[language]
+            event_translation = EventTranslation(name, description, language)
+            self.event_translations.append(event_translation)
+
     def has_specific_translation(self, language):
         return self.event_translations.filter_by(language=language).count() == 1
 
     def update(self,
+               names,
+               descriptions,
                start_date,
                end_date,
                key,
@@ -202,6 +207,9 @@ class Event(db.Model):
         self.registration_open = registration_open
         self.registration_close = registration_close
         self.miniconf_url = miniconf_url
+
+        self.event_translations.delete()
+        self.add_event_translations(names, descriptions)
 
     @property
     def is_application_open(self):

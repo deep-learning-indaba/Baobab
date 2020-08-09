@@ -217,14 +217,6 @@ class EventAPI(EventMixin, restful.Resource):
     def put(self):
         args = self.req_parser.parse_args()
 
-        user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event.id):
-            return FORBIDDEN
-
-        if event_repository.exists_by_key(args['key']):
-            return EVENT_KEY_IN_USE
-
         if len(args['name']) == 0 or len(args['description']) == 0:
             return EVENT_MUST_CONTAIN_TRANSLATION
         
@@ -235,7 +227,17 @@ class EventAPI(EventMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
+        if event_repository.exists_by_key(args['key']) and args['key'] != event.key:
+            return EVENT_KEY_IN_USE
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_admin(event.id):
+            return FORBIDDEN
+
         event.update(
+            args['name'],
+            args['description'],
             args['start_date'],
             args['end_date'],
             args['key'],
