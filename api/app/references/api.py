@@ -15,7 +15,7 @@ from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, RESPONSE_NOT_FOUND
                         APPLICATIONS_CLOSED, REFERENCE_REQUEST_NOT_FOUND, BAD_CONFIGURATION
 
 from app.utils.auth import auth_optional, auth_required
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.references.repository import ReferenceRepository as reference_repository
 from app.references.models import ReferenceRequest, Reference
@@ -124,24 +124,19 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
             LOGGER.error(e)
             return BAD_CONFIGURATION
 
-        if nominator is None:
-            nomination_text = "has nominated themself"
-        else:
-            nomination_text = "has been nominated by {}".format(nominator)
-
-        subject = 'REFERENCE REQUEST - {}'.format(event.name)
-        body = REFERENCE_REQUEST_EMAIL_BODY.format(            
-            title=title,
-            firstname=firstname,
-            lastname=lastname,
-            candidate=candidate,
-            candidate_firstname=candidate_firstname,
-            nomination_text=nomination_text,
-            event_name=event.name,
-            event_url=event.url,
-            application_close_date=event.application_close,
-            link=link)
-        send_mail(recipient=email, subject=subject, body_text=body)
+        email_user(
+            'reference-request-self-nomination' if nominator is None else 'reference-request',
+            template_parameters=dict(
+                candidate=candidate,
+                candidate_firstname=candidate_firstname,
+                nominator=nominator,
+                event_url=event.url,
+                application_close_date=event.application_close,
+                link=link
+            ),
+            event=event,
+            user=user
+        )
 
         reference_request.set_email_sent(datetime.now())
         reference_request_repository.add(reference_request)
