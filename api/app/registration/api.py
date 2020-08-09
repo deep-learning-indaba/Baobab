@@ -147,7 +147,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
-        event_name = event.name
+        event_name = event.get_name('en')
         event_email_from = event.email_from
 
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()

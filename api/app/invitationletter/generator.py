@@ -132,7 +132,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     if not event:
         return errors.EVENT_NOT_FOUND
 
-    subject = "Invitation Letter for " + event.name
+    subject = "Invitation Letter for " + event.get_name('en')
 
     try:
         emailer.send_mail(recipient=email,

@@ -160,7 +160,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
             organisation = event.organisation
-            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
+            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.get_description('en'))
             
             withdrawal_template = email_repository.get(event.id, 'withdrawal').template
             body_text = withdrawal_template.format(
@@ -168,7 +168,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 firstname=user.firstname,
                 lastname=user.lastname,
                 organisation_name=organisation.name,
-                event_name=event.name)
+                event_name=event.get_name('en'))
             emailer.send_mail(user.email, subject, body_text, sender_name=g.organisation.name, sender_email=g.organisation.email_from)
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
@@ -192,7 +192,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            subject = 'Your application to {}'.format(event.description)
+            subject = 'Your application to {}'.format(event.get_description('en'))
             question_answer_summary = strings.build_response_email_body(answers)
 
             template = email_repository.get(event.id, 'confirmation-response').template
@@ -200,9 +200,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 title=user.user_title,
                 firstname=user.firstname,
                 lastname=user.lastname,
-                event_description=event.description,
+                event_description=event.get_description('en'),
                 question_answer_summary=question_answer_summary,
-                event_name=event.name)
+                event_name=event.get_name('en'))
             emailer.send_mail(
                 user.email, 
                 subject, 

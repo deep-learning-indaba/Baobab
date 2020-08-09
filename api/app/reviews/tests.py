@@ -57,9 +57,9 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            self.add_event({'en': 'indaba 2019'}, {'en': 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya '}, datetime(2019, 8, 25), datetime(2019, 8, 31),
             'KENYADABA2019'),
-            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            self.add_event({'en': 'indaba 2020'}, {'en': 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa'}, datetime(2018, 9, 9), datetime(2018, 9, 15),
             'INDABA2020', 2)
         ]
         db.session.commit()
