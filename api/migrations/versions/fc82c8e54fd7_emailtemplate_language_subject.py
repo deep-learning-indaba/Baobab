@@ -21,7 +21,11 @@ def upgrade():
     op.alter_column('email_template', 'language', nullable=False)
     op.add_column('email_template', sa.Column('subject', sa.String(), nullable=True))
 
-    # TODO: SET SUBJECT ON EXISTING EMAILS! 
+    op.execute("""UPDATE email_template SET subject='FINAL REMINDER to submit you application for {event_name}' WHERE key='application-not-submitted'""")
+    op.execute("""UPDATE email_template SET subject='FINAL REMINDER: We do not have your application for {event_name}' WHERE key='application-not-started'""")
+    op.execute("""UPDATE email_template SET subject='Your application for {event_name}' WHERE key='confirmation-response'""")
+    op.execute("""UPDATE email_template SET subject='Withdrawal of Application for {event_name}' WHERE key='withdrawal'""")
+    op.execute("""UPDATE email_template SET subject='{event_name} Application Status Update' WHERE key='outcome-rejected'""")
 
     op.alter_column('email_template', 'subject', nullable=False)
     op.drop_constraint(u'uq_email_template_key_event_id', 'email_template', type_='unique')
