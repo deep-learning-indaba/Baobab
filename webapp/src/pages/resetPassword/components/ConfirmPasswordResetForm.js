@@ -46,29 +46,37 @@ class ConfirmPasswordResetForm extends Component {
     };
   };
 
+
   handleSubmit = event => {
-    event.preventDefault();
+  event.preventDefault();
+
     this.setState({
       submitted: true,
       loading: true
     });
 
-    userService
-      .confirmPasswordReset(this.state.password, this.state.token)
-      .then(response => {
-        console.log("Response from user service: ", response);
 
-        if (response.status === 201) {
-          const { from } = { from: { pathname: "/login" } };
-          this.props.history.push(from);
-        } else {
+   const _this = this;
 
-          this.setState({
-            error: response.message,
-            loading: false
-          });
-        }
-      });
+    return new Promise(function (resolve) {
+      userService
+        .confirmPasswordReset(_this.state.password, _this.state.token)
+        .then(response => {
+          console.log("Response from user service: ", response);
+
+          if (response.status === 201) {
+            const { from } = { from: { pathname: "/login" } };
+            _this.props.history.push(from);
+          } else {
+
+            _this.setState({
+              error: response.message,
+              loading: false
+            });
+          }
+          resolve(response.message)
+        });
+    })
   };
 
   render() {
@@ -89,7 +97,7 @@ class ConfirmPasswordResetForm extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">Reset password</p>
 
-          <div class="col">
+          <div className="col">
             <div>
               <FormTextBox
                 id={validationFields.password.name}
@@ -113,9 +121,9 @@ class ConfirmPasswordResetForm extends Component {
             <div>
               <button
                 type="submit"
-                class="btn btn-primary"
+                className="btn btn-primary"
                 disabled={!this.validateForm() || loading}>
-                {loading && <span class="spinner-grow spinner-grow-sm"
+                {loading && <span className="spinner-grow spinner-grow-sm"
                   role="status"
                   aria-hidden="true"></span>}
                 Submit

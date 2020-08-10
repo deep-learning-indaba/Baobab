@@ -150,7 +150,8 @@ class EventsStatsAPITest(ApiTestCase):
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': 'abc',
-        'policy_agreed': True
+        'policy_agreed': True,
+        'language': 'en'
     }
 
     def seed_static_data(self):
