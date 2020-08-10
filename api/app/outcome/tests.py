@@ -49,6 +49,9 @@ class OutcomeApiTest(ApiTestCase):
 
         self.test_user1_id = self.test_user1.id
 
+        self.add_email_template('outcome-rejected')
+        self.add_email_template('outcome-waitlist')
+
     def test_repository_get_latest_by_user_for_event(self):
         """Test that repository method gets the correct latest outcome for a user."""
         self.seed_static_data()

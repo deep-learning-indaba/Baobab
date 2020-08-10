@@ -22,6 +22,7 @@ from app.applicationModel.models import ApplicationForm
 from app.registration.models import RegistrationForm, Offer
 from app.responses.models import Answer, Response
 from app.invitedGuest.models import InvitedGuest
+from app.email_template.models import EmailTemplate
 
 
 @event.listens_for(Engine, "connect")
@@ -195,6 +196,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(event)
         db.session.commit()
         return event
+
+    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject'):
+        email_template = EmailTemplate(template_key, None, subject, template, language)
+        db.session.add(email_template)
+        db.session.commit()
+        return email_template
 
     def get_auth_header_for(self, email, password='abc'):
         body = {

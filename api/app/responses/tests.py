@@ -39,6 +39,8 @@ class ResponseApiTest(ApiTestCase):
         db.session.add_all(email_templates)
         db.session.commit()
 
+        self.add_email_template('verify-email')
+
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.user_data = json.loads(response.data)
 

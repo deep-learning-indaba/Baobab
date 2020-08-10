@@ -68,6 +68,11 @@ class InvitedGuestTest(ApiTestCase):
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
+        self.add_email_template('guest-invitation-with-registration')
+        self.add_email_template('guest-invitation')
+        self.add_email_template('new-guest-registration')
+        self.add_email_template('new-guest-no-registration')
+
         db.session.flush()
 
     def get_auth_header_for(self, email):

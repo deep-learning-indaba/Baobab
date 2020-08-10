@@ -138,6 +138,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_questions)
         db.session.commit()
 
+        self.add_email_template('reviews-assigned')
+
     def get_auth_header_for(self, email):
         body = {
             'email': email,
