@@ -103,6 +103,8 @@ event_fields = {
     'offer_close': fields.DateTime(dt_format='iso8601'),
     'registration_open': fields.DateTime(dt_format='iso8601'),
     'registration_close': fields.DateTime(dt_format='iso8601'),
+    'travel_grant': fields.Boolean,
+    'miniconf_url': fields.String
 }
 
 
@@ -203,7 +205,8 @@ class EventAPI(EventMixin, restful.Resource):
             args['registration_open'],
             args['registration_close'],
             EventType[args['event_type'].upper()],
-            args['travel_grant'] # TODO bring up in PR whether this is fine to update
+            args['travel_grant'],
+            args['miniconf_url']
         )
 
         event.add_event_role('admin', user_id)
@@ -253,7 +256,9 @@ class EventAPI(EventMixin, restful.Resource):
             args['offer_open'],
             args['offer_close'],
             args['registration_open'],
-            args['registration_close'] # TODO figure out how to handle mini conf url
+            args['registration_close'],
+            args['travel_grant'],
+            args['miniconf_url']
         )
         db.session.commit()
 

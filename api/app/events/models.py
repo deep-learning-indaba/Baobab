@@ -193,6 +193,7 @@ class Event(db.Model):
                offer_close,
                registration_open,
                registration_close,
+               travel_grant,
                miniconf_url=None):
         self.start_date = start_date
         self.end_date = end_date
@@ -210,6 +211,7 @@ class Event(db.Model):
         self.offer_close = offer_close
         self.registration_open = registration_open
         self.registration_close = registration_close
+        self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 
         self.event_translations.delete()
