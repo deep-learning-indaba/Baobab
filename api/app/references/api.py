@@ -129,7 +129,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
         else:
             nomination_text = "has been nominated by {}".format(nominator)
 
-        subject = 'REFERENCE REQUEST - {}'.format(event.name)
+        subject = 'REFERENCE REQUEST - {}'.format(event.get_name('en'))
         body = REFERENCE_REQUEST_EMAIL_BODY.format(            
             title=title,
             firstname=firstname,
@@ -137,7 +137,7 @@ class ReferenceRequestAPI(ReferenceRequestsMixin, restful.Resource):
             candidate=candidate,
             candidate_firstname=candidate_firstname,
             nomination_text=nomination_text,
-            event_name=event.name,
+            event_name=event.get_name('en'),
             event_url=event.url,
             application_close_date=event.application_close,
             link=link)
@@ -195,8 +195,8 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
             'candidate': candidate,
             'nominator': nominator,
             'relation': reference_request.relation,
-            'name': event.name,
-            'description': event.description,
+            'name': event.get_name('en'),
+            'description': event.get_description('en'),
             'is_application_open': event.is_application_open,
             'email_from': event.email_from,
             'reference_submitted_timestamp': reference.timestamp if reference is not None else None

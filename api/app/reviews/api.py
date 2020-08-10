@@ -332,7 +332,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                         baobab_host=misc.get_baobab_host(),
                         system_name=g.organisation.system_name,
                         event_key=event.key,
-                        event=event.name))
+                        event=event.get_name('en')))
 
         return {}, 201
 

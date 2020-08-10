@@ -145,7 +145,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.commit()
 
             event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().name
+                Event.id == registration_form.event_id).first().get_name('en')
 
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
@@ -234,7 +234,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 RegistrationForm.id == args['registration_form_id']).first()
 
             event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().name
+                Event.id == registration_form.event_id).first().get_name('en')
 
             self.send_confirmation(
                 current_user, registration_questions, registration_answers, registration.confirmed, event_name)
@@ -424,7 +424,7 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
             registration.confirm()
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
-            if _send_registration_confirmation_mail(registration_user, registration_event.name):
+            if _send_registration_confirmation_mail(registration_user, registration_event.get_name('en')):
                 registration.confirmation_email_sent_at = datetime.now()
 
             db.session.commit()

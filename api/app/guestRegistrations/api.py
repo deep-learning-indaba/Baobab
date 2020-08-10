@@ -129,7 +129,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().name
+            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().get_name('en')
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
@@ -202,7 +202,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 RegistrationForm.id == args['registration_form_id']).first()
 
             event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().name
+                Event.id == registration_form.event_id).first().get_name('en')
 
             email_sent = self.send_confirmation(current_user, registration_questions, registration_answers,
                                    event_name)

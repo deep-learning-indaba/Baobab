@@ -55,8 +55,8 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
-        self.event1 = self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'LBFSOLVER')
-        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan', datetime.now(), datetime.now(), 'NAGSOLVER', 2)
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'}, datetime.now(), datetime.now(), 'LBFSOLVER')
+        self.event2 = self.add_event({'en': 'IndabaX'}, {'en': 'IndabaX Sudan'}, datetime.now(), datetime.now(), 'NAGSOLVER', 2)
         db.session.commit()
 
         adminRole = EventRole('admin', event_admin.id, self.event1.id)

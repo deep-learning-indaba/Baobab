@@ -106,12 +106,12 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
 
         send_mail(
             recipient=user.email,
-            subject='Welcome to {}'.format(event.name),
+            subject='Welcome to {}'.format(event.get_name('en')),
             body_text=ATTENDANCE_EMAIL_BODY.format(
                 user_title=user.user_title,
                 first_name=user.firstname,
                 last_name=user.lastname,
-                event_name=event.name)
+                event_name=event.get_name('en'))
         )
 
         # Other Fields

@@ -120,13 +120,13 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
                 send_mail(
                     recipient=user.email,
-                    subject='Your invitation to {}'.format(event.name),
+                    subject='Your invitation to {}'.format(event.get_name('en')),
                     body_text=GUEST_EMAIL_TEMPLATE.format(
                         user_title=user.user_title, 
                         firstname=user.firstname, 
                         lastname=user.lastname,
                         role=role,
-                        event_name=event.name,
+                        event_name=event.get_name('en'),
                         guest_registration_text=registration_text))
             except Exception as e:
                 LOGGER.error('Failed to send email to invited guest with user Id {}, due to {}'.format(user.id, e))
@@ -174,13 +174,13 @@ class CreateUser(SignupMixin, restful.Resource):
 
                 send_mail(
                         recipient=user.email,
-                        subject='Your invitation to {}'.format(event.name),
+                        subject='Your invitation to {}'.format(event.get_name('en')),
                         body_text=NEW_GUEST_EMAIL_TEMPLATE.format(
                             user_title=user.user_title, 
                             firstname=user.firstname, 
                             lastname=user.lastname,
                             role=role,
-                            event_name=event.name,
+                            event_name=event.get_name('en'),
                             event_key=event.key,
                             system_name=g.organisation.system_name,
                             host=misc.get_baobab_host(),

@@ -49,7 +49,7 @@ class ResponseApiTest(ApiTestCase):
 
         self.add_n_users(10)
 
-        self.event = self.add_event('Event Without Nomination', key='indaba-2025')
+        self.event = self.add_event({'en': 'Event Without Nomination'}, key='indaba-2025')
         self.form = self.create_application_form(self.event.id, True, False)
         self.section = self.add_section(self.form.id)
         self.question = self.add_question(self.form.id, self.section.id, order=1)
@@ -57,7 +57,7 @@ class ResponseApiTest(ApiTestCase):
         self.response = self.add_response(self.form.id, self.other_user_data['id'], False, False)
         self.answer1 = self.add_answer(self.response.id, self.question.id, 'My Answer')
 
-        self.event_with_nomination = self.add_event('Event With Nomination', key='eeml-2025')
+        self.event_with_nomination = self.add_event({'en': 'Event With Nomination'}, key='eeml-2025')
         self.form_with_nomination = self.create_application_form(self.event_with_nomination.id, True, True)
         self.section_with_nomination = self.add_section(self.event_with_nomination.id)
         self.question1_with_nomination = self.add_question(self.form_with_nomination.id, self.section_with_nomination.id, order=1)
@@ -163,7 +163,7 @@ class ResponseApiTest(ApiTestCase):
         """Test that we get a 404 error if we try to get a response for an event with no application form."""
         
         self._seed_data()
-        test_event2 = self.add_event('Test Event 2', key='HOLLA')
+        test_event2 = self.add_event({'en': 'Test Event 2'}, key='HOLLA')
 
         response = self.app.get(
             '/api/v1/response',

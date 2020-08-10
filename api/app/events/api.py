@@ -19,7 +19,15 @@ from app.registration.repository import RegistrationRepository as registration_r
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 
 from app import db, bcrypt, LOGGER
-from app.utils.errors import EVENT_NOT_FOUND, FORBIDDEN, EVENT_WITH_KEY_NOT_FOUND, EVENT_KEY_IN_USE
+from app.utils.errors import (
+    EVENT_NOT_FOUND,
+    FORBIDDEN,
+    EVENT_WITH_KEY_NOT_FOUND,
+    EVENT_KEY_IN_USE,
+    EVENT_WITH_TRANSLATION_NOT_FOUND,
+    EVENT_MUST_CONTAIN_TRANSLATION,
+    EVENT_TRANSLATION_MISMATCH
+)
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
 from app.utils.emailer import send_mail
@@ -43,61 +51,61 @@ def status_info(status):
         'is_event_attendee': status.is_event_attendee
     }
 
-def event_info(user_id, event_org, status):
+def event_info(user_id, event, status, language):
     return {
-        'id': event_org.Event.id,
-        'name': event_org.Event.name,
-        'description': event_org.Event.description,
-        'key': event_org.Event.key,
-        'start_date': event_org.Event.start_date.strftime("%d %B %Y"),
-        'end_date': event_org.Event.end_date.strftime("%d %B %Y"),
+        'id': event.id,
+        'name': event.get_name(language),
+        'description': event.get_description(language),
+        'key': event.key,
+        'start_date': event.start_date.strftime("%d %B %Y"),
+        'end_date': event.end_date.strftime("%d %B %Y"),
         'status': status_info(status),
-        'email_from': event_org.Event.email_from,
-        'organisation_name': event_org.Organisation.name,
-        'organisation_id': event_org.Organisation.id,
-        'url': event_org.Event.url,
-        'event_type': event_org.Event.event_type.value.upper(),
-        'is_application_open': event_org.Event.is_application_open,
-        'is_application_opening': event_org.Event.is_application_opening,
-        'is_review_open': event_org.Event.is_review_open,
-        'is_review_opening': event_org.Event.is_review_opening,
-        'is_selection_open': event_org.Event.is_selection_open,
-        'is_selection_opening': event_org.Event.is_selection_opening,
-        'is_offer_open': event_org.Event.is_offer_open,
-        'is_offer_opening': event_org.Event.is_offer_opening,
-        'is_registration_open': event_org.Event.is_registration_open,
-        'is_registration_opening': event_org.Event.is_registration_opening,
-        'is_event_open': event_org.Event.is_event_open,
-        'is_event_opening': event_org.Event.is_event_opening,
-        'travel_grant': event_org.Event.travel_grant,
-        "miniconf_url": event_org.Event.miniconf_url
+        'email_from': event.email_from,
+        'organisation_name': event.organisation.name,
+        'organisation_id': event.organisation.id,
+        'url': event.url,
+        'event_type': event.event_type.value.upper(),
+        'is_application_open': event.is_application_open,
+        'is_application_opening': event.is_application_opening,
+        'is_review_open': event.is_review_open,
+        'is_review_opening': event.is_review_opening,
+        'is_selection_open': event.is_selection_open,
+        'is_selection_opening': event.is_selection_opening,
+        'is_offer_open': event.is_offer_open,
+        'is_offer_opening': event.is_offer_opening,
+        'is_registration_open': event.is_registration_open,
+        'is_registration_opening': event.is_registration_opening,
+        'is_event_open': event.is_event_open,
+        'is_event_opening': event.is_event_opening,
+        'travel_grant': event.travel_grant,
+        "miniconf_url": event.miniconf_url
     }
 
 
-def event_details(event_org):
-    date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-    return {
-        'id': event_org.Event.id,
-        'name': event_org.Event.name,
-        'description': event_org.Event.description,
-        'key': event_org.Event.key,
-        'start_date': event_org.Event.start_date.strftime(date_format),
-        'end_date': event_org.Event.end_date.strftime(date_format),
-        'email_from': event_org.Event.email_from,
-        'organisation_name': event_org.Organisation.name,
-        'organisation_id': event_org.Organisation.id,
-        'url': event_org.Event.url,
-        'application_open': event_org.Event.application_open.strftime(date_format),
-        'application_close': event_org.Event.application_close.strftime(date_format),
-        'review_open': event_org.Event.review_open.strftime(date_format),
-        'review_close': event_org.Event.review_close.strftime(date_format),
-        'selection_open': event_org.Event.selection_open.strftime(date_format),
-        'selection_close': event_org.Event.selection_close.strftime(date_format),
-        'offer_open': event_org.Event.offer_open.strftime(date_format),
-        'offer_close': event_org.Event.offer_close.strftime(date_format),
-        'registration_open': event_org.Event.registration_open.strftime(date_format),
-        'registration_close': event_org.Event.registration_close.strftime(date_format)
-    }
+event_fields = {
+    'id': fields.Integer,
+    'name': fields.Raw(attribute=lambda event: event.get_all_name_translations() if isinstance(event, Event) else {}),
+    'description': fields.Raw(attribute=lambda event: event.get_all_description_translations() if isinstance(event, Event) else {}),
+    'key': fields.String,
+    'start_date': fields.DateTime(dt_format='iso8601'),
+    'end_date': fields.DateTime(dt_format='iso8601'),
+    'email_from': fields.String,
+    'organisation_name': fields.String(attribute='organisation.name'),
+    'organisation_id': fields.String(attribute='organisation.id'),
+    'url': fields.String,
+    'application_open': fields.DateTime(dt_format='iso8601'),
+    'application_close': fields.DateTime(dt_format='iso8601'),
+    'review_open': fields.DateTime(dt_format='iso8601'),
+    'review_close': fields.DateTime(dt_format='iso8601'),
+    'selection_open': fields.DateTime(dt_format='iso8601'),
+    'selection_close': fields.DateTime(dt_format='iso8601'),
+    'offer_open': fields.DateTime(dt_format='iso8601'),
+    'offer_close': fields.DateTime(dt_format='iso8601'),
+    'registration_open': fields.DateTime(dt_format='iso8601'),
+    'registration_close': fields.DateTime(dt_format='iso8601'),
+    'travel_grant': fields.Boolean,
+    'miniconf_url': fields.String
+}
 
 
 def get_user_event_response_status(user_id, event_id):
@@ -149,16 +157,17 @@ def get_user_event_response_status(user_id, event_id):
 
 
 class EventAPI(EventMixin, restful.Resource):
+    @auth_required
+    @marshal_with(event_fields)
     def get(self):
         event_id = request.args['id']
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
-        else:
-            event_org = event_repository.get_by_id_with_organisation(event.id)
-            return event_details(event_org), 200
+        return event
 
     @auth_required
+    @marshal_with(event_fields)
     def post(self):
         args = self.req_parser.parse_args()
 
@@ -167,147 +176,94 @@ class EventAPI(EventMixin, restful.Resource):
         if not current_user.is_admin:
             return FORBIDDEN
 
-        _date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-        name = args['name']
-        description = args['description']
-        start_date = datetime.strptime(
-            (args['start_date']), _date_format)
-        end_date = datetime.strptime(
-            (args['end_date']), _date_format)
-        key = args['key']
-        organisation_id = args['organisation_id']
-        email_from = args['email_from']
-        url = args['url']
-        application_open = datetime.strptime(
-            (args['application_open']), _date_format)
-        application_close = datetime.strptime(
-            (args['application_close']), _date_format)
-        review_open = datetime.strptime(
-            (args['review_open']), _date_format)
-        review_close = datetime.strptime(
-            (args['review_close']), _date_format)
-        selection_open = datetime.strptime(
-            (args['selection_open']), _date_format)
-        selection_close = datetime.strptime(
-            (args['selection_close']), _date_format)
-        offer_open = datetime.strptime(
-            (args['offer_open']), _date_format)
-        offer_close = datetime.strptime(
-            (args['offer_close']), _date_format)
-        registration_open = datetime.strptime(
-            (args['registration_open']), _date_format)
-        registration_close = datetime.strptime(
-            (args['registration_close']), _date_format)
-        event_type = args['event_type'].upper()
+        if event_repository.exists_by_key(args['key']):
+            return EVENT_KEY_IN_USE
+        
+        if len(args['name']) == 0 or len(args['description']) == 0:
+            return EVENT_MUST_CONTAIN_TRANSLATION
+        
+        if set(args['name']) != set(args['description']):
+            return EVENT_TRANSLATION_MISMATCH
 
         event = Event(
-            name,
-            description,
-            start_date,
-            end_date,
-            key,
-            organisation_id,
-            email_from,
-            url,
-            application_open,
-            application_close,
-            review_open,
-            review_close,
-            selection_open,
-            selection_close,
-            offer_open,
-            offer_close,
-            registration_open,
-            registration_close,
-            EventType[event_type],
-            travel_grant=False   # TODO: Add to incoming request
+            args['name'],
+            args['description'],
+            args['start_date'],
+            args['end_date'],
+            args['key'],
+            args['organisation_id'],
+            args['email_from'],
+            args['url'],
+            args['application_open'],
+            args['application_close'],
+            args['review_open'],
+            args['review_close'],
+            args['selection_open'],
+            args['selection_close'],
+            args['offer_open'],
+            args['offer_close'],
+            args['registration_open'],
+            args['registration_close'],
+            EventType[args['event_type'].upper()],
+            args['travel_grant'],
+            args['miniconf_url']
         )
+
         event.add_event_role('admin', user_id)
-        try:
-            event = event_repository.add(event)
-        except IntegrityError as e:
+        event = event_repository.add(event)
 
-            LOGGER.error("Event with KEY: {} already exists".format(key))
-            LOGGER.error(e)
-            return EVENT_KEY_IN_USE
-
-        event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_details(event_org), 201
+        event = event_repository.get_by_id(event.id)
+        return event, 201
 
     @auth_required
+    @marshal_with(event_fields)
     def put(self):
         args = self.req_parser.parse_args()
+
+        if len(args['name']) == 0 or len(args['description']) == 0:
+            return EVENT_MUST_CONTAIN_TRANSLATION
+        
+        if set(args['name']) != set(args['description']):
+            return EVENT_TRANSLATION_MISMATCH
 
         event = event_repository.get_by_id(args['id'])
         if not event:
             return EVENT_NOT_FOUND
+
+        if event_repository.exists_by_key(args['key']) and args['key'] != event.key:
+            return EVENT_KEY_IN_USE
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event.id):
             return FORBIDDEN
 
-        _date_format = '%Y-%m-%dT%H:%M:%S.%fZ'
-        name = args['name']
-        description = args['description']
-        start_date = datetime.strptime(
-            (args['start_date']), _date_format)
-        end_date = datetime.strptime(
-            (args['end_date']), _date_format)
-        key = args['key']
-        organisation_id = args['organisation_id']
-        email_from = args['email_from']
-        url = args['url']
-        application_open = datetime.strptime(
-            (args['application_open']), _date_format)
-        application_close = datetime.strptime(
-            (args['application_close']), _date_format)
-        review_open = datetime.strptime(
-            (args['review_open']), _date_format)
-        review_close = datetime.strptime(
-            (args['review_close']), _date_format)
-        selection_open = datetime.strptime(
-            (args['selection_open']), _date_format)
-        selection_close = datetime.strptime(
-            (args['selection_close']), _date_format)
-        offer_open = datetime.strptime(
-            (args['offer_open']), _date_format)
-        offer_close = datetime.strptime(
-            (args['offer_close']), _date_format)
-        registration_open = datetime.strptime(
-            (args['registration_open']), _date_format)
-        registration_close = datetime.strptime(
-            (args['registration_close']), _date_format)
-
         event.update(
-            name,
-            description,
-            start_date,
-            end_date,
-            key,
-            organisation_id,
-            email_from,
-            url,
-            application_open,
-            application_close,
-            review_open,
-            review_close,
-            selection_open,
-            selection_close,
-            offer_open,
-            offer_close,
-            registration_open,
-            registration_close
+            args['name'],
+            args['description'],
+            args['start_date'],
+            args['end_date'],
+            args['key'],
+            args['organisation_id'],
+            args['email_from'],
+            args['url'],
+            args['application_open'],
+            args['application_close'],
+            args['review_open'],
+            args['review_close'],
+            args['selection_open'],
+            args['selection_close'],
+            args['offer_open'],
+            args['offer_close'],
+            args['registration_open'],
+            args['registration_close'],
+            args['travel_grant'],
+            args['miniconf_url']
         )
+        db.session.commit()
 
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error("Event with KEY: {} already exists".format(key))
-            return EVENT_KEY_IN_USE
-
-        event_org = event_repository.get_by_id_with_organisation(event.id)
-        return event_details(event_org), 200
+        event = event_repository.get_by_id(event.id)
+        return event, 200
 
 
 class EventsAPI(restful.Resource):
@@ -315,13 +271,19 @@ class EventsAPI(restful.Resource):
     @auth_required
     def get(self):
         user_id = g.current_user["id"]
+        language = request.args['language']
+        default_language = 'en'
 
         events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         returnEvents = []
 
         for event in events:
-            status = None if user_id == 0 else event_status.get_event_status(event.Event.id, user_id)
-            returnEvents.append(event_info(user_id, event, status))
+            if not event.has_specific_translation(language):
+                LOGGER.error('Missing {} translation for event {}.'.format(language, event.id))
+                language = default_language
+            status = None if user_id == 0 else event_status.get_event_status(event.id, user_id)
+            returnEvents.append(event_info(user_id, event, status, language))
+            language = request.args['language']
 
         return returnEvents, 200
 
@@ -364,7 +326,7 @@ class EventStatsAPI(EventsMixin, restful.Resource):
 
     @event_admin_required
     def get(self, event_id):
-        event = event_repository.get_by_id_with_organisation(event_id)
+        event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
 
@@ -419,15 +381,24 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         args = self.req_parser.parse_args()
 
         user_id = g.current_user['id']
+        language = args['language']
+        if language is None or len(language) > 2:
+            LOGGER.warning("Missing or invalid language parameter for EventsByKeyAPI. Defaulting to 'en'")
+            default_language = 'en'
+            language = default_language
 
-        event = event_repository.get_by_key_with_organisation(
-            args['event_key'])
+        event = event_repository.get_by_key(args['event_key'])
         if not event:
             return EVENT_WITH_KEY_NOT_FOUND
+        
+        if not event.has_specific_translation(language):
+            return EVENT_WITH_TRANSLATION_NOT_FOUND
+            
         info = event_info(
             g.current_user['id'], 
             event, 
-            event_status.get_event_status(event.Event.id, user_id))
+            event_status.get_event_status(event.id, user_id),
+            language)
         return info, 200
 
 
@@ -452,7 +423,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
             title = user.user_title
             firstname = user.firstname
             lastname = user.lastname
-            event_name = event.name
+            event_name = event.get_name('en')
             organisation_name = event.organisation.name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
@@ -493,7 +464,7 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             title = user.user_title
             firstname = user.firstname
             lastname = user.lastname
-            event_name = event.name
+            event_name = event.get_name('en')
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
             deadline = event.application_close.strftime('%A %-d %B %Y')

@@ -111,10 +111,10 @@ class OutcomeAPI(restful.Resource):
             if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates    
                 email_template = email_repository.get(event_id, 'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist')
                 if email_template:
-                    send_mail(recipient=user.email, subject='{} Application Status Update'.format(event.name),
+                    send_mail(recipient=user.email, subject='{} Application Status Update'.format(event.get_name('en')),
                     body_text=email_template.template.format(
                         user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
-                        event_name=event.name, host=misc.get_baobab_host()))
+                        event_name=event.get_name('en'), host=misc.get_baobab_host()))
                     LOGGER.debug("Sent an outcome email to {}".format(user.email))
                 else:
                     LOGGER.warn('No outcome email sent to {} due to missing email template'.format(user.email))
