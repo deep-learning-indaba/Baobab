@@ -376,7 +376,12 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         args = self.req_parser.parse_args()
 
         user_id = g.current_user['id']
-        language = request.args['language']
+        language = args['language']
+        default_language = 'en'
+        if language is None:
+            language = default_language
+        else:
+            language = language[:2]
 
         event = event_repository.get_by_key(args['event_key'])
         if not event:

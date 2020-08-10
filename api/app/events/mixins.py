@@ -38,3 +38,4 @@ class EventsMixin(object):
 class EventsKeyMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('event_key', type=str, required=True)
+    req_parser.add_argument('language', type=str, required=False)
