@@ -31,7 +31,8 @@ def email_user(
     if event is None and event_id is not None:
         event = event_repository.get_by_id(event_id)
     language = user.user_primaryLanguage
-    email_template = email_repository.get(event.id, email_template_key, language)
+    event_id = None if event is None else event.id
+    email_template = email_repository.get(event_id, email_template_key, language)
 
     if email_template is None:
         raise ValueError('Could not find email template with key {}'.format(email_template_key))
