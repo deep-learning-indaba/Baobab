@@ -38,7 +38,7 @@ def email_user(
     
     subject_parameters = subject_parameters or {}
     if event is not None and 'event_name' not in subject_parameters:
-        subject_parameters['event_name'] = event.name
+        subject_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
 
     subject = email_template.subject.format(**subject_parameters)
 
@@ -50,7 +50,7 @@ def email_user(
     if 'lastname' not in template_parameters:
         template_parameters['lastname'] = user.lastname
     if event is not None and 'event_name' not in template_parameters:
-        template_parameters['event_name'] = event.name
+        template_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
 
     body_text = email_template.template.format(**template_parameters)
     send_mail(recipient=user.email, subject=subject, body_text=body_text)
