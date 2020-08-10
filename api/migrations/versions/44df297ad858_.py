@@ -26,7 +26,7 @@ def downgrade():
     op.add_column('event', sa.Column('description', sa.VARCHAR(length=255), autoincrement=False, nullable=True))
     op.add_column('event', sa.Column('name', sa.VARCHAR(length=255), autoincrement=False, nullable=True))
 
-    op.execute(""""
+    op.execute("""
     UPDATE event
         SET 
 	        name = (SELECT name FROM event_translation WHERE event.id = event_translation.event_id AND event_translation.language = 'en'),
