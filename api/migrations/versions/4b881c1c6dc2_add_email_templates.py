@@ -21,6 +21,7 @@ import datetime
 Base = declarative_base()
 
 
+
 class EmailTemplate(Base):
 
     __tablename__ = 'email_template'
@@ -28,12 +29,10 @@ class EmailTemplate(Base):
 
     id = db.Column(db.Integer(), primary_key=True)
     key = db.Column(db.String(50), nullable=False)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=True)
+    event_id = db.Column(db.Integer(), nullable=True)
     language = db.Column(db.String(2), nullable=False)
     template = db.Column(db.String(), nullable=False)
     subject = db.Column(db.String(), nullable=False)
-
-    event = db.relationship('Event', foreign_keys=[event_id])
 
     def __init__(self, key, event_id, subject, template, language):
         self.key = key
@@ -281,7 +280,11 @@ Kind Regards,
 
 
 def downgrade():
-    added_keys = ['outcome-rejected', 'outcome-waitlist']
+    added_keys = ['outcome-rejected', 'outcome-waitlist', 'attendance-confirmation', 'guest-registration-confirmation',
+            'invitation-letter', 'guest-invitation', 'guest-invitation-with-registration', 'new-guest-no-registration',
+            'new-guest-registration', 'reference-request-self-nomination', 'reference-request', 'offer',
+            'registration-pending-confirmation', 'registration-with-confirmation', 'registration-confirmed', 
+            'reviews-assigned', 'verify-email', 'password-reset']
     op.execute("""DELETE FROM email_template WHERE key in ({})""".format(', '.join(["'" + k + "'" for k in added_keys])))
     op.execute("""SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));""")
 
