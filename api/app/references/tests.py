@@ -25,6 +25,8 @@ class ReferenceAPITest(ApiTestCase):
         test_event = self.add_event()
         test_event.add_event_role('admin', 1)
         self.test_event_data = copy.deepcopy(test_event.__dict__)
+        self.test_event_data['name'] = test_event.get_name('en')
+        self.test_event_data['description'] = test_event.get_description('en')
         self.add_to_db(test_event)
 
         nomination_event = self.add_event(key="AWARD_NOMINATIONS_ONLY")

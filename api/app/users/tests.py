@@ -34,10 +34,10 @@ class UserApiTest(ApiTestCase):
         self.add_organisation('Deep Learning IndabaX')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = self.add_event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'},
                             datetime.now(), datetime.now(),
                             'SOUTHAFRI2019')
-        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
+        self.event2 = self.add_event({'en': 'IndabaX'}, {'en': 'IndabaX Sudan'},
                             datetime.now(), datetime.now(),
                             'SUDANMO', 2)
         db.session.commit()
@@ -408,7 +408,7 @@ class UserCommentAPITest(ApiTestCase):
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = self.add_event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'},
                             datetime.now(), datetime.now(),
                             'NAGSOLVER')
         db.session.add(self.event1)
@@ -492,8 +492,8 @@ class UserProfileApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM'),
-            self.add_event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2)
+            self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'}, datetime.now(), datetime.now(), 'ADAMOPTIM'),
+            self.add_event({'en': 'Indaba2'}, {'en': 'Indaba Event 2'}, datetime.now(), datetime.now(), 'HACFTET', 2)
         ]
 
         application_forms = [

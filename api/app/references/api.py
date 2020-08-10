@@ -190,8 +190,8 @@ class ReferenceRequestDetailAPI(ReferenceRequestDetailMixin, restful.Resource):
             'candidate': candidate,
             'nominator': nominator,
             'relation': reference_request.relation,
-            'name': event.name,
-            'description': event.description,
+            'name': event.get_name('en'),
+            'description': event.get_description('en'),
             'is_application_open': event.is_application_open,
             'email_from': event.email_from,
             'reference_submitted_timestamp': reference.timestamp if reference is not None else None

@@ -1,3 +1,5 @@
+// TODO: ADD TRANSLATION
+
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
@@ -256,11 +258,6 @@ class GuestRegistrationComponent extends Component {
       isValid,
       isSubmitting
     } = this.state;
-
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
 
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {

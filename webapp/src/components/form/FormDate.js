@@ -12,12 +12,16 @@ class FormDate extends React.Component {
 
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
+
   };
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.showFocus) {
       this.dateInput.focus();
     }
+
+
+
   }
 
   onChange = value => {
@@ -40,20 +44,19 @@ class FormDate extends React.Component {
             ) : (
                 <div />
               )}
+
           </div>
 
-          <div>
-            <DateTimePicker
-              id={this.props.id}
-              ref={input => {
-                this.dateInput = input;
-              }}
-              className={this.props.id && this.props.errorText.length > 0 ? "react-datetime-picker error" : "react-datetime-picker"}
-              onChange={this.onChange}
-              value={this.props.value ? new Date(this.props.value) : null}
-              format="y-MM-dd"
-            />
-          </div>
+          <DateTimePicker
+            id={this.props.id}
+            ref={input => {
+              this.dateInput = input;
+            }}
+            className={this.props.id && this.props.errorText && this.props.errorText.length > 0  ? "react-datetime-picker error" : "react-datetime-picker"}
+            onChange={this.onChange}
+            value={this.props.value ? new Date(this.props.value) : null}
+            format="y-MM-dd"
+          />
 
         </FormGroup>
       </div>

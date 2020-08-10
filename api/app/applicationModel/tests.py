@@ -21,7 +21,7 @@ class ApplicationFormApiTest(ApiTestCase):
         self.start_time = datetime.now() + timedelta(days=30)
         self.end_time = datetime.now() + timedelta(days=60)
 
-        self.test_event = self.add_event('Test Event', 'Event Description', self.start_time, self.end_time)
+        self.test_event = self.add_event({'en': 'Test Event'}, {'en': 'Event Description'}, self.start_time, self.end_time)
         self.add_to_db(self.test_event)
         self.test_form = self.create_application_form(
                 self.test_event.id, True, False)

@@ -10,8 +10,8 @@ class OutcomeApiTest(ApiTestCase):
     def seed_static_data(self):
         db.session.expire_on_commit = False    
 
-        self.event1 = self.add_event(name='Event 1', key='event1')
-        self.event2 = self.add_event(name='Event 2', key='event2')
+        self.event1 = self.add_event(name={'en': 'Event 1'}, key='event1')
+        self.event2 = self.add_event(name={'en': 'Event 2'}, key='event2')
 
         self.test_user1 = self.add_user('something@email.com')
         self.test_user2 = self.add_user('something_else@email.com')
