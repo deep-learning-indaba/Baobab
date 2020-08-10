@@ -378,6 +378,7 @@ class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
         user_id = g.current_user['id']
         language = args['language']
         if language is None or len(language) > 2:
+            LOGGER.warning("Missing or invalid language parameter for EventsByKeyAPI. Defaulting to 'en'")
             default_language = 'en'
             language = default_language
 

@@ -324,8 +324,14 @@ class RemindersAPITest(ApiTestCase):
 class EventAPITest(ApiTestCase):
 
     test_event_data_dict = {
-        'name': {'en': 'Test Event'},
-        'description': {'en': 'Test Event Description'},
+        'name': {
+            'en': 'Test Event',
+            'fr': 'evenement de test'
+        },
+        'description': {
+            'en': 'Test Event Description',
+            'fr': "Description de l'evenement de test"
+        },
         'start_date': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'end_date': datetime(2020, 6, 6).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'key': 'testevent',
@@ -418,7 +424,15 @@ class EventAPITest(ApiTestCase):
             headers=header, 
             data=json.dumps(self.test_event_data_dict),
             content_type='application/json')
+        data = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(data['name']), 2)
+        self.assertEqual(len(data['description']), 2)
+        self.assertEqual(data['name']['en'], 'Test Event')
+        self.assertEqual(data['name']['fr'], 'evenement de test')
+        self.assertEqual(data['description']['en'], 'Test Event Description')
+        self.assertEqual(data['description']['fr'], "Description de l'evenement de test")
+
 
     def test_post_event_eventrole_added(self):
         self.seed_static_data()
@@ -447,7 +461,8 @@ class EventAPITest(ApiTestCase):
         header = self.get_auth_header_for(self.test_admin_user.email)
         # update(put) event
         self.test_event_data_dict['id'] = 1
-        self.test_event_data_dict['name'] = {'en': 'Test Event Updated'}
+        self.test_event_data_dict['name'] = {'en': 'Test Event Name Updated'}
+        self.test_event_data_dict['description'] = {'en': 'Test Event Description Updated'}
         response = self.app.put(
             'api/v1/event',
             headers=header,
@@ -455,7 +470,10 @@ class EventAPITest(ApiTestCase):
             content_type='application/json')
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(data['name']['en'], 'Test Event Updated')
+        self.assertEqual(len(data['name']), 1)
+        self.assertEqual(len(data['description']), 1)
+        self.assertEqual(data['name']['en'], 'Test Event Name Updated')
+        self.assertEqual(data['description']['en'], 'Test Event Description Updated')
 
     def test_put_event_not_admin(self):
         self.seed_static_data()
@@ -466,6 +484,7 @@ class EventAPITest(ApiTestCase):
 
         self.test_event_data_dict['id'] = 1
         self.test_event_data_dict['name'] = {'en': 'Test Event Updated'}
+        self.test_event_data_dict['description'] = {'en': 'Test Event Description Updated'}
 
         response = self.app.put(
             'api/v1/event',
@@ -473,6 +492,68 @@ class EventAPITest(ApiTestCase):
             data=json.dumps(self.test_event_data_dict),
             content_type='application/json')
         self.assertEqual(response.status_code, 403)
+    
+    def test_post_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['name'] = {}
+        self.test_event_data_dict['description'] = {}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_post_event_translation_mismatch(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['name'] = {'en': 'English Translation'}
+        self.test_event_data_dict['description'] = {'fr': 'French Translation'}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_put_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['id'] = 1
+        self.test_event_data_dict['name'] = {}
+        self.test_event_data_dict['description'] = {}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_put_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['id'] = 1
+        self.test_event_data_dict['name'] = {'en': 'English Translation'}
+        self.test_event_data_dict['description'] = {'fr': 'French Translation'}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
 
 
 class EventStatusTest(ApiTestCase):
