@@ -87,8 +87,8 @@ footer .btn {
 }
 
 .navbar-light .navbar-nav .nav-link.active {
-  background: #f1f2f3;  
   font-weight: bold;
+  border-bottom: 3px solid #27A844;
 }
 
 .navbar-light .navbar-nav .nav-item .nav-link{

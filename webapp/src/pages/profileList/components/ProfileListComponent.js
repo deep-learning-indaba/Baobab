@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { withRouter } from "react-router";
 import ReactTable from 'react-table';
 import { profileService } from "../../../services/profilelist";
+import { withTranslation } from 'react-i18next';
 
 class ProfileListComponent extends Component {
     constructor(props) {
@@ -51,8 +52,10 @@ class ProfileListComponent extends Component {
             "height": "3rem"
         }
 
+        const t = this.props.t;
+
         const columns = [{
-            id: "user", Header: <div className="list-fullname">Full-Name</div>,
+            id: "user", Header: <div className="list-fullname">{t("Full Name")}</div>,
             accessor: u => u.lastname + " " + u.firstname + ", " + u.user_title,
             Cell: props =>
                 <button className="link-style"
@@ -65,7 +68,7 @@ class ProfileListComponent extends Component {
             minWidth: 150
         },
 
-        { Header: <div className="list-type">Type</div>, accessor: "type" }];
+        { Header: <div className="list-type">{t("Type")}</div>, accessor: "type" }];
 
         if (loading) {
             return (
@@ -88,13 +91,13 @@ class ProfileListComponent extends Component {
                 {isEmpty ? (
                     <div className="error-message-empty-list">
                         <div className="alert alert-danger alert-container">
-                            There are currently no user profiles to display!
+                            {t("There are currently no user profiles to display!")}
                         </div>
                     </div>
                 ) : (
                         <div className="review-padding"> <span className="review-padding">
                             <div className="alert alert-primary table-header">
-                                Total Profiles: {List.length}
+                                {t("Total Profiles")}: {List.length}
                             </div>
 
                         </span>
@@ -109,4 +112,4 @@ class ProfileListComponent extends Component {
     }
 }
 
-export default withRouter(ProfileListComponent); 
+export default withRouter(withTranslation()(ProfileListComponent)); 
