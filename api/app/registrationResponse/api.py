@@ -234,7 +234,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 RegistrationForm.id == args['registration_form_id']).first()
 
             event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().name
+                Event.id == registration_form.event_id).first().get_name('en')
 
             self.send_confirmation(
                 current_user, registration_questions, registration_answers, registration.confirmed, event_name)
