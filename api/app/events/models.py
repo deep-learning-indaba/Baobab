@@ -140,17 +140,13 @@ class Event(db.Model):
         event_translation = self.event_translations.filter_by(language=language).first()
         if event_translation is not None:
             return event_translation.name
-        
-        default_event_translation = self.event_translations.filter_by(language='en').first()
-        return default_event_translation.name
+        return None
 
     def get_description(self, language):
         event_translation = self.event_translations.filter_by(language=language).first()
         if event_translation is not None:
             return event_translation.description
-        
-        default_event_translation = self.event_translations.filter_by(language='en').first()
-        return default_event_translation.description
+        return None
     
     def get_all_name_translations(self):
         name_translation_map = {}
