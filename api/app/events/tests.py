@@ -52,10 +52,7 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_applied(self):
         self.seed_static_data()
 
-        test_response = Response(self.test_form.id, self.test_user.id)
-        test_response.submit()
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id, is_submitted=True)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -81,10 +78,7 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_withdrawn(self):
         self.seed_static_data()
 
-        test_response = Response(self.test_form.id, self.test_user.id)
-        test_response.withdraw()
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id, is_withdrawn=True)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -109,9 +103,7 @@ class EventsAPITest(ApiTestCase):
 
     def test_unsubmitted_response(self):
         self.seed_static_data()
-        test_response = Response(self.test_form.id, self.test_user.id)
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -188,14 +180,8 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        self.test_response = Response(self.test_form.id, self.test_user1['id'])
-        db.session.add(self.test_response)
-        db.session.commit()
-
-        self.test_response2 = Response(self.test_form.id, self.test_user2['id'])
-        self.test_response2.submit()
-        db.session.add(self.test_response2)
-        db.session.commit()
+        self.test_response = self.add_response(self.test_form.id, self.test_user1['id'])
+        self.test_response2 = self.add_response(self.test_form.id, self.test_user2['id'], is_submitted=True)
 
         self.user_role1 = EventRole(
             'admin', self.test_user1['id'], self.test_event.id)
@@ -263,19 +249,10 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(application_form)
         db.session.commit()
 
-        submitted_response = Response(application_form.id, self.test_users[0].id)
-        submitted_response.submit()
-        withdrawn_response = Response(application_form.id, self.test_users[3].id)
-        withdrawn_response.withdraw()
-        responses = [
-            submitted_response,
-            Response(application_form.id, self.test_users[1].id),
-            withdrawn_response,
-            Response(application_form.id, self.test_users[4].id),
-        ]
-        db.session.add_all(responses)
-
-        db.session.commit()
+        submitted_response = self.add_response(application_form.id, self.test_users[0].id, is_submitted=True)
+        withdrawn_response = self.add_response(application_form.id, self.test_users[3].id, is_withdrawn=True)
+        self.add_response(application_form.id, self.test_users[1].id)
+        self.add_response(application_form.id, self.test_users[4].id)
 
         self.add_email_template('application-not-submitted')
         self.add_email_template('application-not-started')
@@ -636,9 +613,7 @@ class EventStatusTest(ApiTestCase):
         invited = InvitedGuest(event_id=self.event.id, user_id=self.user1.id, role='Mentor')
         db.session.add(invited)
 
-        response = Response(self.application_form.id, self.user1.id)
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(self.application_form.id, self.user1.id)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
 
@@ -652,11 +627,7 @@ class EventStatusTest(ApiTestCase):
         """Test statuses when the user has applied."""
         self.seed_static_data()
         # Candidate has not submitted or withdrawn
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        db.session.add(response)
-        db.session.commit()
+        response = self.add_response(self.application_form.id, self.user1.id)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
 
@@ -716,12 +687,7 @@ class EventStatusTest(ApiTestCase):
             event_status.get_event_status(self.event.id, self.user1.id)
         
         # Check status when user has applied and has an outcome
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
@@ -737,11 +703,7 @@ class EventStatusTest(ApiTestCase):
         outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
         db.session.add(outcome)
 
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         # Test pending offer
         offer = Offer(
@@ -797,11 +759,7 @@ class EventStatusTest(ApiTestCase):
         outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
         db.session.add(outcome)
 
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         offer = Offer(
             user_id=self.user1.id, 
