@@ -20,12 +20,13 @@ class Response(db.Model):
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
+    language = db.Column(db.String(2), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer', order_by='Answer.order')
 
-    def __init__(self, application_form_id, user_id):
+    def __init__(self, application_form_id, user_id, language):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = False
@@ -33,6 +34,7 @@ class Response(db.Model):
         self.is_withdrawn = False
         self.withdrawn_timestamp = None
         self.started_timestamp = date.today()
+        self.language = language
 
     def submit(self):
         self.is_submitted = True
