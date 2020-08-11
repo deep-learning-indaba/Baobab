@@ -530,7 +530,7 @@ class EventAPITest(ApiTestCase):
         self.test_event_data_dict['name'] = {}
         self.test_event_data_dict['description'] = {}
 
-        response = self.app.post(
+        response = self.app.put(
             'api/v1/event',
             headers=header,
             data=json.dumps(self.test_event_data_dict),
@@ -546,7 +546,7 @@ class EventAPITest(ApiTestCase):
         self.test_event_data_dict['name'] = {'en': 'English Translation'}
         self.test_event_data_dict['description'] = {'fr': 'French Translation'}
 
-        response = self.app.post(
+        response = self.app.put(
             'api/v1/event',
             headers=header,
             data=json.dumps(self.test_event_data_dict),
