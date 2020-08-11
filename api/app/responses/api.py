@@ -37,7 +37,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'is_withdrawn': fields.Boolean,
         'withdrawn_timestamp': fields.DateTime(dt_format='iso8601'),
         'started_timestamp': fields.DateTime(dt_format='iso8601'),
-        'answers': fields.List(fields.Nested(answer_fields))
+        'answers': fields.List(fields.Nested(answer_fields)),
+        'language': fields.String
     }
 
     @auth_required
@@ -65,6 +66,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
+        language = args['language']
+        if len(language) != 2:
+            language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
         application_form = application_form_repository.get_by_id(application_form_id)
         if application_form is None:
@@ -76,7 +80,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         if not application_form.nominations and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED
 
-        response = Response(application_form_id, user_id)
+        response = Response(application_form_id, user_id, language)
         if is_submitted:
             response.submit()
             
@@ -105,6 +109,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         args = self.put_req_parser.parse_args()
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
+        language = args['language']
 
         response = response_repository.get_by_id(args['id'])
         if not response:
@@ -115,6 +120,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.UPDATE_CONFLICT
 
         response.is_submitted = is_submitted
+        response.language = language
         if is_submitted:
             response.submit()
         response_repository.save(response)
