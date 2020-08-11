@@ -197,8 +197,8 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return event
 
-    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject'):
-        email_template = EmailTemplate(template_key, None, subject, template, language)
+    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
+        email_template = EmailTemplate(template_key, event_id, subject, template, language)
         db.session.add(email_template)
         db.session.commit()
         return email_template
