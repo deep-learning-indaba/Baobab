@@ -160,6 +160,10 @@ class RegistrationApiTest(ApiTestCase):
             db.session.add(self.registration3)
             db.session.commit()
 
+        self.add_email_template('registration-with-confirmation')
+        self.add_email_template('registration-pending-confirmation')
+        self.add_email_template('registration-confirmed')
+
         db.session.flush()
 
     def get_auth_header_for(self, email):

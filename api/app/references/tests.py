@@ -99,6 +99,9 @@ class ReferenceAPITest(ApiTestCase):
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
         self.other_headers = self.get_auth_header_for("someuser@mail.com")
 
+        self.add_email_template('reference-request-self-nomination')
+        self.add_email_template('reference-request')
+
         db.session.flush()
 
     def test_create_reference_request(self):

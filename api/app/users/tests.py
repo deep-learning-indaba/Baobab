@@ -45,6 +45,9 @@ class UserApiTest(ApiTestCase):
         self.event1_id = self.event1.id
         self.event2_id = self.event2.id
 
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         db.session.flush()
 
     def get_auth_header_for(self, email):
@@ -416,6 +419,9 @@ class UserCommentAPITest(ApiTestCase):
 
         self.event1_id = self.event1.id
         
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         user_data1 = USER_DATA.copy()
         response = self.app.post('/api/v1/user', data=user_data1)
         self.user1 = json.loads(response.data)
@@ -429,6 +435,7 @@ class UserCommentAPITest(ApiTestCase):
 
         user2 = db.session.query(AppUser).filter(AppUser.email == 'person2@person.com').first()
         user2.is_admin = True
+
         db.session.flush()
 
 
@@ -644,6 +651,9 @@ class OrganisationUserTest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
 
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         db.session.commit()
 
     def get_auth_header_for(self, email, domain):
@@ -742,6 +752,9 @@ class EventAttendeeAPITest(ApiTestCase):
         self.user1 = self.add_user()
         self.app_form = self.create_application_form()
         self.response = self.add_response(self.app_form.id, self.user1.id, True, False)
+
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
     
     def test_auth_required(self):
         """Check that response is 401 when no auth token provided."""

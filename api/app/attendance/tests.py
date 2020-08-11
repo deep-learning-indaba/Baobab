@@ -105,6 +105,8 @@ class AttendanceApiTest(ApiTestCase):
         db.session.add_all([ra])
         db.session.commit()
 
+        self.add_email_template('attendance-confirmation')
+
     def get_auth_header_for(self, email):
         body = {
             'email': email,

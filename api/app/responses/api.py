@@ -9,7 +9,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from app import LOGGER, bcrypt, db
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.applicationModel.models import ApplicationForm, Question
-from app.email_template.repository import EmailRepository as email_repository
 from app.events.models import Event
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin
@@ -160,16 +159,16 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
             organisation = event.organisation
-            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.get_description('en'))
-            
-            withdrawal_template = email_repository.get(event.id, 'withdrawal').template
-            body_text = withdrawal_template.format(
-                title=user.user_title,
-                firstname=user.firstname,
-                lastname=user.lastname,
-                organisation_name=organisation.name,
-                event_name=event.get_name('en'))
-            emailer.send_mail(user.email, subject, body_text, sender_name=g.organisation.name, sender_email=g.organisation.email_from)
+
+            emailer.email_user(
+                'withdrawal',
+                template_parameters=dict(
+                    organisation_name=organisation.name
+                ),
+                event=event,
+                user=user
+            )
+
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
 
@@ -192,23 +191,22 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            subject = 'Your application to {}'.format(event.get_description('en'))
             question_answer_summary = strings.build_response_email_body(answers)
 
-            template = email_repository.get(event.id, 'confirmation-response').template
-            body_text = template.format(
-                title=user.user_title,
-                firstname=user.firstname,
-                lastname=user.lastname,
-                event_description=event.get_description('en'),
-                question_answer_summary=question_answer_summary,
-                event_name=event.get_name('en'))
-            emailer.send_mail(
-                user.email, 
-                subject, 
-                body_text=body_text, 
-                sender_name=g.organisation.name,
-                sender_email=g.organisation.email_from)
+            if event.has_specific_translation(user.user_primaryLanguage):
+                event_description = event.get_description(user.user_primaryLanguage)
+            else:
+                event_description = event.get_description('en')
 
-        except:
-            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
+            emailer.email_user(
+                'confirmation-response',
+                template_parameters=dict(
+                    event_description=event_description,
+                    question_answer_summary=question_answer_summary,
+                ),
+                event=event,
+                user=user
+            )
+
+        except Exception as e:
+            LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

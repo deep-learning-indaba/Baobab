@@ -166,6 +166,8 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(test_category)
         db.session.commit()
 
+        self.add_email_template('verify-email')
+
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.test_user1 = json.loads(response.data)
 
@@ -249,8 +251,8 @@ class RemindersAPITest(ApiTestCase):
         db.session.commit()
 
         email_templates = [
-            EmailTemplate('application-not-submitted', None, ''),
-            EmailTemplate('application-not-started', None, '')]
+            EmailTemplate('application-not-submitted', None, 'Application Not Submitted', '', 'en'),
+            EmailTemplate('application-not-started', None, 'Application Not Started', '', 'en')]
         db.session.add_all(email_templates)
         db.session.commit()
 
@@ -274,6 +276,9 @@ class RemindersAPITest(ApiTestCase):
         db.session.add_all(responses)
 
         db.session.commit()
+
+        self.add_email_template('application-not-submitted')
+        self.add_email_template('application-not-started')
 
     def get_auth_header_for(self, email):
         body = {
