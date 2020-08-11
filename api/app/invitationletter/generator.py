@@ -66,7 +66,7 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date, user_id):
+             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date, user):
 
     check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
@@ -122,7 +122,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         emailer.email_user(
             'invitation-letter',
             event=event,
-            user_id=user_id,
+            user=user,
             file_name="InvitationLetter.pdf",
             file_path=template_pdf
         )

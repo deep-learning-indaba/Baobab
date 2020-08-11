@@ -16,6 +16,7 @@ from app.events.models import Event
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
 from app import LOGGER
 
 from app import db
@@ -129,7 +130,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().get_name('en')
+            event = event_repository.get_by_id(registration_form.event_id)
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
@@ -144,8 +145,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers,
-                                   event_name, registration_form.event_id)
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, event)
             if email_sent:
                 registration.confirmation_email_sent_at = date.today()
                 db.session.commit()
@@ -200,11 +200,9 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.id == args['registration_form_id']).first()
 
-            event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().get_name('en')
+            event = event_repository.get_by_id(registration_form.event_id)
 
-            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers,
-                                   event_name, registration_form.event_id)
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, event)
             if email_sent:
                 registration.confirmation_email_sent_at = date.today()
                 db.session.commit()
@@ -213,7 +211,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, event_name, event_id):
+    def send_confirmation(self, user, questions, answers, event):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -235,10 +233,10 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             
             emailer.email_user(
                 'guest-registration-confirmation',
-                dict(
+                template_parameters=dict(
                     summary=summary,
                 ),
-                event_id=event_id,
+                event=event,
                 user=user,
             )
 

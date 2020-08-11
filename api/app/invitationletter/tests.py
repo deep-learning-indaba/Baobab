@@ -293,7 +293,7 @@ class InvitationLetterTests(ApiTestCase):
 class PDFConverterTest(ApiTestCase):
 
     def seed_static_data(self):
-        test_user = self.add_user('something@email.com')
+        self.test_user = self.add_user('something@email.com')
         self.add_organisation('Deep Learning Indaba')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
@@ -331,7 +331,7 @@ class PDFConverterTest(ApiTestCase):
                                   firstname='Jeff',
                                   lastname='Jeffdejeff',
                                   bringing_poster='',
-                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True)
+                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True, self.test_user)
 
 
 

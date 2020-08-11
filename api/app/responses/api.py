@@ -162,10 +162,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
             emailer.email_user(
                 'withdrawal',
-                dict(
+                template_parameters=dict(
                     organisation_name=organisation.name
                 ),
-                event_id=event.id,
+                event=event,
                 user=user
             )
 
@@ -193,15 +193,20 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         try:
             question_answer_summary = strings.build_response_email_body(answers)
 
+            if event.has_specific_translation(user.user_primaryLanguage):
+                event_description = event.get_description(user.user_primaryLanguage)
+            else:
+                event_description = event.get_description('en')
+
             emailer.email_user(
                 'confirmation-response',
-                dict(
-                    event_description=event.description,
+                template_parameters=dict(
+                    event_description=event_description,
                     question_answer_summary=question_answer_summary,
                 ),
-                event_id=event.id,
+                event=event,
                 user=user
             )
 
-        except:
-            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
+        except Exception as e:
+            LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

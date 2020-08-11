@@ -110,10 +110,10 @@ class OutcomeAPI(restful.Resource):
             if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates  
                 email_user(
                     'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
-                    dict(
+                    template_parameters=dict(
                         host=misc.get_baobab_host()
                     ),
-                    event_id=event.id,
+                    event=event,
                     user=user,
                 )
 

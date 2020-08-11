@@ -425,7 +425,7 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
 
             email_user(
                 'application-not-submitted', 
-                dict(
+                template_parameters=dict(
                     organisation_name=organisation_name,
                     deadline=deadline), 
                 event=event,
@@ -459,13 +459,13 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
 
             email_user(
                 'application-not-started', 
-                dict(
+                template_parameters=dict(
                     event=event_name,
                     organisation_name=organisation_name,
                     system_name=system_name,
                     deadline=deadline
                 ),
-                event_id=event_id,
+                event=event,
                 user=user
             )
 

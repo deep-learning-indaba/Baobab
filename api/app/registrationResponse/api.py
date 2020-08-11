@@ -17,6 +17,7 @@ from app import LOGGER
 from app.users.repository import UserRepository as user_repository
 from app.registrationResponse.repository import RegistrationRepository
 from app.guestRegistrations.repository import GuestRegistrationRepository
+from app.events.repository import EventRepository as event_repository
 import itertools
 
 
@@ -134,8 +135,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().get_name('en')
+            event = event_repository.get_by_id(registration_form.event_id)
 
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
@@ -153,8 +153,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
-                                   event_name, registration_form.event_id)
+            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed, event)
 
             # 201 is 'CREATED' status code
             return marshal(registration, self.registration_fields), 201
@@ -223,17 +222,16 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             registration_form = db.session.query(RegistrationForm).filter(
                 RegistrationForm.id == args['registration_form_id']).first()
 
-            event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().get_name('en')
+            event = event_repository.get_by_id(registration_form.event_id)
 
             self.send_confirmation(
-                current_user, registration_questions, registration_answers, registration.confirmed, event_name, registration_form.event_id)
+                current_user, registration_questions, registration_answers, registration.confirmed, event)
 
             return 200
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, confirmed, event_name, event_id):
+    def send_confirmation(self, user, questions, answers, confirmed, event):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -255,7 +253,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
                 template_parameters=dict(
                     summary=summary
                 ),
-                event_id=event_id,
+                event=event,
                 user=user)
 
         except Exception as e:
