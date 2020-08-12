@@ -247,16 +247,16 @@ class LanguageSelectorComponent extends Component {
   render() {
     if (this.props.organisation && this.props.organisation.languages.length > 1) {
       return (
-        <ul class="navbar-nav language-navbar">
-          <li class="nav-item dropdown">
+        <ul className="navbar-nav language-navbar">
+          <li className="nav-item dropdown">
             <button
-              class="nav-link dropdown-toggle link-style"
+              className="nav-link dropdown-toggle link-style"
               id="userDropdown"
               data-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-globe menu-icon" />{" "}
+              <i className="fas fa-globe menu-icon" />{" "}
               {this.props.i18n.language}
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
