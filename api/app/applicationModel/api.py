@@ -19,31 +19,32 @@ def get_form_fields(form, language):
     for section in form.sections:
         question_fields = []
         for question in section.questions:
+            question_translation = question.get_translation(language)
             question_field = {
                 'id': question.id,
                 'type': question.type,
-                # 'description': fields.String,
-                # 'headline': fields.String,
+                'description': question_translation.description,
+                'headline': question_translation.headline,
                 'order': question.order,
-                # 'options': fields.Raw,
-                # 'placeholder': fields.String,
-                # 'validation_regex': fields.String,
-                # 'validation_text': fields.String,
+                'options': question_translation.options,
+                'placeholder': question_translation.placeholder,
+                'validation_regex': question_translation.validation_regex,
+                'validation_text': question_translation.validation_text,
                 'is_required': question.is_required,
                 'depends_on_question_id': question.depends_on_question_id,
-                # 'show_for_values': fields.Raw,
+                'show_for_values': question_translation.show_for_values,
                 'key': question.key
             }
             question_fields.append(question_field)
 
-        translation = section.get_translation(language)
+        section_translation = section.get_translation(language)
         section_field = {
             'id': section.id,
-            'name': translation.name,
-            'description': translation.description,
+            'name': section_translation.name,
+            'description': section_translation.description,
             'order': section.order,
             'depends_on_question_id': section.depends_on_question_id,
-            'show_for_values': translation.show_for_values,
+            'show_for_values': section_translation.show_for_values,
             'questions': question_fields
         }
         section_fields.append(section_field)

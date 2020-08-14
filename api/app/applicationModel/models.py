@@ -45,6 +45,10 @@ class Question(db.Model):
         self.is_required = is_required
         self.validation_regex = validation_regex
         self.validation_text = validation_text
+    
+    def get_translation(self, language):
+        question_translation = self.question_translations.filter_by(language=language).first()
+        return question_translation
 
 
 class Section(db.Model):
