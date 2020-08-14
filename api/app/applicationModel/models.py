@@ -77,6 +77,7 @@ class SectionTranslation(db.Model):
     language = db.Column(db.String(2), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(), nullable=False)
+    show_for_values = db.Column(db.JSON(), nullable=True)
 
     section = db.relationship('Section', foreign_keys=[section_id])
 
