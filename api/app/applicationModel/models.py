@@ -54,7 +54,6 @@ class Section(db.Model):
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
-    show_for_values = db.Column(db.JSON(), nullable=True)
     key = db.Column(db.String(255), nullable=True)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
@@ -66,6 +65,10 @@ class Section(db.Model):
         self.name = name
         self.description = description
         self.order = order
+
+    def get_translation(self, language):
+        section_translation = self.section_translations.filter_by(language=language).first()
+        return section_translation
 
 
 class SectionTranslation(db.Model):

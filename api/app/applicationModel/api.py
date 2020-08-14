@@ -35,13 +35,15 @@ def get_form_fields(form, language):
                 'key': question.key
             }
             question_fields.append(question_field)
+
+        translation = section.get_translation(language)
         section_field = {
             'id': section.id,
-            # name
-            # description
+            'name': translation.name,
+            'description': translation.description,
             'order': section.order,
             'depends_on_question_id': section.depends_on_question_id,
-            'show_for_values': section.show_for_values,
+            'show_for_values': translation.show_for_values,
             'questions': question_fields
         }
         section_fields.append(section_field)
