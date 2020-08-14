@@ -74,7 +74,7 @@ class SectionTranslation(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     section_id = db.Column(db.Integer(), db.ForeignKey('section.id'), nullable=False)
-    language = db.Column(db.String(2))
+    language = db.Column(db.String(2), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(), nullable=False)
 
@@ -92,7 +92,7 @@ class QuestionTranslation(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=False)
-    language = db.Column(db.String(2))
+    language = db.Column(db.String(2), nullable=False)
     description = db.Column(db.String(), nullable=True)
     headline = db.Column(db.String(), nullable=False)
     placeholder = db.Column(db.String(), nullable=True)
