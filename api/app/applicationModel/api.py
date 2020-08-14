@@ -14,44 +14,50 @@ from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FO
 from app import db, bcrypt
 from app import LOGGER
 
-
-class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
-    question_fields = {
-        'id': fields.Integer,
-        'type': fields.String,
-        # 'description': fields.String,
-        # 'headline': fields.String,
-        'order': fields.Integer,
-        # 'options': fields.Raw,
-        # 'placeholder': fields.String,
-        # 'validation_regex': fields.String,
-        # 'validation_text': fields.String,
-        'is_required': fields.Boolean,
-        'depends_on_question_id': fields.Integer,
-        # 'show_for_values': fields.Raw,
-        'key': fields.String
-    }
-
-    section_fields = {
-        'id': fields.Integer,
-        #'name': fields.String,
-        #'description': fields.String,
-        'order': fields.Integer,
-        'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Raw,
-        'questions': fields.List(fields.Nested(question_fields)),
-    }
+def get_form_fields(form, language):
+    section_fields = []
+    for section in form.sections:
+        question_fields = []
+        for question in section.questions:
+            question_field = {
+                'id': question.id,
+                'type': question.type,
+                # 'description': fields.String,
+                # 'headline': fields.String,
+                'order': question.order,
+                # 'options': fields.Raw,
+                # 'placeholder': fields.String,
+                # 'validation_regex': fields.String,
+                # 'validation_text': fields.String,
+                'is_required': question.is_required,
+                'depends_on_question_id': question.depends_on_question_id,
+                # 'show_for_values': fields.Raw,
+                'key': question.key
+            }
+            question_fields.append(question_field)
+        section_field = {
+            'id': section.id,
+            # name
+            # description
+            'order': section.order,
+            'depends_on_question_id': section.depends_on_question_id,
+            'show_for_values': section.show_for_values,
+            'questions': question_fields
+        }
+        section_fields.append(section_field)
 
     form_fields = {
-        'id': fields.Integer,
-        'event_id': fields.Integer,
-        'is_open':  fields.Boolean,
-        'nominations': fields.Boolean,
-        'sections': fields.List(fields.Nested(section_fields))
+        'id': form.id,
+        'event_id': form.event_id,
+        'is_open':  form.is_open,
+        'nominations': form.nominations,
+        'sections': section_fields
     }
+    return form_fields
+
+class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
     @auth_required
-    @marshal_with(form_fields)
     def get(self):
         args = self.req_parser.parse_args()
         language = args['language']
@@ -67,7 +73,7 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             if not form.sections:
                 return SECTION_NOT_FOUND
 
-            return form
+            return get_form_fields(form, language)
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
