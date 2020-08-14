@@ -76,7 +76,7 @@ class SectionTranslation(db.Model):
     section_id = db.Column(db.Integer(), db.ForeignKey('section.id'), nullable=False)
     language = db.Column(db.String(2))
     name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(), nullable=False)
 
     section = db.relationship('Section', foreign_keys=[section_id])
 

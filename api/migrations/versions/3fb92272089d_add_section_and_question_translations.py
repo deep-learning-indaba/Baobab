@@ -21,7 +21,7 @@ def upgrade():
         sa.Column('section_id', sa.Integer(), nullable=False),
         sa.Column('language', sa.String(length=2), nullable=True),
         sa.Column('name', sa.String(length=255), nullable=False),
-        sa.Column('description', sa.String(length=255), nullable=False),
+        sa.Column('description', sa.String(), nullable=False),
         sa.ForeignKeyConstraint(['section_id'], ['section.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('section_id', 'language', name='uq_section_id_language')
