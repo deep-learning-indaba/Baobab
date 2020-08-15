@@ -79,8 +79,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         sections = [
-            Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(2, 'Tell Us a Bit About You', '', 1)
+            Section(1, 1),
+            Section(2, 1)
         ]
         db.session.add_all(sections)
         db.session.commit()
@@ -104,14 +104,16 @@ class ReviewsApiTest(ApiTestCase):
             }
         ]
         questions = [
-            Question(1, 1, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(1, 1, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(2, 2, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(1, 1, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None, True, None, options)
+            Question(1, 1, 1, 'long_text'),
+            Question(1, 1, 2, 'long_text'),
+            Question(2, 2, 1, 'long_text'),
+            Question(2, 2, 2, 'long_text'),
+            Question(1, 1, 3, 'multi-choice')
         ]
         db.session.add_all(questions)
         db.session.commit()
+
+        self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options)
 
         closed_review = ReviewForm(2, datetime(2018, 4, 30))
         closed_review.close()
@@ -540,6 +542,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
+        print(data)
 
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
 

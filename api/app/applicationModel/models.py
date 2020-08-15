@@ -33,18 +33,12 @@ class Question(db.Model):
     section = db.relationship('Section', foreign_keys=[section_id])
     question_translations = db.relationship('QuestionTranslation', lazy='dynamic')
 
-    def __init__(self, application_form_id, section_id, headline, placeholder, order, questionType, validation_regex, validation_text=None, is_required = True, description = None, options = None):
+    def __init__(self, application_form_id, section_id, order, questionType, is_required=True):
         self.application_form_id = application_form_id
         self.section_id = section_id
-        self.headline = headline
-        self.placeholder = placeholder
         self.order = order
         self.type = questionType
-        self.description = description
-        self.options = options
         self.is_required = is_required
-        self.validation_regex = validation_regex
-        self.validation_text = validation_text
     
     def get_translation(self, language):
         question_translation = self.question_translations.filter_by(language=language).first()
@@ -64,11 +58,11 @@ class Section(db.Model):
     section_translations = db.relationship('SectionTranslation', lazy='dynamic')
     questions = db.relationship('Question', primaryjoin=id==Question.section_id, order_by='Question.order')
 
-    def __init__(self, application_form_id, name, description, order):
+    def __init__(self, application_form_id, order, depends_on_question_id=None, key=None):
         self.application_form_id = application_form_id
-        self.name = name
-        self.description = description
         self.order = order
+        self.depends_on_question_id = depends_on_question_id
+        self.key = key
 
     def get_translation(self, language):
         section_translation = self.section_translations.filter_by(language=language).first()
@@ -88,10 +82,12 @@ class SectionTranslation(db.Model):
 
     section = db.relationship('Section', foreign_keys=[section_id])
 
-    def __init__(self, name, description, language):
+    def __init__(self, section_id, language, name, description, show_for_values=None):
+        self.section_id = section_id
+        self.language = language
         self.name = name
         self.description = description
-        self.language = language
+        self.show_for_values = show_for_values
 
 
 class QuestionTranslation(db.Model):
@@ -101,8 +97,8 @@ class QuestionTranslation(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=False)
     language = db.Column(db.String(2), nullable=False)
-    description = db.Column(db.String(), nullable=True)
     headline = db.Column(db.String(), nullable=False)
+    description = db.Column(db.String(), nullable=True)
     placeholder = db.Column(db.String(), nullable=True)
     validation_regex = db.Column(db.String(), nullable=True)
     validation_text = db.Column(db.String(), nullable=True)
@@ -110,3 +106,25 @@ class QuestionTranslation(db.Model):
     show_for_values = db.Column(db.JSON(), nullable=True)
 
     question = db.relationship('Question', foreign_keys=[question_id])
+
+    def __init__(
+        self,
+        question_id,
+        language,
+        headline,
+        description=None,
+        placeholder=None,
+        validation_regex=None,
+        validation_text=None,
+        options=None,
+        show_for_values=None
+    ):
+        self.question_id = question_id
+        self.language = language
+        self.headline = headline
+        self.description = description
+        self.placeholder = placeholder
+        self.validation_regex = validation_regex
+        self.validation_text = validation_text
+        self.options = options
+        self.show_for_values

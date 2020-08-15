@@ -12,16 +12,14 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import ProgrammingError
 
 from app import LOGGER, app, db
-from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
+                                         SectionTranslation)
 from app.events.models import Event, EventType
-from app.organisation.models import Organisation
-from app.users.models import AppUser, UserCategory, Country
-from app.events.models import Event
-from app.events.models import EventType
-from app.applicationModel.models import ApplicationForm
-from app.registration.models import RegistrationForm, Offer
-from app.responses.models import Answer, Response
 from app.invitedGuest.models import InvitedGuest
+from app.organisation.models import Organisation
+from app.registration.models import Offer, RegistrationForm
+from app.responses.models import Answer, Response
+from app.users.models import AppUser, Country, UserCategory
 
 
 @event.listens_for(Engine, "connect")
@@ -231,30 +229,34 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return registration_form
     
-    def add_section(
-        self,
-        application_form_id,
-        name='Section',
-        description='Description',
-        order=1):
-        section = Section(application_form_id, name, description, order)
+    def add_section(self, application_form_id, order=1):
+        section = Section(application_form_id, order)
         db.session.add(section)
         db.session.commit()
         return section
     
+    def add_section_translation(self, section_id, language, name, description, show_for_values=None):
+        section_translation = SectionTranslation(section_id, language, name, description, show_for_values)
+        db.session.add(section_translation)
+        db.session.commit()
+        return section_translation
+
     def add_question(
         self,
         application_form_id,
         section_id,
-        headline='Question?',
-        placeholder='placeholder',
         order=1,
-        question_type='short-text',
-        validation_regex=None):
-        question = Question(application_form_id, section_id, headline, placeholder, order, question_type, validation_regex)
+        question_type='short-text'):
+        question = Question(application_form_id, section_id, order, question_type)
         db.session.add(question)
         db.session.commit()
         return question
+
+    def add_question_translation(self, question_id, language, headline, options=None):
+        question_translation = QuestionTranslation(question_id, language, headline, options=options)
+        db.session.add(question_translation)
+        db.session.commit()
+        return question_translation
     
     def add_response(self, application_form_id, user_id, is_submitted, is_withdrawn):
         response = Response(application_form_id, user_id)
