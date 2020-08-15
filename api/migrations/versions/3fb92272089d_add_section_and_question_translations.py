@@ -129,13 +129,13 @@ def downgrade():
     op.execute("""
         UPDATE question
             SET
-                description = (SELECT description from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                headline = (SELECT headline from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                placeholder = (SELECT placeholder from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                validation_regex = (SELECT validation_regex from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                validation_text = (SELECT validation_text from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                options = (SELECT options from question_translation where question.id = question_translation.question_id AND question_translation = 'en'),
-                show_for_values = (SELECT show_for_values from question_translation where question.id = question_translation.question_id AND question_translation = 'en')
+                description = (SELECT description from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                headline = (SELECT headline from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                placeholder = (SELECT placeholder from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                validation_regex = (SELECT validation_regex from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                validation_text = (SELECT validation_text from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                options = (SELECT options from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en'),
+                show_for_values = (SELECT show_for_values from question_translation where question.id = question_translation.question_id AND question_translation.language = 'en')
     """)
 
     op.alter_column('question', 'headline', nullable=False)
