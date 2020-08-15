@@ -94,6 +94,8 @@ class OfferApiTest(ApiTestCase):
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
 
+        self.add_email_template('offer')
+
         db.session.flush()
 
     def get_auth_header_for(self, email):

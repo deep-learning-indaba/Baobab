@@ -45,6 +45,9 @@ class UserApiTest(ApiTestCase):
         self.event1_id = self.event1.id
         self.event2_id = self.event2.id
 
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         db.session.flush()
 
     def get_auth_header_for(self, email):
@@ -338,19 +341,9 @@ class UserApiTest(ApiTestCase):
         event_role = EventRole('admin', 4, 1)
         db.session.add(event_role)
 
-        submitted_response_user1 = Response(1, 1)
-        submitted_response_user1.submit()
-        withdrawn_response = Response(1, 2)
-        withdrawn_response.withdraw()
-        submitted_response_user3 = Response(2, 3)
-        submitted_response_user3.submit()
-        responses = [
-            submitted_response_user1,
-            withdrawn_response,
-            submitted_response_user3
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 1, is_submitted=True)
+        self.add_response(1, 2, is_withdrawn=True)
+        self.add_response(2, 3, is_submitted=True)
 
     def test_email_change_gets_new_token_and_is_unverified(self):
         self.seed_static_data()
@@ -416,6 +409,9 @@ class UserCommentAPITest(ApiTestCase):
 
         self.event1_id = self.event1.id
         
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         user_data1 = USER_DATA.copy()
         response = self.app.post('/api/v1/user', data=user_data1)
         self.user1 = json.loads(response.data)
@@ -429,6 +425,7 @@ class UserCommentAPITest(ApiTestCase):
 
         user2 = db.session.query(AppUser).filter(AppUser.email == 'person2@person.com').first()
         user2.is_admin = True
+
         db.session.flush()
 
 
@@ -518,14 +515,8 @@ class UserProfileApiTest(ApiTestCase):
         ]
         db.session.add_all(event_roles)
         db.session.commit()
-        responses = [
-            Response(1, 1),
-            Response(2, 2)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 1, is_submitted=True)
+        self.add_response(2, 2, is_submitted=True)
     
     def get_auth_header_for(self, email):
         body = {
@@ -644,6 +635,9 @@ class OrganisationUserTest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
 
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         db.session.commit()
 
     def get_auth_header_for(self, email, domain):
@@ -742,6 +736,9 @@ class EventAttendeeAPITest(ApiTestCase):
         self.user1 = self.add_user()
         self.app_form = self.create_application_form()
         self.response = self.add_response(self.app_form.id, self.user1.id, True, False)
+
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
     
     def test_auth_required(self):
         """Check that response is 401 when no auth token provided."""

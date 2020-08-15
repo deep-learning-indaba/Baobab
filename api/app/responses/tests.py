@@ -33,11 +33,13 @@ class ResponseApiTest(ApiTestCase):
         test_category = self.add_category()
 
         email_templates = [
-            EmailTemplate('withdrawal', None, ''),
-            EmailTemplate('confirmation-response', None, '{question_answer_summary}')
+            EmailTemplate('withdrawal', None, 'Withdrawal', '', 'en'),
+            EmailTemplate('confirmation-response', None, 'Confirmation', '{question_answer_summary}', 'en')
         ]
         db.session.add_all(email_templates)
         db.session.commit()
+
+        self.add_email_template('verify-email')
 
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.user_data = json.loads(response.data)
@@ -92,6 +94,7 @@ class ResponseApiTest(ApiTestCase):
         self.assertIsNone(data['withdrawn_timestamp'])
         self.assertIsNotNone(data['started_timestamp'])
         self.assertTrue(data['answers'])
+        self.assertEqual(data['language'], 'en')
 
         self.assertEqual(len(data['answers']), 1)
         answer = data['answers'][0]
@@ -211,7 +214,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -224,6 +228,7 @@ class ResponseApiTest(ApiTestCase):
         self.assertFalse(data['is_withdrawn'])
         self.assertIsNone(data['withdrawn_timestamp'])
         self.assertEqual(len(data['answers']), 2)
+        self.assertEqual(data['language'], 'en')
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1')
@@ -251,7 +256,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -280,7 +286,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -288,7 +295,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -316,7 +324,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'fr'})  # Updating the language from English to French
 
         self.assertEqual(response.status_code, 200)
 
@@ -338,6 +347,7 @@ class ResponseApiTest(ApiTestCase):
 
         self.assertTrue(data['is_submitted'])
         self.assertFalse(data['is_withdrawn'])
+        self.assertEqual(data['language'], 'fr')
         self.assertTrue(data['answers'])
 
         answer = data['answers'][0]
@@ -363,7 +373,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 404)
 
@@ -382,7 +393,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 401)
 
@@ -401,7 +413,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 409)
 

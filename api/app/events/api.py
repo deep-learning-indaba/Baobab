@@ -30,7 +30,7 @@ from app.utils.errors import (
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
@@ -420,25 +420,16 @@ class NotSubmittedReminderAPI(EventsMixin, restful.Resource):
 
         users = user_repository.get_all_with_unsubmitted_response()
         for user in users:
-            title = user.user_title
-            firstname = user.firstname
-            lastname = user.lastname
-            event_name = event.get_name('en')
             organisation_name = event.organisation.name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
-            subject = 'FINAL REMINDER to submit you application for {}'.format(
-                event_name)
-            not_submitted_body = email_repository.get(event_id, 'application-not-submitted').template
-            body = not_submitted_body.format(
-                title=title,
-                firstname=firstname,
-                lastname=lastname,
-                event=event_name,
-                organisation_name=organisation_name,
-                deadline=deadline)
-
-            send_mail(recipient=user.email, subject=subject, body_text=body)
+            email_user(
+                'application-not-submitted', 
+                template_parameters=dict(
+                    organisation_name=organisation_name,
+                    deadline=deadline), 
+                event=event,
+                user=user)
 
         return {'unsubmitted_responses': len(users)}, 201
 
@@ -461,26 +452,21 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
 
         users = user_repository.get_all_without_responses()
         for user in users:
-            title = user.user_title
-            firstname = user.firstname
-            lastname = user.lastname
             event_name = event.get_name('en')
             organisation_name = event.organisation.name
             system_name = event.organisation.system_name
             deadline = event.application_close.strftime('%A %-d %B %Y')
 
-            not_started_body = email_repository.get(event_id, 'application-not-started').template
-            subject = 'FINAL REMINDER: We do not have your application to attend {}'.format(
-                event_name)
-            body = not_started_body.format(
-                title=title,
-                firstname=firstname,
-                lastname=lastname,
-                event=event_name,
-                organisation_name=organisation_name,
-                system_name=system_name,
-                deadline=deadline)
-
-            send_mail(recipient=user.email, subject=subject, body_text=body)
+            email_user(
+                'application-not-started', 
+                template_parameters=dict(
+                    event=event_name,
+                    organisation_name=organisation_name,
+                    system_name=system_name,
+                    deadline=deadline
+                ),
+                event=event,
+                user=user
+            )
 
         return {'not_started_responses': len(users)}, 201

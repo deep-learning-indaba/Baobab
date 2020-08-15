@@ -20,6 +20,7 @@ from app.organisation.models import Organisation
 from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response
 from app.users.models import AppUser, Country, UserCategory
+from app.email_template.models import EmailTemplate
 
 
 @event.listens_for(Engine, "connect")
@@ -194,6 +195,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return event
 
+    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
+        email_template = EmailTemplate(template_key, event_id, subject, template, language)
+        db.session.add(email_template)
+        db.session.commit()
+        return email_template
+
     def get_auth_header_for(self, email, password='abc'):
         body = {
             'email': email,
@@ -258,8 +265,8 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return question_translation
     
-    def add_response(self, application_form_id, user_id, is_submitted, is_withdrawn):
-        response = Response(application_form_id, user_id)
+    def add_response(self, application_form_id, user_id, is_submitted=False, is_withdrawn=False, language='en'):
+        response = Response(application_form_id, user_id, language)
         if is_submitted:
             response.submit()
         if is_withdrawn:

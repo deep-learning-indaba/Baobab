@@ -19,7 +19,7 @@ from app.utils.auth import auth_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 from app.utils import misc
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user
 
 option_fields = {
     'value': fields.String,
@@ -254,16 +254,6 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
             'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, config.num_reviews_required)
         }
 
-ASSIGNED_BODY = """Dear {title} {firstname} {lastname},
-
-You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
-Note that if you were already logged in to {system_name}, you will need to log out and log in again to pick up the changes to your profile. 
-
-Thank you for assisting us review applications for {event}!
-
-Kind Regards,
-The {event} Organisers
-"""
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
@@ -322,18 +312,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.commit()
         
         if len(response_ids) > 0:
-            send_mail(recipient=reviewer_user.email,
-                    subject='You have been assigned reviews in Baobab',
-                    body_text=ASSIGNED_BODY.format(
-                        title=reviewer_user.user_title, 
-                        firstname=reviewer_user.firstname, 
-                        lastname=reviewer_user.lastname,
-                        num_reviews=len(response_ids),
-                        baobab_host=misc.get_baobab_host(),
-                        system_name=g.organisation.system_name,
-                        event_key=event.key,
-                        event=event.get_name('en')))
-
+            email_user(
+                'reviews-assigned',
+                template_parameters=dict(
+                    num_reviews=len(response_ids),
+                    baobab_host=misc.get_baobab_host(),
+                    system_name=g.organisation.system_name,
+                    event_key=event.key
+                ),
+                event=event,
+                user=reviewer_user)
         return {}, 201
 
     

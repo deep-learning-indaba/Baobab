@@ -62,7 +62,7 @@ class ReferenceAPITest(ApiTestCase):
         db.session.add_all(questions)
         db.session.commit()
 
-        self.test_response1 = Response(  # Self nomination
+        self.test_response1 = self.add_response(  # Self nomination
             self.test_form.id, self.first_user_data.id)
 
         self.add_to_db(self.test_response1)
@@ -73,7 +73,7 @@ class ReferenceAPITest(ApiTestCase):
         db.session.add_all(answers)
         db.session.commit()
 
-        self.test_response2 = Response(  # Nominating other
+        self.test_response2 = self.add_response(  # Nominating other
             self.test_form.id, self.other_user_data.id)
 
         self.add_to_db(self.test_response2)
@@ -90,6 +90,9 @@ class ReferenceAPITest(ApiTestCase):
 
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
         self.other_headers = self.get_auth_header_for("someuser@mail.com")
+
+        self.add_email_template('reference-request-self-nomination')
+        self.add_email_template('reference-request')
 
         db.session.flush()
 
@@ -239,8 +242,7 @@ class ReferenceAPITest(ApiTestCase):
         self.test_form = self.create_application_form(test_event.id, True, False)
         self.add_to_db(self.test_form)
 
-        self.test_response = Response(self.test_form.id, other_user_data.id)
-        self.add_to_db(self.test_response)
+        self.test_response = self.add_response(self.test_form.id, other_user_data.id)
         self.headers = self.get_auth_header_for("someuser@mail.com")
 
         db.session.flush()

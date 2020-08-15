@@ -18,7 +18,7 @@ from app.users.models import AppUser, PasswordReset, UserComment
 from app.users.repository import UserRepository as user_repository
 from app.utils import errors, misc
 from app.utils.auth import admin_required, auth_required, generate_token, get_user_from_request
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user, send_mail
 from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
                               EMAIL_IN_USE, EMAIL_NOT_VERIFIED,
                               EMAIL_VERIFY_CODE_NOT_VALID,
@@ -30,28 +30,6 @@ from app.utils.errors import (ADD_VERIFY_TOKEN_FAILED, BAD_CREDENTIALS,
 from app.utils.misc import make_code
 from app.utils.errors import UNAUTHORIZED
 
-VERIFY_EMAIL_BODY = """
-Dear {title} {firstname} {lastname},
-
-Thank you for creating a new {system} account. Please use the following link to verify your email address:
-
-{host}/verifyEmail?token={token}
-
-Kind Regards,
-{organisation}
-"""
-
-RESET_EMAIL_BODY = """
-Dear {title} {firstname} {lastname},
-
-You recently requested a password reset on {system}, please use the following link to reset you password:
-{host}/resetPassword?resetToken={token}
-
-If you did not request a password reset, please ignore this email and contact {organisation}.
-
-Kind Regards,
-{organisation}
-"""
 
 user_fields = {
     'id': fields.Integer,
@@ -139,16 +117,16 @@ class UserAPI(SignupMixin, restful.Resource):
             return EMAIL_IN_USE
 
         if(not invitedGuest):
-            send_mail(recipient=user.email,
-                      sender_name=g.organisation.name,
-                      sender_email=g.organisation.email_from,
-                      subject='{} Email Verification'.format(g.organisation.system_name),
-                      body_text=VERIFY_EMAIL_BODY.format(
-                          title=user_title, firstname=firstname, lastname=lastname,
-                          system=g.organisation.system_name,
-                          organisation=g.organisation.name,
-                          host=misc.get_baobab_host(),
-                          token=user.verify_token))
+            email_user(
+                'verify-email',
+                template_parameters=dict(
+                    system=g.organisation.system_name,
+                    organisation=g.organisation.name,
+                    host=misc.get_baobab_host(),
+                    token=user.verify_token
+                ),
+                user=user,
+                subject_parameters=dict(system=g.organisation.system_name))
 
             LOGGER.debug("Sent verification email to {}".format(user.email))
         else:
@@ -189,16 +167,15 @@ class UserAPI(SignupMixin, restful.Resource):
             return ERROR_UPDATING_USER_PROFILE
 
         if not user.verified_email:
-            send_mail(recipient=user.email,
-                      sender_name=g.organisation.name,
-                      sender_email=g.organisation.email_from,
-                      subject='{} Email Re-Verification'.format(g.organisation.system_name),
-                      body_text=VERIFY_EMAIL_BODY.format(
-                          title=user_title, firstname=firstname, lastname=lastname,
-                          system=g.organisation.system_name,
-                          organisation=g.organisation.name,
-                          host=misc.get_baobab_host(),
-                          token=user.verify_token))
+            email_user(
+                'verify-email',
+                template_parameters=dict(
+                    system=g.organisation.system_name,
+                    organisation=g.organisation.name,
+                    host=misc.get_baobab_host(),
+                    token=user.verify_token
+                ),
+                user=user)
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
@@ -352,14 +329,15 @@ class PasswordResetRequestAPI(restful.Resource):
         db.session.add(password_reset)
         db.session.commit()
 
-        send_mail(recipient=args['email'],
-                  sender_name=g.organisation.name,
-                  sender_email=g.organisation.email_from,
-                  subject='Password Reset for {}'.format(g.organisation.system_name),
-                  body_text=RESET_EMAIL_BODY.format(
-                        title=user.user_title, firstname=user.firstname, lastname=user.lastname,
-                        system=g.organisation.system_name, organisation=g.organisation.name,
-                        host=misc.get_baobab_host(), token=password_reset.code))
+        email_user(
+            'password-reset',
+            template_parameters=dict(
+                system=g.organisation.system_name, 
+                organisation=g.organisation.name,
+                host=misc.get_baobab_host(), 
+                token=password_reset.code
+            ),
+            user=user)
 
         return {}, 201
 
@@ -443,16 +421,15 @@ class ResendVerificationEmailAPI(restful.Resource):
             LOGGER.error("Adding verify token for {} failed. ".format(email))
             return ADD_VERIFY_TOKEN_FAILED
 
-        send_mail(recipient=user.email,
-                  sender_name=g.organisation.name,
-                  sender_email=g.organisation.email_from,
-                  subject='{} Email Verification'.format(g.organisation.system_name),
-                  body_text=VERIFY_EMAIL_BODY.format(
-                      title=user.user_title, firstname=user.firstname, lastname=user.lastname,
-                      system=g.organisation.system_name,
-                      organisation=g.organisation.name,
-                      host=misc.get_baobab_host(),
-                      token=user.verify_token))
+        email_user(
+            'verify-email',
+            template_parameters=dict(
+                system=g.organisation.system_name,
+                organisation=g.organisation.name,
+                host=misc.get_baobab_host(),
+                token=user.verify_token
+            ),
+            user=user)
 
         LOGGER.debug("Resent email verification to: {}".format(email))
 

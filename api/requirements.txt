@@ -37,3 +37,4 @@ google
 requests-file==1.4.3
 tldextract
 parameterized
+mock
