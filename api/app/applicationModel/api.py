@@ -72,6 +72,12 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
             if not form.is_open:
                 return APPLICATIONS_CLOSED
+            
+            if not form.sections:
+                return SECTION_NOT_FOUND
+            
+            if not form.questions:
+                return QUESTION_NOT_FOUND
 
             return get_form_fields(form, language)
 

@@ -12,6 +12,7 @@ class ApplicationForm(db.Model):
 
     event = db.relationship('Event', foreign_keys=[event_id])
     sections = db.relationship('Section', order_by='Section.order')
+    questions = db.relationship('Question')
 
     def __init__(self, event_id, is_open, nominations):
         self.event_id = event_id
@@ -30,6 +31,7 @@ class Question(db.Model):
     depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
     key = db.Column(db.String(255), nullable=True)
 
+    application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     section = db.relationship('Section', foreign_keys=[section_id])
     question_translations = db.relationship('QuestionTranslation', lazy='dynamic')
 
