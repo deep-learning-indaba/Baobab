@@ -269,8 +269,22 @@ class ApiTestCase(unittest.TestCase):
         question_id,
         language,
         headline='Question Headline',
-        options=None):
-        question_translation = QuestionTranslation(question_id, language, headline, options=options)
+        description=None,
+        placeholder=None,
+        validation_regex=None,
+        validation_text=None,
+        options=None,
+        show_for_values=None):
+        question_translation = QuestionTranslation(
+            question_id,
+            language,
+            headline,
+            description,
+            placeholder,
+            validation_regex,
+            validation_text,
+            options,
+            show_for_values)
         db.session.add(question_translation)
         db.session.commit()
         return question_translation

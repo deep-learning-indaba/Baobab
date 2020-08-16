@@ -29,8 +29,28 @@ class ApplicationFormApiTest(ApiTestCase):
         self.section_translation_en = self.add_section_translation(self.section.id, 'en', 'Test Section', 'Test Description')
         self.section_translation_fr = self.add_section_translation(self.section.id, 'fr', 'Section francaise', 'Description du test')
         self.question = self.add_question(self.form.id, self.section.id, question_type='multi-choice')
-        self.question_translation_en = self.add_question_translation(self.question.id, 'en', 'English Headline', [{'label': 'Yes', 'value': 'yes'}, {'label': 'No', 'value': 'no'}])
-        self.question_translation_fr = self.add_question_translation(self.question.id, 'fr', 'Titre francais', [{'label': 'Oui', 'value': 'oui'}, {'label': 'Non', 'value': 'non'}])
+        self.question_translation_en = self.add_question_translation(
+            question_id=self.question.id,
+            language='en',
+            headline='English Headline',
+            description='English Question Description',
+            placeholder='English Placeholder',
+            validation_regex='^\\W*(\\w+(\\W+|$)){0,150}$',
+            validation_text='Enter a maximum of 150 words',
+            options=[{'label': 'Yes', 'value': 'yes'}, {'label': 'No', 'value': 'no'}],
+            show_for_values=['yes']
+        )
+        self.question_translation_fr = self.add_question_translation(
+            question_id=self.question.id,
+            language='fr',
+            headline='Titre francais',
+            description='Description de la question en Francais',
+            placeholder='Espace reserve Francais',
+            validation_regex='^\\W*(\\w+(\\W+|$)){0,200}$',
+            validation_text='Entrez un maximum de 200 mots',
+            options=[{'label': 'Oui', 'value': 'oui'}, {'label': 'Non', 'value': 'non'}],
+            show_for_values=['oui']
+        )
 
         self.section2 = self.add_section(self.form.id, 2)
         self.section_translation2_en = self.add_section_translation(self.section2.id, 'en', 'Test Section 2', 'Test Description 2')
@@ -66,13 +86,13 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['depends_on_question_id'], None)
         self.assertEqual(data['sections'][0]['questions'][0]['key'], None)
 
-        self.assertEqual(data['sections'][0]['questions'][0]['description'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], 'English Question Description')
         self.assertEqual(data['sections'][0]['questions'][0]['headline'], 'English Headline')
         self.assertEqual(data['sections'][0]['questions'][0]['options'], [{'label': 'Yes', 'value': 'yes'}, {'label': 'No', 'value': 'no'}])
-        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], 'English Placeholder')
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], '^\\W*(\\w+(\\W+|$)){0,150}$')
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], 'Enter a maximum of 150 words')
+        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], ['yes'])
         
     
     def test_get_form_in_french(self):
@@ -102,10 +122,10 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['depends_on_question_id'], None)
         self.assertEqual(data['sections'][0]['questions'][0]['key'], None)
 
-        self.assertEqual(data['sections'][0]['questions'][0]['description'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], 'Description de la question en Francais')
         self.assertEqual(data['sections'][0]['questions'][0]['headline'], 'Titre francais')
         self.assertEqual(data['sections'][0]['questions'][0]['options'], [{'label': 'Oui', 'value': 'oui'}, {'label': 'Non', 'value': 'non'}])
-        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], None)
-        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], 'Espace reserve Francais')
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], '^\\W*(\\w+(\\W+|$)){0,200}$')
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], 'Entrez un maximum de 200 mots')
+        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], ['oui'])

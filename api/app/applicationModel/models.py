@@ -127,4 +127,4 @@ class QuestionTranslation(db.Model):
         self.validation_regex = validation_regex
         self.validation_text = validation_text
         self.options = options
-        self.show_for_values
+        self.show_for_values = show_for_values
