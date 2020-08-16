@@ -26,8 +26,8 @@ class ApplicationFormApiTest(ApiTestCase):
         self.form = self.create_application_form(self.event.id, True, False)
 
         self.section = self.add_section(self.form.id, 1)
-        self.section_translation_en = self.add_section_translation(self.section.id, 'en', 'Test Section', 'Test Description')
-        self.section_translation_fr = self.add_section_translation(self.section.id, 'fr', 'Section francaise', 'Description du test')
+        self.section_translation_en = self.add_section_translation(self.section.id, 'en', 'Test Section', 'Test Description', ['no'])
+        self.section_translation_fr = self.add_section_translation(self.section.id, 'fr', 'Section francaise', 'Description du test', ['non'])
         self.question = self.add_question(self.form.id, self.section.id, question_type='multi-choice')
         self.question_translation_en = self.add_question_translation(
             question_id=self.question.id,
@@ -78,7 +78,7 @@ class ApplicationFormApiTest(ApiTestCase):
 
         self.assertEqual(data['sections'][0]['name'], 'Test Section')
         self.assertEqual(data['sections'][0]['description'], 'Test Description')
-        self.assertEqual(data['sections'][0]['show_for_values'], None)
+        self.assertEqual(data['sections'][0]['show_for_values'], ['no'])
 
         self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
         self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
@@ -114,7 +114,7 @@ class ApplicationFormApiTest(ApiTestCase):
 
         self.assertEqual(data['sections'][0]['name'], 'Section francaise')
         self.assertEqual(data['sections'][0]['description'], 'Description du test')
-        self.assertEqual(data['sections'][0]['show_for_values'], None)
+        self.assertEqual(data['sections'][0]['show_for_values'], ['non'])
 
         self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
         self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
