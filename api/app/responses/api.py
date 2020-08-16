@@ -197,7 +197,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            question_answer_summary = strings.build_response_email_body(answers)
+            question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage)
 
             if event.has_specific_translation(user.user_primaryLanguage):
                 event_description = event.get_description(user.user_primaryLanguage)

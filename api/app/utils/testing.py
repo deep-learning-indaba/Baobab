@@ -242,7 +242,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return section
     
-    def add_section_translation(self, section_id, language, name, description, show_for_values=None):
+    def add_section_translation(
+        self,
+        section_id,
+        language,
+        name='Section Name',
+        description='Section Description',
+        show_for_values=None):
         section_translation = SectionTranslation(section_id, language, name, description, show_for_values)
         db.session.add(section_translation)
         db.session.commit()
@@ -259,7 +265,11 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return question
 
-    def add_question_translation(self, question_id, language, headline, options=None):
+    def add_question_translation(self,
+        question_id,
+        language,
+        headline='Question Headline',
+        options=None):
         question_translation = QuestionTranslation(question_id, language, headline, options=options)
         db.session.add(question_translation)
         db.session.commit()
