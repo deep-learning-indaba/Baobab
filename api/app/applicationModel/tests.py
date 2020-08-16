@@ -29,8 +29,8 @@ class ApplicationFormApiTest(ApiTestCase):
         self.section_translation_en = self.add_section_translation(self.section.id, 'en', 'Test Section', 'Test Description')
         self.section_translation_fr = self.add_section_translation(self.section.id, 'fr', 'Section francaise', 'Description du test')
         self.question = self.add_question(self.form.id, self.section.id, question_type='multi-choice')
-        self.question_translation_en = self.add_question_translation(self.question.id, 'en', 'English Headline')
-        self.question_translation_fr = self.add_question_translation(self.question.id, 'fr', 'Titre francais')
+        self.question_translation_en = self.add_question_translation(self.question.id, 'en', 'English Headline', [{'label': 'Yes', 'value': 'yes'}, {'label': 'No', 'value': 'no'}])
+        self.question_translation_fr = self.add_question_translation(self.question.id, 'fr', 'Titre francais', [{'label': 'Oui', 'value': 'oui'}, {'label': 'Non', 'value': 'non'}])
 
         self.section2 = self.add_section(self.form.id, 2)
         self.section_translation2_en = self.add_section_translation(self.section2.id, 'en', 'Test Section 2', 'Test Description 2')
@@ -50,10 +50,62 @@ class ApplicationFormApiTest(ApiTestCase):
 
         self.assertEqual(data['event_id'], 1)
         self.assertEqual(data['is_open'], True)
-        self.assertEqual(data['sections'][0]['description'], 'Test Description')
-        self.assertEqual(data['sections'][0]['name'], 'Test Section')
-        self.assertEqual(data['sections'][0]['order'], 1)
-        self.assertEqual(data['sections'][0]['questions'][0]['headline'], 'English Headline')
-        self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
-        self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
         self.assertEqual(data['nominations'], False)
+
+        self.assertEqual(len(data['sections']), 2)
+        self.assertEqual(data['sections'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['depends_on_question_id'], None)
+
+        self.assertEqual(data['sections'][0]['name'], 'Test Section')
+        self.assertEqual(data['sections'][0]['description'], 'Test Description')
+        self.assertEqual(data['sections'][0]['show_for_values'], None)
+
+        self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
+        self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['is_required'], True)
+        self.assertEqual(data['sections'][0]['questions'][0]['depends_on_question_id'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['key'], None)
+
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['headline'], 'English Headline')
+        self.assertEqual(data['sections'][0]['questions'][0]['options'], [{'label': 'Yes', 'value': 'yes'}, {'label': 'No', 'value': 'no'}])
+        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], None)
+        
+    
+    def test_get_form_in_french(self):
+        header = self.get_auth_header_for(self.test_user.email)
+        response = self.app.get(
+            '/api/v1/application-form',
+            headers=header,
+            query_string={'event_id': 1, 'language': 'fr'}
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(data['event_id'], 1)
+        self.assertEqual(data['is_open'], True)
+        self.assertEqual(data['nominations'], False)
+
+        self.assertEqual(len(data['sections']), 2)
+        self.assertEqual(data['sections'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['depends_on_question_id'], None)
+
+        self.assertEqual(data['sections'][0]['name'], 'Section francaise')
+        self.assertEqual(data['sections'][0]['description'], 'Description du test')
+        self.assertEqual(data['sections'][0]['show_for_values'], None)
+
+        self.assertEqual(data['sections'][0]['questions'][0]['type'], 'multi-choice')
+        self.assertEqual(data['sections'][0]['questions'][0]['order'], 1)
+        self.assertEqual(data['sections'][0]['questions'][0]['is_required'], True)
+        self.assertEqual(data['sections'][0]['questions'][0]['depends_on_question_id'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['key'], None)
+
+        self.assertEqual(data['sections'][0]['questions'][0]['description'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['headline'], 'Titre francais')
+        self.assertEqual(data['sections'][0]['questions'][0]['options'], [{'label': 'Oui', 'value': 'oui'}, {'label': 'Non', 'value': 'non'}])
+        self.assertEqual(data['sections'][0]['questions'][0]['placeholder'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], None)
+        self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], None)
