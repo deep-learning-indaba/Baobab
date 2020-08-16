@@ -4,7 +4,7 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import column_property
 
-from app import db
+from app import db, LOGGER
 from app.applicationModel.models import Question
 
 
@@ -72,8 +72,12 @@ class Answer(db.Model):
     
     @property
     def value_display(self):
-        if self.question.type == 'multi-choice' and self.question.options is not None:
-            option = [option for option in self.question.options if option['value'] == self.value]
+        question_translation = self.question.get_translation(self.response.language)
+        if question_translation is None:
+            LOGGER.error('Missing {} translation for question {}'.format(self.response.language, self.question.id))
+            question_translation = self.question.get_translation('en')
+        if self.question.type == 'multi-choice' and question_translation.options is not None:
+            option = [option for option in question_translation.options if option['value'] == self.value]
             if option:
                 return option[0]['label']
         return self.value
