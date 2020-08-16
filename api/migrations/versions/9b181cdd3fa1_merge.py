@@ -1,4 +1,4 @@
-"""empty message
+"""Merge migration after adding section and question translations
 
 Revision ID: 9b181cdd3fa1
 Revises: ('3fb92272089d', '984cb348ec98')
