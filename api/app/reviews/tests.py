@@ -117,7 +117,7 @@ class ReviewsApiTest(ApiTestCase):
         self.add_question_translation(2, 'en', 'Question 2')
         self.add_question_translation(3, 'en', 'Question 3')
         self.add_question_translation(4, 'en', 'Question 4')
-        self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options)
+        self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options=options)
 
         closed_review = ReviewForm(2, datetime(2018, 4, 30))
         closed_review.close()
