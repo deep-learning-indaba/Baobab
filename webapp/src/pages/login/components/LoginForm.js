@@ -100,18 +100,18 @@ class LoginForm extends Component {
 
           <div class="card">
             <div class="form-group">
-              <label for="email">{t("Email address")}</label>
+              <label htmlFor="email">{t("Email address")}</label>
               <input
                 type="email"
                 class="form-control"
                 id="email"
                 onChange={this.handleChange}
                 value={email}
-                autoFocus="true" />
+                autoFocus={true} />
             </div>
 
             <div class="form-group">
-              <label for="password">{t("Password")}</label>
+              <label htmlFor="password">{t("Password")}</label>
               <input
                 type="password"
                 class="form-control"
