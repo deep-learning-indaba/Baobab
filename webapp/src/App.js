@@ -1,4 +1,4 @@
-import React, { Component, Suspense } from "react";
+import React, { Component } from "react";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import EventHome from "./pages/eventHome";
@@ -12,15 +12,15 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
-import Loading from "./components/Loading";
 
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
-import { organisationService } from "./services/organisation/organisation.service";
+
 import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
+
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
@@ -247,16 +247,16 @@ class LanguageSelectorComponent extends Component {
   render() {
     if (this.props.organisation && this.props.organisation.languages.length > 1) {
       return (
-        <ul class="navbar-nav language-navbar">
-          <li class="nav-item dropdown">
+        <ul className="navbar-nav language-navbar">
+          <li className="nav-item dropdown">
             <button
-              class="nav-link dropdown-toggle link-style"
+              className="nav-link dropdown-toggle link-style"
               id="userDropdown"
               data-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-globe menu-icon" />{" "}
+              <i className="fas fa-globe menu-icon" />{" "}
               {this.props.i18n.language}
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
@@ -280,7 +280,6 @@ class AppComponent extends Component {
 
     this.state = {
       user: {},
-      organisation: null,
       collapsed: true,
       eventKey: null,
       currentEvent: null
@@ -292,19 +291,6 @@ class AppComponent extends Component {
   componentDidMount() {
     this.setState({
       user: JSON.parse(localStorage.getItem("user"))
-    });
-
-    organisationService.getOrganisation().then(response => {
-      this.setState({
-        organisation: response.organisation,
-        error: response.error
-      });
-      if (response.organisation) {
-        document.title =
-          response.organisation.system_name +
-          " | " +
-          response.organisation.name;
-      }
     });
   }
 
@@ -340,15 +326,15 @@ class AppComponent extends Component {
             <a className="navbar-brand navbar-brand-main" href="/">
               <img
                 src={
-                  this.state.organisation &&
-                  require("./images/" + this.state.organisation.icon_logo)
+                  this.props.organisation &&
+                  require("./images/" + this.props.organisation.icon_logo)
                 }
                 width="30"
                 height="30"
                 className="d-inline-block align-top brand-image"
                 alt=""
               />
-              {this.state.organisation && this.state.organisation.system_name}
+              {this.props.organisation && this.props.organisation.system_name}
             </a>
             <div
               class={
@@ -358,7 +344,7 @@ class AppComponent extends Component {
               id="navbarNav"
             >
               <ul className="navbar-nav mr-auto"></ul>
-              <LanguageSelector organisation={this.state.organisation} />
+              <LanguageSelector organisation={this.props.organisation} />
               <UserDropdown
                 logout={this.handleLogout}
                 user={this.state.user}
@@ -402,7 +388,7 @@ class AppComponent extends Component {
                   exact
                   path="/login"
                   render={props => (
-                    <Login {...props} loggedIn={this.refreshUser} organisation={this.state.organisation} />
+                    <Login {...props} loggedIn={this.refreshUser} organisation={this.props.organisation} />
                   )}
                 />
                 <Route
@@ -412,7 +398,7 @@ class AppComponent extends Component {
                     <CreateAccount
                       {...props}
                       loggedIn={this.refreshUser}
-                      organisation={this.state.organisation}
+                      organisation={this.props.organisation}
                     />
                   )}
                 />
@@ -443,19 +429,19 @@ class AppComponent extends Component {
           <footer className="text-muted">
             <div className="container-flex">
               <div>
-                {this.state.organisation && this.state.organisation.system_name}
+                {this.props.organisation && this.props.organisation.system_name}
                 , © 2020 |{" "}
                 <a
-                  href={this.state.organisation && this.state.organisation.url}
+                  href={this.props.organisation && this.props.organisation.url}
                 >
-                  {this.state.organisation && this.state.organisation.name}
+                  {this.props.organisation && this.props.organisation.name}
                 </a>{" "}
                 |{" "}
                 <a
                   href={
                     "/" +
-                    (this.state.organisation
-                      ? this.state.organisation.privacy_policy
+                    (this.props.organisation
+                      ? this.props.organisation.privacy_policy
                       : "")
                   }
                   target="_blank"
@@ -463,8 +449,8 @@ class AppComponent extends Component {
                 >
                   {t('Privacy Policy')}
                 </a>
-                {this.state.organisation &&
-                  this.state.organisation.system_name !== "Baobab" && (
+                {this.props.organisation &&
+                  this.props.organisation.system_name !== "Baobab" && (
                     <div className="float-right powered-by">
                       {t('Powered by')}{" "}
                       <a
@@ -494,8 +480,8 @@ class AppComponent extends Component {
               <a
                 href={
                   "/" +
-                  (this.state.organisation
-                    ? this.state.organisation.privacy_policy
+                  (this.props.organisation
+                    ? this.props.organisation.privacy_policy
                     : "")
                 }
               >
@@ -509,10 +495,6 @@ class AppComponent extends Component {
   }
 }
 
-const AppTranslation = withTranslation()(AppComponent);
+const App = withTranslation()(AppComponent);
 
-export default function App() {
-  return <Suspense fallback={<Loading />}>
-    <AppTranslation />
-  </Suspense>
-}
+export default App;
