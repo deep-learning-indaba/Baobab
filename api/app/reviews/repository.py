@@ -5,6 +5,7 @@ from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewConfiguration
 from app.users.models import AppUser
+from app.references.models import Reference
 from app.events.models import EventRole
 
 class ReviewRepository():
@@ -248,6 +249,10 @@ class ReviewRepository():
     def delete_review(review_response):
         db.session.query(ReviewScore).filter(ReviewScore.review_response_id == review_response.id).delete()
 
+    @staticmethod
+    def get_reference_models(response_id):
+        references = db.session.query(Reference).filter(response_id=response_id).all()
+        return references
 
 class ReviewConfigurationRepository():
 
