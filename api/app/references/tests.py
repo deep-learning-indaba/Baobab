@@ -40,27 +40,19 @@ class ReferenceAPITest(ApiTestCase):
         self.test_nomination_form = self.create_application_form(nomination_event.id, True, True)
 
         sections = [
-            Section(test_event.id, 'Nomination Capacity', 'Nomination Details', 1),
-            Section(nomination_event.id, 'Nominee Information', 'Details of person being nominated', 1)
+            Section(test_event.id, 1),
+            Section(nomination_event.id, 1, key='nominee_section')
         ]
-        sections[1].key = 'nominee_section'
         db.session.add_all(sections)
         db.session.commit()
 
         questions = [
-            Question(test_event.id, sections[0].id,
-                     'Nomination Capacity',
-                     'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(test_event.id, sections[0].id,
-                     'some details', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(nomination_event.id, sections[1].id,
-                     'title', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(nomination_event.id, sections[1].id,
-                     'firstname', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(nomination_event.id, sections[1].id,
-                     'lastname', 'Enter 50 to 150 words', 3, 'long_text', ''),
-            Question(nomination_event.id, sections[1].id,
-                     'email', 'Enter 50 to 150 words', 4, 'long_text', ''),
+            Question(self.test_form.id, sections[0].id, 1, 'long_text'),
+            Question(self.test_form.id, sections[0].id, 2, 'long_text'),
+            Question(self.test_nomination_form.id, sections[1].id, 1, 'long_text'),
+            Question(self.test_nomination_form.id, sections[1].id, 2, 'long_text'),
+            Question(self.test_nomination_form.id, sections[1].id, 3, 'long_text'),
+            Question(self.test_nomination_form.id, sections[1].id, 4, 'long_text'),
         ]
         questions[0].key = 'nominating_capacity'
         questions[2].key = 'nomination_title'
