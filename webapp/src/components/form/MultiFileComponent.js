@@ -2,6 +2,10 @@ import React from "react";
 import "./Style.css";
 import edit from '../../images/edit2.png'
 import bin from '../../images/bin.png'
+import tick from '../../images/green_tick.png'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCoffee } from '@fortawesome/free-solid-svg-icons'
+
 
 
 class MultiFileComponent extends React.Component {
@@ -26,6 +30,23 @@ class MultiFileComponent extends React.Component {
 
     };
 
+    // handle File Viewing
+    onFileUpload(file, fileName) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = data => {
+                this.setState({
+                    file: file,
+                    isSubmitted: true,
+                    fileData: data.target.result
+                }, () => { this.props.handleUpload(file, fileName, this.state.delete, this.state.fileData) })
+                resolve(data.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+
     // handleUpload
     handleUpload = event => {
         const value = event.target.files[0];
@@ -35,10 +56,7 @@ class MultiFileComponent extends React.Component {
             fileName = value.name
         }
 
-        this.setState({
-            file: value,
-            isSubmitted: true,
-        }, () => { this.props.handleUpload(value, fileName, this.state.delete) })
+        this.onFileUpload(value, fileName)
     };
 
     // Name Change
@@ -56,7 +74,7 @@ class MultiFileComponent extends React.Component {
         event.preventDefault()
         this.setState({
             delete: true
-        }, () => this.props.handleUpload(this.state.file, this.state.name, this.state.delete))
+        }, () => this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData))
 
     }
 
@@ -68,13 +86,44 @@ class MultiFileComponent extends React.Component {
             btnSubmit: false,
             isSubmitted: true
         }, () => {
-            this.props.handleUpload(this.state.file, this.state.name, this.state.delete)
+            this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData)
         })
+    }
+
+    // Data Pop Up
+    triggerPopUp = event => {
+        event.preventDefault()
+        var myWindow = window.open("", "newWindow", "width=1000,height=1000");
+        myWindow.document.write(`<body style="margin: 0;">
+        <iframe style="width:100vw;height:100vh;" src=${this.state.fileData}></iframe>
+        </body>`)
+
+        //window.open('url','name','specs');
+    }
+
+    handleInput() {
+        if (!this.props.value.file) {
+            return (<input className={this.props.addError && !this.state.file ? "file-input error" : "file-input"}
+                onChange={this.handleUpload} type="file">
+            </input>)
+        }
+        else {
+            return (<div className="file-uploaded"><img src={tick}></img><h6 style={{marginLeft: "3px"}}>{this.props.value.name}</h6></div>)
+        }
+    }
+
+    componentWillMount() {
+        if (this.props.value.file) {
+            this.setState({
+                file: this.props.value.file
+            })
+        }
     }
 
 
 
     render() {
+        console.log("rendered")
         const {
             btnSubmit,
             isSubmitted,
@@ -90,28 +139,27 @@ class MultiFileComponent extends React.Component {
 
                 <div className="upload-item-container">
 
-                    <div className={btnSubmit ? "file-name enter" : "file-name" }>
+                    <div className={btnSubmit ? "file-name enter" : "file-name"}>
                         <input className={isSubmitted ? "input-field lock" : "input-field"
                             // || this.props.errorText ? "input-field" : "input-field alert"
                         }
                             onChange={this.handleChange}
-                            placeholder="File Name"
+                            placeholder={this.props.value.name ? `${this.props.value.name}` : "File Name"}
                             type="text"
                             value={name}
                         ></input>
 
                         <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>Submit</button>
                         <a onClick={this.nameChange} className={isSubmitted ? "edit show" : "edit"}><img src={edit} /></a>
-                        <a><img onClick={this.del} className={file ? "bin show" : "bin"} src={bin} /></a>
-                        <a href={this.state.file}>View File</a>
+                        <a><img onClick={this.del} className={file ? "bin show" : "bin"} src={bin} /><FontAwesomeIcon icon={faCoffee} /></a>
+                        <a style={file ? { display: "block" } : { display: "none" }} onClick={this.triggerPopUp}>View File</a>
                     </div>
 
                     <div className={file ? "file-input-wrapper lock" : "file-input-wrapper"}>
-                        <input className={this.props.addError && !file ? "file-input error" : "file-input"} onChange={this.handleUpload} type="file"></input>
+                        {this.handleInput()}
                     </div>
-
-
                 </div>
+
             </form>
 
         )

@@ -140,3 +140,16 @@ display: block;
   color: red;
 }
 
+.file-uploaded {
+display: flex;
+}
+
+.file-uploaded img {
+  width: 20px;
+  height: 20px;
+  margin: 0 5px;
+  }
+
+
+
+

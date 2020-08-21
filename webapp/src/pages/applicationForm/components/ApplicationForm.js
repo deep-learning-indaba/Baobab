@@ -62,14 +62,13 @@ class FieldEditor extends React.Component {
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
-      uploaded: false
+      uploaded: false,
     }
   }
 
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
-    console.log(value)
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -83,7 +82,7 @@ class FieldEditor extends React.Component {
 
   handleUploadFile = (file) => {
     this.setState({
-      uploading: true
+      uploading: true,
     }, () => {
       fileService.uploadFile(file, progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -102,9 +101,13 @@ class FieldEditor extends React.Component {
         });
       })
     })
+
+    return file
   }
 
+
   formControl = (key, question, answer, validationError, responseId) => {
+
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -211,17 +214,19 @@ class FieldEditor extends React.Component {
             errorText={validationError}
             required={question.is_required} />
         );
-        case MULTI_FILE:
-          return (
-            <FormMultiFile
-              id={this.id}
-              name={this.id}
-              label={question.description}
-              value={answer}
-              uploadFile={(file) => this.handleUploadFile(file)}
-              errorText={validationError}
-               />
-          );
+      case MULTI_FILE:
+        return (
+          <FormMultiFile
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            onChange={this.handleChange}
+            uploadFile={(file) => this.handleUploadFile(file)}
+            errorText={validationError}
+          />
+        );
+
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
@@ -949,12 +954,12 @@ class ApplicationList extends Component {
         </thead>
         <tbody>
           {this.props.responses.map(response => {
-          return <tr key={"response_" + response.id}>
-            <td>{this.getCandidate(allQuestions, response)}</td>
-            <td>{this.getStatus(response)}</td>
-            <td>{this.getAction(response)}</td>
-          </tr>
-        })}
+            return <tr key={"response_" + response.id}>
+              <td>{this.getCandidate(allQuestions, response)}</td>
+              <td>{this.getStatus(response)}</td>
+              <td>{this.getAction(response)}</td>
+            </tr>
+          })}
         </tbody>
       </table>
     </div>

@@ -8,108 +8,100 @@ class FormMultiFile extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            uploads: [{ file: 1, deleted: false }],
-            fileList: [],
-            addError: false
+            fileList: [{ name: null, file: null, delete: null, filePath: null }],
+            addError: false,
         }
     }
 
+
+    componentWillMount(){
+        if (this.props.value) {
+            this.setState({
+                fileList: this.props.value,
+            })
+        }
+    }
+
+   
     // add file
     addFile = () => {
+        // variables
         let condition = true;
         let addError = false;
-        const uploads = this.state.uploads;
-        const fileList = this.state.fileList;
-        let filterDelItems = uploads.filter((val, index) => {
-            return val.deleted != true
+        let handleList = this.state.fileList;
+        // check against empty fields
+        handleList.map(val => {
+            if (!val.file) {
+                condition = false
+                addError = true
+            }
         })
-        console.log(filterDelItems)
-        // Check uplaods array for le
-
-        if (filterDelItems.length > fileList.length) {
-            condition = false;
-            addError = true
+        // add item if there is no empty fields
+        if (condition) {
+            handleList.push({ name: null, file: null, delete: null, filePath: null })
         }
-        else {
-            addError = false
-            condition = true;
-        }
-
 
         this.setState({
-            uploads: condition ? uploads.concat({ file: uploads.length + 1, deleted: false }) : uploads,
-            addError: addError
-        }, () => console.log(this.state.addError))
-
-
+            addError: addError,
+            fileList: handleList
+        }, () => {
+            condition = true;
+            addError = false
+        })
     }
 
-    //handle upload
-    handleUpload = (file, name, del) => {
 
+    //handle upload
+    handleUpload = (file, name, del, filePath) => {
         // function variables
         let handleDuplicates = false;
         let handleList = this.state.fileList;
-        let uploads = this.state.uploads;
-        let removeFile;
 
-
-        // assign data
-        var newFile = { name: `${name}`, file: file }
-
-        // handle Delete
         if (del) {
-            if (uploads.length == 1) {
-                uploads.concat({ file: null, deleted: true })
-            }
-            else {
-                handleList.map(val => {
-                    if (val.file == file) {
-                        removeFile = handleList.indexOf(val)
-                        handleList.splice(handleList.indexOf(val), 1)
-                        console.log(uploads)
-                        console.log(removeFile)
-
-                    }
-                })
-
-                if (removeFile > -1) {
-                    uploads[removeFile] = { file: null, deleted: true }
-                }
-            }
-
+            // del file
+            let filteredList  = handleList.filter((val) => {
+                return file != val.file
+            })
+            handleList = filteredList
         }
 
-        // if not delete then handle otherwise
         else {
-            // test and handle updated values
+            // Add new value
             handleList.map(val => {
+                if (!val.file) {
+                    val.name = name;
+                    val.file = file;
+                    val.delete = del;
+                    val.filePath = filePath;
+                }
+                // test for and handle updated values
                 if (val.file == file) {
-                    handleList.splice(handleList.indexOf(val), 1, newFile)
-                    handleDuplicates = true;
+                    val.name = name;
+                    val.delete = del;
+                    val.filePath = filePath;
+                    handleDuplicates = true
                 }
             })
+        }
 
-            // concat or return if file is just being updated
-            if (!handleDuplicates) {
-                handleList.push(newFile)
-                this.props.uploadFile(file)
-            }
+        if(handleDuplicates) {
+            this.props.uploadFile(file)
         }
 
         // setState and Callback functions
         this.setState({
             fileList: handleList,
-            uploads: uploads,
 
         },  // reset function variables
             () => {
                 handleDuplicates = false;
-                removeFile = null;
+                //  removeFile = null;
+                this.props.handleUpload(file)
+                setTimeout(() => {
+                    this.props.onChange(this.state.fileList)
+                },3000)
+                
             })
-
-        console.log(this.state.fileList)
-        console.log(this.state.uploads)
     }
 
 
@@ -117,14 +109,15 @@ class FormMultiFile extends React.Component {
         return (
             <div>
                 <FormGroup>
-                    {this.state.uploads.map((val) => {
-                        if (!val.deleted)
-                            return <MultiFileComponent className="multi-file-component"
-                                handleUpload={(file, name, del) => this.handleUpload(file, name, del)}
-                                errorText={this.props.errorText}
-                                addError={this.state.addError}
-                                del={(file) => this.del(file)}
-                            />
+                    {this.state.fileList.map(val => {
+                        console.log(val)
+                        return <MultiFileComponent className="multi-file-component"
+                            handleUpload={(file, name, del, filePath) => this.handleUpload(file, name, del, filePath)}
+                            errorText={this.props.errorText}
+                            addError={this.state.addError}
+                            del={(file) => this.del(file)}
+                            value={val}
+                        />
                     })}
 
                     <button className="add-file-btn" onClick={(e) => this.addFile(e)}>Add File</button>

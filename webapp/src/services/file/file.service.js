@@ -23,7 +23,7 @@ function uploadFile(file, onUploadProgress) {
         .then(response => {
             return {
                 fileId: response.data.file_id,
-                error: ""
+                error: "",
             }
         }).catch(error => {
             return {
