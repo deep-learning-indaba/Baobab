@@ -10,3 +10,9 @@ dispatch:
 
   - url: "portal.eeml.eu/*"
     service: prod-frontend
+
+  - url: "test-baobab.ai4d.ai/*"
+    service: staging-frontend
+
+  - url: "baobab.ai4d.ai/*"
+    service: prod-frontend
