@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -14,6 +15,7 @@ import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
+
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -25,6 +27,8 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const MULTI_FILE = 'multi-file';
+
 
 /*
  * Utility functions for the feature where questions are dependent on the answers of other questions
@@ -52,7 +56,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
-class FieldEditor extends React.Component {
+ class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
@@ -60,8 +64,9 @@ class FieldEditor extends React.Component {
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
-      uploaded: false
+      uploaded: false,
     }
+
   }
 
   handleChange = event => {
@@ -80,7 +85,7 @@ class FieldEditor extends React.Component {
 
   handleUploadFile = (file) => {
     this.setState({
-      uploading: true
+      uploading: true,
     }, () => {
       fileService.uploadFile(file, progressEvent => {
         const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -90,6 +95,7 @@ class FieldEditor extends React.Component {
       }).then(response => {
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
+          return response
         }
         this.setState({
           uploaded: response.fileId !== "",
@@ -98,9 +104,13 @@ class FieldEditor extends React.Component {
         });
       })
     })
+
+    return file
   }
 
+
   formControl = (key, question, answer, validationError, responseId) => {
+
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -205,8 +215,24 @@ class FieldEditor extends React.Component {
             key={"i_" + key}
             showError={validationError}
             errorText={validationError}
-            required={question.is_required} />
+            required={question.is_required}
+          />
+
+
         );
+      case MULTI_FILE:
+        return (
+          <FormMultiFile
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            onChange={this.handleChange}
+            uploadFile={(file) => this.handleUploadFile(file)}
+            errorText={validationError}
+          />
+        );
+
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
@@ -248,7 +274,7 @@ class FieldEditor extends React.Component {
   }
 }
 
-class Section extends React.Component {
+  class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -257,15 +283,18 @@ class Section extends React.Component {
         .slice()
         .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
-      validationStale: false
+      validationStale: false,
+
     };
   }
+
 
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
       value: value
     };
+
 
     const newQuestionModels = this.state.questionModels
       .map(q => {
@@ -294,6 +323,8 @@ class Section extends React.Component {
     );
   };
 
+
+  // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
     const question = questionModel.question;
@@ -302,6 +333,7 @@ class Section extends React.Component {
     if (question.is_required && (!answer || !answer.value)) {
       errors.push("An answer is required.");
     }
+
     if (
       answer &&
       question.validation_regex &&
@@ -313,6 +345,8 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
+
+  // isValidated
   isValidated = () => {
     const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
@@ -341,6 +375,7 @@ class Section extends React.Component {
         }
       }
     );
+
     return isValid;
   };
 
@@ -372,7 +407,9 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
+
     const allAnswersInSection = questionModels.map(q => q.answer);
+
     return (
       <div className={"section"}>
         <div className={"headline"}>
@@ -410,6 +447,7 @@ class Section extends React.Component {
   }
 }
 
+
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
@@ -429,6 +467,7 @@ function AnswerValue(props) {
   }
   return "No answer provided.";
 }
+
 
 class Confirmation extends React.Component {
 
@@ -777,8 +816,8 @@ class ApplicationFormInstance extends Component {
     } = this.state;
 
     if (isError) {
-      return <div className={"alert alert-danger alert-container"}>{
-        errorMessage}
+      return <div className={"alert alert-danger alert-container"}>
+        {errorMessage}
       </div>;
     }
 
@@ -877,6 +916,7 @@ class ApplicationFormInstance extends Component {
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
           />
+
           <ReactToolTip />
         </div>
         {isSubmitting && <h2 class="submitting">Saving Responses...</h2>}
@@ -934,17 +974,16 @@ class ApplicationList extends Component {
         </thead>
         <tbody>
           {this.props.responses.map(response => {
-          return <tr key={"response_" + response.id}>
-            <td>{this.getCandidate(allQuestions, response)}</td>
-            <td>{this.getStatus(response)}</td>
-            <td>{this.getAction(response)}</td>
-          </tr>
-        })}
+            return <tr key={"response_" + response.id}>
+              <td>{this.getCandidate(allQuestions, response)}</td>
+              <td>{this.getStatus(response)}</td>
+              <td>{this.getAction(response)}</td>
+            </tr>
+          })}
         </tbody>
       </table>
     </div>
   }
-
 }
 
 class ApplicationForm extends Component {
@@ -994,7 +1033,15 @@ class ApplicationForm extends Component {
   }
 
   render() {
-    const { isLoading, isError, errorMessage, formSpec, responses, selectedResponse, responseSelected } = this.state;
+    const {
+      isLoading,
+      isError,
+      errorMessage,
+      formSpec,
+      responses,
+      selectedResponse,
+      responseSelected } = this.state;
+
     if (isLoading) {
       return (<Loading />);
     }
@@ -1002,7 +1049,6 @@ class ApplicationForm extends Component {
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
-
 
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
       return <div>
@@ -1020,4 +1066,4 @@ class ApplicationForm extends Component {
 
 }
 
-export default withRouter(ApplicationForm);
+ export default withRouter(ApplicationForm);

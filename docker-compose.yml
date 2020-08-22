@@ -5,7 +5,7 @@ redis:
 db:
   image: orchardup/postgresql
   ports:
-    - 5432:5432
+    - 4040:5432
 storage:
   image: fsouza/fake-gcs-server
   ports:
