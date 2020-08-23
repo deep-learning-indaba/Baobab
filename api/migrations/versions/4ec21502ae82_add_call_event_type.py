@@ -15,6 +15,7 @@ import sqlalchemy as sa
 
 
 def upgrade():
+    op.execute("COMMIT")
     op.execute("ALTER TYPE event_type ADD VALUE 'call'")
 
 
