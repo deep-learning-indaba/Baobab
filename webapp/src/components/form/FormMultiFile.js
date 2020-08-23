@@ -13,8 +13,7 @@ class FormMultiFile extends React.Component {
         }
     }
 
-
-    componentWillMount(){
+    componentWillMount() {
         if (this.props.value) {
             this.setState({
                 fileList: this.props.value,
@@ -22,7 +21,7 @@ class FormMultiFile extends React.Component {
         }
     }
 
-   
+
     // add file
     addFile = () => {
         // variables
@@ -59,7 +58,7 @@ class FormMultiFile extends React.Component {
 
         if (del) {
             // del file
-            let filteredList  = handleList.filter((val) => {
+            let filteredList = handleList.filter((val) => {
                 return file != val.file
             })
             handleList = filteredList
@@ -75,7 +74,7 @@ class FormMultiFile extends React.Component {
                     val.filePath = filePath;
                 }
                 // test for and handle updated values
-                if (val.file == file) {
+                else if (val.file == file) {
                     val.name = name;
                     val.delete = del;
                     val.filePath = filePath;
@@ -84,33 +83,30 @@ class FormMultiFile extends React.Component {
             })
         }
 
-        if(handleDuplicates) {
-            this.props.uploadFile(file)
-        }
 
         // setState and Callback functions
         this.setState({
             fileList: handleList,
-
         },  // reset function variables
             () => {
+                if (!handleDuplicates) {
+                    this.props.uploadFile(file, handleList)
+                }
                 handleDuplicates = false;
-                //  removeFile = null;
-                this.props.handleUpload(file)
-                setTimeout(() => {
-                    this.props.onChange(this.state.fileList)
-                },3000)
-                
+
             })
+
+
+
     }
 
 
     render() {
+
         return (
             <div>
                 <FormGroup>
                     {this.state.fileList.map(val => {
-                        console.log(val)
                         return <MultiFileComponent className="multi-file-component"
                             handleUpload={(file, name, del, filePath) => this.handleUpload(file, name, del, filePath)}
                             errorText={this.props.errorText}

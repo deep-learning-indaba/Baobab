@@ -1,8 +1,6 @@
 import React from "react";
 import "./Style.css";
-// import edit from '../../images/edit2.png'
-// import bin from '../../images/bin.png'
-// import tick from '../../images/green_tick.png'
+import tick from '../../images/tick.png'
 
 
 class MultiFileComponent extends React.Component {
@@ -62,16 +60,18 @@ class MultiFileComponent extends React.Component {
         this.setState({
             isSubmitted: false,
             name: "",
-            btnSubmit: true
+            btnSubmit: true,
+            prevName: event.target.value
         })
     }
 
     // delete File
     del = event => {
         event.preventDefault()
+  
         this.setState({
             delete: true
-        }, () => this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData))
+        }, () => this.props.handleUpload(this.state.file, this.state.file.name, this.state.delete, this.state.fileData))
 
     }
 
@@ -79,12 +79,20 @@ class MultiFileComponent extends React.Component {
     //Submit
     submit = event => {
         event.preventDefault()
-        this.setState({
-            btnSubmit: false,
-            isSubmitted: true
-        }, () => {
-            this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData)
-        })
+        if(!this.state.name.length) {
+            this.setState({
+                error: true
+            })
+        }
+        else {
+            this.setState({
+                btnSubmit: false,
+                isSubmitted: true,
+                error: false
+            }, () => {
+                this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData)
+            })
+        }
     }
 
     // Data Pop Up
@@ -92,10 +100,9 @@ class MultiFileComponent extends React.Component {
         event.preventDefault()
         var myWindow = window.open("", "newWindow", "width=1000,height=1000");
         myWindow.document.write(`<body style="margin: 0;">
-        <iframe style="width:100vw;height:100vh;" src=${this.state.fileData}></iframe>
+        <iframe style="width:100vw;height:100vh;" src=${this.props.value ? this.props.value.filePath : this.state.fileData }></iframe>
         </body>`)
 
-        //window.open('url','name','specs');
     }
 
     handleInput() {
@@ -105,7 +112,7 @@ class MultiFileComponent extends React.Component {
             </input>)
         }
         else {
-            return (<div className="file-uploaded"><img ></img><h6 style={{marginLeft: "3px"}}>{this.props.value.name}</h6></div>)
+            return (<div className="file-uploaded"><img src={tick} ></img><h6 style={{ marginLeft: "3px" }}>{this.props.value.name}</h6></div>)
         }
     }
 
@@ -120,12 +127,10 @@ class MultiFileComponent extends React.Component {
 
 
     render() {
-        console.log("rendered")
         const {
             btnSubmit,
             isSubmitted,
             name,
-            errorText,
             file
         } = this.state;
         return (
@@ -137,7 +142,7 @@ class MultiFileComponent extends React.Component {
                 <div className="upload-item-container">
 
                     <div className={btnSubmit ? "file-name enter" : "file-name"}>
-                        <input className={isSubmitted ? "input-field lock" : "input-field"
+                        <input className={isSubmitted  ? "input-field lock" : "input-field"
                             // || this.props.errorText ? "input-field" : "input-field alert"
                         }
                             onChange={this.handleChange}
@@ -147,10 +152,11 @@ class MultiFileComponent extends React.Component {
                         ></input>
 
                         <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>Submit</button>
-                        <a onClick={this.nameChange} className={isSubmitted ? "edit show" : "edit"}><img  /></a>
-                        <a><img onClick={this.del} className={file ? "bin show" : "bin"}  /></a>
-                        <a style={file ? { display: "block" } : { display: "none" }} onClick={this.triggerPopUp}>View File</a>
+                        <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"}><i className="fas fa-edit"></i></a>
+                        <a onClick={this.del} className={file ? "bin show" : "bin"}><i className="fas fa-trash"></i></a>
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} onClick={this.triggerPopUp}><i className="far fa-eye"></i></a>
                     </div>
+                    {this.state.error && <p style={{color: "red"}}>Please enter a name</p>}
 
                     <div className={file ? "file-input-wrapper lock" : "file-input-wrapper"}>
                         {this.handleInput()}

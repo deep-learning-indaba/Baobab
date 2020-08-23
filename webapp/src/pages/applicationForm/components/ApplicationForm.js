@@ -83,7 +83,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
     }
   };
 
-  handleUploadFile = (file) => {
+  handleUploadFile = (file, uploadType) => {
     this.setState({
       uploading: true,
     }, () => {
@@ -93,15 +93,20 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
           uploadPercentComplete: percentCompleted
         });
       }).then(response => {
+        
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
-          return response
+          // return response
         }
         this.setState({
           uploaded: response.fileId !== "",
           uploadError: response.error,
           uploading: false
         });
+      }).then(response => {
+        if(uploadType){
+          this.handleChange(uploadType)
+        }
       })
     })
 
@@ -228,7 +233,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             label={question.description}
             value={answer}
             onChange={this.handleChange}
-            uploadFile={(file) => this.handleUploadFile(file)}
+            uploadFile={(file, uploadType) => this.handleUploadFile(file, uploadType)}
             errorText={validationError}
           />
         );
