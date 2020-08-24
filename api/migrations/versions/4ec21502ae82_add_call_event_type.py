@@ -16,12 +16,12 @@ import sqlalchemy as sa
 
 def upgrade():
     op.execute("COMMIT")
-    op.execute("ALTER TYPE event_type ADD VALUE 'call'")
+    op.execute("ALTER TYPE event_type ADD VALUE 'CALL'")
 
 
 def downgrade():
     op.execute("""DELETE FROM pg_enum
-WHERE enumlabel = 'call'
+WHERE enumlabel = 'CALL'
 AND enumtypid = (
   SELECT oid FROM pg_type WHERE typname = 'event_type'
 )""")
