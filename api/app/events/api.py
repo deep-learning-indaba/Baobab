@@ -276,8 +276,6 @@ class EventsAPI(restful.Resource):
 
         upcoming_events = event_repository.get_upcoming_for_organisation(g.organisation.id)
         attended_events = event_repository.get_attended_by_user_for_organisation(g.organisation.id, user_id)
-        for event in attended_events:
-            event.event_type = EventType.ATTENDED
 
         returnEvents = []
 
