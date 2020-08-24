@@ -85,7 +85,7 @@
 .btn-submit {
   display: none;
   height: 29px;
-  margin: 0 4px;
+  margin: 0 10px;
   border: none;
   color: white;
   background: hsl(205deg 34% 28%);
@@ -103,7 +103,7 @@
 
 .edit {
   display: none;
-  margin: 0 4px;
+  margin: 0 10px;
 }
 
 .edit.show {
@@ -122,7 +122,7 @@
 }
 
 .bin {
-  margin: 0 4px;
+  margin: 0 10px;
   display: none;
 }
 
@@ -150,7 +150,7 @@ display: flex;
   }
 
   .view {
-    margin: 0 4px;
+    margin: 0 10px;
   }
 
 

@@ -57,11 +57,17 @@ class FormMultiFile extends React.Component {
         let handleList = this.state.fileList;
 
         if (del) {
-            // del file
-            let filteredList = handleList.filter((val) => {
-                return file != val.file
-            })
-            handleList = filteredList
+            if (handleList.length > 1) {
+                // del file
+                let filteredList = handleList.filter((val) => {
+                    return file != val.file
+                })
+                handleList = filteredList
+            }
+            else {
+                handleList = []
+            }
+
         }
 
         else {
@@ -93,12 +99,9 @@ class FormMultiFile extends React.Component {
                     this.props.uploadFile(file, handleList)
                 }
                 handleDuplicates = false;
-
             })
-
-
-
     }
+
 
 
     render() {

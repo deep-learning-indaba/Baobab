@@ -49,6 +49,7 @@ class MultiFileComponent extends React.Component {
 
         if (!this.state.name || this.state.name == "") {
             fileName = value.name
+ 
         }
 
         this.onFileUpload(value, fileName)
@@ -100,7 +101,7 @@ class MultiFileComponent extends React.Component {
         event.preventDefault()
         var myWindow = window.open("", "newWindow", "width=1000,height=1000");
         myWindow.document.write(`<body style="margin: 0;">
-        <iframe style="width:100vw;height:100vh;" src=${this.props.value ? this.props.value.filePath : this.state.fileData }></iframe>
+        <iframe style="width:100vw;height:100vh;" src=${this.state.fileData }></iframe>
         </body>`)
 
     }
@@ -112,20 +113,21 @@ class MultiFileComponent extends React.Component {
             </input>)
         }
         else {
-            return (<div className="file-uploaded"><img src={tick} ></img><h6 style={{ marginLeft: "3px" }}>{this.props.value.name}</h6></div>)
+            return (<div className="file-uploaded"><img src={tick} ></img><h6 style={{ marginLeft: "3px" }}>{this.props.value.file.name}</h6></div>)
         }
     }
 
     componentWillMount() {
+        console.log(this.props.value)
         if (this.props.value.file) {
             this.setState({
-                file: this.props.value.file
+                file: this.props.value.file,
+                fileData: this.props.value.filePath
             })
         }
     }
 
-
-
+  
     render() {
         const {
             btnSubmit,
