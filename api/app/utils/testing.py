@@ -306,7 +306,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return answer
 
-    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False):
+    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False, candidate_response=None):
         offer_date = offer_date or datetime.now()
         expiry_date = expiry_date or datetime.now() + timedelta(10)
 
@@ -317,7 +317,9 @@ class ApiTestCase(unittest.TestCase):
             expiry_date=expiry_date,
             payment_required=payment_required,
             travel_award=travel_award,
-            accommodation_award=accommodation_award)
+            accommodation_award=accommodation_award,
+            candidate_response=candidate_response)
+
         db.session.add(offer)
         db.session.commit()
         return offer

@@ -8,6 +8,7 @@ class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
     CALL = 'call'
+    ATTENDED = 'attended'  # This is used by the API, but not stored in the database
 
 
 class Event(db.Model):

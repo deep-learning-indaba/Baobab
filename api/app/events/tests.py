@@ -47,7 +47,7 @@ class EventsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        db.session.flush()
+        # db.session.flush()
 
     def test_get_events_applied(self):
         self.seed_static_data()
@@ -132,6 +132,88 @@ class EventsAPITest(ApiTestCase):
 
         response = self.app.get('/api/v1/events')
         self.assertEqual(response.status_code, 401)  # Unauthorized
+
+    def test_past_event_offer_accepted(self):
+        """API should return past events that user had an accepted offer for."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_offer(self.test_user.id, past_event.id, candidate_response=True)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+        self.assertEqual(data[1]["event_type"], 'ATTENDED')
+        
+    def test_past_event_offer_rejected(self):
+        """API should not return past events where the user rejected an offer."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_offer(self.test_user.id, past_event.id, candidate_response=False)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+
+    def test_past_event_guest(self):
+        """API should return past events where user was an invited guest."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_invited_guest(self.test_user.id, past_event.id)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+        self.assertEqual(data[1]["event_type"], 'ATTENDED')
+
+    def test_past_event_non_attendee(self):
+        """API should not return past events where the user was not an attendee."""
+        self.seed_static_data()
+
+        past_event1 = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST1')
+
+        past_event2 = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST2')
+
+        # Add a different user who attended these events
+        other_user = self.add_user(email='other@user.com')
+        self.add_invited_guest(other_user.id, event_id=past_event1.id)
+        self.add_offer(other_user.id, event_id=past_event2.id, candidate_response=True)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
 
 
 class EventsStatsAPITest(ApiTestCase):

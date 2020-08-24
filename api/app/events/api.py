@@ -1,6 +1,6 @@
 from datetime import datetime
 import traceback
-
+import itertools
 from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
@@ -274,10 +274,14 @@ class EventsAPI(restful.Resource):
         language = request.args['language']
         default_language = 'en'
 
-        events = event_repository.get_upcoming_for_organisation(g.organisation.id)
+        upcoming_events = event_repository.get_upcoming_for_organisation(g.organisation.id)
+        attended_events = event_repository.get_attended_by_user_for_organisation(g.organisation.id, user_id)
+        for event in attended_events:
+            event.event_type = EventType.ATTENDED
+
         returnEvents = []
 
-        for event in events:
+        for event in itertools.chain(upcoming_events, attended_events):
             if not event.has_specific_translation(language):
                 LOGGER.error('Missing {} translation for event {}.'.format(language, event.id))
                 language = default_language
