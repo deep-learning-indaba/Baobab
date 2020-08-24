@@ -32,10 +32,10 @@ class Home extends Component {
                 }
                 if (response.events) {
                     this.setState({
-                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT'),
-                        awards: response.events.filter(e => e.event_type === 'AWARD'),
-                        calls: response.events.filter(e => e.event_type == "CALL"),
-                        attended: response.events.filter(e => e.event_type == "ATTENDED")
+                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
+                        awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
+                        calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
+                        attended: response.events.filter(e => !e.is_event_opening)
                     });
                 }
             });

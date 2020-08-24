@@ -226,30 +226,54 @@ class EventStatus extends Component {
       }
   }
 
+  buildMiniConfUrl = (event) => {
+      const link = 
+        "https://" +
+        event.miniconf_url +
+        "/index.html?token=" +
+        JSON.parse(localStorage.getItem("user"))["token"] +
+        "&event_id=" + 
+        event.id +
+        "&redirect_back_url=" +
+        window.location.href +
+        "&verify_token_url=" +
+        process.env.REACT_APP_API_URL +
+        "/api/v1/validate-user-event-attendee" +
+        "&origin=" +
+        window.location.origin;
+
+      return link
+  }
+
+  pastEventStatus = (event) => {
+    if (event.miniconf_url) {
+        return {
+            title: this.props.t("Virtual Event Over"),
+            titleClass: "text-success",
+            longText: `${event.name} ` + this.props.t("is now over. You may still visit our virtual event site."),
+            shortText: this.props.t('Go To Virtual Event >'),
+            linkClass: "btn-success",
+            link: this.buildMiniConfUrl(event)
+        }
+      }
+      else {
+          return {
+              title: this.props.t("Thank you for participating!"),
+              titleClass: "text-success",
+              shortText: this.props.t("Thank you for participating!")
+          }
+      }
+  }
+
   eventStatus = (event) => {
       if (event.miniconf_url) {
-        const link = 
-            "https://" +
-            event.miniconf_url +
-            "/index.html?token=" +
-            JSON.parse(localStorage.getItem("user"))["token"] +
-            "&event_id=" + 
-            event.id +
-            "&redirect_back_url=" +
-            window.location.href +
-            "&verify_token_url=" +
-            process.env.REACT_APP_API_URL +
-            "/api/v1/validate-user-event-attendee" +
-            "&origin=" +
-            window.location.origin;
-
         return {
             title: this.props.t("Virtual Event Now Open"),
             titleClass: "text-success",
             longText: `${event.name} ` + this.props.t("is now open! Please visit our virtual event site to attend."),
             shortText: this.props.t('Go To Virtual Event >'),
             linkClass: "btn-success",
-            link: link
+            link: this.buildMiniConfUrl(event)
         }
       }
       else {
@@ -283,6 +307,10 @@ class EventStatus extends Component {
   mapStatus = (event) => {
       if (event.status === null) {
         return this.unknownStatus("Status", this.props.t("Please try refresh the page and/or clear your cookies"));
+      }
+
+      if (!event.is_event_opening && event.status.is_event_attendee) {
+        return this.pastEventStatus(event);
       }
 
       if (!event.is_registration_open && event.is_event_opening && event.status.is_event_attendee) {
