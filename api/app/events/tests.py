@@ -150,7 +150,7 @@ class EventsAPITest(ApiTestCase):
 
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]["event_type"], 'EVENT')
-        self.assertEqual(data[1]["event_type"], 'ATTENDED')
+        self.assertTrue(data[1]["status"]['is_event_attendee'])
         
     def test_past_event_offer_rejected(self):
         """API should not return past events where the user rejected an offer."""
@@ -187,7 +187,7 @@ class EventsAPITest(ApiTestCase):
 
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]["event_type"], 'EVENT')
-        self.assertEqual(data[1]["event_type"], 'ATTENDED')
+        self.assertTrue(data[1]["status"]['is_event_attendee'])
 
     def test_past_event_non_attendee(self):
         """API should not return past events where the user was not an attendee."""
