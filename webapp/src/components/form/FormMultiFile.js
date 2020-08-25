@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import FormGroup from "./FormGroup";
 import MultiFileComponent from './MultiFileComponent';
+import { withTranslation } from 'react-i18next';
 import "./Style.css";
 
 
@@ -24,12 +25,13 @@ class FormMultiFile extends React.Component {
 
     // add file
     addFile = () => {
+        let handleList = this.state.fileList;
         // check against empty fields
-        let condition = handleList.all(val => val.file);
+        let condition = handleList.every(val => val.file);
 
         // variables
         let addError = condition ? false : true;
-        let handleList = this.state.fileList;
+      
 
         // add item if there is no empty fields
         if (condition) {
@@ -109,6 +111,7 @@ class FormMultiFile extends React.Component {
 
 
     render() {
+        const t = this.props.t
 
         return (
             <div>
@@ -118,12 +121,12 @@ class FormMultiFile extends React.Component {
                             handleUpload={(file, name, del, filePath) => this.handleUpload(file, name, del, filePath)}
                             errorText={this.props.errorText}
                             addError={this.state.addError}
-                            del={(file) => this.del(file)}
+                            del={(file, del) => this.del(file, del)}
                             value={val}
                         />
                     })}
 
-                    <button className="add-file-btn" onClick={(e) => this.addFile(e)}>Add File</button>
+                    <button className="add-file-btn" onClick={(e) => this.addFile(e)}>{t("Add File")}</button>
                     <div className={this.props.errorText ? "errorText display" : "errorText"}> <p>{this.props.errorText}</p> </div>
                 </FormGroup>
             </div>
@@ -131,4 +134,5 @@ class FormMultiFile extends React.Component {
     }
 
 }
-export default FormMultiFile;
+export default withTranslation(FormMultiFile);
+

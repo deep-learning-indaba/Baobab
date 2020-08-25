@@ -1,6 +1,7 @@
 import React from "react";
 import "./Style.css";
 import tick from '../../images/tick.png'
+import { withTranslation } from 'react-i18next';
 
 
 class MultiFileComponent extends React.Component {
@@ -135,11 +136,14 @@ class MultiFileComponent extends React.Component {
             name,
             file
         } = this.state;
+
+        const t = this.props.t
+
         return (
 
             <form className="upload-item-wrapper">
 
-                <label>Upload File</label>
+                <label>{t("Upload File")}</label>
 
                 <div className="upload-item-container">
 
@@ -153,12 +157,12 @@ class MultiFileComponent extends React.Component {
                             value={name}
                         ></input>
 
-                        <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>Submit</button>
+                        <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>{t("Submit")}</button>
                         <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"}><i className="fas fa-edit"></i></a>
                         <a onClick={this.del} className={file ? "bin show" : "bin"}><i className="fas fa-trash"></i></a>
                         <a className="view" style={file ? { display: "block" } : { display: "none" }} onClick={this.triggerPopUp}><i className="far fa-eye"></i></a>
                     </div>
-                    {this.state.error && <p style={{color: "red"}}>Please enter a name</p>}
+                    {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}
 
                     <div className={file ? "file-input-wrapper lock" : "file-input-wrapper"}>
                         {this.handleInput()}
@@ -171,7 +175,7 @@ class MultiFileComponent extends React.Component {
     }
 }
 
-export default MultiFileComponent;
+export default withTranslation(MultiFileComponent)
 
 
 
