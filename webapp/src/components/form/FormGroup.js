@@ -6,7 +6,7 @@ class FormGroup extends React.Component {
     return (
       <div id={this.props.id} className={formClass}>
         {this.props.children}
-        <div class="invalid-feedback">
+        <div className="invalid-feedback">
           {this.props.errorText}
         </div>
       </div>

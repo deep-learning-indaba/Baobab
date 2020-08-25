@@ -1,3 +1,4 @@
+// TODO: HOW TO TRANSLATE THESE?
 export const isRequiredDropdown = fieldName => `${fieldName} is required`;
 export const isRequiredText = fieldName => `${fieldName} is required`;
 export const isRequiredCheckBox = fieldName => `${fieldName} is required`;

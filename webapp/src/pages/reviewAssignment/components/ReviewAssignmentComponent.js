@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { reviewService } from "../../../services/reviews";
 import { withRouter } from "react-router";
 import ReactTable from 'react-table'
+import { withTranslation } from 'react-i18next'
 
 import 'react-table/react-table.css'
 
@@ -106,7 +107,7 @@ class ReviewAssignmentComponent extends Component {
         className="btn btn-primary btn-sm"
         onClick={() => this.assignReviewers(cellInfo.row.email, cellInfo.row.reviews_to_assign)}
         disabled={!Number.isInteger(cellInfo.row.reviews_to_assign)}>
-        Assign
+        {this.props.t("Assign")}
       </button>
     )
   }
@@ -119,28 +120,30 @@ class ReviewAssignmentComponent extends Component {
       "height": "3rem"
     }
 
+    const t = this.props.t;
+
     const columns = [{
-      Header: 'Title',
+      Header: t("Title"),
       accessor: 'user_title' // String-based value accessors!
     }, {
-      Header: 'Email',
+      Header: t("Email"),
       accessor: 'email'
     }, {
       id: 'fullName', // Required because our accessor is not a string
-      Header: 'Name',
+      Header: t("Name"),
       accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
     }, {
-      Header: 'No. Allocated',
+      Header: t("No. Allocated"),
       accessor: 'reviews_allocated'
     }, {
-      Header: 'No. Completed',
+      Header: t("No. Completed"),
       accessor: 'reviews_completed'
     }, {
-      Header: 'No. to Assign',
+      Header: t("No. to Assign"),
       accessor: 'reviews_to_assign',
       Cell: this.renderEditable
     }, {
-      Header: 'Assign',
+      Header: t("Assign"),
       Cell: this.renderButton
     }]
 
@@ -160,7 +163,7 @@ class ReviewAssignmentComponent extends Component {
           {error}
         </div>}
 
-        <span className="review-padding">Total Unallocated Reviews: {reviewSummary.reviews_unallocated}</span>
+        <span className="review-padding">{t("Total Unallocated Reviews:")} {reviewSummary.reviews_unallocated}</span>
 
         <ReactTable
           data={reviewers}
@@ -171,8 +174,8 @@ class ReviewAssignmentComponent extends Component {
           <FormTextBox
             id={"newReviewEmail"}
             name={'newReviewEmail'}
-            label={"Add new reviewer's email (they must already have an account)"}
-            placeholder={"Review email"}
+            label={t("Add new reviewer's email (they must already have an account)")}
+            placeholder={t("Review email")}
             onChange={this.handleChange}
             value={newReviewerEmail}
             key={"i_newReviewEmail"} />
@@ -180,7 +183,7 @@ class ReviewAssignmentComponent extends Component {
           <button
             class="btn btn-primary float-right"
             onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0) }}>
-            Add
+            {t("Add")}
             </button>
 
         </div>
@@ -189,4 +192,4 @@ class ReviewAssignmentComponent extends Component {
   }
 }
 
-export default withRouter(ReviewAssignmentComponent);
+export default withRouter(withTranslation()(ReviewAssignmentComponent));

@@ -7,13 +7,13 @@ import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import { Link } from "react-router-dom";
+import { withTranslation } from 'react-i18next';
 import {
   requiredText,
   requiredDropdown,
   validEmail,
   validatePassword
 } from "../../../utils/validation/rules.js";
-import { createColClassName } from "../../../utils/styling/styling";
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
@@ -126,7 +126,7 @@ class CreateAccountForm extends Component {
     this.setState({ submitted: true, showErrors: true });
 
     if (this.state.user.password !== this.state.user.confirmPassword) {
-      this.state.errors.$set.push({ passwords: "Passwords do not match" });
+      this.state.errors.$set.push({ passwords: this.props.t("Passwords do not match") });
     }
     const passwordErrors = validatePassword(this.state.user.password)
     if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0 && passwordErrors.password.foreach) {
@@ -177,11 +177,7 @@ class CreateAccountForm extends Component {
     return errorMessages;
   };
   render() {
-    const xs = 12;
-    const sm = 4;
-    const md = 4;
-    const lg = 4;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
+    const t = this.props.t;
 
     const {
       firstName,
@@ -205,13 +201,10 @@ class CreateAccountForm extends Component {
     if (created) {
       return (
         <div className="CreateAccount">
-          <p className="h3 text-center mb-4">Sign Up</p>
+          <p className="h3 text-center mb-4">{t("Sign Up")}</p>
           <p id="account-created">
-            Your {this.props.organisation ? this.props.organisation.name : ""} account
-            has been created, but before you can use it, we
-            need to verify your email address. Please check your email (and spam
-            folder) for a message containing a link to verify your email
-            address.
+            {this.props.t("Your")} {this.props.organisation ? this.props.organisation.name : ""} 
+            {this.props.t("account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.")}
           </p>
         </div>
       );
@@ -223,9 +216,9 @@ class CreateAccountForm extends Component {
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
           <div class="login-header-logo">
-            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} />
-            <h3>Sign Up</h3>
-            <h6>Or <Link to="/login" className="sign-up">Sign In</Link> if you already have an account</h6>
+            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} alt="Logo"/>
+            <h3>{t("Sign Up")}</h3>
+            <h6><Link to="/login" className="sign-up">{t("Sign In")}</Link> {t("if you already have an account")}</h6>
           </div>
 
           <div class="card">
@@ -234,46 +227,43 @@ class CreateAccountForm extends Component {
               id={validationFields.title.name}
               onChange={this.handleChangeDropdown}
               value={titleValue}
-              label={validationFields.title.display}
+              label={t(validationFields.title.display)}
             />
             <FormTextBox
               id={validationFields.firstName.name}
               type="text"
               onChange={this.handleChange(validationFields.firstName)}
               value={firstName}
-              label={validationFields.firstName.display}
+              label={t(validationFields.firstName.display)}
             />
             <FormTextBox
               id={validationFields.lastName.name}
               type="text"
               onChange={this.handleChange(validationFields.lastName)}
               value={lastName}
-              label={validationFields.lastName.display}
+              label={t(validationFields.lastName.display)}
             />
             <FormTextBox
               id={validationFields.email.name}
               type="email"
-              placeholder={validationFields.email.display}
               onChange={this.handleChange(validationFields.email)}
               value={email}
-              label={validationFields.email.display}
+              label={t(validationFields.email.display)}
             />
             <br /><br />
             <FormTextBox
               id={validationFields.password.name}
               type="password"
-              placeholder={validationFields.password.display}
               onChange={this.handleChange(validationFields.password)}
               value={password}
-              label={validationFields.password.display}
+              label={t(validationFields.password.display)}
             />
             <FormTextBox
               id={validationFields.confirmPassword.name}
               type="password"
-              placeholder={validationFields.confirmPassword.display}
               onChange={this.handleChange(validationFields.confirmPassword)}
               value={confirmPassword}
-              label={validationFields.confirmPassword.display}
+              label={t(validationFields.confirmPassword.display)}
             />
             <br /><br />
             <div className="custom-control custom-checkbox text-left">
@@ -285,7 +275,7 @@ class CreateAccountForm extends Component {
                 checked={over18}
                 onChange={this.toggleAge} />
               <label class="custom-control-label" for="over18">
-                I am over 18
+                {t("I am over 18")}
               </label>
             </div>
 
@@ -299,11 +289,11 @@ class CreateAccountForm extends Component {
                 onChange={this.togglePrivacyPolicy}
               />
               <label class="custom-control-label" for="agreePrivacyPolicy">
-                {"I have read and agree to the "}
+                {t("I have read and agree to the ")}
                 <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
                   target="_blank"
                   rel="noopener noreferrer">
-                  privacy policy
+                  {t("Privacy Policy")}
                 </a>
               </label>
             </div>
@@ -321,7 +311,7 @@ class CreateAccountForm extends Component {
                   aria-hidden="true"
                 />
               )}
-              Sign Up
+              {t("Sign Up")}
             </button>
 
           </div>
@@ -343,4 +333,4 @@ class CreateAccountForm extends Component {
   }
 }
 
-export default withRouter(CreateAccountForm);
+export default withRouter(withTranslation()(CreateAccountForm));

@@ -1,6 +1,7 @@
 import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
+import { withTranslation } from 'react-i18next';
 
 class FormTextArea extends React.Component {
   state = {
@@ -38,6 +39,8 @@ class FormTextArea extends React.Component {
   };
 
   render() {
+    const t = this.props.t;
+    
     return (
       <div>
         <FormGroup
@@ -74,7 +77,7 @@ class FormTextArea extends React.Component {
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
           />
-          <span class="question__word-count float-right">Word Count:{this.state.words}</span>
+          <span class="question__word-count float-right">{t('Word Count') + ': ' + this.state.words}</span>
         </FormGroup>
         
       </div>
@@ -82,4 +85,4 @@ class FormTextArea extends React.Component {
   }
 }
 
-export default FormTextArea;
+export default withTranslation()(FormTextArea);
