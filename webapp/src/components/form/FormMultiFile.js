@@ -24,17 +24,13 @@ class FormMultiFile extends React.Component {
 
     // add file
     addFile = () => {
-        // variables
-        let condition = true;
-        let addError = false;
-        let handleList = this.state.fileList;
         // check against empty fields
-        handleList.map(val => {
-            if (!val.file) {
-                condition = false
-                addError = true
-            }
-        })
+        let condition = handleList.all(val => val.file);
+
+        // variables
+        let addError = condition ? false : true;
+        let handleList = this.state.fileList;
+
         // add item if there is no empty fields
         if (condition) {
             handleList.push({ name: null, file: null, delete: null, filePath: null })
@@ -49,11 +45,7 @@ class FormMultiFile extends React.Component {
         })
     }
 
-
-    //handle upload
-    handleUpload = (file, name, del, filePath) => {
-        // function variables
-        let handleDuplicates = false;
+    del = (file, del) => {
         let handleList = this.state.fileList;
 
         if (del) {
@@ -67,28 +59,40 @@ class FormMultiFile extends React.Component {
             else {
                 handleList = []
             }
-
         }
 
-        else {
-            // Add new value
-            handleList.map(val => {
-                if (!val.file) {
-                    val.name = name;
-                    val.file = file;
-                    val.delete = del;
-                    val.filePath = filePath;
-                }
-                // test for and handle updated values
-                else if (val.file == file) {
-                    val.name = name;
-                    val.delete = del;
-                    val.filePath = filePath;
-                    handleDuplicates = true
-                }
+        // setState and Callback functions
+        this.setState({
+            fileList: handleList,
+        },  // reset function variables
+            () => {
+                this.props.onChange(handleList)
             })
-        }
+    }
 
+
+    //handle upload
+    handleUpload = (file, name, del, filePath) => {
+        // function variables
+        let handleDuplicates = false;
+        let handleList = this.state.fileList;
+
+        // Add new value
+        handleList.map(val => {
+            if (!val.file) {
+                val.name = name;
+                val.file = file;
+                val.delete = del;
+                val.filePath = filePath;
+            }
+            // test for and handle updated values
+            else if (val.file == file) {
+                val.name = name;
+                val.delete = del;
+                val.filePath = filePath;
+                handleDuplicates = true
+            }
+        })
 
         // setState and Callback functions
         this.setState({

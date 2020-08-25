@@ -72,7 +72,7 @@ class MultiFileComponent extends React.Component {
   
         this.setState({
             delete: true
-        }, () => this.props.handleUpload(this.state.file, this.state.file.name, this.state.delete, this.state.fileData))
+        }, () => this.props.del(this.state.file, this.state.delete))
 
     }
 
