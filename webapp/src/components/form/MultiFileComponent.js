@@ -175,7 +175,7 @@ import { withTranslation } from 'react-i18next';
     }
 }
 
-export default withTranslation(MultiFileComponent)
+export default withTranslation()(MultiFileComponent)
 
 
 

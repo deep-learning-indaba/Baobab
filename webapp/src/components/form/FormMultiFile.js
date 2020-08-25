@@ -134,5 +134,5 @@ export class FormMultiFile extends React.PureComponent {
     }
 
 }
-export default withTranslation(FormMultiFile);
+export default withTranslation()(FormMultiFile);
 
