@@ -64,7 +64,8 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
-      uploaded:
+      uploaded: false,
+    }
 
   }
 
