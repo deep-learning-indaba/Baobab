@@ -1,11 +1,11 @@
 import React, { Component } from "react";
+import { withTranslation } from "react-i18next";
 import FormGroup from "./FormGroup";
 import MultiFileComponent from './MultiFileComponent';
-import { withTranslation } from 'react-i18next';
 import "./Style.css";
 
 
-export class FormMultiFile extends React.Component {
+export class FormMultiFile extends React.PureComponent {
     constructor(props) {
         super(props);
         this.state = {

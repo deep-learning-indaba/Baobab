@@ -4,7 +4,7 @@ import tick from '../../images/tick.png'
 import { withTranslation } from 'react-i18next';
 
 
-export class MultiFileComponent extends React.Component {
+ class MultiFileComponent extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
