@@ -7,7 +7,9 @@ import 'react-markdown-editor-lite/lib/index.css';
 // Remove underline from React Markdown Editor Lite because MarkdownIt doesn't render it.
 Editor.unuse(Plugins.FontUnderline);
 
+
 const mdParser = new MarkdownIt();
+
 
 class MarkDownEditor extends React.Component {
     constructor(props) {
