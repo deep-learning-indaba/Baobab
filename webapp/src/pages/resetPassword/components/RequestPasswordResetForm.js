@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import { createColClassName } from "../../../utils/styling/styling";
+import { withTranslation } from 'react-i18next'
 
 class RequestPasswordResetForm extends Component {
   constructor(props) {
@@ -40,11 +41,13 @@ class RequestPasswordResetForm extends Component {
             resetRequested: true
           });
         } else {
+
           this.setState({
-            error: response.message,
+            error: response.message, 
             loading: false
           });
         }
+
       });
   };
 
@@ -60,12 +63,14 @@ class RequestPasswordResetForm extends Component {
       resetRequested
     } = this.state;
 
+    const t = this.props.t;
+
     if (resetRequested) {
       return (
         <div className={"reset-status text-center"}>
-          <p className="h5 text-center mb-4">Reset Password</p>
+          <p className="h5 text-center mb-4">{t("Reset Password")}</p>
           <div class="col">
-            Your password reset request has been processed. Please check your email for a link that will allow you to change your password.
+            {t("Your password reset request has been processed. Please check your email for a link that will allow you to change your password.")}
           </div>
         </div>
       )
@@ -76,16 +81,15 @@ class RequestPasswordResetForm extends Component {
     return (
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Reset Password</p>
+          <p className="h5 text-center mb-4">{t("Reset Password")}</p>
 
           <div class="form-group reset-password-container">
-            <label for="email">Email address</label>
+            <label for="email">{t("Email Address")}</label>
 
             <input
               type="email"
               class="form-control"
               id="email"
-              placeholder="Enter email"
               onChange={this.handleChange}
               value={this.state.email}
               autoFocus="true" />
@@ -97,9 +101,8 @@ class RequestPasswordResetForm extends Component {
                 type="submit"
                 class="btn btn-primary"
                 disabled={!this.validateForm() || loading}>
-
                 {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
-                Reset password
+                {t("Reset Password")}
               </button>
             </div>
 
@@ -115,4 +118,4 @@ class RequestPasswordResetForm extends Component {
   }
 }
 
-export default withRouter(RequestPasswordResetForm);
+export default withRouter(withTranslation()(RequestPasswordResetForm));

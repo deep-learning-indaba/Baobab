@@ -6,6 +6,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
+import { withTranslation } from 'react-i18next';
 import {
   requiredText,
   requiredDropdown,
@@ -20,7 +21,7 @@ const fieldValidations = [
   ruleRunner(validationFields.email, validEmail),
 ];
 
-class creatreInvitedGuestComponent extends Component {
+class CreateInvitedGuestComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -151,21 +152,22 @@ class creatreInvitedGuestComponent extends Component {
     const roleOptions = invitedGuestServices.getRoles();
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
+    const t = this.props.t;
 
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Create Guest</p>
+          <p className="h5 text-center mb-4">{t("Create Guest")}</p>
           <div class="row">
 
             <div class={commonColClassName}>
               <FormSelect
                 options={this.state.titleOptions}
                 id={validationFields.title.name}
-                placeholder={validationFields.title.display}
+                placeholder={t(validationFields.title.display)}
                 onChange={this.handleChangeDropdown}
                 value={titleValue}
-                label={validationFields.title.display}
+                label={t(validationFields.title.display)}
               />
             </div>
 
@@ -173,10 +175,10 @@ class creatreInvitedGuestComponent extends Component {
               <FormTextBox
                 id={validationFields.firstName.name}
                 type="text"
-                placeholder={validationFields.firstName.display}
+                placeholder={t(validationFields.firstName.display)}
                 onChange={this.handleChange(validationFields.firstName)}
                 value={firstName}
-                label={validationFields.firstName.display}
+                label={t(validationFields.firstName.display)}
               />
             </div>
 
@@ -184,10 +186,10 @@ class creatreInvitedGuestComponent extends Component {
               <FormTextBox
                 id={validationFields.lastName.name}
                 type="text"
-                placeholder={validationFields.lastName.display}
+                placeholder={t(validationFields.lastName.display)}
                 onChange={this.handleChange(validationFields.lastName)}
                 value={lastName}
-                label={validationFields.lastName.display}
+                label={t(validationFields.lastName.display)}
               />
             </div>
           </div>
@@ -197,10 +199,10 @@ class creatreInvitedGuestComponent extends Component {
               <FormTextBox
                 id={validationFields.email.name}
                 type="email"
-                placeholder={validationFields.email.display}
+                placeholder={t(validationFields.email.display)}
                 onChange={this.handleChange(validationFields.email)}
                 value={email}
-                label={validationFields.email.display}
+                label={t(validationFields.email.display)}
               />
             </div>
 
@@ -210,7 +212,7 @@ class creatreInvitedGuestComponent extends Component {
                 options={roleOptions}
                 id={"role"}
                 onChange={this.handleChangeDropdown}
-                label={"Role"}
+                label={t("Role")}
               />
             </div>
           </div>
@@ -220,11 +222,11 @@ class creatreInvitedGuestComponent extends Component {
             class="btn btn-primary"
             disabled={!this.validateForm()}
           >
-            Create guest
+            {t("Create Guest")}
           </button>
           {this.state.conflict && (
             <div class="alert alert-danger alert-container">
-              Email is already taken
+              {t("An account with this email address already exists")}
             </div>
           )}
         </form>
@@ -233,4 +235,4 @@ class creatreInvitedGuestComponent extends Component {
   }
 }
 
-export default withRouter(creatreInvitedGuestComponent);
+export default withRouter(withTranslation()(CreateInvitedGuestComponent));

@@ -22,7 +22,8 @@ class ResponseApiTest(ApiTestCase):
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': '123456',
-        'policy_agreed': True
+        'policy_agreed': True,
+        'language': 'en'
     }
 
     def _seed_data(self):
@@ -32,11 +33,13 @@ class ResponseApiTest(ApiTestCase):
         test_category = self.add_category()
 
         email_templates = [
-            EmailTemplate('withdrawal', None, ''),
-            EmailTemplate('confirmation-response', None, '{question_answer_summary}')
+            EmailTemplate('withdrawal', None, 'Withdrawal', '', 'en'),
+            EmailTemplate('confirmation-response', None, 'Confirmation', '{question_answer_summary}', 'en')
         ]
         db.session.add_all(email_templates)
         db.session.commit()
+
+        self.add_email_template('verify-email')
 
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.user_data = json.loads(response.data)
@@ -48,19 +51,25 @@ class ResponseApiTest(ApiTestCase):
 
         self.add_n_users(10)
 
-        self.event = self.add_event('Event Without Nomination', key='indaba-2025')
+        self.event = self.add_event({'en': 'Event Without Nomination'}, key='indaba-2025')
         self.form = self.create_application_form(self.event.id, True, False)
         self.section = self.add_section(self.form.id)
+        self.section_translation = self.add_section_translation(self.section.id, 'en')
         self.question = self.add_question(self.form.id, self.section.id, order=1)
+        self.question_translation = self.add_question_translation(self.question.id, 'en', 'Question 1')
         self.question2 = self.add_question(self.form.id, self.section.id, order=2)
+        self.question_translation2 = self.add_question_translation(self.question2.id, 'en', 'Question 2')
         self.response = self.add_response(self.form.id, self.other_user_data['id'], False, False)
         self.answer1 = self.add_answer(self.response.id, self.question.id, 'My Answer')
 
-        self.event_with_nomination = self.add_event('Event With Nomination', key='eeml-2025')
+        self.event_with_nomination = self.add_event({'en': 'Event With Nomination'}, key='eeml-2025')
         self.form_with_nomination = self.create_application_form(self.event_with_nomination.id, True, True)
         self.section_with_nomination = self.add_section(self.event_with_nomination.id)
+        self.section_translation_with_nomination = self.add_section_translation(self.section_with_nomination.id, 'en')
         self.question1_with_nomination = self.add_question(self.form_with_nomination.id, self.section_with_nomination.id, order=1)
+        self.question_translation1_with_nomination = self.add_question_translation(self.question1_with_nomination.id, 'en', 'Question 1 with nomination')
         self.question2_with_nomination = self.add_question(self.form_with_nomination.id, self.section_with_nomination.id, order=2)
+        self.question_translation2_with_nomination = self.add_question_translation(self.question2_with_nomination.id, 'en', 'Question 1 with nomination')
         self.response1_with_nomination = self.add_response(self.form_with_nomination.id, self.other_user_data['id'], True, False)
         self.answer2_with_nomination = self.add_answer(self.response1_with_nomination.id, self.question2_with_nomination.id, 'Second nomination answer')
         self.answer1_with_nomination = self.add_answer(self.response1_with_nomination.id, self.question1_with_nomination.id, 'Another answer')
@@ -91,6 +100,7 @@ class ResponseApiTest(ApiTestCase):
         self.assertIsNone(data['withdrawn_timestamp'])
         self.assertIsNotNone(data['started_timestamp'])
         self.assertTrue(data['answers'])
+        self.assertEqual(data['language'], 'en')
 
         self.assertEqual(len(data['answers']), 1)
         answer = data['answers'][0]
@@ -162,7 +172,7 @@ class ResponseApiTest(ApiTestCase):
         """Test that we get a 404 error if we try to get a response for an event with no application form."""
         
         self._seed_data()
-        test_event2 = self.add_event('Test Event 2', key='HOLLA')
+        test_event2 = self.add_event({'en': 'Test Event 2'}, key='HOLLA')
 
         response = self.app.get(
             '/api/v1/response',
@@ -210,7 +220,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -223,6 +234,7 @@ class ResponseApiTest(ApiTestCase):
         self.assertFalse(data['is_withdrawn'])
         self.assertIsNone(data['withdrawn_timestamp'])
         self.assertEqual(len(data['answers']), 2)
+        self.assertEqual(data['language'], 'en')
 
         answer = data['answers'][0]
         self.assertEqual(answer['value'], 'Answer 1')
@@ -250,7 +262,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -279,7 +292,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -287,7 +301,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(response_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
         
         self.assertEqual(response.status_code, 201)
 
@@ -315,7 +330,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'fr'})  # Updating the language from English to French
 
         self.assertEqual(response.status_code, 200)
 
@@ -337,6 +353,7 @@ class ResponseApiTest(ApiTestCase):
 
         self.assertTrue(data['is_submitted'])
         self.assertFalse(data['is_withdrawn'])
+        self.assertEqual(data['language'], 'fr')
         self.assertTrue(data['answers'])
 
         answer = data['answers'][0]
@@ -362,7 +379,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 404)
 
@@ -381,7 +399,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.user_data['token']})
+            headers={'Authorization': self.user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 401)
 
@@ -400,7 +419,8 @@ class ResponseApiTest(ApiTestCase):
             '/api/v1/response',
             data=json.dumps(update_data),
             content_type='application/json',
-            headers={'Authorization': self.other_user_data['token']})
+            headers={'Authorization': self.other_user_data['token']},
+            query_string={'language': 'en'})
 
         self.assertEqual(response.status_code, 409)
 

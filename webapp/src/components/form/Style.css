@@ -12,7 +12,6 @@
   border: 1px solid red !important;
 }
 
-
 .add-file-btn {
   padding: 3px 10px;
   margin-top: 8px;
@@ -152,7 +151,4 @@ display: flex;
   .view {
     margin: 0 10px;
   }
-
-
-
 

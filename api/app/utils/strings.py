@@ -1,4 +1,4 @@
-#Define and create string builders here
+from app import LOGGER
 
 def _get_answer_value(answer):
     question = answer.question
@@ -16,11 +16,16 @@ def _get_answer_value(answer):
 def build_response_email_greeting(title, firstname, lastname):
     return ('Dear {title} {firstname} {lastname},'.format(title=title, firstname=firstname, lastname=lastname))
 
-def build_response_email_body(answers):
+def build_response_email_body(answers, language):
     #stringifying the dictionary summary, with linebreaks between question/answer pairs
     stringified_summary = None
     for answer in answers:
-        question_headline = answer.question.headline
+        question_translation = answer.question.get_translation(language)
+        if question_translation is None:
+            LOGGER.error('Missing {} translation for question {}.'.format(language, answer.question.id))
+            question_translation = answer.question.get_translation('en')
+        question_headline = question_translation.headline
+
         answer_value = _get_answer_value(answer)
         if(stringified_summary is None):
             stringified_summary = '{question}:\n{answer}'.format(question=question_headline, answer=answer_value)

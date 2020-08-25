@@ -15,6 +15,8 @@ import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
+import { withTranslation } from 'react-i18next';
+
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
@@ -28,6 +30,7 @@ const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
 const MULTI_FILE = 'multi-file';
+
 
 
 /*
@@ -223,8 +226,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             errorText={validationError}
             required={question.is_required}
           />
-
-
         );
       case MULTI_FILE:
         return (
@@ -238,7 +239,6 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             errorText={validationError}
           />
         );
-
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
@@ -337,7 +337,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
     const answer = updatedAnswer || questionModel.answer;
 
     if (question.is_required && (!answer || !answer.value)) {
-      errors.push("An answer is required.");
+      errors.push(this.props.t("An answer is required."));
     }
 
     if (
@@ -439,13 +439,13 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
         }
         {this.props.unsavedChanges && !this.props.isSaving && (
           <button className="btn btn-secondary" onClick={this.handleSave} >
-            Save for later...
+            {this.props.t("Save for later")}...
           </button>
         )}
-        {this.props.isSaving && <span class="saving mx-auto">Saving...</span>}
+        {this.props.isSaving && <span class="saving mx-auto">{this.props.t("Saving")}...</span>}
         {hasValidated && !validationStale && (
           <div class="alert alert-danger alert-container">
-            Please fix the errors before continuing.
+            {this.props.t("Please fix the errors before continuing.")}
           </div>
         )}
       </div>
@@ -466,33 +466,30 @@ function AnswerValue(props) {
           return props.qm.answer.value;
         }
       case FILE:
-        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>Uploaded File</a>
+        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
       default:
         return props.qm.answer.value;
     }
   }
-  return "No answer provided.";
+  return props.t("No answer provided.");
 }
 
 
-class Confirmation extends React.Component {
+class ConfirmationComponent extends React.Component {
 
   render() {
+    const t = this.props.t;
     return (
       <div>
         <div class="row">
           <div class="col confirmation-heading">
-            <h2>Review your Answers</h2>
+            <h2>{t("Review your Answers")}</h2>
             <p>
-              Please confirm that your answers are correct. Use the previous
-              button to correct them if they are not. You can also exit and come back
-              later as they have all been saved.
-
-              Click the SUBMIT button once you are happy to submit your answers to the committee.
+              {t("applicationConfirmationText")}
             </p>
 
             <div class="alert alert-warning">
-              <span class="fa fa-exclamation-triangle"></span> You MUST click SUBMIT before the deadline for your application to be considered!
+              <span class="fa fa-exclamation-triangle"></span> {t("You MUST click SUBMIT before the deadline for your application to be considered!")}
             </div>
 
             <div class="text-center">
@@ -501,7 +498,7 @@ class Confirmation extends React.Component {
                 onClick={this.props.submit}
                 disabled={this.props.isSubmitting}
               >
-                Submit
+                {t("Submit")}
               </button>
             </div>
 
@@ -519,7 +516,7 @@ class Confirmation extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm} /></p>
+                      <p><AnswerValue qm={qm} t={t} /></p>
                     </div>
                   </div>
                 </div>
@@ -531,14 +528,18 @@ class Confirmation extends React.Component {
           onClick={this.props.submit}
           disabled={this.props.isSubmitting}
         >
-          Submit
+          {t("Submit")}
         </button>
       </div>
     );
   }
 }
 
-class Submitted extends React.Component {
+
+const Confirmation = withTranslation()(ConfirmationComponent);
+
+
+class SubmittedComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -594,9 +595,10 @@ class Submitted extends React.Component {
   };
 
   render() {
+    const t = this.props.t;
     return (
       <div class="submitted">
-        <h2>Thank you for applying!</h2>
+        <h2>{t("Thank you for applying!")}</h2>
         {this.state.isError && (
           <div className={"alert alert-danger alert-container"}>
             {this.state.errorMessage}
@@ -604,25 +606,24 @@ class Submitted extends React.Component {
         )}
 
         <p class="thank-you">
-          Thank you for applying to attend {this.props.event ? this.props.event.name : ""}.
-          Your application will be reviewed by our committee and we will get back to you as soon as
-          possible.
+          {t("Thank you for applying to attend") + " "} {this.props.event ? this.props.event.name : ""}.
+          {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
         <p class="timestamp">
-          You submitted your application on{" "}
+          {t("You submitted your application on") + " "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
 
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
-            Withdraw Application
+            {t("Withdraw Application")}
           </button>
         </div>
 
         <div class="submitted-footer">
           <button class="btn btn-primary" onClick={this.handleEdit}>
-            Edit Application
+            {t("Edit Application")}
           </button>
         </div>
 
@@ -630,11 +631,11 @@ class Submitted extends React.Component {
           visible={this.state.withdrawModalVisible}
           onOK={this.handleWithdrawOK}
           onCancel={this.handleWithdrawCancel}
-          okText={"Yes - Withdraw"}
-          cancelText={"No - Don't withdraw"}>
+          okText={t("Yes - Withdraw")}
+          cancelText={t("No - Don't withdraw")}>
 
           <p>
-            By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.
+            {t("By continuing, your submitted application will go into draft state. You MUST press Submit again after you make your changes for your application to be considered in the selection.")}
           </p>
         </ConfirmModal>
 
@@ -642,10 +643,10 @@ class Submitted extends React.Component {
           visible={this.state.editAppModalVisible}
           onOK={this.handleEditOK}
           onCancel={this.cancelEditModal}
-          okText={"Yes - Edit application"}
-          cancelText={"No - Don't edit"}>
+          okText={t("Yes - Edit application")}
+          cancelText={t("No - Don't edit")}>
           <p>
-            Do you want to edit your application: {this.props.event ? this.props.event.name : ""}?
+            {t("Do you want to edit your application to") + " "} {this.props.event ? this.props.event.name : ""}?
           </p>
         </ConfirmModal>
       </div>
@@ -653,7 +654,10 @@ class Submitted extends React.Component {
   }
 }
 
-class ApplicationFormInstance extends Component {
+const Submitted = withTranslation()(SubmittedComponent);
+
+
+class ApplicationFormInstanceComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -872,7 +876,7 @@ class ApplicationFormInstance extends Component {
       sectionModels &&
       sectionModels.map((model, i) => {
         return {
-          name: "Step " + i,
+          name: this.props.t("Step") + " " + i,
           component: (
             <Section
               key={"section_" + model.section.id}
@@ -886,6 +890,7 @@ class ApplicationFormInstance extends Component {
               isSaving={this.state.isSaving}
               responseId={this.state.responseId}
               stepProgress={i}
+              t={this.props.t}
             />
           )
         };
@@ -902,7 +907,7 @@ class ApplicationFormInstance extends Component {
         .reduce((a, b) => a.concat(b), []);
 
     steps.push({
-      name: "Confirmation",
+      name: this.props.t("Confirmation"),
       component: (
         <Confirmation
           questionModels={allQuestionModels}
@@ -925,11 +930,15 @@ class ApplicationFormInstance extends Component {
 
           <ReactToolTip />
         </div>
-        {isSubmitting && <h2 class="submitting">Saving Responses...</h2>}
+        {isSubmitting && <h2 class="submitting">{this.props.t("Saving Responses")}...</h2>}
       </div>
     );
   }
 }
+
+
+const ApplicationFormInstance = withRouter(withTranslation()(ApplicationFormInstanceComponent));
+
 
 class ApplicationList extends Component {
   constructor(props) {
@@ -945,36 +954,36 @@ class ApplicationList extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return "Self Nomination";
+    return this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
     if (response.is_submitted) {
-      return <span>Submitted</span>
+      return <span>{this.props.t("Submitted")}</span>
     }
     else {
-      return <span>In Progress</span>
+      return <span>{this.props.t("In Progress")}</span>
     }
   }
 
   getAction = (response) => {
     if (response.is_submitted) {
-      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>View</button>
+      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
     }
     else {
-      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>Continue</button>
+      return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>{this.props.t("Continue")}</button>
     }
   }
 
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
     return <div>
-      <h4>Your Nominations</h4>
+      <h4>{this.props.t("Your Nominations")}</h4>
       <table class="table">
         <thead>
           <tr>
-            <th scope="col">Nominee</th>
-            <th scope="col">Status</th>
+            <th scope="col">{this.props.t("Nominee")}</th>
+            <th scope="col">{this.props.t("Status")}</th>
             <th scope="col"></th>
           </tr>
         </thead>
@@ -1059,7 +1068,7 @@ class ApplicationForm extends Component {
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
       return <div>
         <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
-        <button className="btn btn-primary" onClick={() => this.newNomination()}>New Nomination ></button>
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>{this.props.t("New Nomination") + " "} &gt;</button>
       </div>
     }
     else {
@@ -1072,4 +1081,6 @@ class ApplicationForm extends Component {
 
 }
 
- export default withRouter(ApplicationForm);
+
+export default withRouter(withTranslation()(ApplicationForm));
+

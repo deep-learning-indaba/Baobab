@@ -4,6 +4,7 @@ import { NavLink } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
+import { withTranslation } from 'react-i18next';
 
 
 class Home extends Component {
@@ -62,6 +63,8 @@ class Home extends Component {
     }
 
     render() {
+        const t = this.props.t;
+
         return (
             <div>
                 <div>
@@ -74,14 +77,14 @@ class Home extends Component {
                 {!this.props.user &&
                     <div>
                         {this.state.organisation &&
-                            <h2 className="Blurb">Welcome to {this.state.organisation.system_name}</h2>}
-                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">Sign up</NavLink> for an account in order to apply for an event, or <NavLink id="nav-login" to="/login">sign in</NavLink> if you already have one.</p>
+                            <h2 className="Blurb">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
+                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
                     </div>
                 }
 
                 {this.props.user && this.state.upcomingEvents && this.state.upcomingEvents.length > 0
                     && <div class="event-table-container">
-                        <h3 className="text-center">Upcoming Events</h3>
+                        <h3 className="text-center">{t("Upcoming Events")}</h3>
                         <div class="card">
                             <table className="event-table">
                                 <tbody>
@@ -101,7 +104,7 @@ class Home extends Component {
 
                 {this.props.user && this.state.awards && this.state.awards.length > 0 &&
                     <div class="event-table-container">
-                        <h3 className="text-center">Awards</h3>
+                        <h3 className="text-center">{t("Awards")}</h3>
                         <div class="card">
                             <table className="event-table">
                                 <tbody>
@@ -124,4 +127,4 @@ class Home extends Component {
     }
 }
 
-export default Home;
+export default withTranslation()(Home);

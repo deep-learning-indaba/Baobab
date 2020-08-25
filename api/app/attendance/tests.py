@@ -38,7 +38,7 @@ class AttendanceApiTest(ApiTestCase):
 
         registration_admin = self.add_user('ra@ra.com')
 
-        event = self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),'JOLLOF')
+        event = self.add_event({'en': 'indaba 2019'}, {'en': 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya '}, datetime(2019, 8, 25), datetime(2019, 8, 31),'JOLLOF')
         self.event = event
         db.session.add(self.event)
 
@@ -104,6 +104,8 @@ class AttendanceApiTest(ApiTestCase):
         )
         db.session.add_all([ra])
         db.session.commit()
+
+        self.add_email_template('attendance-confirmation')
 
     def get_auth_header_for(self, email):
         body = {
