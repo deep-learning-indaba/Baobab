@@ -4,7 +4,7 @@ import FormMultiFile from '../FormMultiFile.js';
 
 
 
-
+/*
 //  FormMultiFile and  Tests
 describe('FormMultiFile Tests', () => {
     it('Check if FormMultiFile Page renders.', () => {
@@ -26,8 +26,9 @@ describe('FormMultiFile Tests', () => {
         expect(wrapper.find('.multi-file-component').length).toEqual(2);
     })
 
-
 })
+*/
+
 
 
 

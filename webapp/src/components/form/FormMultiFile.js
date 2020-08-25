@@ -5,7 +5,7 @@ import { withTranslation } from 'react-i18next';
 import "./Style.css";
 
 
-class FormMultiFile extends React.Component {
+export class FormMultiFile extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
