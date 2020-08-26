@@ -116,13 +116,14 @@ export class FormMultiFile extends React.PureComponent {
         return (
             <div>
                 <FormGroup>
-                    {this.state.fileList.map(val => {
+                    {this.state.fileList.map((val, i) => {
                         return <MultiFileComponent className="multi-file-component"
                             handleUpload={(file, name, del, filePath) => this.handleUpload(file, name, del, filePath)}
                             errorText={this.props.errorText}
                             addError={this.state.addError}
                             del={(file, del) => this.del(file, del)}
                             value={val}
+                            key={"file_" + i.toString()}
                         />
                     })}
 
