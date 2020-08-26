@@ -396,7 +396,11 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    ai4d = session.query(Organisation).filter_by('AI4D Africa').first()
+    op.alter_column('event_translation', 'name',
+               existing_type=sa.String(length=50),
+               type_=sa.String(length=100))
+
+    ai4d = session.query(Organisation).filter_by(name='AI4D Africa').first()
 
     # Add Event
     event = Event(
@@ -446,7 +450,7 @@ def upgrade():
                 section.id, 
                 language, 
                 names[language], 
-                None if descriptions is None else descriptions[language], 
+                '' if descriptions is None else descriptions[language], 
                 show_for_values=None if show_for_values is None else show_for_values[language]))
         session.add_all(translations)
         session.commit()
@@ -503,8 +507,8 @@ Pour toute question, veuillez envoyer un e-mail à calls@ai4d.ai"""
 
     # (Description Page)
     add_section({
-        'en', 'Call for Proposals for Policy Research Centres',
-        'fr', u'Appel à Propositions pour les Centres de Recherche Politique'
+        'en': 'Call for Proposals for Policy Research Centres',
+        'fr': u'Appel à Propositions pour les Centres de Recherche Politique'
     },
     {'en': en_description, 'fr': fr_description},
     1)
@@ -1018,6 +1022,13 @@ def downgrade():
     session.commit()
 
     session.query(ApplicationForm).filter_by(event_id=event.id).delete()
+
+    event = session.query(Event).filter_by(key='prc').first()
+    session.query(EventTranslation).filter_by(event_id=event.id).delete()
     session.query(Event).filter_by(key='prc').delete()
 
     session.commit()
+
+    op.alter_column('event_translation', 'name',
+               existing_type=sa.String(length=50),
+               type_=sa.String(length=100))
