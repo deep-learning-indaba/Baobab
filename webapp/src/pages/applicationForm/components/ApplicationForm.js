@@ -59,7 +59,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
- class FieldEditor extends React.Component {
+class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
@@ -75,7 +75,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
- console.log(value)
+    
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -97,7 +97,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
           uploadPercentComplete: percentCompleted
         });
       }).then(response => {
-        
+
         if (response.fileId && this.props.onChange) {
           this.props.onChange(this.props.question, response.fileId);
           // return response
@@ -108,7 +108,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
           uploading: false
         });
       }).then(response => {
-        if(uploadType){
+        if (uploadType) {
           this.handleChange(uploadType)
         }
       })
@@ -280,7 +280,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   }
 }
 
-  class Section extends React.Component {
+class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {

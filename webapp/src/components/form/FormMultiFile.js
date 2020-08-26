@@ -17,7 +17,7 @@ export class FormMultiFile extends React.PureComponent {
     componentWillMount() {
         if (this.props.value) {
             this.setState({
-                fileList: this.props.value,
+                fileList: JSON.parse(this.props.value),
             })
         }
     }
@@ -68,7 +68,7 @@ export class FormMultiFile extends React.PureComponent {
             fileList: handleList,
         },  // reset function variables
             () => {
-                this.props.onChange(handleList)
+                this.props.onChange(JSON.stringify(handleList))
             })
     }
 
