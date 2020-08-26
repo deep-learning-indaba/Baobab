@@ -47,8 +47,6 @@ class EventsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        # db.session.flush()
-
     def test_get_events_applied(self):
         self.seed_static_data()
 
