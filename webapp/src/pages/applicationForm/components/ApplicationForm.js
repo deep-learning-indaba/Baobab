@@ -75,7 +75,7 @@ class FieldEditor extends React.Component {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
-    
+
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -87,36 +87,29 @@ class FieldEditor extends React.Component {
     }
   };
 
-  handleUploadFile = (file, uploadType) => {
+  handleUploadFile = (file) => {
     this.setState({
       uploading: true,
-    }, () => {
-      fileService.uploadFile(file, progressEvent => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        this.setState({
-          uploadPercentComplete: percentCompleted
-        });
-      }).then(response => {
-
-        if (response.fileId && this.props.onChange) {
-          this.props.onChange(this.props.question, response.fileId);
-          // return response
-        }
-        this.setState({
-          uploaded: response.fileId !== "",
-          uploadError: response.error,
-          uploading: false
-        });
-      }).then(response => {
-        if (uploadType) {
-          this.handleChange(uploadType)
-        }
-      })
     })
 
-    return file
-  }
+    return fileService.uploadFile(file, progressEvent => {
+      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      this.setState({
+        uploadPercentComplete: percentCompleted
+      });
+    }).then(response => {
+      if (response.fileId && this.props.onChange) {
+        this.props.onChange(this.props.question, response.fileId);
+      }
+      this.setState({
+        uploaded: response.fileId !== "",
+        uploadError: response.error,
+        uploading: false
+      });
 
+      return response.fileId;
+    });
+  }
 
   formControl = (key, question, answer, validationError, responseId) => {
 
@@ -235,7 +228,7 @@ class FieldEditor extends React.Component {
             label={question.description}
             value={answer}
             onChange={this.handleChange}
-            uploadFile={(file, uploadType) => this.handleUploadFile(file, uploadType)}
+            uploadFile={this.handleUploadFile}
             errorText={validationError}
           />
         );

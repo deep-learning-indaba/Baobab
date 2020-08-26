@@ -31,7 +31,7 @@ export class FormMultiFile extends React.PureComponent {
 
         // variables
         let addError = condition ? false : true;
-      
+
 
         // add item if there is no empty fields
         if (condition) {
@@ -68,7 +68,9 @@ export class FormMultiFile extends React.PureComponent {
             fileList: handleList,
         },  // reset function variables
             () => {
-                this.props.onChange(JSON.stringify(handleList))
+                if (this.props.onChange) {
+                    this.props.onChange(JSON.stringify(handleList));
+                }
             })
     }
 
@@ -101,11 +103,15 @@ export class FormMultiFile extends React.PureComponent {
             fileList: handleList,
         },  // reset function variables
             () => {
-                if (!handleDuplicates) {
-                    this.props.uploadFile(file, handleList)
+                if (!handleDuplicates && this.props.uploadFile) {
+                    this.props.uploadFile(file).then(fileId => {
+                        if (this.props.onChange) {
+                            this.props.onChange(JSON.stringify(this.state.fileList));
+                        }
+                    })
                 }
                 handleDuplicates = false;
-            })
+            });
     }
 
 
