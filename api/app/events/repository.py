@@ -45,7 +45,6 @@ class EventRepository():
 
     @staticmethod
     def get_attended_by_user_for_organisation(organisation_id, user_id):
-        # .filter_by(candidate_response=True)\
         return db.session.query(Event)\
                          .filter(Event.end_date < datetime.now())\
                          .filter_by(organisation_id=organisation_id)\
