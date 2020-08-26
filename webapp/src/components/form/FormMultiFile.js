@@ -3,14 +3,15 @@ import { withTranslation } from "react-i18next";
 import FormGroup from "./FormGroup";
 import MultiFileComponent from './MultiFileComponent';
 import "./Style.css";
+import _ from "lodash";
 
 
 export class FormMultiFile extends React.PureComponent {
     constructor(props) {
         super(props);
         this.state = {
-            fileList: [{ name: null, file: null, delete: null, filePath: null }],
-            addError: false,
+            fileList: [{ id: 1, name: null, file: null }],
+            addError: false
         }
     }
 
@@ -35,7 +36,11 @@ export class FormMultiFile extends React.PureComponent {
 
         // add item if there is no empty fields
         if (condition) {
-            handleList.push({ name: null, file: null, delete: null, filePath: null })
+            handleList.push({ 
+                id: _.max(handleList.map(h=>h.id)) + 1, 
+                name: null, 
+                file: null
+            });
         }
 
         this.setState({
@@ -47,74 +52,53 @@ export class FormMultiFile extends React.PureComponent {
         })
     }
 
-    del = (file, del) => {
-        let handleList = this.state.fileList;
-
-        if (del) {
-            if (handleList.length > 1) {
-                // del file
-                let filteredList = handleList.filter((val) => {
-                    return file != val.file
-                })
-                handleList = filteredList
-            }
-            else {
-                handleList = []
-            }
-        }
+    del = (id) => {
+        const newList = this.state.fileList.filter(h=>h.id !== id);
 
         // setState and Callback functions
         this.setState({
-            fileList: handleList,
-        },  // reset function variables
+            fileList: newList
+        },
             () => {
                 if (this.props.onChange) {
-                    this.props.onChange(JSON.stringify(handleList));
+                    this.props.onChange(JSON.stringify(this.state.fileList));
                 }
             })
     }
 
 
     //handle upload
-    handleUpload = (file, name, del, filePath) => {
-        // function variables
-        let handleDuplicates = false;
-        let handleList = this.state.fileList;
-
-        // Add new value
-        handleList.map(val => {
-            if (!val.file) {
-                val.name = name;
-                val.file = file;
-                val.delete = del;
-                val.filePath = filePath;
-            }
-            // test for and handle updated values
-            else if (val.file == file) {
-                val.name = name;
-                val.delete = del;
-                val.filePath = filePath;
-                handleDuplicates = true
-            }
-        })
-
-        // setState and Callback functions
-        this.setState({
-            fileList: handleList,
-        },  // reset function variables
-            () => {
-                if (!handleDuplicates && this.props.uploadFile) {
+    handleUpload = (id, file, name) => {
+        const handleList = this.state.fileList;
+        return new Promise((resolve, reject) => {
+            // Add new value
+            const existing = _.find(handleList, h=>h.id === id);
+            if (!existing.file) {  // New file, upload it
+                if (this.props.uploadFile) {
                     this.props.uploadFile(file).then(fileId => {
-                        if (this.props.onChange) {
-                            this.props.onChange(JSON.stringify(this.state.fileList));
-                        }
+                        existing.name = name;
+                        existing.file = fileId;
+                        this.setState({fileList: handleList}, () => {
+                            if (this.props.onChange) {
+                                this.props.onChange(JSON.stringify(this.state.fileList));
+                            }
+                            resolve(fileId);
+                        });
+                        // TODO: Handle errors from upload
                     })
                 }
-                handleDuplicates = false;
-            });
+            }
+            else {  // Already uploaded, update metadata
+                existing.name = name;
+                this.setState({fileList: handleList}, () => {
+                    if (this.props.onChange) {
+                        this.props.onChange(JSON.stringify(this.state.fileList));
+                    }
+                    resolve(existing.file);
+                });
+            }
+        });
     }
-
-
 
     render() {
         const t = this.props.t
@@ -122,14 +106,14 @@ export class FormMultiFile extends React.PureComponent {
         return (
             <div>
                 <FormGroup>
-                    {this.state.fileList.map((val, i) => {
+                    {this.state.fileList.map(val => {
                         return <MultiFileComponent className="multi-file-component"
-                            handleUpload={(file, name, del, filePath) => this.handleUpload(file, name, del, filePath)}
+                            handleUpload={this.handleUpload}
                             errorText={this.props.errorText}
                             addError={this.state.addError}
-                            del={(file, del) => this.del(file, del)}
+                            del={this.del}
                             value={val}
-                            key={"file_" + i.toString()}
+                            key={"file_" + val.id.toString()}
                         />
                     })}
 

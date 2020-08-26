@@ -92,6 +92,7 @@ class FieldEditor extends React.Component {
       uploading: true,
     })
 
+    // TODO: Handle errors
     return fileService.uploadFile(file, progressEvent => {
       const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
       this.setState({
@@ -229,7 +230,7 @@ class FieldEditor extends React.Component {
             value={answer}
             onChange={this.handleChange}
             uploadFile={this.handleUploadFile}
-            errorText={validationError}
+            errorText={validationError || this.state.uploadError}
           />
         );
       case REFERENCE_REQUEST:

@@ -3,6 +3,7 @@ import "./Style.css";
 import tick from '../../images/tick.png'
 import { withTranslation } from 'react-i18next';
 
+const baseUrl = process.env.REACT_APP_API_URL;
 
  class MultiFileComponent extends React.Component {
     constructor(props) {
@@ -22,26 +23,9 @@ import { withTranslation } from 'react-i18next';
 
         this.setState({
             name: value
-        })
+        });
 
     };
-
-    // handle File Viewing
-    onFileUpload(file, fileName) {
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = data => {
-                this.setState({
-                    file: file,
-                    isSubmitted: true,
-                    fileData: data.target.result
-                }, () => { this.props.handleUpload(file, fileName, this.state.delete, this.state.fileData) })
-                resolve(data.target.result);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
 
     // handleUpload
     handleUpload = event => {
@@ -50,10 +34,15 @@ import { withTranslation } from 'react-i18next';
 
         if (!this.state.name || this.state.name == "") {
             fileName = value.name
- 
         }
 
-        this.onFileUpload(value, fileName)
+        if (this.props.handleUpload) {
+            this.props.handleUpload(this.props.value.id, value, fileName).then(() => {
+                this.setState({
+                    isSubmitted: true
+                });
+            });
+        }
     };
 
     // Name Change
@@ -73,14 +62,14 @@ import { withTranslation } from 'react-i18next';
   
         this.setState({
             delete: true
-        }, () => this.props.del(this.state.file, this.state.delete))
+        }, () => this.props.del(this.props.value.id))
 
     }
 
 
     //Submit
     submit = event => {
-        event.preventDefault()
+        event.preventDefault();
         if(!this.state.name.length) {
             this.setState({
                 error: true
@@ -92,24 +81,14 @@ import { withTranslation } from 'react-i18next';
                 isSubmitted: true,
                 error: false
             }, () => {
-                this.props.handleUpload(this.state.file, this.state.name, this.state.delete, this.state.fileData)
+                this.props.handleUpload(this.props.value.id, this.props.value.file, this.state.name)
             })
         }
     }
 
-    // Data Pop Up
-    triggerPopUp = event => {
-        event.preventDefault()
-        var myWindow = window.open("", "newWindow", "width=1000,height=1000");
-        myWindow.document.write(`<body style="margin: 0;">
-        <iframe style="width:100vw;height:100vh;" src=${this.state.fileData }></iframe>
-        </body>`)
-
-    }
-
     handleInput() {
         if (!this.props.value.file) {
-            return (<input className={this.props.addError && !this.state.file ? "file-input error" : "file-input"}
+            return (<input className={this.props.addError && !this.props.value.file ? "file-input error" : "file-input"}
                 onChange={this.handleUpload} type="file">
             </input>)
         }
@@ -118,24 +97,14 @@ import { withTranslation } from 'react-i18next';
         }
     }
 
-    componentWillMount() {
-        console.log(this.props.value)
-        if (this.props.value.file) {
-            this.setState({
-                file: this.props.value.file,
-                fileData: this.props.value.filePath
-            })
-        }
-    }
-
-  
     render() {
         const {
             btnSubmit,
             isSubmitted,
-            name,
-            file
+            name
         } = this.state;
+
+        const file = this.props.value.file;
 
         const t = this.props.t
 
@@ -148,11 +117,9 @@ import { withTranslation } from 'react-i18next';
                 <div className="upload-item-container">
 
                     <div className={btnSubmit ? "file-name enter" : "file-name"}>
-                        <input className={isSubmitted  ? "input-field lock" : "input-field"
-                            // || this.props.errorText ? "input-field" : "input-field alert"
-                        }
+                        <input className={isSubmitted  ? "input-field lock" : "input-field"}
                             onChange={this.handleChange}
-                            placeholder={this.props.value.name ? `${this.props.value.name}` : "File Name"}
+                            placeholder={this.props.value.name ? `${this.props.value.name}` : t("Enter File Name")}
                             type="text"
                             value={name}
                         ></input>
@@ -160,7 +127,7 @@ import { withTranslation } from 'react-i18next';
                         <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>{t("Submit")}</button>
                         <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"}><i className="fas fa-edit"></i></a>
                         <a onClick={this.del} className={file ? "bin show" : "bin"}><i className="fas fa-trash"></i></a>
-                        <a className="view" style={file ? { display: "block" } : { display: "none" }} onClick={this.triggerPopUp}><i className="far fa-eye"></i></a>
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={baseUrl + "/api/v1/file?filename=" + file} target="_blank"><i className="far fa-eye"></i></a>
                     </div>
                     {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}
 
