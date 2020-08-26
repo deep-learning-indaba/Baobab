@@ -7,6 +7,7 @@ from enum import Enum
 class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
+    CALL = 'call'
 
 
 class Event(db.Model):

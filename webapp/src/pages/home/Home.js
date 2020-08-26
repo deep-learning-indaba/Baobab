@@ -32,8 +32,10 @@ class Home extends Component {
                 }
                 if (response.events) {
                     this.setState({
-                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT'),
-                        awards: response.events.filter(e => e.event_type === 'AWARD')
+                        upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
+                        awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
+                        calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
+                        attended: response.events.filter(e => !e.is_event_opening)
                     });
                 }
             });
@@ -62,6 +64,30 @@ class Home extends Component {
         return <EventStatus longForm={false} event={e} />;
     }
 
+    renderEventTable = (events, description) => {
+        if (this.props.user && events && events.length > 0) {
+            return (<div class="event-table-container">
+                <h3 className="text-center">{this.props.t(description)}</h3>
+                <div class="card">
+                    <table className="event-table">
+                        <tbody>
+                            {events.map(e => {
+                                return (<tr>
+                                    <td>
+                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {e.start_date + " to " + e.end_date}
+                                    </td>
+                                    <td>{this.statusDisplay(e)}</td>
+                                </tr>)
+                            })}
+                        </tbody>
+                </table>
+                </div>
+            </div>);
+        }
+        return <div></div>
+    }
+
     render() {
         const t = this.props.t;
 
@@ -82,46 +108,10 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user && this.state.upcomingEvents && this.state.upcomingEvents.length > 0
-                    && <div class="event-table-container">
-                        <h3 className="text-center">{t("Upcoming Events")}</h3>
-                        <div class="card">
-                            <table className="event-table">
-                                <tbody>
-                                    {this.state.upcomingEvents.map(e => {
-                                        return (<tr>
-                                            <td>
-                                                <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                                {e.start_date + " to " + e.end_date}
-                                            </td>
-                                            <td>{this.statusDisplay(e)}</td>
-                                        </tr>)
-                                    })}
-                                </tbody>
-                        </table>
-                        </div>
-                    </div>}
-
-                {this.props.user && this.state.awards && this.state.awards.length > 0 &&
-                    <div class="event-table-container">
-                        <h3 className="text-center">{t("Awards")}</h3>
-                        <div class="card">
-                            <table className="event-table">
-                                <tbody>
-                                    {this.state.awards.map(e => {
-                                        return (<tr>
-                                            <td>
-                                                <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                                {e.start_date + " to " + e.end_date}
-                                            </td>
-                                            <td>{this.statusDisplay(e)}</td>
-                                        </tr>)
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>}
-
+                {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
+                {this.renderEventTable(this.state.awards, "Awards")}
+                {this.renderEventTable(this.state.calls, "Calls for Proposals")}
+                {this.renderEventTable(this.state.attended, "Past Events")}
 
             </div >)
     }

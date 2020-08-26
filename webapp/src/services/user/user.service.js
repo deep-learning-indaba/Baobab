@@ -69,6 +69,7 @@ function update(user) {
     .then(response => {
       let user = null;
       if (response) user = response.data;
+      localStorage.setItem("user", JSON.stringify(user));
       return user;
     });
 }
