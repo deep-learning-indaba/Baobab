@@ -27,6 +27,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const INFORMATION = 'information'
 
 
 /*
@@ -230,6 +231,8 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             options={question.options}
             responseId={responseId} />
         )
+      case INFORMATION:
+        return question.description && <div className="application-form-information">{question.description}</div>
       default:
         return (
           <p className="text-danger">
