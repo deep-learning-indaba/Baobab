@@ -205,6 +205,7 @@ class FieldEditor extends React.Component {
             uploadPercentComplete={this.state.uploadPercentComplete}
             uploadFile={this.handleUploadFile}
             uploaded={this.state.uploaded}
+            options={question.options}
           />
         );
       case DATE:
