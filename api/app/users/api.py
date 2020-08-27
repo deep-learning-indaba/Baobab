@@ -175,7 +175,8 @@ class UserAPI(SignupMixin, restful.Resource):
                     host=misc.get_baobab_host(),
                     token=user.verify_token
                 ),
-                user=user)
+                user=user,
+                subject_parameters=dict(system=g.organisation.system_name))
 
             LOGGER.debug("Sent re-verification email to {}".format(user.email))
 
@@ -337,6 +338,7 @@ class PasswordResetRequestAPI(restful.Resource):
                 host=misc.get_baobab_host(), 
                 token=password_reset.code
             ),
+            subject_parameters=dict(system_name=g.organisation.system_name),
             user=user)
 
         return {}, 201
@@ -429,7 +431,8 @@ class ResendVerificationEmailAPI(restful.Resource):
                 host=misc.get_baobab_host(),
                 token=user.verify_token
             ),
-            user=user)
+            user=user,
+            subject_parameters=dict(system=g.organisation.system_name))
 
         LOGGER.debug("Resent email verification to: {}".format(email))
 
