@@ -601,17 +601,17 @@ Pour toute question, veuillez envoyer un e-mail à calls@ai4d.ai"""
 
     add_question(org_section, 13, 'short-text', {
         'en': 'Name of principal contact',
-        'fr': u'Nom du personne-ressource'
+        'fr': u'Nom du contact principal'
     }, is_required=True)
 
     add_question(org_section, 14, 'short-text', {
         'en': 'Email Address of principal contact',
-        'fr': u'Adresse de courriel du personne-ressource'
+        'fr': u'Adresse de courriel du contact principal'
     }, is_required=True)
 
     add_question(org_section, 15, 'short-text', {
         'en': 'Telephone/Mobile of principal contact',
-        'fr': u'Numéro de téléphone ou de téléphone mobile du personne-ressource'
+        'fr': u'Numéro de téléphone ou de téléphone mobile du contact principal'
     }, is_required=True)
 
     # Section 1
@@ -754,7 +754,7 @@ Pour toute question, veuillez envoyer un e-mail à calls@ai4d.ai"""
     add_question(section2, 3, 'information', {
         'en': '3. Methodology and approach.',
         'fr': u'3. Méthodologie et approche.'
-    })
+    }, is_required=False)
 
     add_question(section2, 4, 'long-text', {
         'en': '3a. Approach.',
@@ -954,8 +954,8 @@ Veuillez fournir des exemples (c.-à-d. des documents en format PDF, ou des lien
         'fr': [{'label': 'Oui', 'value': 'Yes'}, {'label': 'Non', 'value': 'No'}]
     }, is_required=True)
 
-    add_question(section3, 2, 'long-text', {
-        'en': '3.a If yes, please describe this engagement. List any regional and global networks/association memberships if appropriate.',
+    add_question(section3, 4, 'long-text', {
+        'en': '3a. If yes, please describe this engagement. List any regional and global networks/association memberships if appropriate.',
         'fr': u'3a. Si oui, veuillez décrire la nature de ces travaux. Dressez une liste des associations ou des réseaux auxquels vous appartenez à l’échelle régionale et mondiale, le cas échéant.'
     }, descriptions=None, placeholders={
         'en': 'Enter up to 250 words',
@@ -997,7 +997,10 @@ Insérez ce budget en tant que pièce jointe à votre demande. Dans le cas contr
     add_question(section4, 1, 'file', {
         'en': 'Budget',
         'fr': 'Budget'
-    }, is_required=True)
+    }, is_required=True, options={
+        'en': {"accept": ".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"},
+        'fr': {"accept": ".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"},
+    })
 
 
 def downgrade():
