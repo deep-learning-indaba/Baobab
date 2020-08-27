@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import StepZilla from "react-stepzilla";
@@ -17,6 +18,7 @@ import _ from "lodash";
 import { withTranslation } from 'react-i18next';
 
 
+
 const baseUrl = process.env.REACT_APP_API_URL;
 
 const SHORT_TEXT = "short-text";
@@ -27,6 +29,8 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const MULTI_FILE = 'multi-file';
+
 
 
 /*
@@ -55,7 +59,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
- class FieldEditor extends React.Component {
+class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
     this.id = "question_" + props.question.id;
@@ -63,7 +67,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
       uploading: false,
       uploadPercentComplete: 0,
       uploadError: "",
-      uploaded: false
+      uploaded: false,
     }
 
   }
@@ -71,6 +75,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
     const value = event && event.target ? event.target.value : event;
+
     if (this.props.onChange) {
       this.props.onChange(this.props.question, value);
     }
@@ -84,27 +89,31 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
 
   handleUploadFile = (file) => {
     this.setState({
-      uploading: true
-    }, () => {
-      fileService.uploadFile(file, progressEvent => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        this.setState({
-          uploadPercentComplete: percentCompleted
-        });
-      }).then(response => {
-        if (response.fileId && this.props.onChange) {
-          this.props.onChange(this.props.question, response.fileId);
-        }
-        this.setState({
-          uploaded: response.fileId !== "",
-          uploadError: response.error,
-          uploading: false
-        });
-      })
+      uploading: true,
     })
+
+    // TODO: Handle errors
+    return fileService.uploadFile(file, progressEvent => {
+      const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+      this.setState({
+        uploadPercentComplete: percentCompleted
+      });
+    }).then(response => {
+      if (response.fileId && this.props.onChange) {
+        this.props.onChange(this.props.question, response.fileId);
+      }
+      this.setState({
+        uploaded: response.fileId !== "",
+        uploadError: response.error,
+        uploading: false
+      });
+
+      return response.fileId;
+    });
   }
 
   formControl = (key, question, answer, validationError, responseId) => {
+
     switch (question.type) {
       case SHORT_TEXT:
         return (
@@ -211,8 +220,18 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
             errorText={validationError}
             required={question.is_required}
           />
-
-
+        );
+      case MULTI_FILE:
+        return (
+          <FormMultiFile
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            value={answer}
+            onChange={this.handleChange}
+            uploadFile={this.handleUploadFile}
+            errorText={validationError || this.state.uploadError}
+          />
         );
       case REFERENCE_REQUEST:
         return (
@@ -255,7 +274,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   }
 }
 
-  class Section extends React.Component {
+class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -448,6 +467,7 @@ function AnswerValue(props) {
   }
   return props.t("No answer provided.");
 }
+
 
 class ConfirmationComponent extends React.Component {
 
@@ -1055,4 +1075,6 @@ class ApplicationForm extends Component {
 
 }
 
+
 export default withRouter(withTranslation()(ApplicationForm));
+

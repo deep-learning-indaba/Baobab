@@ -14,7 +14,7 @@ export const applicationFormService = {
 
 function getForEvent(eventId) {
     return axios
-    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId)
+    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId, { 'headers': authHeader() })
     .then(response => {
         let formSpec = null;
         if (response) formSpec = response.data;
