@@ -264,7 +264,7 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <h4>{this.props.question.headline}</h4>
+        <p className={this.props.question.type == INFORMATION ? "h3 app-form-info" : "h4"}>{this.props.question.headline}</p>
         {this.formControl(
           this.props.key,
           this.props.question,
