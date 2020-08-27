@@ -58,7 +58,7 @@ class FormFileUpload extends React.Component {
                 ref={input => {
                 this.nameInput = input;
                 }}
-                accept={this.props.options || ".pdf, application/pdf"}
+                accept={this.props.options.accept || ".pdf, application/pdf"}
                 tabIndex={this.props.tabIndex}
                 autoFocus={this.props.autoFocus}
                 required={this.props.required || null}
