@@ -278,8 +278,12 @@
     "User Application Info": "Informations sur la demande de l’utilisateur",
     "Submitted on": "Soumise le ",
     "Withdrawn on": "Retirée le",
+    "Add File": "Ajouter le fichier",
+    "Please enter a name": "Veuillez saisir un nom",
+    "Upload File": "Téléverser un fichier",
     "Past Events": "Past Events",
     "Virtual Event Over": "Événement virtuel terminé",
     "is now over. You may still visit our virtual event site.": "est maintenant terminé. Vous pouvez toujours visiter notre site d'événements virtuels.",
-    "Thank you for participating!": "Merci d'avoir participé!"
+    "Thank you for participating!": "Merci d'avoir participé!",
+    "Enter File Name": "Entrez le nom du fichier"
 }
