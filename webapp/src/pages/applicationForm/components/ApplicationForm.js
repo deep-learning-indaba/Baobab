@@ -604,7 +604,7 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {t("Thank you for applying to attend") + " "} {this.props.event ? this.props.event.name : ""}.
+          {t("Thank you for applying for") + " "} {this.props.event ? this.props.event.name : ""}.
           {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
