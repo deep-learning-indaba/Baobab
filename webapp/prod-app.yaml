@@ -4,7 +4,7 @@ api_version: 1
 threadsafe: true
 
 handlers:
-  - url: /(.*\.(gif|png|jpg|css|js|pdf)(|\.map))$
+  - url: /(.*\.(gif|png|jpg|css|js|pdf|json)(|\.map))$
     static_files: build/\1
     upload: build/(.*)(|\.map)
     secure: always
