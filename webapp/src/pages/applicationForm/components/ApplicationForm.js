@@ -29,6 +29,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const INFORMATION = 'information'
 const MULTI_FILE = 'multi-file';
 
 
@@ -204,6 +205,7 @@ class FieldEditor extends React.Component {
             uploadPercentComplete={this.state.uploadPercentComplete}
             uploadFile={this.handleUploadFile}
             uploaded={this.state.uploaded}
+            options={question.options}
           />
         );
       case DATE:
@@ -249,6 +251,8 @@ class FieldEditor extends React.Component {
             options={question.options}
             responseId={responseId} />
         )
+      case INFORMATION:
+        return question.description && <div className="application-form-information">{question.description}</div>
       default:
         return (
           <p className="text-danger">
@@ -261,7 +265,7 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <h4>{this.props.question.headline}</h4>
+        <p className={this.props.question.type == INFORMATION ? "h3 app-form-info" : "h4"}>{this.props.question.headline}</p>
         {this.formControl(
           this.props.key,
           this.props.question,
@@ -600,7 +604,7 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {t("Thank you for applying to attend") + " "} {this.props.event ? this.props.event.name : ""}.
+          {t("Thank you for applying for") + " "} {this.props.event ? this.props.event.name : ""}.
           {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
