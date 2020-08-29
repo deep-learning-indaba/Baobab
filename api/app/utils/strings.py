@@ -1,9 +1,8 @@
 from app import LOGGER
 
-def _get_answer_value(answer):
-    question = answer.question
-    if question.type == 'multi-choice' and question.options is not None:
-        value = [o for o in question.options if o['value'] == answer.value]
+def _get_answer_value(answer, question, question_translation):
+    if question.type == 'multi-choice' and question_translation.options is not None:
+        value = [o for o in question_translation.options if o['value'] == answer.value]
         if not value:
             return answer.value
         return value[0]['label']
@@ -26,7 +25,7 @@ def build_response_email_body(answers, language):
             question_translation = answer.question.get_translation('en')
         question_headline = question_translation.headline
 
-        answer_value = _get_answer_value(answer)
+        answer_value = _get_answer_value(answer, answer.question, question_translation)
         if(stringified_summary is None):
             stringified_summary = '{question}:\n{answer}'.format(question=question_headline, answer=answer_value)
         else:
