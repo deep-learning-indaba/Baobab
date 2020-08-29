@@ -362,8 +362,32 @@ Cordialement,
 """
     session.add(EmailTemplate('password-reset', None, u'Réinitialisation du mot de passe pour {system_name}', template, 'fr'))
 
+#########
+
+    template = """Madame / Monsieur {lastname},
+
+Merci d’avoir soumis votre demande de participation à {event_description}. Votre demande sera examinée par notre comité et nous vous répondrons dès que possible. Vous trouverez ci-dessous une copie de vos réponses.
+
+{question_answer_summary}
+
+Cordialement,
+L’équipe de {event_name}
+"""
+
+    session.add(EmailTemplate('confirmation-response', None, u'Votre demande pour {event_name}', template, 'fr'))
+
+    en_template = session.query(EmailTemplate).filter_by(key='confirmation-response', language='en').first()
+    en_template.template = u"""Dear {title} {firstname} {lastname},
+
+Thank you for applying to {event_description}. Your application is being reviewed by our committee and we will get back to you as soon as possible. Included below is a copy of your responses.
+
+{question_answer_summary}
+
+Kind Regards,
+The {event_name} Team"""
+
     session.commit()
 
 def downgrade():
-    # No practical way to back out of this
-    pass
+    added_keys = ['confirmation-response']
+    op.execute("""DELETE FROM email_template WHERE language='fr' and key in ({})""".format(', '.join(["'" + k + "'" for k in added_keys])))
