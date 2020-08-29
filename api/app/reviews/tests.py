@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import copy
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
@@ -7,6 +8,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
+from app.references.models import ReferenceRequest
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
@@ -1285,3 +1287,234 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['total_pages'], 0)
     
+
+class ReferenceReviewRequest(ApiTestCase):
+    def static_seed_data(self):
+    # Set up organisation and user
+        self.add_organisation('Deep Learning Indaba 2019', 'blah.png', 'blah_big.png')
+        self.add_organisation('Deep Learning Indaba 2020', 'blah.png', 'blah_big.png')
+        user_categories = [
+            UserCategory('Honours'),
+            UserCategory('Student'),
+            UserCategory('MSc'),
+            UserCategory('PhD')
+        ]
+        db.session.add_all(user_categories)
+        db.session.commit()
+
+
+
+        countries = [
+            Country('Egypt'),
+            Country('Botswana'),
+            Country('Namibia'),
+            Country('Zimbabwe'),
+            Country('Mozambique'),
+            Country('Ghana'),
+            Country('Nigeria')
+        ]
+        db.session.add_all(countries)
+        db.session.commit()
+
+        # Nominations
+        self.first_user_data = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
+        self.other_user_data = self.add_user('someuser@mail.com')
+
+        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
+        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', password='abc', organisation_id=1, )
+        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr', password='abc', organisation_id=1, )
+        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', password='abc', organisation_id=1, )
+        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', password='abc', organisation_id=1, )
+        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', password='abc', organisation_id=1, )
+        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', password='abc', organisation_id=1, )
+        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', password='abc', organisation_id=1, )
+        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', password='abc', organisation_id=1, is_admin=True)
+        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', password='abc', organisation_id=1)
+        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin,
+                 event_admin]
+        for user in users:
+            user.verify()
+        db.session.add_all(users)
+        db.session.commit()
+
+        event_roles = [
+            EventRole('admin', 10, 1),
+            EventRole('reviewer', 3, 1)
+        ]
+        db.session.add_all(event_roles)
+        db.session.commit()
+
+        # events = [
+        #     self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
+        #                    datetime(2019, 8, 25), datetime(2019, 8, 31),
+        #                    'KENYADABA2019'),
+        #     self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
+        #                    datetime(2018, 9, 9), datetime(2018, 9, 15),
+        #                    'INDABA2020', 2)
+        # ]
+        db.session.commit()
+        # Create events
+        test_event = self.add_event()
+        test_event.add_event_role('admin', 1)
+        self.test_event_data = copy.deepcopy(test_event.__dict__)
+        self.add_to_db(test_event)
+
+        nomination_event = self.add_event(key="AWARD_NOMINATIONS_ONLY")
+        nomination_event.add_event_role('admin', 1)
+        self.test_nomination_event_data = copy.deepcopy(nomination_event.__dict__)
+        self.add_to_db(nomination_event)
+
+        #Create application forms
+        self.test_form = self.create_application_form(test_event.id, True, False)
+        self.add_to_db(self.test_form)
+
+        self.test_nomination_form = self.create_application_form(nomination_event.id, True, True)
+
+        # application_forms = [
+        #     self.create_application_form(1, True, False),
+        #     self.create_application_form(2, False, False)
+        # ]
+        # db.session.add_all(application_forms)
+        # db.session.commit()
+
+        sections = [
+            Section(test_event.id, 'Tell Us a Bit About You', '', 1),
+            Section(nomination_event.id, 'Tell Us a Bit About You', '', 1)
+        ]
+        db.session.add_all(sections)
+        db.session.commit()
+
+        options = [
+            {
+                "value": "indaba-2017",
+                "label": "Yes, I attended the 2017 Indaba"
+            },
+            {
+                "value": "indaba-2018",
+                "label": "Yes, I attended the 2018 Indaba"
+            },
+            {
+                "value": "indaba-2017-2018",
+                "label": "Yes, I attended both Indabas"
+            },
+            {
+                "value": "none",
+                "label": "No"
+            }
+        ]
+        questions = [
+            Question(test_event.id, sections[0].id, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1,
+                     'long_text', ''),
+            Question(test_event.id, sections[0].id, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2,
+                     'long_text', ''),
+            Question(nomination_event.id, sections[1].id, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1,
+                     'long_text', ''),
+            Question(nomination_event.id, sections[1].id, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text',
+                     ''),
+            Question(test_event.id, sections[0].id, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None,
+                     True, None, options)
+        ]
+        db.session.add_all(questions)
+        db.session.commit()
+
+        closed_review = ReviewForm(2, datetime(2018, 4, 30))
+        closed_review.close()
+        review_forms = [
+            ReviewForm(1, datetime(2019, 4, 30)),
+            closed_review
+        ]
+        db.session.add_all(review_forms)
+        db.session.commit()
+
+        review_configs = [
+            ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
+            ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
+        ]
+        db.session.add_all(review_configs)
+        db.session.commit()
+
+        review_questions = [
+            ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
+            ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
+            ReviewQuestion(2, 3, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
+            ReviewQuestion(2, 4, None, None, 'information', None, None, False, 2, None, None, 0)
+        ]
+        db.session.add_all(review_questions)
+        db.session.commit()
+
+        # Reference
+        sections_reference = [
+            Section(test_event.id, 'Nomination Capacity', 'Nomination Details', 1),
+            Section(nomination_event.id, 'Nominee Information', 'Details of person being nominated', 1)
+        ]
+        sections_reference[1].key = 'nominee_section'
+        db.session.add_all(sections_reference)
+        db.session.commit()
+
+        questions_reference = [
+            Question(test_event.id, sections_reference[0].id,
+                     'Nomination Capacity',
+                     'Enter 50 to 150 words', 1, 'long_text', ''),
+            Question(test_event.id, sections_reference[0].id,
+                     'some details', 'Enter 50 to 150 words', 2, 'long_text', ''),
+            Question(nomination_event.id, sections_reference[1].id,
+                     'title', 'Enter 50 to 150 words', 1, 'long_text', ''),
+            Question(nomination_event.id, sections_reference[1].id,
+                     'firstname', 'Enter 50 to 150 words', 2, 'long_text', ''),
+            Question(nomination_event.id, sections_reference[1].id,
+                     'lastname', 'Enter 50 to 150 words', 3, 'long_text', ''),
+            Question(nomination_event.id, sections_reference[1].id,
+                     'email', 'Enter 50 to 150 words', 4, 'long_text', ''),
+        ]
+        questions_reference[0].key = 'nominating_capacity'
+        questions_reference[2].key = 'nomination_title'
+        questions_reference[3].key = 'nomination_firstname'
+        questions_reference[4].key = 'nomination_lastname'
+        questions_reference[5].key = 'nomination_email'
+        db.session.add_all(questions_reference)
+        db.session.commit()
+
+        self.test_response1 = Response(  # Self nomination
+            self.test_form.id, self.first_user_data.id)
+
+        self.add_to_db(self.test_response1)
+        answers_reference = [
+            Answer(self.test_response1.id, questions[0].id, 'self'),
+            Answer(self.test_response1.id, questions[1].id, 'Blah')
+        ]
+        db.session.add_all(answers_reference)
+        db.session.commit()
+
+        self.test_response2 = Response(  # Nominating other
+            self.test_form.id, self.other_user_data.id)
+
+        self.add_to_db(self.test_response2)
+        answers_reference = [
+            Answer(self.test_response2.id, questions[0].id, 'other'),
+            Answer(self.test_response2.id, questions[1].id, 'Blah'),
+            Answer(self.test_response2.id, questions[2].id, 'Mx'),
+            Answer(self.test_response2.id, questions[3].id, 'Skittles'),
+            Answer(self.test_response2.id, questions[4].id, 'Cat'),
+            Answer(self.test_response2.id, questions[5].id, 'skittles@box.com'),
+        ]
+        db.session.add_all(answers_reference)
+        db.session.commit()
+
+        self.first_headers = self.get_auth_header_for("firstuser@mail.com")
+        self.other_headers = self.get_auth_header_for("someuser@mail.com")
+
+        db.session.flush()
+
+    def test_get_reference_request_by_response_id(self):
+
+
+        # self.seed_static_data()
+        # reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        # reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
+        # reference_request_repository.create(reference_req)
+    #     reference_request_repository.create(reference_req2)
+    #     response = self.app.get(
+    #         '/api/v1/reference-request/list', data={'response_id':1}, headers=self.first_headers)
+    #     data = json.loads(response.data)
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(len(data), 2)
