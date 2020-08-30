@@ -203,7 +203,7 @@ class CreateAccountForm extends Component {
         <div className="CreateAccount">
           <p className="h3 text-center mb-4">{t("Sign Up")}</p>
           <p id="account-created">
-            {this.props.t("Your")} {this.props.organisation ? this.props.organisation.name : ""} 
+            {this.props.t("Your")} {this.props.organisation ? this.props.organisation.name : ""} {" "}
             {this.props.t("account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address.")}
           </p>
         </div>

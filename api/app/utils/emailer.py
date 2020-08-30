@@ -103,7 +103,7 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
                 server.sendmail(sender_email, recipient, msg.as_string())
                 server.close()
             except Exception as e:
-                LOGGER.error("Exception {} while trying to send email: {}, {}".format(e, traceback.format_exc()))
+                LOGGER.error("Exception {} while trying to send email: {}".format(e, traceback.format_exc()))
                 raise e
 
     else:
