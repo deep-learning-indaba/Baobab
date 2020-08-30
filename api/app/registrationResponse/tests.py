@@ -24,8 +24,8 @@ class RegistrationApiTest(ApiTestCase):
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
             key='SPEEDNET'
@@ -159,6 +159,10 @@ class RegistrationApiTest(ApiTestCase):
             self.registration3 = Registration(self.offer3.id, self.form.id, confirmed=False)
             db.session.add(self.registration3)
             db.session.commit()
+
+        self.add_email_template('registration-with-confirmation')
+        self.add_email_template('registration-pending-confirmation')
+        self.add_email_template('registration-confirmed')
 
         db.session.flush()
 

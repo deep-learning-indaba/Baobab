@@ -12,16 +12,15 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import ProgrammingError
 
 from app import LOGGER, app, db
-from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
+                                         SectionTranslation)
 from app.events.models import Event, EventType
-from app.organisation.models import Organisation
-from app.users.models import AppUser, UserCategory, Country
-from app.events.models import Event
-from app.events.models import EventType
-from app.applicationModel.models import ApplicationForm
-from app.registration.models import RegistrationForm, Offer
-from app.responses.models import Answer, Response
 from app.invitedGuest.models import InvitedGuest
+from app.organisation.models import Organisation
+from app.registration.models import Offer, RegistrationForm
+from app.responses.models import Answer, Response
+from app.users.models import AppUser, Country, UserCategory
+from app.email_template.models import EmailTemplate
 
 
 @event.listens_for(Engine, "connect")
@@ -148,8 +147,8 @@ class ApiTestCase(unittest.TestCase):
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
                                     email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
-                                    privacy_policy='PrivacyPolicy.pdf'):
-        org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy)
+                                    privacy_policy='PrivacyPolicy.pdf', languages=[{"code": "en", "description": "English"}]):
+        org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages)
         db.session.add(org)
         db.session.commit()
         return org
@@ -167,8 +166,8 @@ class ApiTestCase(unittest.TestCase):
         return category
 
     def add_event(self, 
-                 name ='Test Event', 
-                 description = 'Event Description', 
+                 name ={'en': 'Test Event'}, 
+                 description = {'en': 'Event Description'}, 
                  start_date = datetime.now() + timedelta(days=30), 
                  end_date = datetime.now() + timedelta(days=60),
                  key = 'INDABA2025',
@@ -195,6 +194,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(event)
         db.session.commit()
         return event
+
+    def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
+        email_template = EmailTemplate(template_key, event_id, subject, template, language)
+        db.session.add(email_template)
+        db.session.commit()
+        return email_template
 
     def get_auth_header_for(self, email, password='abc'):
         body = {
@@ -231,33 +236,61 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return registration_form
     
-    def add_section(
-        self,
-        application_form_id,
-        name='Section',
-        description='Description',
-        order=1):
-        section = Section(application_form_id, name, description, order)
+    def add_section(self, application_form_id, order=1):
+        section = Section(application_form_id, order)
         db.session.add(section)
         db.session.commit()
         return section
     
+    def add_section_translation(
+        self,
+        section_id,
+        language,
+        name='Section Name',
+        description='Section Description',
+        show_for_values=None):
+        section_translation = SectionTranslation(section_id, language, name, description, show_for_values)
+        db.session.add(section_translation)
+        db.session.commit()
+        return section_translation
+
     def add_question(
         self,
         application_form_id,
         section_id,
-        headline='Question?',
-        placeholder='placeholder',
         order=1,
-        question_type='short-text',
-        validation_regex=None):
-        question = Question(application_form_id, section_id, headline, placeholder, order, question_type, validation_regex)
+        question_type='short-text'):
+        question = Question(application_form_id, section_id, order, question_type)
         db.session.add(question)
         db.session.commit()
         return question
+
+    def add_question_translation(self,
+        question_id,
+        language,
+        headline='Question Headline',
+        description=None,
+        placeholder=None,
+        validation_regex=None,
+        validation_text=None,
+        options=None,
+        show_for_values=None):
+        question_translation = QuestionTranslation(
+            question_id,
+            language,
+            headline,
+            description,
+            placeholder,
+            validation_regex,
+            validation_text,
+            options,
+            show_for_values)
+        db.session.add(question_translation)
+        db.session.commit()
+        return question_translation
     
-    def add_response(self, application_form_id, user_id, is_submitted, is_withdrawn):
-        response = Response(application_form_id, user_id)
+    def add_response(self, application_form_id, user_id, is_submitted=False, is_withdrawn=False, language='en'):
+        response = Response(application_form_id, user_id, language)
         if is_submitted:
             response.submit()
         if is_withdrawn:
@@ -273,7 +306,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return answer
 
-    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False):
+    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False, candidate_response=None):
         offer_date = offer_date or datetime.now()
         expiry_date = expiry_date or datetime.now() + timedelta(10)
 
@@ -284,7 +317,9 @@ class ApiTestCase(unittest.TestCase):
             expiry_date=expiry_date,
             payment_required=payment_required,
             travel_award=travel_award,
-            accommodation_award=accommodation_award)
+            accommodation_award=accommodation_award,
+            candidate_response=candidate_response)
+
         db.session.add(offer)
         db.session.commit()
         return offer

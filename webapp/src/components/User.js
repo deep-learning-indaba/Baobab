@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { withRouter } from "react-router";
 import { userService } from "../services/user";
 import isEqual from "lodash.isequal";
+import { withTranslation } from 'react-i18next';
 
 class UserDropdown extends Component {
   constructor(props) {
@@ -29,6 +30,8 @@ class UserDropdown extends Component {
   };
 
   render() {
+    const t = this.props.t;
+
     if (this.state.user) {
       return (
         <ul class="navbar-nav">
@@ -40,7 +43,7 @@ class UserDropdown extends Component {
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-user" />{" "}
+              <i class="fas fa-user menu-icon" />{" "}
               {this.state.user.firstname + " " + this.state.user.lastname}
             </button>
             <div class="dropdown-menu" aria-labelledby="userDropdown">
@@ -49,10 +52,10 @@ class UserDropdown extends Component {
                 href="/profile"
                 onClick={this.props.onClick}
               >
-                Profile
+                {t("Profile")}
               </a>
               <button className="dropdown-item cursor-pointer" onClick={this.handleLogout}>
-                Sign Out
+                {t("Sign Out")}
               </button>
             </div>
           </li>
@@ -68,7 +71,7 @@ class UserDropdown extends Component {
               className="nav-link"
               onClick={this.props.onClick}
             >
-              Sign In
+              {t("Sign In")}
             </NavLink>
           </li>
         </ul>
@@ -77,4 +80,4 @@ class UserDropdown extends Component {
   }
 }
 
-export default withRouter(UserDropdown);
+export default withRouter(withTranslation()(UserDropdown));
