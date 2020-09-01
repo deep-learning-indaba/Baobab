@@ -619,11 +619,12 @@ class SubmittedComponent extends React.Component {
           </button>
         </div>
 
-        <div class="submitted-footer">
+        {!this.props.withdraw && <div class="submitted-footer">
           <button class="btn btn-primary" onClick={this.handleEdit}>
             {t("Edit Application")}
           </button>
-        </div>
+        </div>}
+
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}
@@ -703,18 +704,19 @@ class ApplicationFormInstanceComponent extends Component {
       one: "Applications have not opened yet",
       two: "Applications are closed and you did not apply",
       three: "You did not submit an application before the deadline, applications are now closed",
-      four: "withdraw",
-      five: "You applied, but you can't withdraw or edit your application"
+      four: "You applied, but you can't withdraw or edit your application"
     }
 
     let handleValidate;
-    let edit_withdraw;
+    let withdraw;
 
-    const noApplication = !props.reponse;
-    const applicationClosed = !props.event.is_application_open && !props.event.is_application_opening;
+    const noApplication = !props.response;
+    const submitted = props.response ? props.response.is_submitted : null;
     const applicationStillOpening = !props.event.is_application_open && props.event.is_application_opening;
-    const deadlineMissed = !props.response.is_submitted && !props.event.is_application_open && !props.event.is_application_opening;
-    const submitted = props.response.is_submitted;
+    const applicationClosed = !props.event.is_application_open && !props.event.is_application_opening;
+    const deadlineMissed = !noApplication && !submitted && !props.event.is_application_open && !props.event.is_application_opening;
+    
+    
 
     if (applicationStillOpening) {
       handleValidate = messages.one
@@ -722,26 +724,28 @@ class ApplicationFormInstanceComponent extends Component {
     else if (noApplication && applicationClosed) {
       handleValidate = messages.two
     }
-    else if (deadlineMissed) {
+  
+     else if (deadlineMissed) {
       handleValidate = messages.three
     }
-    else if (!noApplication && submitted && applicationClosed) {
+  
+    else if (submitted && applicationClosed) {
       if (props.event.is_review_open) {
-        edit_withdraw = messages.four
+        withdraw = true
       }
       if (!props.event.is_review_open) {
-        handleValidate = messages.five
+        handleValidate = messages.four
       }
     }
 
     this.setState({
       errorMessage: handleValidate ? handleValidate : "",
       isError: handleValidate ? true : false,
-      edit_withdraw: edit_withdraw ? edit_withdraw : null
+      withdraw: withdraw ? true : false
 
     }, () => {
       handleValidate = null;
-      edit_withdraw = null;
+      withdraw = false;
     });
   }
 
@@ -873,7 +877,8 @@ class ApplicationFormInstanceComponent extends Component {
       isSubmitted,
       errorMessage,
       answers,
-      isSubmitting
+      isSubmitting,
+      withdraw
     } = this.state;
 
     if (isError) {
@@ -885,6 +890,8 @@ class ApplicationFormInstanceComponent extends Component {
     if (isSubmitted) {
       return (
         <Submitted
+          valdiate={errorMessage}
+          withdraw={withdraw}
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
