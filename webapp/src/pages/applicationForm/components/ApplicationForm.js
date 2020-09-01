@@ -669,11 +669,17 @@ class ApplicationFormInstanceComponent extends Component {
       errors: [],
       answers: [],
       unsavedChanges: false,
-      startStep: 0
+      startStep: 0,
     };
+
   }
 
+
   componentDidMount() {
+
+    // checkErrors
+    this.validateForm(this.props)
+
     if (this.props.response) {
       this.setState({
         responseId: this.props.response.id,
@@ -681,15 +687,62 @@ class ApplicationFormInstanceComponent extends Component {
         isSubmitted: this.props.response.is_submitted,
         submittedTimestamp: this.props.response.submitted_timestamp,
         answers: this.props.response.answers,
-        unsavedChanges: false
+        unsavedChanges: false,
       });
     }
     else {
       this.setState({
         new_response: true,
-        unsavedChanges: false
+        unsavedChanges: false,
       });
     }
+  }
+
+  validateForm = (props) => {
+    const messages = {
+      one: "Applications have not opened yet",
+      two: "Applications are closed and you did not apply",
+      three: "You did not submit an application before the deadline, applications are now closed",
+      four: "withdraw",
+      five: "You applied, but you can't withdraw or edit your application"
+    }
+
+    let handleValidate;
+    let edit_withdraw;
+
+    const noApplication = !props.reponse;
+    const applicationClosed = !props.event.is_application_open && !props.event.is_application_opening;
+    const applicationStillOpening = !props.event.is_application_open && props.event.is_application_opening;
+    const deadlineMissed = !props.response.is_submitted && !props.event.is_application_open && !props.event.is_application_opening;
+    const submitted = props.response.is_submitted;
+
+    if (applicationStillOpening) {
+      handleValidate = messages.one
+    }
+    else if (noApplication && applicationClosed) {
+      handleValidate = messages.two
+    }
+    else if (deadlineMissed) {
+      handleValidate = messages.three
+    }
+    else if (!noApplication && submitted && applicationClosed) {
+      if (props.event.is_review_open) {
+        edit_withdraw = messages.four
+      }
+      if (!props.event.is_review_open) {
+        handleValidate = messages.five
+      }
+    }
+
+    this.setState({
+      errorMessage: handleValidate ? handleValidate : "",
+      isError: handleValidate ? true : false,
+      edit_withdraw: edit_withdraw ? edit_withdraw : null
+
+    }, () => {
+      handleValidate = null;
+      edit_withdraw = null;
+    });
   }
 
   handleSubmit = event => {
