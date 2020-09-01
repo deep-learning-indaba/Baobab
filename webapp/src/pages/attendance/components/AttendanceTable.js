@@ -1,3 +1,5 @@
+// TODO: ADD TRANSLATION
+
 import React from "react";
 import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";

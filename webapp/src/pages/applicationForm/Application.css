@@ -182,6 +182,12 @@ ol.progtrckr li.progtrckr-done:hover:before {
   padding-top: 0.5em;
 }
 
+.app-form-info {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 1em;
+  margin-bottom: -1em;
+}
+
 @media (max-width: 650px) {
   .progtrckr li span {
     display: none;

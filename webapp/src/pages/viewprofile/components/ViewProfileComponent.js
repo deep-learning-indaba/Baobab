@@ -4,6 +4,7 @@ import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
+import { withTranslation } from 'react-i18next'
 
 class ViewProfileComponent extends Component {
   constructor(props) {
@@ -75,6 +76,8 @@ class ViewProfileComponent extends Component {
       height: "3rem"
     };
 
+    const t = this.props.t;
+
     if (loading) {
       return (
         <div class="d-flex justify-content-center">
@@ -95,7 +98,7 @@ class ViewProfileComponent extends Component {
         {isNull ? (
           <div className="error-message-empty-list">
             <div className="alert alert-danger alert-container">
-              No user profile to display!
+              {t("No user profile to display!")}
             </div>
           </div>
         ) : (
@@ -103,40 +106,40 @@ class ViewProfileComponent extends Component {
               {" "}
               <span className="profile-view-padding">
                 <div className="alert alert-primary user-profile-header">
-                  Profile For : {title + " " + firstName + " " + lastName}
+                  {t("Profile For")}: {title + " " + firstName + " " + lastName}
                 </div>
               </span>
 
               <form>
                 <div class="row">
                   <fieldset class="fieldset">
-                    <legend class="legend">Personal Information </legend>
+                    <legend class="legend">{t("Personal Information")}</legend>
 
                     <div class="row">
                       <div class={commonColClassName}>
                         <FormTextBox
                           id={validationFields.title.name}
-                          placeholder={validationFields.title.display}
+                          placeholder={t(validationFields.title.display)}
                           value={title}
-                          label={validationFields.title.display} />
+                          label={t(validationFields.title.display)} />
                       </div>
 
                       <div class={commonColClassName}>
                         <FormTextBox
                           id={validationFields.firstName.name}
                           type="text"
-                          placeholder={validationFields.firstName.display}
+                          placeholder={t(validationFields.firstName.display)}
                           value={firstName}
-                          label={validationFields.firstName.display} />
+                          label={t(validationFields.firstName.display)} />
                       </div>
 
                       <div class={commonColClassName}>
                         <FormTextBox
                           id={validationFields.lastName.name}
                           type="text"
-                          placeholder={validationFields.lastName.display}
+                          placeholder={t(validationFields.lastName.display)}
                           value={lastName}
-                          label={validationFields.lastName.display}
+                          label={t(validationFields.lastName.display)}
                           editable={false} />
                       </div>
                     </div>
@@ -146,9 +149,9 @@ class ViewProfileComponent extends Component {
                         <FormTextBox
                           id={validationFields.email.name}
                           type="email"
-                          placeholder={validationFields.email.display}
+                          placeholder={t(validationFields.email.display)}
                           value={email}
-                          label={validationFields.email.display} />
+                          label={t(validationFields.email.display)} />
                       </div>
                     </div>
                   </fieldset>
@@ -157,7 +160,7 @@ class ViewProfileComponent extends Component {
                 <div class="row">
                   <fieldset class="fieldset">
                     <legend class="legend">
-                      User Application Info.
+                      {t("User Application Info")}
                     </legend>
 
                     <div className="row" class={colClassNameUserApplicationInfo}>
@@ -167,7 +170,7 @@ class ViewProfileComponent extends Component {
                             <div
                               class="alert alert-success yes-submitted-alert"
                               role="alert">
-                              Submitted on
+                              {t("Submitted on")}
                               {Date_Submitted}
                             </div>
                           </div>
@@ -180,7 +183,7 @@ class ViewProfileComponent extends Component {
                             <div
                               class="alert alert-danger no-submitted-alert"
                               role="alert">
-                              Withdrawn on
+                              {t("Withdrawn on")}
                               {Date_Withdrawn}
                             </div>
                           </div>
@@ -198,4 +201,4 @@ class ViewProfileComponent extends Component {
   }
 }
 
-export default withRouter(ViewProfileComponent);
+export default withRouter(withTranslation()(ViewProfileComponent));

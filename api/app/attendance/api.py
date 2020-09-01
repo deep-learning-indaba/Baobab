@@ -2,15 +2,13 @@ from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
 from app import db
-
-from app.attendance.emails import ATTENDANCE_EMAIL_BODY
 from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, OFFER_NOT_FOUND, REGISTRATION_NOT_FOUND
 from app.registration.models import RegistrationQuestion
 from app.registration.models import Offer
@@ -104,14 +102,10 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         attendance = Attendance(event_id, user_id, registration_user_id)
         attendance_repository.create(attendance)
 
-        send_mail(
-            recipient=user.email,
-            subject='Welcome to {}'.format(event.name),
-            body_text=ATTENDANCE_EMAIL_BODY.format(
-                user_title=user.user_title,
-                first_name=user.firstname,
-                last_name=user.lastname,
-                event_name=event.name)
+        email_user(
+            'attendance-confirmation',
+            event=event,
+            user=user
         )
 
         # Other Fields

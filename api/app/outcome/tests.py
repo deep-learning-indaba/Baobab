@@ -10,8 +10,8 @@ class OutcomeApiTest(ApiTestCase):
     def seed_static_data(self):
         db.session.expire_on_commit = False    
 
-        self.event1 = self.add_event(name='Event 1', key='event1')
-        self.event2 = self.add_event(name='Event 2', key='event2')
+        self.event1 = self.add_event(name={'en': 'Event 1'}, key='event1')
+        self.event2 = self.add_event(name={'en': 'Event 2'}, key='event2')
 
         self.test_user1 = self.add_user('something@email.com')
         self.test_user2 = self.add_user('something_else@email.com')
@@ -40,6 +40,10 @@ class OutcomeApiTest(ApiTestCase):
         ])
 
         db.session.commit()
+
+        self.add_email_template('outcome-rejected')
+        self.add_email_template('outcome-waitlist')
+
         db.session.flush()
 
         self.event1_user1_outcome1_id = self.event1_user1_outcome1.id
@@ -48,6 +52,7 @@ class OutcomeApiTest(ApiTestCase):
         self.event2_user1_outcome_id = self.event2_user1_outcome.id
 
         self.test_user1_id = self.test_user1.id
+        
 
     def test_repository_get_latest_by_user_for_event(self):
         """Test that repository method gets the correct latest outcome for a user."""

@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import { requiredText } from "../../../utils/validation/rules.js";
+import { withTranslation } from 'react-i18next'
 
 const fieldValidations = [
   ruleRunner(validationFields.password, requiredText),
@@ -46,29 +47,37 @@ class ConfirmPasswordResetForm extends Component {
     };
   };
 
+
   handleSubmit = event => {
-    event.preventDefault();
+  event.preventDefault();
+
     this.setState({
       submitted: true,
       loading: true
     });
 
-    userService
-      .confirmPasswordReset(this.state.password, this.state.token)
-      .then(response => {
-        console.log("Response from user service: ", response);
+   const _this = this;
 
-        if (response.status === 201) {
-          const { from } = { from: { pathname: "/login" } };
-          this.props.history.push(from);
-        } else {
+    return new Promise(function (resolve) {
+      userService
+        .confirmPasswordReset(_this.state.password, _this.state.token)
+        .then(response => {
+          console.log("Response from user service: ", response);
 
-          this.setState({
-            error: response.message,
-            loading: false
-          });
-        }
-      });
+          if (response.status === 201) {
+            const { from } = { from: { pathname: "/login" } };
+            _this.props.history.push(from);
+          } else {
+
+            _this.setState({
+              error: response.message,
+              loading: false
+            });
+          }
+          resolve(response.message)
+        });
+    })
+
   };
 
   render() {
@@ -79,6 +88,8 @@ class ConfirmPasswordResetForm extends Component {
       error
     } = this.state;
 
+    const t = this.props.t;
+
     return (
       <div className="ResetPassword">
         {error &&
@@ -87,38 +98,38 @@ class ConfirmPasswordResetForm extends Component {
           </div>}
 
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Reset password</p>
+          <p className="h5 text-center mb-4">{t("Reset Password")}</p>
 
-          <div class="col">
+          <div className="col">
             <div>
               <FormTextBox
                 id={validationFields.password.name}
                 type="password"
-                placeholder={validationFields.password.display}
+                placeholder={t(validationFields.password.display)}
                 onChange={this.handleChange(validationFields.password)}
                 value={password}
-                label={validationFields.password.display} />
+                label={t(validationFields.password.display)} />
             </div>
 
             <div>
               <FormTextBox
                 id={validationFields.confirmPassword.name}
                 type="password"
-                placeholder={validationFields.confirmPassword.display}
+                placeholder={t(validationFields.confirmPassword.display)}
                 onChange={this.handleChange(validationFields.confirmPassword)}
                 value={confirmPassword}
-                label={validationFields.confirmPassword.display} />
+                label={t(validationFields.confirmPassword.display)} />
             </div>
 
             <div>
               <button
                 type="submit"
-                class="btn btn-primary"
+                className="btn btn-primary"
                 disabled={!this.validateForm() || loading}>
-                {loading && <span class="spinner-grow spinner-grow-sm"
+                {loading && <span className="spinner-grow spinner-grow-sm"
                   role="status"
                   aria-hidden="true"></span>}
-                Submit
+                {t("Submit")}
               </button>
             </div>
           </div>
@@ -128,4 +139,4 @@ class ConfirmPasswordResetForm extends Component {
   }
 }
 
-export default withRouter(ConfirmPasswordResetForm);
+export default withRouter(withTranslation()(ConfirmPasswordResetForm));

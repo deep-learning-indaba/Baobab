@@ -7,9 +7,157 @@
   padding-left: 15px;
 }
 
+
 /* FormMarkDown Component */
 #md-editor.select-control.is-invalid {
     padding: 0;
     background-image: none;
     outline: 1px solid red;
 }
+
+.react-datetime-picker.error {
+  border-radius: 5px;
+  border: 1px solid red !important;
+}
+
+.add-file-btn {
+  padding: 3px 10px;
+  margin-top: 8px;
+  width: 99px;
+  border: 1px solid lightgrey;
+  background: hsl(214deg 32% 18%);
+  color: white;
+  font-size: 1rem;
+  border-radius: 5px;
+}
+
+
+/* MultiFileComponent */
+
+.upload-item-wrapper {
+  margin-bottom: 18px;
+}
+
+.errorText {
+  display: none;
+  color: red;
+}
+
+.errorText.display {
+  display: block;
+}
+
+.upload-item-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-name.enter .input-field {
+  border: 1px solid hsl(169deg 37% 57%);
+  }
+
+.input-field {
+  width: 40%;
+  padding: 3px 5px;
+  border: 1px solid lightgrey;
+  outline: none;
+  border-radius: 5px;
+  margin-bottom: 0;
+}
+
+
+.upload-item-container input#file-upload-button {
+  background: hsl(211deg 100% 50%);
+  color: white;
+}
+
+.input-field.lock {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.input-field.alert {
+  border: 1px solid red;
+}
+
+
+
+.file-name {
+  display: flex;
+  margin-bottom: 10px;
+  height: 35px;
+  align-items: center;
+}
+
+.btn-submit {
+  display: none;
+  height: 29px;
+  margin: 0 10px;
+  border: none;
+  color: white;
+  background: hsl(205deg 34% 28%);
+  border-radius: 5px;
+  transition: 1000ms;
+}
+
+.btn-submit.show {
+  display: block;
+}
+
+.edit img {
+  width: 33px;
+}
+
+.edit {
+  display: none;
+  margin: 0 10px;
+}
+
+.edit.show {
+  display: block;
+}
+
+.file-input-wrapper {
+  display: flex;
+  opacity: 1;
+  pointer-events: all;
+}
+
+.file-input-wrapper.lock {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.bin {
+  margin: 0 10px;
+  display: none;
+}
+
+.bin.show{
+display: block;
+}
+
+.file-input {
+  width: 30%;
+}
+
+.file-input.error {
+  width: 31%;
+  color: red;
+}
+
+.file-uploaded {
+display: flex;
+}
+
+.file-uploaded img {
+  width: 20px;
+  height: 20px;
+  margin: 0 5px;
+  }
+
+  .view {
+    margin: 0 10px;
+  }
+
+
