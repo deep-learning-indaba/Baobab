@@ -26,7 +26,7 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
-            return send_file(temp.name, as_attachment=True, attachment_filename=args['filename'], mimetype='application/pdf')
+            return send_file(temp.name, as_attachment=True, attachment_filename=args['filename'])
 
 
     def post(self):

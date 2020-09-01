@@ -7,6 +7,14 @@
   padding-left: 15px;
 }
 
+
+/* FormMarkDown Component */
+#md-editor.select-control.is-invalid {
+    padding: 0;
+    background-image: none;
+    outline: 1px solid red;
+}
+
 .react-datetime-picker.error {
   border-radius: 5px;
   border: 1px solid red !important;
@@ -151,4 +159,5 @@ display: flex;
   .view {
     margin: 0 10px;
   }
+
 

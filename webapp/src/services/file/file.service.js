@@ -8,6 +8,7 @@ export const fileService = {
 }
 
 function uploadFile(file, onUploadProgress) {
+
     var config = {
         onUploadProgress: onUploadProgress,
         headers: {

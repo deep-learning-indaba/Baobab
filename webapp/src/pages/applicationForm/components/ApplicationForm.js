@@ -5,6 +5,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import MarkDownForm from '../../../components/form/MarkDownForm';
 import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
@@ -29,9 +30,9 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
+const MARK_DOWN = "markdown";
 const INFORMATION = 'information'
 const MULTI_FILE = 'multi-file';
-
 
 
 /*
@@ -60,6 +61,7 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
+
 class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -72,6 +74,7 @@ class FieldEditor extends React.Component {
     }
 
   }
+
 
   handleChange = event => {
     // Some components (datepicker, custom controls) return pass the value directly rather than via event.target.value
@@ -87,6 +90,7 @@ class FieldEditor extends React.Component {
       this.props.onChange(this.props.question, dropdown.value);
     }
   };
+
 
   handleUploadFile = (file) => {
     this.setState({
@@ -109,7 +113,9 @@ class FieldEditor extends React.Component {
         uploading: false
       });
 
-      return response.fileId;
+      
+      let fileUrl = `${baseUrl}/api/v1/file?filename=${response.fileId}`;
+      return fileUrl
     });
   }
 
@@ -235,6 +241,15 @@ class FieldEditor extends React.Component {
             errorText={validationError || this.state.uploadError}
           />
         );
+      case MARK_DOWN:
+        return (
+              <MarkDownForm
+                onChange={(e) => this.handleChange(e)}
+                onImageUpload={(e) => this.handleUploadFile(e)}
+                errorText={validationError}
+                value={answer}
+              />
+        );
       case REFERENCE_REQUEST:
         return (
           <FormReferenceRequest
@@ -294,6 +309,7 @@ class Section extends React.Component {
 
 
   onChange = (question, value) => {
+
     const newAnswer = {
       question_id: question.id,
       value: value
@@ -305,13 +321,14 @@ class Section extends React.Component {
         if (q.question.id !== question.id) {
           return q;
         }
-        return {
-          ...q,
-          validationError: this.state.hasValidated
-            ? this.validate(q, newAnswer)
-            : "",
-          answer: newAnswer
-        };
+
+          return {
+            ...q,
+            validationError: this.state.hasValidated
+              ? this.validate(q, newAnswer)
+              : "",
+            answer: newAnswer
+          };
       })
 
     this.setState(
@@ -330,6 +347,7 @@ class Section extends React.Component {
 
   // validate
   validate = (questionModel, updatedAnswer) => {
+
     let errors = [];
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
@@ -339,14 +357,14 @@ class Section extends React.Component {
     }
 
     if (
-      answer &&
+      answer && 
       question.validation_regex &&
       !answer.value.match(question.validation_regex)
     ) {
       errors.push(question.validation_text);
     }
-
     return errors.join("; ");
+
   };
 
 
@@ -754,6 +772,7 @@ class ApplicationFormInstanceComponent extends Component {
           applicationFormService
             .submit(this.props.formSpec.id, false, this.state.answers)
             .then(resp => {
+
               let submitError = resp.response_id === null;
               this.setState({
                 isError: submitError,
