@@ -9,6 +9,7 @@ from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
 from app.references.models import ReferenceRequest
+from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
@@ -1471,13 +1472,20 @@ class ReferenceReviewRequest(ApiTestCase):
     def test_get_reference_request_by_response_id(self):
 
 
-        # self.seed_static_data()
-        # reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        self.seed_static_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         # reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
-        # reference_request_repository.create(reference_req)
-    #     reference_request_repository.create(reference_req2)
-    #     response = self.app.get(
-    #         '/api/v1/reference-request/list', data={'response_id':1}, headers=self.first_headers)
-    #     data = json.loads(response.data)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(len(data), 2)
+
+        params = {'event_id': 1, 'application_form_id': 1, 'user_id:': 5, 'sort_column' : 'review_response_id'} # confirm params, check ids
+        reference_request_repository.create(reference_req)
+        responses = [
+            self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params),
+            self.app.get('/api/v1/reference-request/list', data={'response_id': 1}, headers=self.first_headers)
+        ]
+
+        # Response(1, 5)
+        # reference_request_repository.create(reference_req2)
+
+        data = json.loads(responses.data)
+        self.assertEqual(responses.status_code, 200)
+        self.assertEqual(len(data), 2) # Check length
