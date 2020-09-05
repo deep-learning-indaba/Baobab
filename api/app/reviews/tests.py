@@ -8,7 +8,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.references.models import ReferenceRequest
+from app.references.models import ReferenceRequest, Reference
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
@@ -1291,35 +1291,9 @@ class ReviewsApiTest(ApiTestCase):
 
 class ReferenceReviewRequest(ApiTestCase):
     def static_seed_data(self):
-    # Set up organisation and user
-        self.add_organisation('Deep Learning Indaba 2019', 'blah.png', 'blah_big.png')
-        self.add_organisation('Deep Learning Indaba 2020', 'blah.png', 'blah_big.png')
-        user_categories = [
-            UserCategory('Honours'),
-            UserCategory('Student'),
-            UserCategory('MSc'),
-            UserCategory('PhD')
-        ]
-        db.session.add_all(user_categories)
-        db.session.commit()
-
-
-
-        countries = [
-            Country('Egypt'),
-            Country('Botswana'),
-            Country('Namibia'),
-            Country('Zimbabwe'),
-            Country('Mozambique'),
-            Country('Ghana'),
-            Country('Nigeria')
-        ]
-        db.session.add_all(countries)
-        db.session.commit()
-
+        # User, country and organisation is set up by ApiTestCase
         # Nominations
-        self.first_user_data = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
-        # self.other_user_data = self.add_user('someuser@mail.com')
+        self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
         reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', password='abc', organisation_id=1, )
@@ -1345,15 +1319,15 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(event_roles)
         db.session.commit()
 
-        events = [
-            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
-                           datetime(2019, 8, 25), datetime(2019, 8, 31),
-                           'KENYADABA2019'),
-            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
-                           datetime(2018, 9, 9), datetime(2018, 9, 15),
-                           'INDABA2020', 2)
-        ]
-        db.session.commit()
+        # events = [
+        #     self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
+        #                    datetime(2019, 8, 25), datetime(2019, 8, 31),
+        #                    'KENYADABA2019'),
+        #     self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
+        #                    datetime(2018, 9, 9), datetime(2018, 9, 15),
+        #                    'INDABA2020', 2)
+        # ]
+        # db.session.commit()
 
         event_roles = [
             EventRole('admin', 10, 1),
@@ -1450,7 +1424,7 @@ class ReferenceReviewRequest(ApiTestCase):
         # Reference
 
         self.test_response = Response(  # Nominating other
-            self.application_form.id, self.first_user_data.id)
+            self.application_form.id, self.first_user.id)
 
         self.add_to_db(self.test_response)
         answers = [
@@ -1465,27 +1439,47 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.commit()
 
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
-        # self.other_headers = self.get_auth_header_for("someuser@mail.com")
 
         db.session.flush()
 
     def test_get_reference_request_by_response_id(self):
-
-
         self.seed_static_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
-        # reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
-
-        params = {'event_id': 1, 'application_form_id': 1, 'user_id:': 5, 'sort_column' : 'review_response_id'} # confirm params, check ids
         reference_request_repository.create(reference_req)
-        responses = [
-            self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params),
-            self.app.get('/api/v1/reference-request/list', data={'response_id': 1}, headers=self.first_headers)
-        ]
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        # response = self.app.get(
+        #     '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        # self.assertEqual(response.status_code, 201)
 
-        # Response(1, 5)
-        # reference_request_repository.create(reference_req2)
+        params = {'event_id': 1, 'application_form_id': 1, 'user_id:': 5, 'sort_column' : 'review_response_id',
+                  'reference_detail': REFERENCE_DETAIL} # confirm params, check ids
 
-        data = json.loads(responses.data)
-        self.assertEqual(responses.status_code, 200)
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 2) # Check length
+
+    def test_get_reference_request_with_two_references(self):
+        # Initial draft / planning
+        self.seed_static_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979', # confirm where to find these
+        }
+        response = self.app.get(
+            '/api/v1/reference-request/list', data={'response_id': 1}, headers=self.first_headers)
+
+        
