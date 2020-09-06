@@ -1,4 +1,5 @@
 from app import LOGGER
+import json
 
 def _get_answer_value(answer, question, question_translation):
     if question.type == 'multi-choice' and question_translation.options is not None:
@@ -9,6 +10,10 @@ def _get_answer_value(answer, question, question_translation):
     
     if question.type == 'file' and answer.value:
         return 'Uploaded File'
+
+    if question.type == 'multi-file' and answer.value:
+        file_info = json.loads(answer.value)
+        return "\n".join([f['name'] for f in file_info])
 
     return answer.value
 

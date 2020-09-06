@@ -333,7 +333,7 @@ class PasswordResetRequestAPI(restful.Resource):
         email_user(
             'password-reset',
             template_parameters=dict(
-                system=g.organisation.system_name, 
+                system_name=g.organisation.system_name, 
                 organisation=g.organisation.name,
                 host=misc.get_baobab_host(), 
                 token=password_reset.code
