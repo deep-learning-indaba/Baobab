@@ -236,7 +236,7 @@ class LanguageSelectorComponent extends Component {
           userService.update({
             email: result.email,
             firstName: result.firstname,
-            lastName: result.lastName,
+            lastName: result.lastname,
             title: result.user_title
           });
         })
