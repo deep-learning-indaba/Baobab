@@ -9,8 +9,15 @@ import _ from "lodash";
 export class FormMultiFile extends React.PureComponent {
     constructor(props) {
         super(props);
+
+        const initLength = (props.options && props.options.num_uploads) || 1;
+        const initList = []
+        for (let i = 0; i < initLength; i++) {
+            initList.push({ id: i+1, name: null, file: null });
+        }
+
         this.state = {
-            fileList: [{ id: 1, name: null, file: null }],
+            fileList: initList,
             addError: false
         }
     }
@@ -92,7 +99,8 @@ export class FormMultiFile extends React.PureComponent {
                 existing.name = name;
                 this.setState({fileList: handleList}, () => {
                     if (this.props.onChange) {
-                        this.props.onChange(JSON.stringify(this.state.fileList));
+                        const filteredList = this.state.fileList.filter(f=>f.file);
+                        this.props.onChange(JSON.stringify(filteredList));
                     }
                     resolve(existing.file);
                 });
@@ -114,6 +122,7 @@ export class FormMultiFile extends React.PureComponent {
                             del={this.del}
                             value={val}
                             key={"file_" + val.id.toString()}
+                            placeholder={this.props.placeholder}
                         />
                     })}
 
