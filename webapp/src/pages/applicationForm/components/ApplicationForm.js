@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
+import ReactMarkdown from "react-markdown";
 import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
@@ -233,6 +234,8 @@ class FieldEditor extends React.Component {
             onChange={this.handleChange}
             uploadFile={this.handleUploadFile}
             errorText={validationError || this.state.uploadError}
+            placeholder={question.placeholder}
+            options={question.options}
           />
         );
       case REFERENCE_REQUEST:
@@ -265,7 +268,7 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p className={this.props.question.type == INFORMATION ? "h3 app-form-info" : "h4"}>{this.props.question.headline}</p>
+        <p className={this.props.question.type == INFORMATION ? "h3" : "h4"}>{this.props.question.headline}</p>
         {this.formControl(
           this.props.key,
           this.props.question,
@@ -404,6 +407,8 @@ class Section extends React.Component {
     }
   }
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     const {
       section,
@@ -417,8 +422,8 @@ class Section extends React.Component {
     return (
       <div className={"section"}>
         <div className={"headline"}>
-          <h2>{section.name}</h2>
-          <p>{section.description}</p>
+          <h1>{section.name}</h1>
+          <ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/>
         </div>
         {questionModels &&
           questionModels
@@ -452,6 +457,13 @@ class Section extends React.Component {
 }
 
 
+function MultiFileValue(props) {
+  const value = JSON.parse(props.value);
+  return <ul>
+    {value.map(v=><li key={"file_" + v.id}><a target="_blank" href={baseUrl + "/api/v1/file?filename=" + v.file}>{v.name}</a></li>)}
+  </ul>
+}
+
 function AnswerValue(props) {
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
@@ -464,7 +476,9 @@ function AnswerValue(props) {
           return props.qm.answer.value;
         }
       case FILE:
-        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+        return <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+      case MULTI_FILE:
+        return <MultiFileValue value={props.qm.answer.value}/>
       default:
         return props.qm.answer.value;
     }
@@ -503,7 +517,7 @@ class ConfirmationComponent extends React.Component {
           </div>
         </div>
         {this.props.questionModels &&
-          this.props.questionModels.map(qm => {
+          this.props.questionModels.filter(q=>q.question.type !== INFORMATION).map(qm => {
             return (
               qm.question && (
                 <div className={"confirmation answer"}>
@@ -514,7 +528,7 @@ class ConfirmationComponent extends React.Component {
                   </div>
                   <div class="row">
                     <div class="col">
-                      <p><AnswerValue qm={qm} t={t} /></p>
+                      <p class="answer-value"><AnswerValue qm={qm} t={t} /></p>
                     </div>
                   </div>
                 </div>
