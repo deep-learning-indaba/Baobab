@@ -68,7 +68,8 @@ export class FormMultiFile extends React.PureComponent {
         },
             () => {
                 if (this.props.onChange) {
-                    this.props.onChange(JSON.stringify(this.state.fileList));
+                    const filteredList = this.state.fileList.filter(f=>f.file);
+                    this.props.onChange(JSON.stringify(filteredList));
                 }
             })
     }
@@ -87,7 +88,8 @@ export class FormMultiFile extends React.PureComponent {
                         existing.file = fileId;
                         this.setState({fileList: handleList}, () => {
                             if (this.props.onChange) {
-                                this.props.onChange(JSON.stringify(this.state.fileList));
+                                const filteredList = this.state.fileList.filter(f=>f.file);
+                                this.props.onChange(JSON.stringify(filteredList));
                             }
                             resolve(fileId);
                         });
