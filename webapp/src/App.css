@@ -26,15 +26,13 @@
 }
 
 body {
-  background: #F9fafb;
   font-family: 'Open Sans', sans-serif;
 }
 
 .Body{
-  background: #F9fafb;;
-  min-height: 80vh;
-  padding-bottom: 1em;
-  padding-top: 2em;
+  background: hsl(0deg 0% 99%);
+  min-height: 94vh;
+  position: relative;
 }
 
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
@@ -54,6 +52,9 @@ footer {
   border-bottom-color: rgb(221, 221, 221);
   border-bottom-style: solid;
   border-bottom-width: 1px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 footer .btn {
@@ -76,6 +77,15 @@ footer .btn {
   border: none;
   cursor: pointer;
   padding: 0;
+}
+
+/*Navbar*/
+#navbarNav {
+  margin-right: 20px;
+}
+
+.navbar-nav .dropdown-menu.show{
+  right: 5px
 }
 
 .nav-link {
@@ -125,6 +135,8 @@ footer .btn {
   margin-right: 10px;
 }
 
+
+
 .alert-container{
   margin-top: 16px;
 }
@@ -137,6 +149,7 @@ footer .btn {
   box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
   padding-top: 30px;
   padding-bottom: 30px;
+  margin-top: 15px;
 }
 
 label {

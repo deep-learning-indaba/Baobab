@@ -67,15 +67,15 @@ class Home extends Component {
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (<div class="event-table-container">
-                <h3 className="text-center">{this.props.t(description)}</h3>
+                <h3 style={{color: "hsl(0deg 0% 69%)", fontFamily: "Montserrat, sans-serif"}} className="text-center">{this.props.t(description)}</h3>
                 <div class="card">
                     <table className="event-table">
                         <tbody>
                             {events.map(e => {
                                 return (<tr>
                                     <td>
-                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                        {e.start_date + " to " + e.end_date}
+                                        <h5><NavLink style={{color: "hsl(207deg 38% 49%)"}} to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                       <p style={{color: "grey"}}>{e.start_date + " to " + e.end_date}</p> 
                                     </td>
                                     <td>{this.statusDisplay(e)}</td>
                                 </tr>)

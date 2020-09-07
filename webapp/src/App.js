@@ -282,7 +282,17 @@ class AppComponent extends Component {
       user: {},
       collapsed: true,
       eventKey: null,
-      currentEvent: null
+      currentEvent: null,
+      styling: {
+        logo: {
+          fontFamily: "Montserrat, sans-derif",
+          marginTop: "5px",
+          fontWeight: "500",
+          fontSize: "17px",
+          display: "flex",
+          alignItems: "center"
+        },
+      }
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -318,12 +328,13 @@ class AppComponent extends Component {
 
   render() {
     const t = this.props.t;
+    const styling = this.state.styling;
 
     return (
       <Router history={history}>
         <div>
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a className="navbar-brand navbar-brand-main" href="/">
+            <a className="navbar-brand navbar-brand-main" href="/" style={styling.logo}>
               <img
                 src={
                   this.props.organisation &&
@@ -334,7 +345,7 @@ class AppComponent extends Component {
                 className="d-inline-block align-top brand-image"
                 alt=""
               />
-              {this.props.organisation && this.props.organisation.system_name}
+             <p style={{margin: "0"}}>{this.props.organisation && this.props.organisation.system_name}</p> 
             </a>
             <div
               class={
@@ -351,7 +362,7 @@ class AppComponent extends Component {
                 onClick={this.toggleMenu}
               />
             </div>
-            <div>
+            <div class="new-class">
               <ul className="navbar-nav mr-auto"></ul>
             </div>
             <button
@@ -370,6 +381,8 @@ class AppComponent extends Component {
             eventKey={this.state.eventKey}
             event={this.state.currentEvent}
             user={this.state.user} />}
+
+           {/*Body*/}
           <div className="Body">
             <div className="container-fluid">
               <Switch>
@@ -425,8 +438,9 @@ class AppComponent extends Component {
                 />
               </Switch>
             </div>
-          </div>
-          <footer className="text-muted">
+
+            {/*Footer*/}
+            <footer className="text-muted">
             <div className="container-flex">
               <div>
                 {this.props.organisation && this.props.organisation.system_name}
@@ -465,6 +479,8 @@ class AppComponent extends Component {
               </div>
             </div>
           </footer>
+          </div>
+         
           <CookieConsent
             cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}

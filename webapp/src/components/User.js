@@ -37,13 +37,13 @@ class UserDropdown extends Component {
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
             <button
-              class="nav-link dropdown-toggle link-style"
+              class="nav-link link-style"
               id="userDropdown"
               data-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-user menu-icon" />{" "}
+              <i style={{fontSize: "17px"}} class="fas fa-user-circle menu-icon" />{" "}
               {this.state.user.firstname + " " + this.state.user.lastname}
             </button>
             <div class="dropdown-menu" aria-labelledby="userDropdown">

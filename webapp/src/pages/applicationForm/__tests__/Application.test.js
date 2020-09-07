@@ -4,9 +4,10 @@ import Application from '../Application.js';
 import ApplicationForm from '../components/ApplicationForm';
 import FormDate from '../../../components/form/FormDate';
 
+
 test('Check if Application Form Page renders.', () => {
   // Render Application Form Page.
-  const wrapper = shallow(<Application />);
+  const wrapper = shallow(<Application t={key => key} />);
   expect(wrapper.length).toEqual(1);
 });
 

@@ -1,9 +1,24 @@
-import React, { Component } from "react";
+import React, { Component} from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
 
 
 class EventStatus extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+          styling: {
+           button: {
+            fontSize: "13px",
+            padding: "5px 15px",
+            border: "none",
+            background: "#2196F3"
+           }
+          }
+        };
+      }
+
+
 
   unknownStatus = (status_name, status) => {
       return {
@@ -342,10 +357,18 @@ class EventStatus extends Component {
   }
 
   renderButton = (definition) => {
-    return <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a> 
+    const styling = this.state.styling;
+
+    return <a style={styling.button} 
+    href={definition.link} className={"btn " + definition.linkClass}>
+    {definition.shortText}
+    </a> 
   }
 
+
   render() {
+     
+
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {
         return <div>
