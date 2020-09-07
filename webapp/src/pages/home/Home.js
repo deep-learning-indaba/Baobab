@@ -125,10 +125,10 @@ class Home extends Component {
                 </div>
 
                 {!this.props.user &&
-                    <div>
+                    <div className="text-center">
                         {this.state.organisation &&
                             <h2 className="Blurb">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
-                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
+                        <p><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
                     </div>
                 }
 
