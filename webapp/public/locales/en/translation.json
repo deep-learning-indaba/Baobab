@@ -291,4 +291,5 @@
     "Applications are closed and you did not apply": "Applications are closed and you did not apply",
     "You did not submit an application before the deadline, applications are now closed": "You did not submit an application before the deadline, applications are now closed" ,
     "You applied, but you can't withdraw or edit your application": "You applied, but you can't withdraw or edit your application"
-}
+    "Edit Name": "Edit Name",
+    "Delete": "Delete"
