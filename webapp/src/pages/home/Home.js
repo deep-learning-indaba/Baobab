@@ -15,7 +15,29 @@ class Home extends Component {
             upcomingEvents: null,
             awards: null,
             organisation: null,
-            errors: []
+            errors: [],
+            styling: {
+                blueText: {
+                    color: "hsl(211deg 100% 50%)"
+                },
+                description: {
+                    color: "hsl(213deg 33% 18%)", 
+                    fontFamily: "Montserrat, sans-serif", 
+                    fontWeight: "400",
+                    marginLeft: "80px",
+                    textAlign: "left"
+                },
+                status: {
+                    padding: "5px 2px",
+                    color: "white",
+                    borderRadius: "5px",
+                    background: "hsl(211deg 30% 69%)",
+                    textAlign: "center"
+                },
+                header: {
+                    color: "grey"
+                }
+            }
         }
     }
 
@@ -65,19 +87,20 @@ class Home extends Component {
     }
 
     renderEventTable = (events, description) => {
+        const styling = this.state.styling;
         if (this.props.user && events && events.length > 0) {
             return (<div class="event-table-container">
-                <h3 style={{color: "hsl(0deg 0% 69%)", fontFamily: "Montserrat, sans-serif"}} className="text-center">{this.props.t(description)}</h3>
+                <h3 style={styling.description} >{this.props.t(description)}</h3>
                 <div class="card">
                     <table className="event-table">
                         <tbody>
                             {events.map(e => {
                                 return (<tr>
                                     <td>
-                                        <h5><NavLink style={{color: "hsl(207deg 38% 49%)"}} to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        <h5><NavLink style={styling.blueText} to={`/${e.key}`}>{e.description}</NavLink></h5>
                                        <p style={{color: "grey"}}>{e.start_date + " to " + e.end_date}</p> 
                                     </td>
-                                    <td>{this.statusDisplay(e)}</td>
+                                    <td><p style={styling.status}>{this.statusDisplay(e)}</p></td>
                                 </tr>)
                             })}
                         </tbody>
@@ -90,6 +113,7 @@ class Home extends Component {
 
     render() {
         const t = this.props.t;
+        
 
         return (
             <div>

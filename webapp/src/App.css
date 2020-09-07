@@ -30,8 +30,9 @@ body {
 }
 
 .Body{
-  background: hsl(0deg 0% 99%);
-  min-height: 94vh;
+  background-image: url("./images/Baobab.png");
+  background-size: cover;
+  min-height: 94.5vh;
   position: relative;
 }
 
@@ -46,15 +47,11 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 footer {
   padding: 1em;
   background: white;
-  border-top-color: rgb(221, 221, 221);
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-bottom-color: rgb(221, 221, 221);
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
   position: absolute;
+  border-top: 1px solid  hsl(0deg 0% 95%);
   bottom: 0;
   width: 100%;
+  font-size: 11px;
 }
 
 footer .btn {
@@ -85,7 +82,7 @@ footer .btn {
 }
 
 .navbar-nav .dropdown-menu.show{
-  right: 5px
+  left: -5px;
 }
 
 .nav-link {
@@ -156,6 +153,7 @@ label {
   margin-bottom: .2rem;
 }
 
+
 .powered-by a {
   font-weight: bold;
 }
@@ -176,4 +174,30 @@ label {
 
 .menu-icon {
   margin-right: .1em;
+}
+
+
+/*DropDown Menu's*/
+.dropdown-item {
+  padding: .8rem 1.5rem;
+}
+
+.dropdown-item:hover {
+color: white;
+background: hsl(211deg 30% 69%);
+}
+
+.dropdown-menu {
+  padding: 0;
+  left: -3px;
+}
+
+/*Dropw Down Button*/
+button.nav-link {
+  outline: none;
+}
+
+/*Footer a tags*/
+.text-muted a {
+  color: hsl(211deg 55% 59%);
 }

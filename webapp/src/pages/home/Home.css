@@ -30,4 +30,6 @@ table.event-table tbody {
 
 .event-table h5 {
     margin-bottom: 2px;
+    font-family: "Montserrat";
+    font-weight: 500
 }

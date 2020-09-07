@@ -48,8 +48,8 @@ class EventNav extends Component {
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
         
-        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class={
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
+        <div className={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
@@ -292,6 +292,11 @@ class AppComponent extends Component {
           display: "flex",
           alignItems: "center"
         },
+        greyText: {
+          color: "grey",
+          fontFamily: "Montserrat, sans-serif",
+          margin: "0"
+        }
       }
     };
 
@@ -442,7 +447,7 @@ class AppComponent extends Component {
             {/*Footer*/}
             <footer className="text-muted">
             <div className="container-flex">
-              <div>
+              <div >
                 {this.props.organisation && this.props.organisation.system_name}
                 , © 2020 |{" "}
                 <a
@@ -466,14 +471,13 @@ class AppComponent extends Component {
                 {this.props.organisation &&
                   this.props.organisation.system_name !== "Baobab" && (
                     <div className="float-right powered-by">
-                      {t('Powered by')}{" "}
-                      <a
+                     <p style={styling.greyText}>{t('Powered by')}{" "} <a
                         href="http://www.deeplearningindaba.com"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         Baobab
-                      </a>
+                      </a></p> 
                     </div>
                   )}
               </div>
