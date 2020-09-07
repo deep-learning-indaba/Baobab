@@ -1442,7 +1442,7 @@ class ReferenceReviewRequest(ApiTestCase):
 
         db.session.flush()
 
-    def test_get_reference_request_by_response_id(self):
+    def test_get_reference_request_by_event_id(self):
         self.seed_static_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_request_repository.create(reference_req)
@@ -1450,21 +1450,22 @@ class ReferenceReviewRequest(ApiTestCase):
             'token': reference_req.token,
             'uploaded_document': 'DOCT-UPLOAD-78999',
         }
-        # response = self.app.get(
-        #     '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
-        # self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1, 'application_form_id': 1, 'user_id:': 5, 'sort_column' : 'review_response_id',
-                  'reference_detail': REFERENCE_DETAIL} # confirm params, check ids
-
+        params = {'event_id': 1}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 2) # Check length
+        self.assertEqual(len(data), 6) # len as counted by number of data (dict) items
+
+        self.assertEqual(data['references'][0], REFERENCE_DETAIL)
+        self.assertEqual(data['references'][0]['token'], reference_req.token)
+        self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
+
 
     def test_get_reference_request_with_two_references(self):
         # Initial draft / planning
+        # check that the list is correct
         self.seed_static_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
@@ -1479,7 +1480,25 @@ class ReferenceReviewRequest(ApiTestCase):
             'token': reference_req2.token,
             'uploaded_document': 'DOCT-UPLOAD-78979', # confirm where to find these
         }
-        response = self.app.get(
-            '/api/v1/reference-request/list', data={'response_id': 1}, headers=self.first_headers)
+        # params = {'event_id': 1} To be confirmed once above test is correct
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.put(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.data)
+
+        # To be confirmed once above test is correct:
+        self.assertEqual(data['references'][0], REFERENCE_DETAIL)
+        self.assertEqual(data['references'][0]['token'], reference_req.token)
+        self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
+
+        self.assertEqual(data['references'][1], REFERENCE_DETAIL_2)
+        self.assertEqual(data['references'][1]['token'], reference_req2.token)
+        self.assertEqual(data['references'][1]['uploaded_document'], 'DOCT-UPLOAD-78979')
+
 
         
