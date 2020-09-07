@@ -613,13 +613,14 @@ class SubmittedComponent extends React.Component {
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
 
-        <div class="submitted-footer">
+ 
+      {this.props.withdrawEditWindow !== "expired" &&  <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
             {t("Withdraw Application")}
           </button>
-        </div>
+        </div>}
 
-        {!this.props.withdraw && <div class="submitted-footer">
+        {this.props.withdrawEditWindow !== "withdraw_only" && this.props.withdrawEditWindow !== "expired"  && <div class="submitted-footer">
           <button class="btn btn-primary" onClick={this.handleEdit}>
             {t("Edit Application")}
           </button>
@@ -679,7 +680,7 @@ class ApplicationFormInstanceComponent extends Component {
   componentDidMount() {
 
     // checkErrors
-    this.validateForm(this.props)
+    this.validateForm(this.props);
 
     if (this.props.response) {
       this.setState({
@@ -701,14 +702,14 @@ class ApplicationFormInstanceComponent extends Component {
 
   validateForm = (props) => {
     const messages = {
-      one: "Applications have not opened yet",
-      two: "Applications are closed and you did not apply",
-      three: "You did not submit an application before the deadline, applications are now closed",
-      four: "You applied, but you can't withdraw or edit your application"
+      applications_not_open: props.t("Applications have not opened yet"),
+      applications_closed_did_not_apply: props.t("Applications are closed and you did not apply"),
+      deadline_reached_submissions_closed: props.t("You did not submit an application before the deadline, applications are now closed"),
+      withdraw_edit_window_expired: props.t("You applied, but you can't withdraw or edit your application")
     }
 
     let handleValidate;
-    let withdraw;
+    let withdraw_edit_window = "edit_withdraw";
 
     const noApplication = !props.response;
     const submitted = props.response ? props.response.is_submitted : null;
@@ -719,33 +720,35 @@ class ApplicationFormInstanceComponent extends Component {
     
 
     if (applicationStillOpening) {
-      handleValidate = messages.one
+      handleValidate = messages.applications_not_open;
     }
+    
     else if (noApplication && applicationClosed) {
-      handleValidate = messages.two
+      handleValidate = messages.applications_closed_did_not_apply;
     }
   
      else if (deadlineMissed) {
-      handleValidate = messages.three
+      handleValidate = messages.deadline_reached_submissions_closed;
     }
   
     else if (submitted && applicationClosed) {
       if (props.event.is_review_open) {
-        withdraw = true
+        withdraw_edit_window = "withdraw_only";
       }
       if (!props.event.is_review_open) {
-        handleValidate = messages.four
+        handleValidate = messages.withdraw_edit_window_expired;
+        withdraw_edit_window = "expired";
       }
-    }
+    };
 
     this.setState({
       errorMessage: handleValidate ? handleValidate : "",
       isError: handleValidate ? true : false,
-      withdraw: withdraw ? true : false
+      withdrawEditWindow: withdraw_edit_window
 
     }, () => {
       handleValidate = null;
-      withdraw = false;
+      withdraw_edit_window = "edit_withdraw";
     });
   }
 
@@ -878,7 +881,7 @@ class ApplicationFormInstanceComponent extends Component {
       errorMessage,
       answers,
       isSubmitting,
-      withdraw
+      withdrawEditWindow
     } = this.state;
 
     if (isError) {
@@ -891,7 +894,7 @@ class ApplicationFormInstanceComponent extends Component {
       return (
         <Submitted
           valdiate={errorMessage}
-          withdraw={withdraw}
+          withdrawEditWindow={withdrawEditWindow}
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}

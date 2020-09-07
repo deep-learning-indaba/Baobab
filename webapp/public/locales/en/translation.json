@@ -286,5 +286,9 @@
     "Virtual Event Over": "Virtual Event Over",
     "is now over. You may still visit our virtual event site.": "is now over. You may still visit our virtual event site.",
     "Thank you for participating!": "Thank you for attending!",
-    "Enter File Name": "Enter File Name"
+    "Enter File Name": "Enter File Name",
+    "Applications have not opened yet": "Applications have not opened yet",
+    "Applications are closed and you did not apply": "Applications are closed and you did not apply",
+    "You did not submit an application before the deadline, applications are now closed": "You did not submit an application before the deadline, applications are now closed" ,
+    "You applied, but you can't withdraw or edit your application": "You applied, but you can't withdraw or edit your application"
 }
