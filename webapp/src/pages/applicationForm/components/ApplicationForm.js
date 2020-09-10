@@ -465,6 +465,10 @@ function MultiFileValue(props) {
 }
 
 function AnswerValue(props) {
+  if (props.qm.question.type === INFORMATION) {
+    return "";
+  }
+
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
       case MULTI_CHOICE:
@@ -516,25 +520,34 @@ class ConfirmationComponent extends React.Component {
 
           </div>
         </div>
-        {this.props.questionModels &&
-          this.props.questionModels.filter(q=>q.question.type !== INFORMATION).map(qm => {
-            return (
-              qm.question && (
-                <div className={"confirmation answer"}>
-                  <div class="row">
-                    <div class="col">
-                      <h5>{qm.question.headline}</h5>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col">
-                      <p class="answer-value"><AnswerValue qm={qm} t={t} /></p>
-                    </div>
-                  </div>
-                </div>
-              )
-            );
+
+        {this.props.sectionModels && 
+          this.props.sectionModels.filter(sm => sm.questionModels.length > 0).map(sm => {
+            return <div key={"section_" + sm.section.id}>
+              <h2>{sm.section.name}</h2>
+              {sm.questionModels &&
+                sm.questionModels.map(qm => {
+                  return (
+                    qm.question && (
+                      <div className={"confirmation answer"}>
+                        <div class="row">
+                          <div class="col">
+                            <h5>{qm.question.headline}</h5>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col">
+                            <p class="answer-value"><AnswerValue qm={qm} t={t} /></p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  );
+                })}
+            </div>
           })}
+
+        
         <button
           className="btn btn-primary submit-application mx-auto"
           onClick={this.props.submit}
@@ -908,21 +921,21 @@ class ApplicationFormInstanceComponent extends Component {
         };
       });
 
-    const allQuestionModels =
-      sectionModels &&
-      sectionModels
-        .map(section =>
-          section.questionModels
-            .slice()
-            .sort((a, b) => a.question.order - b.question.order)
-        )
-        .reduce((a, b) => a.concat(b), []);
+    // const allQuestionModels =
+    //   sectionModels &&
+    //   sectionModels
+    //     .map(section =>
+    //       section.questionModels
+    //         .slice()
+    //         .sort((a, b) => a.question.order - b.question.order)
+    //     )
+    //     .reduce((a, b) => a.concat(b), []);
 
     steps.push({
       name: this.props.t("Confirmation"),
       component: (
         <Confirmation
-          questionModels={allQuestionModels}
+          sectionModels={sectionModels}
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
         />
