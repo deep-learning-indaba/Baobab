@@ -361,7 +361,7 @@ def upgrade():
 
     # Update capitalization
     question, en, fr = get_question_by_en_headline('Name of Organisation')
-    en.headline = 'Name of organisation'
+    en.headline = 'Name of organization'
 
     question, en, fr = get_question_by_en_headline('Email Address of principal contact')
     en.headline = 'Email address of principal contact'
@@ -454,7 +454,7 @@ def downgrade():
         'fr': 'Adresse de courriel'
     })
 
-    question, en, fr = get_question_by_en_headline('Name of organisation')
+    question, en, fr = get_question_by_en_headline('Name of organization')
     en.headline = 'Name of Organisation'
 
     question, en, fr = get_question_by_en_headline('Email address of principal contact')
