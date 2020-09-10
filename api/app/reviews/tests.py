@@ -1292,7 +1292,6 @@ class ReviewsApiTest(ApiTestCase):
 class ReferenceReviewRequest(ApiTestCase):
     def static_seed_data(self):
         # User, country and organisation is set up by ApiTestCase
-        # Nominations
         self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
@@ -1318,16 +1317,6 @@ class ReferenceReviewRequest(ApiTestCase):
         ]
         db.session.add_all(event_roles)
         db.session.commit()
-
-        # events = [
-        #     self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
-        #                    datetime(2019, 8, 25), datetime(2019, 8, 31),
-        #                    'KENYADABA2019'),
-        #     self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
-        #                    datetime(2018, 9, 9), datetime(2018, 9, 15),
-        #                    'INDABA2020', 2)
-        # ]
-        # db.session.commit()
 
         event_roles = [
             EventRole('admin', 10, 1),
@@ -1421,15 +1410,11 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_questions)
         db.session.commit()
 
-        # Reference
-
         self.test_response = Response(  # Nominating other
             self.application_form.id, self.first_user.id)
 
         self.add_to_db(self.test_response)
         answers = [
-            # Answer(self.test_response.id, questions[0].id, 'other'),
-            # Answer(self.test_response.id, questions[1].id, 'Blah'),
             Answer(self.test_response.id, questions[5].id, 'Mx'),
             Answer(self.test_response.id, questions[6].id, 'Skittles'),
             Answer(self.test_response.id, questions[7].id, 'Cat'),
@@ -1462,10 +1447,8 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(data['references'][0]['token'], reference_req.token)
         self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
 
-
     def test_get_reference_request_with_two_references(self):
-        # Initial draft / planning
-        # check that the list is correct
+
         self.seed_static_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
@@ -1478,9 +1461,9 @@ class ReferenceReviewRequest(ApiTestCase):
         }
         REFERENCE_DETAIL_2 = {
             'token': reference_req2.token,
-            'uploaded_document': 'DOCT-UPLOAD-78979', # confirm where to find these
+            'uploaded_document': 'DOCT-UPLOAD-78979', #
         }
-        # params = {'event_id': 1} To be confirmed once above test is correct
+        # params = {'event_id': 1}
         response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
