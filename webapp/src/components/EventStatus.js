@@ -7,14 +7,7 @@ class EventStatus extends Component {
     constructor(props) {
         super(props);
         this.state = {
-          styling: {
-           button: {
-            fontSize: "13px",
-            padding: "5px 15px",
-            border: "none",
-            background: "#2196F3"
-           }
-          }
+
         };
       }
 
@@ -357,10 +350,9 @@ class EventStatus extends Component {
   }
 
   renderButton = (definition) => {
-    const styling = this.state.styling;
 
-    return <a style={styling.button} 
-    href={definition.link} className={"btn " + definition.linkClass}>
+    return <a  
+    href={definition.link} className={"status-btn btn " + definition.linkClass}>
     {definition.shortText}
     </a> 
   }
@@ -380,14 +372,14 @@ class EventStatus extends Component {
     else {
         if (definition.shortText && definition.link && definition.title !== definition.shortText) {
             return <div>
-                <span>{definition.title}</span><br/>{this.renderButton(definition)}
+                <span className="status-txt">{definition.title}</span><br/>{this.renderButton(definition)}
             </div>
         }
         else if (definition.shortText && definition.link) {
             return this.renderButton(definition);
         }
         else {
-            return <span>{definition.shortText}</span>
+            return <span className="status-txt">{definition.shortText}</span>
         }
     }
   }

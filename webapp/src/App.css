@@ -32,8 +32,11 @@ body {
 .Body{
   background-image: url("./images/Baobab.png");
   background-size: cover;
-  min-height: 94.5vh;
+  min-height: 93.5vh;
   position: relative;
+  overflow: scroll;
+  margin: 0;
+  padding: 0;
 }
 
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
@@ -45,7 +48,8 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 footer {
-  padding: 1em;
+  margin: 0;
+  padding: 1rem;
   background: white;
   position: absolute;
   border-top: 1px solid  hsl(0deg 0% 95%);
@@ -200,7 +204,7 @@ button.nav-link {
 .text-muted a {
   color: hsl(211deg 55% 59%);
 }
-=======
+
 div.vertical-space {
   margin-top: 2em;
 }
@@ -209,3 +213,35 @@ div.card-container {
   margin: 0 auto;
 }
 
+
+  .logo {
+    font-family: "Montserrat", sans-serif;
+    margin-top: 5px;
+    font-weight: 500;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+  }
+
+  .grey-txt {
+    color: grey;
+    font-family: "Montserrat", sans-serif;
+    margin: 0;
+  }
+
+
+/* EventStatus */
+
+.status-btn {
+     font-size: 13px;
+     padding: 5px 15px;
+     min-width: 100px;
+     border: none;
+     background: hsl(211deg 30% 69%);
+
+}
+
+.status-txt {
+  color: hsl(211deg 30% 69%);
+  font-size: 13px;
+}
