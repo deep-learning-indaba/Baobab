@@ -12,6 +12,7 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
+import ResponseList from './pages/ResponseList/ResponseList'
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -47,7 +48,7 @@ class EventNav extends Component {
 
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
-        
+
         <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
         <div class={
           "collapse navbar-collapse" +
@@ -142,6 +143,13 @@ class EventNav extends Component {
                   >
                     {t('Invited Guests')}
                   </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/responseList`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Response List')}
+                  </NavLink>
                 </div>
               </li>
             )}
@@ -229,7 +237,7 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{
+      this.props.i18n.changeLanguage(lang).then(() => {
         // We send a put request to the user service to update the language on the back-end. 
         // Note the language is automatically sent with every request through axios
         userService.get().then(result => {
@@ -261,7 +269,7 @@ class LanguageSelectorComponent extends Component {
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
               {this.props.organisation.languages.map(lang => (
-                <button className="dropdown-item cursor-pointer" onClick={()=>this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+                <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
               ))}
             </div>
           </li>
@@ -382,6 +390,13 @@ class AppComponent extends Component {
                       user={this.state.user}
                       setEvent={this.setEvent}
                     />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/responseList"
+                  render={props => (
+                    <ResponseList {...props} loggedIn={this.refreshUser} organisation={this.props.organisation} />
                   )}
                 />
                 <Route

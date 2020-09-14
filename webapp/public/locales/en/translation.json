@@ -1,4 +1,3 @@
-
 {
     "Privacy Policy": "Privacy Policy",
     "Powered by": "Powered by",
@@ -288,5 +287,6 @@
     "Thank you for participating!": "Thank you for attending!",
     "Enter File Name": "Enter File Name",
     "Edit Name": "Edit Name",
-    "Delete": "Delete"
+    "Delete": "Delete",
+    "Response List": "Response List"
 }
