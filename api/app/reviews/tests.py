@@ -1366,7 +1366,7 @@ class ReferenceReviewRequest(ApiTestCase):
             Question(1, sections[0].id, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text',
                      ''),
             Question(1, sections[0].id, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None,
-                     True, None, options)
+                     True, None, options),
             Question(1, sections[1].id,
                      'title', 'Enter 50 to 150 words', 1, 'long_text', ''),
             Question(1, sections[1].id,
@@ -1428,7 +1428,7 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.flush()
 
     def test_get_reference_request_by_event_id(self):
-        self.seed_static_data()
+        self.static_seed_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_request_repository.create(reference_req)
         REFERENCE_DETAIL = {
@@ -1436,20 +1436,24 @@ class ReferenceReviewRequest(ApiTestCase):
             'uploaded_document': 'DOCT-UPLOAD-78999',
         }
 
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
         params = {'event_id': 1}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6) # len as counted by number of data (dict) items
+        self.assertEqual(len(data), 6)
 
-        self.assertEqual(data['references'][0], REFERENCE_DETAIL)
+        self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)
         self.assertEqual(data['references'][0]['token'], reference_req.token)
         self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
 
     def test_get_reference_request_with_two_references(self):
 
-        self.seed_static_data()
+        self.static_seed_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
         reference_request_repository.create(reference_req)
@@ -1461,25 +1465,23 @@ class ReferenceReviewRequest(ApiTestCase):
         }
         REFERENCE_DETAIL_2 = {
             'token': reference_req2.token,
-            'uploaded_document': 'DOCT-UPLOAD-78979', #
+            'uploaded_document': 'DOCT-UPLOAD-78979',
         }
-        # params = {'event_id': 1}
         response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        response = self.app.put(
+        response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
         self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.data)
 
-        # To be confirmed once above test is correct:
-        self.assertEqual(data['references'][0], REFERENCE_DETAIL)
+        self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)
         self.assertEqual(data['references'][0]['token'], reference_req.token)
         self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
 
-        self.assertEqual(data['references'][1], REFERENCE_DETAIL_2)
+        self.assertDictEqual(data['references'][1], REFERENCE_DETAIL_2)
         self.assertEqual(data['references'][1]['token'], reference_req2.token)
         self.assertEqual(data['references'][1]['uploaded_document'], 'DOCT-UPLOAD-78979')
 
