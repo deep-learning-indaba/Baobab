@@ -1,0 +1,20 @@
+.container{
+    text-align: left;
+}
+
+
+.question-list{
+height: 0px;
+opacity: 0;
+z-index: -10;
+transition: 300ms;
+}
+
+.question-list.show{
+    height: 300px;
+    opacity: 1;
+    z-index: 0;
+    transition: 300ms;
+    overflow: scroll
+    }
+
