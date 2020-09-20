@@ -304,9 +304,23 @@ class AppComponent extends Component {
   }
 
   refreshUser() {
+    const currentUser = JSON.parse(localStorage.getItem("user"));
     this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
+      user: currentUser
     });
+
+    if (currentUser) {
+      // Send a user profile update to record the currently selected language
+      userService.get().then(result => {
+        userService.update({
+          email: result.email,
+          firstName: result.firstname,
+          lastName: result.lastname,
+          title: result.user_title
+        });
+      });
+    }
+    
   }
 
   toggleMenu = () => {
