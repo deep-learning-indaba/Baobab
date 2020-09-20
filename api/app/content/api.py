@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime
 
 import flask_restful as restful
@@ -86,7 +88,7 @@ class GenderContentAPI(restful.Resource):
             {"value": "male", "label": "Homme"},
             {"value": "female", "label": "Femme"},
             {"value": "other", "label": "Autre"},
-            {"value": "prefer_not_to_say", "label": "Je préfère ne pas le dire"}
+            {"value": "prefer_not_to_say", "label": u"Je préfère ne pas le dire"}
 
         # Default to English if not another known language
         return [
