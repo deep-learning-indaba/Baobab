@@ -1293,6 +1293,8 @@ class ReferenceReviewRequest(ApiTestCase):
     def static_seed_data(self):
         # User, country and organisation is set up by ApiTestCase
         self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
+        event = self.add_event()
+        self.add_to_db(event)
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
         reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', password='abc', organisation_id=1, )
@@ -1311,12 +1313,15 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(users)
         db.session.commit()
 
-        event_roles = [
-            EventRole('admin', 10, 1),
-            EventRole('reviewer', 3, 1)
-        ]
-        db.session.add_all(event_roles)
-        db.session.commit()
+        # events = [
+        #     self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
+        #                    datetime(2019, 8, 25), datetime(2019, 8, 31),
+        #                    'KENYADABA2019'),
+        #     self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
+        #                    datetime(2018, 9, 9), datetime(2018, 9, 15),
+        #                    'INDABA2020', 2)
+        # ]
+        # db.session.commit()
 
         event_roles = [
             EventRole('admin', 10, 1),
@@ -1332,8 +1337,8 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.commit()
 
         sections = [
-            Section(application_form.id, 'Tell Us a Bit About You', '', 1),
-            Section(application_form.id, 'Reference', 'Details of referree', 2)
+            Section(1, 'Tell Us a Bit About You', '', 1),
+            Section(1, 'Reference', 'Details of referree', 2)
         ]
         db.session.add_all(sections)
         db.session.commit()
@@ -1384,8 +1389,7 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(questions)
         db.session.commit()
 
-
-        closed_review = ReviewForm(2, datetime(2018, 4, 30))
+        closed_review = ReviewForm(1, datetime(2018, 4, 30))
         closed_review.close()
         review_forms = [
             ReviewForm(1, datetime(2019, 4, 30)),
@@ -1394,12 +1398,12 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
-        review_configs = [
-            ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
-            ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
-        ]
-        db.session.add_all(review_configs)
-        db.session.commit()
+        # review_configs = [
+        #     ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
+        #     ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
+        # ]
+        # db.session.add_all(review_configs)
+        # db.session.commit()
 
         review_questions = [
             ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
@@ -1411,16 +1415,16 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.commit()
 
         self.test_response = Response(  # Nominating other
-            self.application_form.id, self.first_user.id)
+            1, self.first_user.id)
 
-        self.add_to_db(self.test_response)
-        answers = [
-            Answer(self.test_response.id, questions[5].id, 'Mx'),
-            Answer(self.test_response.id, questions[6].id, 'Skittles'),
-            Answer(self.test_response.id, questions[7].id, 'Cat'),
-            Answer(self.test_response.id, questions[8].id, 'skittles@box.com'),
-        ]
-        db.session.add_all(answers)
+        # self.add_to_db(self.test_response)
+        # answers = [
+        #     Answer(self.test_response.id, questions[5].id, 'Mx'),
+        #     Answer(self.test_response.id, questions[6].id, 'Skittles'),
+        #     Answer(self.test_response.id, questions[7].id, 'Cat'),
+        #     Answer(self.test_response.id, questions[8].id, 'skittles@box.com'),
+        # ]
+        # db.session.add_all(answers)
         db.session.commit()
 
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
@@ -1484,6 +1488,3 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertDictEqual(data['references'][1], REFERENCE_DETAIL_2)
         self.assertEqual(data['references'][1]['token'], reference_req2.token)
         self.assertEqual(data['references'][1]['uploaded_document'], 'DOCT-UPLOAD-78979')
-
-
-        
