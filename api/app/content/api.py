@@ -19,6 +19,7 @@ category_fields = {
 
 
 class CountryContentAPI(restful.Resource):
+    # DEPRECATED - TODO: REMOVE
     @marshal_with(country_fields)
     def get(self):
         countries = db.session.query(Country).order_by(Country.id).all()
@@ -26,6 +27,7 @@ class CountryContentAPI(restful.Resource):
 
 
 class CategoryContentAPI(restful.Resource):
+    # DEPRECATED - TODO: REMOVE
     @marshal_with(category_fields)
     def get(self):
         countries = db.session.query(
@@ -34,7 +36,7 @@ class CategoryContentAPI(restful.Resource):
 
 
 class EthnicityContentAPI(restful.Resource):
-
+    # DEPRECATED - TODO: REMOVE
     def get(self):
         return [
             {"label": "Black", "value": 'black'},
@@ -47,6 +49,21 @@ class EthnicityContentAPI(restful.Resource):
 
 class TitleContentAPI(restful.Resource):
     def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+        language = args['language']
+
+        if language == 'fr':
+            return [
+                {"value": "M.", "label": "M."},
+                {"value": "Mme", "label": "Mme"},
+                {"value": "Mlle", "label": "Mlle"},
+                {"value": "Dr", "label": "Dr"},
+                {"value": "Pr", "label": "Pr"}
+            ]
+
+        # Default to English if not another known language
         return [
             {"value": "Mr", "label": "Mr"},
             {"value": "Mrs", "label": "Mrs"},
@@ -60,6 +77,18 @@ class TitleContentAPI(restful.Resource):
 
 class GenderContentAPI(restful.Resource):
     def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+        language = args['language']
+
+        if language == 'fr':
+            {"value": "male", "label": "Homme"},
+            {"value": "female", "label": "Femme"},
+            {"value": "other", "label": "Autre"},
+            {"value": "prefer_not_to_say", "label": "Je préfère ne pas le dire"}
+
+        # Default to English if not another known language
         return [
             {"value": "male", "label": "Male"},
             {"value": "female", "label": "Female"},
@@ -69,6 +98,7 @@ class GenderContentAPI(restful.Resource):
 
 
 class DisabilityContentAPI(restful.Resource):
+    # DEPRECATED - TODO: REMOVE
     def get(self):
         return[
             {"label": "No disabilities", "value": "none"},
