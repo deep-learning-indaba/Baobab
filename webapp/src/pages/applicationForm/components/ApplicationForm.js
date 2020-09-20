@@ -963,6 +963,8 @@ class ApplicationFormInstanceComponent extends Component {
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
+            nextButtonText={this.props.t("Next")}
+            backButtonText={this.props.t("Previous")}
           />
 
           <ReactToolTip />
