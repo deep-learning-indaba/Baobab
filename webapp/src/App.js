@@ -229,17 +229,19 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{
-        // We send a put request to the user service to update the language on the back-end. 
-        // Note the language is automatically sent with every request through axios
-        userService.get().then(result => {
-          userService.update({
-            email: result.email,
-            firstName: result.firstname,
-            lastName: result.lastname,
-            title: result.user_title
+      this.props.i18n.changeLanguage(lang).then(()=>{        
+        if (localStorage.getItem("user")) {
+          // We send a put request to the user service to update the language on the back-end. 
+          // Note the language is automatically sent with every request through axios
+          userService.get().then(result => {
+            userService.update({
+              email: result.email,
+              firstName: result.firstname,
+              lastName: result.lastname,
+              title: result.user_title
+            });
           });
-        })
+        }
       });
     }
   }
