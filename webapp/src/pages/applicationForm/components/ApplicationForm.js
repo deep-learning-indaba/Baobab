@@ -600,7 +600,9 @@ class SubmittedComponent extends React.Component {
   };
 
   handleEditOK = event => {
-    this.props.onCancelSubmit()
+    if (this.props.onEdit) {
+      this.props.onEdit();
+    }
   };
 
   handleWithdrawCancel = event => {
@@ -702,6 +704,7 @@ class ApplicationFormInstanceComponent extends Component {
       isSubmitting: false,
       isError: false,
       isSubmitted: false,
+      isEditing: false,
       responseId: null,
       submittedTimestamp: null,
       errorMessage: "",
@@ -748,6 +751,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false,
                 new_response: false,
@@ -769,6 +773,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false
               });
@@ -857,6 +862,7 @@ class ApplicationFormInstanceComponent extends Component {
     const {
       isError,
       isSubmitted,
+      isEditing,
       errorMessage,
       answers,
       isSubmitting
@@ -868,14 +874,14 @@ class ApplicationFormInstanceComponent extends Component {
       </div>;
     }
 
-    if (isSubmitted) {
+    if (isSubmitted && !isEditing) {
       return (
         <Submitted
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
+          onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
