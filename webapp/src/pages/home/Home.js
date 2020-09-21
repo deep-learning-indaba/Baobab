@@ -92,13 +92,22 @@ class Home extends Component {
 
     render() {
         const t = this.props.t;
+        let logo = this.state.organisation && this.state.organisation.large_logo;
+        // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
+        if (this.state.organisation) {
+            console.log("this.state.organisation.name:", this.state.organisation.name);
+            console.log("this.props.i18n.language:", this.props.i18n.language);
+        }
+        
+        if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
+            logo = "ai4d_logo_fr.png";
+        }
 
         return (
             <div>
                 <div>
                     <img src={this.state.organisation &&
-                        require("../../images/" +
-                            this.state.organisation.large_logo)}
+                        require("../../images/" + logo)}
                         className="img-fluid large-logo" alt="logo" />
                 </div>
 
