@@ -41,8 +41,6 @@ class ResponseListForm extends Component {
 
         this.setState({
             selected: selected
-        }, () => {
-            this.apiCall()
         })
     }
 
@@ -59,14 +57,15 @@ class ResponseListForm extends Component {
     }
 
 
-
     handleData() {
-        // formatAnswers
-        function formatAnswers(row, newAnswers) {
+        const { selected } = this.state;
+
+        // add Answers as new column 
+        function addAnswersCol(row, newAnswers) {
             return row.answers = newAnswers
         }
-        // formatReviews
-        function formatReview(row, newAnswers) {
+        // add Reviews as new column 
+        function addReviewCol(row, newAnswers) {
             return row.answers = newAnswers
         }
 
@@ -74,37 +73,64 @@ class ResponseListForm extends Component {
             let handleAnwsers = [];
             let handleReviews = [];
 
-            // Handle Anwsers
+            // Handle Anwsers and Reviews
             response.map(val => {
+                // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.map(answer => {
-                    handleAnwsers.push(answer.value)
+                    // format anwers display based on type
+                    if (selected.includes(answer.question_id)) {
+                        if (answer.type.includes("file")) {
+                            handleAnwsers.push(<a href={answer.value[0]}>{answer.value[1]}</a>)
+                        }
+                        if (answer.type.includes("choice")) {
+                            let choices = [];
+                            answer.options.map((opt => {
+                                opt.value ? choices.push(<div><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
+                            }))
+                            handleAnwsers.push(<div>{choices}</div>)
+                        }
+                        if (answer.type.includes("long-text")) {
+                            handleAnwsers.push(<div style={{overflow: "scroll"}}>{answer.value}</div>)
+                        }
+                    }
+                    
                 })
-
+                console.log(selected)
+                // extract only the reviewers name
                 val.reviewers.map(review => {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
                 })
+                // envoke and store new columns for Reviews and Answers
+                let addAnwsers = addAnswersCol(val, handleAnwsers);
+                let addReviews = addReviewCol(val, handleReviews);
 
-                let formatAnwsers = formatAnswers(val, handleAnwsers);
-                let formatReviews = formatReview(val, handleReviews);
+                // insert anwsers values as columns
+                if (handleAnwsers.length) {
+                    addAnwsers.map((answer, index) => {
+                        let num = (index) + (1);
+                        let key = "Answer" + num;
+                        val[key] = answer
+                    })
+                }
+                // insert new reviews values as columns
+                addReviews.map((review, index) => {
+                    let num = (index) + (1);
+                    let key = "Review" + num;
+                    val[key] = review
+                })
+                // delete original review and answer rows as they don't need to be displayed with all their data
                 handleAnwsers = [];
                 handleReviews = [];
-                val.answers = formatAnwsers;
+                delete val.answers;
                 delete val.reviewers;
-                formatReviews.map((review, index) => {
-                    let n = "Review" + index;
-                    val[n] = review
-                })
             })
 
             console.log(response)
 
-
-            
-             this.setState({
-                      responseTable: response,
-                  }
-                  )
-            
+            this.setState({
+                responseTable: response,
+            }
+            )
 
         })
     }
@@ -112,12 +138,11 @@ class ResponseListForm extends Component {
 
     generateCol() {
         let colFormat = [];
-
         if (this.state.responseTable) {
             let col = Object.keys(this.state.responseTable[0]);
             col.map(val => {
-                console.log(val)
-                colFormat.push({ id: val, Header: val, accessor: val })
+            console.log(val)
+            colFormat.push({ id: val, Header: val, accessor: val, style: { 'whiteSpace': 'unset', 'maxHeight' : '150px', 'maxWidth' : '450px', 'marginBottom': '10px' } })
             })
         }
         return colFormat
@@ -163,7 +188,7 @@ class ResponseListForm extends Component {
                         {questions.length && questions.map(val => {
                             return <div> <input onClick={(e) => this.handleSelect(val.question_id)} className="form-check-input" type="checkbox" value="" id="defaultCheck1" />
                                 <label className="form-check-label" for="defaultCheck1">
-                                    {val.type}
+                                    {val.headline}
                                 </label>
                             </div>
 
@@ -174,7 +199,7 @@ class ResponseListForm extends Component {
 
 
                 {/*Add Table*/}
-                <button onClick={(e) => this.addTable(questions)} type="button" className="btn btn-primary">Add Table</button>
+                <button onClick={(e) => this.handleData()} type="button" className="btn btn-primary">Add Table</button>
 
                 {/* Response Table */}
                 {responseTable && <ReactTable

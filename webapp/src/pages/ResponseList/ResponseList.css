@@ -18,3 +18,8 @@ transition: 300ms;
     overflow: scroll
     }
 
+    /* React Table */
+    .container #ReactTable .rt-tbody .rt-td {
+        max-width: 200px !important;
+        min-width: 100px !important;
+    }
