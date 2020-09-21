@@ -6,7 +6,7 @@ import "./Style.css";
 import _ from "lodash";
 
 
-export class FormMultiFile extends React.PureComponent {
+export class FormMultiFile extends Component {
     constructor(props) {
         super(props);
 
@@ -112,6 +112,10 @@ export class FormMultiFile extends React.PureComponent {
 
     render() {
         const t = this.props.t
+        let canAddFile = true;
+        if (this.props.options && this.props.options.num_uploads) {
+            canAddFile = this.props.options.num_uploads > this.state.fileList.length;
+        }
 
         return (
             <div>
@@ -128,7 +132,7 @@ export class FormMultiFile extends React.PureComponent {
                         />
                     })}
 
-                    <button className="add-file-btn" onClick={(e) => this.addFile(e)}>{t("Add File")}</button>
+                    {canAddFile && <button className="add-file-btn" onClick={(e) => this.addFile(e)}>{t("Add File")}</button>}
                     <div className={this.props.errorText ? "errorText display" : "errorText"}> <p>{this.props.errorText}</p> </div>
                 </FormGroup>
             </div>
