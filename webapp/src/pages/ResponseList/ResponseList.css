@@ -1,25 +1,53 @@
-.container{
+.container {
     text-align: left;
 }
+
+/* Inputs */
+.form-check-input {
+    padding-left: 30px;
+}
+
+.label-top {
+    color: grey;
+    font-size: 20px;
+}
+
+.questions{
+    margin: 10px 0;
+}
+
 
 
 .question-list{
 height: 0px;
 opacity: 0;
 z-index: -10;
+margin: 10px 0;
 transition: 300ms;
 }
 
 .question-list.show{
-    height: 300px;
+    height: 150px;
     opacity: 1;
     z-index: 0;
     transition: 300ms;
     overflow: scroll
     }
 
+    .btn-add.wrapper{
+margin-top: 5px;
+
+    }
+
     /* React Table */
-    .container #ReactTable .rt-tbody .rt-td {
-        max-width: 200px !important;
-        min-width: 100px !important;
+    .react-table{
+        text-align: left;
+        width: 95vw;
+    }
+
+    .Tooltip {
+    width: 35vw;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    display: block;
     }
