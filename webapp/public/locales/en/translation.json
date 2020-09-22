@@ -292,4 +292,9 @@
     "You did not submit an application before the deadline, applications are now closed": "You did not submit an application before the deadline, applications are now closed" ,
     "You applied, but you can't withdraw or edit your application": "You applied, but you can't withdraw or edit your application"
     "Edit Name": "Edit Name",
-    "Delete": "Delete"
+    "Delete": "Delete",
+    "Thank you for responding to the": "Thank you for responding to the",
+    "Note: You may need to change the file name to open the file on certain operating systems": "Note: You may need to change the file name to open the file on certain operating systems",
+    "Next": "Next",
+    "Previous": "Previous"
+}
