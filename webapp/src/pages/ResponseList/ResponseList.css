@@ -10,9 +10,17 @@
     transition: 300ms;
 }
 
-.question-wrapper h2 {
+.question-wrapper .heading {
     color: grey;
     font-weight: 300;
+    margin-top: 30px;
+    transition: 300ms;
+}
+.question-wrapper .heading.short {
+    color: grey;
+    font-weight: 300;
+    margin-top: 2px;
+    transition: 300ms;
 }
 
 .btn {
@@ -78,17 +86,12 @@ height: 240px;
 
 
     /* React Table */
+ 
     .react-table{
         text-align: left;
         width: 95vw;
         display: flex;
-        justify-content: center;
-    }
-
-    .react-table-placeholder{
-        width: 95vw;
-        height: 200px;
-        background: hsl(0deg 0% 97%);
+      justify-content: center;
     }
 
     .Tooltip {

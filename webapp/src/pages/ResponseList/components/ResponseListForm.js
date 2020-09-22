@@ -8,13 +8,11 @@ import ReactTooltip from 'react-tooltip';
 
 
 class ResponseListForm extends Component {
-
     constructor(props) {
         super(props);
         this.state = {
             questions: [],
             selected: [],
-            table: null,
             toggleList: false,
             responseTable: null,
             addBtn: {
@@ -28,6 +26,7 @@ class ResponseListForm extends Component {
         this.fetchData()
     }
 
+
     fetchData() {
         fetchQuestions().then(response => {
             this.setState({
@@ -35,6 +34,7 @@ class ResponseListForm extends Component {
             })
         })
     }
+
 
     handleSelect(question) {
         const selected = this.state.selected;
@@ -52,6 +52,7 @@ class ResponseListForm extends Component {
             addBtn: { background: "hsl(134deg 61% 41%)" }
         }, () => this.fetchData())
     }
+
 
     toggleList(list) {
         this.setState({
@@ -75,11 +76,10 @@ class ResponseListForm extends Component {
             return row.answers = newAnswers
         }
 
+
         fetchResponse().then(response => {
-            console.log(response)
             let handleAnwsers = [];
             let handleReviews = [];
-
             // Handle Anwsers and Reviews
             response.map(val => {
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
@@ -106,9 +106,8 @@ class ResponseListForm extends Component {
                             </div>)
                         }
                     }
-
                 })
-                console.log(selected)
+
                 // extract only the reviewers name
                 val.reviewers.map(review => {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
@@ -137,8 +136,6 @@ class ResponseListForm extends Component {
                 delete val.answers;
                 delete val.reviewers;
             })
-
-            console.log(response)
 
             this.setState({
                 responseTable: response,
@@ -176,7 +173,6 @@ class ResponseListForm extends Component {
 
             let col = Object.keys(this.state.responseTable[0]);
             col.map(val => {
-                console.log(val)
                 colFormat.push({ id: val, Header: val, accessor: val, style: colStyle, width: widthCalc(val) })
             })
         }
@@ -186,49 +182,46 @@ class ResponseListForm extends Component {
 
 
     render() {
+        // Translation
         const t = this.props.t;
+        // State Obj
         const {
             questions,
             toggleList,
             responseTable,
             addBtn
         } = this.state
-
+        // Generate Col
         const columns = this.generateCol();
-
 
         return (
             <section>
                 <div className={responseTable ? "question-wrapper wide" : "question-wrapper"}>
-
                     {/*Heading*/}
-                    <h2>Response List</h2>
-
+                    <h2 className={toggleList || responseTable ? "heading short" : "heading"}>{t('Response List')}</h2>
                     {/*CheckBox*/}
                     <div className="checkbox-top">
                         <input onClick={(e) => this.fetchData()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
                         <label id="label" className="label-top" for="defaultCheck1">
-                            Include un-submitted
-                </label>
+                            {t('Include un-submitted')}
+                        </label>
                     </div>
-
-
 
                     {/*DropDown*/}
                     <div className="questions">
                         <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
-                            Questions
-                    </button>
+                            {t('Questions')}
+                        </button>
                         {/*Add Table*/}
                         <button style={addBtn} onClick={(e) => this.handleData()} type="button" className="btn btn-primary">Add Table</button>
-                        {toggleList && questions.length && <span style={{marginLeft: "5px", color: "grey"}}>
-                                        {questions.length} questions
-                                    </span>}
+                        {toggleList && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
+                            {questions.length} {t('questions')}
+                        </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
                                 return <div className="questions-item">
                                     <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" />
-                                    <label style={{marginLeft: "5px"}} className="form-check-label" for="defaultCheck1">
+                                    <label style={{ marginLeft: "5px" }} className="form-check-label" for="defaultCheck1">
                                         {val.headline}
                                     </label>
                                 </div>
@@ -237,15 +230,13 @@ class ResponseListForm extends Component {
                             }
                         </div>
                     </div>
-
-
-
-
                 </div>
 
+              
                 <div className="react-table">
                     {/* Response Table */}
-                    {responseTable && !toggleList && <ReactTable
+                    {responseTable && !toggleList &&
+                        <ReactTable
                         data={responseTable}
                         columns={columns}
                         minRows={0} />}
