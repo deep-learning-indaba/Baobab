@@ -7,7 +7,7 @@ export function fetchQuestions() {
       { "question_id": 2, "headline": "Second question", "type": "long-text" },
       { "question_id": 3, "headline": "Third question", "type": "multi-choice" },
       { "question_id": 4, "headline": "Forth question", "type": "file" },
-      { "question_id": 5, "headline": "Fifth question", "type": "single-choice" }
+      { "question_id": 5, "headline": "Fifth question", "type": "single-choice" },
     ])
   })
 }

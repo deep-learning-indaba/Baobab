@@ -1,10 +1,41 @@
-.container {
+.question-wrapper {
     text-align: left;
+    width: 40vw;
+    transition: 300ms;
+}
+
+.question-wrapper.wide {
+    text-align: left;
+    width: 87vw;
+    transition: 300ms;
+}
+
+.question-wrapper h2 {
+    color: grey;
+    font-weight: 300;
+}
+
+.btn {
+    margin-right:7px;
+    color: white;
 }
 
 /* Inputs */
-.form-check-input {
-    padding-left: 30px;
+
+#label  {
+    margin-left: 20px;
+    }
+
+    .question-item #label  {
+        margin-left: 20px;
+        }
+    
+.form-check-input.input {
+    margin-left: 2px;
+}
+
+.form-check-label {
+    display: block;
 }
 
 .label-top {
@@ -16,6 +47,15 @@
     margin: 10px 0;
 }
 
+.total-q {
+    color: grey;
+}
+
+.questions-item {
+    display: flex;
+    align-items: center;
+    width: 50%;
+}
 
 
 .question-list{
@@ -24,25 +64,31 @@ opacity: 0;
 z-index: -10;
 margin: 10px 0;
 transition: 300ms;
+overflow: scroll;
+display: flex;
+flex-wrap: wrap;
 }
 
 .question-list.show{
-    height: 150px;
+height: 240px;
     opacity: 1;
     z-index: 0;
     transition: 300ms;
-    overflow: scroll
     }
 
-    .btn-add.wrapper{
-margin-top: 5px;
-
-    }
 
     /* React Table */
     .react-table{
         text-align: left;
         width: 95vw;
+        display: flex;
+        justify-content: center;
+    }
+
+    .react-table-placeholder{
+        width: 95vw;
+        height: 200px;
+        background: hsl(0deg 0% 97%);
     }
 
     .Tooltip {

@@ -62,7 +62,7 @@ class ResponseListForm extends Component {
 
     handleData() {
         // disable question list
-        this.toggleList(this.state.toggleList)
+        this.toggleList(true)
 
         const { selected } = this.state;
 
@@ -199,20 +199,19 @@ class ResponseListForm extends Component {
 
         return (
             <section>
-                <div className="container">
+                <div className={responseTable ? "question-wrapper wide" : "question-wrapper"}>
 
-                    {/**/}
-                    {/**/}
-                    {/**/}
-                    {/**/}
-
+                    {/*Heading*/}
+                    <h2>Response List</h2>
 
                     {/*CheckBox*/}
-
-                    <input onClick={(e) => this.fetchData()} className="form-check-input" type="checkbox" value="" id="defaultCheck1" />
-                    <label className="label-top" for="defaultCheck1">
-                        Include un-submitted
+                    <div className="checkbox-top">
+                        <input onClick={(e) => this.fetchData()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
+                        <label id="label" className="label-top" for="defaultCheck1">
+                            Include un-submitted
                 </label>
+                    </div>
+
 
 
                     {/*DropDown*/}
@@ -220,13 +219,16 @@ class ResponseListForm extends Component {
                         <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
                             Questions
                     </button>
-                         {/*Add Table*/}
-                    <button style={addBtn} onClick={(e) => this.handleData()} type="button" className="btn primary">Add Table</button>
-
+                        {/*Add Table*/}
+                        <button style={addBtn} onClick={(e) => this.handleData()} type="button" className="btn btn-primary">Add Table</button>
+                        {toggleList && questions.length && <span style={{marginLeft: "5px", color: "grey"}}>
+                                        {questions.length} questions
+                                    </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
-                                return <div> <input onClick={(e) => this.handleSelect(val.question_id)} className="form-check-input" type="checkbox" value="" id="defaultCheck1" />
-                                    <label className="form-check-label" for="defaultCheck1">
+                                return <div className="questions-item">
+                                    <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" />
+                                    <label style={{marginLeft: "5px"}} className="form-check-label" for="defaultCheck1">
                                         {val.headline}
                                     </label>
                                 </div>
@@ -235,15 +237,15 @@ class ResponseListForm extends Component {
                             }
                         </div>
                     </div>
-                   
-                   
+
+
 
 
                 </div>
 
                 <div className="react-table">
                     {/* Response Table */}
-                    {responseTable && <ReactTable
+                    {responseTable && !toggleList && <ReactTable
                         data={responseTable}
                         columns={columns}
                         minRows={0} />}
