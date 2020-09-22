@@ -1417,14 +1417,14 @@ class ReferenceReviewRequest(ApiTestCase):
         self.test_response = Response(  # Nominating other
             1, self.first_user.id)
 
-        # self.add_to_db(self.test_response)
-        # answers = [
-        #     Answer(self.test_response.id, questions[5].id, 'Mx'),
-        #     Answer(self.test_response.id, questions[6].id, 'Skittles'),
-        #     Answer(self.test_response.id, questions[7].id, 'Cat'),
-        #     Answer(self.test_response.id, questions[8].id, 'skittles@box.com'),
-        # ]
-        # db.session.add_all(answers)
+        self.add_to_db(self.test_response)
+        answers = [
+            Answer(self.test_response.id, questions[5].id, 'Mx'),
+            Answer(self.test_response.id, questions[6].id, 'Skittles'),
+            Answer(self.test_response.id, questions[7].id, 'Cat'),
+            Answer(self.test_response.id, questions[8].id, 'skittles@box.com'),
+        ]
+        db.session.add_all(answers)
         db.session.commit()
 
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
