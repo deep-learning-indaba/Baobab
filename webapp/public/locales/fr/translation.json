@@ -288,5 +288,8 @@
     "Enter File Name": "Entrez le nom du fichier",
     "Edit Name": "Modifier le nom",
     "Delete": "Supprimer",
-    "Response List": "Liste de réponse"
+    "Response List": "Liste de réponse",
+    "Questions": "Des questions",
+    "questions": "des questions",
+    "Include un-submitted": "Inclure les non-soumis"
 }
