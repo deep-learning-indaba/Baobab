@@ -87,22 +87,22 @@ class ResponseListForm extends Component {
                     // format anwers display based on type
                     if (selected.includes(answer.question_id)) {
                         if (answer.type.includes("file")) {
-                            handleAnwsers.push(<a href={answer.value[0]}>{answer.value[1]}</a>)
+                            handleAnwsers.push(<a key={answer.value[1]} href={answer.value[0]}>{answer.value[1]}</a>)
                         }
                         if (answer.type.includes("choice")) {
                             let choices = [];
                             answer.options.map((opt => {
-                                opt.value ? choices.push(<div><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
+                                opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
                             }))
-                            handleAnwsers.push(<div>{choices}</div>)
+                            handleAnwsers.push(<div key={choices}>{choices}</div>)
                         }
                         if (answer.type.includes("text")) {
                             handleAnwsers.push(<div>
-                                <div data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
+                                <div key={answer.value} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
                                     className="Tooltip"
                                 />
                                 </div>
-
+                                
                             </div>)
                         }
                     }
@@ -219,7 +219,7 @@ class ResponseListForm extends Component {
                         </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
-                                return <div className="questions-item">
+                                return <div key={val} className="questions-item">
                                     <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" />
                                     <label style={{ marginLeft: "5px" }} className="form-check-label" for="defaultCheck1">
                                         {val.headline}
@@ -237,6 +237,7 @@ class ResponseListForm extends Component {
                     {/* Response Table */}
                     {responseTable && !toggleList &&
                         <ReactTable
+                        className="ReactTable"
                         data={responseTable}
                         columns={columns}
                         minRows={0} />}
