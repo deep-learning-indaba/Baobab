@@ -16,6 +16,7 @@
     margin-top: 30px;
     transition: 300ms;
 }
+
 .question-wrapper .heading.short {
     color: grey;
     font-weight: 300;
@@ -23,21 +24,28 @@
     transition: 300ms;
 }
 
+
+.btn-primary.green {
+    background: hsl(120, 58%, 42%);
+    border: darkgreen;
+    }
+
 .btn {
-    margin-right:7px;
+    margin-right: 7px;
     color: white;
 }
 
+
 /* Inputs */
 
-#label  {
+#label {
     margin-left: 20px;
-    }
+}
 
-    .question-item #label  {
-        margin-left: 20px;
-        }
-    
+.question-item #label {
+    margin-left: 20px;
+}
+
 .form-check-input.input {
     margin-left: 2px;
 }
@@ -51,7 +59,7 @@
     font-size: 20px;
 }
 
-.questions{
+.questions {
     margin: 10px 0;
 }
 
@@ -62,41 +70,54 @@
 .questions-item {
     display: flex;
     align-items: center;
-    width: 50%;
+    width: 30%;
 }
 
-
-.question-list{
-height: 0px;
-opacity: 0;
-z-index: -10;
-margin: 10px 0;
-transition: 300ms;
-overflow: scroll;
-display: flex;
-flex-wrap: wrap;
+.question-list {
+    height: 0px;
+    opacity: 0;
+    z-index: -10;
+    margin: 10px 0;
+    transition: 300ms;
+    overflow: scroll;
+    display: flex;
+    flex-wrap: wrap;
 }
 
-.question-list.show{
-height: 240px;
+.question-list.show {
+    height: 240px;
     opacity: 1;
     z-index: 0;
     transition: 300ms;
-    }
+}
 
+/* React Table */
 
-    /* React Table */
- 
-    .react-table{
-        text-align: left;
-        width: 95vw;
-        display: flex;
-      justify-content: center;
-    }
+.react-table {
+    text-align: left;
+    width: 88vw;
+    display: flex;
+    justify-content: center;
+}
 
-    .Tooltip {
+.ReactTable {
+    width: 100%;
+    max-height: 66vh
+}
+
+.Tooltip {
     width: 35vw;
     word-break: break-all;
     overflow-wrap: break-word;
     display: block;
-    }
+}
+
+ 
+.myCol {
+    max-width: 300;
+    width: 250;
+    white-space: normal;
+    max-height: 200px;
+    overflow: scroll;
+    margin-bottom: 10px
+}

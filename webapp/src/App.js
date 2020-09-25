@@ -399,6 +399,13 @@ class AppComponent extends Component {
                     <Login {...props} loggedIn={this.refreshUser} organisation={this.props.organisation} />
                   )}
                 />
+                   <Route
+                  exact
+                  path="/responseList"
+                  render={props => (
+                    <ResponseList {...props} loggedIn={this.refreshUser} organisation={this.props.organisation} />
+                  )}
+                />
                 <Route
                   exact
                   path="/createAccount"

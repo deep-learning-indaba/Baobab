@@ -15,15 +15,14 @@ class ResponseListForm extends Component {
             selected: [],
             toggleList: false,
             responseTable: null,
-            addBtn: {
-                background: "hsl(211deg 100% 50%)",
-            }
+            btnUpdate: false
         }
     }
 
 
     componentWillMount() {
         this.fetchData()
+        this.handleData()
     }
 
 
@@ -49,7 +48,7 @@ class ResponseListForm extends Component {
 
         this.setState({
             selected: selected,
-            addBtn: { background: "hsl(134deg 61% 41%)" }
+            btnUpdate: true
         }, () => this.fetchData())
     }
 
@@ -62,84 +61,107 @@ class ResponseListForm extends Component {
 
 
     handleData() {
+        const baseUrl = process.env.REACT_APP_API_URL;
         // disable question list
         this.toggleList(true)
 
         const { selected } = this.state;
 
-        // add Answers as new column 
-        function addAnswersCol(row, newAnswers) {
+        // add Answers or Reviews as new column 
+        function addNewCol(row, newAnswers) {
             return row.answers = newAnswers
         }
-        // add Reviews as new column 
-        function addReviewCol(row, newAnswers) {
-            return row.answers = newAnswers
+        // add User Title as new column 
+        function userTitleCol(row, user_title, firstname, lastname) {
+            return row.user_title = user_title + " " + firstname + " " + lastname
         }
 
 
         fetchResponse().then(response => {
-            let handleAnwsers = [];
-            let handleReviews = [];
-            // Handle Anwsers and Reviews
-            response.map(val => {
+
+            // Handle Answers and Reviews
+            response.forEach(val => {
+                let handleAnswers = [];
+                let handleReviews = [];
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
-                val.answers.map(answer => {
+                val.answers.forEach(answer => {
                     // format anwers display based on type
                     if (selected.includes(answer.question_id)) {
-                        if (answer.type.includes("file")) {
-                            handleAnwsers.push(<a key={answer.value[1]} href={answer.value[0]}>{answer.value[1]}</a>)
+                        if (answer.type == "file") {
+                            handleAnswers.push(<a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.headline}</a>)
+                        }
+                        if (answer.type == "multi-file") {
+                            let files = [];
+                            answer.value.forEach((file => {
+                                file ? files.push(<div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.headline}</a></div>)
+                                    :
+                                    console.log(`${answer.question_id} contains no value`)
+                            }))
+                            handleAnswers.push(<div key={answer.headline}>{files}</div>)
                         }
                         if (answer.type.includes("choice")) {
                             let choices = [];
-                            answer.options.map((opt => {
-                                opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
+                            answer.options.forEach((opt => {
+                                console.log(answer.value)
+                                console.log(opt.value)
+                                answer.value == opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
                             }))
-                            handleAnwsers.push(<div key={choices}>{choices}</div>)
+                            handleAnswers.push(<div key={choices}>{choices}</div>)
                         }
                         if (answer.type.includes("text")) {
-                            handleAnwsers.push(<div>
-                                <div key={answer.value} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
+                            handleAnswers.push(<div>
+                                <div key={answer.headline} data-tip={answer.headline}><p>{answer.headline}</p><ReactTooltip
                                     className="Tooltip"
                                 />
                                 </div>
-                                
+
                             </div>)
                         }
                     }
                 })
 
                 // extract only the reviewers name
-                val.reviewers.map(review => {
+                val.reviewers.forEach(review => {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
                 })
-                // envoke and store new columns for Reviews and Answers
-                let addAnwsers = addAnswersCol(val, handleAnwsers);
-                let addReviews = addReviewCol(val, handleReviews);
 
-                // insert anwsers values as columns
-                if (handleAnwsers.length) {
-                    addAnwsers.map((answer, index) => {
+
+                // envoke and store new columns for Reviews and Answers and UserTitle
+                let addAnswers = addNewCol(val, handleAnswers);
+                let addReviews = addNewCol(val, handleReviews);
+                // combine user credentials
+                userTitleCol(val, val.user_title, val.firstname, val.lastname)
+
+                // insert Answers values as columns
+                if (handleAnswers.length) {
+                    console.log("fired")
+                    addAnswers.forEach((answer, index) => {
                         let num = (index) + (1);
                         let key = "Answer" + num;
                         val[key] = answer
                     })
+                      handleAnswers = [];
                 }
                 // insert new reviews values as columns
-                addReviews.map((review, index) => {
+                addReviews.forEach((review, index) => {
                     let num = (index) + (1);
                     let key = "Review" + num;
                     val[key] = review
+                    handleReviews = [];
                 })
                 // delete original review and answer rows as they don't need to be displayed with all their data
-                handleAnwsers = [];
-                handleReviews = [];
                 delete val.answers;
                 delete val.reviewers;
+                delete val.answers;
+                delete val.firstname;
+                delete val.lastname;
             })
+
+            console.log(response)
 
             this.setState({
                 responseTable: response,
-                addBtn: { background: "hsl(211deg 100% 50%)" }
+                btnUpdate: false
             }
             )
 
@@ -147,23 +169,27 @@ class ResponseListForm extends Component {
     }
 
 
-    generateCol() {
+    generateCols() {
         let colFormat = [];
-        let colStyle = {
-            'maxWidth': '300',
-            'width': '250',
-            'whiteSpace': 'normal',
-            'maxHeight': '200px',
-            'overflow': 'scroll',
-            'marginBottom': '10px'
-        }
-
+       
+        // Find the row with greatest col count and assign the col values to React Table
         if (this.state.responseTable) {
+            function readColumns(rows) {
+                let tableColumns = [];
+                rows.map(val => {
+                    let newColumns = Object.keys(val)
+                    tableColumns.length < newColumns.length  ? tableColumns = newColumns : console.log("columns already added")
+                })
+                
+                return tableColumns
+            }
+
             function widthCalc(colItem) {
                 if (colItem.includes('Answer')) {
                     return 200
                 }
-                if (colItem.includes('Review')) {
+
+                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date')) {
                     return 180
                 }
                 else {
@@ -171,10 +197,8 @@ class ResponseListForm extends Component {
                 }
             }
 
-            let col = Object.keys(this.state.responseTable[0]);
-            col.map(val => {
-                colFormat.push({ id: val, Header: val, accessor: val, style: colStyle, width: widthCalc(val) })
-            })
+            let col = readColumns(this.state.responseTable);
+            colFormat = col.map( val => ({ id: val, Header: val, accessor: val, class: "myCol", width: widthCalc(val) }))   
         }
         return colFormat
     }
@@ -189,10 +213,10 @@ class ResponseListForm extends Component {
             questions,
             toggleList,
             responseTable,
-            addBtn
+            btnUpdate
         } = this.state
         // Generate Col
-        const columns = this.generateCol();
+        const columns = this.generateCols();
 
         return (
             <section>
@@ -212,35 +236,37 @@ class ResponseListForm extends Component {
                         <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
                             {t('Questions')}
                         </button>
-                        {/*Add Table*/}
-                        <button style={addBtn} onClick={(e) => this.handleData()} type="button" className="btn btn-primary">Add Table</button>
+                        {/*Update Table*/}
                         {toggleList && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
                             {questions.length} {t('questions')}
                         </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
                                 return <div key={val} className="questions-item">
-                                    <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" />
-                                    <label style={{ marginLeft: "5px" }} className="form-check-label" for="defaultCheck1">
+                                    <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
+                                    <label style={{ marginLeft: "5px" }} className="form-check-label" for={val.question_id}>
                                         {val.headline}
                                     </label>
                                 </div>
-
                             })
                             }
                         </div>
+                        {toggleList && <button
+                            onClick={(e) => this.handleData()}
+                            type="button"
+                            className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>}
                     </div>
                 </div>
 
-              
+
                 <div className="react-table">
                     {/* Response Table */}
-                    {responseTable && !toggleList &&
+                    {!toggleList &&
                         <ReactTable
-                        className="ReactTable"
-                        data={responseTable}
-                        columns={columns}
-                        minRows={0} />}
+                            className="ReactTable"
+                            data={responseTable ? responseTable : []}
+                            columns={columns}
+                            minRows={0} />}
                 </div>
 
             </section>

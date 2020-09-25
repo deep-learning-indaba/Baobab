@@ -8,6 +8,7 @@ export function fetchQuestions() {
       { "question_id": 3, "headline": "Third question", "type": "multi-choice" },
       { "question_id": 4, "headline": "Forth question", "type": "file" },
       { "question_id": 5, "headline": "Fifth question", "type": "single-choice" },
+      { "question_id": 6, "headline": "Sixth question", "type": "multi-file" }
     ])
   })
 }
@@ -21,10 +22,10 @@ export function fetchResponse() {
           "user_title": "Mr",
           "firstname": "Jimmy",
           "lastname": "Fallon",
-          "start_date": "2020-06-01 [...]",    // ISO8601 format
+          "start_date": "2020-06-01 T10:26:00.996Z",    // ISO8601 format
           "is_submitted": true,
           "is_withdrawn": false,
-          "submitted_date": "2020-06-03 [...]",  // ISO8601 format
+          "submitted_date": "2020-06-03 T10:26:00.996Z",  // ISO8601 format
           "language": "en",
           "reviewers": [
             { "reviewer_id": 23, "reviewer_name": "Mr James Dosh", "review_response_id": 33 },
@@ -40,10 +41,10 @@ export function fetchResponse() {
           "user_title": "Ms",
           "firstname": "Halle",
           "lastname": "Berry",
-          "start_date": "2020-06-01 [...]",    // ISO8601 format
+          "start_date": "2020-06-01 T10:26:00.996Z",    // ISO8601 format
           "is_submitted": true,
           "is_withdrawn": false,
-          "submitted_date": "2020-06-03 [...]",  // ISO8601 format
+          "submitted_date": "2020-06-03 T10:26:00.996Z",  // ISO8601 format
           "language": "en",
           "reviewers": [
             { "reviewer_id": 63, "reviewer_name": "Mr Barack Obama", "review_response_id": 23 },
@@ -59,18 +60,37 @@ export function fetchResponse() {
           "user_title": "Mr",
           "firstname": "Jo",
           "lastname": "Test",
-          "start_date": "2020-06-01 [...]",    // ISO8601 format
+          "start_date": "2020-06-01 T10:26:00.996Z",    // ISO8601 format
           "is_submitted": true,
           "is_withdrawn": false,
-          "submitted_date": "2020-06-03 [...]",  // ISO8601 format
+          "submitted_date": "2020-06-03 T10:26:00.996Z",  // ISO8601 format
           "language": "fr",
           "reviewers": [
             { "reviewer_id": 60, "reviewer_name": "Mr Justice Donner", "review_response_id": 44 },
             null
           ],
           "answers": [
-            { "question_id": 4, "headline": "Forth question", "value": ["https://github.com/deep-learning-indaba/Baobab/issues/779", "Baobab"], "type": "file", "options": null },
+            { "question_id": 4, "headline": "Forth question", "value": "Tomatoes", "type": "file", "options": null },
             { "question_id": 3, "headline": "Third question", "value": "x-men", "type": "multi-choice", "options": [{ "label": "Harry Potter", "value": "harry-potter" }, { "label": "X-men", "value": "x-men" }] }
+          ]
+        },
+        {
+          "response_id": 4,
+          "user_title": "Mr",
+          "firstname": "Ares",
+          "lastname": "Dares",
+          "start_date": "2020-06-01 T10:26:00.996Z",    // ISO8601 format
+          "is_submitted": true,
+          "is_withdrawn": false,
+          "submitted_date": "2020-06-03 T10:26:00.996Z",  // ISO8601 format
+          "language": "fr",
+          "reviewers": [
+            { "reviewer_id": 35, "reviewer_name": "Mr Tempest", "review_response_id": 12 },
+            null
+          ],
+          "answers": [
+            { "question_id": 4, "headline": "Forth question", "value": "Baobab", "type": "file", "options": null },
+            { "question_id": 6, "headline": "Sixth question", "value": ["Chips", "Chocolate"], "type": "multi-file", "options": null }
           ]
         }
       ]
