@@ -44,7 +44,7 @@ test("Check if React Table renders.", async () => {
 test("Check if Col function is succesfull.", async () => {
     const wrapper = shallow(<ResponseList />);
     await wrapper.instance().handleData();
-    let columns = await wrapper.instance().generateCol();
+    let columns = await wrapper.instance().generateCols();
     expect(columns.length).toBeTruthy();
 });
 
