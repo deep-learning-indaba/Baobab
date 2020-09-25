@@ -102,8 +102,6 @@ class ResponseListForm extends Component {
                         if (answer.type.includes("choice")) {
                             let choices = [];
                             answer.options.forEach((opt => {
-                                console.log(answer.value)
-                                console.log(opt.value)
                                 answer.value == opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
                             }))
                             handleAnswers.push(<div key={choices}>{choices}</div>)
@@ -134,7 +132,6 @@ class ResponseListForm extends Component {
 
                 // insert Answers values as columns
                 if (handleAnswers.length) {
-                    console.log("fired")
                     addAnswers.forEach((answer, index) => {
                         let num = (index) + (1);
                         let key = "Answer" + num;
@@ -156,9 +153,7 @@ class ResponseListForm extends Component {
                 delete val.firstname;
                 delete val.lastname;
             })
-
-            console.log(response)
-
+            
             this.setState({
                 responseTable: response,
                 btnUpdate: false
