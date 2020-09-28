@@ -152,3 +152,6 @@ display: flex;
     margin: 0 10px;
   }
 
+.multi-checkbox-list {
+  margin-top: 1em;
+}

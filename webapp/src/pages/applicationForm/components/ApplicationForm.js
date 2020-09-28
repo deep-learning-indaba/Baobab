@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
+import ReactMarkdown from "react-markdown";
 import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
@@ -233,6 +234,8 @@ class FieldEditor extends React.Component {
             onChange={this.handleChange}
             uploadFile={this.handleUploadFile}
             errorText={validationError || this.state.uploadError}
+            placeholder={question.placeholder}
+            options={question.options}
           />
         );
       case REFERENCE_REQUEST:
@@ -265,7 +268,7 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p className={this.props.question.type == INFORMATION ? "h3 app-form-info" : "h4"}>{this.props.question.headline}</p>
+        <p className={this.props.question.type == INFORMATION ? "h3" : "h4"}>{this.props.question.headline}</p>
         {this.formControl(
           this.props.key,
           this.props.question,
@@ -404,6 +407,8 @@ class Section extends React.Component {
     }
   }
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     const {
       section,
@@ -417,8 +422,8 @@ class Section extends React.Component {
     return (
       <div className={"section"}>
         <div className={"headline"}>
-          <h2>{section.name}</h2>
-          <p>{section.description}</p>
+          <h1>{section.name}</h1>
+          <ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/>
         </div>
         {questionModels &&
           questionModels
@@ -452,7 +457,18 @@ class Section extends React.Component {
 }
 
 
+function MultiFileValue(props) {
+  const value = JSON.parse(props.value);
+  return <ul>
+    {value.map(v=><li key={"file_" + v.id}><a target="_blank" href={baseUrl + "/api/v1/file?filename=" + v.file}>{v.name}</a></li>)}
+  </ul>
+}
+
 function AnswerValue(props) {
+  if (props.qm.question.type === INFORMATION) {
+    return "";
+  }
+
   if (props.qm.answer && props.qm.answer.value) {
     switch (props.qm.question.type) {
       case MULTI_CHOICE:
@@ -464,7 +480,17 @@ function AnswerValue(props) {
           return props.qm.answer.value;
         }
       case FILE:
-        return <a href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+        return <div>
+          <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+          <br/>
+          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
+        </div>
+      case MULTI_FILE:
+        return <div>
+          <MultiFileValue value={props.qm.answer.value}/>
+          <br/>
+          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
+        </div>
       default:
         return props.qm.answer.value;
     }
@@ -502,25 +528,34 @@ class ConfirmationComponent extends React.Component {
 
           </div>
         </div>
-        {this.props.questionModels &&
-          this.props.questionModels.map(qm => {
-            return (
-              qm.question && (
-                <div className={"confirmation answer"}>
-                  <div class="row">
-                    <div class="col">
-                      <h5>{qm.question.headline}</h5>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col">
-                      <p><AnswerValue qm={qm} t={t} /></p>
-                    </div>
-                  </div>
-                </div>
-              )
-            );
+
+        {this.props.sectionModels && 
+          this.props.sectionModels.filter(sm => sm.questionModels.length > 0).map(sm => {
+            return <div key={"section_" + sm.section.id}>
+              <h2>{sm.section.name}</h2>
+              {sm.questionModels &&
+                sm.questionModels.map(qm => {
+                  return (
+                    qm.question && (
+                      <div className={"confirmation answer"}>
+                        <div class="row">
+                          <div class="col">
+                            <h5>{qm.question.headline}</h5>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col">
+                            <p class="answer-value"><AnswerValue qm={qm} t={t} /></p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  );
+                })}
+            </div>
           })}
+
+        
         <button
           className="btn btn-primary submit-application mx-auto"
           onClick={this.props.submit}
@@ -565,7 +600,9 @@ class SubmittedComponent extends React.Component {
   };
 
   handleEditOK = event => {
-    this.props.onCancelSubmit()
+    if (this.props.onEdit) {
+      this.props.onEdit();
+    }
   };
 
   handleWithdrawCancel = event => {
@@ -594,6 +631,10 @@ class SubmittedComponent extends React.Component {
 
   render() {
     const t = this.props.t;
+    const initialText = this.props.event && this.props.event.event_type === "CALL" 
+      ? t("Thank you for responding to the")
+      : t("Thank you for applying for"); 
+
     return (
       <div class="submitted">
         <h2>{t("Thank you for applying!")}</h2>
@@ -604,7 +645,7 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {t("Thank you for applying for") + " "} {this.props.event ? this.props.event.name : ""}.
+          {initialText + " "} {this.props.event ? this.props.event.name : ""}. {" "}
           {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
@@ -663,6 +704,7 @@ class ApplicationFormInstanceComponent extends Component {
       isSubmitting: false,
       isError: false,
       isSubmitted: false,
+      isEditing: false,
       responseId: null,
       submittedTimestamp: null,
       errorMessage: "",
@@ -709,6 +751,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false,
                 new_response: false,
@@ -730,6 +773,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false
               });
@@ -818,6 +862,7 @@ class ApplicationFormInstanceComponent extends Component {
     const {
       isError,
       isSubmitted,
+      isEditing,
       errorMessage,
       answers,
       isSubmitting
@@ -829,14 +874,14 @@ class ApplicationFormInstanceComponent extends Component {
       </div>;
     }
 
-    if (isSubmitted) {
+    if (isSubmitted && !isEditing) {
       return (
         <Submitted
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
+          onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
@@ -894,21 +939,21 @@ class ApplicationFormInstanceComponent extends Component {
         };
       });
 
-    const allQuestionModels =
-      sectionModels &&
-      sectionModels
-        .map(section =>
-          section.questionModels
-            .slice()
-            .sort((a, b) => a.question.order - b.question.order)
-        )
-        .reduce((a, b) => a.concat(b), []);
+    // const allQuestionModels =
+    //   sectionModels &&
+    //   sectionModels
+    //     .map(section =>
+    //       section.questionModels
+    //         .slice()
+    //         .sort((a, b) => a.question.order - b.question.order)
+    //     )
+    //     .reduce((a, b) => a.concat(b), []);
 
     steps.push({
       name: this.props.t("Confirmation"),
       component: (
         <Confirmation
-          questionModels={allQuestionModels}
+          sectionModels={sectionModels}
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
         />
@@ -924,6 +969,8 @@ class ApplicationFormInstanceComponent extends Component {
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
+            nextButtonText={this.props.t("Next")}
+            backButtonText={this.props.t("Previous")}
           />
 
           <ReactToolTip />

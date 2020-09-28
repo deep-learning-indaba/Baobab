@@ -215,7 +215,7 @@ class CreateAccountForm extends Component {
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
-          <div class="login-header-logo">
+          <div class="login-header-logo text-center">
             <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} alt="Logo"/>
             <h3>{t("Sign Up")}</h3>
             <h6><Link to="/login" className="sign-up">{t("Sign In")}</Link> {t("if you already have an account")}</h6>
@@ -250,7 +250,9 @@ class CreateAccountForm extends Component {
               value={email}
               label={t(validationFields.email.display)}
             />
-            <br /><br />
+            
+            <div className="vertical-space"></div>
+
             <FormTextBox
               id={validationFields.password.name}
               type="password"
@@ -265,7 +267,9 @@ class CreateAccountForm extends Component {
               value={confirmPassword}
               label={t(validationFields.confirmPassword.display)}
             />
-            <br /><br />
+
+            <div className="vertical-space"></div>
+
             <div className="custom-control custom-checkbox text-left">
               <input
                 className="custom-control-input"
@@ -297,7 +301,6 @@ class CreateAccountForm extends Component {
                 </a>
               </label>
             </div>
-            <br /><br />
 
             <button
               id="btn-signup-confirm"

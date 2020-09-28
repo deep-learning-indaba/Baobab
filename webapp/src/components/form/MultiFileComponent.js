@@ -2,6 +2,7 @@ import React from "react";
 import "./Style.css";
 import tick from '../../images/tick.png'
 import { withTranslation } from 'react-i18next';
+import ReactToolTip from "react-tooltip";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -108,6 +109,8 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
         const t = this.props.t
 
+        const placeholder = this.props.value.name ? `${this.props.value.name}` : (this.props.placeholder || t("Enter File Name"));
+
         return (
 
             <form className="upload-item-wrapper">
@@ -119,15 +122,18 @@ const baseUrl = process.env.REACT_APP_API_URL;
                     <div className={btnSubmit ? "file-name enter" : "file-name"}>
                         <input className={isSubmitted  ? "input-field lock" : "input-field"}
                             onChange={this.handleChange}
-                            placeholder={this.props.value.name ? `${this.props.value.name}` : t("Enter File Name")}
+                            placeholder={placeholder}
                             type="text"
                             value={name}
                         ></input>
 
                         <button onClick={this.submit} className={btnSubmit ? "btn-submit show" : "btn-submit"}>{t("Submit")}</button>
-                        <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"}><i className="fas fa-edit"></i></a>
-                        <a onClick={this.del} className={file ? "bin show" : "bin"}><i className="fas fa-trash"></i></a>
-                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={baseUrl + "/api/v1/file?filename=" + file} target="_blank"><i className="far fa-eye"></i></a>
+                        <a onClick={this.nameChange} className={isSubmitted || this.props.value.name ? "edit show" : "edit"} data-tip={t("Edit Name")}><i className="fas fa-edit"></i></a>
+                        <ReactToolTip type="info" place="top" effect="solid" />
+                        <a onClick={this.del} className={file ? "bin show" : "bin"} data-tip={t("Delete")}><i className="fas fa-trash"></i></a>
+                        <ReactToolTip type="info" place="top" effect="solid" />
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={baseUrl + "/api/v1/file?filename=" + file} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
+                        <ReactToolTip type="info" place="top" effect="solid" />
                     </div>
                     {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}
 
