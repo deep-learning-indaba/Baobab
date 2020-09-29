@@ -12,7 +12,7 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
-import ResponseList from './pages/ResponseList/ResponseList'
+
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -404,17 +404,6 @@ class AppComponent extends Component {
                   path="/createAccount"
                   render={props => (
                     <CreateAccount
-                      {...props}
-                      loggedIn={this.refreshUser}
-                      organisation={this.props.organisation}
-                    />
-                  )}
-                />
-                   <Route
-                  exact
-                  path="/responseList"
-                  render={props => (
-                    <ResponseList
                       {...props}
                       loggedIn={this.refreshUser}
                       organisation={this.props.organisation}
