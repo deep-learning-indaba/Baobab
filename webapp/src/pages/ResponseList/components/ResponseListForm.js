@@ -67,15 +67,6 @@ class ResponseListForm extends Component {
 
         const { selected } = this.state;
 
-        // add Answers or Reviews as new column 
-        function addNewCol(row, newAnswers) {
-            return row.answers = newAnswers
-        }
-        // add User Title as new column 
-        function userTitleCol(row, user_title, firstname, lastname) {
-            return row.user_title = user_title + " " + firstname + " " + lastname
-        }
-
 
         fetchResponse().then(response => {
 
@@ -88,32 +79,38 @@ class ResponseListForm extends Component {
                     // format anwers display based on type
                     if (selected.includes(answer.question_id)) {
                         if (answer.type == "file") {
-                            handleAnswers.push(<a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.headline}</a>)
+                            handleAnswers.push([{
+                                headline: answer.headline,
+                                value: <a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
+                            }])
                         }
                         if (answer.type == "multi-file") {
                             let files = [];
                             answer.value.forEach((file => {
-                                file ? files.push(<div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.headline}</a></div>)
+                                file ? files.push(
+                                    <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
+                                )
                                     :
                                     console.log(`${answer.question_id} contains no value`)
                             }))
-                            handleAnswers.push(<div key={answer.headline}>{files}</div>)
+                            handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
                         }
+
                         if (answer.type.includes("choice")) {
                             let choices = [];
                             answer.options.forEach((opt => {
                                 answer.value == opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
                             }))
-                            handleAnswers.push(<div key={choices}>{choices}</div>)
+                            handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
                         }
+
                         if (answer.type.includes("text")) {
-                            handleAnswers.push(<div>
-                                <div key={answer.headline} data-tip={answer.headline}><p>{answer.headline}</p><ReactTooltip
+                            handleAnswers.push([{
+                                headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
                                     className="Tooltip"
                                 />
                                 </div>
-
-                            </div>)
+                            }])
                         }
                     }
                 })
@@ -123,29 +120,34 @@ class ResponseListForm extends Component {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
                 })
 
+                   // add User Title as new column 
+                   function userTitleCol(row, user_title, firstname, lastname) {
+                    return row.user_title = user_title + " " + firstname + " " + lastname
+                }
 
-                // envoke and store new columns for Reviews and Answers and UserTitle
-                let addAnswers = addNewCol(val, handleAnswers);
-                let addReviews = addNewCol(val, handleReviews);
+
+                // envoke and store new columns for UserTitle
                 // combine user credentials
                 userTitleCol(val, val.user_title, val.firstname, val.lastname)
 
                 // insert Answers values as columns
                 if (handleAnswers.length) {
-                    addAnswers.forEach((answer, index) => {
-                        let num = (index) + (1);
-                        let key = "Answer" + num;
-                        val[key] = answer
+                    handleAnswers.forEach((answer, index) => {
+                        let key = answer[0].headline
+                        val[key] = answer[0].value
                     })
-                      handleAnswers = [];
+                    handleAnswers = [];
                 }
                 // insert new reviews values as columns
-                addReviews.forEach((review, index) => {
-                    let num = (index) + (1);
-                    let key = "Review" + num;
-                    val[key] = review
-                    handleReviews = [];
-                })
+                if (handleReviews.length) {
+                    handleReviews.forEach((review, index) => {
+                        let num = (index) + (1);
+                        let key = "Review" + num;
+                        val[key] = review
+                        handleReviews = [];
+                    })
+                }
+
                 // delete original review and answer rows as they don't need to be displayed with all their data
                 delete val.answers;
                 delete val.reviewers;
@@ -153,7 +155,7 @@ class ResponseListForm extends Component {
                 delete val.firstname;
                 delete val.lastname;
             })
-            
+
             this.setState({
                 responseTable: response,
                 btnUpdate: false
@@ -166,21 +168,24 @@ class ResponseListForm extends Component {
 
     generateCols() {
         let colFormat = [];
-       
+
         // Find the row with greatest col count and assign the col values to React Table
         if (this.state.responseTable) {
             function readColumns(rows) {
                 let tableColumns = [];
                 rows.map(val => {
                     let newColumns = Object.keys(val)
-                    tableColumns.length < newColumns.length  ? tableColumns = newColumns : console.log("columns already added")
+                    newColumns.forEach(val => {
+                        tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
+                    })
+                    console.log(tableColumns)
                 })
-                
+
                 return tableColumns
             }
 
             function widthCalc(colItem) {
-                if (colItem.includes('Answer')) {
+                if (colItem.includes('question')) {
                     return 200
                 }
 
@@ -193,7 +198,7 @@ class ResponseListForm extends Component {
             }
 
             let col = readColumns(this.state.responseTable);
-            colFormat = col.map( val => ({ id: val, Header: val, accessor: val, class: "myCol", width: widthCalc(val) }))   
+            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className:"myCol", width: widthCalc(val) }))
         }
         return colFormat
     }

@@ -113,11 +113,12 @@
 }
 
  
-.myCol {
-    max-width: 300;
-    width: 250;
+
+html .ReactTable .myCol {
+    max-width: 300px;
     white-space: normal;
     max-height: 200px;
     overflow: scroll;
     margin-bottom: 10px
 }
+
