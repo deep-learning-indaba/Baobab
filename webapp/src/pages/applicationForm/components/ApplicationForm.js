@@ -480,9 +480,17 @@ function AnswerValue(props) {
           return props.qm.answer.value;
         }
       case FILE:
-        return <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+        return <div>
+          <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
+          <br/>
+          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
+        </div>
       case MULTI_FILE:
-        return <MultiFileValue value={props.qm.answer.value}/>
+        return <div>
+          <MultiFileValue value={props.qm.answer.value}/>
+          <br/>
+          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
+        </div>
       default:
         return props.qm.answer.value;
     }
@@ -592,7 +600,9 @@ class SubmittedComponent extends React.Component {
   };
 
   handleEditOK = event => {
-    this.props.onCancelSubmit()
+    if (this.props.onEdit) {
+      this.props.onEdit();
+    }
   };
 
   handleWithdrawCancel = event => {
@@ -621,6 +631,10 @@ class SubmittedComponent extends React.Component {
 
   render() {
     const t = this.props.t;
+    const initialText = this.props.event && this.props.event.event_type === "CALL" 
+      ? t("Thank you for responding to the")
+      : t("Thank you for applying for"); 
+
     return (
       <div class="submitted">
         <h2>{t("Thank you for applying!")}</h2>
@@ -631,7 +645,7 @@ class SubmittedComponent extends React.Component {
         )}
 
         <p class="thank-you">
-          {t("Thank you for applying for") + " "} {this.props.event ? this.props.event.name : ""}.
+          {initialText + " "} {this.props.event ? this.props.event.name : ""}. {" "}
           {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
@@ -690,6 +704,7 @@ class ApplicationFormInstanceComponent extends Component {
       isSubmitting: false,
       isError: false,
       isSubmitted: false,
+      isEditing: false,
       responseId: null,
       submittedTimestamp: null,
       errorMessage: "",
@@ -736,6 +751,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false,
                 new_response: false,
@@ -757,6 +773,7 @@ class ApplicationFormInstanceComponent extends Component {
                 errorMessage: resp.message,
                 isSubmitting: false,
                 isSubmitted: resp.is_submitted,
+                isEditing: false,
                 submittedTimestamp: resp.submitted_timestamp,
                 unsavedChanges: false
               });
@@ -845,6 +862,7 @@ class ApplicationFormInstanceComponent extends Component {
     const {
       isError,
       isSubmitted,
+      isEditing,
       errorMessage,
       answers,
       isSubmitting
@@ -856,14 +874,14 @@ class ApplicationFormInstanceComponent extends Component {
       </div>;
     }
 
-    if (isSubmitted) {
+    if (isSubmitted && !isEditing) {
       return (
         <Submitted
           timestamp={this.state.submittedTimestamp}
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onCancelSubmit={() => this.setState({ isSubmitted: false, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
+          onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
         />
       );
     }
@@ -951,6 +969,8 @@ class ApplicationFormInstanceComponent extends Component {
             backButtonCls={"btn btn-prev btn-secondary"}
             nextButtonCls={"btn btn-next btn-primary float-right"}
             startAtStep={this.state.startStep}
+            nextButtonText={this.props.t("Next")}
+            backButtonText={this.props.t("Previous")}
           />
 
           <ReactToolTip />

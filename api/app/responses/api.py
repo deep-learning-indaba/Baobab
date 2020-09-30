@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app import LOGGER, bcrypt, db
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.applicationModel.models import ApplicationForm, Question
-from app.events.models import Event
+from app.events.models import Event, EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin
 from app.responses.models import Answer, Response
@@ -197,7 +197,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage)
+            question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage, application_form)
 
             if event.has_specific_translation(user.user_primaryLanguage):
                 event_description = event.get_description(user.user_primaryLanguage)
@@ -205,7 +205,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event_description = event.get_description('en')
 
             emailer.email_user(
-                'confirmation-response',
+                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
                 template_parameters=dict(
                     event_description=event_description,
                     question_answer_summary=question_answer_summary,
