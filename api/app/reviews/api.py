@@ -13,6 +13,9 @@ from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewRe
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
+from app.references.api import reference_fields
+from app.references.repository import ReferenceRequestRepository as reference_repository
+
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
@@ -99,13 +102,16 @@ review_fields = {
     'review_response': fields.Nested(review_response_fields)
 }
 
+
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
+    def __init__(self, review_form, response, reviews_remaining_count, reference_fields, review_response=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
+        self.reference_response = reference_fields
         self.review_response = review_response
+
 
 class ReviewAPI(ReviewMixin, restful.Resource):
 
@@ -124,8 +130,10 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
+        print(response)
+        reference = reference_repository.get_all_by_response_id(response.id)
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count)
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, reference)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
