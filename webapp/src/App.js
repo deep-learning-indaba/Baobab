@@ -229,17 +229,21 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{
-        // We send a put request to the user service to update the language on the back-end. 
-        // Note the language is automatically sent with every request through axios
-        userService.get().then(result => {
-          userService.update({
-            email: result.email,
-            firstName: result.firstname,
-            lastName: result.lastName,
-            title: result.user_title
+      this.props.i18n.changeLanguage(lang).then(()=>{    
+        const currentUser = JSON.parse(localStorage.getItem("user"))   
+        if (currentUser) {
+          // We send a put request to the user service to update the language on the back-end. 
+          // Note the language is automatically sent with every request through axios
+          userService.get().then(result => {
+            userService.update({
+              email: result.email,
+              firstName: result.firstname,
+              lastName: result.lastname,
+              title: result.user_title
+            });
           });
-        })
+        }
+        window.location.reload(true);
       });
     }
   }
@@ -300,9 +304,23 @@ class AppComponent extends Component {
   }
 
   refreshUser() {
+    const currentUser = JSON.parse(localStorage.getItem("user"));
     this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
+      user: currentUser
     });
+
+    if (currentUser) {
+      // Send a user profile update to record the currently selected language
+      userService.get().then(result => {
+        userService.update({
+          email: result.email,
+          firstName: result.firstname,
+          lastName: result.lastname,
+          title: result.user_title
+        });
+      });
+    }
+    
   }
 
   toggleMenu = () => {

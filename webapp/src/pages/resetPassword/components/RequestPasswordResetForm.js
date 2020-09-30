@@ -76,8 +76,6 @@ class RequestPasswordResetForm extends Component {
       )
     }
 
-    console.log("Rendering, error is: " + error);
-
     return (
       <div className="Login">
         <form onSubmit={this.handleSubmit}>
@@ -92,7 +90,7 @@ class RequestPasswordResetForm extends Component {
               id="email"
               onChange={this.handleChange}
               value={this.state.email}
-              autoFocus="true" />
+              autoFocus={true} />
           </div>
 
           <div class="row, center">

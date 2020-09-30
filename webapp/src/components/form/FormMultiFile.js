@@ -6,11 +6,18 @@ import "./Style.css";
 import _ from "lodash";
 
 
-export class FormMultiFile extends React.PureComponent {
+export class FormMultiFile extends Component {
     constructor(props) {
         super(props);
+
+        const initLength = (props.options && props.options.num_uploads) || 1;
+        const initList = []
+        for (let i = 0; i < initLength; i++) {
+            initList.push({ id: i+1, name: null, file: null });
+        }
+
         this.state = {
-            fileList: [{ id: 1, name: null, file: null }],
+            fileList: initList,
             addError: false
         }
     }
@@ -61,7 +68,8 @@ export class FormMultiFile extends React.PureComponent {
         },
             () => {
                 if (this.props.onChange) {
-                    this.props.onChange(JSON.stringify(this.state.fileList));
+                    const filteredList = this.state.fileList.filter(f=>f.file);
+                    this.props.onChange(JSON.stringify(filteredList));
                 }
             })
     }
@@ -80,7 +88,8 @@ export class FormMultiFile extends React.PureComponent {
                         existing.file = fileId;
                         this.setState({fileList: handleList}, () => {
                             if (this.props.onChange) {
-                                this.props.onChange(JSON.stringify(this.state.fileList));
+                                const filteredList = this.state.fileList.filter(f=>f.file);
+                                this.props.onChange(JSON.stringify(filteredList));
                             }
                             resolve(fileId);
                         });
@@ -92,7 +101,8 @@ export class FormMultiFile extends React.PureComponent {
                 existing.name = name;
                 this.setState({fileList: handleList}, () => {
                     if (this.props.onChange) {
-                        this.props.onChange(JSON.stringify(this.state.fileList));
+                        const filteredList = this.state.fileList.filter(f=>f.file);
+                        this.props.onChange(JSON.stringify(filteredList));
                     }
                     resolve(existing.file);
                 });
@@ -102,6 +112,10 @@ export class FormMultiFile extends React.PureComponent {
 
     render() {
         const t = this.props.t
+        let canAddFile = true;
+        if (this.props.options && this.props.options.num_uploads) {
+            canAddFile = this.props.options.num_uploads > this.state.fileList.length;
+        }
 
         return (
             <div>
@@ -114,10 +128,11 @@ export class FormMultiFile extends React.PureComponent {
                             del={this.del}
                             value={val}
                             key={"file_" + val.id.toString()}
+                            placeholder={this.props.placeholder}
                         />
                     })}
 
-                    <button className="add-file-btn" onClick={(e) => this.addFile(e)}>{t("Add File")}</button>
+                    {canAddFile && <button className="add-file-btn" onClick={(e) => this.addFile(e)}>{t("Add File")}</button>}
                     <div className={this.props.errorText ? "errorText display" : "errorText"}> <p>{this.props.errorText}</p> </div>
                 </FormGroup>
             </div>
