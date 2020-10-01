@@ -19,6 +19,7 @@ import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
+import ResponseList from "../ResponseList/ResponseList"
 
 
 class EventInfo extends Component {
@@ -125,6 +126,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/`}
           render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
+        />
+             <Route
+          exact
+          path={`${match.path}/responseList`}
+          render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact

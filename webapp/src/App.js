@@ -13,6 +13,7 @@ import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
 
+
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
@@ -47,7 +48,7 @@ class EventNav extends Component {
 
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
-        
+
         <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
         <div class={
           "collapse navbar-collapse" +
@@ -141,6 +142,13 @@ class EventNav extends Component {
                     onClick={this.props.toggleMenu}
                   >
                     {t('Invited Guests')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/responseList`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Response List')}
                   </NavLink>
                 </div>
               </li>
@@ -265,7 +273,7 @@ class LanguageSelectorComponent extends Component {
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
               {this.props.organisation.languages.map(lang => (
-                <button className="dropdown-item cursor-pointer" onClick={()=>this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+                <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
               ))}
             </div>
           </li>

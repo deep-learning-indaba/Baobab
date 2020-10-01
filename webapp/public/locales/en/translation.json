@@ -1,4 +1,3 @@
-
 {
     "Privacy Policy": "Privacy Policy",
     "Powered by": "Powered by",
@@ -289,6 +288,11 @@
     "Enter File Name": "Enter File Name",
     "Edit Name": "Edit Name",
     "Delete": "Delete",
+    "Response List": "Response List",
+    "Questions": "Questions",
+    "questions": "questions",
+    "Include un-submitted": "Include un-submitted",
+    "Update": "Update",
     "Thank you for responding to the": "Thank you for responding to the",
     "Note: You may need to change the file name to open the file on certain operating systems": "Note: You may need to change the file name to open the file on certain operating systems",
     "Next": "Next",
