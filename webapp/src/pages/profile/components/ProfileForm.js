@@ -8,7 +8,7 @@ import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import { requiredText, requiredDropdown } from "../../../utils/validation/rules.js";
-import { createColClassName } from "../../../utils/styling/styling";
+import { withTranslation } from 'react-i18next';
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
@@ -172,18 +172,14 @@ class ProfileForm extends Component {
   };
 
   render() {
-    const xs = 12;
-    const sm = 4;
-    const md = 4;
-    const lg = 4;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
-
     const {
       firstName,
       lastName,
       title,
       email
     } = this.state.user;
+
+    const t = this.props.t;
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
 
@@ -196,76 +192,62 @@ class ProfileForm extends Component {
       <div className="Profile">
         <form onSubmit={this.handleSubmit}>
 
-          <p className="h5 text-center mb-4">Profile</p>
-
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.titleOptions}
-                id={validationFields.title.name}
-                placeholder={validationFields.title.display}
-                onChange={this.handleChangeDropdown}
-                value={titleValue}
-                label={validationFields.title.display} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.firstName.name}
-                type="text"
-                placeholder={validationFields.firstName.display}
-                onChange={this.handleChange(validationFields.firstName)}
-                value={firstName}
-                label={validationFields.firstName.display} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.lastName.name}
-                type="text"
-                placeholder={validationFields.lastName.display}
-                onChange={this.handleChange(validationFields.lastName)}
-                value={lastName}
-                label={validationFields.lastName.display}
-                editable={false} />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.email.name}
-                type="email"
-                value={email}
-                label={validationFields.email.display}
-                description={"Read-only"} />
-            </div>
+          <div class="Profile-Header">
+            <h3>{t("Your Profile")}</h3>
           </div>
 
-          <div class="row">
-            <div class={commonColClassName}>
-              <button
-                type="button"
-                class="btn btn-primary Button"
-                disabled={loading}
-                onClick={() => this.setState({ confirmResetVisible: true })}>
-                Reset password
-              </button>
-            </div>
+          <div class="card">
 
-            <div class={commonColClassName}>
-              <button
-                type="submit"
-                class="btn btn-primary Button"
-                disabled={loading}>
-                {loading && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true" />
-                )}
-                Save profile
+            <FormSelect
+              options={this.state.titleOptions}
+              id={validationFields.title.name}
+              onChange={this.handleChangeDropdown}
+              value={titleValue}
+              label={t(validationFields.title.display)} />
+            <FormTextBox
+              id={validationFields.firstName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.firstName)}
+              value={firstName}
+              label={t(validationFields.firstName.display)} />
+            <FormTextBox
+              id={validationFields.lastName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.lastName)}
+              value={lastName}
+              label={t(validationFields.lastName.display)}
+              editable={false} />
+            <FormTextBox
+              isDisabled={true}
+              id={validationFields.email.name}
+              type="email"
+              value={email}
+              label={t(validationFields.email.display)}
+              description={t("Read-only")} />
+
+            <br /><br />
+
+            <button
+              type="submit"
+              class="btn btn-primary Button"
+              disabled={loading}>
+              {loading && (
+                <span
+                  class="spinner-grow spinner-grow-sm"
+                  role="status"
+                  aria-hidden="true" />
+              )}
+                {t("Save profile")}
               </button>
-            </div>
           </div>
+          <br/>
+          <button
+            type="button"
+            class="link-style App-link"
+            disabled={loading}
+            onClick={() => this.setState({ confirmResetVisible: true })}>
+            {t("Reset Your Password")}
+          </button>
 
           {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
         </form>
@@ -274,11 +256,10 @@ class ProfileForm extends Component {
           visible={this.state.confirmResetVisible}
           onOK={this.resetPassword}
           onCancel={() => this.setState({ confirmResetVisible: false })}
-          okText={"Reset Password"}
+          okText={t("Reset Password")}
           cancelText={"Cancel"}>
           <p>
-            Are you sure? Click "Reset Password" to receive an email with a link
-            to reset your password.
+            {t("Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.")}
           </p>
         </ConfirmModal>
       </div>
@@ -286,4 +267,4 @@ class ProfileForm extends Component {
   }
 }
 
-export default withRouter(ProfileForm);
+export default withRouter(withTranslation()(ProfileForm));

@@ -92,7 +92,7 @@ class FormMultiCheckbox extends React.Component {
                 <div />
               )}
           </div>
-          <div className="form-inline">
+          <div className="form text-left multi-checkbox-list">
             {this.props.options.map((option) => this.renderFormCheckbox(option))}
           </div>
         </FormGroup>

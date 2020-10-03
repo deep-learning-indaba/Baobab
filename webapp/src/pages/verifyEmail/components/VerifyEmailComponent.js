@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
+import { Trans, withTranslation } from 'react-i18next'
 
 class VerifyEmailComponent extends Component {
   constructor(props) {
@@ -62,15 +63,17 @@ class VerifyEmailComponent extends Component {
       </div>
     }
 
+    const t = this.props.t;
+
     return (
       <div className={"verify-email"}>
-        <p className="h5 text-center mb-4">Verify Email Address</p>
+        <p className="h5 text-center mb-4">{t("Verify Email Address")}</p>
         <div class="col">
-          Your email address has been verified. <Link to="/login">Click here</Link> to login if you are not automatically redirected.
+          <Trans i18nKey="verified">Your email address has been verified. <Link to="/login">Click here</Link> to login if you are not automatically redirected.</Trans>
           </div>
       </div>
     )
   }
 }
 
-export default withRouter(VerifyEmailComponent);
+export default withRouter(withTranslation()(VerifyEmailComponent));

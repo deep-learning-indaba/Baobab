@@ -68,8 +68,8 @@ class OfferApiTest(ApiTestCase):
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12),
             end_date=datetime(2020, 12, 12),
             key='SPEEDNET'
@@ -93,6 +93,8 @@ class OfferApiTest(ApiTestCase):
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
+
+        self.add_email_template('offer')
 
         db.session.flush()
 
@@ -203,8 +205,8 @@ class RegistrationTest(ApiTestCase):
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
             key='SPEEDNET'

@@ -1,5 +1,5 @@
-from sqlalchemy.sql import func, exists
-from sqlalchemy import and_
+from sqlalchemy.sql import exists
+from sqlalchemy import and_, func, cast, Date
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
@@ -178,6 +178,41 @@ class ReviewRepository():
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .count())
         return count
+
+    @staticmethod
+    def get_count_reviews_completed_for_event(event_id):
+        count = (db.session.query(ReviewResponse)
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                        .filter(ApplicationForm.event_id == event_id)
+                        .count())
+        return count
+
+    @staticmethod
+    def get_count_reviews_incomplete_for_event(event_id):
+        count = (db.session.query(ResponseReviewer)
+                        .join(Response, ResponseReviewer.response_id == Response.id)
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                        .filter(ApplicationForm.event_id == event_id)
+                        .join(ReviewForm, ApplicationForm.id == ReviewForm.application_form_id)
+                        .outerjoin(ReviewResponse, and_(
+                            ReviewResponse.review_form_id == ReviewForm.id, 
+                            ReviewResponse.reviewer_user_id == ResponseReviewer.reviewer_user_id))
+                        .filter(ReviewResponse.id == None)
+                        .count())
+        return count
+
+    @staticmethod
+    def get_review_complete_timeseries_by_event(event_id):
+        timeseries = (db.session.query(cast(ReviewResponse.submitted_timestamp, Date), func.count(ReviewResponse.submitted_timestamp))
+                        .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                        .filter(ApplicationForm.event_id == event_id)
+                        .group_by(cast(ReviewResponse.submitted_timestamp, Date))
+                        .order_by(cast(ReviewResponse.submitted_timestamp, Date))
+                        .all())
+        return timeseries
+
 
 class ReviewConfigurationRepository():
 

@@ -8,79 +8,79 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask import g
 
 from app.applicationModel.models import ApplicationForm, Question, Section
-from app.applicationModel.repository import ApplicationFormRepository as app_repository
-from app.users.repository import UserRepository as user_repository
-from app.events.models import Event
-
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.utils.auth import auth_required
-
-from app.utils.errors import EVENT_NOT_FOUND, FORM_NOT_FOUND_BY_ID, APPLICATION_FORM_EXISTS, QUESTION_NOT_FOUND, \
-    SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED, FORBIDDEN, UPDATE_CONFLICT
+from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
 from app import db, bcrypt
 from app import LOGGER
 
+def get_form_fields(form, language):
+    section_fields = []
+    for section in form.sections:
+        question_fields = []
+        for question in section.questions:
+            question_translation = question.get_translation(language)
+            question_field = {
+                'id': question.id,
+                'type': question.type,
+                'description': question_translation.description,
+                'headline': question_translation.headline,
+                'order': question.order,
+                'options': question_translation.options,
+                'placeholder': question_translation.placeholder,
+                'validation_regex': question_translation.validation_regex,
+                'validation_text': question_translation.validation_text,
+                'is_required': question.is_required,
+                'depends_on_question_id': question.depends_on_question_id,
+                'show_for_values': question_translation.show_for_values,
+                'key': question.key
+            }
+            question_fields.append(question_field)
 
-class ApplicationFormAPI(restful.Resource):
-    question_fields = {
-        'id': fields.Integer,
-        'type': fields.String,
-        'description': fields.String,
-        'headline': fields.String,
-        'order': fields.Integer,
-        'options': fields.Raw,
-        'placeholder': fields.String,
-        'validation_regex': fields.String,
-        'validation_text': fields.String,
-        'is_required': fields.Boolean,
-        'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Raw,
-        'key': fields.String
-    }
-
-    section_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'order': fields.Integer,
-        'questions': fields.List(fields.Nested(question_fields)),
-        'depends_on_question_id': fields.Integer,
-        'show_for_values': fields.Raw,
-        'key': fields.String
-    }
+        section_translation = section.get_translation(language)
+        section_field = {
+            'id': section.id,
+            'name': section_translation.name,
+            'description': section_translation.description,
+            'order': section.order,
+            'depends_on_question_id': section.depends_on_question_id,
+            'show_for_values': section_translation.show_for_values,
+            'questions': question_fields
+        }
+        section_fields.append(section_field)
 
     form_fields = {
-        'id': fields.Integer,
-        'event_id': fields.Integer,
-        'is_open': fields.Boolean,
-        'deadline': fields.DateTime,
-        'sections': fields.List(fields.Nested(section_fields)),
-        'nominations': fields.Boolean
+        'id': form.id,
+        'event_id': form.event_id,
+        'is_open':  form.is_open,
+        'nominations': form.nominations,
+        'sections': section_fields
     }
+    return form_fields
 
+class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
+
+    @auth_required
     def get(self):
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True,
-                                help='Invalid event_id requested. Event_id\'s should be of type int.')
-
-        LOGGER.debug('Received get request for application form')
-        args = req_parser.parse_args()
-        LOGGER.debug('Parsed Args for event_id: {}'.format(args))
+        args = self.req_parser.parse_args()
+        language = args['language']
 
         try:
-            form = db.session.query(ApplicationForm).filter(ApplicationForm.event_id == args['event_id']).first()
-            if (not form):
-                LOGGER.warn('Form not found for event_id: {}'.format(args['event_id']))
+            form = application_form_repository.get_by_event_id(args['event_id'])
+            if not form:
                 return FORM_NOT_FOUND
 
             if not form.is_open:
                 return APPLICATIONS_CLOSED
+            
+            if not form.sections:
+                return SECTION_NOT_FOUND
+            
+            if not form.questions:
+                return QUESTION_NOT_FOUND
 
-            if (form):
-                return marshal(form, self.form_fields)
-            else:
-                LOGGER.warn("Event not found for event_id: {}".format(args['event_id']))
-                return EVENT_NOT_FOUND
+            return get_form_fields(form, language)
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))

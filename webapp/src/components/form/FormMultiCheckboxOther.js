@@ -4,6 +4,7 @@ import React from "react";
 import "./Style.css";
 import _ from "lodash";
 import FormMultiCheckbox from "./FormMultiCheckbox";
+import { withTranslation } from 'react-i18next';
 
 class FormMultiCheckboxOther extends React.Component {
     constructor(props) {
@@ -34,7 +35,7 @@ class FormMultiCheckboxOther extends React.Component {
         if (!options.some(o => o.value === "other")) {
             options.push({
                 'value': 'other',
-                'label': 'Other...'
+                'label': this.props.t("Other") + '...'
             });
         }
 
@@ -80,6 +81,8 @@ class FormMultiCheckboxOther extends React.Component {
     }
 
     render() {
+        const t = this.props.t;
+
         return <div>
 
             <FormMultiCheckbox
@@ -94,7 +97,7 @@ class FormMultiCheckboxOther extends React.Component {
             />
             {this.state.showOther &&
                 <div class="form-group row">
-                    <label for="inputPassword" class="col-sm-2 col-form-label">Other - Please Specify:</label>
+                    <label for="inputPassword" class="col-sm-2 col-form-label">{t("Other - Please Specify")}:</label>
                     <div class="col-sm-10">
                         <input
                             type="text"
@@ -111,4 +114,4 @@ class FormMultiCheckboxOther extends React.Component {
 
 }
 
-export default FormMultiCheckboxOther;
+export default withTranslation()(FormMultiCheckboxOther);

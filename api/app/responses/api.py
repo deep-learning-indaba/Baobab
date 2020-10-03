@@ -9,8 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app import LOGGER, bcrypt, db
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.applicationModel.models import ApplicationForm, Question
-from app.email_template.repository import EmailRepository as email_repository
-from app.events.models import Event
+from app.events.models import Event, EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin
 from app.responses.models import Answer, Response
@@ -38,7 +37,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'is_withdrawn': fields.Boolean,
         'withdrawn_timestamp': fields.DateTime(dt_format='iso8601'),
         'started_timestamp': fields.DateTime(dt_format='iso8601'),
-        'answers': fields.List(fields.Nested(answer_fields))
+        'answers': fields.List(fields.Nested(answer_fields)),
+        'language': fields.String
     }
 
     @auth_required
@@ -66,6 +66,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
+        language = args['language']
+        if len(language) != 2:
+            language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
         application_form = application_form_repository.get_by_id(application_form_id)
         if application_form is None:
@@ -77,7 +80,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         if not application_form.nominations and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED
 
-        response = Response(application_form_id, user_id)
+        response = Response(application_form_id, user_id, language)
         if is_submitted:
             response.submit()
             
@@ -106,6 +109,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         args = self.put_req_parser.parse_args()
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
+        language = args['language']
 
         response = response_repository.get_by_id(args['id'])
         if not response:
@@ -116,6 +120,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.UPDATE_CONFLICT
 
         response.is_submitted = is_submitted
+        response.language = language
         if is_submitted:
             response.submit()
         response_repository.save(response)
@@ -160,16 +165,16 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             user = user_repository.get_by_id(current_user_id)
             event = response.application_form.event
             organisation = event.organisation
-            subject = 'Withdrawal of Application for the {event_name}'.format(event_name=event.description)
-            
-            withdrawal_template = email_repository.get(event.id, 'withdrawal').template
-            body_text = withdrawal_template.format(
-                title=user.user_title,
-                firstname=user.firstname,
-                lastname=user.lastname,
-                organisation_name=organisation.name,
-                event_name=event.name)
-            emailer.send_mail(user.email, subject, body_text, sender_name=g.organisation.name, sender_email=g.organisation.email_from)
+
+            emailer.email_user(
+                'withdrawal',
+                template_parameters=dict(
+                    organisation_name=organisation.name
+                ),
+                event=event,
+                user=user
+            )
+
         except:                
             LOGGER.error('Failed to send withdrawal confirmation email for response with ID : {id}, but the response was withdrawn succesfully'.format(id=args['id']))
 
@@ -192,23 +197,22 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not connect to the database to retrieve response confirmation email data on response with ID : {response_id}'.format(response_id=response.id))
 
         try:
-            subject = 'Your application to {}'.format(event.description)
-            question_answer_summary = strings.build_response_email_body(answers)
+            question_answer_summary = strings.build_response_email_body(answers, user.user_primaryLanguage, application_form)
 
-            template = email_repository.get(event.id, 'confirmation-response').template
-            body_text = template.format(
-                title=user.user_title,
-                firstname=user.firstname,
-                lastname=user.lastname,
-                event_description=event.description,
-                question_answer_summary=question_answer_summary,
-                event_name=event.name)
-            emailer.send_mail(
-                user.email, 
-                subject, 
-                body_text=body_text, 
-                sender_name=g.organisation.name,
-                sender_email=g.organisation.email_from)
+            if event.has_specific_translation(user.user_primaryLanguage):
+                event_description = event.get_description(user.user_primaryLanguage)
+            else:
+                event_description = event.get_description('en')
 
-        except:
-            LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(response_id=response.id))
+            emailer.email_user(
+                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
+                template_parameters=dict(
+                    event_description=event_description,
+                    question_answer_summary=question_answer_summary,
+                ),
+                event=event,
+                user=user
+            )
+
+        except Exception as e:
+            LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

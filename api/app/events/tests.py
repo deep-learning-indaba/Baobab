@@ -36,7 +36,7 @@ class EventsAPITest(ApiTestCase):
         db.session.add(self.test_user)
         db.session.commit()
 
-        test_event = self.add_event('Test Event', 'Event Description',
+        test_event = self.add_event({'en': 'Test Event'}, {'en': 'Event Description'},
                            datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
                            'SPEEDNET', 1, 'abx@indaba.deeplearning')
         db.session.add(test_event)
@@ -47,15 +47,10 @@ class EventsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        db.session.flush()
-
     def test_get_events_applied(self):
         self.seed_static_data()
 
-        test_response = Response(self.test_form.id, self.test_user.id)
-        test_response.submit()
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id, is_submitted=True)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -67,7 +62,10 @@ class EventsAPITest(ApiTestCase):
         data = json.loads(response.data)
 
         response = self.app.get(
-            '/api/v1/events', headers={'Authorization': data["token"]})
+            '/api/v1/events',
+            headers={'Authorization': data["token"]},
+            query_string={'language': 'en'}
+        )
         data = json.loads(response.data)
 
         self.assertEqual(len(data), 1)
@@ -78,10 +76,7 @@ class EventsAPITest(ApiTestCase):
     def test_get_events_withdrawn(self):
         self.seed_static_data()
 
-        test_response = Response(self.test_form.id, self.test_user.id)
-        test_response.withdraw()
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id, is_withdrawn=True)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -93,7 +88,10 @@ class EventsAPITest(ApiTestCase):
         data = json.loads(response.data)
 
         response = self.app.get(
-            '/api/v1/events', headers={'Authorization': data["token"]})
+            '/api/v1/events',
+            headers={'Authorization': data["token"]},
+            query_string={'language': 'en'}
+        )
         data = json.loads(response.data)
 
         self.assertEqual(len(data), 1)
@@ -103,9 +101,7 @@ class EventsAPITest(ApiTestCase):
 
     def test_unsubmitted_response(self):
         self.seed_static_data()
-        test_response = Response(self.test_form.id, self.test_user.id)
-        db.session.add(test_response)
-        db.session.commit()
+        self.add_response(self.test_form.id, self.test_user.id)
 
         response = self.app.post('/api/v1/authenticate', data={
             'email': 'something@email.com',
@@ -117,7 +113,9 @@ class EventsAPITest(ApiTestCase):
         data = json.loads(response.data)
 
         response = self.app.get(
-            '/api/v1/events', headers={'Authorization': data["token"]})
+            '/api/v1/events',
+            headers={'Authorization': data["token"]},
+            query_string={'language': 'en'})
         data = json.loads(response.data)
 
         self.assertEqual(len(data), 1)
@@ -133,6 +131,88 @@ class EventsAPITest(ApiTestCase):
         response = self.app.get('/api/v1/events')
         self.assertEqual(response.status_code, 401)  # Unauthorized
 
+    def test_past_event_offer_accepted(self):
+        """API should return past events that user had an accepted offer for."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_offer(self.test_user.id, past_event.id, candidate_response=True)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+        self.assertTrue(data[1]["status"]['is_event_attendee'])
+        
+    def test_past_event_offer_rejected(self):
+        """API should not return past events where the user rejected an offer."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_offer(self.test_user.id, past_event.id, candidate_response=False)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+
+    def test_past_event_guest(self):
+        """API should return past events where user was an invited guest."""
+        self.seed_static_data()
+
+        past_event = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST12')
+        self.add_invited_guest(self.test_user.id, past_event.id)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+        self.assertTrue(data[1]["status"]['is_event_attendee'])
+
+    def test_past_event_non_attendee(self):
+        """API should not return past events where the user was not an attendee."""
+        self.seed_static_data()
+
+        past_event1 = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST1')
+
+        past_event2 = self.add_event(start_date=datetime.now() - timedelta(days=30), 
+                       end_date=datetime.now() - timedelta(days=30),
+                       key='PAST2')
+
+        # Add a different user who attended these events
+        other_user = self.add_user(email='other@user.com')
+        self.add_invited_guest(other_user.id, event_id=past_event1.id)
+        self.add_offer(other_user.id, event_id=past_event2.id, candidate_response=True)
+        
+        response = self.app.get(
+            '/api/v1/events',
+            headers=self.get_auth_header_for('something@email.com'),
+            query_string={'language': 'en'})
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["event_type"], 'EVENT')
+
 
 class EventsStatsAPITest(ApiTestCase):
 
@@ -142,7 +222,8 @@ class EventsStatsAPITest(ApiTestCase):
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': 'abc',
-        'policy_agreed': True
+        'policy_agreed': True,
+        'language': 'en'
     }
 
     def seed_static_data(self):
@@ -157,6 +238,8 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(test_category)
         db.session.commit()
 
+        self.add_email_template('verify-email')
+
         response = self.app.post('/api/v1/user', data=self.user_data_dict)
         self.test_user1 = json.loads(response.data)
 
@@ -165,7 +248,7 @@ class EventsStatsAPITest(ApiTestCase):
         response = self.app.post('/api/v1/user', data=other_user_data)
         self.test_user2 = json.loads(response.data)
 
-        self.test_event = self.add_event('Test Event', 'Event Description',
+        self.test_event = self.add_event({'en': 'Test Event'}, {'en': 'Event Description'},
                                 datetime.now() + timedelta(days=30), datetime.now() + timedelta(days=60),
                                 'KONNET', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning',
                                 datetime.now(), datetime.now() + timedelta(days=30))
@@ -177,14 +260,8 @@ class EventsStatsAPITest(ApiTestCase):
         db.session.add(self.test_form)
         db.session.commit()
 
-        self.test_response = Response(self.test_form.id, self.test_user1['id'])
-        db.session.add(self.test_response)
-        db.session.commit()
-
-        self.test_response2 = Response(self.test_form.id, self.test_user2['id'])
-        self.test_response2.submit()
-        db.session.add(self.test_response2)
-        db.session.commit()
+        self.test_response = self.add_response(self.test_form.id, self.test_user1['id'])
+        self.test_response2 = self.add_response(self.test_form.id, self.test_user2['id'], is_submitted=True)
 
         self.user_role1 = EventRole(
             'admin', self.test_user1['id'], self.test_event.id)
@@ -209,25 +286,6 @@ class EventsStatsAPITest(ApiTestCase):
                                 query_string={'someparam': self.test_event.id})
         self.assertEqual(response.status_code, 400)
 
-    def test_event_id_missing(self):
-        self.seed_static_data()
-        response = self.app.get('/api/v1/eventstats',
-                                headers={
-                                    'Authorization': self.test_user2['token']},
-                                query_string={'event_id': self.test_event.id + 100})
-        self.assertEqual(response.status_code, 404)
-
-    def test_event_stats_accurate(self):
-        self.seed_static_data()
-        response = self.app.get('/api/v1/eventstats',
-                                headers={
-                                    'Authorization': self.test_user1['token']},
-                                query_string={'event_id': self.test_event.id})
-        data = json.loads(response.data)
-        self.assertEqual(data['num_users'], 2)
-        self.assertEqual(data['num_responses'], 2)
-        self.assertEqual(data['num_submitted_responses'], 1)
-
 
 class RemindersAPITest(ApiTestCase):
     def seed_static_data(self):
@@ -250,14 +308,17 @@ class RemindersAPITest(ApiTestCase):
         user_category = UserCategory('Post Doc')
         db.session.add(user_category)
 
-        event = self.add_event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31),
-                      'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning')
+        event = self.add_event(
+            {'en': 'Indaba 2019'}, {'en': 'Deep Learning Indaba'}, 
+            datetime(2019, 8, 25), datetime(2019, 8, 31),
+            'COOLER', 1, 'abx@indaba.deeplearning', 'indaba.deeplearning'
+        )
         db.session.add(event)
         db.session.commit()
 
         email_templates = [
-            EmailTemplate('application-not-submitted', None, ''),
-            EmailTemplate('application-not-started', None, '')]
+            EmailTemplate('application-not-submitted', None, 'Application Not Submitted', '', 'en'),
+            EmailTemplate('application-not-started', None, 'Application Not Started', '', 'en')]
         db.session.add_all(email_templates)
         db.session.commit()
 
@@ -268,19 +329,13 @@ class RemindersAPITest(ApiTestCase):
         db.session.add(application_form)
         db.session.commit()
 
-        submitted_response = Response(application_form.id, self.test_users[0].id)
-        submitted_response.submit()
-        withdrawn_response = Response(application_form.id, self.test_users[3].id)
-        withdrawn_response.withdraw()
-        responses = [
-            submitted_response,
-            Response(application_form.id, self.test_users[1].id),
-            withdrawn_response,
-            Response(application_form.id, self.test_users[4].id),
-        ]
-        db.session.add_all(responses)
+        submitted_response = self.add_response(application_form.id, self.test_users[0].id, is_submitted=True)
+        withdrawn_response = self.add_response(application_form.id, self.test_users[3].id, is_withdrawn=True)
+        self.add_response(application_form.id, self.test_users[1].id)
+        self.add_response(application_form.id, self.test_users[4].id)
 
-        db.session.commit()
+        self.add_email_template('application-not-submitted')
+        self.add_email_template('application-not-started')
 
     def get_auth_header_for(self, email):
         body = {
@@ -331,25 +386,32 @@ class RemindersAPITest(ApiTestCase):
 class EventAPITest(ApiTestCase):
 
     test_event_data_dict = {
-        'name': 'Test Event',
-        'description': 'Test Event Description',
-        'start_date': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'end_date': datetime(2020, 6, 6).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+        'name': {
+            'en': 'Test Event',
+            'fr': 'evenement de test'
+        },
+        'description': {
+            'en': 'Test Event Description',
+            'fr': "Description de l'evenement de test"
+        },
+        'start_date': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'end_date': datetime(2020, 6, 6).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'key': 'testevent',
         'organisation_id': 1,
         'email_from': 'test@testindaba.com',
         'url': 'testindaba.com',
-        'application_open': datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'application_close': datetime(2020, 2, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'review_open': datetime(2020, 2, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'review_close': datetime(2020, 3, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'selection_open': datetime(2020, 3, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'selection_close': datetime(2020, 5, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'offer_open': datetime(2020, 5, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'offer_close': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'registration_open': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'registration_close': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
-        'event_type':'EVENT'
+        'application_open': datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'application_close': datetime(2020, 2, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'review_open': datetime(2020, 2, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'review_close': datetime(2020, 3, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'selection_open': datetime(2020, 3, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'selection_close': datetime(2020, 5, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'offer_open': datetime(2020, 5, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'offer_close': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'registration_open': datetime(2020, 5, 30).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'registration_close': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'event_type':'EVENT',
+        'travel_grant': False
     }
 
     def seed_static_data(self):
@@ -375,7 +437,7 @@ class EventAPITest(ApiTestCase):
         db.session.add(self.test_user)
         db.session.commit()
 
-        event = self.add_event('Indaba 2019', 'Deep Learning Indaba', datetime(2019, 8, 25), datetime(2019, 8, 31), 'COOLER')
+        event = self.add_event({'en': 'Indaba 2019'}, {'en': 'Deep Learning Indaba'}, datetime(2019, 8, 25), datetime(2019, 8, 31), 'COOLER')
         db.session.commit()
 
         db.session.flush()
@@ -388,39 +450,60 @@ class EventAPITest(ApiTestCase):
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
         header = {'Authorization': data['token']}
-        LOGGER.debug('here')
         return header
 
     def test_post_event_unauthed(self):
         self.seed_static_data()
         response = self.app.post(
-            'api/v1/event', data=self.test_event_data_dict)
+            'api/v1/event',
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         self.assertEqual(response.status_code, 401)
 
     def test_put_event_unauthed(self):
         self.seed_static_data()
-        response = self.app.put('api/v1/event', data=self.test_event_data_dict)
+        response = self.app.put(
+            'api/v1/event',
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         self.assertEqual(response.status_code, 401)
 
     def test_post_event_not_admin(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_user.email)
         response = self.app.post(
-            'api/v1/event', headers=header, data=self.test_event_data_dict)
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         self.assertEqual(response.status_code, 403)
 
     def test_post_event_is_admin(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)
         response = self.app.post(
-            'api/v1/event', headers=header, data=self.test_event_data_dict)
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
+        data = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(data['name']), 2)
+        self.assertEqual(len(data['description']), 2)
+        self.assertEqual(data['name']['en'], 'Test Event')
+        self.assertEqual(data['name']['fr'], 'evenement de test')
+        self.assertEqual(data['description']['en'], 'Test Event Description')
+        self.assertEqual(data['description']['fr'], "Description de l'evenement de test")
+
 
     def test_post_event_eventrole_added(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)
         event_response = self.app.post(
-            'api/v1/event', headers=header, data=self.test_event_data_dict)
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         event_data = json.loads(event_response.data)
         self.assertEqual(event_response.status_code, 201)
 
@@ -440,12 +523,19 @@ class EventAPITest(ApiTestCase):
         header = self.get_auth_header_for(self.test_admin_user.email)
         # update(put) event
         self.test_event_data_dict['id'] = 1
-        self.test_event_data_dict['name'] = 'Test Event Updated'
+        self.test_event_data_dict['name'] = {'en': 'Test Event Name Updated'}
+        self.test_event_data_dict['description'] = {'en': 'Test Event Description Updated'}
         response = self.app.put(
-            'api/v1/event', headers=header, data=self.test_event_data_dict)
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(data['name'], 'Test Event Updated')
+        self.assertEqual(len(data['name']), 1)
+        self.assertEqual(len(data['description']), 1)
+        self.assertEqual(data['name']['en'], 'Test Event Name Updated')
+        self.assertEqual(data['description']['en'], 'Test Event Description Updated')
 
     def test_put_event_not_admin(self):
         self.seed_static_data()
@@ -455,11 +545,77 @@ class EventAPITest(ApiTestCase):
         header = self.get_auth_header_for(self.test_user.email)
 
         self.test_event_data_dict['id'] = 1
-        self.test_event_data_dict['name'] = 'Test Event Updated'
+        self.test_event_data_dict['name'] = {'en': 'Test Event Updated'}
+        self.test_event_data_dict['description'] = {'en': 'Test Event Description Updated'}
 
         response = self.app.put(
-            'api/v1/event', headers=header, data=self.test_event_data_dict)
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         self.assertEqual(response.status_code, 403)
+    
+    def test_post_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['name'] = {}
+        self.test_event_data_dict['description'] = {}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_post_event_translation_mismatch(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['name'] = {'en': 'English Translation'}
+        self.test_event_data_dict['description'] = {'fr': 'French Translation'}
+
+        response = self.app.post(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_put_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['id'] = 1
+        self.test_event_data_dict['name'] = {}
+        self.test_event_data_dict['description'] = {}
+
+        response = self.app.put(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+        
+        self.assertEqual(response.status_code, 400)
+    
+    def test_put_event_must_contain_translation(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['id'] = 1
+        self.test_event_data_dict['name'] = {'en': 'English Translation'}
+        self.test_event_data_dict['description'] = {'fr': 'French Translation'}
+
+        response = self.app.put(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
 
 
 class EventStatusTest(ApiTestCase):
@@ -468,7 +624,7 @@ class EventStatusTest(ApiTestCase):
         self.user1 = self.add_user('applicant@mail.co.za', 'applicant')
         self.user2 = self.add_user('applicant2@mail.co.za', 'applicant2')
         self.event = self.add_event()
-        self.event2 = self.add_event('Second event', key='second_event')
+        self.event2 = self.add_event({'en': 'Second event'}, key='second_event')
 
         self.application_form = self.create_application_form()
 
@@ -537,9 +693,7 @@ class EventStatusTest(ApiTestCase):
         invited = InvitedGuest(event_id=self.event.id, user_id=self.user1.id, role='Mentor')
         db.session.add(invited)
 
-        response = Response(self.application_form.id, self.user1.id)
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(self.application_form.id, self.user1.id)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
 
@@ -553,11 +707,7 @@ class EventStatusTest(ApiTestCase):
         """Test statuses when the user has applied."""
         self.seed_static_data()
         # Candidate has not submitted or withdrawn
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        db.session.add(response)
-        db.session.commit()
+        response = self.add_response(self.application_form.id, self.user1.id)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
 
@@ -617,12 +767,7 @@ class EventStatusTest(ApiTestCase):
             event_status.get_event_status(self.event.id, self.user1.id)
         
         # Check status when user has applied and has an outcome
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertIsNone(status.invited_guest)
@@ -638,11 +783,7 @@ class EventStatusTest(ApiTestCase):
         outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
         db.session.add(outcome)
 
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         # Test pending offer
         offer = Offer(
@@ -698,11 +839,7 @@ class EventStatusTest(ApiTestCase):
         outcome = Outcome(self.event.id, self.user1.id, OutcomeStatus.ACCEPTED, self.user2.id)
         db.session.add(outcome)
 
-        response = Response(
-            self.application_form.id, 
-            self.user1.id)
-        response.submit()
-        db.session.add(response)
+        self.add_response(self.application_form.id, self.user1.id, is_submitted=True)
 
         offer = Offer(
             user_id=self.user1.id, 

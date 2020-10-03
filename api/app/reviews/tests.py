@@ -57,9 +57,9 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            self.add_event({'en': 'indaba 2019'}, {'en': 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya '}, datetime(2019, 8, 25), datetime(2019, 8, 31),
             'KENYADABA2019'),
-            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            self.add_event({'en': 'indaba 2020'}, {'en': 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa'}, datetime(2018, 9, 9), datetime(2018, 9, 15),
             'INDABA2020', 2)
         ]
         db.session.commit()
@@ -79,8 +79,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         sections = [
-            Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(2, 'Tell Us a Bit About You', '', 1)
+            Section(1, 1),
+            Section(2, 1)
         ]
         db.session.add_all(sections)
         db.session.commit()
@@ -104,14 +104,20 @@ class ReviewsApiTest(ApiTestCase):
             }
         ]
         questions = [
-            Question(1, 1, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(1, 1, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(2, 2, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(1, 1, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None, True, None, options)
+            Question(1, 1, 1, 'long_text'),
+            Question(1, 1, 2, 'long_text'),
+            Question(2, 2, 1, 'long_text'),
+            Question(2, 2, 2, 'long_text'),
+            Question(1, 1, 3, 'multi-choice')
         ]
         db.session.add_all(questions)
         db.session.commit()
+
+        self.add_question_translation(1, 'en', 'Question 1')
+        self.add_question_translation(2, 'en', 'Question 2')
+        self.add_question_translation(3, 'en', 'Question 3')
+        self.add_question_translation(4, 'en', 'Question 4')
+        self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options=options)
 
         closed_review = ReviewForm(2, datetime(2018, 4, 30))
         closed_review.close()
@@ -138,6 +144,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_questions)
         db.session.commit()
 
+        self.add_email_template('reviews-assigned')
+
     def get_auth_header_for(self, email):
         body = {
             'email': email,
@@ -149,13 +157,7 @@ class ReviewsApiTest(ApiTestCase):
         return header
 
     def setup_one_reviewer_one_candidate(self, active=True):
-        response = Response(1, 5)
-        response.submit()
-        responses = [
-            response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -210,13 +212,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_unallocated'], 2)  
 
     def setup_responses_and_no_reviewers(self):
-        response = Response(1, 5)
-        response.submit()
-        responses = [
-            response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -247,15 +243,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_unallocated'], 3)
         
     def setup_one_reviewer_three_candidates(self):
-        responses = [
-            Response(application_form_id=1, user_id=5),
-            Response(application_form_id=1, user_id=6),
-            Response(application_form_id=1, user_id=7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(application_form_id=1, user_id=5, is_submitted=True)
+        self.add_response(application_form_id=1, user_id=6, is_submitted=True)
+        self.add_response(application_form_id=1, user_id=7, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -290,15 +280,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -335,17 +319,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
-        withdrawn_response = Response(1, 5)
-        withdrawn_response.withdraw()
-        submitted_response = Response(1, 7)
-        submitted_response.submit()
-        responses = [
-            withdrawn_response,
-            Response(1, 6),
-            submitted_response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        withdrawn_response = self.add_response(1, 5, is_withdrawn=True)
+        submitted_response = self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 6)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -378,16 +354,10 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 1)
 
     def setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7),
-            Response(1, 8)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 8, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -480,14 +450,9 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_candidate_who_has_applied_to_multiple_events(self):
         user_id = 5
-        responses = [
-            Response(application_form_id=1, user_id=user_id),
-            Response(application_form_id=2, user_id=user_id)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        
+        self.add_response(application_form_id=1, user_id=user_id, is_submitted=True)
+        self.add_response(application_form_id=2, user_id=user_id, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -519,10 +484,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
 
     def setup_multi_choice_answer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         answer = Answer(1, 5, 'indaba-2017')
         db.session.add(answer)
@@ -540,6 +502,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
+        print(data)
 
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
 
@@ -554,10 +517,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, REVIEW_RESPONSE_NOT_FOUND[1])
 
     def setup_review_response(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         answer = Answer(1, 1, 'To learn alot')
         db.session.add(answer)
@@ -609,10 +569,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
 
     def setup_response_reviewer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
@@ -632,10 +589,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(review_scores[0].value, 'test_answer')
 
     def setup_existing_review_response(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
@@ -702,16 +656,10 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(event_roles[1].role, 'reviewer')
 
     def setup_responses_without_reviewers(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7),
-            Response(1, 8)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 8, is_submitted=True)
 
     def test_adding_first_reviewer(self):
         self.seed_static_data()
@@ -736,14 +684,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(response_reviewers), 3)
 
     def setup_reviewer_with_own_response(self):
-        responses = [
-            Response(1, 3), # reviewer
-            Response(1, 5) # someone else
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 3, is_submitted=True) # reviewer
+        self.add_response(1, 5, is_submitted=True) # someone else
 
     def test_reviewer_does_not_get_assigned_to_own_response(self):
         self.seed_static_data()
@@ -758,18 +700,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 2)
 
     def setup_withdrawn_and_unsubmitted_responses(self):
-        unsubmitted_response = Response(1, 5)
-        withdrawn_response = Response(1, 6)
-        withdrawn_response.withdraw()
-        submitted_response = Response(1, 7)
-        submitted_response.submit()
-        responses = [
-            unsubmitted_response,
-            withdrawn_response,
-            submitted_response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5)
+        self.add_response(1, 6, is_withdrawn=True)
+        self.add_response(1, 7, is_submitted=True)
 
     def test_withdrawn_and_unsubmitted_responses_are_not_assigned_reviewers(self):
         self.seed_static_data()
@@ -784,10 +717,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 3)
 
     def setup_response_with_three_reviewers(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         response_reviewers = [
             ResponseReviewer(1, 1),
@@ -809,10 +739,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(response_reviewers), 0)   
 
     def setup_responsereview_with_different_reviewer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
@@ -832,10 +759,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[1].reviewer_user_id, 3)
     
     def setup_reviewer_is_not_assigned_to_response_more_than_once(self):
-        response = Response(1,5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
     def setup_count_reviews_allocated_and_completed(self):
         db.session.add_all([ 
@@ -845,17 +769,12 @@ class ReviewsApiTest(ApiTestCase):
             EventRole('reviewer', 4, 1)
         ])
         
-        responses = [
-            Response(1, 5), #1
-            Response(1, 6), #2
-            Response(1, 7), #3
-            Response(1, 8), #4
-            Response(2, 5), #5
-            Response(2, 6)  #6
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
+        self.add_response(1, 5, is_submitted=True) #1
+        self.add_response(1, 6, is_submitted=True) #2
+        self.add_response(1, 7, is_submitted=True) #3
+        self.add_response(1, 8, is_submitted=True) #4
+        self.add_response(2, 5, is_submitted=True) #5
+        self.add_response(2, 6, is_submitted=True)  #6
 
         response_reviewers = [
             ResponseReviewer(1, 2),
@@ -947,16 +866,10 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         users_id = [5,6,7]
-        responses = [
-            Response(application_form_id=1, user_id=users_id[0]),
-            Response(application_form_id=1, user_id=users_id[1]),
-            Response(application_form_id=1, user_id=users_id[2])
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
-
+        self.add_response(application_form_id=1, user_id=users_id[0], is_submitted=True)
+        self.add_response(application_form_id=1, user_id=users_id[1], is_submitted=True)
+        self.add_response(application_form_id=1, user_id=users_id[2], is_submitted=True)
+        
         final_verdict_options = [
             {'label': 'Yes', 'value': 2},
             {'label': 'No', 'value': 0},
@@ -1075,15 +988,9 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(verdict_question)
         db.session.commit()
 
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
 
         review_response_1 = ReviewResponse(1,3,1)
         review_response_2 = ReviewResponse(1,3,2)
@@ -1192,15 +1099,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][2]['user_category'], 'Student')
 
     def setup_two_extra_responses_for_reviewer3(self):
-
-        responses = [
-            Response(1, 8),
-            Response(1, 1)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 8, is_submitted=True)
+        self.add_response(1, 1, is_submitted=True)
 
         review_responses = [
             ReviewResponse(1,3,4),

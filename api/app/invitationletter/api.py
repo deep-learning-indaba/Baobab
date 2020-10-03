@@ -188,7 +188,8 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             user_title=user.user_title,
                             firstname=user.firstname,
                             lastname=user.lastname,
-                            bringing_poster=bringing_poster
+                            bringing_poster=bringing_poster,
+                            user=user
                             )
         if not is_sent:
             return errors.SENDING_INVITATION_FAILED
