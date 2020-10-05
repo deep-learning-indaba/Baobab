@@ -1,0 +1,30 @@
+
+
+.table-wrapper {
+    width: 87vw;
+}
+
+.heading-back-btn {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+h2 {
+    color: grey;
+    font-weight: 300;
+    margin-top: 2px;
+    text-align: left;
+    margin: 0;
+}
+
+h4 {
+    color: lightgrey;
+    font-weight: 300;
+    margin-top: 5px;
+    text-align: left;
+}
+
+button {
+    margin-bottom: 10px;
+}

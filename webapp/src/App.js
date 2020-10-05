@@ -12,6 +12,7 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
+import ResponseList from './pages/ResponseList/ResponseList'
 
 
 import ReactGA from "react-ga";
@@ -237,17 +238,6 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-<<<<<<< HEAD
-      this.props.i18n.changeLanguage(lang).then(() => {
-        // We send a put request to the user service to update the language on the back-end. 
-        // Note the language is automatically sent with every request through axios
-        userService.get().then(result => {
-          userService.update({
-            email: result.email,
-            firstName: result.firstname,
-            lastName: result.lastname,
-            title: result.user_title
-=======
       this.props.i18n.changeLanguage(lang).then(()=>{    
         const currentUser = JSON.parse(localStorage.getItem("user"))   
         if (currentUser) {
@@ -260,7 +250,6 @@ class LanguageSelectorComponent extends Component {
               lastName: result.lastname,
               title: result.user_title
             });
->>>>>>> develop
           });
         }
         window.location.reload(true);
@@ -445,6 +434,13 @@ class AppComponent extends Component {
                   path="/resetPassword"
                   render={props => (
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                   <Route
+                  exact
+                  path="/responseList"
+                  render={props => (
+                    <ResponseList {...props} loggedIn={this.refreshUser} />
                   )}
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />

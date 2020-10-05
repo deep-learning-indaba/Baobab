@@ -20,6 +20,7 @@ import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList"
+import ResponsePage from "../ResponsePage/ResponsePage"
 
 
 class EventInfo extends Component {
@@ -213,6 +214,12 @@ class EventHome extends Component {
           path={`${match.path}/registrationAdmin`}
           render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
+          <Route
+          exact
+          path={`${match.path}/responsePage/:id`}
+          render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        
       </div>
     );
   }

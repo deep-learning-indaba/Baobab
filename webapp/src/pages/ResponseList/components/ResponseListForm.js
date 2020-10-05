@@ -5,6 +5,7 @@ import { fetchResponse, fetchQuestions } from '../../../services/ResponseList/Re
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
+import { NavLink } from "react-router-dom";
 
 
 class ResponseListForm extends Component {
@@ -74,6 +75,17 @@ class ResponseListForm extends Component {
             response.forEach(val => {
                 let handleAnswers = [];
                 let handleReviews = [];
+
+                // Create Response Id Link
+                val.response_id = <NavLink 
+                to={`test2021/responsePage/${val.response_id}`}
+                    className="table-nav-link"
+                >
+                   
+                    {val.response_id}
+                </NavLink>;
+            // val.response_id
+
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
                     // format anwers display based on type
@@ -120,8 +132,8 @@ class ResponseListForm extends Component {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
                 })
 
-                   // add User Title as new column 
-                   function userTitleCol(row, user_title, firstname, lastname) {
+                // add User Title as new column 
+                function userTitleCol(row, user_title, firstname, lastname) {
                     return row.user_title = user_title + " " + firstname + " " + lastname
                 }
 
@@ -198,8 +210,9 @@ class ResponseListForm extends Component {
             }
 
             let col = readColumns(this.state.responseTable);
-            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className:"myCol", width: widthCalc(val) }))
+            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }))
         }
+
         return colFormat
     }
 
@@ -266,7 +279,9 @@ class ResponseListForm extends Component {
                             className="ReactTable"
                             data={responseTable ? responseTable : []}
                             columns={columns}
-                            minRows={0} />}
+                            minRows={0}
+                        />
+                    }
                 </div>
 
             </section>
