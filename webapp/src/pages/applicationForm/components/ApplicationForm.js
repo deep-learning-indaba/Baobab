@@ -418,7 +418,7 @@ class Section extends React.Component {
       <div className={"section"}>
         <div className={"headline"}>
           <h2>{section.name}</h2>
-          <p>{section.description}</p>
+          <p className="sub-heading">{section.description}</p>
         </div>
         {questionModels &&
           questionModels

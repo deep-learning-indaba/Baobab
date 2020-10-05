@@ -1,3 +1,34 @@
+  
+  /* Type Face */
+  html h2 {
+  text-align: left;
+  font-family: "Montserrat" , sans-serif;
+}
+
+html label {
+  color: grey;
+}
+
+.h4 {
+  color: hsl(213deg 39% 42%);
+  font-weight: 300;
+}
+
+textarea.form-control:focus {
+  border-color: hsl(213deg 39% 42%);  box-shadow: 0 0 5px hsl(213deg 49% 69%);
+  border: none
+}
+
+ html input #file-upload-button {
+  padding: 0;
+}
+
+
+
+.sub-heading {
+  color: grey;
+}
+ 
 .submit-application {
   width: 100px;
 }
