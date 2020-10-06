@@ -44,67 +44,145 @@ class ResponsePage extends Component {
         })
     }
 
-    generateCols() {
-        let colFormat = [];
-        // Find the row with greatest col count and assign the col values to React Table
-        let newColumns = Object.keys(this.state.applicationForm)
-
-
-        function widthCalc(colItem) {
-            if (colItem.includes('question')) {
-                return 200
-            }
-
-            if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date')) {
-                return 180
-            }
-            else {
-                return 100
-            }
-        }
-
-        let col = newColumns;
-        console.log(col)
-        colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }))
-        console.log(colFormat)
-        return colFormat
-    }
-
-    goBack(){
+    // Go Back
+    goBack() {
         this.props.history.goBack();
     }
 
+    // Generate Applciation Status
+    applicationStatus() {
+        const data = this.state.applicationData;
 
-    render() {
+        if (data) {
+            let unsubmitted = !data.is_submitted && !data.is_withdrawn;
+            let submitted = data.is_submitted;
+            let withdrawn = data.is_withdrawn;
 
-
-        const { applicationForm } = this.state
-
-        let columns = applicationForm ? this.generateCols() : console.log("no form data");
-
-        return (
-            <div className="table-wrapper">
-
-                <h2>Response Page</h2>
-                <div className="heading-back-btn">
-                    <h4>{this.props.match.params.eventKey}</h4>
-                 <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
-                </div>
-               
-                {/* Response Table */}
-                {applicationForm &&
-                    <ReactTable
-                        className="ReactTable"
-                        //  data={responseTable ? responseTable : []}
-                        columns={columns}
-                        minRows={0}
-                    />
-                }
-            </div>
-        )
+            if (unsubmitted) {
+                return ["unsubmitted" + " " + data.started_timestamp]
+            }
+            if (submitted) {
+                return ["submitted" + " " + data.submitted_timestamp]
+            }
+            if (withdrawn) {
+                return ["withdrawn" + " " + data.withdrawn_timestamp]
+            }
+        }
     }
-}
 
-export default withTranslation()(ResponsePage);
+    // Render Sections
+    renderSections() {
+        const applicationForm = this.state.applicationForm;
+        const applicationData = this.state.applicationData;
+        let html = [];
+
+        // render answerers
+        function renderAnswerer(id, type) {
+
+            // format answerers
+            function formatAnswerer(answer, type) {
+                const baseUrl = process.env.REACT_APP_API_URL;
+                let answers;
+                // file
+                if (type == "file") {
+                    answers = <a key={answer.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
+                }
+                // multi-file
+                if (type == "multi-file") {
+                    let files = [];
+                    answer.value.forEach((file => {
+                        file ? files.push(
+                            <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
+                        )
+                            :
+                            console.log(`${answer.question_id} contains no value`)
+                    }))
+                    answers = <div key={answer.headline}>{files}</div>
+                }
+                // choice
+                if (type.includes("choice")) {
+                    let choices = [];
+                    answer.options.forEach((opt => {
+                        choices.push(<div key={opt.label}><label>{opt.label}</label></div>)
+                    }))
+                    answers = <div key={choices}>{choices}</div>
+                }
+                // text
+                if (answer.type.includes("text")) {
+                    answers = <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p></div>
+
+                }
+
+                let answer;
+                applicationData.answers.forEach(a => {
+                    if (a.question_id == id) {
+                        answer = formatAnswerer(a, type)
+                    }
+                })
+
+                return answer
+            }
+        }
+
+            // render questions
+            function renderQuestions(section) {
+                let questions = section.questions.map(q => {
+                    return <div className="question-answerer-block">
+                        <p>{q.headline}</p>
+                        <h6>{renderAnswerer(q.id, q.type)}</h6>
+                    </div>
+                })
+                return questions
+            }
+
+            if (applicationForm && applicationData) {
+                applicationForm.sections.forEach(section => {
+                    html.push(<div className="section">
+                        { /*Heading*/}
+                        <div className="flex baseline"><h5>{section.name}</h5><label>Section</label></div>
+                        { /*Q & A*/}
+                        <div className="Q-A">
+                            {renderQuestions(section)}
+                        </div>
+                    </div>)
+                })
+            }
+
+            return html
+        }
+
+
+        render() {
+            const { applicationForm, applicationData } = this.state
+            const applicationStatus = this.applicationStatus();
+            const renderSections = this.renderSections();
+
+            return (
+                <div className="table-wrapper">
+                    {/**/}
+                    {/*Headings*/}
+                    <div className="flex baseline"> <h2>Response Page </h2> <h4>{this.props.match.params.eventKey}</h4> </div>
+                    {applicationData &&
+                        <div className="headings-lower">
+                            <div className="user-details"><label>User Title</label> <p>{applicationData.user_title}</p> </div>
+                            <div className="user-details"><label>User Id</label> <p>{applicationData.user_id}</p> </div>
+                            <div className="user-details"><label>First Name</label> <p>{applicationData.firstname}</p> </div>
+                            <div className="user-details"><label>Last Name</label> <p> {applicationData.lastname}</p></div>
+                            <div className="user-details"><label>applicationStatus</label> <p>{applicationStatus}</p> </div>
+                            <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                        </div>
+                    }
+
+                    {/*Response Data*/}
+                    <div className="response-details">
+                        {renderSections}
+                    </div>
+
+                </div>
+            )
+        }
+    }
+
+    export default withTranslation()(ResponsePage);
 
 

@@ -4,14 +4,8 @@
     width: 87vw;
 }
 
-.heading-back-btn {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-}
-
 h2 {
-    color: grey;
+    color: rgb(65, 65, 65);
     font-weight: 300;
     margin-top: 2px;
     text-align: left;
@@ -28,3 +22,89 @@ h4 {
 button {
     margin-bottom: 10px;
 }
+
+label {
+    font-size: 12px;
+    color: grey;
+}
+/* Flex Box Classes */
+
+.flex {
+    display: flex;
+}
+
+.baseline {
+    align-items: baseline;
+}
+
+.center {
+    justify-content: center;
+}
+
+
+/* General and  User Details Heading */
+.headings-lower {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 17px;
+    flex-wrap: wrap;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.user-details p {
+    color: hsl(0deg 0% 30%);
+}
+
+
+
+/* Response Details Section and Sub-Sections */
+.response-details {
+    margin-top: 20px;
+    width: 100%;
+    padding: 2%;
+    background: white;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    min-height: 40px;
+    padding-bottom: 40px;
+    text-align: left;
+}
+
+.section {
+    padding: 10px 0;
+}
+
+/* Q&A Sections */
+.Q-A {
+display: flex;
+flex-wrap: wrap;
+}
+
+.question-answerer-block {
+    width: 45%;
+    padding: 10px 5px;
+    border: 1px solid #e8e8e8;
+    margin: 5px;
+    background: hsl(0deg 0% 96%);
+    border-radius: 2px;
+}
+
+.question-answerer-block p {
+    color: grey;
+}
+
+/* Response Details Type Face */
+.response-details h5 {
+    color: hsl(211deg 64% 66%);
+    margin: 0;
+    padding-left: 7px;
+    padding-bottom: 4px;
+    padding-right: 4px;
+}
+
+
