@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 from datetime import datetime, timedelta
 
@@ -157,67 +159,144 @@ class ApplicationFormApiTest(ApiTestCase):
 
 
 APPLICATION_FORM_POST_DATA = {
-    "event_id": 1,
-    "is_open": True,
-    "nominations": False,
-    "sections": [
+  "id": 2,
+  "event_id": 2, 
+  "is_open": True, 
+  "nominations": False, 
+  "sections": [
+    {
+      "name": {
+         "en": "Section 1",
+         "fr": "Section 1"
+      },
+      "description": {
+         "en": "Description of the section",
+         "fr": "Description de la section"
+      },
+      "order": 1,
+      "depends_on_question_id": None,
+      "show_for_values": None,
+      "key": "candidate_information",
+      "questions": [
         {
-            "description": "Description of the section",
-            "order": 1,
-            "questions": [
-                {
-                    "validation_regex": None,
-                    "options": [
-                        {"value": "undergrad", "label": "An undergraduate student"},
-                        {"value": "masters", "label": "A masters student"},
-                    ],
-                    "description": None,
-                    "headline": "Question 1",
-                    "placeholder": "Select an Option...",
-                    "is_required": True,
-                    "type": "multi-choice",
-                    "validation_text": None,
-                    "order": 1
-                }
-            ],
-            "name": "Section 1"
+          "validation_regex": {
+             "en": None, 
+             "fr": None
+          },
+          "options": {
+              "en": [
+                  {"value": "undergrad", "label": "An undergraduate student"}, 
+                  {"value": "masters", "label": "A masters student"}, 
+                ],
+              "fr": [
+                  {"value": "undergrad", "label": u"un étudiant de premier cycle"}, 
+                  {"value": "masters", "label": u"un étudiant en maîtrise"}, 
+                ],
+          },
+          "description": {
+              "en": None, 
+              "fr": None
+          },
+          "headline": {
+              "en": "Question 1", 
+              "fr": "Question 1"
+          }
+          "placeholder": {
+              "en": "Select an Option...",
+              "fr": u"Sélectionnez une option"
+          } 
+          "is_required": True, 
+          "type": "multi-choice", 
+          "validation_text": {
+              "en": None,
+              "fr": None
+          } 
+          "order": 1
         },
         {
-            "description": "Description of the section",
-            "order": 2,
-            "questions": [
-                {
-                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
-                    "options": None,
-                    "description": "Question description",
-                    "headline": "Section 2, question 1",
-                    "placeholder": "Some question",
-                    "is_required": True,
-                    "type": "long-text",
-                    "validation_text": "You must enter no more than 150 words",
-                    "order": 1
-                },
-                {
-                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$",
-                    "options": None,
-                    "description": "Question description",
-                    "headline": "Section 2, question 2",
-                    "placeholder": "Some question",
-                    "is_required": False,
-                    "type": "long-text",
-                    "validation_text": "You must enter no more than 10 words",
-                    "order": 2
-                }
-            ],
-            "name": "Section 2"
+          "validation_regex": {
+             "en": "regex", 
+             "fr": "regex"
+          },
+          "options": {
+              "en": None,
+              "fr": None
+          },
+          "description": {
+              "en": "English Description", 
+              "fr": u"description en français"
+          },
+          "headline": {
+              "en": "Question 2", 
+              "fr": "Question 2"
+          }
+          "placeholder": {
+              "en": None,
+              "fr": None
+          } 
+          "is_required": True, 
+          "type": "long-text", 
+          "validation_text": {
+              "en": "You must enter 1 million words",
+              "fr": u"Vous devez saisir 1 million de mots"
+          } 
+          "order": 2
         }
-    ]
+      ]
+    },  # End section 1
+    {
+      "name": {
+         "en": "Section 2",
+         "fr": "Section 2"
+      },
+      "description": {
+         "en": "Description of the section",
+         "fr": "Description de la section"
+      },
+      "order": 2,
+      "depends_on_question_id": None,  # TODO: ADD THIS
+      "show_for_values": None,  # TODO: ADD THIS
+      "key": None,
+      "questions": [
+          {
+          "validation_regex": {
+             "en": "blah", 
+             "fr": "blah"
+          },
+          "options": {
+              "en": None,
+              "fr": None
+          },
+          "description": {
+              "en": "English Description", 
+              "fr": u"description en français"
+          },
+          "headline": {
+              "en": "Question 3", 
+              "fr": "Question 3"
+          }
+          "placeholder": {
+              "en": "Placeholder",
+              "fr": "Espace réservé"
+          } 
+          "is_required": False, 
+          "type": "short-text", 
+          "validation_text": {
+              "en": "Enter a valid number",
+              "fr": u"Entrez un numéro valide"
+          } 
+          "order": 1
+        }
+      ]
+    }  # End section 2
+  ]
 }
+
 
 
 class ApplicationFormCreateTest(ApiTestCase):
     """
-    Test that an application form is created by an event admin with the correct permission
+    Test the Application Form API's PUT method
     """
 
     def _seed_data_create(self):

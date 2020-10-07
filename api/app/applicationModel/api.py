@@ -59,11 +59,15 @@ def get_form_fields(form, language):
     }
     return form_fields
 
-class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
+class ApplicationFormAPI(restful.Resource):
 
     @auth_required
     def get(self):
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True, help = 'Invalid event_id requested. Event_id\'s should be of type int.')
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+
         language = args['language']
 
         try:
@@ -90,8 +94,8 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
             return DB_NOT_AVAILABLE
 
     @auth_required
-    @marshal_with(form_fields)
     def post(self):
+        # TODO: Need to handle translations! 
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True,
                                 help='Invalid event_id requested. Event_id\'s should be of type int.')
@@ -153,11 +157,11 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
                 db.session.add(question)
                 db.session.commit()
         app_form = app_repository.get_by_id(app_form.id)
-        return app_form, 201
+        return get_form_fields(form, 'en'), 201  # Need to return "detail" version with all languages!
 
     @auth_required
-    @marshal_with(form_fields)
     def put(self):
+        # TODO: Handle translations! 
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True,
                                 help='Invalid event_id requested. Event_id\'s should be of type int.')
@@ -271,4 +275,4 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
 
         db.session.commit()
 
-        return app_form, 200
+        return get_form_fields(app_form, 'en'), 200
