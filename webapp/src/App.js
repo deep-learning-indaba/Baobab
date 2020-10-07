@@ -48,8 +48,8 @@ class EventNav extends Component {
     return (
       <nav class="navbar navbar-expand-sm bg-white navbar-light">
         
-        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class={
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
+        <div className={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
@@ -236,7 +236,7 @@ class LanguageSelectorComponent extends Component {
           userService.update({
             email: result.email,
             firstName: result.firstname,
-            lastName: result.lastName,
+            lastName: result.lastname,
             title: result.user_title
           });
         })
@@ -282,7 +282,22 @@ class AppComponent extends Component {
       user: {},
       collapsed: true,
       eventKey: null,
-      currentEvent: null
+      currentEvent: null,
+      styling: {
+        logo: {
+          fontFamily: "Montserrat, sans-derif",
+          marginTop: "5px",
+          fontWeight: "500",
+          fontSize: "17px",
+          display: "flex",
+          alignItems: "center"
+        },
+        greyText: {
+          color: "grey",
+          fontFamily: "Montserrat, sans-serif",
+          margin: "0"
+        }
+      }
     };
 
     this.refreshUser = this.refreshUser.bind(this);
@@ -318,12 +333,13 @@ class AppComponent extends Component {
 
   render() {
     const t = this.props.t;
+    const styling = this.state.styling;
 
     return (
       <Router history={history}>
         <div>
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a className="navbar-brand navbar-brand-main" href="/">
+            <a className="navbar-brand navbar-brand-main" href="/" style={styling.logo}>
               <img
                 src={
                   this.props.organisation &&
@@ -334,7 +350,7 @@ class AppComponent extends Component {
                 className="d-inline-block align-top brand-image"
                 alt=""
               />
-              {this.props.organisation && this.props.organisation.system_name}
+             <p style={{margin: "0"}}>{this.props.organisation && this.props.organisation.system_name}</p> 
             </a>
             <div
               class={
@@ -351,7 +367,7 @@ class AppComponent extends Component {
                 onClick={this.toggleMenu}
               />
             </div>
-            <div>
+            <div class="new-class">
               <ul className="navbar-nav mr-auto"></ul>
             </div>
             <button
@@ -370,6 +386,8 @@ class AppComponent extends Component {
             eventKey={this.state.eventKey}
             event={this.state.currentEvent}
             user={this.state.user} />}
+
+           {/*Body*/}
           <div className="Body">
             <div className="container-fluid">
               <Switch>
@@ -425,10 +443,11 @@ class AppComponent extends Component {
                 />
               </Switch>
             </div>
-          </div>
-          <footer className="text-muted">
+
+            {/*Footer*/}
+            <footer className="text-muted">
             <div className="container-flex">
-              <div>
+              <div >
                 {this.props.organisation && this.props.organisation.system_name}
                 , © 2020 |{" "}
                 <a
@@ -452,19 +471,20 @@ class AppComponent extends Component {
                 {this.props.organisation &&
                   this.props.organisation.system_name !== "Baobab" && (
                     <div className="float-right powered-by">
-                      {t('Powered by')}{" "}
-                      <a
+                     <p style={styling.greyText}>{t('Powered by')}{" "} <a
                         href="http://www.deeplearningindaba.com"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         Baobab
-                      </a>
+                      </a></p> 
                     </div>
                   )}
               </div>
             </div>
           </footer>
+          </div>
+         
           <CookieConsent
             cookieName="baobab-cookie-consent"
             style={{ background: "#343a40" }}

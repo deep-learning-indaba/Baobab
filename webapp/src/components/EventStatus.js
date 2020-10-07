@@ -1,9 +1,17 @@
-import React, { Component } from "react";
+import React, { Component} from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
 
 
 class EventStatus extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+
+        };
+      }
+
+
 
   unknownStatus = (status_name, status) => {
       return {
@@ -342,10 +350,17 @@ class EventStatus extends Component {
   }
 
   renderButton = (definition) => {
-    return <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a> 
+
+    return <a  
+    href={definition.link} className={"status-btn btn " + definition.linkClass}>
+    {definition.shortText}
+    </a> 
   }
 
+
   render() {
+     
+
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {
         return <div>
@@ -357,14 +372,14 @@ class EventStatus extends Component {
     else {
         if (definition.shortText && definition.link && definition.title !== definition.shortText) {
             return <div>
-                <span>{definition.title}</span><br/>{this.renderButton(definition)}
+                <span className="status-txt">{definition.title}</span><br/>{this.renderButton(definition)}
             </div>
         }
         else if (definition.shortText && definition.link) {
             return this.renderButton(definition);
         }
         else {
-            return <span>{definition.shortText}</span>
+            return <span className="status-txt">{definition.shortText}</span>
         }
     }
   }

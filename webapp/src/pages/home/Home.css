@@ -25,4 +25,34 @@ table.event-table tbody {
 
 .event-table-container {
     max-width: 90%;
+    margin: 80px 0;
+}
+
+.event-table h5 {
+    margin-bottom: 2px;
+    font-family: "Montserrat";
+    font-weight: 500;
+
+}
+
+
+.link {
+    color: hsl(211deg 100% 50%)
+}
+
+
+.discription {
+    color: hsl(213deg 33% 18%);
+    font-family: "Montserrat", sans-serif;
+    font-weight: 400;
+    margin-left: 80px;
+    text-align: left;
+}
+
+.status {
+    text-align: center;
+}
+
+.text-center {
+    text-align: center;
 }

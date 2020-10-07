@@ -1,35 +1,43 @@
+
+
 @media all and (min-width: 480px) {
-    .Login {
-      padding: 1em 0 4em 0;
-    }
-  
-    .Login form {
-      margin: 0 auto;
-      max-width: 375px;
-    }
+  .Login {
+    padding: 1em 0 4em 0;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+  }
+
+  .Login form {
+    margin: 0 auto;
+    max-width: 375px;
+  }
 }
 
 .reset-password-container {
-  margin: 10px;
+margin: 10px;
 }
 
 .forgot-password {
-  margin-top: 0.2em;
+margin-top: 0.2em;
 }
 
 .login-header-logo img {
-  width: 100px;
+width: 100px;
 }
 
 .login-header-logo h3 {
-  font-weight: bold;
+font-weight: bold;
 }
 
 .login-header-logo h6 .sign-up {
-  font-weight: bold;
+font-weight: bold;
 }
 
 #btn-login {
-  width: 100%;
-  margin-top: 1em;
+width: 100%;
+margin-top: 1em;
 }

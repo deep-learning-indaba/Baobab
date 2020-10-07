@@ -26,15 +26,17 @@
 }
 
 body {
-  background: #F9fafb;
   font-family: 'Open Sans', sans-serif;
 }
 
 .Body{
-  background: #F9fafb;;
-  min-height: 80vh;
-  padding-bottom: 1em;
-  padding-top: 2em;
+  background-image: url("./images/Baobab.png");
+  background-size: cover;
+  min-height: 93.5vh;
+  position: relative;
+  overflow: scroll;
+  margin: 0;
+  padding: 0;
 }
 
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
@@ -46,14 +48,14 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 footer {
-  padding: 1em;
+  margin: 0;
+  padding: 1rem;
   background: white;
-  border-top-color: rgb(221, 221, 221);
-  border-top-style: solid;
-  border-top-width: 1px;
-  border-bottom-color: rgb(221, 221, 221);
-  border-bottom-style: solid;
-  border-bottom-width: 1px;
+  position: absolute;
+  border-top: 1px solid  hsl(0deg 0% 95%);
+  bottom: 0;
+  width: 100%;
+  font-size: 11px;
 }
 
 footer .btn {
@@ -76,6 +78,15 @@ footer .btn {
   border: none;
   cursor: pointer;
   padding: 0;
+}
+
+/*Navbar*/
+#navbarNav {
+  margin-right: 20px;
+}
+
+.navbar-nav .dropdown-menu.show{
+  left: -5px;
 }
 
 .nav-link {
@@ -125,6 +136,8 @@ footer .btn {
   margin-right: 10px;
 }
 
+
+
 .alert-container{
   margin-top: 16px;
 }
@@ -137,11 +150,13 @@ footer .btn {
   box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
   padding-top: 30px;
   padding-bottom: 30px;
+  margin-top: 15px;
 }
 
 label {
   margin-bottom: .2rem;
 }
+
 
 .powered-by a {
   font-weight: bold;
@@ -163,4 +178,70 @@ label {
 
 .menu-icon {
   margin-right: .1em;
+}
+
+/*DropDown Menu's*/
+.dropdown-item {
+  padding: .8rem 1.5rem;
+}
+
+.dropdown-item:hover {
+color: white;
+background: hsl(211deg 30% 69%);
+}
+
+.dropdown-menu {
+  padding: 0;
+  left: -3px;
+}
+
+/*Dropw Down Button*/
+button.nav-link {
+  outline: none;
+}
+
+/*Footer a tags*/
+.text-muted a {
+  color: hsl(211deg 55% 59%);
+}
+
+div.vertical-space {
+  margin-top: 2em;
+}
+
+div.card-container {
+  margin: 0 auto;
+}
+
+
+  .logo {
+    font-family: "Montserrat", sans-serif;
+    margin-top: 5px;
+    font-weight: 500;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+  }
+
+  .grey-txt {
+    color: grey;
+    font-family: "Montserrat", sans-serif;
+    margin: 0;
+  }
+
+
+/* EventStatus */
+
+.status-btn {
+     font-size: 13px;
+     padding: 5px 15px;
+     min-width: 100px;
+     border: none;
+     background: hsl(211deg 30% 69%);
+
+}
+
+.status-txt {
+  color: hsl(211deg 30% 69%);
+  font-size: 13px;
 }
