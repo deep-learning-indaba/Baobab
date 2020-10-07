@@ -12,10 +12,9 @@ class ResponsePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            applicationForm: null,
+ 
         }
     };
-
 
 
     componentDidMount() {
@@ -23,15 +22,14 @@ class ResponsePage extends Component {
         this.fetchData()
     }
 
-
-
     // Fetch Form
     fetchForm() {
-        applicationFormService.getForEvent(this.props.event.id).then(response => {
-            this.setState({
-                applicationForm: response.formSpec
+            applicationFormService.getForEvent(this.props.event.id).then(response => {
+                this.setState({
+                    applicationForm: response.formSpec
+                })
             })
-        })
+
     }
 
 
@@ -39,24 +37,22 @@ class ResponsePage extends Component {
     // Fetch Data
     fetchData() {
         let params = {
-            id: this.props.match.params.id,
-            eventKey: this.props.match.params.eventKey,
+            id: this.props.match.params.id
         }
-
-        fetchResponse(params).then(response => {
-            this.setState({
-                applicationData: response
+            fetchResponse(params).then(response => {
+                this.setState({
+                    applicationData: response
+                })
             })
-        })
+ 
+        
     }
-
 
 
     // Go Back
     goBack() {
         this.props.history.goBack();
     }
-
 
 
     // Generate Applciation Status
