@@ -14,8 +14,10 @@ const data = [
     "lastname": "Bloggs",
     "answers": [
         { "id": 4, "question_id": 37, "value": "First answer" },
-        { "id": 5, "question_id": 44, "value": "Second answer" }
-    ],
+        { "id": 5, "question_id": 50, "value": "Second answer" },
+        { "id": 6, "question_id": 44, "headline": "Third question", "value": "harry-potter", "type": "multi-choice", "options": [{ "label": "Yes, transport only", "value": "Yes, transport only" }, { "label": "Yes, accommodation only", "value": "Yes, accommodation only" }] },
+        { "id": 5, "question_id": 39, "headline": "Sixth question", "value": ["Chips", "Chocolate"], "type": "multi-file", "options": null }
+        ],
     "language": "en"}
 ]
 

@@ -2,10 +2,11 @@
 
 .table-wrapper {
     width: 87vw;
+    margin-top: 20px;
 }
 
 h2 {
-    color: rgb(65, 65, 65);
+    color: hsl(0, 0%, 25%);
     font-weight: 300;
     margin-top: 2px;
     text-align: left;
@@ -16,6 +17,7 @@ h4 {
     color: lightgrey;
     font-weight: 300;
     margin-top: 5px;
+    margin-left: 5px;
     text-align: left;
 }
 
@@ -25,6 +27,13 @@ button {
 
 label {
     font-size: 12px;
+    color: grey;
+    margin: 0 1px;
+}
+
+html .btn-primary {
+    background: white;
+    border: none;
     color: grey;
 }
 /* Flex Box Classes */
@@ -47,8 +56,16 @@ label {
     display: flex;
     width: 100%;
     justify-content: space-between;
-    margin-top: 17px;
+    margin-top: 8px;
     flex-wrap: wrap;
+    padding: 10px 15px;
+    background: hsl(213deg 16% 49%);
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    border-radius: 4px;
+}
+
+html .headings-lower label {
+    color: hsl(0deg 0% 82%);
 }
 
 .user-details {
@@ -58,7 +75,7 @@ label {
 }
 
 .user-details p {
-    color: hsl(0deg 0% 30%);
+    color: white;
 }
 
 
@@ -73,6 +90,7 @@ label {
     min-height: 40px;
     padding-bottom: 40px;
     text-align: left;
+    border-radius: 4px;
 }
 
 .section {
@@ -87,20 +105,31 @@ flex-wrap: wrap;
 
 .question-answerer-block {
     width: 45%;
-    padding: 10px 5px;
+    padding: 10px;
     border: 1px solid #e8e8e8;
     margin: 5px;
-    background: hsl(0deg 0% 96%);
+    background: hsl(0deg 0% 98%);
     border-radius: 2px;
 }
 
 .question-answerer-block p {
     color: grey;
+    font-size: 17px;
+}
+
+ html .answer {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.answer.file {
+    color: skyblue;
+    text-decoration: underline;
 }
 
 /* Response Details Type Face */
-.response-details h5 {
-    color: hsl(211deg 64% 66%);
+.response-details h3 {
+    color: hsl(213deg 16% 49%);
     margin: 0;
     padding-left: 7px;
     padding-bottom: 4px;

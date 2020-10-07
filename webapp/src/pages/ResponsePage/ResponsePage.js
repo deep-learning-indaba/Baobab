@@ -16,19 +16,25 @@ class ResponsePage extends Component {
         }
     };
 
+
+
     componentDidMount() {
         this.fetchForm()
         this.fetchData()
     }
+
+
 
     // Fetch Form
     fetchForm() {
         applicationFormService.getForEvent(this.props.event.id).then(response => {
             this.setState({
                 applicationForm: response.formSpec
-            }, console.log(response.formSpec))
+            })
         })
     }
+
+
 
     // Fetch Data
     fetchData() {
@@ -44,10 +50,14 @@ class ResponsePage extends Component {
         })
     }
 
+
+
     // Go Back
     goBack() {
         this.props.history.goBack();
     }
+
+
 
     // Generate Applciation Status
     applicationStatus() {
@@ -70,119 +80,131 @@ class ResponsePage extends Component {
         }
     }
 
+
+
     // Render Sections
     renderSections() {
         const applicationForm = this.state.applicationForm;
         const applicationData = this.state.applicationData;
         let html = [];
+        // Translation
+        const t = this.props.t;
 
-        // render answerers
-        function renderAnswerer(id, type) {
-
-            // format answerers
-            function formatAnswerer(answer, type) {
-                const baseUrl = process.env.REACT_APP_API_URL;
-                let answers;
-                // file
-                if (type == "file") {
-                    answers = <a key={answer.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
-                }
-                // multi-file
-                if (type == "multi-file") {
-                    let files = [];
-                    answer.value.forEach((file => {
-                        file ? files.push(
-                            <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
-                        )
-                            :
-                            console.log(`${answer.question_id} contains no value`)
-                    }))
-                    answers = <div key={answer.headline}>{files}</div>
-                }
-                // choice
-                if (type.includes("choice")) {
-                    let choices = [];
-                    answer.options.forEach((opt => {
-                        choices.push(<div key={opt.label}><label>{opt.label}</label></div>)
-                    }))
-                    answers = <div key={choices}>{choices}</div>
-                }
-                // text
-                if (answer.type.includes("text")) {
-                    answers = <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p></div>
-
-                }
-
-                let answer;
-                applicationData.answers.forEach(a => {
-                    if (a.question_id == id) {
-                        answer = formatAnswerer(a, type)
-                    }
-                })
-
-                return answer
-            }
-        }
-
-            // render questions
-            function renderQuestions(section) {
-                let questions = section.questions.map(q => {
-                    return <div className="question-answerer-block">
-                        <p>{q.headline}</p>
-                        <h6>{renderAnswerer(q.id, q.type)}</h6>
+        // main function
+        if (applicationForm && applicationData) {
+            applicationForm.sections.forEach(section => {
+                html.push(<div className="section">
+                    { /*Heading*/}
+                    <div className="flex baseline"><h3>{section.name}</h3><label>{t('Section')}</label></div>
+                    { /*Q & A*/}
+                    <div className="Q-A">
+                        {this.renderQuestions(section)}
                     </div>
-                })
-                return questions
-            }
-
-            if (applicationForm && applicationData) {
-                applicationForm.sections.forEach(section => {
-                    html.push(<div className="section">
-                        { /*Heading*/}
-                        <div className="flex baseline"><h5>{section.name}</h5><label>Section</label></div>
-                        { /*Q & A*/}
-                        <div className="Q-A">
-                            {renderQuestions(section)}
-                        </div>
-                    </div>)
-                })
-            }
-
-            return html
+                </div>)
+            })
         }
 
-
-        render() {
-            const { applicationForm, applicationData } = this.state
-            const applicationStatus = this.applicationStatus();
-            const renderSections = this.renderSections();
-
-            return (
-                <div className="table-wrapper">
-                    {/**/}
-                    {/*Headings*/}
-                    <div className="flex baseline"> <h2>Response Page </h2> <h4>{this.props.match.params.eventKey}</h4> </div>
-                    {applicationData &&
-                        <div className="headings-lower">
-                            <div className="user-details"><label>User Title</label> <p>{applicationData.user_title}</p> </div>
-                            <div className="user-details"><label>User Id</label> <p>{applicationData.user_id}</p> </div>
-                            <div className="user-details"><label>First Name</label> <p>{applicationData.firstname}</p> </div>
-                            <div className="user-details"><label>Last Name</label> <p> {applicationData.lastname}</p></div>
-                            <div className="user-details"><label>applicationStatus</label> <p>{applicationStatus}</p> </div>
-                            <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
-                        </div>
-                    }
-
-                    {/*Response Data*/}
-                    <div className="response-details">
-                        {renderSections}
-                    </div>
-
-                </div>
-            )
-        }
+        return html
     }
 
-    export default withTranslation()(ResponsePage);
+
+
+    // Render Questions 
+    renderQuestions(section) {
+        let questions = section.questions.map(q => {
+            return <div className="question-answerer-block">
+                <p>{q.headline}</p>
+                <h6>{this.renderAnswerer(q.id, q.type)}</h6>
+            </div>
+        })
+        return questions
+    }
+
+
+
+    // Render Answerers 
+    renderAnswerer(id, type) {
+        const applicationData = this.state.applicationData;
+        const baseUrl = process.env.REACT_APP_API_URL;
+        let answers;
+
+        applicationData.answers.forEach(a => {
+            if (a.question_id == id) {
+                console.log("yes", a.question_id)
+                formatAnswerer(a, type)
+            }
+        })
+
+        // format aswerers 
+        function formatAnswerer(a, type) {
+            // file
+            if (type == "file") {
+                answers = <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{a.value}</a>
+            }
+            // multi-file
+            if (type == "multi-file") {
+                let files = [];
+                a.value.forEach((file => {
+                    file ? files.push(
+                        <div key={a.headline}><a key={a.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file} className="answer">{a.value}</a></div>
+                    )
+                        :
+                        console.log(`${a.question_id} contains no value`)
+                }))
+                answers = <div key={a.headline}>{files}</div>
+            }
+            // choice
+            if (type.includes("choice")) {
+                let choices = [];
+                a.options.forEach(opt => {
+                    choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
+                })
+                answers = <div key={choices}>{choices}</div>
+            }
+            // text
+            if (type.includes("text")) {
+                answers = <div key={a.headline}><p className="answer">{a.value}</p></div>
+            }
+        }
+
+        return answers
+    }
+
+
+    render() {
+        const { applicationForm, applicationData } = this.state
+        const applicationStatus = this.applicationStatus();
+        const renderSections = this.renderSections();
+
+        // Translation
+        const t = this.props.t;
+ 
+        return (
+            <div className="table-wrapper">
+                {/**/}
+                {/*Headings*/}
+                <div className="flex baseline"> <h2>{t('Response Page')}</h2> <h4>{this.props.match.params.eventKey}</h4> </div>
+                {applicationData &&
+                    <div className="headings-lower">
+                        <div className="user-details"><label>{t('User Title')}</label> <p>{applicationData.user_title}</p> </div>
+                        <div className="user-details"><label>{t('User Id')}</label> <p>{applicationData.user_id}</p> </div>
+                        <div className="user-details"><label>{t('First Name')}</label> <p>{applicationData.firstname}</p> </div>
+                        <div className="user-details"><label>{t('Last Name')}</label> <p> {applicationData.lastname}</p></div>
+                        <div className="user-details"><label>{t('Application Status')}</label> <p>{applicationStatus}</p> </div>
+                        <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                    </div>
+                }
+
+                {/*Response Data*/}
+                <div className="response-details">
+                    {renderSections}
+                </div>
+
+            </div>
+        )
+    }
+}
+
+export default withTranslation()(ResponsePage);
 
 
