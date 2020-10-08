@@ -6,6 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
+import { tagList } from '../../../services/taglist/TagList'
 
 
 class ResponseListForm extends Component {
@@ -22,12 +23,25 @@ class ResponseListForm extends Component {
 
 
     componentWillMount() {
-        this.fetchData()
-        this.handleData()
+        this.fetchTags()
+    }
+
+
+    fetchTags() {
+        tagList().then(response => {
+            this.setState({
+                tags: response
+            }, () => {
+                this.handleData()
+                this.fetchData()
+            })
+        })
     }
 
 
     fetchData() {
+
+
         fetchQuestions().then(response => {
             this.setState({
                 questions: response
@@ -36,40 +50,19 @@ class ResponseListForm extends Component {
     }
 
 
-    handleSelect(question) {
-        const selected = this.state.selected;
-        let duplicate = selected.indexOf(question)
-
-        if (duplicate == -1) {
-            selected.push(question)
-        }
-        else {
-            selected.splice(duplicate, 1)
-        }
-
-        this.setState({
-            selected: selected,
-            btnUpdate: true
-        }, () => this.fetchData())
-    }
-
-
-    toggleList(list) {
-        this.setState({
-            toggleList: !list ? true : false
-        })
-    }
-
-
     handleData() {
         const baseUrl = process.env.REACT_APP_API_URL;
+        // generate tag params
+        let tags = this.state.tags.map(val => {
+            return val.id
+        })
         // disable question list
         this.toggleList(true)
 
         const { selected } = this.state;
 
 
-        fetchResponse().then(response => {
+        fetchResponse(tags).then(response => {
 
             // Handle Answers and Reviews
             response.forEach(val => {
@@ -77,14 +70,14 @@ class ResponseListForm extends Component {
                 let handleReviews = [];
 
                 // Create Response Id Link
-                val.response_id = <NavLink 
-                to={`test2021/responsePage/${val.response_id}`}
+                val.response_id = <NavLink
+                    to={`test2021/responsePage/${val.response_id}`}
                     className="table-nav-link"
                 >
-                   
+
                     {val.response_id}
                 </NavLink>;
-            // val.response_id
+                // val.response_id
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
@@ -178,6 +171,32 @@ class ResponseListForm extends Component {
     }
 
 
+
+    handleSelect(question) {
+        const selected = this.state.selected;
+        let duplicate = selected.indexOf(question)
+
+        if (duplicate == -1) {
+            selected.push(question)
+        }
+        else {
+            selected.splice(duplicate, 1)
+        }
+
+        this.setState({
+            selected: selected,
+            btnUpdate: true
+        }, () => this.fetchData())
+    }
+
+
+    toggleList(list) {
+        this.setState({
+            toggleList: !list ? true : false
+        })
+    }
+
+
     generateCols() {
         let colFormat = [];
 
@@ -244,45 +263,67 @@ class ResponseListForm extends Component {
                         </label>
                     </div>
 
-                    {/*DropDown*/}
-                    <div className="questions">
-                        <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
-                            {t('Questions')}
-                        </button>
-                        {/*Update Table*/}
-                        {toggleList && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
-                            {questions.length} {t('questions')}
-                        </span>}
-                        <div className={!toggleList ? "question-list" : "question-list show"}>
-                            {questions.length && questions.map(val => {
-                                return <div key={val.headline + "" + val.value} className="questions-item">
-                                    <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
-                                    <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
-                                        {val.headline}
-                                    </label>
+                    {/* Wrapper for drop down lists */}
+                    <div className="lists-wrapper">
+
+
+                        {/*Tags Dropdown*/}
+                        <div className="tags">
+                            <button className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
+                                {t('Tags')}
+                            </button>
+                            {/*Tag List*/}
+                            <div className="tag-list">
+                                <p>1</p>
+                                <p>2</p>
+                                <p>3</p>
+                              </div>
+                            </div>
+
+                            {/*Questions DropDown*/}
+                            <div className="questions">
+                                <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
+                                    {t('Questions')}
+                                </button>
+                                {/*Update Table*/}
+                                {toggleList && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
+                                    {questions.length} {t('questions')}
+                                </span>}
+                                <div className={!toggleList ? "question-list" : "question-list show"}>
+                                    {questions.length && questions.map(val => {
+                                        return <div key={val.headline + "" + val.value} className="questions-item">
+                                            <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
+                                            <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
+                                                {val.headline}
+                                            </label>
+                                        </div>
+                                    })
+                                    }
                                 </div>
-                            })
-                            }
+                                {toggleList && <button
+                                    onClick={(e) => this.handleData()}
+                                    type="button"
+                                    className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>}
+                            </div>
+
+
                         </div>
-                        {toggleList && <button
-                            onClick={(e) => this.handleData()}
-                            type="button"
-                            className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>}
+
+
                     </div>
-                </div>
 
 
-                <div className="react-table">
-                    {/* Response Table */}
-                    {!toggleList &&
-                        <ReactTable
-                            className="ReactTable"
-                            data={responseTable ? responseTable : []}
-                            columns={columns}
-                            minRows={0}
-                        />
-                    }
-                </div>
+                    <div className="react-table">
+                        {/* Response Table */}
+                        {!toggleList &&
+                            <ReactTable
+                                className="ReactTable"
+                                data={responseTable ? responseTable : []}
+                                columns={columns}
+                                minRows={0}
+                            />
+                        }
+                    </div>
 
             </section>
         )
