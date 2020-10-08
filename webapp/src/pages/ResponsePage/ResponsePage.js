@@ -188,17 +188,20 @@ class ResponsePage extends Component {
 
                         <div>
                             <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p> </div>
-                            <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                            <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
                         </div>
                     </div>
                 }
 
                 {/*Response Data*/}
+                {applicationData  &&
                 <div className="response-details">
                     {renderSections}
-                </div>
+                    </div>
+                }
 
-            </div>
+                </div>
+        
         )
     }
 }

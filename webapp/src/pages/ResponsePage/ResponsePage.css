@@ -32,10 +32,11 @@ label {
 }
 
  .btn-primary {
-    background: hsl(0deg 0% 81%);
+    background: grey;
     border: none;
     color: white;
     border: 1px solid lightgrey;
+    margin: 0 5px;
 }
 /* Flex Box Classes */
 

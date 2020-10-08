@@ -78,12 +78,13 @@ class ResponseListForm extends Component {
 
                 // Create Response Id Link
                 val.response_id = <NavLink 
-                to={`${this.props.event.key}/responsePage/${val.response_id}`}
+                to={`test2021/responsePage/${val.response_id}`}
                     className="table-nav-link"
                 >
                    
                     {val.response_id}
                 </NavLink>;
+            // val.response_id
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
