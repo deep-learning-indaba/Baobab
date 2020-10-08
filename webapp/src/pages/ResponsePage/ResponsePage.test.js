@@ -57,37 +57,6 @@ test("Check if Question and Answerer html renders.", async () => {
     expect(wrapper.find('.Q-A').length).toEqual(1);
 });
 
-/*
-
-
-
-test("Check if toggleList function displays list.", async () => {
-    const wrapper = shallow(<ResponsePage />);
-    let listStatus = wrapper.state().toggleList;
-    await wrapper.instance().toggleList(listStatus);
-    expect(wrapper.find('.question-list.show').length).toEqual(1);
-});
-
-test("Check if Table API call is successful.",  async () => {
-    const wrapper = shallow(<ResponsePage />);
-    await wrapper.instance().handleData();
-    expect(wrapper.state().responseTable.length).toBeTruthy();
-});
-
-test("Check if React Table renders.", async () => {
-    const wrapper = shallow(<ResponsePage />);
-    await wrapper.instance().handleData();
-    expect(wrapper.find('.ReactTable').length).toEqual(1);
-});
-
-test("Check if Col function is succesfull.", async () => {
-    const wrapper = shallow(<ResponsePage />);
-    await wrapper.instance().handleData();
-    let columns = await wrapper.instance().generateCols();
-    expect(columns.length).toBeTruthy();
-});
-*/
-
 
 
 

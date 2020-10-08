@@ -78,13 +78,12 @@ class ResponseListForm extends Component {
 
                 // Create Response Id Link
                 val.response_id = <NavLink 
-                to={`test2021/responsePage/${val.response_id}`}
+                to={`${this.props.event.key}/responsePage/${val.response_id}`}
                     className="table-nav-link"
                 >
                    
                     {val.response_id}
                 </NavLink>;
-            // val.response_id
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
@@ -190,7 +189,7 @@ class ResponseListForm extends Component {
                     newColumns.forEach(val => {
                         tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
                     })
-                    console.log(tableColumns)
+
                 })
 
                 return tableColumns
@@ -239,7 +238,7 @@ class ResponseListForm extends Component {
                     {/*CheckBox*/}
                     <div className="checkbox-top">
                         <input onClick={(e) => this.fetchData()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
-                        <label id="label" className="label-top" for="defaultCheck1">
+                        <label id="label" className="label-top" htmlFor="defaultCheck1">
                             {t('Include un-submitted')}
                         </label>
                     </div>
@@ -255,9 +254,9 @@ class ResponseListForm extends Component {
                         </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
-                                return <div key={val} className="questions-item">
+                                return <div key={val.headline + "" + val.value} className="questions-item">
                                     <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
-                                    <label style={{ marginLeft: "5px" }} className="form-check-label" for={val.question_id}>
+                                    <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
                                         {val.headline}
                                     </label>
                                 </div>

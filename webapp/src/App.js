@@ -48,10 +48,10 @@ class EventNav extends Component {
     const t = this.props.t;
 
     return (
-      <nav class="navbar navbar-expand-sm bg-white navbar-light">
+      <nav className="navbar navbar-expand-sm bg-white navbar-light">
 
-        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class={
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
+        <div className={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
@@ -364,7 +364,7 @@ class AppComponent extends Component {
               {this.props.organisation && this.props.organisation.system_name}
             </a>
             <div
-              class={
+              className={
                 "collapse navbar-collapse" +
                 (this.state.collapsed ? " collapsed" : "")
               }

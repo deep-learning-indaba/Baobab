@@ -1,7 +1,5 @@
 
 import React, { Component } from 'react'
-import ReactTable from 'react-table';
-import { NavLink } from 'react-router-dom';
 import "react-table/react-table.css";
 import { withTranslation } from 'react-i18next';
 import './ResponsePage.css'
@@ -12,7 +10,7 @@ class ResponsePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
- 
+
         }
     };
 
@@ -24,11 +22,11 @@ class ResponsePage extends Component {
 
     // Fetch Form
     fetchForm() {
-            applicationFormService.getForEvent(this.props.event.id).then(response => {
-                this.setState({
-                    applicationForm: response.formSpec
-                })
+        applicationFormService.getForEvent(this.props.event.id).then(response => {
+            this.setState({
+                applicationForm: response.formSpec
             })
+        })
 
     }
 
@@ -39,13 +37,13 @@ class ResponsePage extends Component {
         let params = {
             id: this.props.match.params.id
         }
-            fetchResponse(params).then(response => {
-                this.setState({
-                    applicationData: response
-                })
+        fetchResponse(params).then(response => {
+            this.setState({
+                applicationData: response
             })
- 
-        
+        })
+
+
     }
 
 
@@ -89,9 +87,9 @@ class ResponsePage extends Component {
         // main function
         if (applicationForm && applicationData) {
             applicationForm.sections.forEach(section => {
-                html.push(<div className="section">
+                html.push(<div key={section.name} className="section">
                     { /*Heading*/}
-                    <div className="flex baseline"><h3>{section.name}</h3><label>{t('Section')}</label></div>
+                    <div className="flex baseline"><h3>{section.name}</h3></div>
                     { /*Q & A*/}
                     <div className="Q-A">
                         {this.renderQuestions(section)}
@@ -108,9 +106,9 @@ class ResponsePage extends Component {
     // Render Questions 
     renderQuestions(section) {
         let questions = section.questions.map(q => {
-            return <div className="question-answerer-block">
+            return <div key={q.id} className="question-answer-block">
                 <p>{q.headline}</p>
-                <h6>{this.renderAnswerer(q.id, q.type)}</h6>
+                <h6>{this.renderAnswer(q.id, q.type)}</h6>
             </div>
         })
         return questions
@@ -118,21 +116,20 @@ class ResponsePage extends Component {
 
 
 
-    // Render Answerers 
-    renderAnswerer(id, type) {
+    // Render Answers 
+    renderAnswer(id, type) {
         const applicationData = this.state.applicationData;
         const baseUrl = process.env.REACT_APP_API_URL;
         let answers;
 
         applicationData.answers.forEach(a => {
             if (a.question_id == id) {
-                console.log("yes", a.question_id)
-                formatAnswerer(a, type)
+                formatAnswer(a, type)
             }
         })
 
         // format aswerers 
-        function formatAnswerer(a, type) {
+        function formatAnswer(a, type) {
             // file
             if (type == "file") {
                 answers = <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{a.value}</a>
@@ -153,7 +150,11 @@ class ResponsePage extends Component {
             if (type.includes("choice")) {
                 let choices = [];
                 a.options.forEach(opt => {
-                    choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
+                    a.value.forEach(val => {
+                        if (val.label == opt.label) {
+                            choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
+                        }
+                    })
                 })
                 answers = <div key={choices}>{choices}</div>
             }
@@ -174,20 +175,21 @@ class ResponsePage extends Component {
 
         // Translation
         const t = this.props.t;
- 
+
         return (
             <div className="table-wrapper">
-                {/**/}
-                {/*Headings*/}
-                <div className="flex baseline"> <h2>{t('Response Page')}</h2> <h4>{this.props.match.params.eventKey}</h4> </div>
                 {applicationData &&
                     <div className="headings-lower">
-                        <div className="user-details"><label>{t('User Title')}</label> <p>{applicationData.user_title}</p> </div>
-                        <div className="user-details"><label>{t('User Id')}</label> <p>{applicationData.user_id}</p> </div>
-                        <div className="user-details"><label>{t('First Name')}</label> <p>{applicationData.firstname}</p> </div>
-                        <div className="user-details"><label>{t('Last Name')}</label> <p> {applicationData.lastname}</p></div>
-                        <div className="user-details"><label>{t('Application Status')}</label> <p>{applicationStatus}</p> </div>
-                        <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                        <div>
+                            <div className="user-details"> <p>{applicationData.user_title}</p> </div>
+                            <div className="user-details"> <p>{applicationData.firstname}</p> </div>
+                            <div className="user-details"> <p> {applicationData.lastname}</p></div>
+                        </div>
+
+                        <div>
+                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p> </div>
+                            <button class="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                        </div>
                     </div>
                 }
 

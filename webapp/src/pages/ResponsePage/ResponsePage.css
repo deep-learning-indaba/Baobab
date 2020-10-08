@@ -31,10 +31,11 @@ label {
     margin: 0 1px;
 }
 
-html .btn-primary {
-    background: white;
+ .btn-primary {
+    background: hsl(0deg 0% 81%);
     border: none;
-    color: grey;
+    color: white;
+    border: 1px solid lightgrey;
 }
 /* Flex Box Classes */
 
@@ -59,13 +60,25 @@ html .btn-primary {
     margin-top: 8px;
     flex-wrap: wrap;
     padding: 10px 15px;
-    background: hsl(213deg 16% 49%);
     box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
     border-radius: 4px;
 }
 
+.headings-lower div {
+    display: flex;
+    align-items: center;
+}
+
+.user-details {
+    padding: 0 2px
+}
+
+.user-details.right {
+    padding: 0 10px
+}
+
 html .headings-lower label {
-    color: hsl(0deg 0% 82%);
+    color: hsl(0deg 0% 55%);
 }
 
 .user-details {
@@ -75,7 +88,7 @@ html .headings-lower label {
 }
 
 .user-details p {
-    color: white;
+    color: hsl(0deg 0% 30%);
 }
 
 
@@ -103,8 +116,8 @@ display: flex;
 flex-wrap: wrap;
 }
 
-.question-answerer-block {
-    width: 45%;
+.question-answer-block {
+    width: 100%;
     padding: 10px;
     border: 1px solid #e8e8e8;
     margin: 5px;
@@ -112,12 +125,12 @@ flex-wrap: wrap;
     border-radius: 2px;
 }
 
-.question-answerer-block p {
+.question-answer-block p {
     color: grey;
     font-size: 17px;
 }
 
- html .answer {
+ html .answerer {
     font-weight: bold;
     font-size: 13px;
 }

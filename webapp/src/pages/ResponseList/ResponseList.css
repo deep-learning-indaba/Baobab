@@ -25,15 +25,18 @@
 }
 
 
-.btn-primary.green {
+.questions .btn-primary.green {
     background: hsl(120, 58%, 42%);
     border: darkgreen;
+    color: white;
     }
 
-.btn {
-    margin-right: 7px;
-    color: white;
-}
+    .questions .btn-update {
+        background:white;
+        border: 1px solid lightgrey;
+        color: grey;
+
+    }
 
 
 /* Inputs */
