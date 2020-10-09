@@ -1,13 +1,119 @@
+.label-top {
+    color: grey;
+    font-size: 17px;
+}
+
+.lists-wrapper .btn {
+    margin-right: 5px;
+}
+
+
 /* Drop Down Lists Wrapper */
 .lists-wrapper {
     display: flex;
+    align-items: center;
+    flex-wrap: wrap;
 }
+
+/* Pills */
+.pills {
+    display: flex;
+}
+
+.pills button {
+    border-radius: 4px;
+    background: hsl(212deg 78% 52%);
+    color: white;
+    font-size: 10px;
+    border: none;
+    height: 26px;
+    margin: 0 5px;
+}
+
+.pills i {
+    padding: 0 3px;
+}
+
 
 /* Tags */
 
-.tag-list {
-    width: 30px;
-    padding: 4px;
+.tags {
+    min-width: 1px;
+}
+
+.tag-list {  
+    min-width: 1px;
+    height: 1px; 
+    opacity: 0;
+    margin-left: 0;
+    transition: 300ms;
+    pointer-events: none;
+    overflow: scroll;
+}
+
+.tag-list.show {
+    height: 240px;
+    opacity: 1;
+    margin-right: 15px;
+    transition: 300ms;
+}
+
+.tag-item {
+    display: flex;
+    margin: 5px 0;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.tag-list.show .tag-item{
+    pointer-events: all;
+}
+
+.tag-item.hide {
+    display: flex;
+    margin: 5px 0;
+    color: lightgrey;
+    display: none;
+}
+
+.btn.tag {
+    background: none;
+    border: 1px solid grey;
+    pointer-events: all;
+    opacity: 1;
+}
+
+.btn.tag.hide {
+    background: none;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.btn.tags {
+    background: hsl(0deg 0% 91%);
+    margin: 0;
+    font-size: 12px;
+    width: 15%;
+    text-align: left;
+}
+
+.btn.tags.update {
+    background: hsl(120, 58%, 42%);
+    border: darkgreen;
+    color: white;
+    z-index: 50;
+    pointer-events: all;
+}
+
+.btn.tags.update:hover {
+    background: hsl(120, 58%, 48%);
+    border: darkgreen;
+    color: white;
+}
+
+.btn.tags:hover {
+    background: none;
+    border: 1px solid lightgrey;
 }
 
 /*Questions*/
@@ -38,18 +144,34 @@
     transition: 300ms;
 }
 
+.btn-secondary {
+    opacity: 1;
+    pointer-events: all;
+    }
 
-.questions .btn-primary.green {
+    .btn-secondary.hide {
+opacity: 0.5;
+pointer-events: none;
+}
+
+html .btn-update {
+    background:hsl(214deg 98% 65%);
+}
+
+
+html .btn-primary.green {
     background: hsl(120, 58%, 42%);
     border: darkgreen;
     color: white;
     }
 
-    .questions .btn-update {
-        background:white;
+    .btn.reset:hover{
+        background: hsl(0, 0%, 91%);
         border: 1px solid lightgrey;
+    }
+    .btn.reset {
+        background: white;
         color: grey;
-
     }
 
 
@@ -71,21 +193,24 @@
     display: block;
 }
 
-.label-top {
-    color: grey;
-    font-size: 20px;
-}
-
-
 .total-q {
     color: grey;
 }
 
 .questions-item {
     display: flex;
-    align-items: center;
     width: 30%;
+    opacity: 1;
+    pointer-events: all;
 }
+
+.questions-item.hide {
+    display: flex;
+    width: 30%;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
 
 .question-list {
     height: 0px;
@@ -96,6 +221,7 @@
     overflow: scroll;
     display: flex;
     flex-wrap: wrap;
+    pointer-events: none;
 }
 
 .question-list.show {
@@ -103,6 +229,7 @@
     opacity: 1;
     z-index: 0;
     transition: 300ms;
+    pointer-events: all;
 }
 
 /* React Table */

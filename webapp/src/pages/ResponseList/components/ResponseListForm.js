@@ -14,10 +14,11 @@ class ResponseListForm extends Component {
         super(props);
         this.state = {
             questions: [],
-            selected: [],
+            selectedQuestions: [],
             toggleList: false,
             responseTable: null,
-            btnUpdate: false
+            btnUpdate: false,
+            selectedTags: [],
         }
     }
 
@@ -40,8 +41,6 @@ class ResponseListForm extends Component {
 
 
     fetchData() {
-
-
         fetchQuestions().then(response => {
             this.setState({
                 questions: response
@@ -49,21 +48,15 @@ class ResponseListForm extends Component {
         })
     }
 
+    
 
     handleData() {
         const baseUrl = process.env.REACT_APP_API_URL;
-        // generate tag params
-        let tags = this.state.tags.map(val => {
-            return val.id
-        })
+        const { selectedTags, selectedQuestions } = this.state
         // disable question list
-        this.toggleList(true)
+        this.toggleList(false)
 
-        const { selected } = this.state;
-
-
-        fetchResponse(tags).then(response => {
-
+        fetchResponse(selectedTags).then(response => {
             // Handle Answers and Reviews
             response.forEach(val => {
                 let handleAnswers = [];
@@ -82,7 +75,7 @@ class ResponseListForm extends Component {
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
                     // format anwers display based on type
-                    if (selected.includes(answer.question_id)) {
+                    if (selectedQuestions.includes(answer.question_id)) {
                         if (answer.type == "file") {
                             handleAnswers.push([{
                                 headline: answer.headline,
@@ -163,17 +156,40 @@ class ResponseListForm extends Component {
 
             this.setState({
                 responseTable: response,
-                btnUpdate: false
+                btnUpdate: false,
             }
             )
 
         })
     }
 
+    tagSelector(name) {
+        let list = this.state.selectedTags;
+        let duplicateTag = list.indexOf(name)
+
+        if (duplicateTag == -1) {
+            list.push(name)
+        }
+        else {
+            list.splice(duplicateTag, 1);
+        }
+
+        this.setState({
+            selectedTags: list,
+            btnUpdate: true
+        }, () => this.fetchData())
+    }
 
 
-    handleSelect(question) {
-        const selected = this.state.selected;
+    deletePill(val) {
+        this.tagSelector(val);
+        this.handleData()
+    }
+
+
+
+    questionSelector(question) {
+        const selected = this.state.selectedQuestions;
         let duplicate = selected.indexOf(question)
 
         if (duplicate == -1) {
@@ -184,15 +200,15 @@ class ResponseListForm extends Component {
         }
 
         this.setState({
-            selected: selected,
+            selectedQuestions: selected,
             btnUpdate: true
         }, () => this.fetchData())
     }
 
 
-    toggleList(list) {
+    toggleList(list, type) {
         this.setState({
-            toggleList: !list ? true : false
+            toggleList: !list ? type : false
         })
     }
 
@@ -237,6 +253,21 @@ class ResponseListForm extends Component {
 
 
 
+    reset() {
+        // reset checkboxes
+        document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+
+         // disable question list
+         this.toggleList(true)
+
+        this.setState({
+            selectedQuestions: [],
+            selectedTags: []
+        })
+    }
+
+
+
     render() {
         // Translation
         const t = this.props.t;
@@ -245,7 +276,10 @@ class ResponseListForm extends Component {
             questions,
             toggleList,
             responseTable,
-            btnUpdate
+            btnUpdate,
+            tags,
+            selectedTags,
+            selectedQuestions
         } = this.state
         // Generate Col
         const columns = this.generateCols();
@@ -263,67 +297,106 @@ class ResponseListForm extends Component {
                         </label>
                     </div>
 
+
+
                     {/* Wrapper for drop down lists */}
                     <div className="lists-wrapper">
 
 
                         {/*Tags Dropdown*/}
                         <div className="tags">
-                            <button className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
+                            <button onClick={(e) => this.toggleList(toggleList, "tag")} className={!toggleList ? "btn tag" : "btn tag hide"} type="button" aria-haspopup="true" aria-expanded="false">
                                 {t('Tags')}
                             </button>
-                            {/*Tag List*/}
-                            <div className="tag-list">
-                                <p>1</p>
-                                <p>2</p>
-                                <p>3</p>
-                              </div>
-                            </div>
-
-                            {/*Questions DropDown*/}
-                            <div className="questions">
-                                <button onClick={(e) => this.toggleList(toggleList)} className="btn btn-secondary" type="button" aria-haspopup="true" aria-expanded="false">
-                                    {t('Questions')}
-                                </button>
-                                {/*Update Table*/}
-                                {toggleList && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
-                                    {questions.length} {t('questions')}
-                                </span>}
-                                <div className={!toggleList ? "question-list" : "question-list show"}>
-                                    {questions.length && questions.map(val => {
-                                        return <div key={val.headline + "" + val.value} className="questions-item">
-                                            <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
-                                            <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
-                                                {val.headline}
-                                            </label>
-                                        </div>
-                                    })
-                                    }
-                                </div>
-                                {toggleList && <button
-                                    onClick={(e) => this.handleData()}
-                                    type="button"
-                                    className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>}
-                            </div>
-
 
                         </div>
 
+                        {/*Questions DropDown*/}
+                        <div className="questions">
+                            <button onClick={(e) => this.toggleList(toggleList, "question")} className={!toggleList ? "btn btn-secondary" : "btn btn-secondary hide"}
+                                type="button" aria-haspopup="true" aria-expanded="false">
+                                {t('Questions')}
+                            </button>
+                            {/*Update Table*/}
+                            {toggleList == "question" && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
+                                {questions.length} {t('questions')}
+                            </span>}
+                        </div>
+
+
+                        {/*Pills*/}
+                        <div class="pills">
+
+                            {selectedTags &&
+                                selectedTags.map(val => {
+                                    return <button onClick={(e) => this.deletePill(val)} className="btn btn-primary"> {val} <i className="far fa-trash-alt"></i></button>
+                                })
+                            }
+                        </div>
 
                     </div>
 
 
-                    <div className="react-table">
-                        {/* Response Table */}
-                        {!toggleList &&
-                            <ReactTable
-                                className="ReactTable"
-                                data={responseTable ? responseTable : []}
-                                columns={columns}
-                                minRows={0}
-                            />
+                    {/* List Section */}
+                    <div className="list-section">
+
+                        {/*Tag List*/}
+                        <div className={toggleList == "tag" ? "tag-list show" : "tag-list"}>
+                            {tags &&
+                                tags.map(val => {
+                                    return <div className={selectedTags.includes(val.name) ? "tag-item hide" : "tag-item"} key={val.id} >
+                                        <button className="btn tags" onClick={(e) => this.tagSelector(val.name)}>{val.name}</button>
+                                    </div>
+                                })}
+                              {/* Update Button */}
+                        {toggleList && <button
+                            onClick={(e) => this.handleData(selectedTags)}
+                            type="button"
+                            className="btn tags update" >Update</button>
                         }
+                        </div>
+
+                        {/* List Questions */}
+                        <div className={toggleList == "question" ? "question-list show" : "question-list "}>
+                            {questions.length && questions.map(val => {
+                                return <div className={selectedQuestions.includes(val.question_id) ? "questions-item hide" : "questions-item"} key={val.headline + "" + val.value} >
+                                    <input onClick={(e) => this.questionSelector(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
+                                    <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
+                                        {val.headline}
+                                    </label>
+                                </div>
+                            })
+                            }
+                        </div>
+
+                        {/* Update Button */}
+                        {toggleList == "question" && <button
+                            onClick={(e) => this.handleData(selectedTags)}
+                            type="button"
+                            className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>
+
+                        }
+                        {toggleList == "question" &&
+                            <button onClick={(e) => this.reset(e)} className="btn btn-primary reset">Reset</button>
+                        }
+
                     </div>
+
+
+                </div>
+
+
+                <div className="react-table">
+                    {/* Response Table */}
+                    {!toggleList &&
+                        <ReactTable
+                            className="ReactTable"
+                            data={responseTable ? responseTable : []}
+                            columns={columns}
+                            minRows={0}
+                        />
+                    }
+                </div>
 
             </section>
         )
