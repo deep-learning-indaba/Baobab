@@ -1,5 +1,5 @@
 
-export function fetchQuestions() {
+export function questions() {
   return new Promise((resolve, reject) => {
     resolve([
       { "question_id": 1, "headline": "First question", "type": "short-text" },
@@ -12,14 +12,12 @@ export function fetchQuestions() {
   })
 }
 
-export function fetchResponse(tags) {
+export function response(tags) {
+
   return new Promise((resolve, reject) => {
-
-
 
     const data = [
       {
-        "tag_name": "First Tag",
         "response_id": 1,
         "user_title": "Mr",
         "firstname": "Jimmy",
@@ -36,10 +34,14 @@ export function fetchResponse(tags) {
         "answers": [
           { "question_id": 1, "headline": "First question", "value": "Hello world", "type": "short-text", "options": null },
           { "question_id": 3, "headline": "Third question", "value": "harry-potter", "type": "multi-choice", "options": [{ "label": "Harry Potter", "value": "harry-potter" }, { "label": "X-men", "value": "x-men" }] }
+        ],
+        "tags": [         //  <-------- NEW
+          { "id": 5, "name": "Education" },
+          { "id": 7, "name": "Healthcare" }
         ]
       },
+
       {
-        "tag_name": "Second Tag",
         "response_id": 2,
         "user_title": "Ms",
         "firstname": "Halle",
@@ -56,10 +58,13 @@ export function fetchResponse(tags) {
         "answers": [
           { "question_id": 1, "headline": "First question", "value": "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?", "type": "long-text", "options": null },
           { "question_id": 3, "headline": "Third question", "value": "x-men", "type": "multi-choice", "options": [{ "label": "Harry Potter", "value": "harry-potter" }, { "label": "X-men", "value": "x-men" }] }
+        ],
+        "tags": [             //  <-------- NEW
+          { "id": 2, "name": "Desk Reject" },
+          { "id": 7, "name": "Healthcare" }
         ]
       },
       {
-        "tag_name": "Third Tag",
         "response_id": 3,
         "user_title": "Mr",
         "firstname": "Jo",
@@ -76,10 +81,13 @@ export function fetchResponse(tags) {
         "answers": [
           { "question_id": 4, "headline": "Forth question", "value": "Tomatoes", "type": "file", "options": null },
           { "question_id": 3, "headline": "Third question", "value": "x-men", "type": "multi-choice", "options": [{ "label": "Harry Potter", "value": "harry-potter" }, { "label": "X-men", "value": "x-men" }] }
+        ],
+        "tags": [         //  <-------- NEW
+          { "id": 5, "name": "Education" },
+          { "id": 7, "name": "Healthcare" }
         ]
       },
       {
-        "tag_name": "Fourth Tag",
         "response_id": 4,
         "user_title": "Mr",
         "firstname": "Ares",
@@ -96,22 +104,30 @@ export function fetchResponse(tags) {
         "answers": [
           { "question_id": 4, "headline": "Forth question", "value": "Baobab", "type": "file", "options": null },
           { "question_id": 6, "headline": "Sixth question", "value": ["Chips", "Chocolate"], "type": "multi-file", "options": null }
+        ],
+        "tags": [             //  <-------- NEW
+          { "id": 2, "name": "Desk Reject" },
+          { "id": 1, "name": "Mock Tag" }
         ]
       }
     ];
 
-    let paramData = tags;
     let filteredData = [];
 
-    if (tags.length) {
-      data.forEach(val => {
-        if (paramData.includes(val.tag_name)) {
-          filteredData.push(val)
-        }
+
+    data.forEach(val => {
+      let isSelected;
+      val.tags.forEach(tag => {
+        tags.includes(tag.name) ? isSelected = true : isSelected = false
       })
 
-      console.log(filteredData)
-    }
+      if (isSelected) {
+        filteredData.push(val)
+      }
+     
+    })
+
+
 
     resolve(filteredData.length ? filteredData : data)
 

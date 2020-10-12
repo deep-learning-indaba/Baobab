@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { fetchResponse, fetchQuestions } from '../../../services/ResponseList/ResponseList'
+import { response, questions } from '../../../services/ResponseList/ResponseList'
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
@@ -27,36 +27,39 @@ class ResponseListForm extends Component {
         this.fetchTags()
     }
 
-
+    // Fetch Tags
     fetchTags() {
         tagList().then(response => {
             this.setState({
                 tags: response
             }, () => {
                 this.handleData()
-                this.fetchData()
+                this.fetchQuestions()
             })
         })
     }
 
 
-    fetchData() {
-        fetchQuestions().then(response => {
+    // Fetch Questions
+    fetchQuestions() {
+        questions().then(response => {
             this.setState({
                 questions: response
             })
         })
     }
 
-    
 
+    // Fetch Ressponses and Handle/Format Data
     handleData() {
+
         const baseUrl = process.env.REACT_APP_API_URL;
         const { selectedTags, selectedQuestions } = this.state
+
         // disable question list
         this.toggleList(false)
 
-        fetchResponse(selectedTags).then(response => {
+        response(selectedTags).then(response => {
             // Handle Answers and Reviews
             response.forEach(val => {
                 let handleAnswers = [];
@@ -66,11 +69,13 @@ class ResponseListForm extends Component {
                 val.response_id = <NavLink
                     to={`test2021/responsePage/${val.response_id}`}
                     className="table-nav-link"
-                >
-
-                    {val.response_id}
+                >{val.response_id}
                 </NavLink>;
-                // val.response_id
+
+                //Create tag column
+                val.tags = val.tags.map(val => {
+                    return <div>{val.name}</div>
+                })
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
@@ -123,7 +128,6 @@ class ResponseListForm extends Component {
                     return row.user_title = user_title + " " + firstname + " " + lastname
                 }
 
-
                 // envoke and store new columns for UserTitle
                 // combine user credentials
                 userTitleCol(val, val.user_title, val.firstname, val.lastname)
@@ -149,7 +153,6 @@ class ResponseListForm extends Component {
                 // delete original review and answer rows as they don't need to be displayed with all their data
                 delete val.answers;
                 delete val.reviewers;
-                delete val.answers;
                 delete val.firstname;
                 delete val.lastname;
             })
@@ -157,55 +160,44 @@ class ResponseListForm extends Component {
             this.setState({
                 responseTable: response,
                 btnUpdate: false,
-            }
-            )
-
+            })
         })
     }
 
+    // Tag Selection State
     tagSelector(name) {
         let list = this.state.selectedTags;
-        let duplicateTag = list.indexOf(name)
+        let duplicateTag = list.indexOf(name) // test against duplicates
 
-        if (duplicateTag == -1) {
-            list.push(name)
-        }
-        else {
-            list.splice(duplicateTag, 1);
-        }
+        duplicateTag == -1 ? list.push(name) : list.splice(duplicateTag, 1);;
 
         this.setState({
             selectedTags: list,
             btnUpdate: true
-        }, () => this.fetchData())
+        })
     }
 
-
+    // Delete Pill function
     deletePill(val) {
         this.tagSelector(val);
         this.handleData()
     }
 
 
-
+    // Question selection state
     questionSelector(question) {
         const selected = this.state.selectedQuestions;
         let duplicate = selected.indexOf(question)
 
-        if (duplicate == -1) {
-            selected.push(question)
-        }
-        else {
-            selected.splice(duplicate, 1)
-        }
-
+        duplicate == -1 ? selected.push(question) : selected.splice(duplicate, 1);
         this.setState({
             selectedQuestions: selected,
             btnUpdate: true
-        }, () => this.fetchData())
+        })
     }
 
 
+    // Toggle List
     toggleList(list, type) {
         this.setState({
             toggleList: !list ? type : false
@@ -213,11 +205,14 @@ class ResponseListForm extends Component {
     }
 
 
+    // Generate table columns
     generateCols() {
         let colFormat = [];
 
         // Find the row with greatest col count and assign the col values to React Table
         if (this.state.responseTable) {
+
+            // function
             function readColumns(rows) {
                 let tableColumns = [];
                 rows.map(val => {
@@ -225,17 +220,16 @@ class ResponseListForm extends Component {
                     newColumns.forEach(val => {
                         tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
                     })
-
                 })
 
                 return tableColumns
             }
 
+            // function
             function widthCalc(colItem) {
                 if (colItem.includes('question')) {
                     return 200
                 }
-
                 if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date')) {
                     return 180
                 }
@@ -253,12 +247,13 @@ class ResponseListForm extends Component {
 
 
 
+    // Reset state, question and tag list UI 
     reset() {
         // reset checkboxes
         document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
 
-         // disable question list
-         this.toggleList(true)
+        // disable question list
+        this.toggleList(true)
 
         this.setState({
             selectedQuestions: [],
@@ -271,7 +266,7 @@ class ResponseListForm extends Component {
     render() {
         // Translation
         const t = this.props.t;
-        // State Obj
+        // State values
         const {
             questions,
             toggleList,
@@ -291,7 +286,7 @@ class ResponseListForm extends Component {
                     <h2 className={toggleList || responseTable ? "heading short" : "heading"}>{t('Response List')}</h2>
                     {/*CheckBox*/}
                     <div className="checkbox-top">
-                        <input onClick={(e) => this.fetchData()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
+                        <input onClick={(e) => this.fetchQuestions()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
                         <label id="label" className="label-top" htmlFor="defaultCheck1">
                             {t('Include un-submitted')}
                         </label>
@@ -348,12 +343,12 @@ class ResponseListForm extends Component {
                                         <button className="btn tags" onClick={(e) => this.tagSelector(val.name)}>{val.name}</button>
                                     </div>
                                 })}
-                              {/* Update Button */}
-                        {toggleList && <button
-                            onClick={(e) => this.handleData(selectedTags)}
-                            type="button"
-                            className="btn tags update" >Update</button>
-                        }
+                            {/* Update Button */}
+                            {toggleList && <button
+                                onClick={(e) => this.handleData(selectedTags)}
+                                type="button"
+                                className="btn tags update" >Update</button>
+                            }
                         </div>
 
                         {/* List Questions */}
