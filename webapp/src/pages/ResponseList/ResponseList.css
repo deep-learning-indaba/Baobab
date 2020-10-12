@@ -269,5 +269,14 @@ html .table-nav-link {
     border-radius: 4px;
 }
 
+.pills.table .btn-primary {
+    background: rgb(243, 243, 243);
+    color: black;
+    margin: 1px;
+}
+
+html .pills.table {
+    margin-bottom: 0;
+}
 
 

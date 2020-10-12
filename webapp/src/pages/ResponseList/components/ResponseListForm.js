@@ -74,7 +74,9 @@ class ResponseListForm extends Component {
 
                 //Create tag column
                 val.tags = val.tags.map(val => {
-                    return <div>{val.name}</div>
+                    return <div class="pills table">
+                        <button className="btn btn-primary"> {val.name} </button>
+                    </div>
                 })
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
@@ -218,7 +220,7 @@ class ResponseListForm extends Component {
                 rows.map(val => {
                     let newColumns = Object.keys(val)
                     newColumns.forEach(val => {
-                        if(!tableColumns.includes(val)){tableColumns.push(val)}
+                        if (!tableColumns.includes(val)) { tableColumns.push(val) }
                     })
                 })
 
