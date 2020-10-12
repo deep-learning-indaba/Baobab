@@ -218,7 +218,7 @@ class ResponseListForm extends Component {
                 rows.map(val => {
                     let newColumns = Object.keys(val)
                     newColumns.forEach(val => {
-                        tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
+                        if(!tableColumns.includes(val)){tableColumns.push(val)}
                     })
                 })
 
