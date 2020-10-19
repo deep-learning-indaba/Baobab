@@ -33,7 +33,7 @@ describe('FormMultiFile Tests', () => {
         const wrapper = shallow(<FormMultiFile />);
         wrapper.setState({ fileList: [{ id: 1, name: "test", file: "test" }, { id: 2, name: "test", file: "test" }] });
         wrapper.instance().addFile();
-        expect(wrapper.find('.multi-file-component').length).toEqual(2);
+        expect(wrapper.find('.multi-file-component').length).toEqual(3);
     });
 
 

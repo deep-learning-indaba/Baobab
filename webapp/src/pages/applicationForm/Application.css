@@ -188,6 +188,14 @@ ol.progtrckr li.progtrckr-done:hover:before {
   margin-bottom: -1em;
 }
 
+.answer-value {
+  white-space: pre-wrap;
+}
+
+.small-text {
+  font-size: 0.75em;
+}
+
 @media (max-width: 650px) {
   .progtrckr li span {
     display: none;

@@ -74,11 +74,11 @@ class Home extends Component {
                 <div class="row event-table">
                 {events.map(e => {
                                 return (
-                                    <>
-                                    <div style={{textAlign:"left"}} class="col-8"> <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                    {e.start_date + " to " + e.end_date}</div>
+                                    <div key="{e.key}">
+                                        <div style={{textAlign:"left"}} class="col-8"> <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {e.start_date + " to " + e.end_date}</div>
                                         <div class="col-4">{this.statusDisplay(e)}</div>
-                                        </>
+                                    <div/>
                                 )
                             })}
                 </div>
@@ -90,21 +90,30 @@ class Home extends Component {
 
     render() {
         const t = this.props.t;
+        let logo = this.state.organisation && this.state.organisation.large_logo;
+        // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
+        if (this.state.organisation) {
+            console.log("this.state.organisation.name:", this.state.organisation.name);
+            console.log("this.props.i18n.language:", this.props.i18n.language);
+        }
+        
+        if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
+            logo = "ai4d_logo_fr.png";
+        }
 
         return (
             <div>
                 <div>
                     <img src={this.state.organisation &&
-                        require("../../images/" +
-                            this.state.organisation.large_logo)}
+                        require("../../images/" + logo)}
                         className="img-fluid large-logo" alt="logo" />
                 </div>
 
                 {!this.props.user &&
-                    <div>
+                    <div className="text-center">
                         {this.state.organisation &&
-                            <h2 className="Blurb">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
-                        <p class="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
+                            <h2 className="Blurb text-center">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
+                        <p className="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
                     </div>
                 }
 
