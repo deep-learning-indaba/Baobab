@@ -14,3 +14,8 @@ class ApplicationFormRepository():
         return db.session.query(ApplicationForm)\
             .filter_by(event_id=event_id)\
             .first()
+
+    def add_form(application_form):
+        db.session.add(application_form)
+        db.session.commit()
+        return application_form

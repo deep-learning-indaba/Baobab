@@ -200,17 +200,17 @@ APPLICATION_FORM_POST_DATA = {
           "headline": {
               "en": "Question 1", 
               "fr": "Question 1"
-          }
+          },
           "placeholder": {
               "en": "Select an Option...",
               "fr": u"Sélectionnez une option"
-          } 
+          },
           "is_required": True, 
           "type": "multi-choice", 
           "validation_text": {
               "en": None,
               "fr": None
-          } 
+          },
           "order": 1
         },
         {
@@ -229,17 +229,17 @@ APPLICATION_FORM_POST_DATA = {
           "headline": {
               "en": "Question 2", 
               "fr": "Question 2"
-          }
+          },
           "placeholder": {
               "en": None,
               "fr": None
-          } 
+          },
           "is_required": True, 
           "type": "long-text", 
           "validation_text": {
               "en": "You must enter 1 million words",
               "fr": u"Vous devez saisir 1 million de mots"
-          } 
+          },
           "order": 2
         }
       ]
@@ -274,25 +274,23 @@ APPLICATION_FORM_POST_DATA = {
           "headline": {
               "en": "Question 3", 
               "fr": "Question 3"
-          }
+          },
           "placeholder": {
               "en": "Placeholder",
               "fr": "Espace réservé"
-          } 
+          }, 
           "is_required": False, 
           "type": "short-text", 
           "validation_text": {
               "en": "Enter a valid number",
               "fr": u"Entrez un numéro valide"
-          } 
+          },
           "order": 1
         }
       ]
     }  # End section 2
   ]
 }
-
-
 
 class ApplicationFormCreateTest(ApiTestCase):
     """
@@ -364,27 +362,27 @@ class ApplicationFormCreateTest(ApiTestCase):
         # Check a few fields in the sections themselves
         section0 = response_data['sections'][0]
         self.assertIsNotNone(section0['id'])
-        self.assertEqual(section0['name'], APPLICATION_FORM_POST_DATA['sections'][0]['name'])
+        self.assertDictEqual(section0['name'], APPLICATION_FORM_POST_DATA['sections'][0]['name'])
         self.assertEqual(len(section0['questions']), len(APPLICATION_FORM_POST_DATA['sections'][0]['questions']))
 
         section0_question0 = section0['questions'][0]
         self.assertIsNotNone(section0_question0['id'])
-        self.assertEqual(section0_question0['headline'],
+        self.assertDictEqual(section0_question0['headline'],
                          APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
 
         section1 = response_data['sections'][1]
         self.assertIsNotNone(section1['id'])
-        self.assertEqual(section1['name'], APPLICATION_FORM_POST_DATA['sections'][1]['name'])
+        self.assertDictEqual(section1['name'], APPLICATION_FORM_POST_DATA['sections'][1]['name'])
         self.assertEqual(len(section1['questions']), len(APPLICATION_FORM_POST_DATA['sections'][1]['questions']))
 
         section1_question0 = section1['questions'][0]
         self.assertIsNotNone(section1_question0['id'])
-        self.assertEqual(section1_question0['headline'],
+        self.assertDictEqual(section1_question0['headline'],
                          APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
 
         section1_question1 = section1['questions'][1]
         self.assertIsNotNone(section1_question1['id'])
-        self.assertEqual(section1_question1['headline'],
+        self.assertDictEqual(section1_question1['headline'],
                          APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
 
 

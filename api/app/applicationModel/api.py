@@ -8,8 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask import g
 
 from app.applicationModel.models import ApplicationForm, Question, Section
+from app.events.repository import EventRepository as event_repository
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
 from app import db, bcrypt
@@ -93,41 +94,28 @@ class ApplicationFormAPI(restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return DB_NOT_AVAILABLE
 
-    @auth_required
-    def post(self):
+    @event_admin_required
+    def post(self, event_id):
         # TODO: Need to handle translations! 
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True,
-                                help='Invalid event_id requested. Event_id\'s should be of type int.')
         req_parser.add_argument('is_open', type=bool, required=True)
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
         args = req_parser.parse_args()
-        event_id = args['event_id']
-
-        event = db.session.query(Event).get(event_id)
-        if not event:
-            return EVENT_NOT_FOUND
-
-        user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
 
         app_form = app_repository.get_by_event_id(event_id)
         if app_form:
             return APPLICATION_FORM_EXISTS
-        else:
-            is_open = args['is_open']
-            nominations = args['nominations']
 
-            app_form = ApplicationForm(
-                event_id,
-                is_open,
-                nominations
-            )
-            db.session.add(app_form)
-            db.session.commit()
+        is_open = args['is_open']
+        nominations = args['nominations']
+
+        app_form = ApplicationForm(
+            event_id,
+            is_open,
+            nominations
+        )
+        application_form_repository.add_form(app_form)
         section_args = args['sections']
 
         for s in section_args:
