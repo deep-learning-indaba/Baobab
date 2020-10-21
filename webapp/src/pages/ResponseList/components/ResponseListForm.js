@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { fetchResponse, fetchQuestions } from '../../../services/ResponseList/ResponseList'
+import { fetchResponse, fetchQuestions } from '../../../services/responseList/responseList.service'
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
@@ -77,14 +77,15 @@ class ResponseListForm extends Component {
                 let handleReviews = [];
 
                 // Create Response Id Link
-                val.response_id = <NavLink 
-                to={`test2021/responsePage/${val.response_id}`}
+                if (this.props.event) {
+                    val.response_id = <NavLink
+                    to={`${this.props.event.key}/responsePage/${val.response_id}`}
                     className="table-nav-link"
                 >
-                   
                     {val.response_id}
-                </NavLink>;
-            // val.response_id
+                </NavLink>; 
+                }
+              
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
@@ -99,11 +100,11 @@ class ResponseListForm extends Component {
                         if (answer.type == "multi-file") {
                             let files = [];
                             answer.value.forEach((file => {
-                                file ? files.push(
-                                    <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
-                                )
-                                    :
-                                    console.log(`${answer.question_id} contains no value`)
+                                if (file) {
+                                    files.push(
+                                        <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
+                                    )
+                                }
                             }))
                             handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
                         }
@@ -111,7 +112,7 @@ class ResponseListForm extends Component {
                         if (answer.type.includes("choice")) {
                             let choices = [];
                             answer.options.forEach((opt => {
-                                answer.value == opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
+                                if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
                             }))
                             handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
                         }
@@ -188,11 +189,12 @@ class ResponseListForm extends Component {
                 rows.map(val => {
                     let newColumns = Object.keys(val)
                     newColumns.forEach(val => {
-                        tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
+                        if (!tableColumns.includes(val)) {
+                            tableColumns.push(val)
+                        }
                     })
-
                 })
-
+                console.log(tableColumns)
                 return tableColumns
             }
 
@@ -212,7 +214,7 @@ class ResponseListForm extends Component {
             let col = readColumns(this.state.responseTable);
             colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }))
         }
-
+        console.log(colFormat)
         return colFormat
     }
 

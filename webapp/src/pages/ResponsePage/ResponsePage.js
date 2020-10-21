@@ -4,7 +4,7 @@ import "react-table/react-table.css";
 import { withTranslation } from 'react-i18next';
 import './ResponsePage.css'
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
-import { fetchResponse } from '../../services/ResponsePage/ResponsePage'
+import { fetchResponse } from '../../services/responsePage/responsePage.service'
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -138,11 +138,11 @@ class ResponsePage extends Component {
             if (type == "multi-file") {
                 let files = [];
                 a.value.forEach((file => {
-                    file ? files.push(
-                        <div key={a.headline}><a key={a.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file} className="answer">{a.value}</a></div>
-                    )
-                        :
-                        console.log(`${a.question_id} contains no value`)
+                    if (file) {
+                        files.push(
+                            <div key={a.headline}><a key={a.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file} className="answer">{a.value}</a></div>
+                        )
+                    }
                 }))
                 answers = <div key={a.headline}>{files}</div>
             }
@@ -150,11 +150,9 @@ class ResponsePage extends Component {
             if (type.includes("choice")) {
                 let choices = [];
                 a.options.forEach(opt => {
-                    a.value.forEach(val => {
-                        if (val.label == opt.label) {
-                            choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
-                        }
-                    })
+                    if (a.value == opt.valuel) {
+                        choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
+                    }
                 })
                 answers = <div key={choices}>{choices}</div>
             }
@@ -180,28 +178,28 @@ class ResponsePage extends Component {
             <div className="table-wrapper">
                 {applicationData &&
                     <div className="headings-lower">
-                        <div>
-                            <div className="user-details"> <p>{applicationData.user_title}</p> </div>
-                            <div className="user-details"> <p>{applicationData.firstname}</p> </div>
-                            <div className="user-details"> <p> {applicationData.lastname}</p></div>
+                        <div className="user-details">
+                            <h4>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h4>
                         </div>
 
                         <div>
-                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p> </div>
-                            <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                        <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p>
+                        <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                        </div>
+                           
                         </div>
                     </div>
                 }
 
                 {/*Response Data*/}
-                {applicationData  &&
-                <div className="response-details">
-                    {renderSections}
+                {applicationData &&
+                    <div className="response-details">
+                        {renderSections}
                     </div>
                 }
 
-                </div>
-        
+            </div>
+
         )
     }
 }
