@@ -24,45 +24,58 @@ class ReviewQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
-    description = db.Column(db.String(), nullable=True)
-    headline = db.Column(db.String(), nullable=True)
+    
     type = db.Column(db.String(), nullable=False)
-    placeholder = db.Column(db.String(), nullable=True)
-    options = db.Column(db.JSON(), nullable=True)
+    
     is_required = db.Column(db.Boolean(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    validation_regex = db.Column(db.String(), nullable=True)
-    validation_text = db.Column(db.String(), nullable=True)
     weight = db.Column(db.Float(), nullable=False)
-
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     question = db.relationship('Question', foreign_keys=[question_id])
+
+    translations = db.relationship('ReviewQuestionTranslation', lazy='dynamic')
 
     def __init__(self,
                  review_form_id,
                  question_id,
-                 description,
-                 headline,
                  type,
-                 placeholder,
-                 options,
                  is_required,
                  order,
-                 validation_regex,
-                 validation_text,
                  weight):
         self.review_form_id = review_form_id
         self.question_id = question_id
-        self.description = description
-        self.headline = headline
         self.type = type
-        self.placeholder = placeholder
-        self.options = options
         self.is_required = is_required
         self.order = order
+        self.weight = weight
+
+    def get_translation(self, language):
+        translation = self.translations.filter_by(language=language).first()
+        return translation
+
+
+class ReviewQuestionTranslation(db.Model):
+    __tablename__ = 'review_question_translation'
+    __table_args__ = tuple([db.UniqueConstraint('review_question_id', 'language', name='uq_review_question_id_language')])
+
+    id = db.Column(db.Integer(), primary_key=True)
+    review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
+    language = db.Column(db.String(2), nullable=False)
+
+    description = db.Column(db.String(), nullable=True)
+    headline = db.Column(db.String(), nullable=True)
+    placeholder = db.Column(db.String(), nullable=True)
+    options = db.Column(db.JSON(), nullable=True)
+    validation_regex = db.Column(db.String(), nullable=True)
+    validation_text = db.Column(db.String(), nullable=True)
+
+    def __init__(self, language, description=None, headline=None, placeholder=None, options=None, validation_regex=None, validation_text=None)
+        self.description = description
+        self.headline = headline
+        self.placeholder = placeholder
+        self.options = options
         self.validation_regex = validation_regex
         self.validation_text = validation_text
-        self.weight = weight
 
 
 class ReviewResponse(db.Model):
