@@ -69,7 +69,14 @@ class ReviewQuestionTranslation(db.Model):
     validation_regex = db.Column(db.String(), nullable=True)
     validation_text = db.Column(db.String(), nullable=True)
 
-    def __init__(self, language, description=None, headline=None, placeholder=None, options=None, validation_regex=None, validation_text=None)
+    def __init__(self, 
+                 language, 
+                 description=None, 
+                 headline=None, 
+                 placeholder=None, 
+                 options=None, 
+                 validation_regex=None, 
+                 validation_text=None):
         self.description = description
         self.headline = headline
         self.placeholder = placeholder
