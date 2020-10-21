@@ -32,8 +32,9 @@ label {
 }
 
  .btn-primary {
-    background: grey;
+    background:hsl(208deg 84% 59%);
     border: none;
+    width: 100%;
     color: white;
     border: 1px solid lightgrey;
     margin: 0 5px;
@@ -65,10 +66,6 @@ label {
     border-radius: 4px;
 }
 
-.headings-lower div {
-    display: flex;
-    align-items: center;
-}
 
 .user-details {
     padding: 0 2px
@@ -84,12 +81,18 @@ html .headings-lower label {
 
 .user-details {
     display: flex;
-    flex-direction: column;
     text-align: left;
+    align-items: center;
 }
 
-.user-details p {
-    color: hsl(0deg 0% 30%);
+.user-details.right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.user-details h4 {
+    color: hsl(0, 0%, 44%);
 }
 
 
