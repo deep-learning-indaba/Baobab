@@ -31,7 +31,6 @@ class ResponsePage extends Component {
     }
 
 
-
     // Fetch Data
     fetchData() {
         let params = {
@@ -74,7 +73,19 @@ class ResponsePage extends Component {
         }
     }
 
-
+  
+    renderTags() {
+        const data = this.state.applicationData;
+        if (data) {
+            let tags = data.tags.map(tag => {
+                return <span class="badge badge-info">{tag.headline}</span>
+            })
+            return tags
+        }
+          
+    }
+  
+  
 
     // Render Sections
     renderSections() {
@@ -113,7 +124,6 @@ class ResponsePage extends Component {
         })
         return questions
     }
-
 
 
     // Render Answers 
@@ -170,6 +180,7 @@ class ResponsePage extends Component {
         const { applicationForm, applicationData } = this.state
         const applicationStatus = this.applicationStatus();
         const renderSections = this.renderSections();
+        const tags = this.renderTags()
 
         // Translation
         const t = this.props.t;
@@ -179,14 +190,15 @@ class ResponsePage extends Component {
                 {applicationData &&
                     <div className="headings-lower">
                         <div className="user-details">
-                            <h4>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h4>
+                        <h4>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h4>
+                        <div className="tags">{tags}</div>
                         </div>
 
                         <div>
-                        <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p>
-                        <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
-                        </div>
-                           
+                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p>
+                                <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
+                            </div>
+
                         </div>
                     </div>
                 }
