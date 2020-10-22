@@ -70,6 +70,7 @@ class ReviewQuestionTranslation(db.Model):
     validation_text = db.Column(db.String(), nullable=True)
 
     def __init__(self, 
+                 review_question_id,
                  language, 
                  description=None, 
                  headline=None, 
@@ -77,6 +78,7 @@ class ReviewQuestionTranslation(db.Model):
                  options=None, 
                  validation_regex=None, 
                  validation_text=None):
+        self.review_question_id = review_question_id
         self.description = description
         self.headline = headline
         self.placeholder = placeholder
