@@ -21,14 +21,13 @@
     min-width: 1%;
 }
 
-.pills button {
-    border-radius: 4px;
-    background: hsl(212deg 78% 52%);
-    color: white;
-    font-size: 10px;
-    border: none;
-    height: 26px;
+.badge {
     margin: 0 5px;
+    padding: 4px 6px;
+}
+
+.badge:hover {
+    cursor: pointer;
 }
 
 .pills i {

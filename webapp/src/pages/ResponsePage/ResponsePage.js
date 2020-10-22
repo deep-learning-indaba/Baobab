@@ -78,7 +78,7 @@ class ResponsePage extends Component {
         const data = this.state.applicationData;
         if (data) {
             let tags = data.tags.map(tag => {
-                return <span class="badge badge-info">{tag.headline}</span>
+                return <span class="badge badge-primary">{tag.headline}</span>
             })
             return tags
         }

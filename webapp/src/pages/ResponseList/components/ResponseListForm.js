@@ -340,7 +340,7 @@ class ResponseListForm extends Component {
                         <div class="pills">
                             {selectedTags &&
                                 selectedTags.map(val => {
-                                    return <button onClick={(e) => this.deletePill(val)} className="btn btn-primary">{val}<i className="far fa-trash-alt"></i></button> 
+                                    return <span onClick={(e) => this.deletePill(val)} className="badge badge-primary">{val} <i className="far fa-trash-alt"></i></span>
                                 })
                             }
                         </div>
