@@ -35,8 +35,8 @@ export function response(tags) {
           { "question_id": 1, "headline": "First question", "value": "Hello world", "type": "short-text", "options": null },
           { "question_id": 3, "headline": "Third question", "value": "harry-potter", "type": "multi-choice", "options": [{ "label": "Harry Potter", "value": "harry-potter" }, { "label": "X-men", "value": "x-men" }] }
         ],
-        "tags": [         //  <-------- NEW
-          { "id": 5, "name": "Education" },
+        "tags": [             //  <-------- NEW
+          { "id": 2, "name": "Desk Reject" },
           { "id": 7, "name": "Healthcare" }
         ]
       },
@@ -114,17 +114,15 @@ export function response(tags) {
 
     let filteredData = [];
 
-
     data.forEach(val => {
-      let isSelected;
-      val.tags.forEach(tag => {
-        tags.includes(tag.name) ? isSelected = true : isSelected = false
-      })
 
-      if (isSelected) {
-        filteredData.push(val)
-      }
-     
+      val.tags.forEach(tag => {
+        if (tags.includes(tag.name)) {
+          if (!filteredData.includes(val)) {
+              filteredData.push(val)
+          }
+        }
+      })
     })
 
 

@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/taglist/TagList'
+import { tagList } from '../../../services/taglist/TagList.service'
 
 
 class ResponseListForm extends Component {
@@ -60,10 +60,13 @@ class ResponseListForm extends Component {
         this.toggleList(false)
 
         response(selectedTags).then(response => {
+
+            console.log(response)
             // Handle Answers and Reviews
             response.forEach(val => {
                 let handleAnswers = [];
                 let handleReviews = [];
+                let handleTags = [];
 
                 // Create Response Id Link
                 if (this.props.event) {
@@ -117,6 +120,13 @@ class ResponseListForm extends Component {
                     }
                 })
 
+                // extract only the tag names
+                val.tags.forEach(tag => {
+                    if (tag) {
+                        handleTags.push(<div>{tag.name}</div>)   
+                       }
+                })
+
                 // extract only the reviewers name
                 val.reviewers.forEach(review => {
                     review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
@@ -139,6 +149,7 @@ class ResponseListForm extends Component {
                     })
                     handleAnswers = [];
                 }
+
                 // insert new reviews values as columns
                 if (handleReviews.length) {
                     handleReviews.forEach((review, index) => {
@@ -149,12 +160,17 @@ class ResponseListForm extends Component {
                     })
                 }
 
+                
+                   val.tags = handleTags
+
                 // delete original review and answer rows as they don't need to be displayed with all their data
                 delete val.answers;
                 delete val.reviewers;
                 delete val.firstname;
                 delete val.lastname;
+                
             })
+
 
             this.setState({
                 responseTable: response,
@@ -222,7 +238,7 @@ class ResponseListForm extends Component {
                         }
                     })
                 })
-                console.log(tableColumns)
+
                 return tableColumns
             }
 
@@ -242,7 +258,7 @@ class ResponseListForm extends Component {
             let col = readColumns(this.state.responseTable);
             colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }))
         }
-        console.log(colFormat)
+
         return colFormat
     }
 
@@ -322,10 +338,9 @@ class ResponseListForm extends Component {
 
                         {/*Pills*/}
                         <div class="pills">
-
                             {selectedTags &&
                                 selectedTags.map(val => {
-                                    return <button onClick={(e) => this.deletePill(val)} className="btn btn-primary"> {val} <i className="far fa-trash-alt"></i></button>
+                                    return <button onClick={(e) => this.deletePill(val)} className="btn btn-primary">{val}<i className="far fa-trash-alt"></i></button> 
                                 })
                             }
                         </div>

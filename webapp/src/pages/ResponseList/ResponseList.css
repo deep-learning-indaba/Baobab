@@ -18,6 +18,7 @@
 /* Pills */
 .pills {
     display: flex;
+    min-width: 1%;
 }
 
 .pills button {
