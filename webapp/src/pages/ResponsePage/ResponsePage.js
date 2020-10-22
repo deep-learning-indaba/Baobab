@@ -5,20 +5,44 @@ import { withTranslation } from 'react-i18next';
 import './ResponsePage.css'
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
 import { fetchResponse } from '../../services/responsePage/responsePage.service'
+import { tagList } from '../../services/taglist/TagList.service'
+import { eventService } from '../../services/events/events.service'
 
 class ResponsePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
-
+            tagMenu: false
         }
     };
-
 
     componentDidMount() {
         this.fetchForm()
         this.fetchData()
+        this.fetchTags()
+       // this.fetchEvent()
     }
+
+
+      // Fetch Tags
+    fetchTags() {
+        tagList().then(response => {
+            this.setState({
+                tagList: response
+            })
+        })
+    }
+  
+
+        // Fetch Event Details
+        fetchEvent() {
+            eventService.getEvent().then(response => {
+                this.setState({
+                    eventDetails: response
+                })
+            })
+        }
+
 
     // Fetch Form
     fetchForm() {
@@ -41,8 +65,6 @@ class ResponsePage extends Component {
                 applicationData: response
             })
         })
-
-
     }
 
 
@@ -73,19 +95,19 @@ class ResponsePage extends Component {
         }
     }
 
-  
+
     renderTags() {
         const data = this.state.applicationData;
         if (data) {
             let tags = data.tags.map(tag => {
-                return <span class="badge badge-primary">{tag.headline}</span>
+                return <span class="badge badge-info dark">{tag.headline}</span>
             })
             return tags
         }
-          
+
     }
-  
-  
+
+
 
     // Render Sections
     renderSections() {
@@ -176,8 +198,15 @@ class ResponsePage extends Component {
     }
 
 
+    toggleTags(list) {
+        this.setState({
+            tagMenu: list ? false : true
+        })
+    }
+
+
     render() {
-        const { applicationForm, applicationData } = this.state
+        const { applicationForm, applicationData, tagList, tagMenu } = this.state
         const applicationStatus = this.applicationStatus();
         const renderSections = this.renderSections();
         const tags = this.renderTags()
@@ -187,13 +216,57 @@ class ResponsePage extends Component {
 
         return (
             <div className="table-wrapper">
+
+                {/*Add Tags Modal */}
+                <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLabel">Add Tags</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <div>
+                                        <label>English</label>
+                                        <input placeHolder="enter tag name"></input>
+                                    </div>
+                                    
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Headings */}
                 {applicationData &&
                     <div className="headings-lower">
                         <div className="user-details">
-                        <h4>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h4>
-                        <div className="tags">{tags}</div>
+                            <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
+                            <div className="tags">{tags}  <span onClick={(e) => this.toggleTags(tagMenu)} className="badge add-tags">Add tag</span></div>
+
+                            {/*Tag List*/}
+                            <div className={tagMenu ? "tag-response show" : "tag-response"}>
+                                {tagList &&
+                                    tagList.map(val => {
+                                        return <div className="tag-item" key={val.id} >
+                                            <button class="btn tag">{val.name}</button>
+                                        </div>
+                                    })}
+                                <button data-toggle="modal" data-target="#exampleModal" type="button" className="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
+                                    Launch demo modal
+                            </button>
+                            </div>
+
                         </div>
 
+                        {/* User details Right Tab */}
                         <div>
                             <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p>
                                 <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>Back</button>
