@@ -26,29 +26,6 @@ option_fields = {
     'label': fields.String
 }
 
-review_question_fields = {
-    'id': fields.Integer,
-    'question_id': fields.Integer,
-    'description': fields.String,
-    'headline': fields.String,
-    'type': fields.String,
-    'placeholder': fields.String,
-    'options': fields.List(fields.Nested(option_fields)),
-    'is_required': fields.Boolean,
-    'order': fields.Integer,
-    'validation_regex': fields.String,
-    'validation_text': fields.String,
-    'weight': fields.Float
-}
-
-review_form_fields = {
-    'id': fields.Integer,
-    'application_form_id': fields.Integer,
-    'is_open': fields.Boolean,
-    'deadline': fields.DateTime('iso8601'),
-    'review_questions': fields.List(fields.Nested(review_question_fields))
-}
-
 answer_fields = {
     'id': fields.Integer,
     'question_id': fields.Integer,
@@ -91,16 +68,49 @@ review_response_fields = {
 }
 
 review_fields = {
-    'review_form': fields.Nested(review_form_fields),
+    'review_form': fields.Raw,
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
     'reviews_remaining_count': fields.Integer,
     'review_response': fields.Nested(review_response_fields)
 }
 
+def _serialize_review_form(review_form, language):
+    review_questions = []
+    for question in review_form.review_questions:
+        translation = question.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Missing {} translation for review question id {}'.format(language, question.id))
+            translation = question.get_translation('en')
+            review_questions.append({
+                'id': question.id,
+                'question_id': question.question_id,
+                'description': translation.description,
+                'headline': translation.headline,
+                'type': question.type,
+                'placeholder': translation.placeholder,
+                'options': translation.options,
+                'is_required': question.is_required,
+                'order': question.order,
+                'validation_regex': translation.validation_regex,
+                'validation_text': translation.validation_text,
+                'weight': question.weight
+            })
+        
+    form = {
+        'id': review_form.id,
+        'application_form_id': review_form.application_form_id,
+        'is_open': review_form.is_open,
+        'deadline': review_form.deadline.isoformat(),
+        'review_questions': review_questions
+    }
+
+    return form
+
+
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, review_response=None):
-        self.review_form = review_form
+    def __init__(self, review_form, response, reviews_remaining_count, language, review_response=None):
+        self.review_form = _serialize_review_form(review_form, language)
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
@@ -124,7 +134,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count)
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'])
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
@@ -159,7 +169,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
         response = review_repository.get_response_by_review_response(id, reviewer_user_id, review_form.application_form_id)
 
-        return ReviewResponseUser(review_form, response, 0, review_response)
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
     @auth_required
     def post(self):

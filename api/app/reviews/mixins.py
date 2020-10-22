@@ -4,11 +4,13 @@ class ReviewMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('event_id', type=int, required=True)
     req_parser.add_argument('skip', type=int, required=False)
+    req_parser.add_argument('language', type=str, required=True)
 
 
 class GetReviewResponseMixin(object):
     get_req_parser = reqparse.RequestParser()
     get_req_parser.add_argument('id', type=int, required=True)
+    get_req_parser.add_argument('language', type=str, required=True)
 
 
 class PostReviewResponseMixin(object):
