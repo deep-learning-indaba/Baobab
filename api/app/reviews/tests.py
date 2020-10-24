@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import itertools
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
@@ -7,7 +8,7 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
@@ -136,12 +137,25 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_questions = [
-            ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
-            ReviewQuestion(2, 3, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(2, 4, None, None, 'information', None, None, False, 2, None, None, 0)
+            ReviewQuestion(1, 1, 'multi-choice', True, 1, 0),
+            ReviewQuestion(1, 2, 'multi-choice', True, 2, 0),
+            ReviewQuestion(2, 3, 'multi-choice', True, 1, 0),
+            ReviewQuestion(2, 4, 'information', False, 2, 0)
         ]
         db.session.add_all(review_questions)
+        db.session.commit()
+
+        review_question_translations = [
+            ReviewQuestionTranslation(review_questions[0].id, 'en'),
+            ReviewQuestionTranslation(review_questions[0].id, 'fr'),
+            ReviewQuestionTranslation(review_questions[1].id, 'en', headline='English Headline', description='English Description', placeholder='English Placeholder', options=[{'label': 'en1', 'value': 'en'}], validation_regex='EN Regex', validation_text='EN Validation Message'),
+            ReviewQuestionTranslation(review_questions[1].id, 'fr', headline='French Headline', description='French Description', placeholder='French Placeholder', options=[{'label': 'fr1', 'value': 'fr'}], validation_regex='FR Regex', validation_text='FR Validation Message'),
+            ReviewQuestionTranslation(review_questions[2].id, 'en'),
+            ReviewQuestionTranslation(review_questions[2].id, 'fr'),
+            ReviewQuestionTranslation(review_questions[3].id, 'en'),
+            ReviewQuestionTranslation(review_questions[3].id, 'fr'),
+        ]
+        db.session.add_all(review_question_translations)
         db.session.commit()
 
         self.add_email_template('reviews-assigned')
@@ -178,7 +192,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_one_candidate()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -189,7 +203,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_one_candidate(active=False)
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -225,7 +239,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_responses_and_no_reviewers()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -272,7 +286,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -311,7 +325,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates_and_one_completed_review()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -346,7 +360,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -404,7 +418,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
         self.seed_static_data()
         self.setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed()
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         header = self.get_auth_header_for('r1@r.com')
         response1 = self.app.get('/api/v1/review', headers=header, data=params)
@@ -427,7 +441,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_skipping(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = {'event_id': 1, 'skip': 1}
+        params = {'event_id': 1, 'skip': 1, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -439,7 +453,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = {'event_id': 1, 'skip': 5}
+        params = {'event_id': 1, 'skip': 5, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -473,7 +487,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_filtering_on_event_when_candidate_has_applied_to_more_than(self):
         self.seed_static_data()
         self.setup_candidate_who_has_applied_to_multiple_events()
-        params = {'event_id': 2}
+        params = {'event_id': 2, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -497,7 +511,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_multi_choice_answers_use_label_instead_of_value(self):
         self.seed_static_data()
         self.setup_multi_choice_answer()
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -508,7 +522,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_review_response_not_found(self):
         self.seed_static_data()
-        params = {'id': 55}
+        params = {'id': 55, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
@@ -535,7 +549,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_review_response(self):
         self.seed_static_data()
         self.setup_review_response()
-        params = {'id': self.review_response.id}
+        params = {'id': self.review_response.id, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
@@ -875,8 +889,11 @@ class ReviewsApiTest(ApiTestCase):
             {'label': 'No', 'value': 0},
             {'label': 'Maybe', 'value': 1},
         ]
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
+        verdict_question = ReviewQuestion(1, None, 'multi-choice', True, 3, 0)
         db.session.add(verdict_question)
+        db.session.commit()
+        verdict_question_translation = ReviewQuestionTranslation(verdict_question.id, 'en', headline='Final Verdict', options=final_verdict_options)
+        db.session.add(verdict_question_translation)
         db.session.commit()
 
         review_responses = [
@@ -984,8 +1001,11 @@ class ReviewsApiTest(ApiTestCase):
             {'label': 'Maybe', 'value': 1},
         ]
 
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
+        verdict_question = ReviewQuestion(1, None, 'multi-choice', True, 3, 0)
         db.session.add(verdict_question)
+        db.session.commit()
+        verdict_question_translation = ReviewQuestionTranslation(verdict_question.id, 'en', headline='Final Verdict', options=final_verdict_options)
+        db.session.add(verdict_question_translation)
         db.session.commit()
 
         self.add_response(1, 5, is_submitted=True)
@@ -1185,3 +1205,30 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['total_pages'], 0)
     
+    def test_review_form_language(self):
+        """Test that the review form questions are returned in the correct language."""
+        self.seed_static_data()
+        params ={'event_id' : 1, 'language': 'en'}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)  
+        data = json.loads(response.data)
+
+        self.assertEqual(data['review_form']['review_questions'][1]['description'], 'English Description')
+        self.assertEqual(data['review_form']['review_questions'][1]['headline'], 'English Headline')
+        self.assertEqual(data['review_form']['review_questions'][1]['placeholder'], 'English Placeholder')
+        self.assertDictEqual(data['review_form']['review_questions'][1]['options'][0], {'label': 'en1', 'value': 'en'})
+        self.assertEqual(data['review_form']['review_questions'][1]['validation_regex'], 'EN Regex')        
+        self.assertEqual(data['review_form']['review_questions'][1]['validation_text'], 'EN Validation Message')
+        
+        params ={'event_id' : 1, 'language': 'fr'}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)  
+        data = json.loads(response.data)
+
+        self.assertEqual(data['review_form']['review_questions'][1]['description'], 'French Description')
+        self.assertEqual(data['review_form']['review_questions'][1]['headline'], 'French Headline')
+        self.assertEqual(data['review_form']['review_questions'][1]['placeholder'], 'French Placeholder')
+        self.assertDictEqual(data['review_form']['review_questions'][1]['options'][0], {'label': 'fr1', 'value': 'fr'})
+        self.assertEqual(data['review_form']['review_questions'][1]['validation_regex'], 'FR Regex')        
+        self.assertEqual(data['review_form']['review_questions'][1]['validation_text'], 'FR Validation Message')
