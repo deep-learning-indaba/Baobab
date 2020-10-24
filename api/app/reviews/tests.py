@@ -317,7 +317,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(response_reviewers)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1)
+        review_response = ReviewResponse(1, 1, 1, 'en')
         db.session.add(review_response)
         db.session.commit()
 
@@ -407,10 +407,10 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_responses = [
-            ReviewResponse(1, 2, 2),
-            ReviewResponse(1, 3, 1),
-            ReviewResponse(1, 3, 2),
-            ReviewResponse(1, 4, 1)
+            ReviewResponse(1, 2, 2, 'en'),
+            ReviewResponse(1, 3, 1, 'en'),
+            ReviewResponse(1, 3, 2, 'en'),
+            ReviewResponse(1, 4, 1, 'en')
         ]
         db.session.add_all(review_responses)
         db.session.commit()
@@ -537,7 +537,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(answer)
         db.session.commit()
 
-        self.review_response = ReviewResponse(1, 1, 1)
+        self.review_response = ReviewResponse(1, 1, 1, 'en')
         self.review_response.review_scores.append(ReviewScore(1, 'answer1'))
         self.review_response.review_scores.append(ReviewScore(2, 'answer2'))
         db.session.add(self.review_response)
@@ -565,7 +565,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -575,7 +575,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_can_still_submit_inactive_response_reviewer(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -592,7 +592,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_saving_review_response(self):
         self.seed_static_data()
         self.setup_response_reviewer()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -609,7 +609,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(response_reviewer)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1)
+        review_response = ReviewResponse(1, 1, 1, 'en')
         review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
         db.session.add(review_response)
         db.session.commit()
@@ -617,7 +617,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_updating_review_response(self):
         self.seed_static_data()
         self.setup_existing_review_response()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en'})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -810,13 +810,13 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(response_reviewers)
         # review form, review_user_id, response_id 
         review_responses = [
-            ReviewResponse(1, 3, 2), 
-            ReviewResponse(1, 3, 4),
-            ReviewResponse(1, 2, 1),
-            ReviewResponse(1, 2, 3),
-            ReviewResponse(1, 2, 4),
-            ReviewResponse(2, 1, 5),
-            ReviewResponse(2, 2, 6)
+            ReviewResponse(1, 3, 2, 'en'), 
+            ReviewResponse(1, 3, 4, 'en'),
+            ReviewResponse(1, 2, 1, 'en'),
+            ReviewResponse(1, 2, 3, 'en'),
+            ReviewResponse(1, 2, 4, 'en'),
+            ReviewResponse(2, 1, 5, 'en'),
+            ReviewResponse(2, 2, 6, 'en')
         ]
         db.session.add_all(review_responses)
 
@@ -897,11 +897,11 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_responses = [
-            ReviewResponse(1,3,1), 
-            ReviewResponse(1,3,2),
-            ReviewResponse(1,2,1), 
-            ReviewResponse(1,2,2),
-            ReviewResponse(1,3,3)
+            ReviewResponse(1,3,1, 'en'), 
+            ReviewResponse(1,3,2, 'en'),
+            ReviewResponse(1,2,1, 'en'), 
+            ReviewResponse(1,2,2, 'en'),
+            ReviewResponse(1,3,3, 'en')
         ]
         review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(5, '1')]
         review_responses[1].review_scores = [ReviewScore(1, '55'), ReviewScore(5, '2')]
@@ -1012,9 +1012,9 @@ class ReviewsApiTest(ApiTestCase):
         self.add_response(1, 6, is_submitted=True)
         self.add_response(1, 7, is_submitted=True)
 
-        review_response_1 = ReviewResponse(1,3,1)
-        review_response_2 = ReviewResponse(1,3,2)
-        review_response_3 = ReviewResponse(1,3,3)
+        review_response_1 = ReviewResponse(1,3,1, 'en')
+        review_response_2 = ReviewResponse(1,3,2, 'en')
+        review_response_3 = ReviewResponse(1,3,3, 'en')
         review_response_1.submitted_timestamp = datetime(2019, 1, 1)
         review_response_2.submitted_timestamp = datetime(2018, 1, 1)
         review_response_3.submitted_timestamp = datetime(2018, 6, 6)
@@ -1123,8 +1123,8 @@ class ReviewsApiTest(ApiTestCase):
         self.add_response(1, 1, is_submitted=True)
 
         review_responses = [
-            ReviewResponse(1,3,4),
-            ReviewResponse(1,3,5)
+            ReviewResponse(1,3,4, 'en'),
+            ReviewResponse(1,3,5, 'en')
         ]
         review_responses[0].review_scores = [ReviewScore(1, '89'), ReviewScore(5, 'Maybe')] 
         review_responses[1].review_scores = [ReviewScore(1, '75'), ReviewScore(5, 'Yes')]

@@ -64,7 +64,8 @@ review_response_fields = {
     'review_form_id': fields.Integer,
     'response_id': fields.Integer,
     'reviewer_user_id': fields.Integer,
-    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
+    'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores'),
+    'language': fields.String
 }
 
 review_fields = {
@@ -182,12 +183,13 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         review_form_id = args['review_form_id']
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
+        language = args['language']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
             return FORBIDDEN
 
-        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
         review_response.review_scores = self.get_review_scores(scores)
         review_repository.add_model(review_response)
 
