@@ -79,6 +79,7 @@ class ReviewQuestionTranslation(db.Model):
                  validation_regex=None, 
                  validation_text=None):
         self.review_question_id = review_question_id
+        self.language = language
         self.description = description
         self.headline = headline
         self.placeholder = placeholder
