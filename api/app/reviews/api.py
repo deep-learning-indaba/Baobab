@@ -82,20 +82,20 @@ def _serialize_review_form(review_form, language):
         if translation is None:
             LOGGER.warn('Missing {} translation for review question id {}'.format(language, question.id))
             translation = question.get_translation('en')
-            review_questions.append({
-                'id': question.id,
-                'question_id': question.question_id,
-                'description': translation.description,
-                'headline': translation.headline,
-                'type': question.type,
-                'placeholder': translation.placeholder,
-                'options': translation.options,
-                'is_required': question.is_required,
-                'order': question.order,
-                'validation_regex': translation.validation_regex,
-                'validation_text': translation.validation_text,
-                'weight': question.weight
-            })
+        review_questions.append({
+            'id': question.id,
+            'question_id': question.question_id,
+            'description': translation.description,
+            'headline': translation.headline,
+            'type': question.type,
+            'placeholder': translation.placeholder,
+            'options': translation.options,
+            'is_required': question.is_required,
+            'order': question.order,
+            'validation_regex': translation.validation_regex,
+            'validation_text': translation.validation_text,
+            'weight': question.weight
+        })
         
     form = {
         'id': review_form.id,
