@@ -144,3 +144,54 @@ class ReviewsApiTest(ApiTestCase):
             'en': 'Renamed English Name',
             'zu': 'Zulu Name'
         })
+
+    def test_tag_list(self):
+        """Test that a list of tags can be retrieved in the correct language."""
+        self.seed_static_data()
+        params = {
+            'event_id': 1,
+            'language': 'en'
+        }
+
+        response = self.app.get('/api/v1/tags', headers=self.user1_headers, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['id'], 1)
+        self.assertEqual(data[0]['event_id'], 1)
+        self.assertEqual(data[0]['name'], 'English Tag 1 Event 1')
+        self.assertEqual(data[1]['id'], 2)
+        self.assertEqual(data[1]['event_id'], 1)
+        self.assertEqual(data[1]['name'], 'English Tag 2 Event 1')
+
+        params = {
+            'event_id': 1,
+            'language': 'fr'
+        }
+
+        response = self.app.get('/api/v1/tags', headers=self.user1_headers, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['id'], 1)
+        self.assertEqual(data[0]['event_id'], 1)
+        self.assertEqual(data[0]['name'], 'French Tag 1 Event 1')
+        self.assertEqual(data[1]['id'], 2)
+        self.assertEqual(data[1]['event_id'], 1)
+        self.assertEqual(data[1]['name'], 'French Tag 2 Event 1')
+
+    def test_tag_list_default_language(self):
+        """Test that the language defaults to English when not found."""
+        self.seed_static_data()
+        params = {
+            'event_id': 2,
+            'language': 'zu'
+        }
+
+        response = self.app.get('/api/v1/tags', headers=self.user2_headers, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['id'], 3)
+        self.assertEqual(data[0]['event_id'], 2)
+        self.assertEqual(data[0]['name'], 'English Tag 1 Event 2')

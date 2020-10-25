@@ -20,3 +20,7 @@ class TagRepository():
     @staticmethod
     def commit():
         db.session.commit()
+
+    @staticmethod
+    def get_all_for_event(event_id):
+        return db.session.query(Tag).filter_by(event_id=event_id).all()

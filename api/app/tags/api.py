@@ -5,6 +5,7 @@ from app.utils.auth import auth_required, event_admin_required
 from app.tags.repository import TagRepository as tag_repository
 from app.utils import errors
 from app.tags.models import Tag, TagTranslation
+from app import LOGGER
 
 def _serialize_tag_detail(tag):
     """Serializes a tag with all of its translations."""
@@ -17,6 +18,18 @@ def _serialize_tag_detail(tag):
     }
     return result
 
+
+def _serialize_tag(tag, language):
+    """Serialize a tag in a specific language."""
+    translation = tag.get_translation(language)
+    if translation is None:
+        LOGGER.warn('Could not find translation for language {} for tag id {}'.format(language, tag.id))
+        translation = tag.get_translation('en')
+    return {
+        'id': tag.id,
+        'event_id': tag.event_id,
+        'name': translation.name
+    }
 
 class TagAPI(restful.Resource):
 
@@ -74,3 +87,15 @@ class TagAPI(restful.Resource):
         tag_repository.commit()
 
         return _serialize_tag_detail(tag), 200
+
+
+class TagListAPI(restful.Resource):
+    @event_admin_required
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+        language = args['language']
+
+        tags = tag_repository.get_all_for_event(event_id)
+        return [_serialize_tag(t, language) for t in tags]
