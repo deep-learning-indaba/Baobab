@@ -12,3 +12,11 @@ class TagRepository():
         db.session.add(tag)
         db.session.commit()
         return tag
+
+    @staticmethod
+    def delete_translation(id):
+        db.session.query(TagTranslation).filter_by(id=id).delete()
+
+    @staticmethod
+    def commit():
+        db.session.commit()

@@ -30,8 +30,7 @@ class ReviewsApiTest(ApiTestCase):
             TagTranslation(self.tags[0].id, 'fr', 'French Tag 1 Event 1'),
             TagTranslation(self.tags[1].id, 'en', 'English Tag 2 Event 1'),
             TagTranslation(self.tags[1].id, 'fr', 'French Tag 2 Event 1'),
-            TagTranslation(self.tags[2].id, 'en', 'English Tag Event 2'),
-            TagTranslation(self.tags[2].id, 'fr', 'French Tag Event 2')
+            TagTranslation(self.tags[2].id, 'en', 'English Tag 1 Event 2')
         ]
 
         db.session.add_all(tag_translations)
@@ -68,3 +67,80 @@ class ReviewsApiTest(ApiTestCase):
         params = {'id': 1, 'event_id': 1}
         response = self.app.get('/api/v1/tag', headers=self.user2_headers, data=params)
         self.assertEqual(response.status_code, 403)
+
+    def test_typical_post(self):
+        """Test a typical post request."""
+        self.seed_static_data()
+        params = {
+            'event_id': 2,
+            'name': {
+                'en': 'English Tag 2 Event 2',
+                'fr': 'French Tag 2 Event 2',
+            }
+        }
+        response = self.app.post(
+            '/api/v1/tag', 
+            headers=self.user2_headers, 
+            data=json.dumps(params),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        new_id = data['id']
+
+        response = self.app.get('/api/v1/tag', headers=self.user2_headers, data={'id': new_id, 'event_id': 2})
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], new_id)
+        self.assertEqual(data['event_id'], 2)
+        self.assertDictEqual(data['name'], {
+            'en': 'English Tag 2 Event 2',
+            'fr': 'French Tag 2 Event 2'
+        })
+
+    def test_post_event_admin(self):
+        """Test that a non-event admin can't post a new tag."""
+        self.seed_static_data()
+        params = {
+            'event_id': 2,
+            'name': {
+                'en': 'English Tag 2 Event 2',
+                'fr': 'French Tag 2 Event 2',
+            }
+        }
+        # User 1 is not an event admin for event 2
+        response = self.app.post(
+            '/api/v1/tag', 
+            headers=self.user1_headers, 
+            data=json.dumps(params), 
+            content_type='application/json')
+        self.assertEqual(response.status_code, 403)
+
+    
+    def test_put(self):
+        """Test typcial put request."""
+        self.seed_static_data()
+        params = {
+            'id': 2,
+            'event_id': 1,
+            'name': {
+                'en': 'Renamed English Name',  # Rename
+                'zu': 'Zulu Name'
+            }
+        }
+
+        response = self.app.put(
+            '/api/v1/tag', 
+            headers=self.user1_headers, 
+            data=json.dumps(params),
+            content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+
+        response = self.app.get('/api/v1/tag', headers=self.user1_headers, data={'id': 2, 'event_id': 1})
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], 2)
+        self.assertEqual(data['event_id'], 1)
+        self.assertDictEqual(data['name'], {
+            'en': 'Renamed English Name',
+            'zu': 'Zulu Name'
+        })
