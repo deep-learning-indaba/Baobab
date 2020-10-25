@@ -28,7 +28,7 @@ class TagAPI(restful.Resource):
 
         tag = tag_repository.get_by_id(id)
         if tag.event_id != event_id:
-            return errors.UNAUTHORIZED
+            return errors.FORBIDDEN
 
         return _serialize_tag_detail(tag)
 
