@@ -152,6 +152,7 @@ html .headings-lower label {
 
 .tags {
     display: flex;
+    flex-wrap: wrap;
     min-width: 1px;
 }
 
@@ -178,6 +179,22 @@ html .headings-lower label {
     font-size: 12px;
     text-align: left;
     margin: 0;
+}
+
+/* New Tag Modal */
+.new-tag-inputs {
+margin: 5px 0;
+display: flex;
+flex-direction: column;
+width: 100%;
+}
+
+.new-tag-inputs label {
+    text-align: left;
+}
+
+.new-tag-inputs input {
+width: 100%;
 }
 
 /* Response Details Section and Sub-Sections */

@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/taglist/TagList.service'
+import { tagList } from '../../../services/tagList/tagList.service'
 
 
 class ResponseListForm extends Component {
@@ -29,7 +29,7 @@ class ResponseListForm extends Component {
 
     // Fetch Tags
     fetchTags() {
-        tagList().then(response => {
+        tagList.list().then(response => {
             this.setState({
                 tags: response
             }, () => {
@@ -52,7 +52,6 @@ class ResponseListForm extends Component {
 
     // Fetch Ressponses and Handle/Format Data
     handleData() {
-
         const baseUrl = process.env.REACT_APP_API_URL;
         const { selectedTags, selectedQuestions } = this.state
 
@@ -60,8 +59,6 @@ class ResponseListForm extends Component {
         this.toggleList(false)
 
         response(selectedTags).then(response => {
-
-            console.log(response)
             // Handle Answers and Reviews
             response.forEach(val => {
                 let handleAnswers = [];
@@ -78,7 +75,6 @@ class ResponseListForm extends Component {
                 </NavLink>; 
                 }
               
-
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
                     // format anwers display based on type
