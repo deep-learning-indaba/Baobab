@@ -1,7 +1,8 @@
 
 export const tagList = {
   list,
-  post
+  post,
+  remove
 };
 
  function list() {
@@ -14,9 +15,23 @@ export const tagList = {
   })
 }
 
- function post() {
+function post() {
   return new Promise(resolve => {
-    resolve({"status": 201})
+    resolve({ "status": 201 })
   })
 }
+
+function remove(tag) {
+  return new Promise((resolve, reject )=> {
+    if (tag) {
+      resolve({ "status": 201 })
+    }
+    else {
+      reject({ "status": 400, "message": "Network Error" })
+    }
+  })
+}
+   
+  
+
 

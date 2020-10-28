@@ -110,6 +110,10 @@ html .headings-lower label {
     font-size: 14px;
 }
 
+.fa-trash-alt {
+padding: 0 5px;
+}
+
 /* Tag List */
 .tag-response {  
    opacity: 0;
@@ -128,8 +132,12 @@ html .headings-lower label {
 }
 
 .badge.add-tags {
-    background: hsl(208deg, 84%, 59%);
+    background: hsl(208, 74%, 57%);
     color: white;
+}
+
+.badge.add-tags.active {
+    background:hsl(117deg, 32%, 46%);
 }
 
 .tag-item {

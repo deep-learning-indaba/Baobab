@@ -1,6 +1,5 @@
 
 export const tagResponse = {
-   // fetchResponse,
     post
 };
   
@@ -16,9 +15,12 @@ function post(param) {
 })
 }
 
+/*
  function test() {
     return new Promise(resolve => {
       resolve({"status": 200, "tag": {"headline": "test tag", "id": 101}})
     })
   }
+*/
+
   
