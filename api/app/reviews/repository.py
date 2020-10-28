@@ -213,6 +213,15 @@ class ReviewRepository():
                         .all())
         return timeseries
 
+    @staticmethod
+    def get_response_reviewers_for_event(event_id):
+        return (db.session.query(ResponseReviewer)
+                  .join(Response, Response.id == ResponseReviewer.response_id)
+                  .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                  .filter_by(event_id=event_id)
+                  .order_by(ResponseReviewer.response_id)
+                  .all())
+
 
 class ReviewConfigurationRepository():
 
