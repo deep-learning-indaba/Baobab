@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { fetchResponse, fetchQuestions } from '../../../services/ResponseList/ResponseList'
+import { fetchResponse, fetchQuestions } from '../../../services/responseList/responseList.service'
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
+import { NavLink } from "react-router-dom";
 
 
 class ResponseListForm extends Component {
@@ -21,8 +22,8 @@ class ResponseListForm extends Component {
 
 
     componentWillMount() {
-        this.fetchData()
-        this.handleData()
+        this.fetchData();
+        this.handleData();
     }
 
 
@@ -37,8 +38,7 @@ class ResponseListForm extends Component {
 
     handleSelect(question) {
         const selected = this.state.selected;
-        let duplicate = selected.indexOf(question)
-
+        let duplicate = selected.indexOf(question);
         if (duplicate == -1) {
             selected.push(question)
         }
@@ -62,82 +62,97 @@ class ResponseListForm extends Component {
 
     handleData() {
         const baseUrl = process.env.REACT_APP_API_URL;
-        // disable question list
-        this.toggleList(true)
-
         const { selected } = this.state;
-
+        // disable question list
+        this.toggleList(true);
 
         fetchResponse().then(response => {
-
             // Handle Answers and Reviews
             response.forEach(val => {
                 let handleAnswers = [];
                 let handleReviews = [];
+                // Create Response Id Link
+                if (this.props.event) {
+                    val.response_id = <NavLink
+                    to={`${this.props.event.key}/responsePage/${val.response_id}`}
+                    className="table-nav-link"
+                >
+                    {val.response_id}
+                </NavLink>; 
+                }
+              
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
                     // format anwers display based on type
-                    if (selected.includes(answer.question_id)) {
+
+                    if (answer.type.includes("text")) {
+                        handleAnswers.push([{
+                            headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
+                                className="Tooltip"
+                            />
+                            </div>
+                        }])
+                    }
+
+                    else if (selected.includes(answer.question_id)) {
                         if (answer.type == "file") {
                             handleAnswers.push([{
                                 headline: answer.headline,
                                 value: <a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
                             }])
                         }
-                        if (answer.type == "multi-file") {
+
+                        else if (answer.type == "multi-file") {
                             let files = [];
                             answer.value.forEach((file => {
-                                file ? files.push(
-                                    <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
-                                )
-                                    :
-                                    console.log(`${answer.question_id} contains no value`)
+                                if (file) {
+                                    files.push(
+                                        <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
+                                    )
+                                }
                             }))
                             handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
                         }
 
-                        if (answer.type.includes("choice")) {
+                        else if (answer.type.includes("choice")) {
                             let choices = [];
                             answer.options.forEach((opt => {
-                                answer.value == opt.value ? choices.push(<div key={opt.label}><label>{opt.label}</label></div>) : console.log(`${opt.question_id} contains no value`)
+                                if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
                             }))
                             handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
-                        }
+                        };
+                    }
 
-                        if (answer.type.includes("text")) {
-                            handleAnswers.push([{
-                                headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
-                                    className="Tooltip"
-                                />
-                                </div>
-                            }])
-                        }
+                    else {
+                        handleAnswers.push([{
+                            headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
+                            </div>
+                        }])
                     }
                 })
 
                 // extract only the reviewers name
                 val.reviewers.forEach(review => {
-                    review ? handleReviews.push(review.reviewer_name) : handleReviews.push("")
+                    review ? handleReviews.push(review.reviewer_name) : handleReviews.push("");
                 })
 
-                   // add User Title as new column 
-                   function userTitleCol(row, user_title, firstname, lastname) {
+                // add User Title as new column 
+                function userTitleCol(row, user_title, firstname, lastname) {
                     return row.user_title = user_title + " " + firstname + " " + lastname
                 }
 
-
                 // envoke and store new columns for UserTitle
                 // combine user credentials
-                userTitleCol(val, val.user_title, val.firstname, val.lastname)
+                userTitleCol(val, val.user_title, val.firstname, val.lastname);
 
                 // insert Answers values as columns
                 if (handleAnswers.length) {
                     handleAnswers.forEach((answer, index) => {
                         let key = answer[0].headline
                         val[key] = answer[0].value
-                    })
+                    });
                     handleAnswers = [];
-                }
+                };
                 // insert new reviews values as columns
                 if (handleReviews.length) {
                     handleReviews.forEach((review, index) => {
@@ -146,7 +161,7 @@ class ResponseListForm extends Component {
                         val[key] = review
                         handleReviews = [];
                     })
-                }
+                };
 
                 // delete original review and answer rows as they don't need to be displayed with all their data
                 delete val.answers;
@@ -168,26 +183,25 @@ class ResponseListForm extends Component {
 
     generateCols() {
         let colFormat = [];
-
         // Find the row with greatest col count and assign the col values to React Table
         if (this.state.responseTable) {
             function readColumns(rows) {
                 let tableColumns = [];
                 rows.map(val => {
-                    let newColumns = Object.keys(val)
+                    let newColumns = Object.keys(val);
                     newColumns.forEach(val => {
-                        tableColumns.includes(val) ? console.log("item already exists") : tableColumns.push(val)
-                    })
-                    console.log(tableColumns)
-                })
-
+                        if (!tableColumns.includes(val)) {
+                            tableColumns.push(val)
+                        };
+                    });
+                });
                 return tableColumns
-            }
+            };
 
             function widthCalc(colItem) {
                 if (colItem.includes('question')) {
                     return 200
-                }
+                };
 
                 if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date')) {
                     return 180
@@ -198,8 +212,9 @@ class ResponseListForm extends Component {
             }
 
             let col = readColumns(this.state.responseTable);
-            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className:"myCol", width: widthCalc(val) }))
+            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }));
         }
+     
         return colFormat
     }
 
@@ -226,7 +241,7 @@ class ResponseListForm extends Component {
                     {/*CheckBox*/}
                     <div className="checkbox-top">
                         <input onClick={(e) => this.fetchData()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
-                        <label id="label" className="label-top" for="defaultCheck1">
+                        <label id="label" className="label-top" htmlFor="defaultCheck1">
                             {t('Include un-submitted')}
                         </label>
                     </div>
@@ -242,9 +257,9 @@ class ResponseListForm extends Component {
                         </span>}
                         <div className={!toggleList ? "question-list" : "question-list show"}>
                             {questions.length && questions.map(val => {
-                                return <div key={val} className="questions-item">
+                                return <div key={val.headline + "" + val.value} className="questions-item">
                                     <input onClick={(e) => this.handleSelect(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
-                                    <label style={{ marginLeft: "5px" }} className="form-check-label" for={val.question_id}>
+                                    <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>
                                         {val.headline}
                                     </label>
                                 </div>
@@ -266,7 +281,9 @@ class ResponseListForm extends Component {
                             className="ReactTable"
                             data={responseTable ? responseTable : []}
                             columns={columns}
-                            minRows={0} />}
+                            minRows={0}
+                        />
+                    }
                 </div>
 
             </section>
