@@ -1,0 +1,156 @@
+
+
+.table-wrapper {
+    width: 87vw;
+    margin-top: 20px;
+}
+
+h2 {
+    color: hsl(0, 0%, 25%);
+    font-weight: 300;
+    margin-top: 2px;
+    text-align: left;
+    margin: 0;
+}
+
+h4 {
+    color: lightgrey;
+    font-weight: 300;
+    margin-top: 5px;
+    margin-left: 5px;
+    text-align: left;
+}
+
+button {
+    margin-bottom: 10px;
+}
+
+label {
+    font-size: 12px;
+    color: grey;
+    margin: 0 1px;
+}
+
+ .btn-primary {
+    background:hsl(208deg 84% 59%);
+    border: none;
+    width: 100%;
+    color: white;
+    border: 1px solid lightgrey;
+    margin: 0 5px;
+}
+/* Flex Box Classes */
+
+.flex {
+    display: flex;
+}
+
+.baseline {
+    align-items: baseline;
+}
+
+.center {
+    justify-content: center;
+}
+
+
+/* General and  User Details Heading */
+.headings-lower {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    padding: 10px 15px;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    border-radius: 4px;
+}
+
+
+.user-details {
+    padding: 0 2px
+}
+
+.user-details.right {
+    padding: 0 10px
+}
+
+html .headings-lower label {
+    color: hsl(0deg 0% 55%);
+}
+
+.user-details {
+    display: flex;
+    text-align: left;
+    align-items: center;
+}
+
+.user-details.right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.user-details h4 {
+    color: hsl(0, 0%, 44%);
+}
+
+
+
+/* Response Details Section and Sub-Sections */
+.response-details {
+    margin-top: 20px;
+    width: 100%;
+    padding: 2%;
+    background: white;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    min-height: 40px;
+    padding-bottom: 40px;
+    text-align: left;
+    border-radius: 4px;
+}
+
+.section {
+    padding: 10px 0;
+}
+
+/* Q&A Sections */
+.Q-A {
+display: flex;
+flex-wrap: wrap;
+}
+
+.question-answer-block {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e8e8e8;
+    margin: 5px;
+    background: hsl(0deg 0% 98%);
+    border-radius: 2px;
+}
+
+.question-answer-block p {
+    color: grey;
+    font-size: 17px;
+}
+
+ html .answerer {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.answer.file {
+    color: skyblue;
+    text-decoration: underline;
+}
+
+/* Response Details Type Face */
+.response-details h3 {
+    color: hsl(213deg 16% 49%);
+    margin: 0;
+    padding-left: 7px;
+    padding-bottom: 4px;
+    padding-right: 4px;
+}
+
+

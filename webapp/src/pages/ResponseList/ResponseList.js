@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import './ResponseList.css';
 import { withTranslation } from 'react-i18next';
 import ResponseListForm from './components/ResponseListForm'
 
