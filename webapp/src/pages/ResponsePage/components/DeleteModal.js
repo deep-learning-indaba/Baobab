@@ -10,7 +10,7 @@ class DeleteModal extends Component {
 
 
     handleSubmit() {
-        this.props.handleSubmit(this.props.deleteQue)
+        this.props.handleSubmit(this.props.deleteQue);
     }
 
 

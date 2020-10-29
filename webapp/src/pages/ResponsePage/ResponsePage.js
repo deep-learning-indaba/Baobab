@@ -24,10 +24,10 @@ class ResponsePage extends Component {
     };
 
     componentDidMount() {
-        this.fetchForm()
-        this.fetchData()
-        this.fetchTags()
-        this.fetchEvent()
+        this.fetchForm();
+        this.fetchData();
+        this.fetchTags();
+        this.fetchEvent();
     }
 
     // Data Functions
@@ -37,7 +37,7 @@ class ResponsePage extends Component {
             this.setState({
                 eventLanguages: ["en", "fr"]
             })
-        })
+        });
     }
 
 
@@ -47,7 +47,7 @@ class ResponsePage extends Component {
             this.setState({
                 applicationForm: response.formSpec
             })
-        })
+        });
     }
 
 
@@ -55,12 +55,12 @@ class ResponsePage extends Component {
     fetchData() {
         let params = {
             id: this.props.match.params.id
-        }
+        };
         fetchResponse(params).then(response => {
             this.setState({
                 applicationData: response
             })
-        })
+        });
     }
 
 
@@ -85,7 +85,7 @@ class ResponsePage extends Component {
             this.setState({
                 tagList: response
             })
-        })
+        });
     }
 
 
@@ -99,43 +99,42 @@ class ResponsePage extends Component {
 
     // Post Tag
     postTag(tag, type) {
-        type == "responseTag" ? this.postResponseTag(tag) : this.postTagList(tag)
+        type == "responseTag" ? this.postResponseTag(tag) : this.postTagList(tag);
     }
 
 
 
     // Post Response API
     postResponseTag(tag) {
-        const updateApplicationData = this.state.applicationData
-        const updateTagList = this.state.tagList
+        const updateApplicationData = this.state.applicationData;
+        const updateTagList = this.state.tagList;
 
         tagResponse.post(tag).then(response => {
-
             if (response.status == 201) {
                 let getTag = this.state.tagList.filter(tag => {
                     if (tag.id == response.tag_id) {
                         return tag
                     }
-                })
-                updateApplicationData.tags.push({ "headline": getTag[0].name, "id": getTag[0].id })
-                updateTagList.splice(getTag, 1)
+                });
+                updateApplicationData.tags.push({ "headline": getTag[0].name, "id": getTag[0].id });
+                updateTagList.splice(getTag, 1);
 
                 this.setState({
                     applicationData: updateApplicationData,
-                })
-            }
+                });
+            };
         }).catch((response) => {
             this.error(response.message)
-        })
+        });
     }
 
 
 
     // Post Tag List API
     postTagList(tags) {
-        let updateApplicationData = this.state.applicationData
-        let updateEventLanguages = this.state.eventLanguages
-        let newTags = Object.values(tags)
+        let updateApplicationData = this.state.applicationData;
+        let updateEventLanguages = this.state.eventLanguages;
+        let newTags = Object.values(tags);
         let filterTags = tags;
 
         // filter dulicate headlines (bug fix)  
@@ -143,9 +142,9 @@ class ResponsePage extends Component {
             newTags.forEach((tag2) => {
                 if (tag1.headline == tag2.headline) {
                     delete filterTags[tag2.id]
-                }
+                };
             })
-        })
+        });
 
         if (Object.keys(filterTags).length) {
             tagList.post(filterTags).then(response => {
@@ -160,8 +159,8 @@ class ResponsePage extends Component {
                                 updateEventLanguages.forEach((tag, index) => {
                                     if (tag == val.id) {
                                         updateEventLanguages.splice(index, 1)
-                                    }
-                                });
+                                    };
+                                })
                             });
 
                             this.setState({
@@ -171,18 +170,18 @@ class ResponsePage extends Component {
                         }
                     }).catch(response => {
                         this.error(response.message)
-                    })
-                }
+                    });
+                };
             }).catch(response => {
                 this.error(response.message)
-            })
-        }
+            });
+        };
     }
 
 
     // Del Tag
     deleteTag(tag_id) {
-        let updateApplicationData = this.state.applicationData
+        let updateApplicationData = this.state.applicationData;
         tagList.remove({
             "tag_id": tag_id,
             "response_id": parseInt(this.props.match.params.id),
@@ -193,11 +192,11 @@ class ResponsePage extends Component {
                     if (tag.id == tag_id) {
                         updateApplicationData.tags.splice(index, 1)
                     }
-                })
-            }
+                });
+            };
         }).catch((response) => {
             this.error(response.message)
-        })
+        });
 
         this.setState({
             applicationData: updateApplicationData,
@@ -218,14 +217,14 @@ class ResponsePage extends Component {
 
             if (unsubmitted) {
                 return ["unsubmitted" + " " + data.started_timestamp]
-            }
+            };
             if (submitted) {
                 return ["submitted" + " " + data.submitted_timestamp]
-            }
+            };
             if (withdrawn) {
                 return ["withdrawn" + " " + data.withdrawn_timestamp]
-            }
-        }
+            };
+        };
     }
 
 
@@ -249,8 +248,8 @@ class ResponsePage extends Component {
                         {this.renderQuestions(section)}
                     </div>
                 </div>)
-            })
-        }
+            });
+        };
 
         return html
     }
@@ -264,7 +263,7 @@ class ResponsePage extends Component {
                 <p>{q.headline}</p>
                 <h6>{this.renderAnswer(q.id, q.type)}</h6>
             </div>
-        })
+        });
         return questions
     }
 
@@ -279,15 +278,15 @@ class ResponsePage extends Component {
         applicationData.answers.forEach(a => {
             if (a.question_id == id) {
                 formatAnswer(a, type)
-            }
-        })
+            };
+        });
 
         // format aswerers 
         function formatAnswer(a, type) {
             // file
             if (type == "file") {
                 answers = <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{a.value}</a>
-            }
+            };
             // multi-file
             if (type == "multi-file") {
                 let files = [];
@@ -297,24 +296,24 @@ class ResponsePage extends Component {
                             <div key={a.headline}><a key={a.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file} className="answer">{a.value}</a></div>
                         )
                     }
-                }))
+                }));
                 answers = <div key={a.headline}>{files}</div>
-            }
+            };
             // choice
             if (type.includes("choice")) {
                 let choices = [];
                 a.options.forEach(opt => {
                     if (a.value == opt.valuel) {
                         choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
-                    }
-                })
+                    };
+                });
                 answers = <div key={choices}>{choices}</div>
-            }
+            };
             // text
             if (type.includes("text")) {
                 answers = <div key={a.headline}><p className="answer">{a.value}</p></div>
-            }
-        }
+                 };
+        };
         return answers
     }
 
@@ -333,9 +332,9 @@ class ResponsePage extends Component {
                 >
                     {tag.headline}
                     <i className="far fa-trash-alt"></i></span>
-            })
+            });
             return tags
-        }
+        };
     }
 
 
@@ -348,7 +347,7 @@ class ResponsePage extends Component {
                 postTag={(tags) => this.postTag(tags, "tagList")}
                 eventLanguages={eventLanguages}
             />
-        }
+        };
     }
 
 
@@ -361,7 +360,7 @@ class ResponsePage extends Component {
                 handleSubmit={(tag_id) => this.deleteTag(tag_id)}
                 deleteQue={this.state.deleteModal}
             />
-        }
+        };
     }
 
 
@@ -375,14 +374,14 @@ class ResponsePage extends Component {
 
 
     render() {
-        const { applicationData, tagList, tagMenu, error, eventLanguages } = this.state
+        const { applicationData, tagList, tagMenu, error, eventLanguages } = this.state;
         const applicationStatus = this.applicationStatus();
         const renderSections = this.renderSections();
-        const tags = this.renderTags()
-        const tagModal = this.renderTagModal()
-        const deleteModal = this.renderDeleteModal()
+        const tags = this.renderTags();
+        const tagModal = this.renderTagModal();
+        const deleteModal = this.renderDeleteModal();
         // Translation
-        const t = this.props.t;
+        const t = this.props.t;;
 
         return (
             <div className="table-wrapper">

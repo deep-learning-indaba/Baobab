@@ -11,7 +11,7 @@ class Form extends Component {
 
     handleSubmit() {
         const { tags } = this.state;
-        this.props.postTag(tags)
+        this.props.postTag(tags);
 
         this.setState({
             tags: {}
@@ -28,7 +28,7 @@ class Form extends Component {
         }
         else {
            delete addTags[label]
-        }
+        };
       
         this.setState({
             tags: addTags
