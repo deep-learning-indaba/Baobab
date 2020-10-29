@@ -25,15 +25,18 @@
 }
 
 
-.btn-primary.green {
+.questions .btn-primary.green {
     background: hsl(120, 58%, 42%);
     border: darkgreen;
+    color: white;
     }
 
-.btn {
-    margin-right: 7px;
-    color: white;
-}
+    .questions .btn-update {
+        background:white;
+        border: 1px solid lightgrey;
+        color: grey;
+
+    }
 
 
 /* Inputs */
@@ -112,7 +115,6 @@
     display: block;
 }
 
- 
 
 html .ReactTable .myCol {
     max-width: 300px;
@@ -121,4 +123,13 @@ html .ReactTable .myCol {
     overflow: scroll;
     margin-bottom: 10px
 }
+
+html .table-nav-link {
+    color: hsl(214deg 4% 32%);
+    background: hsl(0deg 0% 93%);
+    padding: 3px 17px;
+    border-radius: 4px;
+}
+
+
 
