@@ -325,6 +325,7 @@ class ResponsePage extends Component {
         if (data) {
             let tags = data.tags.map(tag => {
                 return <span
+                    key={tag.id}
                     onClick={(e) => this.deleteTag(tag.id)}
                     className="btn badge badge-info"
                     data-toggle="modal"
@@ -425,7 +426,7 @@ class ResponsePage extends Component {
                                                         "response_id": parseInt(this.props.match.params.id),
                                                         "event_id": this.props.event.id
                                                     }, "responseTag"
-                                                )} class="btn tag">{val.name}</button>
+                                                )} className="btn tag">{val.name}</button>
                                         </div>
                                     })}
 
