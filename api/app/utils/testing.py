@@ -18,9 +18,10 @@ from app.events.models import Event, EventType
 from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from app.registration.models import Offer, RegistrationForm
-from app.responses.models import Answer, Response
+from app.responses.models import Answer, Response, ResponseReviewer
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
+from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse
 
 
 @event.listens_for(Engine, "connect")
@@ -110,6 +111,8 @@ class ApiTestCase(unittest.TestCase):
                     is_admin=False,
                     post_create_fn=lambda x: None):
         firstnames, lastnames = self._get_names()
+        users = []
+
         for i in range(n):
             title = random.choice(titles)
             firstname = random.choice(firstnames)
@@ -119,10 +122,13 @@ class ApiTestCase(unittest.TestCase):
                                                                        num=len(self.test_users))
             email = strip_accents(email)
             try:
-                self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                users.append(user)
             except ProgrammingError as err:
                 LOGGER.debug("info not added for user: {} {} {} {}".format(email, firstname, lastname, title))
                 db.session.rollback()
+
+        return users
 
     def setUp(self):
         app.config['TESTING'] = True
@@ -194,6 +200,22 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(event)
         db.session.commit()
         return event
+
+    def add_review_config(self, review_form_id=1, num_reviews_required=1, num_optional_reviews=1):
+        review_config = ReviewConfiguration(
+            review_form_id=review_form_id, 
+            num_reviews_required=num_reviews_required, 
+            num_optional_reviews=num_optional_reviews)
+        db.session.add(review_config)
+        db.session.commit()
+        return review_config
+
+    def add_review_form(self, application_form_id=1, deadline=None):
+        deadline = deadline or datetime.now()
+        review_form = ReviewForm(application_form_id, deadline)
+        db.session.add(review_form)
+        db.session.commit()
+        return review_form
 
     def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
         email_template = EmailTemplate(template_key, event_id, subject, template, language)
@@ -300,11 +322,23 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return response
     
+    def add_response_reviewer(self, response_id, reviewer_user_id):
+        rr = ResponseReviewer(response_id, reviewer_user_id)
+        db.session.add(rr)
+        db.session.commit()
+        return rr
+
     def add_answer(self, response_id, question_id, answer_value):
         answer = Answer(response_id, question_id, answer_value)
         db.session.add(answer)
         db.session.commit()
         return answer
+
+    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1):
+        rr = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+        db.session.add(rr)
+        db.session.commit()
+        return rr
 
     def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False, candidate_response=None):
         offer_date = offer_date or datetime.now()

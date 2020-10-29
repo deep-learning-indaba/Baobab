@@ -221,25 +221,16 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))
 
 
-def _serialize_response(response, reviewers, question_filter):
-    answers = ...  # TODO
-
-    
-
-def _serialize_reviewer(reviewer, review_response):
-    return None  # TODO
-
-
 def _pad_list(lst, length):
-    diff = length - len(list)
+    diff = length - len(lst)
     lst.extend([None] * diff)
     return lst
 
-def _serialize_reviewer(response_reviewer):
+def _serialize_reviewer(response_reviewer, review_response):
     return {
         'reviewer_id': response_reviewer.reviewer_user_id,
         'reviewer_name': '{} {} {}'.format(response_reviewer.user.user_title, response_reviewer.user.firstname, response_reviewer.user.lastname),
-        'review_response_id': None if response_reviewer.response is None else response_reviewer.response.id
+        'review_response_id': None if review_response is None else review_response.id
     }
 
 def _serialize_answer(answer, language):
@@ -263,12 +254,13 @@ class ResponseListAPI(restful.Resource):
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('include_unsubmitted', type=bool, required=True)
-        req_parser.add_argument('question_ids', type=list, required=True, location='json')
+        req_parser.add_argument('question_ids', type=list, required=False, location='json')
         req_parser.add_argument('language', type=str, required=True)
         args = req_parser.parse_args()
 
         include_unsubmitted = args['include_unsubmitted']
         question_ids = args['question_ids']
+        language = args['language']
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
 
@@ -280,20 +272,30 @@ class ResponseListAPI(restful.Resource):
             k: list(g) for k, g in itertools.groupby(response_reviewers, lambda r: r.response_id)
         }
 
+        review_responses = review_repository.get_review_responses_for_event(event_id)
+        reviewer_to_review_response = {
+            r.reviewer_user_id: r for r in review_responses
+        }
+
         serialized_responses = []
         for response in responses:
-            reviewers = _pad_list([_serialize_reviewer(r) for r in response_to_reviewers[response.id]], required_reviewers)
-            answers = [_serialize_answer(answer, language) for answer in response.answers if answer.question_id in question_ids]
+            reviewers = [_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)) 
+                         for r in response_to_reviewers.get(response.id, [])]
+            reviewers = _pad_list(reviewers, required_reviewers)
+            if question_ids:
+                answers = [_serialize_answer(answer, language) for answer in response.answers if answer.question_id in question_ids]
+            else:
+                answers = []
 
             serialized = {
                 'response_id': response.id,
                 'user_title': response.user.user_title,
                 'firstname': response.user.firstname,
                 'lastname': response.user.lastname,
-                'start_date': response.start_date.isoformat(),
+                'start_date': response.started_timestamp.isoformat(),
                 'is_submitted': response.is_submitted,
                 'is_withdrawn': response.is_withdrawn,
-                'submitted_date': response_repository.submitted_date.isoformat(),
+                'submitted_date': None if response.submitted_timestamp is None else response.submitted_timestamp.isoformat(),
                 'language': response.language,
                 'answers': answers,
                 'reviewers': reviewers

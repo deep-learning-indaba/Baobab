@@ -120,7 +120,7 @@ class ResponseRepository():
     @staticmethod
     def get_all_for_event(event_id, submitted_only=True):
         query = db.session.query(Response)
-        if submitted:
+        if submitted_only:
             query = query.filter_by(is_submitted=True)
 
         return (query
