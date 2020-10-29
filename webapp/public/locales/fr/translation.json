@@ -299,6 +299,11 @@
     "Previous": "Retourner",
     "User Title": "Titre de l'utilisateur",
     "User Id": "Identifiant d'utilisateur",
-    "Application Status": "État de la candidature"
+    "Application Status": "État de la candidature",
+    "Yes": "Oui",
+    "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer ce tag?",
+    "Save": "Enregistrer",
+    "Add Tags": "Ajouter des tags",
+    "New tag": "Nouveau tag"
 
 }

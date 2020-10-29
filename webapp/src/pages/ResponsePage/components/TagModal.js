@@ -8,30 +8,28 @@ class Form extends Component {
         }
     };
 
+
     handleSubmit() {
         const { tags } = this.state;
         this.props.postTag(tags)
+
+        this.setState({
+            tags: {}
+        })
     }
 
 
     handleChange(event, label) {
         const { tags } = this.state;
         let addTags = tags;
-
-        if (!addTags.length) {
-            addTags[label] = {headline: event.target.value, id: label}
+    
+        if (event.target.value) {
+            addTags[label] = { headline: event.target.value, id: label }
         }
         else {
-            addTags.forEach(val => {
-                if (val.label !== label) {
-                    addTags[label] = {headline: event.target.value, id: label}
-                }
-                if (val.label == label) {
-                    addTags[label].value = event.target.value
-                }
-            })
+           delete addTags[label]
         }
-
+      
         this.setState({
             tags: addTags
         })
@@ -39,11 +37,14 @@ class Form extends Component {
 
 
     renderTagModal() {
-        if (this.props.eventDetails) {
-            let inputs = this.props.eventDetails.event.map(val => {
+          // Translation
+        const t = this.props.t; 
+        
+        if (this.props.eventLanguages) {
+            let inputs = this.props.eventLanguages.map(val => {
                 return <div className="new-tag-inputs">
                     <label>{val}</label>
-                    <input onChange={(e) => this.handleChange(e, val)} defaultValue=""></input>
+                    <input key={val} onChange={(e) => this.handleChange(e, val)}></input>
                 </div>
             });
 
@@ -52,7 +53,7 @@ class Form extends Component {
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalLabel">Add Tags</h5>
+                                <h5 class="modal-title" id="exampleModalLabel">{t('Add Tags')}</h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
@@ -63,8 +64,8 @@ class Form extends Component {
                                 </form>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                <button type="button" data-dismiss="modal" class="btn btn-primary" onClick={(e) => this.handleSubmit()}>Save</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{t('Cancel')}</button>
+                                <button type="button" data-dismiss="modal" class="btn btn-primary" onClick={(e) => this.handleSubmit()}>{t('Save')}</button>
                             </div>
                         </div>
                     </div>
@@ -73,9 +74,9 @@ class Form extends Component {
         }
     }
 
+
     render() {
         const modal = this.renderTagModal()
-
         return (
             <div>
                 {modal}

@@ -24,7 +24,7 @@ function post() {
 function remove(tag) {
   return new Promise((resolve, reject )=> {
     if (tag) {
-      resolve({ "status": 201 })
+      resolve({ "status": 200 })
     }
     else {
       reject({ "status": 400, "message": "Network Error" })

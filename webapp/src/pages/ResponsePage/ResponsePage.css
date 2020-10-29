@@ -137,7 +137,7 @@ padding: 0 5px;
 }
 
 .badge.add-tags.active {
-    background:hsl(117deg, 32%, 46%);
+    background:hsl(120, 0%, 57%);
 }
 
 .tag-item {
@@ -164,15 +164,8 @@ padding: 0 5px;
     min-width: 1px;
 }
 
-.tag-item .badge {
-    background: hsl(0deg, 0%, 91%);
-    border: none;
-    margin: 0;
-    width: 100%;
-    font-size: 12px;
-    color: hsl(0, 0%, 32%);
-    text-align: left;
-    margin: 0.5px 0;
+.tags .btn.badge-info {
+    background: hsl(28deg, 79%, 54%);
 }
 
 .tag-response .btn.tag {
