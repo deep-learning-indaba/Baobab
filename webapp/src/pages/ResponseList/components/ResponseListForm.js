@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/taglist/TagList.service'
+import { tagList } from '../../../services/tagList/tagList.service'
 
 
 class ResponseListForm extends Component {
@@ -29,7 +29,7 @@ class ResponseListForm extends Component {
 
     // Fetch Tags
     fetchTags() {
-        tagList().then(response => {
+        tagList.list().then(response => {
             this.setState({
                 tags: response
             }, () => {
@@ -49,41 +49,8 @@ class ResponseListForm extends Component {
         })
     }
 
-    /*
-   <<<<<<< HEAD
-    // Fetch Questions
-    fetchQuestions() {
-        questions().then(response => {
-            this.setState({
-                questions: response
-            })
-=======
-    handleSelect(question) {
-        const selected = this.state.selected;
-        let duplicate = selected.indexOf(question);
-        if (duplicate == -1) {
-            selected.push(question)
-        }
-        else {
-            selected.splice(duplicate, 1)
-        }
-
-        this.setState({
-            selected: selected,
-            btnUpdate: true
-        }, () => this.fetchData())
-    }
-
-
-    toggleList(list) {
-        this.setState({
-            toggleList: !list ? true : false
->>>>>>> iss779
-        })
-    }
-    */
-
-
+  
+    
     // Fetch Ressponses and Handle/Format Data
     handleData() {
         const baseUrl = process.env.REACT_APP_API_URL;
