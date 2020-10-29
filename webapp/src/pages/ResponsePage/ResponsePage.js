@@ -150,7 +150,7 @@ class ResponsePage extends Component {
             if (type.includes("choice")) {
                 let choices = [];
                 a.options.forEach(opt => {
-                    if (a.value == opt.valuel) {
+                    if (a.value == opt.value) {
                         choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
                     }
                 })
