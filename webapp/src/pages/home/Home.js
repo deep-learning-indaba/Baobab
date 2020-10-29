@@ -66,23 +66,22 @@ class Home extends Component {
 
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
-            return (<div className="row event-table-container">
-                <div className="col">
+            return (
+                <div class="event-table-container">
                     <h3 className="text-center">{this.props.t(description)}</h3>
                     <div class="card">
-                        <table className="event-table">
-                            <tbody>
-                                {events.map(e => {
-                                    return (<tr key={e.key}>
-                                        <td>
-                                            <h5 className="text-left"><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                            <span className="text-left">{e.start_date + " to " + e.end_date}</span>
-                                        </td>
-                                        <td>{this.statusDisplay(e)}</td>
-                                    </tr>)
-                                })}
-                            </tbody>
-                    </table>
+
+
+                    <div class="row event-table">
+                        {events.map(e => {
+                                    return (
+                                        <div key={e.key}>
+                                            <div style={{textAlign:"left"}} class="col-8"> <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                            {e.start_date + " to " + e.end_date}</div>
+                                            <div class="col-4">{this.statusDisplay(e)}</div>
+                                        </div>
+                                    )
+                        })}
                     </div>
                 </div>
             </div>);
@@ -114,8 +113,8 @@ class Home extends Component {
                 {!this.props.user &&
                     <div className="text-center">
                         {this.state.organisation &&
-                            <h2 className="Blurb">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
-                        <p><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
+                            <h2 className="Blurb text-center">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
+                        <p className="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
                     </div>
                 }
 
