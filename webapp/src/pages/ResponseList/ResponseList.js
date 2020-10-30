@@ -18,7 +18,7 @@ class ResponseList extends Component {
         const t = this.props.t;
 
         return (
-            <ResponseListForm />
+            <ResponseListForm event={this.props.event} />
             )
     }
 }
