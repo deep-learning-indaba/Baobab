@@ -15,14 +15,6 @@
     flex-wrap: wrap;
 }
 
-.btn.reset {
-    background: hsl(211deg 100% 50%);
-    color: white;
-    border: none;
-  }
-
-
-
 /* Pills */
 .pills {
     display: flex;
@@ -105,20 +97,6 @@
     text-align: left;
 }
 
-.btn.tags.update {
-    background: hsl(120, 58%, 42%);
-    border: darkgreen;
-    color: white;
-    z-index: 50;
-    pointer-events: all;
-}
-
-.btn.tags.update:hover {
-    background: hsl(120, 58%, 48%);
-    border: darkgreen;
-    color: white;
-}
-
 
 /*Questions*/
 
@@ -153,6 +131,7 @@
     pointer-events: all;
     }
 
+   
 .btn-secondary.hide {
     opacity: 0.5;
     pointer-events: none;

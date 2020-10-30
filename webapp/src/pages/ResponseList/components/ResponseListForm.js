@@ -335,7 +335,7 @@ class ResponseListForm extends Component {
                             {toggleList == "tag" ?  <button
                                 onClick={(e) => this.handleData(selectedTags)}
                                 type="button"
-                                className="btn tag">Update</button> :
+                                className="btn btn-success">Update</button> :
                                 <button onClick={(e) => this.toggleList(toggleList, "tag")}
                                     className={toggleList == "question" ? "btn tag hide" : "btn tag"}
                                     type="button"
@@ -344,10 +344,6 @@ class ResponseListForm extends Component {
                                 {t('Tags')}
                             </button>
                              }
-                            
-                           
-                           
-
                         </div>
 
                         {/*Questions DropDown*/}
@@ -356,7 +352,7 @@ class ResponseListForm extends Component {
                          <button
                             onClick={(e) => this.handleData(selectedTags)}
                             type="button"
-                            className={toggleList ==  "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
+                            className={toggleList ==  "tag" ? "btn btn-success hide" : "btn btn-success"}
                             >Update</button>
 
                          :  <button onClick={(e) => this.toggleList(toggleList, "question")} className={toggleList ==  "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
