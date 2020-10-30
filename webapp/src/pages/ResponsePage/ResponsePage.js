@@ -33,7 +33,7 @@ class ResponsePage extends Component {
 
     // Fetch Data
     fetchData() {
-        let params = {
+        const params = {
             id: this.props.match.params.id
         }
         fetchResponse(params).then(response => {
@@ -41,8 +41,6 @@ class ResponsePage extends Component {
                 applicationData: response
             })
         })
-
-
     }
 
 
@@ -57,9 +55,9 @@ class ResponsePage extends Component {
         const data = this.state.applicationData;
 
         if (data) {
-            let unsubmitted = !data.is_submitted && !data.is_withdrawn;
-            let submitted = data.is_submitted;
-            let withdrawn = data.is_withdrawn;
+            const unsubmitted = !data.is_submitted && !data.is_withdrawn;
+            const submitted = data.is_submitted;
+            const withdrawn = data.is_withdrawn;
 
             if (unsubmitted) {
                 return ["unsubmitted" + " " + data.started_timestamp]
@@ -186,7 +184,7 @@ class ResponsePage extends Component {
         const t = this.props.t;
 
         return (
-            <div className="table-wrapper">
+            <div className="table-wrapper response-page-wrapper">
                 {applicationData &&
                     <div className="headings-lower">
                         <div className="user-details">
