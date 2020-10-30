@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/tagList/tagList.service'
+import { tagList } from '../../../services/taglist/tagList.service'
 
 
 class ResponseListForm extends Component {
@@ -24,7 +24,9 @@ class ResponseListForm extends Component {
 
 
     componentWillMount() {
-        this.fetchTags()
+        this.fetchTags();
+        this.handleData();
+        this.fetchQuestions();
     }
 
     // Fetch Tags
@@ -32,9 +34,6 @@ class ResponseListForm extends Component {
         tagList.list().then(response => {
             this.setState({
                 tags: response
-            }, () => {
-                this.handleData()
-                this.fetchQuestions()
             })
         })
     }
@@ -49,8 +48,8 @@ class ResponseListForm extends Component {
         })
     }
 
-  
-    
+
+
     // Fetch Ressponses and Handle/Format Data
     handleData() {
         const baseUrl = process.env.REACT_APP_API_URL;
@@ -69,26 +68,25 @@ class ResponseListForm extends Component {
                 // Create Response Id Link
                 if (this.props.event) {
                     val.response_id = <NavLink
-                    to={`${this.props.event.key}/responsePage/${val.response_id}`}
-                    className="table-nav-link"
-                >
-                    {val.response_id}
-                </NavLink>; 
+                        to={`${this.props.event.key}/responsePage/${val.response_id}`}
+                        className="table-nav-link"
+                    >
+                        {val.response_id}
+                    </NavLink>;
                 }
-              
+
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
                     // format anwers display based on type
                     if (selectedQuestions.includes(answer.question_id)) {
-
-                    if (answer.type.includes("text")) {
-                        handleAnswers.push([{
-                            headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
-                                className="Tooltip"
-                            />
-                            </div>
-                        }])
-                    }
+                        if (answer.type.includes("text")) {
+                            handleAnswers.push([{
+                                headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
+                                    className="Tooltip"
+                                />
+                                </div>
+                            }])
+                        }
 
                         else if (answer.type == "file") {
                             handleAnswers.push([{
@@ -117,20 +115,20 @@ class ResponseListForm extends Component {
                             handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
                         }
 
-                    else {
-                        handleAnswers.push([{
-                            headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
-                            </div>
-                        }])
+                        else {
+                            handleAnswers.push([{
+                                headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
+                                </div>
+                            }])
+                        }
                     }
-                }
                 })
 
                 // extract only the tag names
                 val.tags.forEach(tag => {
                     if (tag) {
-                        handleTags.push(<div>{tag.name}</div>)   
-                       }
+                        handleTags.push(<div>{tag.name}</div>)
+                    }
                 })
 
                 // extract only the reviewers name
@@ -165,17 +163,14 @@ class ResponseListForm extends Component {
                     })
                 };
 
-                
-                   val.tags = handleTags
-
+                val.tags = handleTags
                 // delete original review and answer rows as they don't need to be displayed with all their data
                 delete val.answers;
                 delete val.reviewers;
                 delete val.firstname;
                 delete val.lastname;
-                
-            })
 
+            })
 
             this.setState({
                 responseTable: response,
@@ -186,10 +181,10 @@ class ResponseListForm extends Component {
 
     // Tag Selection State
     tagSelector(name) {
-        let list = this.state.selectedTags;
-        let duplicateTag = list.indexOf(name) // test against duplicates
+        const list = this.state.selectedTags;
+        const duplicateTag = list.indexOf(name) // test against duplicates
 
-        duplicateTag == -1 ? list.push(name) : list.splice(duplicateTag, 1);;
+        duplicateTag == -1 ? list.push(name) : list.splice(duplicateTag, 1);
 
         this.setState({
             selectedTags: list,
@@ -262,8 +257,23 @@ class ResponseListForm extends Component {
             let col = readColumns(this.state.responseTable);
             colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }));
         }
-     
+
         return colFormat
+    }
+
+
+
+    renderReset() {
+        const {
+            selectedQuestions,
+            toggleList,
+            selectedTags,
+        } = this.state
+        if (!toggleList) {
+            if (selectedTags.length || selectedQuestions.length) {
+            return  <button onClick={(e) => this.reset(e)} className="btn btn-primary">Reset</button>
+        }
+    }
     }
 
 
@@ -299,9 +309,10 @@ class ResponseListForm extends Component {
         } = this.state
         // Generate Col
         const columns = this.generateCols();
+        const renderReset = this.renderReset();
 
         return (
-            <section>
+            <section className="response-list-wrapper">
                 <div className={responseTable ? "question-wrapper wide" : "question-wrapper"}>
                     {/*Heading*/}
                     <h2 className={toggleList || responseTable ? "heading short" : "heading"}>{t('Response List')}</h2>
@@ -321,18 +332,42 @@ class ResponseListForm extends Component {
 
                         {/*Tags Dropdown*/}
                         <div className="tags">
-                            <button onClick={(e) => this.toggleList(toggleList, "tag")} className={!toggleList ? "btn tag" : "btn tag hide"} type="button" aria-haspopup="true" aria-expanded="false">
+                            {toggleList == "tag" ?  <button
+                                onClick={(e) => this.handleData(selectedTags)}
+                                type="button"
+                                className="btn tag">Update</button> :
+                                <button onClick={(e) => this.toggleList(toggleList, "tag")}
+                                    className={toggleList == "question" ? "btn tag hide" : "btn tag"}
+                                    type="button"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
                                 {t('Tags')}
                             </button>
+                             }
+                            
+                           
+                           
 
                         </div>
 
                         {/*Questions DropDown*/}
                         <div className="questions">
-                            <button onClick={(e) => this.toggleList(toggleList, "question")} className={!toggleList ? "btn btn-secondary" : "btn btn-secondary hide"}
+                            { toggleList == "question" ? 
+                         <button
+                            onClick={(e) => this.handleData(selectedTags)}
+                            type="button"
+                            className={toggleList ==  "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
+                            >Update</button>
+
+                         :  <button onClick={(e) => this.toggleList(toggleList, "question")} className={toggleList ==  "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
                                 type="button" aria-haspopup="true" aria-expanded="false">
                                 {t('Questions')}
-                            </button>
+                            </button>}
+                           
+
+                            {/* Reset Button */}
+                            {renderReset}
+                          
                             {/*Update Table*/}
                             {toggleList == "question" && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
                                 {questions.length} {t('questions')}
@@ -364,11 +399,7 @@ class ResponseListForm extends Component {
                                     </div>
                                 })}
                             {/* Update Button */}
-                            {toggleList && <button
-                                onClick={(e) => this.handleData(selectedTags)}
-                                type="button"
-                                className="btn tags update" >Update</button>
-                            }
+                          
                         </div>
 
                         {/* List Questions */}
@@ -383,17 +414,6 @@ class ResponseListForm extends Component {
                             })
                             }
                         </div>
-
-                        {/* Update Button */}
-                        {toggleList == "question" && <button
-                            onClick={(e) => this.handleData(selectedTags)}
-                            type="button"
-                            className={btnUpdate ? "btn btn-primary btn-update green" : "btn btn-primary btn-update"}>Update</button>
-
-                        }
-                        {toggleList == "question" &&
-                            <button onClick={(e) => this.reset(e)} className="btn btn-primary reset">Reset</button>
-                        }
 
                     </div>
 

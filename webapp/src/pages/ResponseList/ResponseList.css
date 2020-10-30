@@ -8,12 +8,20 @@
 }
 
 
-/* Drop Down Lists Wrapper */
+/* Drop Down Lists Wrapper and Buttons */
 .lists-wrapper {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
 }
+
+.btn.reset {
+    background: hsl(211deg 100% 50%);
+    color: white;
+    border: none;
+  }
+
+
 
 /* Pills */
 .pills {
@@ -111,10 +119,6 @@
     color: white;
 }
 
-.btn.tags:hover {
-    background: none;
-    border: 1px solid lightgrey;
-}
 
 /*Questions*/
 
@@ -149,13 +153,13 @@
     pointer-events: all;
     }
 
-    .btn-secondary.hide {
-opacity: 0.5;
-pointer-events: none;
+.btn-secondary.hide {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 html .btn-update {
-    background:hsl(214deg 98% 65%);
+    background:hsl(214deg, 98%, 65%);
 }
 
 
@@ -166,14 +170,9 @@ html .btn-primary.green {
     }
 
     .btn.reset:hover{
-        background: hsl(0, 0%, 91%);
-        border: 1px solid lightgrey;
+      background: hsl(0, 0%, 91%);
+      border: 1px solid lightgrey;
     }
-    .btn.reset {
-        background: white;
-        color: grey;
-    }
-
 
 /* Inputs */
 

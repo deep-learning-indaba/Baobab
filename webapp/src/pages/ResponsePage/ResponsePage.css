@@ -31,7 +31,7 @@ label {
     margin: 0 1px;
 }
 
- .btn-primary {
+ .response-page-wrapper .btn-primary {
     background:hsl(208deg 84% 59%);
     border: none;
     width: 100%;
