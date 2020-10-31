@@ -115,3 +115,4 @@ rest_api.add_resource(users_api.EventAttendeeAPI, '/api/v1/validate-user-event-a
 rest_api.add_resource(responses_api.ResponseListAPI, '/api/v1/responses')
 rest_api.add_resource(tag_api.TagAPI, '/api/v1/tag')
 rest_api.add_resource(tag_api.TagListAPI, '/api/v1/tags')
+rest_api.add_resource(responses_api.ResponseTagAPI, '/api/v1/responsetag')
