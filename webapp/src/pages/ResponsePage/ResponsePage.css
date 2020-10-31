@@ -1,5 +1,5 @@
 
-
+/* Universal */
 .table-wrapper {
     width: 87vw;
     margin-top: 20px;
@@ -31,7 +31,7 @@ label {
     margin: 0 1px;
 }
 
- .btn-primary {
+ .response-page-wrapper .btn-primary {
     background:hsl(208deg 84% 59%);
     border: none;
     width: 100%;
@@ -39,8 +39,9 @@ label {
     border: 1px solid lightgrey;
     margin: 0 5px;
 }
-/* Flex Box Classes */
 
+
+/* Flex Box Classes */
 .flex {
     display: flex;
 }
@@ -66,7 +67,6 @@ label {
     border-radius: 4px;
 }
 
-
 .user-details {
     padding: 0 2px
 }
@@ -82,8 +82,10 @@ html .headings-lower label {
 .user-details {
     display: flex;
     text-align: left;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
 }
+
 
 .user-details.right {
     display: flex;
@@ -93,8 +95,12 @@ html .headings-lower label {
 
 .user-details h4 {
     color: hsl(0, 0%, 44%);
+    margin: 0;
 }
 
+.badge {
+    margin: 2px;
+}
 
 
 /* Response Details Section and Sub-Sections */
@@ -113,6 +119,7 @@ html .headings-lower label {
 .section {
     padding: 10px 0;
 }
+
 
 /* Q&A Sections */
 .Q-A {
@@ -143,6 +150,7 @@ flex-wrap: wrap;
     color: skyblue;
     text-decoration: underline;
 }
+
 
 /* Response Details Type Face */
 .response-details h3 {
