@@ -475,7 +475,6 @@ class ResponseListAPITest(ApiTestCase):
         self.event2 = self.add_event(key='event2')
 
         self.users = self.add_n_users(4)
-        print('Num users:', len(self.users))
         UserName = collections.namedtuple('UserName', ['user_title', 'firstname', 'lastname'])
         self.user_names = [UserName(u.user_title, u.firstname, u.lastname) for u in self.users]
 
@@ -538,6 +537,12 @@ class ResponseListAPITest(ApiTestCase):
         review_response = self.add_review_response(self.users[1].id, self.response1.id, self.review_form1.id)
         self.review_response_id = review_response.id
 
+        tag1 = self.add_tag()
+        tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+        self.tag_response(self.response1.id, tag1.id)
+        self.tag_response(self.response3.id, tag1.id)
+        self.tag_response(self.response3.id, tag2.id)
+
     def test_no_questions_submitted(self):
         """Test response list with no questions requested."""
         self._seed_static_data()
@@ -575,6 +580,9 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(response1['reviewers'][1]['reviewer_id'], 3)
         self.assertEqual(response1['reviewers'][1]['reviewer_name'], '{} {} {}'.format(*self.user_names[2]))
         self.assertEqual(response1['reviewers'][1]['review_response_id'], None)
+        self.assertEqual(len(response1['tags']), 1)
+        self.assertEqual(response1['tags'][0]['id'], 1)
+        self.assertEqual(response1['tags'][0]['name'], 'Tag 1 en')
 
         response2 = data[1]
         self.assertEqual(response2['response_id'], 2)
@@ -592,6 +600,7 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(response2['reviewers'][0]['reviewer_name'], '{} {} {}'.format(*self.user_names[0]))
         self.assertEqual(response2['reviewers'][0]['review_response_id'], None)
         self.assertEqual(response2['reviewers'][1], None)
+        self.assertEqual(len(response2['tags']), 0)
 
     def test_questions_unsubmitted(self):
         """Test response list with questions requested and unsubmitted included."""
@@ -639,3 +648,8 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(len(response3['reviewers']), 2)
         self.assertEqual(response3['reviewers'][0], None)
         self.assertEqual(response3['reviewers'][1], None)
+        self.assertEqual(len(response3['tags']), 2)
+        self.assertEqual(response3['tags'][0]['id'], 1)
+        self.assertEqual(response3['tags'][0]['name'], 'Tag 1 en')
+        self.assertEqual(response3['tags'][1]['id'], 2)
+        self.assertEqual(response3['tags'][1]['name'], 'Tag 2 en')

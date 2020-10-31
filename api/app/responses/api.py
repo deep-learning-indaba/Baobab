@@ -248,6 +248,16 @@ def _serialize_answer(answer, language):
         'headline': translation.headline
     }
 
+def _serialize_tag(tag, language):
+    tag_translation = tag.get_translation(language)
+    if not tag_translation:
+        LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+        tag_translation = tag.get_translation('en')
+    return {
+        'id': tag.id,
+        'name': tag_translation.name
+    }
+
 class ResponseListAPI(restful.Resource):
 
     @event_admin_required
@@ -298,7 +308,8 @@ class ResponseListAPI(restful.Resource):
                 'submitted_date': None if response.submitted_timestamp is None else response.submitted_timestamp.isoformat(),
                 'language': response.language,
                 'answers': answers,
-                'reviewers': reviewers
+                'reviewers': reviewers,
+                'tags': [_serialize_tag(rt.tag, language) for rt in response.response_tags]
             }
 
             serialized_responses.append(serialized)
