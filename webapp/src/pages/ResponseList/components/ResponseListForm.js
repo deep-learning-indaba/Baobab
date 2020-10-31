@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { questions, response } from '../../../services/responseList/responseList.service'
+import { questions, response } from '../../../services/ResponseList/responseList.service'
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/taglist/tagList.service'
+import { tagList } from '../../../services/taglist/TagList.service'
 
 
 class ResponseListForm extends Component {
