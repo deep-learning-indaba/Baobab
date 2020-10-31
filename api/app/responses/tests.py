@@ -876,3 +876,82 @@ class ResponseTagAPITest(ApiTestCase):
             json=params)
 
         self.assertEqual(response.status_code, 403)
+
+class ResponseDetailAPITest(ApiTestCase):
+    def _seed_static_data(self):
+        self.event1 = self.add_event(key='event1')
+        self.event1admin = self.add_user('event1admin@mail.com')
+        self.user1 = self.add_user('user1@mail.com', user_title='Ms', firstname='Danai', lastname='Gurira')
+
+        self.event1.add_event_role('admin', self.event1admin.id)
+
+        application_form = self.create_application_form(self.event1.id)
+        section = self.add_section(application_form.id)
+        question1 = self.add_question(application_form.id, section.id)
+        self.add_question_translation(question1.id, 'en')
+        question2 = self.add_question(application_form.id, section.id)
+        self.add_question_translation(question2.id, 'en')
+
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.response1_submitted = self.response1.submitted_timestamp
+        self.response1_started = self.response1.started_timestamp
+        self.add_answer(self.response1.id, question1.id, 'Answer 1')
+        self.add_answer(self.response1.id, question2.id, 'Answer 2')
+
+        tag1 = self.add_tag()
+        tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+
+        self.tag_response(self.response1.id, tag1.id)
+        self.tag_response(self.response1.id, tag2.id)
+
+    def test_response_detail(self):
+        """Test typical get request."""
+        self._seed_static_data()
+        params = {
+            'event_id': self.event1.id,
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+
+        response = self.app.get(
+            '/api/v1/responsedetail',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(data['id'], 1)
+        self.assertEqual(data['application_form_id'], 1)
+        self.assertEqual(data['user_id'], 2)
+        self.assertEqual(data['is_submitted'], True)
+        self.assertEqual(data['submitted_timestamp'], self.response1_submitted.isoformat())
+        self.assertEqual(data['is_withdrawn'], False)
+        self.assertEqual(data['withdrawn_timestamp'], None)
+        self.assertEqual(data['started_timestamp'], self.response1_started.isoformat())
+        self.assertEqual(len(data['answers']), 2)
+        self.assertEqual(data['answers'][0]['value'], 'Answer 1')
+        self.assertEqual(data['answers'][1]['value'], 'Answer 2')
+        self.assertEqual(data['language'], 'en')
+        self.assertEqual(data['user_title'], 'Ms')
+        self.assertEqual(data['firstname'], 'Danai')
+        self.assertEqual(data['lastname'], 'Gurira')
+        self.assertEqual(len(data['tags']), 2)
+        self.assertEqual(data['tags'][0]['name'], 'Tag 1 en')
+        self.assertEqual(data['tags'][1]['name'], 'Tag 2 en')
+
+    def test_response_detail_admin_only(self):
+        """Test that a non admin can't access reponse detail."""
+        self._seed_static_data()
+        params = {
+            'event_id': self.event1.id,
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+
+        response = self.app.get(
+            '/api/v1/responsedetail',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)

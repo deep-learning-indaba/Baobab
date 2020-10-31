@@ -366,21 +366,25 @@ class ResponseTagAPI(restful.Resource, ResponseTagMixin):
         return {}
 
 
+
 class ResponseDetailAPI(restful.Resource):
 
-    def _serialize_date(self, date):
+    @staticmethod
+    def _serialize_date(date):
         if date is None:
             return None
         return date.isoformat()
 
-    def _serialize_answer(self, answer):
+    @staticmethod
+    def _serialize_answer(answer):
         return {
             'id': answer.id,
             'question_id': answer.question_id,
             'value': answer.value
         }
 
-    def _serialize_tag(self, tag, language):
+    @staticmethod
+    def _serialize_tag(tag, language):
         translation = tag.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
@@ -389,22 +393,23 @@ class ResponseDetailAPI(restful.Resource):
             'name': translation.name
         }
 
-    def _serialize_response(self, response, language):
+    @staticmethod
+    def _serialize_response(response, language):
         return {
             'id': response.id,
             'application_form_id': response.application_form_id,
             'user_id': response.user_id,
             'is_submitted': response.is_submitted,
-            'submitted_timestamp': self._serialize_date(response.submitted_timestamp),
+            'submitted_timestamp': ResponseDetailAPI._serialize_date(response.submitted_timestamp),
             'is_withdrawn': response.is_withdrawn,
-            'withdrawn_timestamp': self._serialize_date(response.withdrawn_timestamp),
-            'started_timestamp': self._serialize_date(response.started_timestamp),
-            'answers': [self._serialize_answer(answer) for answer in response.answers],
+            'withdrawn_timestamp': ResponseDetailAPI._serialize_date(response.withdrawn_timestamp),
+            'started_timestamp': ResponseDetailAPI._serialize_date(response.started_timestamp),
+            'answers': [ResponseDetailAPI._serialize_answer(answer) for answer in response.answers],
             'language': response.language,
             'user_title': response.user.user_title,
             'firstname': response.user.firstname,
-            'lastname': response.user.lastname
-            'tags': [self._serialize_tag(tag, language) for tag in response.tags]
+            'lastname': response.user.lastname,
+            'tags': [ResponseDetailAPI._serialize_tag(rt.tag, language) for rt in response.response_tags]
         }
 
     @event_admin_required
@@ -419,4 +424,4 @@ class ResponseDetailAPI(restful.Resource):
 
         response = response_repository.get_by_id(response_id)
 
-        return self._serialize_response(response, language)
+        return ResponseDetailAPI._serialize_response(response, language)
