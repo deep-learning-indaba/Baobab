@@ -17,7 +17,12 @@ const data = [
         { "id": 6, "question_id": 44, "headline": "Third question", "value": "transport", "type": "multi-choice", "options": [{ "label": "Yes, transport only", "value": "transport" }, { "label": "Yes, accommodation only", "value": "accommodation" }] },
         { "id": 5, "question_id": 39, "headline": "Sixth question", "value": ["Chips", "Chocolate"], "type": "multi-file", "options": null }
         ],
-    "language": "en"}
+        "language": "en",
+        "tags": [
+            {"id": 5, "headline": "éducation"},
+            {"id": 7, "headline": "soins de santé"}
+         ] 
+    }
 ]
 
 export function fetchResponse(param) {

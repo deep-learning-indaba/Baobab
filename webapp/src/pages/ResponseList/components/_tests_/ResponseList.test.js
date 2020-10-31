@@ -8,7 +8,8 @@ jest.mock('react-i18next', () => ({
       Component.defaultProps = { ...Component.defaultProps, t: () => "" };
       return Component;
     },
-  }));
+}));
+  
 
 test("Check if ResponseList Page renders.", () => {
   const wrapper = shallow(<ResponseList />);
@@ -17,22 +18,21 @@ test("Check if ResponseList Page renders.", () => {
 
 test("Check if Question API call is successful.",  async () => {
     const wrapper = shallow(<ResponseList />);
-    await wrapper.instance().fetchData();
+    await wrapper.instance().fetchQuestions();
     expect(wrapper.state().questions.length).toBeTruthy();
 });
 
-  
-test("Check if toggleList function displays list.", async () => {
-    const wrapper = shallow(<ResponseList />);
-    let listStatus = wrapper.state().toggleList;
-    await wrapper.instance().toggleList(listStatus);
-    expect(wrapper.find('.question-list.show').length).toEqual(1);
-});
   
 test("Check if Table API call is successful.",  async () => {
     const wrapper = shallow(<ResponseList />);
     await wrapper.instance().handleData();
     expect(wrapper.state().responseTable.length).toBeTruthy();
+});
+
+test("Check if tag API call is successful.",  async () => {
+  const wrapper = shallow(<ResponseList />);
+  await wrapper.instance().fetchTags();
+  expect(wrapper.state().tags.length).toBeTruthy();
 });
 
 test("Check if React Table renders.", async () => {
@@ -41,12 +41,21 @@ test("Check if React Table renders.", async () => {
     expect(wrapper.find('.ReactTable').length).toEqual(1);
 });
 
+test("Check if toggleList function displays list.", () => {
+  const wrapper = shallow(<ResponseList />);
+  let listStatus = wrapper.state().toggleList;
+   wrapper.instance().toggleList(listStatus, "tag");
+  expect(wrapper.find('.tag-list.show').length).toEqual(1);
+});
+
 test("Check if Col function is succesfull.", async () => {
     const wrapper = shallow(<ResponseList />);
     await wrapper.instance().handleData();
     let columns = await wrapper.instance().generateCols();
     expect(columns.length).toBeTruthy();
 });
+
+
 
 
 
