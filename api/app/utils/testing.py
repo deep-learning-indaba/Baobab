@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 import os
 import random
@@ -18,10 +20,11 @@ from app.events.models import Event, EventType
 from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from app.registration.models import Offer, RegistrationForm
-from app.responses.models import Answer, Response, ResponseReviewer
+from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
 from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse
+from app.tags.models import Tag, TagTranslation
 
 
 @event.listens_for(Engine, "connect")
@@ -65,6 +68,7 @@ class ApiTestCase(unittest.TestCase):
         if os.path.exists("/code/api/app/utils/names.txt"):
             with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
+            names = [n.decode('utf-8', 'replace') for n in names]
         else:
             # why yes, these are names of African Hollywood actors (according to Wikipedia)
             names = ["Mehcad Brooks", "Malcolm Barrett", "Nick Cannon", "Lamorne Morris", "Neil Brown Jr.",
@@ -121,12 +125,8 @@ class ApiTestCase(unittest.TestCase):
                                                                        lastname=lastname if lastname != "" else "x",
                                                                        num=len(self.test_users))
             email = strip_accents(email)
-            try:
-                user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
-                users.append(user)
-            except ProgrammingError as err:
-                LOGGER.debug("info not added for user: {} {} {} {}".format(email, firstname, lastname, title))
-                db.session.rollback()
+            user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+            users.append(user)
 
         return users
 
@@ -334,8 +334,8 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return answer
 
-    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1):
-        rr = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en'):
+        rr = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
         db.session.add(rr)
         db.session.commit()
         return rr
@@ -364,3 +364,20 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(guest)
         db.session.commit()
         return guest
+
+    def add_tag(self, event_id=1, names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}):
+        tag = Tag(event_id)
+        db.session.add(tag)
+        db.session.commit()
+        translations = [
+            TagTranslation(tag.id, k, name) for k, name in names.iteritems()
+        ]
+        db.session.add_all(translations)
+        db.session.commit()
+        return tag
+
+    def tag_response(self, response_id, tag_id):
+        rt = ResponseTag(response_id, tag_id)
+        db.session.add(rt)
+        db.session.commit()
+        return rt
