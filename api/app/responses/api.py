@@ -364,3 +364,59 @@ class ResponseTagAPI(restful.Resource, ResponseTagMixin):
         response_repository.remove_tag_from_response(response_id, tag_id)
 
         return {}
+
+
+class ResponseDetailAPI(restful.Resource):
+
+    def _serialize_date(self, date):
+        if date is None:
+            return None
+        return date.isoformat()
+
+    def _serialize_answer(self, answer):
+        return {
+            'id': answer.id,
+            'question_id': answer.question_id,
+            'value': answer.value
+        }
+
+    def _serialize_tag(self, tag, language):
+        translation = tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+        return {
+            'id': tag.id,
+            'name': translation.name
+        }
+
+    def _serialize_response(self, response, language):
+        return {
+            'id': response.id,
+            'application_form_id': response.application_form_id,
+            'user_id': response.user_id,
+            'is_submitted': response.is_submitted,
+            'submitted_timestamp': self._serialize_date(response.submitted_timestamp),
+            'is_withdrawn': response.is_withdrawn,
+            'withdrawn_timestamp': self._serialize_date(response.withdrawn_timestamp),
+            'started_timestamp': self._serialize_date(response.started_timestamp),
+            'answers': [self._serialize_answer(answer) for answer in response.answers],
+            'language': response.language,
+            'user_title': response.user.user_title,
+            'firstname': response.user.firstname,
+            'lastname': response.user.lastname
+            'tags': [self._serialize_tag(tag, language) for tag in response.tags]
+        }
+
+    @event_admin_required
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('response_id', type=int, required=True) 
+        req_parser.add_argument('language', type=str, required=True) 
+        args = req_parser.parse_args()
+
+        response_id = args['response_id']
+        language = args['language']
+
+        response = response_repository.get_by_id(response_id)
+
+        return self._serialize_response(response, language)
