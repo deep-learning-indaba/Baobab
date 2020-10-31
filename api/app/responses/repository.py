@@ -1,5 +1,5 @@
 from app import db
-from app.responses.models import Response, Answer
+from app.responses.models import Response, Answer, ResponseTag
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
 from sqlalchemy import func, cast, Date
@@ -127,3 +127,17 @@ class ResponseRepository():
             .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
             .filter_by(event_id=event_id)
             .all())
+
+    @staticmethod
+    def tag_response(response_id, tag_id):
+        rt = ResponseTag(response_id, tag_id)
+        db.session.add(rt)
+        db.session.commit()
+        return rt
+
+    @staticmethod
+    def remove_tag_from_response(response_id, tag_id):
+        (db.session.query(ResponseTag)
+            .filter_by(response_id=response_id, tag_id=tag_id)
+            .delete())
+        db.session.commit()
