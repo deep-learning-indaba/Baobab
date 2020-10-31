@@ -653,3 +653,226 @@ class ResponseListAPITest(ApiTestCase):
         self.assertEqual(response3['tags'][0]['name'], 'Tag 1 en')
         self.assertEqual(response3['tags'][1]['id'], 2)
         self.assertEqual(response3['tags'][1]['name'], 'Tag 2 en')
+
+
+class ResponseTagAPITest(ApiTestCase):
+    def _seed_static_data(self):
+        self.event1 = self.add_event(key='event1')
+        self.event1admin = self.add_user('event1admin@mail.com')
+        self.event1reviewer1 = self.add_user('event1reviewer1@mail.com')
+        self.event1reviewer2 = self.add_user('event1reviewer2@mail.com')
+        self.user1 = self.add_user('user1@mail.com')
+        self.user2 = self.add_user('user2@mail.com')
+
+        self.event1.add_event_role('admin', self.event1admin.id)
+        self.event1.add_event_role('reviewer', self.event1reviewer1.id)
+        self.event1.add_event_role('reviewer', self.event1reviewer2.id)
+
+        application_form = self.create_application_form(self.event1.id)
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.add_response_reviewer(self.response1.id, self.event1reviewer1.id)
+        self.response2 = self.add_response(application_form.id, self.user2.id, is_submitted=True)
+        self.add_response_reviewer(self.response2.id, self.event1reviewer2.id)
+
+        self.tag1 = self.add_tag()
+        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+
+        self.tag_response(self.response2.id, self.tag2.id)
+
+    def test_tag_admin(self):
+        """Test that an event admin can add a tag to a response."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 201)
+
+        params = {
+            'event_id': self.event1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/responses',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data[0]['tags']), 1)
+        self.assertEqual(data[0]['tags'][0]['id'], 1)
+
+    def test_tag_reviewer(self):
+        """Test that a reviewer can add a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1reviewer1@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 201)
+
+        params = {
+            'event_id': self.event1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/responses',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data[0]['tags']), 1)
+        self.assertEqual(data[0]['tags'][0]['id'], 1)
+
+    def test_remove_tag_admin(self):
+        """Test that an event admin can remove a tag from a response."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag2.id,
+            'response_id': self.response2.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        params = {
+            'event_id': self.event1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/responses',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data[1]['tags']), 0)
+
+    def test_remove_tag_reviewer(self):
+        """Test that a reviewer can remove a tag from a response."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag2.id,
+            'response_id': self.response2.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1reviewer2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        params = {
+            'event_id': self.event1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/responses',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data[1]['tags']), 0)
+
+    def test_tag_different_reviewer(self):
+        """Test that a reviewer of a different response can't add a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1reviewer2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_remove_tag_different_reviewer(self):
+        """Test that a reviewer of a different response can't remove a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('event1reviewer2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_tag_non_admin_non_reviewer(self):
+        """Test that a non admin and non reviewer can't add a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('user2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_remove_tag_non_admin_non_reviewer(self):
+        """Test that a non admin and non reviewer can't remove a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'response_id': self.response1.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/responsetag',
+            headers=self.get_auth_header_for('user2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)
