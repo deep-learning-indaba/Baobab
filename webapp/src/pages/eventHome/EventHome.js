@@ -20,6 +20,7 @@ import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList"
+import ResponsePage from "../ResponsePage/ResponsePage"
 
 
 class EventInfo extends Component {
@@ -96,9 +97,9 @@ class EventHome extends Component {
 
     if (isLoading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border" style={loadingStyle} role="status">
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       );
@@ -213,6 +214,12 @@ class EventHome extends Component {
           path={`${match.path}/registrationAdmin`}
           render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
+          <Route
+          exact
+          path={`${match.path}/responsePage/:id`}
+          render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        
       </div>
     );
   }

@@ -16,6 +16,7 @@ from attendance import api as attendance_api
 from organisation import api as organisation_api
 from integration_tests import api as integration_tests_api
 from outcome import api as outcome_api
+from tags import api as tag_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -112,3 +113,5 @@ rest_api.add_resource(outcome_api.OutcomeAPI, '/api/v1/outcome')
 rest_api.add_resource(outcome_api.OutcomeListAPI, '/api/v1/outcome-list')
 rest_api.add_resource(users_api.EventAttendeeAPI, '/api/v1/validate-user-event-attendee')
 rest_api.add_resource(form_api.QuestionListApi, '/api/v1/questions')
+rest_api.add_resource(tag_api.TagAPI, '/api/v1/tag')
+rest_api.add_resource(tag_api.TagListAPI, '/api/v1/tags')

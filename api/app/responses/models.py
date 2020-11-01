@@ -6,6 +6,7 @@ from sqlalchemy.orm import column_property
 
 from app import db, LOGGER
 from app.applicationModel.models import Question
+from app.tags.models import Tag
 
 
 class Response(db.Model):
@@ -99,3 +100,13 @@ class ResponseReviewer(db.Model):
 
     def deactivate(self):
         self.active = False
+
+
+class ResponseTag(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+
+    def __init__(self, response_id, tag_id):
+        self.response_id = response_id
+        self.tag_id = tag_id

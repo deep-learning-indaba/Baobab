@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import './ResponseList.css';
 import { withTranslation } from 'react-i18next';
 import ResponseListForm from './components/ResponseListForm'
 
@@ -19,7 +18,7 @@ class ResponseList extends Component {
         const t = this.props.t;
 
         return (
-            <ResponseListForm />
+            <ResponseListForm event={this.props.event} />
             )
     }
 }
