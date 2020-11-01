@@ -177,26 +177,24 @@ function withdraw(id) {
 
 function getQuestionList(eventId) {
   return axios
-    .get(baseUrl + "/api/v1/responses", { 
+    .get(baseUrl + "/api/v1/questions", { 
         "headers": authHeader(),
         "params": {
-            include_unsubmitted: includeUnsubmitted,
-            question_ids: questionIds,
             event_id: eventId
         }
     })
     .then(response => {
-        let responses = null;
-        if (response) responses = response.data;
+        let questions = null;
+        if (response) questions = response.data;
         return {
-            responses: responses,
+            questions: questions,
             status: response.status,
             message: response.statusText
         }
     })
     .catch(function(error){
         return{
-            responses: null,
+            questions: null,
             error:
                 error.response && error.response.data
                 ? error.response.data.message
