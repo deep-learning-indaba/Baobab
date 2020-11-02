@@ -106,14 +106,14 @@ class ResponseListForm extends Component {
                 }
 
                 else if (answer.type == "multi-file") {
+                    const answerFiles = JSON.parse(answer.value);
                     let files = [];
-                    answer.value.forEach((file => {
-                        if (file) {
-                            files.push(
-                                <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
-                            )
-                        }
-                    }))
+                    if (Array.isArray(answerFiles) && answerFiles.length > 0) {
+                        files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)
+                    }
+                    else {
+                        files = "No files uploaded";
+                    }
                     handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
                 }
 
