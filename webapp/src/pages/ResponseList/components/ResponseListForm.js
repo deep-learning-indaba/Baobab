@@ -78,7 +78,7 @@ class ResponseListForm extends Component {
             // Create Response Id Link
             if (this.props.event) {
                 val.response_id = <NavLink
-                    to={`${this.props.event.key}/responsePage/${val.response_id}`}
+                    to={`/${this.props.event.key}/responsePage/${val.response_id}`}
                     className="table-nav-link"
                 >
                     {val.response_id}
