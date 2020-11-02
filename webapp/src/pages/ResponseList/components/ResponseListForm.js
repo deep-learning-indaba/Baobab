@@ -47,12 +47,13 @@ class ResponseListForm extends Component {
     }
 
     refreshResponses() {
+        this.toggleList(false);
         const { selectedTags, selectedQuestions, includeUnsubmitted } = this.state;
         responsesService.getResponseList(this.props.event.id, includeUnsubmitted, selectedQuestions).then(resp => {
             this.setState({
-                responses: resp.responses.filter(r => r.tags.some(t => selectedTags.includes(t))),
+                responses: resp.responses.filter(r => selectedTags.length == 0 || r.tags.some(t => selectedTags.includes(t))),
                 error: resp.error
-            });
+            }, this.handleData);
         });
     }
 
@@ -171,7 +172,7 @@ class ResponseListForm extends Component {
                 })
             };
 
-            val.tags = handleTags
+            val.tags = handleTags;
             val.is_submitted = val.is_submitted ? "True" : "False";
             val.is_withdrawn = val.is_withdrawn ? "True" : "False";
 
@@ -359,7 +360,7 @@ class ResponseListForm extends Component {
                             {toggleList == "tag" ? <button
                                 onClick={(e) => this.refreshResponses()}
                                 type="button"
-                                className="btn btn-success">Update</button> :
+                                className="btn btn-success">{t("Update")}</button> :
                                 <button onClick={(e) => this.toggleList(toggleList, "tag")}
                                     className={toggleList == "question" ? "btn tag hide" : "btn tag"}
                                     type="button"
@@ -377,7 +378,7 @@ class ResponseListForm extends Component {
                                     onClick={(e) => this.refreshResponses()}
                                     type="button"
                                     className={toggleList == "tag" ? "btn btn-success hide" : "btn btn-success"}
-                                >Update</button>
+                                >{t("Update")}</button>
 
                                 : <button onClick={(e) => this.toggleList(toggleList, "question")} className={toggleList == "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
                                     type="button" aria-haspopup="true" aria-expanded="false">

@@ -264,12 +264,13 @@ class ResponseListAPI(restful.Resource):
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('include_unsubmitted', type=bool, required=True)
-        req_parser.add_argument('question_ids', type=list, required=False, location='json')
+        # Note: Including [] in the question_ids parameter because that gets added by Axios on the front-end
+        req_parser.add_argument('question_ids[]', type=int, required=False, action='append')
         req_parser.add_argument('language', type=str, required=True)
         args = req_parser.parse_args()
 
         include_unsubmitted = args['include_unsubmitted']
-        question_ids = args['question_ids']
+        question_ids = args['question_ids[]']
         language = args['language']
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
