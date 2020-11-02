@@ -14,9 +14,9 @@ function getResponseList(eventId, includeUnsubmitted, questionIds) {
         .get(baseUrl + "/api/v1/responses", { 
             "headers": authHeader(),
             "params": {
+                event_id: eventId,
                 include_unsubmitted: includeUnsubmitted,
-                question_ids: questionIds,
-                event_id: eventId
+                question_ids: questionIds
             }
         })
         .then(response => {

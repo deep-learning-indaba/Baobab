@@ -556,7 +556,7 @@ class ResponseListAPITest(ApiTestCase):
         response = self.app.get(
             '/api/v1/responses',
             headers=self.get_auth_header_for('event1admin@mail.com'),
-            json=params)
+            data=params)
 
         data = json.loads(response.data)
 
