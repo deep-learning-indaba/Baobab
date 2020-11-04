@@ -10,7 +10,7 @@ class DeleteModal extends Component {
 
 
     handleSubmit() {
-        this.props.handleSubmit(this.props.deleteQue);
+        this.props.handleSubmit(this.props.deleteQue, "action");
     }
 
 
@@ -32,7 +32,7 @@ class DeleteModal extends Component {
                  { t('Are you sure you want to delete this tag?')}
                 </div>
                 <div className="modal-footer">
-                    <button type="button" className="btn btn-secondary" data-dismiss="modal">{t('Cancel')}</button>
+                           <button onClick={(e) => this.props.handleSubmit(e, "reset")} type="button" className="btn btn-secondary" data-dismiss="modal">{t('Cancel')}</button>
                     <button type="button" data-dismiss="modal" className="btn btn-primary" onClick={(e) => this.handleSubmit()}>{t('Yes')}</button>
                 </div>
             </div>

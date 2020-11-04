@@ -12,7 +12,11 @@ class Form extends Component {
     handleSubmit() {
         const { tags } = this.state;
         this.props.postTag(tags);
-
+        // clear inout fields
+        Array.from(document.querySelectorAll("input")).forEach(
+            input => (input.value = "")
+          );
+  
         this.setState({
             tags: {}
         })
@@ -42,7 +46,7 @@ class Form extends Component {
         
         if (this.props.eventLanguages) {
             let inputs = this.props.eventLanguages.map(val => {
-                return <div key={val} className="new-tag-inputs">
+                return <div id="myInputs" key={val} className="new-tag-inputs">
                     <label>{val}</label>
                     <input key={val} onChange={(e) => this.handleChange(e, val)}></input>
                 </div>
@@ -64,8 +68,20 @@ class Form extends Component {
                                 </form>
                             </div>
                             <div className="modal-footer">
-                                <button type="button" className="btn btn-secondary" data-dismiss="modal">{t('Cancel')}</button>
-                                <button type="button" data-dismiss="modal" className="btn btn-primary" onClick={(e) => this.handleSubmit()}>{t('Save')}</button>
+                                <button type="button"
+                                    className="btn btn-secondary"
+                                    data-dismiss="modal"
+                                >
+                                    {t('Cancel')}
+                                </button>
+                                <button
+                                    type="button"
+                                    data-dismiss="modal"
+                                    className="btn btn-primary"
+                                    onClick={(e) => this.handleSubmit()}
+                                >
+                                    {t('Save')}
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -99,7 +99,12 @@ class ResponsePage extends Component {
 
     // Post Tag
     postTag(tag, type) {
-        type == "responseTag" ? this.postResponseTag(tag) : this.postTagList(tag);
+        if (type == "responseTag") {
+            this.postResponseTag(tag)
+        }
+        else {
+            this.postTagList(tag)
+        }
     }
 
 
@@ -111,12 +116,8 @@ class ResponsePage extends Component {
 
         tagResponse.post(tag).then(response => {
             if (response.status == 201) {
-                let getTag = this.state.tagList.filter(tag => {
-                    if (tag.id == response.tag_id) {
-                        return tag
-                    }
-                });
-                updateApplicationData.tags.push({ "headline": getTag[0].name, "id": getTag[0].id });
+                const getTag = this.state.tagList.find(tag => tag.id === response.tag_id);
+                updateApplicationData.tags.push({ "headline": getTag.name, "id": getTag.id });
                 updateTagList.splice(getTag, 1);
 
                 this.setState({
@@ -134,7 +135,7 @@ class ResponsePage extends Component {
     postTagList(tags) {
         let updateApplicationData = this.state.applicationData;
         let updateEventLanguages = this.state.eventLanguages;
-        let newTags = Object.values(tags);
+        const newTags = Object.values(tags);
         let filterTags = tags;
 
         // filter dulicate headlines (bug fix)  
@@ -153,15 +154,11 @@ class ResponsePage extends Component {
                         if (response.status == 201) {
                             // add tags to state
                             newTags.forEach(val => {
-                                updateApplicationData.tags.push(val)
+                                if (val.id == this.props.i18n.language) {
+                                    updateApplicationData.tags.push(val)
+                                }
+                            })
 
-                                // filter posted tags from state
-                                updateEventLanguages.forEach((tag, index) => {
-                                    if (tag == val.id) {
-                                        updateEventLanguages.splice(index, 1)
-                                    };
-                                })
-                            });
 
                             this.setState({
                                 applicationData: updateApplicationData,
@@ -180,28 +177,32 @@ class ResponsePage extends Component {
 
 
     // Del Tag
-    deleteTag(tag_id) {
+    deleteTag(tag_id, type) {
         let updateApplicationData = this.state.applicationData;
-        tagList.remove({
-            "tag_id": tag_id,
-            "response_id": parseInt(this.props.match.params.id),
-            "event_id": this.props.event.id
-        }).then(response => {
-            if (response.status == 200) {
-                updateApplicationData.tags.forEach((tag, index) => {
-                    if (tag.id == tag_id) {
-                        updateApplicationData.tags.splice(index, 1)
-                    }
-                });
-            };
-        }).catch((response) => {
-            this.error(response.message)
-        });
 
-        this.setState({
-            applicationData: updateApplicationData,
-            deleteModal: null,
-        })
+        if (type == "action") {
+            tagList.remove({
+                "tag_id": tag_id,
+                "response_id": parseInt(this.props.match.params.id),
+                "event_id": this.props.event.id
+            }).then(response => {
+                if (response.status == 200) {
+                    updateApplicationData.tags.forEach((tag, index) => {
+                        if (tag.id == tag_id) {
+                            updateApplicationData.tags.splice(index, 1)
+                        }
+                    });
+                    this.setState({
+                        applicationData: updateApplicationData,
+                    })
+                };
+            }).catch((response) => {
+                this.error(response.message)
+            });
+        }
+        else {
+            this.setDeleteModal(tag_id, type)
+        }
     }
 
 
@@ -312,7 +313,7 @@ class ResponsePage extends Component {
             // text
             if (type.includes("text")) {
                 answers = <div key={a.headline}><p className="answer">{a.value}</p></div>
-                 };
+            };
         };
         return answers
     }
@@ -325,7 +326,7 @@ class ResponsePage extends Component {
             let tags = data.tags.map(tag => {
                 return <span
                     key={tag.id}
-                    onClick={(e) => this.deleteTag(tag.id)}
+                    onClick={(e) => this.deleteTag(tag.id, "prompt")}
                     className="btn badge badge-info"
                     data-toggle="modal"
                     data-target="#exampleModal2"
@@ -343,6 +344,8 @@ class ResponsePage extends Component {
         const { eventLanguages } = this.state;
         if (eventLanguages) {
             return <TagModal
+                keys={this.state.keys}
+                i18nt={this.props.i18n}
                 t={this.props.t}
                 postTag={(tags) => this.postTag(tags, "tagList")}
                 eventLanguages={eventLanguages}
@@ -357,20 +360,17 @@ class ResponsePage extends Component {
         if (eventLanguages) {
             return <DeleteModal
                 t={this.props.t}
-                handleSubmit={(tag_id) => this.deleteTag(tag_id)}
-                deleteQue={this.state.deleteModal}
+                handleSubmit={(tag_id, type) => this.deleteTag(tag_id, type)}
+                deleteQue={this.state.deleteQue}
             />
         };
     }
 
-
-
-    setDeleteModal(tag_id) {
+    setDeleteModal(tag_id, type) {
         this.setState({
-            deleteModal: tag_id
+            deleteQue: type == "reset" ? null : tag_id
         })
     }
-
 
 
     render() {
@@ -429,12 +429,11 @@ class ResponsePage extends Component {
                                         </div>
                                     })}
 
-                                {eventLanguages.length > 0 &&
-                                    <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModal">
-                                        {t('New tag')}
-                                     </button>
-                            }
-                            
+                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModal">
+                                    {t('New tag')}
+                                </button>
+
+
                             </div>
                         </div>
 
