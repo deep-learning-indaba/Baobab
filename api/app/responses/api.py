@@ -12,8 +12,8 @@ from app.applicationModel.repository import ApplicationFormRepository as applica
 from app.applicationModel.models import ApplicationForm, Question
 from app.events.models import Event, EventType
 from app.events.repository import EventRepository as event_repository
-from app.responses.mixins import ResponseMixin
-from app.responses.models import Answer, Response
+from app.responses.mixins import ResponseMixin, ResponseTagMixin
+from app.responses.models import Answer, Response, ResponseTag
 from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
@@ -315,3 +315,52 @@ class ResponseListAPI(restful.Resource):
             serialized_responses.append(serialized)
 
         return serialized_responses
+
+
+def _validate_user_admin_or_reviewer(user_id, event_id, response_id):
+    user = user_repository.get_by_id(user_id)
+    # Check if the user is an event admin
+    permitted = user.is_event_admin(event_id)
+    # If they're not an event admin, check if they're a reviewer for the relevant response
+    if not permitted and user.is_reviewer(event_id):
+        response_reviewer = review_repository.get_response_reviewer(response_id, user.id)
+        if response_reviewer is not None:
+            permitted = True
+    
+    return permitted
+
+class ResponseTagAPI(restful.Resource, ResponseTagMixin):
+    response_tag_fields = {
+        'id': fields.Integer,
+        'response_id': fields.Integer,
+        'tag_id': fields.Integer
+    }
+
+    @marshal_with(response_tag_fields)
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        response_id = args['response_id']
+
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
+            return errors.FORBIDDEN
+
+        return response_repository.tag_response(response_id, tag_id), 201
+
+    @auth_required
+    def delete(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        response_id = args['response_id']
+
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
+            return errors.FORBIDDEN
+
+        response_repository.remove_tag_from_response(response_id, tag_id)
+
+        return {}
