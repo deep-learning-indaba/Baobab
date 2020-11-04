@@ -398,6 +398,10 @@ def upgrade():
 
     ai4d = session.query(Organisation).filter_by(name='AI4D Africa').first()
 
+    op.alter_column('event_translation', 'description',
+               existing_type=sa.String(length=255),
+               type_=sa.String(length=500))
+
     # Add Event
     event = Event(
         {
@@ -638,7 +642,11 @@ Pour toute question, veuillez envoyer un e-mail à calls@ai4d.ai
     }, descriptions={
         'en': 'Upload the five CVs of relevant staff in the organization here.',
         'fr': u'Téléchargez ici les CV des cinq employés concernés de votre organisation.'
-    }, is_required=True)
+    }, is_required=True,
+    options={
+        'en': {"num_uploads": 5},
+        'fr': {"num_uploads": 5}
+    })
 
     add_question(section1, 4, 'long-text', {
         'en': '2. Demonstrated experience and capacity',
@@ -705,8 +713,8 @@ Pour toute question, veuillez envoyer un e-mail à calls@ai4d.ai
        'en': 'Maximum 350 words',
        'fr': 'Maximum 350 mots' 
     }, is_required=True, depends_on_question_id=q2b.id, show_for_values={
-        'en': 'Yes',
-        'fr': 'Yes'
+        'en': ["Yes"],
+        'fr': ["Yes"]
     })
 
     add_question(section1, 8, 'long-text', {
@@ -978,12 +986,8 @@ Comment les activités complémentaires aideront-elles à établir des liens ent
     section3 = add_section({
         'en': 'Section III',
         'fr': u"""Section III"""
-    }, None, 5)
-
-    add_question(section1, 6, 'multi-choice', {
-        'en': """I confirm that I am aware of IDRC's applicable policies and that my institution and the scholarship recipients will have to comply with them.""",
-        'fr': u"""Je confirme que je connais les politiques applicables du CRDI et que mon établissement et les bénéficiaires des bourses devront s’y conformer."""
-    }, descriptions={
+    }, 
+    descriptions={
         'en': r"""IDRC Open Access Policy 
 [https://www.idrc.ca/en/open-access-policy-idrc-funded-project-outputs](https://www.idrc.ca/en/open-access-policy-idrc-funded-project-outputs)
 
@@ -992,7 +996,6 @@ IDRC Open Data Statement of Principles
 
 IDRC Corporate Principles on Research Ethics 
 [https://www.idrc.ca/en/idrcs-advisory-committee-research-ethics](https://www.idrc.ca/en/idrcs-advisory-committee-research-ethics)
-
 
 IDRC’s Standard Terms and Conditions for a Grant Agreement
 [https://www.idrc.ca/sites/default/files/sp/Documents%20EN/resources/idrc-general-terms-and-conditions-of-agreement.pdf](https://www.idrc.ca/sites/default/files/sp/Documents%20EN/resources/idrc-general-terms-and-conditions-of-agreement.pdf)""",
@@ -1008,6 +1011,11 @@ Principes du CRDI en matière d’éthique de la recherche
 Conditions générales de l’accord de subvention
 [https://www.idrc.ca/sites/default/files/sp/Documents%20FR/grant_agreement_fr.pdf](https://www.idrc.ca/sites/default/files/sp/Documents%20FR/grant_agreement_fr.pdf)
 """
+    }, None, 5)
+
+    add_question(section3, 1, 'multi-choice', {
+        'en': """I confirm that I am aware of IDRC's applicable policies and that my institution and the scholarship recipients will have to comply with them.""",
+        'fr': u"""Je confirme que je connais les politiques applicables du CRDI et que mon établissement et les bénéficiaires des bourses devront s’y conformer."""
     }, options={
         'en': [{'label': 'Yes', 'value': 'Yes'}, {'label': 'No', 'value': 'No'}],
         'fr': [{'label': 'Oui', 'value': 'Yes'}, {'label': 'Non', 'value': 'No'}]
@@ -1070,5 +1078,11 @@ def downgrade():
     event = session.query(Event).filter_by(key='spm').first()
     session.query(EventTranslation).filter_by(event_id=event.id).delete()
     session.query(Event).filter_by(key='spm').delete()
+
+    session.commit()
+
+    op.alter_column('event_translation', 'description',
+               existing_type=sa.String(length=500),
+               type_=sa.String(length=255))
 
     session.commit()

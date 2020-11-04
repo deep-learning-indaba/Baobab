@@ -74,7 +74,7 @@ class Home extends Component {
                     <table className="event-table">
                         <tbody>
                             {events.map(e => {
-                                return (<tr>
+                                return (<tr key={e.key}>
                                     <td>
                                         <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                         {e.start_date + " to " + e.end_date}
