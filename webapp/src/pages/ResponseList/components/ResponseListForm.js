@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/taglist/TagList.service'
+import { tagList } from '../../../services/tagList/tagList.service'
 
 
 class ResponseListForm extends Component {
@@ -74,6 +74,8 @@ class ResponseListForm extends Component {
                         {val.response_id}
                     </NavLink>;
                 }
+
+              
 
                 // Check if anwser should be displayed in table based on state.selected, then extract only the value's
                 val.answers.forEach(answer => {
