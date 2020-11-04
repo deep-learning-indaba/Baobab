@@ -1,5 +1,6 @@
 import datetime
 import traceback
+import itertools
 
 import flask_restful as restful
 from flask import g, request
@@ -17,7 +18,9 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
+from app.reviews.repository import ReviewRepository as review_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 
 
 class ResponseAPI(ResponseMixin, restful.Resource):
@@ -216,3 +219,99 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))
+
+
+def _pad_list(lst, length):
+    diff = length - len(lst)
+    lst.extend([None] * diff)
+    return lst
+
+def _serialize_reviewer(response_reviewer, review_response):
+    return {
+        'reviewer_id': response_reviewer.reviewer_user_id,
+        'reviewer_name': '{} {} {}'.format(response_reviewer.user.user_title, response_reviewer.user.firstname, response_reviewer.user.lastname),
+        'review_response_id': None if review_response is None else review_response.id
+    }
+
+def _serialize_answer(answer, language):
+    question = answer.question
+    translation = question.get_translation(language)
+    if translation is None:
+        LOGGER.warn('No {} translation found for question id {}'.format(language, question.id))
+        translation = question.get_translation('en')
+
+    return {
+        'question_id': answer.question_id,
+        'value': answer.value,
+        'type': answer.question.type,
+        'options': translation.options,
+        'headline': translation.headline
+    }
+
+def _serialize_tag(tag, language):
+    tag_translation = tag.get_translation(language)
+    if not tag_translation:
+        LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+        tag_translation = tag.get_translation('en')
+    return {
+        'id': tag.id,
+        'name': tag_translation.name
+    }
+
+class ResponseListAPI(restful.Resource):
+
+    @event_admin_required
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('include_unsubmitted', type=bool, required=True)
+        req_parser.add_argument('question_ids', type=list, required=False, location='json')
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+
+        include_unsubmitted = args['include_unsubmitted']
+        question_ids = args['question_ids']
+        language = args['language']
+
+        responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
+
+        review_config = review_configuration_repository.get_configuration_for_event(event_id)
+        required_reviewers = 1 if review_config is None else review_config.num_reviews_required + review_config.num_optional_reviews
+
+        response_reviewers = review_repository.get_response_reviewers_for_event(event_id)
+        response_to_reviewers = {
+            k: list(g) for k, g in itertools.groupby(response_reviewers, lambda r: r.response_id)
+        }
+
+        review_responses = review_repository.get_review_responses_for_event(event_id)
+        reviewer_to_review_response = {
+            r.reviewer_user_id: r for r in review_responses
+        }
+
+        serialized_responses = []
+        for response in responses:
+            reviewers = [_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)) 
+                         for r in response_to_reviewers.get(response.id, [])]
+            reviewers = _pad_list(reviewers, required_reviewers)
+            if question_ids:
+                answers = [_serialize_answer(answer, language) for answer in response.answers if answer.question_id in question_ids]
+            else:
+                answers = []
+
+            serialized = {
+                'response_id': response.id,
+                'user_title': response.user.user_title,
+                'firstname': response.user.firstname,
+                'lastname': response.user.lastname,
+                'start_date': response.started_timestamp.isoformat(),
+                'is_submitted': response.is_submitted,
+                'is_withdrawn': response.is_withdrawn,
+                'submitted_date': None if response.submitted_timestamp is None else response.submitted_timestamp.isoformat(),
+                'language': response.language,
+                'answers': answers,
+                'reviewers': reviewers,
+                'tags': [_serialize_tag(rt.tag, language) for rt in response.response_tags]
+            }
+
+            serialized_responses.append(serialized)
+
+        return serialized_responses

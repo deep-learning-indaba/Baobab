@@ -116,3 +116,14 @@ class ResponseRepository():
             .group_by(cast(Response.submitted_timestamp, Date))
             .order_by(cast(Response.submitted_timestamp, Date))
             .all())
+
+    @staticmethod
+    def get_all_for_event(event_id, submitted_only=True):
+        query = db.session.query(Response)
+        if submitted_only:
+            query = query.filter_by(is_submitted=True)
+
+        return (query
+            .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+            .filter_by(event_id=event_id)
+            .all())
