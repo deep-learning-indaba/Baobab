@@ -8,7 +8,7 @@
 }
 
 
-/* Drop Down Lists Wrapper */
+/* Drop Down Lists Wrapper and Buttons */
 .lists-wrapper {
     display: flex;
     align-items: center;
@@ -97,24 +97,6 @@
     text-align: left;
 }
 
-.btn.tags.update {
-    background: hsl(120, 58%, 42%);
-    border: darkgreen;
-    color: white;
-    z-index: 50;
-    pointer-events: all;
-}
-
-.btn.tags.update:hover {
-    background: hsl(120, 58%, 48%);
-    border: darkgreen;
-    color: white;
-}
-
-.btn.tags:hover {
-    background: none;
-    border: 1px solid lightgrey;
-}
 
 /*Questions*/
 
@@ -149,13 +131,14 @@
     pointer-events: all;
     }
 
-    .btn-secondary.hide {
-opacity: 0.5;
-pointer-events: none;
+   
+.btn-secondary.hide {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 html .btn-update {
-    background:hsl(214deg 98% 65%);
+    background:hsl(214deg, 98%, 65%);
 }
 
 
@@ -166,14 +149,9 @@ html .btn-primary.green {
     }
 
     .btn.reset:hover{
-        background: hsl(0, 0%, 91%);
-        border: 1px solid lightgrey;
+      background: hsl(0, 0%, 91%);
+      border: 1px solid lightgrey;
     }
-    .btn.reset {
-        background: white;
-        color: grey;
-    }
-
 
 /* Inputs */
 
