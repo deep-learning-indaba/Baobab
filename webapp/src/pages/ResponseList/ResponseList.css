@@ -90,7 +90,7 @@
 }
 
 .btn.tags {
-    background: hsl(0deg 0% 91%);
+    background: hsl(0deg, 0%, 91%);
     margin: 0;
     font-size: 12px;
     width: 15%;
