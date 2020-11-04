@@ -9,7 +9,7 @@ import { eventService } from '../../services/events/events.service'
 import { tagResponse } from '../../services/responseTag/responseTag.service'
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
 import { fetchResponse } from '../../services/responsePage/responsePage.service'
-import { tagList } from '../../services/taglist/TagList.service'
+import { tagList } from '../../services/responseTag/tags.service'
 
 
 class ResponsePage extends Component {
