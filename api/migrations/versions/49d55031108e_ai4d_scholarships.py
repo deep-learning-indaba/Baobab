@@ -987,7 +987,7 @@ Comment les activités complémentaires aideront-elles à établir des liens ent
         'en': 'Section III',
         'fr': u"""Section III"""
     }, 
-    descriptions={
+    {
         'en': r"""IDRC Open Access Policy 
 [https://www.idrc.ca/en/open-access-policy-idrc-funded-project-outputs](https://www.idrc.ca/en/open-access-policy-idrc-funded-project-outputs)
 
@@ -1011,7 +1011,7 @@ Principes du CRDI en matière d’éthique de la recherche
 Conditions générales de l’accord de subvention
 [https://www.idrc.ca/sites/default/files/sp/Documents%20FR/grant_agreement_fr.pdf](https://www.idrc.ca/sites/default/files/sp/Documents%20FR/grant_agreement_fr.pdf)
 """
-    }, None, 5)
+    }, 5)
 
     add_question(section3, 1, 'multi-choice', {
         'en': """I confirm that I am aware of IDRC's applicable policies and that my institution and the scholarship recipients will have to comply with them.""",
