@@ -71,18 +71,19 @@ class Home extends Component {
                     <h3 className="text-center">{this.props.t(description)}</h3>
                     <div class="card">
 
-
-                    <div class="row event-table">
-                        {events.map(e => {
-                                    return (
-                                        <div key={e.key}>
-                                            <div style={{textAlign:"left"}} class="col-8"> <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                            {e.start_date + " to " + e.end_date}</div>
-                                            <div class="col-4">{this.statusDisplay(e)}</div>
-                                        </div>
-                                    )
-                        })}
-                    </div>
+                    <table className="event-table">
+                        <tbody>
+                            {events.map(e => {
+                                return (<tr>
+                                    <td>
+                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {e.start_date + " to " + e.end_date}
+                                    </td>
+                                    <td>{this.statusDisplay(e)}</td>
+                                </tr>)
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>);
         }

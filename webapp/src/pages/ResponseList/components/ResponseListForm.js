@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/tagList/tagList.service'
+import { tagList } from '../../../services/taglist/TagList.service'
 
 
 class ResponseListForm extends Component {
