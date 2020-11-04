@@ -112,5 +112,6 @@ rest_api.add_resource(integration_tests_api.DeleteIntegrationUser, '/api/v1/inte
 rest_api.add_resource(outcome_api.OutcomeAPI, '/api/v1/outcome')
 rest_api.add_resource(outcome_api.OutcomeListAPI, '/api/v1/outcome-list')
 rest_api.add_resource(users_api.EventAttendeeAPI, '/api/v1/validate-user-event-attendee')
+rest_api.add_resource(form_api.QuestionListApi, '/api/v1/questions')
 rest_api.add_resource(tag_api.TagAPI, '/api/v1/tag')
 rest_api.add_resource(tag_api.TagListAPI, '/api/v1/tags')

@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.applicationModel.mixins import ApplicationFormMixin
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
 from app import db, bcrypt
@@ -87,3 +87,26 @@ class ApplicationFormAPI(ApplicationFormMixin, restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return DB_NOT_AVAILABLE
+
+def _serialize_question(question, language):
+    translation = question.get_translation(language)
+    if not translation:
+        LOGGER.warn('Could not find {} translation for question id {}'.format(language, question.id))
+        translation = question.get_translation('en')
+    return dict(
+        question_id=question.id,
+        headline=translation.headline,
+        type=question.type
+    )
+
+class QuestionListApi(restful.Resource):
+
+    @event_admin_required
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+        language = args['language']
+
+        questions = application_form_repository.get_questions_for_event(event_id)
+        return [_serialize_question(q, language) for q in questions]
