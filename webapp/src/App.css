@@ -30,11 +30,6 @@ body {
   font-family: 'Open Sans', sans-serif;
 }
 
-html button:active {
-  border: none;
-  outline: none;
-}
-
 .Body{
   background: #F9fafb;;
   min-height: 80vh;

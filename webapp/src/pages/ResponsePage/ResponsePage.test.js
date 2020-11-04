@@ -57,24 +57,6 @@ test("Check if Question and Answerer html renders.", async () => {
     expect(wrapper.find('.Q-A').length).toEqual(1);
 });
 
-test("Check if tag list renders.", async () => {
-    const wrapper = shallow(<ResponsePage {...props} />);
-    await wrapper.instance().fetchTags();
-    wrapper.setState({tagMenu: true})
-    expect(wrapper.find('.tag-response.show').length).toEqual(1);
-});
-
-test("Check if Tag API updates state.", async () => {
-    const wrapper = shallow(<ResponsePage {...props} />);
-    let prevState = wrapper.state().applicationData;
-    await wrapper.instance().postResponseTag({
-        "tag_id": 1,
-        "response_id": 2,
-        "event_id": 3
-    });
-    expect(wrapper.state().applicationData != prevState).toBeTruthy();
-});
-
 
 
 

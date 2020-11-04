@@ -13,7 +13,7 @@ export const eventService = {
 
 export function getEvent(event_id) {
   return axios
-    .get(baseUrl + `/api/v1/event?id=` + event_id + "&cache_bust=1", { headers: authHeader() })
+    .get(baseUrl + `/api/v1/event?id=` + event_id + "&cache_bust=1")
     .then(response => {
       return {
         event: response.data,
