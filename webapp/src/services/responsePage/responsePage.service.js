@@ -21,7 +21,11 @@ const data = [
         "tags": [
             {"id": 5, "headline": "éducation"},
             {"id": 7, "headline": "soins de santé"}
-         ] 
+       ],
+       "reviewers": [ 
+        {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
+        null
+    ]
     }
 ]
 

@@ -9,7 +9,9 @@ import { eventService } from '../../services/events/events.service'
 import { tagResponse } from '../../services/responseTag/responseTag.service'
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
 import { fetchResponse } from '../../services/responsePage/responsePage.service'
-import { tagList } from '../../services/tagList/tagList.service'
+import { tagList } from '../../services/taglist/tagList.service'
+
+
 
 
 class ResponsePage extends Component {
@@ -62,6 +64,7 @@ class ResponsePage extends Component {
             })
         });
     }
+
 
 
     // Misc FUnctions
@@ -266,6 +269,12 @@ class ResponsePage extends Component {
             </div>
         });
         return questions
+    }
+
+
+    // Render Reviews
+    renderReviews() {
+        
     }
 
 
