@@ -1,42 +1,43 @@
 import React, { Component } from 'react'
 
+// TODO: Need to add validation - can't add a duplicate tag name and can't leave a language blank
+
 class Form extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tags: {}
+            tagTranslations: {}
         }
     };
 
 
     handleSubmit() {
-        const { tags } = this.state;
-        this.props.postTag(tags);
+        const { tagTranslations } = this.state;
+        this.props.postTag(tagTranslations);
         // clear inout fields
         Array.from(document.querySelectorAll("input")).forEach(
             input => (input.value = "")
           );
   
         this.setState({
-            tags: {}
-        })
+            tagTranslations: {}
+        });
     }
 
 
     handleChange(event, label) {
-        const { tags } = this.state;
-        let addTags = tags;
+        const { tagTranslations } = this.state;
     
         if (event.target.value) {
-            addTags[label] = { headline: event.target.value, id: label }
+            tagTranslations[label] = event.target.value;
         }
         else {
-           delete addTags[label]
+           delete tagTranslations[label];
         };
       
         this.setState({
-            tags: addTags
-        })
+            tagTranslations: tagTranslations
+        });
     }
 
 
@@ -51,9 +52,9 @@ class Form extends Component {
                     <input key={val} onChange={(e) => this.handleChange(e, val)}></input>
                 </div>
             });
-
+            
             return (
-                <div className="modal fade" id="exampleModal" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div className="modal fade" id="newTagModal" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
