@@ -1,71 +1,40 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import { reviewService } from '../../../services/reviews/review.service';
 
-class TagModal extends Component {
+class ReviewModal extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tags: {}
+          
         }
     };
 
 
-    handleSubmit() {
-        const { tags } = this.state;
-        this.props.postTag(tags);
-        // clear inout fields
-        Array.from(document.querySelectorAll("input")).forEach(
-            input => (input.value = "")
-          );
-  
-        this.setState({
-            tags: {}
+    renderReviewers() {
+        reviewService.getReviewAssignments(this.props.event.id).then(response => {
+            console.log(response)
         })
     }
 
 
-    handleChange(event, label) {
-        const { tags } = this.state;
-        let addTags = tags;
-    
-        if (event.target.value) {
-            addTags[label] = { headline: event.target.value, id: label }
-        }
-        else {
-           delete addTags[label]
-        };
-      
-        this.setState({
-            tags: addTags
-        })
-    }
 
-
-    renderTagModal() {
+    renderModal() {
           // Translation
         const t = this.props.t; 
         
-        if (this.props.eventLanguages) {
-            let inputs = this.props.eventLanguages.map(val => {
-                return <div id="myInputs" key={val} className="new-tag-inputs">
-                    <label>{val}</label>
-                    <input key={val} onChange={(e) => this.handleChange(e, val)}></input>
-                </div>
-            });
-
+        if (this.props.event) {
             return (
-                <div className="modal fade" id="exampleModalTag" tabIndex="-1" role="dialog" aria-labelledby="exampleModal" aria-hidden="true">
+                <div className="modal fade" id="exampleModalReview" tabIndex="-1" role="dialog" aria-labelledby="exampleModalReview" aria-hidden="true">
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title" id="exampleModalLabel">{t('Add Tags')}</h5>
+                                <h5 className="modal-title" id="exampleModalLabel">{t('Reviewers')}</h5>
                                 <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
                             <div className="modal-body">
-                                <form>
-                                    {inputs}
-                                </form>
+
                             </div>
                             <div className="modal-footer">
                                 <button type="button"
@@ -78,7 +47,7 @@ class TagModal extends Component {
                                     type="button"
                                     data-dismiss="modal"
                                     className="btn btn-primary"
-                                    onClick={(e) => this.handleSubmit()}
+                                    onClick={(e) => this.renderReviewers(e)}
                                 >
                                     {t('Save')}
                                 </button>
@@ -92,7 +61,7 @@ class TagModal extends Component {
 
 
     render() {
-        const modal = this.renderTagModal()
+        const modal = this.renderModal()
         return (
             <div>
                 {modal}
@@ -101,4 +70,4 @@ class TagModal extends Component {
     }
 }
 
-export default TagModal
+export default ReviewModal
