@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { responsesService } from '../../../services/responses/responses.service'
+import { responsesService } from '../../../services/responses/responses.service';
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagssService } from '../../../services/tags/tags.service';
+import { tagsService } from '../../../services/tags/tags.service';
 import { applicationFormService } from '../../../services/applicationForm/applicationForm.service';
 import Loading from "../../../components/Loading";
 
