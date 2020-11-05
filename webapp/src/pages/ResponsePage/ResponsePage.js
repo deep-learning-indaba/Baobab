@@ -1,16 +1,14 @@
-
 import React, { Component } from 'react'
 import "react-table/react-table.css";
 import './ResponsePage.css'
 import { withTranslation } from 'react-i18next';
-import TagModal from './components/TagModal'
-import DeleteModal from './components/DeleteModal'
-import { eventService } from '../../services/events/events.service'
-import { tagResponse } from '../../services/responseTag/responseTag.service'
-import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
-import { fetchResponse } from '../../services/responsePage/responsePage.service'
-import { tagList } from '../../services/responseTag/tags.service'
-
+import TagModal from './components/TagModal';
+import { eventService } from '../../services/events/events.service';
+import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
+import { tagsService } from '../../services/tags/tags.service';
+import { responsesService } from '../../services/responses/responses.service';
+import Loading from "../../components/Loading";
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -19,50 +17,31 @@ class ResponsePage extends Component {
             tagMenu: false,
             error: false,
             addNewTags: [],
-            eventLanguages: []
+            eventLanguages: [],
+            isLoading: true,
+            removeModalVisible: false
         }
     };
 
     componentDidMount() {
-        this.fetchForm();
-        this.fetchData();
-        this.fetchTags();
-        this.fetchEvent();
-    }
-
-    // Data Functions
-    // Fetch Event Details
-    fetchEvent() {
-        eventService.getEvent().then(response => {
+        Promise.all([
+            eventService.getEvent(this.props.event.id),
+            applicationFormService.getForEvent(this.props.event.id),
+            responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
+            tagsService.getTagList(this.props.event.id)
+        ]).then(responses => {
+            console.log(responses);
             this.setState({
-                eventLanguages: ["en", "fr"]
-            })
+                eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
+                applicationForm: responses[1].formSpec,
+                applicationData: responses[2].detail,
+                tagList: responses[3].tags,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+                isLoading: false
+            }, this.handleData);
         });
+
     }
-
-
-    // Fetch Form
-    fetchForm() {
-        applicationFormService.getForEvent(this.props.event.id).then(response => {
-            this.setState({
-                applicationForm: response.formSpec
-            })
-        });
-    }
-
-
-    // Fetch Data
-    fetchData() {
-        let params = {
-            id: this.props.match.params.id
-        };
-        fetchResponse(params).then(response => {
-            this.setState({
-                applicationData: response
-            })
-        });
-    }
-
 
     // Misc FUnctions
     // Go Back
@@ -70,24 +49,11 @@ class ResponsePage extends Component {
         this.props.history.goBack();
     }
 
-
     error(error) {
         this.setState({
             error: error
         })
     }
-
-
-    // Tag Functions
-    // Populate tag list
-    fetchTags() {
-        tagList.list().then(response => {
-            this.setState({
-                tagList: response
-            })
-        });
-    }
-
 
     // Toggle Tag Menu
     toggleTags(list) {
@@ -96,125 +62,105 @@ class ResponsePage extends Component {
         })
     }
 
-
-    // Post Tag
-    postTag(tag, type) {
-        if (type == "responseTag") {
-            this.postResponseTag(tag)
-        }
-        else {
-            this.postTagList(tag)
-        }
-    }
-
-
-
     // Post Response API
-    postResponseTag(tag) {
+    postResponseTag(tagId, responseId, eventId) {
         const updateApplicationData = this.state.applicationData;
         const updateTagList = this.state.tagList;
 
-        tagResponse.post(tag).then(response => {
-            if (response.status == 201) {
-                const getTag = this.state.tagList.find(tag => tag.id === response.tag_id);
-                updateApplicationData.tags.push({ "headline": getTag.name, "id": getTag.id });
-                updateTagList.splice(getTag, 1);
+        responsesService.tagResponse(responseId, tagId, eventId)
+            .then(response => {
+                if (response.status == 201) {
+                    const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
+                    updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
+                    updateTagList.splice(getTag, 1);
 
-                this.setState({
-                    applicationData: updateApplicationData,
-                });
-            };
-        }).catch((response) => {
-            this.error(response.message)
-        });
+                    this.setState({
+                        applicationData: updateApplicationData,
+                        tagList: updateTagList
+                    });
+                }
+                else {
+                    this.error(response.error);
+                }
+            });
     }
 
-
-
     // Post Tag List API
-    postTagList(tags) {
-        let updateApplicationData = this.state.applicationData;
-        let updateEventLanguages = this.state.eventLanguages;
-        const newTags = Object.values(tags);
-        let filterTags = tags;
-
-        // filter dulicate headlines (bug fix)  
-        updateApplicationData.tags.forEach((tag1) => {
-            newTags.forEach((tag2) => {
-                if (tag1.headline == tag2.headline) {
-                    delete filterTags[tag2.id]
-                };
-            })
-        });
-
-        if (Object.keys(filterTags).length) {
-            tagList.post(filterTags).then(response => {
+    addTag = (tagTranslations) => {
+        if (Object.keys(tagTranslations).length) {
+            const newTag = {
+                name: tagTranslations
+            };
+            tagsService.addTag(newTag, this.props.event.id).then(response => {
                 if (response.status == 201) {
-                    tagResponse.post(filterTags).then(response => {
-                        if (response.status == 201) {
-                            // add tags to state
-                            newTags.forEach(val => {
-                                if (val.id == this.props.i18n.language) {
-                                    updateApplicationData.tags.push(val)
-                                }
-                            })
-
-
-                            this.setState({
-                                applicationData: updateApplicationData,
-                                eventLanguages: updateEventLanguages,
-                            })
-                        }
-                    }).catch(response => {
-                        this.error(response.message)
+                    const updateTagList = this.state.tagList;
+                    const newTag = {
+                        id: response.tag.id,
+                        name: response.tag.name[this.props.i18n.language]
+                    };
+                    updateTagList.push(newTag);
+                    this.setState({
+                        tagList: updateTagList
+                    }, ()=>{
+                        this.postResponseTag(response.tag.id, this.props.match.params.id, this.props.event.id);
                     });
-                };
-            }).catch(response => {
-                this.error(response.message)
+                }
+                else {
+                    this.error(response.error);
+                }
             });
         };
     }
 
-
     // Del Tag
-    deleteTag(tag_id, type) {
-        let updateApplicationData = this.state.applicationData;
-
-        if (type == "action") {
-            tagList.remove({
-                "tag_id": tag_id,
-                "response_id": parseInt(this.props.match.params.id),
-                "event_id": this.props.event.id
-            }).then(response => {
-                if (response.status == 200) {
-                    updateApplicationData.tags.forEach((tag, index) => {
-                        if (tag.id == tag_id) {
-                            updateApplicationData.tags.splice(index, 1)
-                        }
-                    });
-                    this.setState({
-                        applicationData: updateApplicationData,
-                    })
-                };
-            }).catch((response) => {
-                this.error(response.message)
-            });
-        }
-        else {
-            this.setDeleteModal(tag_id, type)
-        }
+    removeTag(tag_id) {
+        this.setState({
+            removeModalVisible: true,
+            tagToRemove: tag_id
+        });
     }
 
+    confirmRemoveTag = () => {
+        const updateApplicationData = this.state.applicationData;
 
+        responsesService.removeTag(
+            parseInt(this.props.match.params.id),
+            this.state.tagToRemove,
+            this.props.event.id
+        ).then(response => {
+            if (response.status == 200) {
+                const index = updateApplicationData.tags.findIndex(t => t.id === this.state.tagToRemove);
+                if (index >= 0)
+                    updateApplicationData.tags.splice(index, 1);
+                
+                this.setState({
+                    applicationData: updateApplicationData,
+                    removeModalVisible: false,
+                    tagToRemove: null
+                });
+            }
+            else {
+                this.cancelRemoveTag();
+                this.error(response.message);
+            }
+        });    
+    }
+
+    cancelRemoveTag = () => {
+        this.setState({
+            tagToRemove: null,
+            removeModalVisible: false
+        });
+    }
 
     // Render Page HTML
     // Generate Applciation Status
     applicationStatus() {
         const data = this.state.applicationData;
         if (data) {
-            let unsubmitted = !data.is_submitted && !data.is_withdrawn;
-            let submitted = data.is_submitted;
-            let withdrawn = data.is_withdrawn;
+            const unsubmitted = !data.is_submitted && !data.is_withdrawn;
+            const submitted = data.is_submitted;
+            const withdrawn = data.is_withdrawn;
 
             if (unsubmitted) {
                 return ["unsubmitted" + " " + data.started_timestamp]
@@ -227,8 +173,6 @@ class ResponsePage extends Component {
             };
         };
     }
-
-
 
     // Render Sections
     renderSections() {
@@ -255,70 +199,62 @@ class ResponsePage extends Component {
         return html
     }
 
-
-
     // Render Questions 
     renderQuestions(section) {
-        let questions = section.questions.map(q => {
+        const questions = section.questions.map(q => {
+            if (q.type === "information") {
+                return <h4>{q.headline}</h4>
+            }
             return <div key={q.id} className="question-answer-block">
                 <p>{q.headline}</p>
-                <h6>{this.renderAnswer(q.id, q.type)}</h6>
+                <h6>{this.renderAnswer(q.id, q.type, q.headline, q.options)}</h6>
             </div>
         });
         return questions
     }
 
-
-
     // Render Answers 
-    renderAnswer(id, type) {
+    renderAnswer(id, type, headline, options) {
         const applicationData = this.state.applicationData;
         const baseUrl = process.env.REACT_APP_API_URL;
-        let answers;
 
-        applicationData.answers.forEach(a => {
-            if (a.question_id == id) {
-                formatAnswer(a, type)
-            };
-        });
-
-        // format aswerers 
-        function formatAnswer(a, type) {
+        const a = applicationData.answers.find(a => a.question_id === id);
+        if (! a) {
+            return this.props.t("No answer provided.");
+        }
+        else {
             // file
             if (type == "file") {
-                answers = <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{a.value}</a>
-            };
+                return <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{this.props.t("Uploaded File")}</a>
+            }
             // multi-file
-            if (type == "multi-file") {
+            else if (type == "multi-file") {
+                const answerFiles = JSON.parse(a.value);
                 let files = [];
-                a.value.forEach((file => {
-                    if (file) {
-                        files.push(
-                            <div key={a.headline}><a key={a.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file} className="answer">{a.value}</a></div>
-                        )
-                    }
-                }));
-                answers = <div key={a.headline}>{files}</div>
-            };
+                if (Array.isArray(answerFiles) && answerFiles.length > 0) {
+                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)
+                }
+                else {
+                    files = "No files uploaded";
+                }
+                return <div key={headline}>{files}</div>
+            }
             // choice
-            if (type.includes("choice")) {
+            else if (type.includes("choice")) {
                 let choices = [];
-                a.options.forEach(opt => {
+                options.forEach(opt => {
                     if (a.value == opt.value) {
                         choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
                     };
                 });
-                answers = <div key={choices}>{choices}</div>
+                return <div key={choices}>{choices}</div>
+            }
+            // other
+            else {
+                return <div key={headline}><p className="answer">{a.value}</p></div>
             };
-            // text
-            if (type.includes("text")) {
-                answers = <div key={a.headline}><p className="answer">{a.value}</p></div>
-            };
-        };
-        return answers
+        }
     }
-
-
 
     renderTags() {
         const data = this.state.applicationData;
@@ -326,75 +262,62 @@ class ResponsePage extends Component {
             let tags = data.tags.map(tag => {
                 return <span
                     key={tag.id}
-                    onClick={(e) => this.deleteTag(tag.id, "prompt")}
                     className="btn badge badge-info"
-                    data-toggle="modal"
-                    data-target="#exampleModal2"
                 >
-                    {tag.headline}
-                    <i className="far fa-trash-alt"></i></span>
+                    {tag.name}
+                    <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt"></i></span>
             });
             return tags
         };
     }
 
-
-
     renderTagModal() {
         const { eventLanguages } = this.state;
         if (eventLanguages) {
             return <TagModal
-                keys={this.state.keys}
-                i18nt={this.props.i18n}
                 t={this.props.t}
-                postTag={(tags) => this.postTag(tags, "tagList")}
+                postTag={this.addTag}
                 eventLanguages={eventLanguages}
             />
         };
     }
 
-
-
     renderDeleteModal() {
-        const { eventLanguages } = this.state;
-        if (eventLanguages) {
-            return <DeleteModal
-                t={this.props.t}
-                handleSubmit={(tag_id, type) => this.deleteTag(tag_id, type)}
-                deleteQue={this.state.deleteQue}
-            />
-        };
-    }
+        const t = this.props.t;
 
-    setDeleteModal(tag_id, type) {
-        this.setState({
-            deleteQue: type == "reset" ? null : tag_id
-        })
+        return <ConfirmModal
+          visible={this.state.removeModalVisible}
+          onOK={this.confirmRemoveTag}
+          onCancel={this.cancelRemoveTag}
+          okText={t("Yes")}
+          cancelText={t("No")}>
+          <p>
+            {t('Are you sure you want to delete this tag?')}
+          </p>
+        </ConfirmModal>
     }
-
 
     render() {
-        const { applicationData, tagList, tagMenu, error, eventLanguages } = this.state;
-        const applicationStatus = this.applicationStatus();
-        const renderSections = this.renderSections();
-        const tags = this.renderTags();
-        const tagModal = this.renderTagModal();
-        const deleteModal = this.renderDeleteModal();
+        const { applicationData, tagList, tagMenu, error, eventLanguages, isLoading } = this.state;
         // Translation
         const t = this.props.t;;
+
+        if (isLoading) {
+            return <Loading/>
+        }
 
         return (
             <div className="table-wrapper">
                 {/* API Error */}
                 {error &&
                     <div className="alert alert-danger" role="alert">
-                        <p>{error}</p>
+                        <p>{JSON.stringify(error)}</p>
                     </div>
                 }
 
                 {/* Add Tag Modal*/}
-                {tagModal}
-                {deleteModal}
+                {this.renderTagModal()}
+                {this.renderDeleteModal()}
 
                 {/* Headings */}
                 {applicationData &&
@@ -402,7 +325,7 @@ class ResponsePage extends Component {
                         <div className="user-details">
                             <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
                             <div className="tags">
-                                {tags}
+                                {this.renderTags()}
                                 <span onClick={(e) => this.toggleTags(tagMenu)} className={tagMenu && tagList.length || tagMenu && eventLanguages.length
                                     ? "badge add-tags active"
                                     : "badge add-tags"}>
@@ -419,17 +342,15 @@ class ResponsePage extends Component {
                                     tagList.map(val => {
                                         return <div className="tag-item" key={val.id} >
                                             <button
-                                                onClick={(e) => this.postTag(
-                                                    {
-                                                        "tag_id": val.id,
-                                                        "response_id": parseInt(this.props.match.params.id),
-                                                        "event_id": this.props.event.id
-                                                    }, "responseTag"
-                                                )} className="btn tag">{val.name}</button>
+                                                onClick={(e) => this.postResponseTag(
+                                                        val.id,
+                                                        parseInt(this.props.match.params.id),
+                                                        this.props.event.id
+                                                    )} className="btn tag">{val.name}</button>
                                         </div>
                                     })}
 
-                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModal">
+                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#newTagModal">
                                     {t('New tag')}
                                 </button>
 
@@ -439,7 +360,7 @@ class ResponsePage extends Component {
 
                         {/* User details Right Tab */}
                         <div>
-                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{applicationStatus}</p>
+                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
                                 <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
                             </div>
 
@@ -450,7 +371,7 @@ class ResponsePage extends Component {
                 {/*Response Data*/}
                 {applicationData &&
                     <div className="response-details">
-                        {renderSections}
+                        {this.renderSections()}
                     </div>
                 }
 
@@ -460,5 +381,3 @@ class ResponsePage extends Component {
 }
 
 export default withTranslation()(ResponsePage);
-
-
