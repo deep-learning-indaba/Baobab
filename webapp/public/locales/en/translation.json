@@ -299,5 +299,10 @@
     "Previous": "Previous",
     "Application Status": "Application Status",
     "Reviewer": "Reviewer",
-    "Tags": "Tags"
+    "Tags": "Tags",
+    "Yes": "Yes",
+    "Are you sure you want to delete this tag?": "Are you sure you want to delete this tag?",
+    "Save": "Save",
+    "Add Tags": "Add Tags",
+    "New tag": "New tag"
 }

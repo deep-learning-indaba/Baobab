@@ -6,7 +6,7 @@ import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagsService } from '../../../services/tags/tags.service';
+import { tagssService } from '../../../services/tags/tags.service';
 import { applicationFormService } from '../../../services/applicationForm/applicationForm.service';
 import Loading from "../../../components/Loading";
 

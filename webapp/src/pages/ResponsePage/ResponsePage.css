@@ -5,12 +5,16 @@
     margin-top: 20px;
 }
 
-h2 {
+.table-wrapper p {
+    margin-bottom: 5px;
+}
+
+.table-wrapper h2 {
     color: hsl(0, 0%, 25%);
     font-weight: 300;
     margin-top: 2px;
     text-align: left;
-    margin: 0;
+    margin-bottom: 5px;
 }
 
 h4 {
@@ -25,19 +29,12 @@ button {
     margin-bottom: 10px;
 }
 
-label {
-    font-size: 12px;
-    color: grey;
-    margin: 0 1px;
-}
-
- .response-page-wrapper .btn-primary {
+ .table-wrapper .btn-primary {
     background:hsl(208deg 84% 59%);
     border: none;
     width: 100%;
     color: white;
     border: 1px solid lightgrey;
-    margin: 0 5px;
 }
 
 
@@ -102,6 +99,98 @@ html .headings-lower label {
     margin: 2px;
 }
 
+.badge-info.dark {
+    background: hsl(188deg, 100%, 23%);
+    font-size: 14px;
+}
+
+.fa-trash-alt {
+padding: 0 5px;
+}
+
+/* Tag List */
+.tag-response {  
+   opacity: 0;
+   pointer-events: none;
+   overflow: scroll;
+   transition: 300ms;
+   height: 1px;
+   margin-top: 2px;
+}
+
+.tag-response.show {
+  opacity: 1;
+  pointer-events: all;
+  transition: 300ms;
+  height: 180px;
+}
+
+.badge.add-tags {
+    background: hsl(208, 74%, 57%);
+    color: white;
+}
+
+.badge.add-tags.active {
+    background:hsl(120, 0%, 57%);
+}
+
+.tag-item {
+    display: flex; 
+    margin: 5px 0;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.btn.tag {
+    background: none;
+    border: 1px solid hsl(0, 0%, 75%);
+    pointer-events: all;
+    opacity: 1;
+}
+
+.badge-light {
+    border: 1px solid grey;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 1px;
+}
+
+.tags .btn.badge-info {
+    background: hsl(28deg, 79%, 54%);
+}
+
+.tag-response .btn.tag {
+    background: hsl(0deg, 0%, 90%);
+    padding: 2px 4px;
+    border: none;
+    color: hsl(0deg 0% 32%);
+}
+
+.tag-response .btn{
+    width: 100%;
+    font-size: 12px;
+    text-align: left;
+    margin: 0;
+}
+
+/* New Tag Modal */
+.new-tag-inputs {
+margin: 5px 0;
+display: flex;
+flex-direction: column;
+width: 100%;
+}
+
+.new-tag-inputs label {
+    text-align: left;
+}
+
+.new-tag-inputs input {
+width: 100%;
+}
 
 /* Response Details Section and Sub-Sections */
 .response-details {
