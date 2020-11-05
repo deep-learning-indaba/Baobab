@@ -283,7 +283,7 @@ class EventTranslation(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(500), nullable=False)
     language = db.Column(db.String(2))
 
     event = db.relationship('Event', foreign_keys=[event_id])
