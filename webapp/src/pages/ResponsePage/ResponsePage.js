@@ -3,13 +3,14 @@ import React, { Component } from 'react'
 import "react-table/react-table.css";
 import './ResponsePage.css'
 import { withTranslation } from 'react-i18next';
-import TagModal from './components/TagModal'
-import DeleteModal from './components/DeleteModal'
-import { eventService } from '../../services/events/events.service'
-import { tagResponse } from '../../services/responseTag/responseTag.service'
-import { applicationFormService } from '../../services/applicationForm/applicationForm.service'
-import { fetchResponse } from '../../services/responsePage/responsePage.service'
-import { tagList } from '../../services/taglist/tagList.service'
+import TagModal from './components/TagModal';
+import DeleteModal from './components/DeleteModal';
+import ReviewModal from './components/ReviewModal';
+import { eventService } from '../../services/events/events.service';
+import { tagResponse } from '../../services/responseTag/responseTag.service';
+import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
+import { fetchResponse } from '../../services/responsePage/responsePage.service';
+import { tagList } from '../../services/tagList/tagList.service';
 
 
 
@@ -274,7 +275,36 @@ class ResponsePage extends Component {
 
     // Render Reviews
     renderReviews() {
-        
+        const styles = {
+            green: { "color": "green" },
+            red: { "color": "red" }
+        }
+        if (this.state.applicationData) {
+            const reviews = this.state.applicationData.reviewers.map(val => {
+                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
+                if (!val) {
+                    return <div className="add-reviewer">
+                        <button
+                            data-toggle="modal"
+                            type="button"
+                            data-target="#exampleModalReview"
+                            className="btn btn-light">
+                            Assign Reviewer
+                            </button>
+                    </div>
+                }
+                else {
+                    return <div className="reviewer">
+                        <span>{val.user_title} {val.firstname} {val.lastname}</span>
+                        {val.completed ? <p style={styles.green}>Completed</p> : <p style={styles.red}>Incomplete</p>}
+                    </div>
+                }
+            })
+
+            console.log(reviews)
+
+            return reviews
+        }
     }
 
 
@@ -338,7 +368,7 @@ class ResponsePage extends Component {
                     onClick={(e) => this.deleteTag(tag.id, "prompt")}
                     className="btn badge badge-info"
                     data-toggle="modal"
-                    data-target="#exampleModal2"
+                    data-target="#exampleModalDel"
                 >
                     {tag.headline}
                     <i className="far fa-trash-alt"></i></span>
@@ -361,6 +391,15 @@ class ResponsePage extends Component {
             />
         };
     }
+
+
+        // Render Review Modal
+        renderReviewerModal() {
+            return < ReviewModal
+                event={this.props.event}
+                t={this.props.t}
+            />
+        }
 
 
 
@@ -389,8 +428,10 @@ class ResponsePage extends Component {
         const tags = this.renderTags();
         const tagModal = this.renderTagModal();
         const deleteModal = this.renderDeleteModal();
+        const reviews = this.renderReviews();
+        const reviewModal = this.renderReviewerModal();
         // Translation
-        const t = this.props.t;;
+        const t = this.props.t;
 
         return (
             <div className="table-wrapper">
@@ -404,6 +445,7 @@ class ResponsePage extends Component {
                 {/* Add Tag Modal*/}
                 {tagModal}
                 {deleteModal}
+                {reviewModal}
 
                 {/* Headings */}
                 {applicationData &&
@@ -438,7 +480,7 @@ class ResponsePage extends Component {
                                         </div>
                                     })}
 
-                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModal">
+                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModalTag">
                                     {t('New tag')}
                                 </button>
 
@@ -456,9 +498,21 @@ class ResponsePage extends Component {
                     </div>
                 }
 
+
+
                 {/*Response Data*/}
                 {applicationData &&
                     <div className="response-details">
+                        {/* Reviews */}
+                        <div className="reviewers-section">
+                            <h3>Reviewers</h3>
+                            <div className="list">
+                                {reviews}
+                            </div>
+
+                            <div className="divider"></div>
+                        </div>
+
                         {renderSections}
                     </div>
                 }
