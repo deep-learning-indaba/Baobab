@@ -11,6 +11,7 @@ import { tagResponse } from '../../services/responseTag/responseTag.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
 import { fetchResponse } from '../../services/responsePage/responsePage.service';
 import { tagList } from '../../services/tagList/tagList.service';
+import { reviewService } from '../../services/reviews/review.service';
 
 
 
@@ -64,6 +65,10 @@ class ResponsePage extends Component {
                 applicationData: response
             })
         });
+
+        reviewService.getReviewAssignments(this.props.event.id).then(response => {
+            console.log(response)
+        })
     }
 
 

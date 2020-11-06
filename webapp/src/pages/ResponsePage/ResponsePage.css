@@ -4,9 +4,6 @@
     margin-top: 20px;
 }
 
-.table-wrapper p {
-    margin-bottom: 5px;
-}
 
 .table-wrapper h2 {
     color: hsl(0, 0%, 25%);
@@ -216,10 +213,13 @@ html .headings-lower label {
 
 .reviewers-section .list .add-reviewer .btn {
     margin: 0 10px;
+    font-size: 13px;
+    border: 1px solid hsl(0, 0%, 91%);
 }
 
-.reviewers-section p {
-    margin: auto 10px;
+.reviewers-section span, p {
+    margin: auto 5px;
+    font-size: 13px;
 }
 
 .reviewers-section h5 {
