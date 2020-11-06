@@ -1,13 +1,16 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
 import { withTranslation } from 'react-i18next';
-import { questions, response } from '../../../services/responseList/responseList.service'
+import { responsesService } from '../../../services/responses/responses.service';
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
 import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
-import { tagList } from '../../../services/tagList/tagList.service'
+import { tagsService } from '../../../services/tags/tags.service';
+import { applicationFormService } from '../../../services/applicationForm/applicationForm.service';
+import Loading from "../../../components/Loading";
 
+const baseUrl = process.env.REACT_APP_API_URL;
 
 class ResponseListForm extends Component {
     constructor(props) {
@@ -19,172 +22,179 @@ class ResponseListForm extends Component {
             responseTable: null,
             btnUpdate: false,
             selectedTags: [],
+            includeUnsubmitted: false,
+            responses: null,
+            tags: null,
+            error: null,
+            isLoading: true
         }
     }
 
-
     componentWillMount() {
-        this.fetchTags();
-        this.handleData();
-        this.fetchQuestions();
-    }
-
-    // Fetch Tags
-    fetchTags() {
-        tagList.list().then(response => {
+        Promise.all([
+            tagsService.getTagList(this.props.event.id),
+            responsesService.getResponseList(this.props.event.id, false, []),
+            applicationFormService.getQuestionList(this.props.event.id)
+        ]).then(responses => {
             this.setState({
-                tags: response
-            })
-        })
+                tags: responses[0].tags,
+                responses: responses[1].responses,
+                questions: responses[2].questions.filter(q => q.type !== "information"),
+                error: responses[0].error || responses[1].error || responses[2].error,
+                isLoading: false
+            }, this.handleData);
+        });
     }
 
-
-    // Fetch Questions
-    fetchQuestions() {
-        questions().then(response => {
+    refreshResponses() {
+        this.toggleList(false);
+        const { selectedTags, selectedQuestions, includeUnsubmitted } = this.state;
+        responsesService.getResponseList(this.props.event.id, includeUnsubmitted, selectedQuestions).then(resp => {
             this.setState({
-                questions: response
-            })
-        })
+                responses: resp.responses.filter(r => selectedTags.length == 0 || r.tags.some(t => selectedTags.includes(t))),
+                error: resp.error
+            }, this.handleData);
+        });
     }
 
+    // Handle/Format Data
+    handleData = () => {
+        const { responses } = this.state;
 
-
-    // Fetch Ressponses and Handle/Format Data
-    handleData() {
-        const baseUrl = process.env.REACT_APP_API_URL;
-        const { selectedTags, selectedQuestions } = this.state
+        if (!responses) {
+            console.log('ERROR: responses is not defined: ', responses);
+            return;
+        }
 
         // disable question list
-        this.toggleList(false)
+        this.toggleList(false);
 
-        response(selectedTags).then(response => {
-            // Handle Answers and Reviews
-            response.forEach(val => {
-                let handleAnswers = [];
-                let handleReviews = [];
-                let handleTags = [];
+        // Handle Answers and Reviews
+        responses.forEach(val => {
+            let handleAnswers = [];
+            let handleReviews = [];
+            let handleTags = [];
 
-                // Create Response Id Link
-                if (this.props.event) {
-                    val.response_id = <NavLink
-                        to={`${this.props.event.key}/responsePage/${val.response_id}`}
-                        className="table-nav-link"
-                    >
-                        {val.response_id}
-                    </NavLink>;
+            // Create Response Id Link
+            if (this.props.event) {
+                val.response_id = <NavLink
+                    to={`/${this.props.event.key}/responsePage/${val.response_id}`}
+                    className="table-nav-link"
+                >
+                    {val.response_id}
+                </NavLink>;
+            }
+
+            // Check if anwser should be displayed in table based on state.selected, then extract only the value's
+            val.answers.forEach(answer => {
+                // format anwers display based on type
+
+                if (answer.type.includes("text")) {
+                    handleAnswers.push([{
+                        headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
+                            className="Tooltip"
+                        />
+                        </div>
+                    }])
                 }
 
-              
-
-                // Check if anwser should be displayed in table based on state.selected, then extract only the value's
-                val.answers.forEach(answer => {
-                    // format anwers display based on type
-                    if (selectedQuestions.includes(answer.question_id)) {
-                        if (answer.type.includes("text")) {
-                            handleAnswers.push([{
-                                headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
-                                    className="Tooltip"
-                                />
-                                </div>
-                            }])
-                        }
-
-                        else if (answer.type == "file") {
-                            handleAnswers.push([{
-                                headline: answer.headline,
-                                value: <a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
-                            }])
-                        }
-
-                        else if (answer.type == "multi-file") {
-                            let files = [];
-                            answer.value.forEach((file => {
-                                if (file) {
-                                    files.push(
-                                        <div key={answer.headline}><a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file}>{answer.value}</a></div>
-                                    )
-                                }
-                            }))
-                            handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
-                        }
-
-                        else if (answer.type.includes("choice")) {
-                            let choices = [];
-                            answer.options.forEach((opt => {
-                                if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
-                            }))
-                            handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
-                        }
-
-                        else {
-                            handleAnswers.push([{
-                                headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
-                                </div>
-                            }])
-                        }
-                    }
-                })
-
-                // extract only the tag names
-                val.tags.forEach(tag => {
-                    if (tag) {
-                        handleTags.push(<div>{tag.name}</div>)
-                    }
-                })
-
-                // extract only the reviewers name
-                val.reviewers.forEach(review => {
-                    review ? handleReviews.push(review.reviewer_name) : handleReviews.push("");
-                })
-
-                // add User Title as new column 
-                function userTitleCol(row, user_title, firstname, lastname) {
-                    return row.user_title = user_title + " " + firstname + " " + lastname
+                else if (answer.type == "file") {
+                    handleAnswers.push([{
+                        headline: answer.headline,
+                        value: <a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
+                    }])
                 }
 
-                // envoke and store new columns for UserTitle
-                // combine user credentials
-                userTitleCol(val, val.user_title, val.firstname, val.lastname);
+                else if (answer.type == "multi-file") {
+                    const answerFiles = JSON.parse(answer.value);
+                    let files = [];
+                    if (Array.isArray(answerFiles) && answerFiles.length > 0) {
+                        files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)
+                    }
+                    else {
+                        files = "No files uploaded";
+                    }
+                    handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
+                }
 
-                // insert Answers values as columns
-                if (handleAnswers.length) {
-                    handleAnswers.forEach((answer, index) => {
-                        let key = answer[0].headline
-                        val[key] = answer[0].value
-                    });
-                    handleAnswers = [];
-                };
-                // insert new reviews values as columns
-                if (handleReviews.length) {
-                    handleReviews.forEach((review, index) => {
-                        let num = (index) + (1);
-                        let key = "Review" + num;
-                        val[key] = review
-                        handleReviews = [];
-                    })
-                };
+                else if (answer.type.includes("choice")) {
+                    let choices = [];
+                    answer.options.forEach((opt => {
+                        if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
+                    }))
+                    handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
+                }
 
-                val.tags = handleTags
-                // delete original review and answer rows as they don't need to be displayed with all their data
-                delete val.answers;
-                delete val.reviewers;
-                delete val.firstname;
-                delete val.lastname;
-
+                else {
+                    handleAnswers.push([{
+                        headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
+                        </div>
+                    }])
+                }
             })
 
-            this.setState({
-                responseTable: response,
-                btnUpdate: false,
+            // extract only the tag names
+            val.tags.forEach(tag => {
+                if (tag) {
+                    handleTags.push(<div>{tag.name}</div>);
+                }
             })
+
+            // extract only the reviewers name
+            val.reviewers.forEach(review => {
+                review ? handleReviews.push(review.reviewer_name) : handleReviews.push("");
+            })
+
+            // add User Title as new column 
+            function userTitleCol(row, user_title, firstname, lastname) {
+                return row.user = user_title + " " + firstname + " " + lastname;
+            }
+
+            // envoke and store new columns for UserTitle
+            // combine user credentials
+            userTitleCol(val, val.user_title, val.firstname, val.lastname);
+
+            // insert Answers values as columns
+            if (handleAnswers.length) {
+                handleAnswers.forEach((answer, index) => {
+                    let key = answer[0].headline;
+                    val[key] = answer[0].value;
+                });
+                handleAnswers = [];
+            };
+            // insert new reviews values as columns
+            if (handleReviews.length) {
+                handleReviews.forEach((review, index) => {
+                    let num = (index) + (1);
+                    let key = this.props.t("Reviewer") + " " + num;
+                    val[key] = review;
+                    handleReviews = [];
+                })
+            };
+
+            val.tags = handleTags;
+            val.is_submitted = val.is_submitted ? "True" : "False";
+            val.is_withdrawn = val.is_withdrawn ? "True" : "False";
+
+            // delete original review and answer rows as they don't need to be displayed with all their data
+            delete val.answers;
+            delete val.reviewers;
+            delete val.user_title;
+            delete val.firstname;
+            delete val.lastname;
+
         })
+
+        this.setState({
+            responseTable: responses,
+            btnUpdate: false
+        });
     }
 
     // Tag Selection State
     tagSelector(name) {
         const list = this.state.selectedTags;
-        const duplicateTag = list.indexOf(name) // test against duplicates
+        const duplicateTag = list.indexOf(name); // test against duplicates
 
         duplicateTag == -1 ? list.push(name) : list.splice(duplicateTag, 1);
 
@@ -197,7 +207,7 @@ class ResponseListForm extends Component {
     // Delete Pill function
     deletePill(val) {
         this.tagSelector(val);
-        this.handleData()
+        this.refreshResponses();
     }
 
 
@@ -230,7 +240,7 @@ class ResponseListForm extends Component {
 
             // function
             function readColumns(rows) {
-                let tableColumns = [];
+                let tableColumns = ["response_id", "user", "start_date", "is_submitted", "is_withdrawn", "submitted_date", "tags"];
                 rows.map(val => {
                     let newColumns = Object.keys(val);
                     newColumns.forEach(val => {
@@ -257,6 +267,8 @@ class ResponseListForm extends Component {
             }
 
             let col = readColumns(this.state.responseTable);
+            
+            // TODO: Make columns deterministic, add translations for headers
             colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }));
         }
 
@@ -273,12 +285,10 @@ class ResponseListForm extends Component {
         } = this.state
         if (!toggleList) {
             if (selectedTags.length || selectedQuestions.length) {
-            return  <button onClick={(e) => this.reset(e)} className="btn btn-primary">Reset</button>
+                return <button onClick={(e) => this.reset(e)} className="btn btn-primary">Reset</button>
+            }
         }
     }
-    }
-
-
 
     // Reset state, question and tag list UI 
     reset() {
@@ -291,14 +301,19 @@ class ResponseListForm extends Component {
         this.setState({
             selectedQuestions: [],
             selectedTags: []
-        }, () => this.handleData())
+        }, () => this.refreshResponses())
     }
 
-
+    toggleUnsubmitted = () => {
+        this.setState({
+            includeUnsubmitted: !this.state.includeUnsubmitted
+        }, () => this.refreshResponses());
+    }
 
     render() {
         // Translation
         const t = this.props.t;
+
         // State values
         const {
             questions,
@@ -307,8 +322,19 @@ class ResponseListForm extends Component {
             btnUpdate,
             tags,
             selectedTags,
-            selectedQuestions
+            selectedQuestions,
+            error,
+            isLoading
         } = this.state
+
+        if (error) {
+            return <div className={"alert alert-danger alert-container"}>{error}</div>;
+        }
+
+        if (isLoading) {
+            return (<Loading />);
+          }
+
         // Generate Col
         const columns = this.generateCols();
         const renderReset = this.renderReset();
@@ -320,52 +346,49 @@ class ResponseListForm extends Component {
                     <h2 className={toggleList || responseTable ? "heading short" : "heading"}>{t('Response List')}</h2>
                     {/*CheckBox*/}
                     <div className="checkbox-top">
-                        <input onClick={(e) => this.fetchQuestions()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
+                        <input onClick={(e) => this.toggleUnsubmitted()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
                         <label id="label" className="label-top" htmlFor="defaultCheck1">
                             {t('Include un-submitted')}
                         </label>
                     </div>
 
-
-
                     {/* Wrapper for drop down lists */}
                     <div className="lists-wrapper">
 
-
                         {/*Tags Dropdown*/}
                         <div className="tags">
-                            {toggleList == "tag" ?  <button
-                                onClick={(e) => this.handleData(selectedTags)}
+                            {toggleList == "tag" ? <button
+                                onClick={(e) => this.refreshResponses()}
                                 type="button"
-                                className="btn btn-success">Update</button> :
+                                className="btn btn-success">{t("Update")}</button> :
                                 <button onClick={(e) => this.toggleList(toggleList, "tag")}
                                     className={toggleList == "question" ? "btn tag hide" : "btn tag"}
                                     type="button"
                                     aria-haspopup="true"
                                     aria-expanded="false">
-                                {t('Tags')}
-                            </button>
-                             }
+                                    {t('Tags')}
+                                </button>
+                            }
                         </div>
 
                         {/*Questions DropDown*/}
                         <div className="questions">
-                            { toggleList == "question" ? 
-                         <button
-                            onClick={(e) => this.handleData(selectedTags)}
-                            type="button"
-                            className={toggleList ==  "tag" ? "btn btn-success hide" : "btn btn-success"}
-                            >Update</button>
+                            {toggleList == "question" ?
+                                <button
+                                    onClick={(e) => this.refreshResponses()}
+                                    type="button"
+                                    className={toggleList == "tag" ? "btn btn-success hide" : "btn btn-success"}
+                                >{t("Update")}</button>
 
-                         :  <button onClick={(e) => this.toggleList(toggleList, "question")} className={toggleList ==  "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
-                                type="button" aria-haspopup="true" aria-expanded="false">
-                                {t('Questions')}
-                            </button>}
-                           
+                                : <button onClick={(e) => this.toggleList(toggleList, "question")} className={toggleList == "tag" ? "btn btn-secondary hide" : "btn btn-secondary"}
+                                    type="button" aria-haspopup="true" aria-expanded="false">
+                                    {t('Questions')}
+                                </button>}
+
 
                             {/* Reset Button */}
                             {renderReset}
-                          
+
                             {/*Update Table*/}
                             {toggleList == "question" && questions.length && <span style={{ marginLeft: "5px", color: "grey" }}>
                                 {questions.length} {t('questions')}
@@ -397,7 +420,7 @@ class ResponseListForm extends Component {
                                     </div>
                                 })}
                             {/* Update Button */}
-                          
+
                         </div>
 
                         {/* List Questions */}

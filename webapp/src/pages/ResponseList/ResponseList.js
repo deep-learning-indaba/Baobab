@@ -5,21 +5,8 @@ import ResponseListForm from './components/ResponseListForm'
 
 class ResponseList extends Component {
 
-    constructor(props) {
-        super(props);
-        this.state = {
-
-        }
-    }
-
-   
-
     render() {
-        const t = this.props.t;
-
-        return (
-            <ResponseListForm event={this.props.event} />
-            )
+        return <ResponseListForm event={this.props.event} />
     }
 }
 

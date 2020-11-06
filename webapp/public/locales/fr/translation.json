@@ -298,10 +298,11 @@
     "Next": "Continuer",
     "Previous": "Retourner",
     "Application Status": "État de la candidature",
+    "Reviewer": "Critique",
+    "Tags": "Mots clés",
     "Yes": "Oui",
     "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer ce tag?",
     "Save": "Enregistrer",
     "Add Tags": "Ajouter des tags",
     "New tag": "Nouveau tag"
-
 }

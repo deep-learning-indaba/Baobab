@@ -13,11 +13,11 @@
     margin-bottom: 5px;
 }
 
-h4 {
-    color: lightgrey;
+.response-details h4 {
+    color: hsl(213deg 16% 49%);;
     font-weight: 300;
+    padding-left: 7px;
     margin-top: 5px;
-    margin-left: 5px;
     text-align: left;
 }
 
@@ -25,6 +25,7 @@ button {
     margin-bottom: 10px;
 }
 
+<<<<<<< HEAD
 label {
     font-size: 12px;
     color: grey;
@@ -34,6 +35,10 @@ label {
 
 .table-wrapper .btn-primary {
     background: hsl(208deg 84% 59%);
+=======
+ .table-wrapper .btn-primary {
+    background:hsl(208deg 84% 59%);
+>>>>>>> develop
     border: none;
     width: 100%;
     color: white;
@@ -272,7 +277,16 @@ html .headings-lower label {
     font-size: 17px;
 }
 
+<<<<<<< HEAD
 html .answerer {
+=======
+.question-answer-block p.answer {
+    color: #212529;
+    font-size: 17px;
+}
+
+ html .answerer {
+>>>>>>> develop
     font-weight: bold;
     font-size: 13px;
 }
