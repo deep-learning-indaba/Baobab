@@ -556,7 +556,7 @@ class ResponseListAPITest(ApiTestCase):
         response = self.app.get(
             '/api/v1/responses',
             headers=self.get_auth_header_for('event1admin@mail.com'),
-            json=params)
+            data=params)
 
         data = json.loads(response.data)
 
@@ -610,13 +610,13 @@ class ResponseListAPITest(ApiTestCase):
             'event_id': self.event1.id,
             'language': 'en',
             'include_unsubmitted': True,
-            'question_ids': [1, 3]
+            'question_ids[]': [1, 3]
         }
 
         response = self.app.get(
             '/api/v1/responses',
             headers=self.get_auth_header_for('event1admin@mail.com'),
-            json=params)
+            data=params)
 
         data = json.loads(response.data)
         self.assertEqual(len(data), 3)

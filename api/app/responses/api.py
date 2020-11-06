@@ -4,7 +4,7 @@ import itertools
 
 import flask_restful as restful
 from flask import g, request
-from flask_restful import fields, marshal_with, reqparse
+from flask_restful import fields, marshal_with, reqparse, inputs
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import LOGGER, bcrypt, db
@@ -263,14 +263,17 @@ class ResponseListAPI(restful.Resource):
     @event_admin_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('include_unsubmitted', type=bool, required=True)
-        req_parser.add_argument('question_ids', type=list, required=False, location='json')
+        req_parser.add_argument('include_unsubmitted', type=inputs.boolean, required=True)
+        # Note: Including [] in the question_ids parameter because that gets added by Axios on the front-end
+        req_parser.add_argument('question_ids[]', type=int, required=False, action='append')
         req_parser.add_argument('language', type=str, required=True)
         args = req_parser.parse_args()
 
         include_unsubmitted = args['include_unsubmitted']
-        question_ids = args['question_ids']
+        question_ids = args['question_ids[]']
         language = args['language']
+        
+        print('Include unsubmitted:', include_unsubmitted)
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
 

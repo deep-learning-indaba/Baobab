@@ -17,11 +17,11 @@
     margin-bottom: 5px;
 }
 
-h4 {
-    color: lightgrey;
+.response-details h4 {
+    color: hsl(213deg 16% 49%);;
     font-weight: 300;
+    padding-left: 7px;
     margin-top: 5px;
-    margin-left: 5px;
     text-align: left;
 }
 
@@ -227,6 +227,11 @@ flex-wrap: wrap;
 
 .question-answer-block p {
     color: grey;
+    font-size: 17px;
+}
+
+.question-answer-block p.answer {
+    color: #212529;
     font-size: 17px;
 }
 
