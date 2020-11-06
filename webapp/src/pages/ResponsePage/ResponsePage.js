@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import "react-table/react-table.css";
 import './ResponsePage.css'
 import { withTranslation } from 'react-i18next';
-import TagModal from './components/TagModal';
 import ReviewModal from './components/ReviewModal';
 import { eventService } from '../../services/events/events.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
@@ -313,21 +312,10 @@ class ResponsePage extends Component {
         };
     }
 
-    renderTagModal() {
-        const { eventLanguages } = this.state;
-        if (eventLanguages) {
-            return <TagModal
-                t={this.props.t}
-                postTag={this.addTag}
-                eventLanguages={eventLanguages}
-            />
-        };
-    }
-
 
         // Render Review Modal
         renderReviewerModal() {
-            return < ReviewModal
+            return < ConfirmModal
                 event={this.props.event}
                 t={this.props.t}
             />
@@ -431,13 +419,12 @@ class ResponsePage extends Component {
                         <div className="reviewers-section">
                             <h3>Reviewers</h3>
                             <div className="list">
-                                {reviews}
+                                {this.renderReviews()}
                             </div>
 
                             <div className="divider"></div>
                         </div>
 
-                        {renderSections}
                         {this.renderSections()}
                     </div>
                 }
