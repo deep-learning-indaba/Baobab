@@ -15,7 +15,7 @@ import {
   validatePassword
 } from "../../../utils/validation/rules.js";
 
-const passStrength = React.lazy(() => import("./PasswordStrengthBar"));
+const PassStrengthBar = React.lazy(() => import("./PassStrength"));
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
@@ -273,7 +273,10 @@ class CreateAccountForm extends Component {
               value={password}
               label={t(validationFields.password.display)}
             />
-            <PasswordStrengthBar password={this.state.user.password} />
+            <Suspense fallback={<div>Loading...</div>}>
+              <PassStrengthBar password={this.state.user} />
+            </Suspense>
+
             <FormTextBox
               id={validationFields.confirmPassword.name}
               type="password"
