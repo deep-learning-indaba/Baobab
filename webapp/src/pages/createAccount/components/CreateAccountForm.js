@@ -1,4 +1,4 @@
-import React, { Component, lazy, useEffect, useState } from "react";
+import React, { Component, Suspense } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -14,9 +14,8 @@ import {
   validEmail,
   validatePassword
 } from "../../../utils/validation/rules.js";
-// import PasswordStrengthBar from "react-password-strength-bar";
 
-const passStrength = React.lazy(() => import(PasswordStrengthBar));
+const passStrength = React.lazy(() => import("./PasswordStrengthBar"));
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
