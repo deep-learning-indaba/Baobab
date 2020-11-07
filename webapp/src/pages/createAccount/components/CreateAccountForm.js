@@ -274,7 +274,7 @@ class CreateAccountForm extends Component {
               label={t(validationFields.password.display)}
             />
             <Suspense fallback={<div>Loading...</div>}>
-              <PassStrengthBar password={this.state.user} />
+              <PassStrengthBar password={this.state.user.password} />
             </Suspense>
 
             <FormTextBox
