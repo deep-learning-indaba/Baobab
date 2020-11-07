@@ -14,7 +14,9 @@ import {
   validEmail,
   validatePassword
 } from "../../../utils/validation/rules.js";
-import PasswordStrengthBar from "react-password-strength-bar";
+// import PasswordStrengthBar from "react-password-strength-bar";
+
+const passStrength = React.lazy(() => import(PasswordStrengthBar));
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
