@@ -47,7 +47,6 @@ class ResponsePage extends Component {
     }
 
 
-
     // Misc Functions
     // Go Back
     goBack() {
@@ -225,7 +224,8 @@ class ResponsePage extends Component {
             green: { "color": "green" },
             red: { "color": "red" }
         }
-        if (this.state.applicationData) {
+        
+            if (this.state.applicationData.reviewers) {
             const reviews = this.state.applicationData.reviewers.map(val => {
                 //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
                 if (!val) {
@@ -251,6 +251,8 @@ class ResponsePage extends Component {
 
             return reviews
         }
+        
+    
     }
 
 
@@ -298,6 +300,7 @@ class ResponsePage extends Component {
         }
     }
 
+
     renderTags() {
         const data = this.state.applicationData;
         if (data) {
@@ -311,6 +314,23 @@ class ResponsePage extends Component {
             });
             return tags
         };
+    }
+
+
+    renderTagModal() {
+
+          const { eventLanguages } = this.state;
+        if (eventLanguages) {
+            return <TagModal
+                keys={this.state.keys}
+                i18nt={this.props.i18n}
+                t={this.props.t}
+                postTag={(tags) => this.postTag(tags, "tagList")}
+                eventLanguages={eventLanguages}
+            />
+        };
+ 
+      
     }
 
 
