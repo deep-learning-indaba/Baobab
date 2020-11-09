@@ -270,6 +270,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     
     reviews_count_fields = {
+        'reviewer_user_id': fields.Integer,
         'email': fields.String,
         'user_title': fields.String,
         'firstname': fields.String,

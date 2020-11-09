@@ -13,7 +13,8 @@ class ReviewRepository():
     def count_reviews_allocated_and_completed_per_reviewer(event_id):
         return db.engine.execute("""
                 (
-                    select 
+                    select
+                        app_user.id as reviewer_user_id,
                         email, 
                         user_title, 
                         firstname, 
@@ -33,6 +34,7 @@ class ReviewRepository():
                 union
                 (
                     select        
+                        app_user.id as reviewer_user_id,
                         email, 
                         user_title, 
                         firstname, 
