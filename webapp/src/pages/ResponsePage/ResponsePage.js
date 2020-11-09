@@ -17,6 +17,10 @@ class ResponsePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            mockReviews: [{ "reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
+                { "reviewer_user_id": 3, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
+                null
+            ],
             tagMenu: false,
             error: false,
             addNewTags: [],
@@ -27,23 +31,25 @@ class ResponsePage extends Component {
     };
 
     componentDidMount() {
-        Promise.all([
-            eventService.getEvent(this.props.event.id),
-            applicationFormService.getForEvent(this.props.event.id),
-            responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
-            tagsService.getTagList(this.props.event.id)
-        ]).then(responses => {
-            console.log(responses);
-            this.setState({
-                eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
-                applicationForm: responses[1].formSpec,
-                applicationData: responses[2].detail,
-                tagList: responses[3].tags,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
-                isLoading: false
-            }, this.handleData);
-        });
 
+            Promise.all([
+                eventService.getEvent(this.props.event.id),
+                applicationFormService.getForEvent(this.props.event.id),
+                responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
+                tagsService.getTagList(this.props.event.id),
+                reviewService.getReviewAssignments(this.props.event.id)
+            ]).then(responses => {
+                console.log(responses);
+                    this.setState({
+                    eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
+                    applicationForm: responses[1].formSpec,
+                    applicationData: responses[2].detail,
+                    tagList: responses[3].tags,
+                    reviewers: responses[4].reviewers,
+                    error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+                    isLoading: false
+                }, this.handleData);
+            });
     }
 
 
@@ -225,8 +231,9 @@ class ResponsePage extends Component {
             red: { "color": "red" }
         }
         
-            if (this.state.applicationData.reviewers) {
-            const reviews = this.state.applicationData.reviewers.map(val => {
+            if (this.state.mockReviews) {
+                const reviews = this.state.mockReviews.map((val, index) => {
+                    let num = parseInt(index) + 1;
                 //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
                 if (!val) {
                     return <div className="add-reviewer">
@@ -241,6 +248,7 @@ class ResponsePage extends Component {
                 }
                 else {
                     return <div className="reviewer">
+                        <label>{"Reviewer" + num }</label>
                         <span>{val.user_title} {val.firstname} {val.lastname}</span>
                         {val.completed ? <p style={styles.green}>Completed</p> : <p style={styles.red}>Incomplete</p>}
                     </div>
@@ -251,7 +259,6 @@ class ResponsePage extends Component {
 
             return reviews
         }
-        
     
     }
 
@@ -330,17 +337,48 @@ class ResponsePage extends Component {
             />
         };
  
-      
     }
 
 
         // Render Review Modal
         renderReviewerModal() {
-            return < ConfirmModal
+            return < ReviewModal
+             handlePost={(data) => this.postReviewer(data)}
+                response={this.state.applicationData}
+                reviewers={this.state.reviewers}
                 event={this.props.event}
                 t={this.props.t}
             />
         }
+    
+    
+    
+    postReviewer(data) {
+
+        const updateReviews = this.state.mockReviews;
+
+        const response = data.forEach(val => {
+            return {
+              "response_id": this.state.applicationData.id,    
+              "event_id": this.props.event.id,
+              "reviewer_user_id": val.email        
+              }
+        })  
+        
+        reviewService.assignReviewer(response).then(response => {
+            if (response.status == 201) {
+                data.forEach(val => {
+                    updateReviews.unshift({
+                        "reviewer_user_id": val.email, "user_title": val.email, "firstname": val.email, "lastname": val.email, "completed": false
+                    })
+                })
+
+                this.setState({
+                    mockReviews: updateReviews
+                })
+            }
+        })
+    }
 
 
 

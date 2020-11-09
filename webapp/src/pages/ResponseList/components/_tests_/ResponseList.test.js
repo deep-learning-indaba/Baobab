@@ -9,8 +9,9 @@ jest.mock('react-i18next', () => ({
       return Component;
     },
 }));
-  
 
+  
+/*
 test("Check if ResponseList Page renders.", () => {
   const wrapper = shallow(<ResponseList />);
   expect(wrapper.length).toEqual(1);
@@ -54,6 +55,9 @@ test("Check if Col function is succesfull.", async () => {
     let columns = await wrapper.instance().generateCols();
     expect(columns.length).toBeTruthy();
 });
+*/
+
+
 
 
 

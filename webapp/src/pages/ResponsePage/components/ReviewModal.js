@@ -37,8 +37,9 @@ class ReviewModal extends Component {
 
     renderModal() {
         const { selectedReviews } = this.state;
-        // Translation
-        const t = this.props.t;
+        
+        const { handlePost, t } = this.props
+       
 
         if (this.props.event) {
             return (
@@ -53,15 +54,15 @@ class ReviewModal extends Component {
                             </div>
                             <div className="modal-body">
 
-                                {this.props.reviews.map(val => {
-                                    return <div onClick={(e) => this.handleSelect(val.email)}
+                                {this.props.reviewers.map(val => {
+                                    return <button onClick={(e) => this.handleSelect(val.email)}
                                         className={selectedReviews.includes(val.email) ? "review-select active" : "review-select"}
                                         key={val.email}
                                     >
-                                        <h5> {val.user_title}{val.firstname}{val.lastname} </h5>
+                                        <h5> {val.user_title} {val.firstname} {val.lastname} </h5>
                                         <span>Reviews Allocated: {val.reviews_allocated} </span>
                                         <span>Reviews Completed: {val.reviews_completed} </span>
-                                    </div>
+                                    </button>
                                 })}
 
 
@@ -77,9 +78,9 @@ class ReviewModal extends Component {
                                     type="button"
                                     data-dismiss="modal"
                                     className="btn btn-primary"
-                                    onClick={(e) => this.renderReviewers(e)}
+                                    onClick={(e) => handlePost(selectedReviews)}
                                 >
-                                    {t('Save')}
+                                    {t('Post')}
                                 </button>
                             </div>
                         </div>

@@ -11,7 +11,7 @@ export const reviewService = {
   assignReviews,
   getReviewSummary,
   getReviewHistory,
-  mock
+  assignReviewer
 };
 
 function mock() {
@@ -33,6 +33,12 @@ function mock() {
       "user_title": "Mr"
   }
   ]
+}
+
+function assignReviewer() {
+  return new Promise(resolve => {
+    resolve({status: 201})
+  })
 }
 
 function getReviewForm(eventId, skip) {

@@ -234,6 +234,27 @@ html .headings-lower label {
     margin: 35px auto;
 }
 
+/* Review Modal */
+
+.review-select {
+    padding: 11px 13px;
+    background: hsl(0, 0%, 95%);
+    border: none;
+    border-radius: 10px;
+    outline: none
+}
+
+html button:focus {
+    border: none;
+    outline: none
+}
+
+.review-select.active {
+    background: hsl(33, 83%, 88%);
+    border: none;
+    outline: none
+}
+
 /* Response Details Section and Sub-Sections */
 .response-details {
     margin-top: 20px;
