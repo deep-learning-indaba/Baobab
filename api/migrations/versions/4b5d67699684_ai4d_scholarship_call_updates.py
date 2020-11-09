@@ -334,20 +334,26 @@ Pour toute question, veuillez envoyer un e-mail à social@ai4d.ai
 
     session.commit()
 
-    q_id = session.query(QuestionTranslation).filter_by(language='en', headline='Telephone').first().question_id
-    op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
-    session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
-    session.query(Question).filter_by(id=q_id).delete()
+    q = session.query(QuestionTranslation).filter_by(language='en', headline='Telephone').first()
+    if q:
+        q_id = q.id
+        op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
+        session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
+        session.query(Question).filter_by(id=q_id).delete()
 
-    q_id = session.query(QuestionTranslation).filter_by(language='en', headline='Mobile (Optional)').first().question_id
-    op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
-    session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
-    session.query(Question).filter_by(id=q_id).delete()
+    q = session.query(QuestionTranslation).filter_by(language='en', headline='Mobile (Optional)').first()
+    if q:
+        q_id = q.id
+        op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
+        session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
+        session.query(Question).filter_by(id=q_id).delete()
 
-    q_id = session.query(QuestionTranslation).filter_by(language='en', headline='Email Address').first().question_id
-    op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
-    session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
-    session.query(Question).filter_by(id=q_id).delete()
+    q = session.query(QuestionTranslation).filter_by(language='en', headline='Email Address').first()
+    if q:
+        q_id = q.id
+        op.execute("""DELETE FROM Answer WHERE question_id={}""".format(q_id))
+        session.query(QuestionTranslation).filter_by(question_id=q_id).delete()
+        session.query(Question).filter_by(id=q_id).delete()
     
     en = session.query(QuestionTranslation).filter_by(language='en', headline='2. Summary of the proposed approach to the financial and administrative management of the AI4D scholarships')
     en.description = """Briefly outline your proposal to manage the AI4D scholarship program according to the requirements outlined in section 2.1 of the Call for Proposals Background Document. What approaches, disciplines and modalities will you draw upon to support this?"""
