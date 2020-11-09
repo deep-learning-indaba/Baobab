@@ -8,7 +8,8 @@ export const applicationFormService = {
     submit,
     getResponse,
     updateResponse,
-    withdraw
+    withdraw,
+    getQuestionList
 };
 
 
@@ -172,4 +173,33 @@ function withdraw(id) {
           };
         }
       });
+}
+
+function getQuestionList(eventId) {
+  return axios
+    .get(baseUrl + "/api/v1/questions", { 
+        "headers": authHeader(),
+        "params": {
+            event_id: eventId
+        }
+    })
+    .then(response => {
+        let questions = null;
+        if (response) questions = response.data;
+        return {
+            questions: questions,
+            status: response.status,
+            message: response.statusText
+        }
+    })
+    .catch(function(error){
+        return{
+            questions: null,
+            error:
+                error.response && error.response.data
+                ? error.response.data.message
+                : error.message,
+            status: error.response && error.response.status
+        };
+    });
 }

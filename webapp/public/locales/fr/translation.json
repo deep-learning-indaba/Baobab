@@ -288,8 +288,21 @@
     "Enter File Name": "Entrez le nom du fichier",
     "Edit Name": "Modifier le nom",
     "Delete": "Supprimer",
+    "Response List": "Liste de réponse",
+    "Questions": "Des questions",
+    "questions": "des questions",
+    "Include un-submitted": "Inclure les non-soumis",
+    "Update": "Mettre à jour",
     "Thank you for responding to the": "Merci d’avoir soumis votre demande",
     "Note: You may need to change the file name to open the file on certain operating systems": "Remarque: vous devrez peut-être changer le nom du fichier pour ouvrir le fichier sur certains systèmes d'exploitation",
     "Next": "Continuer",
-    "Previous": "Retourner"
+    "Previous": "Retourner",
+    "Application Status": "État de la candidature",
+    "Reviewer": "Critique",
+    "Tags": "Mots clés",
+    "Yes": "Oui",
+    "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer ce tag?",
+    "Save": "Enregistrer",
+    "Add Tags": "Ajouter des tags",
+    "New tag": "Nouveau tag"
 }

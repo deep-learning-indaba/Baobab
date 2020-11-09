@@ -12,6 +12,8 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
+import ResponseList from './pages/ResponseList/ResponseList'
+
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -46,10 +48,10 @@ class EventNav extends Component {
     const t = this.props.t;
 
     return (
-      <nav class="navbar navbar-expand-sm bg-white navbar-light">
-        
-        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class={
+      <nav className="navbar navbar-expand-sm bg-white navbar-light">
+
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
+        <div className={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
@@ -141,6 +143,13 @@ class EventNav extends Component {
                     onClick={this.props.toggleMenu}
                   >
                     {t('Invited Guests')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/responseList`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Response List')}
                   </NavLink>
                 </div>
               </li>
@@ -265,7 +274,7 @@ class LanguageSelectorComponent extends Component {
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
               {this.props.organisation.languages.map(lang => (
-                <button className="dropdown-item cursor-pointer" onClick={()=>this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+                <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
               ))}
             </div>
           </li>
@@ -355,7 +364,7 @@ class AppComponent extends Component {
               {this.props.organisation && this.props.organisation.system_name}
             </a>
             <div
-              class={
+              className={
                 "collapse navbar-collapse" +
                 (this.state.collapsed ? " collapsed" : "")
               }
@@ -425,6 +434,13 @@ class AppComponent extends Component {
                   path="/resetPassword"
                   render={props => (
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                   <Route
+                  exact
+                  path="/responseList"
+                  render={props => (
+                    <ResponseList {...props} loggedIn={this.refreshUser} />
                   )}
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />

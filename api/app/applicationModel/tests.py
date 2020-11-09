@@ -129,3 +129,102 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['validation_regex'], '^\\W*(\\w+(\\W+|$)){0,200}$')
         self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], 'Entrez un maximum de 200 mots')
         self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], ['oui'])
+
+class QuestionListApiTest(ApiTestCase):
+    def _seed_static_data(self):
+        self.user1 = self.add_user('user1@mail.com')
+        self.user2 = self.add_user('user2@mail.com')
+        self.event = self.add_event()
+        self.event.add_event_role('admin', self.user1.id)
+        db.session.commit()
+
+        self.user1header = self.get_auth_header_for('user1@mail.com')
+        self.user2header = self.get_auth_header_for('user2@mail.com')
+
+        self.application_form = self.create_application_form()
+
+        # Deliberately create these in reverse order to test ordering
+        self.section1 = self.add_section(self.application_form.id, order=2)
+        self.section2 = self.add_section(self.application_form.id, order=1)
+
+        self.section1question1 = self.add_question(self.application_form.id, self.section1.id, order=2)
+        self.add_question_translation(
+            self.section1question1.id, 'en', headline='English Section 1 Question 1'
+        )
+        self.add_question_translation(
+            self.section1question1.id, 'fr', headline='French Section 1 Question 1'
+        )
+
+        self.section1question2 = self.add_question(self.application_form.id, self.section1.id, order=1)
+        self.add_question_translation(
+            self.section1question2.id, 'en', headline='English Section 1 Question 2'
+        )
+        self.add_question_translation(
+            self.section1question2.id, 'fr', headline='French Section 1 Question 2'
+        )
+
+        self.section2question1 = self.add_question(self.application_form.id, self.section2.id, order=1)
+        self.add_question_translation(self.section2question1.id, 'en', 'English Section 2 Question 1')
+        # Deliberately not adding a French translation to test defaulting behaviour
+
+    def test_get(self):
+        """Test a typical get request."""
+        self._seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/questions',
+            headers=self.user1header,
+            query_string={'event_id': 1, 'language': 'en'}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0]['question_id'], 3)
+        self.assertEqual(data[0]['headline'], 'English Section 2 Question 1')
+        self.assertEqual(data[0]['type'], 'short-text')
+
+        self.assertEqual(data[1]['question_id'], 2)
+        self.assertEqual(data[1]['headline'], 'English Section 1 Question 2')
+        self.assertEqual(data[1]['type'], 'short-text')
+
+        self.assertEqual(data[2]['question_id'], 1)
+        self.assertEqual(data[2]['headline'], 'English Section 1 Question 1')
+        self.assertEqual(data[2]['type'], 'short-text')
+
+    def test_get_language(self):
+        """Test get in a specified language and defaulting."""
+        self._seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/questions',
+            headers=self.user1header,
+            query_string={'event_id': 1, 'language': 'fr'}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0]['question_id'], 3)
+        self.assertEqual(data[0]['headline'], 'English Section 2 Question 1')
+        self.assertEqual(data[0]['type'], 'short-text')
+
+        self.assertEqual(data[1]['question_id'], 2)
+        self.assertEqual(data[1]['headline'], 'French Section 1 Question 2')
+        self.assertEqual(data[1]['type'], 'short-text')
+
+        self.assertEqual(data[2]['question_id'], 1)
+        self.assertEqual(data[2]['headline'], 'French Section 1 Question 1')
+        self.assertEqual(data[2]['type'], 'short-text')
+
+    def test_event_admin(self):
+        """Test that a non event admin is blocked from accessing the data."""
+        self._seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/questions',
+            headers=self.user2header,  # Not an event admin
+            query_string={'event_id': 1, 'language': 'fr'}
+        )
+
+        self.assertEqual(response.status_code, 403)

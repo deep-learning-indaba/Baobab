@@ -34,19 +34,19 @@ class UserDropdown extends Component {
 
     if (this.state.user) {
       return (
-        <ul class="navbar-nav">
-          <li class="nav-item dropdown">
+        <ul className="navbar-nav">
+          <li className="nav-item dropdown">
             <button
-              class="nav-link dropdown-toggle link-style"
+              className="nav-link dropdown-toggle link-style"
               id="userDropdown"
               data-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
-              <i class="fas fa-user menu-icon" />{" "}
+              <i className="fas fa-user menu-icon" />{" "}
               {this.state.user.firstname + " " + this.state.user.lastname}
             </button>
-            <div class="dropdown-menu" aria-labelledby="userDropdown">
+            <div className="dropdown-menu" aria-labelledby="userDropdown">
               <a
                 className="dropdown-item"
                 href="/profile"
@@ -63,8 +63,8 @@ class UserDropdown extends Component {
       );
     } else {
       return (
-        <ul class="navbar-nav">
-          <li class="nav-item">
+        <ul className="navbar-nav">
+          <li className="nav-item">
             <NavLink
               to="/login"
               activeClassName="nav-link active"
