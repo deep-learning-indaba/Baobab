@@ -10,8 +10,30 @@ export const reviewService = {
   getReviewAssignments,
   assignReviews,
   getReviewSummary,
-  getReviewHistory
+  getReviewHistory,
+  mock
 };
+
+function mock() {
+  return [
+    {
+      "email": "avi@avi-net.co.za",
+      "firstname": "Avishkar",
+      "lastname": "Bhoopchand",
+      "reviews_allocated": 1,
+      "reviews_completed": 1,
+      "user_title": "Mx"
+  },
+  {
+      "email": "finn@avi-net.co.za",
+      "firstname": "Finn",
+      "lastname": "Dogg",
+      "reviews_allocated": 0,
+      "reviews_completed": 0,
+      "user_title": "Mr"
+  }
+  ]
+}
 
 function getReviewForm(eventId, skip) {
   return axios
@@ -88,6 +110,7 @@ function getReviewAssignments(eventId) {
   return axios
     .get(baseUrl + "/api/v1/reviewassignment?event_id=" + eventId, {
       headers: authHeader()
+    
     })
     .then(function(response) {
       return {

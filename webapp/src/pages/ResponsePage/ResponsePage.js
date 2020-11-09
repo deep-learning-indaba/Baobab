@@ -3,6 +3,7 @@ import "react-table/react-table.css";
 import './ResponsePage.css'
 import { withTranslation } from 'react-i18next';
 import ReviewModal from './components/ReviewModal';
+import TagModal from './components/TagModal';
 import { eventService } from '../../services/events/events.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
 import { reviewService } from '../../services/reviews/review.service';
