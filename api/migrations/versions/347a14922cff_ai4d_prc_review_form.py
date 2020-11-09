@@ -427,7 +427,7 @@ def upgrade():
     db.session.commit()
 
     # Review configuration
-    config = ReviewConfiguration(review_form_id=form.id, num_reviews_required=2, num_optional_reviews=0)
+    config = ReviewConfiguration(review_form_id=form.id, num_reviews_required=5, num_optional_reviews=0)
     db.session.add(config)
     db.session.commit()
 
@@ -462,19 +462,19 @@ At the end of each question and/or section, please reflect in your own words wha
 \[Total possible points = 55\]
 
 Evaluation criteria:
-    - Research team has the necessary expertise and partners to conduct the activities and research proposed.
-    - Experience/years of working on AI policy, or related issues (such as ICTs, digital/big/open data, communications, cyber policy issues - particularly as they pertain to human development and human rights issues - but also infrastructure, capacity-skills), with significant achievements.
-    - Fit between proposed research agenda and the organization’s mission.
-    - Demonstrated research quality (output, citations, research metrics) that addresses numerous facets of advanced technology policy. Please see the [Research Quality Plus](https://www.idrc.ca/en/research-in-action/research-quality-plus) assessment instrument for guidance.
+    * Research team has the necessary expertise and partners to conduct the activities and research proposed.
+    * Experience/years of working on AI policy, or related issues (such as ICTs, digital/big/open data, communications, cyber policy issues - particularly as they pertain to human development and human rights issues - but also infrastructure, capacity-skills), with significant achievements.
+    * Fit between proposed research agenda and the organization’s mission.
+    * Demonstrated research quality (output, citations, research metrics) that addresses numerous facets of advanced technology policy. Please see the [Research Quality Plus](https://www.idrc.ca/en/research-in-action/research-quality-plus) assessment instrument for guidance.
 """,
         'fr': u"""Veuillez examiner et évaluer les réponses du candidat sur la capacité organisationnelle, l’expérience et la mission.
 \[Total des points possibles = 55\]
 
 Critères d’évaluation:
-    - L’équipe de recherche dispose de l’expertise et des partenaires nécessaires pour mener les activités et les recherches proposées.
-    - Expérience/années de travail sur la politique d’IA, ou sur des questions connexes (telles que les TIC, les données numériques/grandes/ouvertes, les communications, les questions de cyberpolitique - en particulier en ce qui concerne le développement humain et les droits de l’homme - mais aussi les infrastructures, les capacités/compétences), avec des réalisations significatives.
-    - Adéquation entre le programme de recherche proposé et la mission de l’organisation.
-    - Qualité démontrée de la recherche (résultats, citations, paramètres de recherche) qui aborde de nombreuses facettes de la politique en matière de technologies avancées. Veuillez consulter l’instrument d’évaluation [Qualité de la recherche plus](https://idl-bnc-idrc.dspacedirect.org/bitstream/handle/10625/56600/IDL-56600.pdf?sequence=2&amp;isAllowed=y) pour obtenir des conseils.
+    * L’équipe de recherche dispose de l’expertise et des partenaires nécessaires pour mener les activités et les recherches proposées.
+    * Expérience/années de travail sur la politique d’IA, ou sur des questions connexes (telles que les TIC, les données numériques/grandes/ouvertes, les communications, les questions de cyberpolitique - en particulier en ce qui concerne le développement humain et les droits de l’homme - mais aussi les infrastructures, les capacités/compétences), avec des réalisations significatives.
+    * Adéquation entre le programme de recherche proposé et la mission de l’organisation.
+    * Qualité démontrée de la recherche (résultats, citations, paramètres de recherche) qui aborde de nombreuses facettes de la politique en matière de technologies avancées. Veuillez consulter l’instrument d’évaluation [Qualité de la recherche plus](https://idl-bnc-idrc.dspacedirect.org/bitstream/handle/10625/56600/IDL-56600.pdf?sequence=2&amp;isAllowed=y) pour obtenir des conseils.
 """
     })
 
@@ -611,31 +611,31 @@ Une recherche de haute qualité est pertinente, fait preuve d’intégrité, de 
 \[Total possible points = 135\]
 
 Evaluation criteria, proposals must demonstrate:
-    - A clear understanding of and justification for the top research priorities, and how the research priorities are relevant to the themes of this call.
-    - Clearly articulated objectives that are relevant and feasible, and a strong justification for the proposed approach, methodology and techniques.
-    - Overall logic of the proposed methodology must be sound and appropriate for the given objectives, and demonstrate a multidisciplinary approach to the research.
-    - A clear articulation of how the proposed approaches and interventions are appropriate and relevant to research users.
-    - Strong considerations of gender and inclusion in research design, questions, strategies to reduce bias, and ensure an inclusive approach. This is critical for the 45% proposal overall, and a poorly articulated gender and inclusion strategy will impact the score of the application.
-    - A clear articulation of the ethical considerations of the research. Evidence that structures and systems, including ethics boards, are in place to deal with ethical, legal, and socio-economic implications of proposed research, and that proposed approaches demonstrate strategies for oversight that are rights-based, ethical, inclusive and sustainable.
-    - Clear and coherent focus on capacity development.
-    - Clear communications strategy to extend the impact of the research and results.
-    - Clear articulation of results and the metrics to gauge them.
-    - Clear and appropriate project management plan that is tied to budget.
+    * A clear understanding of and justification for the top research priorities, and how the research priorities are relevant to the themes of this call.
+    * Clearly articulated objectives that are relevant and feasible, and a strong justification for the proposed approach, methodology and techniques.
+    * Overall logic of the proposed methodology must be sound and appropriate for the given objectives, and demonstrate a multidisciplinary approach to the research.
+    * A clear articulation of how the proposed approaches and interventions are appropriate and relevant to research users.
+    * Strong considerations of gender and inclusion in research design, questions, strategies to reduce bias, and ensure an inclusive approach. This is critical for the 45% proposal overall, and a poorly articulated gender and inclusion strategy will impact the score of the application.
+    * A clear articulation of the ethical considerations of the research. Evidence that structures and systems, including ethics boards, are in place to deal with ethical, legal, and socio-economic implications of proposed research, and that proposed approaches demonstrate strategies for oversight that are rights-based, ethical, inclusive and sustainable.
+    * Clear and coherent focus on capacity development.
+    * Clear communications strategy to extend the impact of the research and results.
+    * Clear articulation of results and the metrics to gauge them.
+    * Clear and appropriate project management plan that is tied to budget.
 """,
         'fr': u"""Veuillez examiner et évaluer les réponses des candidats sur leurs recherches, leurs objectifs et leurs méthodologies.
 \[Total des points possibles = 135\]
 
 Critères d’évaluation: Les propositions doivent démontrer :
-    - Une compréhension claire et une justification des principales priorités de recherche, ainsi que de la pertinence de ces priorités par rapport aux thèmes du présent appel.
-    - Des objectifs clairement articulés, pertinents et réalisables, et une justification solide de l’approche, de la méthodologie et des techniques proposées.
-    - La logique générale de la méthodologie proposée doit être solide et appropriée aux objectifs donnés, et démontrer une approche multidisciplinaire de la recherche.
-    - Une articulation claire de la façon dont les approches et les interventions proposées sont appropriées et pertinentes pour les utilisateurs de la recherche.
-    - De solides considérations sur le genre et l’inclusion dans la conception de la recherche, les questions, les stratégies pour réduire les préjugés et assurer une approche inclusive. Ceci est essentiel pour la proposition de 45% dans son ensemble, et une stratégie mal articulée en matière de genre et d’inclusion aura un impact sur la note de la demande.
-    - Une articulation claire des considérations éthiques de la recherche. La preuve que des structures et des systèmes, y compris des comités d’éthique, sont en place pour traiter les implications éthiques, juridiques et socio-économiques de la recherche proposée, et que les approches proposées font preuve de stratégies de surveillance qui sont fondées sur les droits, éthiques, inclusives et durables.
-    - Une attention claire et cohérente portée au développement des capacités.
-    - Une stratégie de communication claire pour étendre l’impact de la recherche et des résultats.
-    - Une articulation claire des résultats et des mesures permettant de les évaluer.
-    - Un plan de gestion de projet clair et approprié qui est lié au budget.
+    * Une compréhension claire et une justification des principales priorités de recherche, ainsi que de la pertinence de ces priorités par rapport aux thèmes du présent appel.
+    * Des objectifs clairement articulés, pertinents et réalisables, et une justification solide de l’approche, de la méthodologie et des techniques proposées.
+    * La logique générale de la méthodologie proposée doit être solide et appropriée aux objectifs donnés, et démontrer une approche multidisciplinaire de la recherche.
+    * Une articulation claire de la façon dont les approches et les interventions proposées sont appropriées et pertinentes pour les utilisateurs de la recherche.
+    * De solides considérations sur le genre et l’inclusion dans la conception de la recherche, les questions, les stratégies pour réduire les préjugés et assurer une approche inclusive. Ceci est essentiel pour la proposition de 45% dans son ensemble, et une stratégie mal articulée en matière de genre et d’inclusion aura un impact sur la note de la demande.
+    * Une articulation claire des considérations éthiques de la recherche. La preuve que des structures et des systèmes, y compris des comités d’éthique, sont en place pour traiter les implications éthiques, juridiques et socio-économiques de la recherche proposée, et que les approches proposées font preuve de stratégies de surveillance qui sont fondées sur les droits, éthiques, inclusives et durables.
+    * Une attention claire et cohérente portée au développement des capacités.
+    * Une stratégie de communication claire pour étendre l’impact de la recherche et des résultats.
+    * Une articulation claire des résultats et des mesures permettant de les évaluer.
+    * Un plan de gestion de projet clair et approprié qui est lié au budget.
 """
     })
 
@@ -1076,15 +1076,15 @@ Scale:
 \[Total possible points: 75\]
 
 Evaluation criteria:
-    - Evidence of national and regional policy engagement and influence as well as regional and global experience. Applicant must be able to show regular policy engagement with target audiences, including policymakers, media, and civil society organizations.
-    - Neutrality and ability to convene a broad spectrum of views, with a strong commitment to expand your research portfolio, engage broader perspectives on AI policy issues, and improve organizational performance.
+    * Evidence of national and regional policy engagement and influence as well as regional and global experience. Applicant must be able to show regular policy engagement with target audiences, including policymakers, media, and civil society organizations.
+    * Neutrality and ability to convene a broad spectrum of views, with a strong commitment to expand your research portfolio, engage broader perspectives on AI policy issues, and improve organizational performance.
 """,
         'fr': """Veuillez examiner et évaluer les réponses du candidat en fonction de son expérience en matière d’engagement politique.
 \[Total des points possibles = 75\]
 
 Critères d’évaluation :
-    - Preuve de l’engagement et de l’influence de la politique nationale et régionale ainsi que de l’expérience régionale et mondiale. Le candidat doit être en mesure de démontrer un engagement politique régulier auprès des publics cibles, notamment les décideurs politiques, les médias et les organisations de la société civile.
-    - Neutralité et capacité à réunir un large éventail de points de vue, avec un engagement fort à élargir votre portefeuille de recherche, à engager des perspectives plus larges sur les questions de politique d’IA et à améliorer la performance organisationnelle.
+    * Preuve de l’engagement et de l’influence de la politique nationale et régionale ainsi que de l’expérience régionale et mondiale. Le candidat doit être en mesure de démontrer un engagement politique régulier auprès des publics cibles, notamment les décideurs politiques, les médias et les organisations de la société civile.
+    * Neutralité et capacité à réunir un large éventail de points de vue, avec un engagement fort à élargir votre portefeuille de recherche, à engager des perspectives plus larges sur les questions de politique d’IA et à améliorer la performance organisationnelle.
 """
     })
 
@@ -1232,21 +1232,23 @@ Scale:
 \[Total possible points = 30\]
 
 Evaluation criteria:
-    - Clear and coherent
-    - Appropriate for the proposed activities
-    - Aligned with management plan
+    * Clear and coherent
+    * Appropriate for the proposed activities
+    * Aligned with management plan
 """,
         'fr': """Veuillez examiner et évaluer le budget du candidat.
 \[Total des points possibles = 30\]
 
 Critères d’évaluation :
-    - Clair et cohérent
-    - Approprié pour les activités proposées
-    - Aligné sur le plan de gestion
+    * Clair et cohérent
+    * Approprié pour les activités proposées
+    * Aligné sur le plan de gestion
 """
     })
 
-    add_evaluation_question(form.id, 71, headlines={
+    add_information_question(form.id, 71, 'Budget', 'file')
+
+    add_evaluation_question(form.id, 72, headlines={
         'en': 'Evaluating the budget',
         'fr': u'Évaluation du budget'
     }, descriptions={
@@ -1270,7 +1272,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 """
     }, min_score=0, max_score=30)
 
-    add_comment_question(form.id, 72, headlines={
+    add_comment_question(form.id, 73, headlines={
         'en': 'Comments?',
         'fr': u'Des commentaires?'
     }, descriptions={
@@ -1278,7 +1280,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
         'fr': u"""L’équipe d’administration des subventions du CRDI examinera tous les budgets de manière indépendante et leur évaluation sera discutée lors du processus de sélection final. Toutefois, étant donné l’importance des budgets en termes de force institutionnelle, de planification et de stratégie de recherche et d’atténuation des risques, veuillez donner votre avis sur le budget proposé par le candidat et faire part de vos commentaires ou de vos idées concernant"""
     })
     
-    add_divider(form.id, 73, headlines={
+    add_divider(form.id, 74, headlines={
         'en': "Section V: Overall quality of application",
         'fr': u"Section V : Qualité générale de la demande"
     }, descriptions={
@@ -1288,7 +1290,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 \[Total des points possibles = 25\]"""
     })
 
-    add_evaluation_question(form.id, 74, headlines={
+    add_evaluation_question(form.id, 75, headlines={
         'en': 'Overall quality of application',
         'fr': u'Qualité générale de la demande'
     }, descriptions={
@@ -1310,7 +1312,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 """
     }, min_score=0, max_score=10)
 
-    add_evaluation_question(form.id, 75, headlines={
+    add_evaluation_question(form.id, 76, headlines={
         'en': 'Overall quality of application',
         'fr': u'Qualité générale de la demande'
     }, descriptions={
@@ -1332,7 +1334,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 """
     }, min_score=0, max_score=10)
 
-    add_evaluation_question(form.id, 76, headlines={
+    add_evaluation_question(form.id, 77, headlines={
         'en': 'Overall quality of application',
         'fr': u'Qualité générale de la demande'
     }, descriptions={
@@ -1354,7 +1356,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 """
     }, min_score=0, max_score=5)
 
-    add_comment_question(form.id, 77, headlines={
+    add_comment_question(form.id, 78, headlines={
         'en': 'Comments?',
         'fr': u'Des commentaires?'
     }, descriptions={

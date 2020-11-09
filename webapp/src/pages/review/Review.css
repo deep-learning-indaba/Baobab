@@ -46,4 +46,10 @@
 .flag-category {
     display: inline-block;
     color: darkred;
+    margin-top: -5px;
+}
+
+.review-total-score {
+    margin-left: 12px;
+    font-weight: bold;
 }

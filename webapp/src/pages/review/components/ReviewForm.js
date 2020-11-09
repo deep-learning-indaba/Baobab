@@ -84,7 +84,17 @@ class ReviewQuestionComponent extends Component {
                         ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{this.props.t("View File")}</a>
                         : <p>{this.props.t("NO FILE UPLOADED")}</p>}
                 </div>
-
+            case MULTI_FILE:
+                if (answer.value) {
+                    const answerFiles = JSON.parse(answer.value);
+                    return <div>
+                        {answerFiles.map(file => <a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
+                    </div> 
+                }
+                else {
+                    return <p>{this.props.t("NO FILE UPLOADED")}</p>;
+                }
+                
             case CHECKBOX:
                 return (
                     <FormCheckbox
@@ -196,7 +206,8 @@ class ReviewForm extends Component {
             isSubmitting: false,
             currentSkip: 0,
             flagModalVisible: false,
-            flagValue: ""
+            flagValue: "",
+            totalScore: 0
         }
 
     }
@@ -275,9 +286,14 @@ class ReviewForm extends Component {
             };
         });
 
+        const totalScore = newQuestionModels.reduce((acc, q) =>
+            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
+        , 0);
+
         this.setState({
             questionModels: newQuestionModels,
-            validationStale: true
+            validationStale: true,
+            totalScore: totalScore
         });
     }
 
@@ -488,11 +504,17 @@ class ReviewForm extends Component {
                 )}
                 <br /><hr />
 
-                <button
-                    onClick={this.addFlag}
-                    className="btn btn-light flag-category">
-                    {t("Flag Response")} <i className="fa fa-flag"></i>
-                </button>
+                <div className="review-total-score">
+                    {t("Total Score")}: {this.state.totalScore} 
+
+                    <button
+                        onClick={this.addFlag}
+                        className="btn btn-light flag-category pull-right">
+                        {t("Flag Response")} <i className="fa fa-flag"></i>
+                    </button>
+                    
+                </div>
+
                 <hr />
                 <div>
                     {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with event admins outside of the system.")}
