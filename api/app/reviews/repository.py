@@ -13,7 +13,8 @@ class ReviewRepository():
     def count_reviews_allocated_and_completed_per_reviewer(event_id):
         return db.engine.execute("""
                 (
-                    select 
+                    select
+                        app_user.id as reviewer_user_id,
                         email, 
                         user_title, 
                         firstname, 
@@ -23,7 +24,7 @@ class ReviewRepository():
                     from app_user
                     join event_role on event_role.user_id = app_user.id
                     where event_role.role = 'reviewer'
-                    and event_role.event_id = %d
+                    and event_role.event_id = {event_id}
                     and not exists (
                         select 1
                         from response_reviewer
@@ -33,6 +34,7 @@ class ReviewRepository():
                 union
                 (
                     select        
+                        app_user.id as reviewer_user_id,
                         email, 
                         user_title, 
                         firstname, 
@@ -46,16 +48,18 @@ class ReviewRepository():
                         on app_user.id = event_role.user_id 
                     join response 
                     on response.id = response_reviewer.response_id
+                    join application_form on response.application_form_id = application_form.id
                     left join review_response
                     on review_response.response_id = response.id
                     and review_response.reviewer_user_id = app_user.id
                     where 
                         event_role.role = 'reviewer'
-                        and event_role.event_id = %d
+                        and event_role.event_id = {event_id}
+                        and application_form.event_id = {event_id}
                     group by app_user.id
 
                 )
-            """ % (event_id, event_id))
+            """.format(event_id=event_id))
 
     @staticmethod
     def count_unassigned_reviews(event_id, required_reviews_per_response):
