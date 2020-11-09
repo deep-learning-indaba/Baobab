@@ -397,7 +397,24 @@ class ResponseDetailAPI(restful.Resource):
         }
 
     @staticmethod
-    def _serialize_response(response, language):
+    def _serialize_reviewer(response_reviewer, review_form_id):
+        if review_form_id is None:
+            completed = False
+        else:
+            review_response = review_repository.get_review_response(review_form_id, response_reviewer.response_id, response_reviewer.reviewer_user_id)
+            completed = review_response is not None
+
+        return {
+            'reviewer_user_id': response_reviewer.user.id,
+            'user_title': response_reviewer.user.user_title,
+            'firstname': response_reviewer.user.firstname,
+            'lastname': response_reviewer.user.lastname,
+            'completed': completed
+        }
+
+
+    @staticmethod
+    def _serialize_response(response, language, review_form_id, num_reviewers):
         return {
             'id': response.id,
             'application_form_id': response.application_form_id,
@@ -412,7 +429,8 @@ class ResponseDetailAPI(restful.Resource):
             'user_title': response.user.user_title,
             'firstname': response.user.firstname,
             'lastname': response.user.lastname,
-            'tags': [ResponseDetailAPI._serialize_tag(rt.tag, language) for rt in response.response_tags]
+            'tags': [ResponseDetailAPI._serialize_tag(rt.tag, language) for rt in response.response_tags],
+            'reviewers': _pad_list([ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers], num_reviewers)
         }
 
     @event_admin_required
@@ -422,9 +440,14 @@ class ResponseDetailAPI(restful.Resource):
         req_parser.add_argument('language', type=str, required=True) 
         args = req_parser.parse_args()
 
-        response_id = args['response_id']
+        response_id = args['response_id']   
         language = args['language']
 
         response = response_repository.get_by_id(response_id)
+        review_form = review_repository.get_review_form(event_id)
+        review_form_id = None if review_form is None else review_form.id
 
-        return ResponseDetailAPI._serialize_response(response, language)
+        review_config = review_configuration_repository.get_configuration_for_event(event_id)
+        num_reviewers = review_config.num_reviews_required + review_config.num_optional_reviews if review_config is not None else 1
+
+        return ResponseDetailAPI._serialize_response(response, language, review_form_id, num_reviewers)
