@@ -56,19 +56,34 @@ test("Check if Response Page renders.", () => {
     expect(wrapper.length).toEqual(1);
 });
 
-
-/*
-
 test("Check if Question and Answerer html renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
 
     wrapper.setState({
-        applicationData: {mockData: "data"}
+        isLoading: false,
+        applicationData: {
+            tags: [
+                
+            ],
+            sections: [
+           { depends_on_question_id: null,
+                description: "This",
+            id: 12,
+            name: "Indaba 2019 Application Form",
+            order:1,
+            questions:[],
+            show_for_values: null
+            }]}
     })
     
     await wrapper.instance().renderSections()
     expect(wrapper.find('.Q-A').length).toEqual(1);
 });
+
+
+
+/*
+
 
 
 test("Check if tag list renders.", async () => {
