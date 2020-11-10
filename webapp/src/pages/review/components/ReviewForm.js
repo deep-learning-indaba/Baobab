@@ -366,8 +366,6 @@ class ReviewForm extends Component {
                     }
                     else {
                         this.loadForm();
-                        // TODO: Switch to EDIT mode
-                        // TODO: Update backend to keep returning a review until it's SUBMITTED
                     }
                 });
         });
