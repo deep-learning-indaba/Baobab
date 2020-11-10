@@ -883,7 +883,12 @@ class ResponseDetailAPITest(ApiTestCase):
         self.event1admin = self.add_user('event1admin@mail.com')
         self.user1 = self.add_user('user1@mail.com', user_title='Ms', firstname='Danai', lastname='Gurira')
 
+        self.reviewer1 = self.add_user('reviewer1@mail.com', user_title='Mx', firstname='Skittles', lastname='Cat')
+        self.reviewer2 = self.add_user('reviewer2@mail.com', user_title='Mr', firstname='Finn', lastname='Dog')
+
         self.event1.add_event_role('admin', self.event1admin.id)
+        self.event1.add_event_role('reviewer', self.reviewer1.id)
+        self.event1.add_event_role('reviewer', self.reviewer2.id)
 
         application_form = self.create_application_form(self.event1.id)
         section = self.add_section(application_form.id)
@@ -903,6 +908,15 @@ class ResponseDetailAPITest(ApiTestCase):
 
         self.tag_response(self.response1.id, tag1.id)
         self.tag_response(self.response1.id, tag2.id)
+
+        review_form = self.add_review_form(application_form.id)
+        config = self.add_review_config(review_form.id, 2, 1)
+
+        self.add_response_reviewer(self.response1.id, self.reviewer1.id)
+        self.add_response_reviewer(self.response1.id, self.reviewer2.id)
+
+        self.add_review_response(self.reviewer1.id, self.response1.id, review_form.id)
+
 
     def test_response_detail(self):
         """Test typical get request."""
@@ -939,6 +953,17 @@ class ResponseDetailAPITest(ApiTestCase):
         self.assertEqual(len(data['tags']), 2)
         self.assertEqual(data['tags'][0]['name'], 'Tag 1 en')
         self.assertEqual(data['tags'][1]['name'], 'Tag 2 en')
+        self.assertEqual(len(data['reviewers']), 3)
+        self.assertEqual(data['reviewers'][0]['user_title'], 'Mx')
+        self.assertEqual(data['reviewers'][0]['firstname'], 'Skittles')
+        self.assertEqual(data['reviewers'][0]['lastname'], 'Cat')
+        self.assertTrue(data['reviewers'][0]['completed'])
+        self.assertEqual(data['reviewers'][1]['user_title'], 'Mr')
+        self.assertEqual(data['reviewers'][1]['firstname'], 'Finn')
+        self.assertEqual(data['reviewers'][1]['lastname'], 'Dog')
+        self.assertFalse(data['reviewers'][1]['completed'])
+        self.assertIsNone(data['reviewers'][2])
+
 
     def test_response_detail_admin_only(self):
         """Test that a non admin can't access reponse detail."""

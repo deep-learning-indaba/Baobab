@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
+import ReactMarkdown from "react-markdown";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormRadio from "../../../components/form/FormRadio";
+import FormTextBox from "../../../components/form/FormTextBox";
 
 import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
@@ -14,16 +16,18 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import { Trans, withTranslation } from 'react-i18next'
 
 const LONG_TEXT = "long-text";
+const SHORT_TEXT = "short-text";
 const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
 const CHECKBOX = "checkbox";
 const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
+const MULTI_FILE = "multi-file";
 const SECTION_DIVIDER = "section-divider";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
-class ReviewQuestion extends Component {
+class ReviewQuestionComponent extends Component {
     constructor(props) {
         super(props);
         this.id = "question_" + props.model.question.id;
@@ -36,16 +40,7 @@ class ReviewQuestion extends Component {
         }
     };
 
-    getDescription = (question, answer) => {
-        if (question.description) {
-            return question.description;
-        }
-
-        if (answer && answer.value && answer.value.trim()) {
-            return answer.value;
-        }
-        return this.props.t("No Answer Provided");
-    }
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
 
     formControl = (key, question, answer, score, validationError) => {
         switch (question.type) {
@@ -54,7 +49,6 @@ class ReviewQuestion extends Component {
                     <FormTextArea
                         id={this.id}
                         name={this.id}
-                        label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
                         onChange={this.handleChange}
                         value={score}
@@ -63,9 +57,26 @@ class ReviewQuestion extends Component {
                         showError={validationError}
                         errorText={validationError} />
                 );
+            case SHORT_TEXT:
+                return (
+                    <FormTextBox
+                      id={this.id}
+                      name={this.id}
+                      type="text"
+                      placeholder={question.placeholder}
+                      onChange={this.handleChange}
+                      value={score}
+                      key={"i_" + key}
+                      showError={validationError}
+                      errorText={validationError}
+                    />
+                  );
             case INFORMATION:
                 return (
-                    <p>{this.getDescription(question, answer)}</p>
+                    <p>{answer && answer.value && answer.value.trim() 
+                            ? <Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify> 
+                            : this.props.t("No Answer Provided")}
+                    </p>
                 )
             case FILE:
                 return <div>
@@ -73,13 +84,22 @@ class ReviewQuestion extends Component {
                         ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{this.props.t("View File")}</a>
                         : <p>{this.props.t("NO FILE UPLOADED")}</p>}
                 </div>
-
+            case MULTI_FILE:
+                if (answer.value) {
+                    const answerFiles = JSON.parse(answer.value);
+                    return <div>
+                        {answerFiles.map(file => <a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
+                    </div> 
+                }
+                else {
+                    return <p>{this.props.t("NO FILE UPLOADED")}</p>;
+                }
+                
             case CHECKBOX:
                 return (
                     <FormCheckbox
                         id={this.id}
                         name={this.id}
-                        label={this.getDescription(question, answer)}
                         placeholder={question.placeholder}
                         onChange={this.handleChange}
                         value={score}
@@ -103,7 +123,6 @@ class ReviewQuestion extends Component {
                     <FormRadio
                         id={this.id}
                         name={this.id}
-                        label={this.getDescription(question, answer)}
                         onChange={this.handleChange}
                         options={question.options}
                         value={score}
@@ -134,26 +153,43 @@ class ReviewQuestion extends Component {
         return "No Headline";
     }
 
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
+    renderHeader = (model) => {
+        if (model.question.type === SECTION_DIVIDER) {
+            return <div><hr/><h3>{this.getHeadline(model)}</h3></div>;
+        }
+        else if (model.question.type === INFORMATION || model.question.type === FILE || model.question.type === MULTI_FILE) {
+            return <h5>{this.getHeadline(model)}</h5>;
+        }
+        else {
+            return <h4>{this.getHeadline(model)}</h4>;
+        }
+    }
+
     render() {
+        const className = (this.props.model.question.type === INFORMATION || this.props.model.question.type === FILE || this.props.model.question.type === MULTI_FILE)
+            ? "question information" : "question";
+
         return (
-            <div className={"question"}>
-                {this.props.model.question.type === "section-divider" 
-                    ? <div><hr/><h3>{this.getHeadline(this.props.model)}</h3></div>
-                    : <h4>{this.getHeadline(this.props.model)}</h4>}
-                
-                <Linkify properties={{ target: '_blank' }}>
-                    {this.formControl(
-                        this.props.model.question.id,
-                        this.props.model.question,
-                        this.props.model.answer,
-                        this.props.model.score ? this.props.model.score.value : null,
-                        this.props.model.validationError
-                    )}
-                </Linkify>
+            <div className={className}>
+                {this.renderHeader(this.props.model)}
+
+                {this.props.model.question.description && <ReactMarkdown source={this.props.model.question.description} renderers={{link: this.linkRenderer}}/>}
+
+                {this.formControl(
+                    this.props.model.question.id,
+                    this.props.model.question,
+                    this.props.model.answer,
+                    this.props.model.score ? this.props.model.score.value : null,
+                    this.props.model.validationError
+                )}
             </div>
         )
     }
 }
+
+const ReviewQuestion = withTranslation()(ReviewQuestionComponent);
 
 class ReviewForm extends Component {
     constructor(props) {
@@ -170,7 +206,8 @@ class ReviewForm extends Component {
             isSubmitting: false,
             currentSkip: 0,
             flagModalVisible: false,
-            flagValue: ""
+            flagValue: "",
+            totalScore: 0
         }
 
     }
@@ -249,9 +286,14 @@ class ReviewForm extends Component {
             };
         });
 
+        const totalScore = newQuestionModels.reduce((acc, q) =>
+            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
+        , 0);
+
         this.setState({
             questionModels: newQuestionModels,
-            validationStale: true
+            validationStale: true,
+            totalScore: totalScore
         });
     }
 
@@ -462,11 +504,17 @@ class ReviewForm extends Component {
                 )}
                 <br /><hr />
 
-                <button
-                    onClick={this.addFlag}
-                    className="btn btn-light flag-category">
-                    {t("Flag Response")} <i className="fa fa-flag"></i>
-                </button>
+                <div className="review-total-score">
+                    {t("Total Score")}: {this.state.totalScore} 
+
+                    <button
+                        onClick={this.addFlag}
+                        className="btn btn-light flag-category pull-right">
+                        {t("Flag Response")} <i className="fa fa-flag"></i>
+                    </button>
+                    
+                </div>
+
                 <hr />
                 <div>
                     {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with event admins outside of the system.")}

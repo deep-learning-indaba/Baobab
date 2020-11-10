@@ -2,17 +2,25 @@
     margin-top: 2em;
 }
 
-.review-form-container h4 {
-    font-size: 1.2em;
+.review-form-container .question.information {
+    padding: 2%;
+    background: #eee;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    border-radius: 4px;
 }
 
 .review-form-container {
     padding-left: 3em;
     padding-right: 3em;
+    text-align: left;
+}
+
+.review-form-container p {
+    white-space: pre-wrap;
 }
 
 .review-form-container .form-group {
-    text-align: center;
+    text-align: left;
 }
 
 .review-form-container .form-group .rowC p {
@@ -38,4 +46,10 @@
 .flag-category {
     display: inline-block;
     color: darkred;
+    margin-top: -5px;
+}
+
+.review-total-score {
+    margin-left: 12px;
+    font-weight: bold;
 }

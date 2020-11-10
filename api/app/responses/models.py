@@ -27,6 +27,7 @@ class Response(db.Model):
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer', order_by='Answer.order')
     response_tags = db.relationship('ResponseTag')
+    reviewers = db.relationship('ResponseReviewer')
 
     def __init__(self, application_form_id, user_id, language):
         self.application_form_id = application_form_id
