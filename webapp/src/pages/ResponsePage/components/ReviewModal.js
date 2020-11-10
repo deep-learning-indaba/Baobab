@@ -17,20 +17,19 @@ class ReviewModal extends Component {
     }
 
 
-    handleSelect(key) {
+    handleSelect(reviewer) {
         const updateReviews = this.state.selectedReviews;
         
-        if (updateReviews.includes(key)) {
-            updateReviews.splice(updateReviews.indexOf(key), 1)
+        if (updateReviews.includes(reviewer)) {
+            updateReviews.splice(updateReviews.indexOf(reviewer), 1)
         }
         else {
-            updateReviews.push(key.toString())
+            updateReviews.push(reviewer)
         }
 
         this.setState({
             selectedReviews: updateReviews
         })
-
     }
 
 
@@ -38,7 +37,7 @@ class ReviewModal extends Component {
     renderModal() {
         const { selectedReviews } = this.state;
         
-        const { handlePost, t } = this.props
+        const { reviewers, handlePost, t } = this.props
        
 
         if (this.props.event) {
@@ -52,16 +51,20 @@ class ReviewModal extends Component {
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
-                            <div className="modal-body">
 
-                                {this.props.reviewers.map(val => {
-                                    return <button onClick={(e) => this.handleSelect(val.email)}
-                                        className={selectedReviews.includes(val.email) ? "review-select active" : "review-select"}
-                                        key={val.email}
+                            <div className="modal-body">
+                                {reviewers && reviewers.map(val => {
+                                    return <button onClick={(e) => this.handleSelect(val)}
+                                        className={selectedReviews.includes(val) ? "review-select active" : "review-select"}
+                                        key={val.reviewer_user_id}
                                     >
-                                        <h5> {val.user_title} {val.firstname} {val.lastname} </h5>
-                                        <span>Reviews Allocated: {val.reviews_allocated} </span>
-                                        <span>Reviews Completed: {val.reviews_completed} </span>
+                                        <label> {val.user_title} {val.firstname} {val.lastname} </label>
+                                        
+                                        <div>
+                                        <p>Reviews Allocated: {val.reviews_allocated} </p>
+                                        <p>Reviews Completed: {val.reviews_completed} </p>
+                                        </div>
+
                                     </button>
                                 })}
 

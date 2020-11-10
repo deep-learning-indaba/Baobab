@@ -11,33 +11,20 @@ export const reviewService = {
   assignReviews,
   getReviewSummary,
   getReviewHistory,
-  assignReviewer
+  assignReviewer,
+  removeReviewer
 };
 
-function mock() {
-  return [
-    {
-      "email": "avi@avi-net.co.za",
-      "firstname": "Avishkar",
-      "lastname": "Bhoopchand",
-      "reviews_allocated": 1,
-      "reviews_completed": 1,
-      "user_title": "Mx"
-  },
-  {
-      "email": "finn@avi-net.co.za",
-      "firstname": "Finn",
-      "lastname": "Dogg",
-      "reviews_allocated": 0,
-      "reviews_completed": 0,
-      "user_title": "Mr"
-  }
-  ]
-}
 
 function assignReviewer() {
   return new Promise(resolve => {
     resolve({status: 201})
+  })
+}
+
+function removeReviewer() {
+  return new Promise(resolve => {
+    resolve({status: 200})
   })
 }
 

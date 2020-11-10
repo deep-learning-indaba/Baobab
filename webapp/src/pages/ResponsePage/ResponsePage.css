@@ -203,7 +203,6 @@ html .headings-lower label {
 }
 
 .reviewers-section .list .reviewer {
-    display: flex;
     box-shadow: 1px 1px 5px hsl(0deg, 0%, 75%);
     margin-right: 20px;
     padding: 3px 15px;
@@ -217,14 +216,18 @@ html .headings-lower label {
     border: 1px solid hsl(0, 0%, 91%);
 }
 
-.reviewers-section span, p {
-    margin: auto 5px;
+.reviewers-section  p {
+    margin: 0 8px 0 0;
     font-size: 13px;
 }
 
 .reviewers-section h5 {
     margin-top: 11px;
     color: grey;
+}
+
+.reviewer div {
+    display: flex;
 }
 
 .divider {
@@ -237,22 +240,62 @@ html .headings-lower label {
 /* Review Modal */
 
 .review-select {
-    padding: 11px 13px;
-    background: hsl(0, 0%, 95%);
+    background: none;
     border: none;
+    outline: none;
+    text-align: left;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    cursor: pointer;
     border-radius: 10px;
-    outline: none
+    padding: 5px 30px 5px 15px;
+}
+
+.review-select label {
+    color: hsl(208deg, 84%, 59%)
+}
+
+
+.review-select:hover {
+    background: hsl(0, 0%, 96%);
+    color: hsl(0, 0%, 19%);
+}
+
+.review-select div {
+    display: flex;
 }
 
 html button:focus {
     border: none;
+    outline: none;
+}
+
+
+.review-select.active {
+    background:hsl(208deg, 84%, 59%);
+    border: none;
+    outline: none;
+}
+
+.trash-review {
+    background: none;
+    border: none;
     outline: none
 }
 
-.review-select.active {
-    background: hsl(33, 83%, 88%);
-    border: none;
-    outline: none
+.review-select p {
+color: hsl(0, 0%, 38%);
+font-size: 12px;
+margin-right: 8px;
+margin-bottom: 4px;
+}
+
+.review-select.active label {
+color: white;
+font-size: 15px;
+}
+
+.review-select.active p {
+    color: hsl(0, 0%, 100%);
 }
 
 /* Response Details Section and Sub-Sections */

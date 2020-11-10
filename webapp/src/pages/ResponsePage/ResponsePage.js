@@ -17,8 +17,8 @@ class ResponsePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            mockReviews: [{ "reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
-            { "reviewer_user_id": 3, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
+            mockReviews: [{ "reviewer_user_id": 4, "user_title": "Ms", "firstname": "Dev", "lastname": "Soap", "completed": false },
+            { "reviewer_user_id": 3, "user_title": "Mr", "firstname": "Test", "lastname": "User", "completed": false },
                 null
             ],
             tagMenu: false,
@@ -54,7 +54,7 @@ class ResponsePage extends Component {
 
 
     // Misc Functions
-    // Go Back
+
     goBack() {
         this.props.history.goBack();
     }
@@ -72,96 +72,6 @@ class ResponsePage extends Component {
         })
     }
 
-    // Post Response API
-    postResponseTag(tagId, responseId, eventId) {
-        const updateApplicationData = this.state.applicationData;
-        const updateTagList = this.state.tagList;
-
-        responsesService.tagResponse(responseId, tagId, eventId)
-            .then(response => {
-                if (response.status == 201) {
-                    const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
-                    updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
-                    updateTagList.splice(getTag, 1);
-
-                    this.setState({
-                        applicationData: updateApplicationData,
-                        tagList: updateTagList
-                    });
-                }
-                else {
-                    this.error(response.error);
-                }
-            });
-    }
-
-    // Post Tag List API
-    addTag = (tagTranslations) => {
-        if (Object.keys(tagTranslations).length) {
-            const newTag = {
-                name: tagTranslations
-            };
-            tagsService.addTag(newTag, this.props.event.id).then(response => {
-                if (response.status == 201) {
-                    const updateTagList = this.state.tagList;
-                    const newTag = {
-                        id: response.tag.id,
-                        name: response.tag.name[this.props.i18n.language]
-                    };
-                    updateTagList.push(newTag);
-                    this.setState({
-                        tagList: updateTagList
-                    }, () => {
-                        this.postResponseTag(response.tag.id, this.props.match.params.id, this.props.event.id);
-                    });
-                }
-                else {
-                    this.error(response.error);
-                }
-            });
-        };
-    }
-
-    // Del Tag
-    removeTag(tag_id) {
-        this.setState({
-            removeModalVisible: true,
-            tagToRemove: tag_id
-        });
-    }
-
-    confirmRemoveTag = () => {
-        const updateApplicationData = this.state.applicationData;
-
-        responsesService.removeTag(
-            parseInt(this.props.match.params.id),
-            this.state.tagToRemove,
-            this.props.event.id
-        ).then(response => {
-            if (response.status == 200) {
-                const index = updateApplicationData.tags.findIndex(t => t.id === this.state.tagToRemove);
-                if (index >= 0)
-                    updateApplicationData.tags.splice(index, 1);
-
-                this.setState({
-                    applicationData: updateApplicationData,
-                    removeModalVisible: false,
-                    tagToRemove: null
-                });
-            }
-            else {
-                this.cancelRemoveTag();
-                this.error(response.message);
-            }
-        });
-    }
-
-    cancelRemoveTag = () => {
-        this.setState({
-            tagToRemove: null,
-            removeModalVisible: false
-        });
-    }
 
     // Render Page HTML
     // Generate Applciation Status
@@ -223,55 +133,6 @@ class ResponsePage extends Component {
         return questions
     }
 
-
-    // Render Reviews
-    renderReviews() {
-        const styles = {
-            green: { "color": "green" },
-            red: { "color": "red" }
-        }
-
-        if (this.state.mockReviews) {
-            const reviews = this.state.mockReviews.map((val, index) => {
-                let num = parseInt(index) + 1;
-                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
-                if (!val) {
-                    return <div className="add-reviewer">
-                        <button
-                            data-toggle="modal"
-                            type="button"
-                            data-target="#exampleModalReview"
-                            className="btn btn-light">
-                            Assign Reviewer
-                            </button>
-                    </div>
-                }
-                else {
-                    return <div className="reviewer">
-                        <label>{"Reviewer" + num}</label>
-                        <span>{val.user_title} {val.firstname} {val.lastname}</span>
-                        {val.completed ? <p style={styles.green}>Completed</p>
-                            :
-                            <p
-                                onClick={(e) => this.removeReview()}
-                                style={styles.red}>
-                                Incomplete <i className="far fa-trash-alt"></i>
-                            </p>
-                            }
-                        
-                    </div>
-                }
-            })
-
-            // console.log(reviews)
-
-            return reviews
-        }
-
-    }
-
-
-
     // Render Answers 
     renderAnswer(id, type, headline, options) {
         const applicationData = this.state.applicationData;
@@ -315,9 +176,134 @@ class ResponsePage extends Component {
         }
     }
 
+    // render Delete Modal
+    renderDeleteModal() {
+        const t = this.props.t;
+        const { removeModalVisible } = this.state;
+
+        if (removeModalVisible.type == "tag") {
+            return <ConfirmModal
+                visible={this.state.removeModalVisible}
+                onOK={this.confirmRemoveTag}
+                onCancel={this.cancelRemoveTag}
+                okText={t("Yes")}
+                cancelText={t("No")}>
+                <p>
+                    {t('Are you sure you want to delete this tag?')}
+                </p>
+            </ConfirmModal>
+        }
+
+        if (removeModalVisible.type == "review") {
+            return <ConfirmModal
+                visible={this.state.removeModalVisible}
+                onOK={(e) => this.removeReviewerService(e)}
+                onCancel={(e) => this.cancelRemoveReviewer(e)}
+                okText={t("Yes")}
+                cancelText={t("No")}>
+                <p>
+                    {t('Are you sure you want to delete this reviewer?')}
+                </p>
+            </ConfirmModal>
+        }
+    }
+
+
+    // Tag Functions
+    // Post Response API
+    postResponseTag(tagId, responseId, eventId) {
+        const updateApplicationData = this.state.applicationData;
+        const updateTagList = this.state.tagList;
+
+        responsesService.tagResponse(responseId, tagId, eventId)
+            .then(response => {
+                if (response.status == 201) {
+                    const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
+                    updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
+                    updateTagList.splice(getTag, 1);
+
+                    this.setState({
+                        applicationData: updateApplicationData,
+                        tagList: updateTagList
+                    });
+                }
+                else {
+                    this.error(response.error);
+                }
+            });
+    }
+
+    // Post Tag List API
+    addTag = (tagTranslations) => {
+        if (Object.keys(tagTranslations).length) {
+            const newTag = {
+                name: tagTranslations
+            };
+            tagsService.addTag(newTag, this.props.event.id).then(response => {
+                if (response.status == 201) {
+                    const updateTagList = this.state.tagList;
+                    const newTag = {
+                        id: response.tag.id,
+                        name: response.tag.name[this.props.i18n.language]
+                    };
+                    updateTagList.push(newTag);
+                    this.setState({
+                        tagList: updateTagList
+                    }, () => {
+                        this.postResponseTag(response.tag.id, this.props.match.params.id, this.props.event.id);
+                    });
+                }
+                else {
+                    this.error(response.error);
+                }
+            });
+        };
+    }
+
+    // Del Tag
+    removeTag(tag_id) {
+        this.setState({
+            removeModalVisible: { boolean: true, type: "tag" },
+            tagToRemove: tag_id
+        });
+    }
+
+    confirmRemoveTag = () => {
+        const updateApplicationData = this.state.applicationData;
+
+        responsesService.removeTag(
+            parseInt(this.props.match.params.id),
+            this.state.tagToRemove,
+            this.props.event.id
+        ).then(response => {
+            if (response.status == 200) {
+                const index = updateApplicationData.tags.findIndex(t => t.id === this.state.tagToRemove);
+                if (index >= 0)
+                    updateApplicationData.tags.splice(index, 1);
+
+                this.setState({
+                    applicationData: updateApplicationData,
+                    removeModalVisible: false,
+                    tagToRemove: null
+                });
+            }
+            else {
+                this.cancelRemoveTag();
+                this.error(response.message);
+            }
+        });
+    }
+
+    cancelRemoveTag = () => {
+        this.setState({
+            tagToRemove: null,
+            removeModalVisible: false
+        });
+    }
 
     renderTags() {
         const data = this.state.applicationData;
+
         if (data) {
             let tags = data.tags ? data.tags.map(tag => {
                 return <span
@@ -333,10 +319,9 @@ class ResponsePage extends Component {
         };
     }
 
-
     renderTagModal() {
-
         const { eventLanguages } = this.state;
+
         if (eventLanguages) {
             return <TagModal
                 keys={this.state.keys}
@@ -346,45 +331,126 @@ class ResponsePage extends Component {
                 eventLanguages={eventLanguages}
             />
         };
-
     }
 
 
+    // Reviews
+    // Render Reviews
+    renderReviews() {
+        const styles = {
+            green: { "color": "green" },
+            red: { "color": "red" }
+        }
 
-     // Del Tag
-     removeReview(review_user_id) {
+        if (this.state.mockReviews) {
+            const reviews = this.state.mockReviews.map((val, index) => {
+                let num = parseInt(index) + 1;
+                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
+                if (!val) {
+                    return <div className="add-reviewer">
+                        <button
+                            data-toggle="modal"
+                            type="button"
+                            data-target="#exampleModalReview"
+                            className="btn btn-light">
+                            Assign Reviewer
+                            </button>
+                    </div>
+                }
+                else {
+                    return <div className="reviewer">
+                        <label>{"Reviewer" + num}</label>
+                        <div>
+                            <p>{val.user_title} {val.firstname} {val.lastname}</p>
+                            
+                        {val.completed ? <p style={styles.green}>Completed</p>
+                            :
+                            <p
+                                style={styles.red}>
+                                    Incomplete
+                                 <button
+                                        className="trash-review"
+                                        onClick={(e) => this.removeReview("review", val.reviewer_user_id)} >
+                                    <i className="far fa-trash-alt"></i>
+                                </button>
+
+                            </p>
+                        }
+                        </div>
+                      
+
+                    </div>
+                }
+            })
+
+            return reviews
+        }
+    }
+
+    // Remove Reviewer
+    removeReview(type, reviewer_user_id) {
         this.setState({
-            removeModalVisible: true,
-           // tagToRemove: tag_id
+            removeModalVisible: { boolean: true, type: "review", itemId: reviewer_user_id },
+            // tagToRemove: tag_id
         });
     }
 
+    removeReviewerService() {
+        const { applicationData, removeModalVisible } = this.state;
+        const updateReviews = this.state.mockReviews;
+        const { event } = this.props;
 
+        reviewService.removeReviewer({
+            "response_id": applicationData.id,
+            "event_id": event.id,
+            "reviewer_user_id": removeModalVisible.itemId
+        }).then(response => {
+            if (response.status == 200) {
+                updateReviews.map((val, index) => {
+                    if (val) {
+                        if (val.reviewer_user_id == removeModalVisible.itemId) {
+                            updateReviews.splice(index, 1);
+                            updateReviews.push(null)
+                        }
+                    }
+                })
 
-
-    delReviewer() {
-        
+                this.setState({
+                    mockReviews: updateReviews,
+                    removeModalVisible: false
+               })
+            }
+        }).catch(error => {
+            this.setState({
+               error: error
+           })
+        })  
     }
 
-
+    cancelRemoveReviewer() {
+        this.setState({
+            removeModalVisible: false
+        })
+    }
 
     postReviewer(data) {
-
         const updateReviews = this.state.mockReviews;
+        const {applicationData } = this.state;
 
-        const response = data.forEach(val => {
+        // extract multiple values 
+        const request = data.forEach(val => {
             return {
-                "response_id": this.state.applicationData.id,
+                "response_id": applicationData.id,
                 "event_id": this.props.event.id,
-                "reviewer_user_id": val.email
+                "reviewer_user_id": val.reviewer_user_id
             }
         })
 
-        reviewService.assignReviewer(response).then(response => {
+        reviewService.assignReviewer(request).then(response => {
             if (response.status == 201) {
                 data.forEach(val => {
                     updateReviews.unshift({
-                        "reviewer_user_id": val.email, "user_title": val.email, "firstname": val.email, "lastname": val.email, "completed": false
+                        "reviewer_user_id": val.reviewer_user_id, "user_title": val.user_title, "firstname": val.firstname, "lastname": val.lastname, "completed": false
                     })
                 })
 
@@ -399,7 +465,6 @@ class ResponsePage extends Component {
         })
     }
 
-
     // Render Review Modal
     renderReviewerModal() {
         return < ReviewModal
@@ -409,39 +474,6 @@ class ResponsePage extends Component {
             event={this.props.event}
             t={this.props.t}
         />
-    }
-
-
-    renderDeleteModal(type) {
-        const t = this.props.t;
-
-        if (type == "tag") {
-            return <ConfirmModal
-            visible={this.state.removeModalVisible}
-            onOK={this.confirmRemoveTag}
-            onCancel={this.cancelRemoveTag}
-            okText={t("Yes")}
-            cancelText={t("No")}>
-            <p>
-                {t('Are you sure you want to delete this tag?')}
-            </p>
-        </ConfirmModal>
-        }
-
-        if (type == "review") {
-            return <ConfirmModal
-            visible={this.state.removeModalVisible}
-           // onOK={this.confirmRemoveTag}
-           // onCancel={this.cancelRemoveTag}
-            okText={t("Yes")}
-            cancelText={t("No")}>
-            <p>
-                {t('Are you sure you want to delete this reviewer?')}
-            </p>
-        </ConfirmModal>
-        }
-
-    
     }
 
 

@@ -41,7 +41,7 @@ class ResponseListForm extends Component {
                 tags: responses[0].tags,
                 responses: responses[1].responses,
                 questions: responses[2].questions ? responses[2].questions.filter(q => q.type !== "information") : null,
-                error: responses[0].error.language || responses[1].error.language || responses[2].error.language,
+                error: responses[0].error || responses[1].error || responses[2].error,
                 isLoading: false
             }, this.handleData);
         });
