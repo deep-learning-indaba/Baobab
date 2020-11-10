@@ -65,7 +65,7 @@ class ReviewQuestionComponent extends Component {
                       type="text"
                       placeholder={question.placeholder}
                       onChange={this.handleChange}
-                      value={score}
+                      value={score || ""}
                       key={"i_" + key}
                       showError={validationError}
                       errorText={validationError}
@@ -88,7 +88,7 @@ class ReviewQuestionComponent extends Component {
                 if (answer.value) {
                     const answerFiles = JSON.parse(answer.value);
                     return <div>
-                        {answerFiles.map(file => <a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
+                        {answerFiles.map((file, i) => <a key={file.name + `_${i}`} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
                     </div> 
                 }
                 else {
@@ -223,7 +223,7 @@ class ReviewForm extends Component {
             questionModels = response.form.review_form.review_questions.map(q => {
                 let score = null;
                 if (response.form.review_response) {
-                    score = response.form.review_response.scores.find(a => a.review_question_id === q.id)
+                    score = response.form.review_response.scores.find(a => a.review_question_id === q.id);
                 }
                 return {
                     question: q,
@@ -232,6 +232,8 @@ class ReviewForm extends Component {
                 };
             }).sort((a, b) => a.question.order - b.question.order);
         }
+
+        const totalScore = questionModels ? this.computeTotalScore(questionModels) : 0;
 
         this.setState({
             form: response.form,
@@ -244,7 +246,8 @@ class ReviewForm extends Component {
             isValid: false,
             isSubmitting: false,
             flagModalVisible: false,
-            flagValue: ""
+            flagValue: "",
+            totalScore: totalScore
         }, () => {
             window.scrollTo(0, 0);
         });
@@ -267,6 +270,12 @@ class ReviewForm extends Component {
         this.loadForm(id);
     }
 
+    computeTotalScore = (questionModels) => {
+        return questionModels.reduce((acc, q) =>
+            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
+        , 0);
+    }
+
     onChange = (model, value) => {
         const newScore = {
             review_question_id: model.question.id,
@@ -286,9 +295,7 @@ class ReviewForm extends Component {
             };
         });
 
-        const totalScore = newQuestionModels.reduce((acc, q) =>
-            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
-        , 0);
+        const totalScore = this.computeTotalScore(newQuestionModels);
 
         this.setState({
             questionModels: newQuestionModels,
@@ -388,8 +395,8 @@ class ReviewForm extends Component {
                             });
                         }
                         else {
-                            if (this.state.form.review_response) {
-                                this.props.history.push(`/reviewHistory`)
+                            if (this.props.match.params && this.props.match.params.id > 0) {
+                                this.props.history.push(`${this.props.event.key}/reviewHistory`)
                             }
                             else {
                                 this.loadForm();
@@ -552,6 +559,21 @@ class ReviewForm extends Component {
 
                 <hr />
 
+                <div className="text-center">
+                    <button disabled={isSubmitting} 
+                        className="btn btn-info"
+                        onClick={this.save}>
+                            {isSubmitting && (
+                                <span
+                                    class="spinner-grow spinner-grow-sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            )}
+                            {t("Save for later")}
+                    </button>
+                </div>
+
                 <div class="buttons">
                     {currentSkip > 0 &&
                         <button
@@ -570,18 +592,6 @@ class ReviewForm extends Component {
                             {t("Skip")}
                         </button>
                     }
-                    <button disabled={isSubmitting} 
-                        className="btn btn-secondary float-right"
-                        onClick={this.save}>
-                            {isSubmitting && (
-                                <span
-                                    class="spinner-grow spinner-grow-sm"
-                                    role="status"
-                                    aria-hidden="true"
-                                />
-                            )}
-                            {t("Save for later")}
-                        </button>
                     <button disabled={isSubmitting}
                         type="submit"
                         class="btn btn-primary float-right"

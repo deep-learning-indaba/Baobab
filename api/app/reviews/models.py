@@ -111,8 +111,8 @@ class ReviewResponse(db.Model):
         self.review_form_id = review_form_id
         self.reviewer_user_id = reviewer_user_id
         self.response_id = response_id
-        self.submitted_timestamp = datetime.now()
         self.language = language
+        self.is_submitted = False
 
     def submit(self):
         self.is_submitted = True

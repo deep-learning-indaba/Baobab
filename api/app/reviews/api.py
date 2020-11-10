@@ -137,7 +137,9 @@ class ReviewAPI(ReviewMixin, restful.Resource):
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'])
+        review_response = None if response is None else review_repository.get_review_response(review_form.id, response.id, g.current_user['id']) 
+
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'], review_response)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
@@ -374,6 +376,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         return random.sample(responses, min(len(responses), num_reviews))
 
 _review_history_fields = {
+    'response_id': fields.Integer,
     'review_response_id' : fields.Integer,
     'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
     'reviewed_user_id': fields.String
@@ -388,6 +391,7 @@ review_history_fields = {
 
 class ReviewHistoryModel:
     def __init__(self, review):
+        self.response_id = review.Response.id
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
         self.reviewed_user_id  = review.AppUser.id
