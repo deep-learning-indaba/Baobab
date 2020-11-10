@@ -18,7 +18,7 @@ class ResponsePage extends Component {
         super(props);
         this.state = {
             mockReviews: [{ "reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
-                { "reviewer_user_id": 3, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
+            { "reviewer_user_id": 3, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false },
                 null
             ],
             tagMenu: false,
@@ -32,24 +32,24 @@ class ResponsePage extends Component {
 
     componentDidMount() {
 
-            Promise.all([
-                eventService.getEvent(this.props.event.id),
-                applicationFormService.getForEvent(this.props.event.id),
-                responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
-                tagsService.getTagList(this.props.event.id),
-                reviewService.getReviewAssignments(this.props.event.id)
-            ]).then(responses => {
-                console.log(responses);
-                    this.setState({
-                    eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
-                    applicationForm: responses[1].formSpec,
-                    applicationData: responses[2].detail,
-                    tagList: responses[3].tags,
-                    reviewers: responses[4].reviewers,
-                    error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
-                    isLoading: false
-                }, this.handleData);
-            });
+        Promise.all([
+            eventService.getEvent(this.props.event.id),
+            applicationFormService.getForEvent(this.props.event.id),
+            responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
+            tagsService.getTagList(this.props.event.id),
+            reviewService.getReviewAssignments(this.props.event.id)
+        ]).then(responses => {
+            console.log(responses);
+            this.setState({
+                eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
+                applicationForm: responses[1].formSpec,
+                applicationData: responses[2].detail,
+                tagList: responses[3].tags,
+                reviewers: responses[4].reviewers,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+                isLoading: false
+            }, this.handleData);
+        });
     }
 
 
@@ -79,7 +79,6 @@ class ResponsePage extends Component {
 
         responsesService.tagResponse(responseId, tagId, eventId)
             .then(response => {
-                console.log(response)
                 if (response.status == 201) {
                     const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
                     updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
@@ -112,7 +111,7 @@ class ResponsePage extends Component {
                     updateTagList.push(newTag);
                     this.setState({
                         tagList: updateTagList
-                    }, ()=>{
+                    }, () => {
                         this.postResponseTag(response.tag.id, this.props.match.params.id, this.props.event.id);
                     });
                 }
@@ -143,7 +142,7 @@ class ResponsePage extends Component {
                 const index = updateApplicationData.tags.findIndex(t => t.id === this.state.tagToRemove);
                 if (index >= 0)
                     updateApplicationData.tags.splice(index, 1);
-                
+
                 this.setState({
                     applicationData: updateApplicationData,
                     removeModalVisible: false,
@@ -154,7 +153,7 @@ class ResponsePage extends Component {
                 this.cancelRemoveTag();
                 this.error(response.message);
             }
-        });    
+        });
     }
 
     cancelRemoveTag = () => {
@@ -231,10 +230,10 @@ class ResponsePage extends Component {
             green: { "color": "green" },
             red: { "color": "red" }
         }
-        
-            if (this.state.mockReviews) {
-                const reviews = this.state.mockReviews.map((val, index) => {
-                    let num = parseInt(index) + 1;
+
+        if (this.state.mockReviews) {
+            const reviews = this.state.mockReviews.map((val, index) => {
+                let num = parseInt(index) + 1;
                 //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
                 if (!val) {
                     return <div className="add-reviewer">
@@ -249,18 +248,26 @@ class ResponsePage extends Component {
                 }
                 else {
                     return <div className="reviewer">
-                        <label>{"Reviewer" + num }</label>
+                        <label>{"Reviewer" + num}</label>
                         <span>{val.user_title} {val.firstname} {val.lastname}</span>
-                        {val.completed ? <p style={styles.green}>Completed</p> : <p style={styles.red}>Incomplete</p>}
+                        {val.completed ? <p style={styles.green}>Completed</p>
+                            :
+                            <p
+                                onClick={(e) => this.removeReview()}
+                                style={styles.red}>
+                                Incomplete <i className="far fa-trash-alt"></i>
+                            </p>
+                            }
+                        
                     </div>
                 }
             })
 
-           // console.log(reviews)
+            // console.log(reviews)
 
             return reviews
         }
-    
+
     }
 
 
@@ -271,7 +278,7 @@ class ResponsePage extends Component {
         const baseUrl = process.env.REACT_APP_API_URL;
 
         const a = applicationData.answers.find(a => a.question_id === id);
-        if (! a) {
+        if (!a) {
             return this.props.t("No answer provided.");
         }
         else {
@@ -329,7 +336,7 @@ class ResponsePage extends Component {
 
     renderTagModal() {
 
-          const { eventLanguages } = this.state;
+        const { eventLanguages } = this.state;
         if (eventLanguages) {
             return <TagModal
                 keys={this.state.keys}
@@ -339,35 +346,40 @@ class ResponsePage extends Component {
                 eventLanguages={eventLanguages}
             />
         };
- 
+
     }
 
 
-        // Render Review Modal
-        renderReviewerModal() {
-            return < ReviewModal
-             handlePost={(data) => this.postReviewer(data)}
-                response={this.state.applicationData}
-                reviewers={this.state.reviewers}
-                event={this.props.event}
-                t={this.props.t}
-            />
-        }
-    
-    
-    
+
+     // Del Tag
+     removeReview(review_user_id) {
+        this.setState({
+            removeModalVisible: true,
+           // tagToRemove: tag_id
+        });
+    }
+
+
+
+
+    delReviewer() {
+        
+    }
+
+
+
     postReviewer(data) {
 
         const updateReviews = this.state.mockReviews;
 
         const response = data.forEach(val => {
             return {
-              "response_id": this.state.applicationData.id,    
-              "event_id": this.props.event.id,
-              "reviewer_user_id": val.email        
-              }
-        })  
-        
+                "response_id": this.state.applicationData.id,
+                "event_id": this.props.event.id,
+                "reviewer_user_id": val.email
+            }
+        })
+
         reviewService.assignReviewer(response).then(response => {
             if (response.status == 201) {
                 data.forEach(val => {
@@ -380,33 +392,67 @@ class ResponsePage extends Component {
                     mockReviews: updateReviews
                 })
             }
+        }).catch(error => {
+            this.setState({
+                error: error.message
+            })
         })
     }
 
 
+    // Render Review Modal
+    renderReviewerModal() {
+        return < ReviewModal
+            handlePost={(data) => this.postReviewer(data)}
+            response={this.state.applicationData}
+            reviewers={this.state.reviewers}
+            event={this.props.event}
+            t={this.props.t}
+        />
+    }
 
-    renderDeleteModal() {
+
+    renderDeleteModal(type) {
         const t = this.props.t;
 
-        return <ConfirmModal
-          visible={this.state.removeModalVisible}
-          onOK={this.confirmRemoveTag}
-          onCancel={this.cancelRemoveTag}
-          okText={t("Yes")}
-          cancelText={t("No")}>
-          <p>
-            {t('Are you sure you want to delete this tag?')}
-          </p>
+        if (type == "tag") {
+            return <ConfirmModal
+            visible={this.state.removeModalVisible}
+            onOK={this.confirmRemoveTag}
+            onCancel={this.cancelRemoveTag}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+                {t('Are you sure you want to delete this tag?')}
+            </p>
         </ConfirmModal>
+        }
+
+        if (type == "review") {
+            return <ConfirmModal
+            visible={this.state.removeModalVisible}
+           // onOK={this.confirmRemoveTag}
+           // onCancel={this.cancelRemoveTag}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+                {t('Are you sure you want to delete this reviewer?')}
+            </p>
+        </ConfirmModal>
+        }
+
+    
     }
+
 
     render() {
         const { applicationData, tagList, tagMenu, error, eventLanguages, isLoading } = this.state;
         // Translation
         const t = this.props.t;
 
+        // Loading
         if (isLoading) {
-            return <Loading/>
+            return <Loading />
         }
 
         return (
@@ -447,10 +493,10 @@ class ResponsePage extends Component {
                                         return <div className="tag-item" key={val.id} >
                                             <button
                                                 onClick={(e) => this.postResponseTag(
-                                                        val.id,
-                                                        parseInt(this.props.match.params.id),
-                                                        this.props.event.id
-                                                    )} className="btn tag">{val.name}</button>
+                                                    val.id,
+                                                    parseInt(this.props.match.params.id),
+                                                    this.props.event.id
+                                                )} className="btn tag">{val.name}</button>
                                         </div>
                                     })}
 

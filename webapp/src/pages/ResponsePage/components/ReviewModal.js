@@ -19,7 +19,7 @@ class ReviewModal extends Component {
 
     handleSelect(key) {
         const updateReviews = this.state.selectedReviews;
-
+        
         if (updateReviews.includes(key)) {
             updateReviews.splice(updateReviews.indexOf(key), 1)
         }
