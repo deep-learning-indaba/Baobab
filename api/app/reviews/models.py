@@ -95,6 +95,8 @@ class ReviewResponse(db.Model):
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=False)
     language = db.Column(db.String(2), nullable=False)
+    is_submitted = db.Column(db.Boolean(), nullable=False)
+    submitted_timestamp = db.Column(db.DateTime(), nullable=True)
 
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
@@ -111,6 +113,10 @@ class ReviewResponse(db.Model):
         self.response_id = response_id
         self.submitted_timestamp = datetime.now()
         self.language = language
+
+    def submit(self):
+        self.is_submitted = True
+        self.submitted_timestamp = datetime.now()
 
 
 class ReviewScore(db.Model):

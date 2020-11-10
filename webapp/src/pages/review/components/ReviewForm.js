@@ -337,6 +337,35 @@ class ReviewForm extends Component {
         return isValid;
     };
 
+    save = () => {
+        const scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
+        this.setState({
+            isSubmitting: true
+        }, () => {
+            const shouldUpdate = this.state.form.review_response;
+            reviewService
+                .submit(
+                    this.state.form.response.id,
+                    this.state.form.review_form.id,
+                    scores,
+                    shouldUpdate,
+                    false)
+                .then(response => {
+                    if (response.error) {
+                        this.setState({
+                            error: response.error,
+                            isSubmitting: false
+                        });
+                    }
+                    else {
+                        this.loadForm();
+                        // TODO: Switch to EDIT mode
+                        // TODO: Update backend to keep returning a review until it's SUBMITTED
+                    }
+                });
+        });
+    }
+
     submit = () => {
         let scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
         if (this.isValidated()) {
@@ -349,7 +378,8 @@ class ReviewForm extends Component {
                         this.state.form.response.id,
                         this.state.form.review_form.id,
                         scores,
-                        shouldUpdate)
+                        shouldUpdate,
+                        true)
                     .then(response => {
                         if (response.error) {
                             this.setState({
@@ -366,7 +396,7 @@ class ReviewForm extends Component {
                             }
                         }
                     });
-            })
+            });
         }
     }
 
@@ -540,6 +570,18 @@ class ReviewForm extends Component {
                             {t("Skip")}
                         </button>
                     }
+                    <button disabled={isSubmitting} 
+                        className="btn btn-secondary float-right"
+                        onClick={this.save}>
+                            {isSubmitting && (
+                                <span
+                                    class="spinner-grow spinner-grow-sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                            )}
+                            {t("Save for later")}
+                        </button>
                     <button disabled={isSubmitting}
                         type="submit"
                         class="btn btn-primary float-right"

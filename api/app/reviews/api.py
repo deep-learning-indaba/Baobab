@@ -73,7 +73,9 @@ review_fields = {
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
     'reviews_remaining_count': fields.Integer,
-    'review_response': fields.Nested(review_response_fields)
+    'review_response': fields.Nested(review_response_fields),
+    'is_submitted': fields.Boolean,
+    'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
 def _serialize_review_form(review_form, language):
@@ -184,6 +186,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
         language = args['language']
+        is_submitted = args['is_submitted']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
@@ -191,6 +194,8 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
         review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
         review_response.review_scores = self.get_review_scores(scores)
+        if is_submitted:
+            review_response.submit()
         review_repository.add_model(review_response)
 
         return {}, 201
@@ -206,6 +211,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         review_form_id = args['review_form_id']
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
+        is_submitted = args['is_submitted']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
@@ -217,6 +223,8 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         
         db.session.query(ReviewScore).filter(ReviewScore.review_response_id==review_response.id).delete()
         review_response.review_scores = self.get_review_scores(scores)
+        if is_submitted:
+            review_response.submit()
         db.session.commit()
 
         return {}, 200
