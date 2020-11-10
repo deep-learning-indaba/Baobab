@@ -79,6 +79,7 @@ class ResponsePage extends Component {
 
         responsesService.tagResponse(responseId, tagId, eventId)
             .then(response => {
+                console.log(response)
                 if (response.status == 201) {
                     const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
                     updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
@@ -255,7 +256,7 @@ class ResponsePage extends Component {
                 }
             })
 
-            console.log(reviews)
+           // console.log(reviews)
 
             return reviews
         }
@@ -311,14 +312,16 @@ class ResponsePage extends Component {
     renderTags() {
         const data = this.state.applicationData;
         if (data) {
-            let tags = data.tags.map(tag => {
+            let tags = data.tags ? data.tags.map(tag => {
                 return <span
                     key={tag.id}
                     className="btn badge badge-info"
                 >
                     {tag.name}
                     <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt"></i></span>
-            });
+            })
+                :
+                null
             return tags
         };
     }

@@ -58,55 +58,47 @@ test("Check if Response Page renders.", () => {
 
 test("Check if Question and Answerer html renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
-
     wrapper.setState({
-        isLoading: false,
-        applicationData: {
-            tags: [
-                
-            ],
-            sections: [
-           { depends_on_question_id: null,
-                description: "This",
-            id: 12,
-            name: "Indaba 2019 Application Form",
-            order:1,
-            questions:[],
-            show_for_values: null
-            }]}
+        applicationForm: formData,
+        applicationData: true,
+        isLoading: false
     })
-    
-    await wrapper.instance().renderSections()
-    expect(wrapper.find('.Q-A').length).toEqual(1);
+    expect(wrapper.find('.Q-A').length).toBeTruthy();
 });
-
-
-
-/*
-
 
 
 test("Check if tag list renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
     wrapper.setState({
+        isLoading: false,
+        applicationData: true,
         tagMenu: true,
-        eventLanguages: 
+        tagList: [{headline: ""},{headline: ""}],
+        eventLanguages: ["En", "Fr"]
     })
     expect(wrapper.find('.tag-response.show').length).toEqual(1);
 });
 
 
-test("Check if Tag API updates state.", async () => {
-    const wrapper = shallow(<ResponsePage {...props} />);
-    let prevState = wrapper.state().applicationData;
-    await wrapper.instance().postResponseTag({
-        "tag_id": 1,
-        "response_id": 2,
-        "event_id": 3
-    });
-    expect(wrapper.state().applicationData != prevState).toBeTruthy();
+test("Check if responsesService API works.", async () => {
+    const response = await responsesService.getResponseDetail(props.match.params.id, props.event.id);
+    expect(response).toBeTruthy();
 });
-*/
+
+test("Check if applicationFormService API works.", async () => {
+    const response = await applicationFormService.getForEvent(props.event.id);
+     expect(response).toBeTruthy();
+ });
+ 
+
+ test("Check if tagsService API works.", async () => {
+     const response = await tagsService.getTagList(props.event.id);
+     expect(response).toBeTruthy();
+ });
+
+
+ 
+
 
 
 
