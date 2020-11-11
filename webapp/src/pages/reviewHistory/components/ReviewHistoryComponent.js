@@ -76,6 +76,11 @@ class ReviewHistoryComponent extends Component {
         filterable: false
       }, 
       {
+        Header: "response_id",
+        accessor: "response_id",
+        filterable: false
+      },
+      {
         Header: t("Submitted Timestamp"),
         accessor: "submitted_timestamp",
         filterable: false

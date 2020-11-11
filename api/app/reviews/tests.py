@@ -318,6 +318,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         db.session.add(review_response)
         db.session.commit()
 
@@ -412,6 +413,9 @@ class ReviewsApiTest(ApiTestCase):
             ReviewResponse(1, 3, 2, 'en'),
             ReviewResponse(1, 4, 1, 'en')
         ]
+        for rr in review_responses:
+            rr.submit()
+
         db.session.add_all(review_responses)
         db.session.commit()
     
@@ -565,7 +569,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -575,7 +579,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_can_still_submit_inactive_response_reviewer(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -592,7 +596,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_saving_review_response(self):
         self.seed_static_data()
         self.setup_response_reviewer()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -610,6 +614,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
         db.session.add(review_response)
         db.session.commit()
@@ -617,7 +622,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_updating_review_response(self):
         self.seed_static_data()
         self.setup_existing_review_response()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')

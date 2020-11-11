@@ -57,11 +57,12 @@ function getReviewResponse(id) {
     });
 }
 
-function submit(responseId, reviewFormId, scores, shouldUpdate) {
+function submit(responseId, reviewFormId, scores, shouldUpdate, isSubmitted) {
   let review = {
     response_id: responseId,
     review_form_id: reviewFormId,
-    scores: scores
+    scores: scores,
+    is_submitted: isSubmitted
   };
 
   const promise = shouldUpdate 
