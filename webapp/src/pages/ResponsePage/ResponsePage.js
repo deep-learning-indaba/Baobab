@@ -227,7 +227,6 @@ class ResponsePage extends Component {
                 name: tagTranslations
             };
 
-            console.log(newTag)
 
             tagsService.addTag(newTag, this.props.event.id).then(response => {
                 if (response.status == 201) {
@@ -330,49 +329,52 @@ class ResponsePage extends Component {
     renderReviews() {
 
         if (this.state.applicationData) {
-            const reviews = this.state.applicationData.reviewers.map((val, index) => {
-                let num = index + 1;
-                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
-                if (!val) {
-                    return <div
-                        className="add-reviewer"
-                        key={index}
-                    >
-                        <button
-                            data-toggle="modal"
-                            type="button"
-                            data-target="#exampleModalReview"
-                            className="btn btn-light">
-                            Assign Reviewer
-                            </button>
-                    </div>
-                }
-                else {
-                    return <div className="reviewer">
-                        <label>{"Reviewer" + num}</label>
-                        <div>
-                            <p>{val.user_title} {val.firstname} {val.lastname}</p>
-                            
-                            {val.completed ? <p className="review-completed">Completed</p>
-                                :
-                                <p
-                                    className="review-incompleted" >
-                                    Incomplete
-                                 <button
-                                        className="trash-review"
-                                        onClick={(e) => this.removeReview(val.reviewer_user_id)} >
-                                        <i className="far fa-trash-alt"></i>
-                                    </button>
-
-                                </p>
-                            }
+            if (this.state.applicationData.reviewers) {
+                const reviews = this.state.applicationData.reviewers.map((val, index) => {
+                    let num = index + 1;
+                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
+                    if (!val) {
+                        return <div
+                            className="add-reviewer"
+                            key={index}
+                        >
+                            <button
+                                data-toggle="modal"
+                                type="button"
+                                data-target="#exampleModalReview"
+                                className="btn btn-light">
+                                Assign Reviewer
+                                </button>
                         </div>
-                    </div>
-                };
-            });
-
-            return reviews
-        };
+                    }
+                    else {
+                        return <div className="reviewer">
+                            <label>{"Reviewer" + num}</label>
+                            <div>
+                                <p>{val.user_title} {val.firstname} {val.lastname}</p>
+                                
+                                {val.completed ? <p className="review-completed">Completed</p>
+                                    :
+                                    <p
+                                        className="review-incompleted" >
+                                        Incomplete
+                                     <button
+                                            className="trash-review"
+                                            onClick={(e) => this.removeReview(val.reviewer_user_id)} >
+                                            <i className="far fa-trash-alt"></i>
+                                        </button>
+    
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    };
+                });
+    
+                return reviews
+            };
+            }
+        
     };
 
     // Remove Reviewer
