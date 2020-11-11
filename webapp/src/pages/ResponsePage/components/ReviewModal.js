@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { reviewService } from '../../../services/reviews/review.service';
+
 
 class ReviewModal extends Component {
     constructor(props) {
@@ -10,13 +10,6 @@ class ReviewModal extends Component {
     };
 
 
-    renderReviewers() {
-        reviewService.getReviewAssignments(this.props.event.id).then(response => {
-            console.log(response)
-        })
-    }
-
-
     handleSelect(reviewer) {
         const updateReviews = this.state.selectedReviews;
         
@@ -25,19 +18,19 @@ class ReviewModal extends Component {
         }
         else {
             updateReviews.push(reviewer)
-        }
+        };
 
         this.setState({
             selectedReviews: updateReviews
-        })
-    }
+        });
+    };
 
 
 
     renderModal() {
         const { selectedReviews } = this.state;
         
-        const { reviewers, handlePost, t } = this.props
+        const { reviewers, handlePost, t } = this.props;
        
 
         if (this.props.event) {
@@ -90,8 +83,8 @@ class ReviewModal extends Component {
                     </div>
                 </div>
             )
-        }
-    }
+        };
+    };
 
 
     render() {
@@ -101,7 +94,7 @@ class ReviewModal extends Component {
                 {modal}
             </div>
         )
-    }
-}
+    };
+};
 
 export default ReviewModal

@@ -1,11 +1,11 @@
 /* Universal */
-.table-wrapper {
+.table-wrapper.response-page {
     width: 87vw;
     margin-top: 20px;
 }
 
 
-.table-wrapper h2 {
+.table-wrapper.response-page h2 {
     color: hsl(0, 0%, 25%);
     font-weight: 300;
     margin-top: 2px;
@@ -32,12 +32,12 @@ label {
 }
 
 
-.table-wrapper .btn-primary {
-    background: hsl(208deg 84% 59%);
+.table-wrapper.response-page .btn-primary {
+    background: hsl(208deg, 84%, 59%);
     border: none;
+    outline: none;
     width: 100%;
     color: white;
-    border: 1px solid lightgrey;
 }
 
 
@@ -62,7 +62,7 @@ label {
     justify-content: space-between;
     margin-top: 8px;
     flex-wrap: wrap;
-    padding: 10px 15px;
+    padding: 2%;
     box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
     border-radius: 4px;
 }
@@ -98,11 +98,17 @@ html .headings-lower label {
     margin: 0;
 }
 
+.tags .btn-light {
+    font-size: 13px;
+    background: hsl(0deg 0% 100%);
+    border: 1px solid hsl(0deg, 1%, 74%);
+}
+
 .badge {
     margin: 2px;
 }
 
-.badge-info.dark {
+.badge-info {
     background: hsl(188deg, 100%, 23%);
     font-size: 14px;
 }
@@ -200,6 +206,7 @@ html .headings-lower label {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    margin: 12px 0;
 }
 
 .reviewers-section .list .reviewer {
@@ -296,6 +303,14 @@ font-size: 15px;
 
 .review-select.active p {
     color: hsl(0, 0%, 100%);
+}
+
+.review-completed {
+    color: hsl(120, 41%, 47%);
+}
+
+.review-incompleted {
+color: hsl(0, 64%, 61%);
 }
 
 /* Response Details Section and Sub-Sections */

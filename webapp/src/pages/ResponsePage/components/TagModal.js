@@ -12,15 +12,15 @@ class TagModal extends Component {
     handleSubmit() {
         const { tags } = this.state;
         this.props.postTag(tags);
-        // clear inout fields
+        // clear input fields
         Array.from(document.querySelectorAll("input")).forEach(
             input => (input.value = "")
           );
   
         this.setState({
             tags: {}
-        })
-    }
+        });
+    };
 
 
     handleChange(event, label) {
@@ -36,8 +36,8 @@ class TagModal extends Component {
       
         this.setState({
             tags: addTags
-        })
-    }
+        });
+    };
 
 
     renderTagModal() {
@@ -87,8 +87,8 @@ class TagModal extends Component {
                     </div>
                 </div>
             )
-        }
-    }
+        };
+    };
 
 
     render() {
@@ -98,7 +98,7 @@ class TagModal extends Component {
                 {modal}
             </div>
         )
-    }
-}
+    };
+};
 
 export default TagModal
