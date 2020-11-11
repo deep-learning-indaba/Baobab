@@ -305,5 +305,10 @@
     "Save": "Enregistrer",
     "Add Tags": "Ajouter des tags",
     "New tag": "Nouveau tag",
-    "Total Score": "Score Total"
+    "Total Score": "Score Total",
+    "Post": "Publier",
+    "Applications Status": "Statut des applications",
+    "Are you sure you want to delete this reviewer?": "Voulez-vous vraiment supprimer ce réviseur?",
+    "No": "Non"
+
 }
