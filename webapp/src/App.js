@@ -145,6 +145,13 @@ class EventNav extends Component {
                     {t('Invited Guests')}
                   </NavLink>
                   <NavLink
+                    to={`/${this.props.eventKey}/eventConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Event Configuration')}
+                  </NavLink>
+                  <NavLink
                     to={`/${this.props.eventKey}/responseList`}
                     className="dropdown-item"
                     onClick={this.props.toggleMenu}

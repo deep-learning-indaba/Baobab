@@ -11,9 +11,10 @@ class EventConfigComponent extends Component {
     this.state = {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
+      inputValues: null,
       hasBeenUpdated: false,
       loading: true,
-      error: ""
+      error: "",
     };
   }
 
@@ -22,7 +23,7 @@ class EventConfigComponent extends Component {
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
           loading: false,
-          preEvent: result.event,
+          // preEvent: result.event,
           updatedEvent: result.event,
           hasBeenUpdated: false,
           error: result.error
@@ -39,10 +40,12 @@ class EventConfigComponent extends Component {
   };
 
   onClickSubmit = () => {
+    const formatEventRequest = this.state.updatedEvent;
+    this.hasBeenEdited(formatEventRequest);
     // PUT
     eventService.update(this.state.updatedEvent).then(result => {
       this.setState({
-        preEvent: result.event,
+        // preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
         error: result.error
@@ -50,8 +53,15 @@ class EventConfigComponent extends Component {
     });
   };
 
-  hasBeenEdited = () => {
-    let isEdited = false;
+  hasBeenEdited = (newEvent) => {
+  
+    const compare = this.state.updatedEvent != newEvent;
+      this.setState({
+        hasBeenUpdated: compare ? true : false
+      });
+    
+    /*
+     let isEdited = false;
     for (var propname in this.state.preEvent) {
       if (this.state.updatedEvent[propname] !== this.state.preEvent[propname]) {
         isEdited = true;
@@ -60,16 +70,19 @@ class EventConfigComponent extends Component {
     this.setState({
       hasBeenUpdated: isEdited
     });
+    */
   };
 
-  updateEventDetails = (fieldName, e) => {
+  updateEventDetails = (fieldName, key, e) => {
     let u = {
-      ...this.state.updatedEvent,
-      [fieldName]: e.target.value
+      ...this.state.inputValues,
+      [fieldName]: {
+        [key]: e.target.value
+      }
     };
 
     this.setState({
-      updatedEvent: u
+      inputValues: u
     },
       () => this.hasBeenEdited()
     );
@@ -124,14 +137,18 @@ class EventConfigComponent extends Component {
     return (
       <div>
         <div className="card">
+
           <form>
+
             <div className={"form-group row"}>
+
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="organisation_id">
                 {t("Organisation")}
               </label>
 
+              {/* Organisation Name */}
               <div className="col-sm-10">
                 <input
                   readOnly
@@ -143,39 +160,56 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
+            {/* Name */}
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="name">
-                {t("Event Name")}
-              </label>
-
-              <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("name", e)}
-                  type="text"
-                  className="form-control"
-                  id="name"
-                  value={updatedEvent.name}
-                />
+              <div className="d-flex w-100">
+                <label className={"col-sm-2 col-form-label"} htmlFor="name">
+                  {t("Event Name")}
+                </label>
+                <div className="w-100">
+                  {updatedEvent &&
+                    Object.keys(updatedEvent.name).map(val => {
+                      return <div className="col-sm-12 mt-1">
+                        <input
+                          onChange={e => this.updateEventDetails("name", val, e)}
+                          type="text"
+                          className="form-control "
+                          id="name"
+                          placeholder={val}
+                        />
+                      </div>
+                    })
+                  }
+                </div>
               </div>
             </div>
 
+            {/* Description */}
             <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="description">
-                {t("Description")}
-              </label>
-
-              <div className="col-sm-10">
-                <textarea
-                  onChange={e => this.updateEventDetails("description", e)}
-                  className="form-control"
-                  id="description"
-                  value={updatedEvent.description}
-                />
+              <div className="d-flex w-100">
+                <label
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor="description">
+                  {t("Description")}
+                </label>
+                <div className="w-100">
+                  {updatedEvent &&
+                    Object.keys(updatedEvent.description).map(val => {
+                      return <div className="col-sm-12 mt-1">
+                        <textarea
+                          onChange={e => this.updateEventDetails("description", val, e)}
+                          className="form-control"
+                          id="description"
+                          placeholder={val}
+                        />
+                      </div>
+                    })
+                  }
+                </div>
               </div>
             </div>
 
+            {/* Key */}
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="key">
@@ -421,14 +455,18 @@ class EventConfigComponent extends Component {
               </button>
             </div>
 
-            <div className={"col-sm-4 "}>
-              <button
-                onClick={() => this.onClickSubmit()}
-                className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenUpdated}>
-                {t("Update Event")}
-              </button>
-            </div>
+            {hasBeenUpdated &&
+              <div className={"col-sm-4 "}>
+                <button
+                  onClick={() => this.onClickSubmit()}
+                  className="btn btn-success btn-lg btn-block"
+                // disabled={!hasBeenUpdated}
+                >
+                  {t("Update Event")}
+                </button>
+              </div>
+
+            }
 
           </div>
         </div>
