@@ -85,7 +85,7 @@ class ReviewQuestionComponent extends Component {
                         : <p>{this.props.t("NO FILE UPLOADED")}</p>}
                 </div>
             case MULTI_FILE:
-                if (answer.value) {
+                if (answer && answer.value) {
                     const answerFiles = JSON.parse(answer.value);
                     return <div>
                         {answerFiles.map((file, i) => <a key={file.name + `_${i}`} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
