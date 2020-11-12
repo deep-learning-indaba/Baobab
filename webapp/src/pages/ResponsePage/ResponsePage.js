@@ -386,7 +386,7 @@ class ResponsePage extends Component {
     };
 
     removeReviewerService() {
-        const { applicationData, reviewToRemove } = this.state;
+        const { applicationData, reviewToRemove, reviewers } = this.state;
         const updateReviews = this.state.applicationData;
         const { event } = this.props;
 
@@ -400,6 +400,7 @@ class ResponsePage extends Component {
                     if (val) {
                         if (val.reviewer_user_id == reviewToRemove) {
                             updateReviews.reviewers.splice(index, 1);
+                            reviewers.push(val)
                         };
                         
                     };
@@ -418,7 +419,7 @@ class ResponsePage extends Component {
 
     cancelRemoveReviewer() {
         this.setState({
-            removeModalVisible: false,
+            removeReviewerModalVisible: false,
             reviewToRemove: null
         });
     };
@@ -439,6 +440,7 @@ class ResponsePage extends Component {
 
         reviewService.assignReviewer(request).then(response => {
             if (response.status == 201) {
+                console.log(response)
                 // add reviewer to "applicationData" local state
                 data.forEach(val => {
                     updateAssignedReviews.reviewers.unshift({
@@ -527,7 +529,7 @@ class ResponsePage extends Component {
                                 <span onClick={(e) => this.toggleTags(tagMenu)} className={tagMenu && tagList.length || tagMenu && eventLanguages.length
                                     ? "btn btn-light active"
                                     : "btn btn-light add-tags"}>
-                                    Add tag
+                                {t('Add tags')}
                             </span>
                             </div>
 
@@ -573,7 +575,7 @@ class ResponsePage extends Component {
                     <div className="response-details">
                         {/* Reviews */}
                         <div className="reviewers-section">
-                            <h3>Reviewers</h3>
+                        <h3>{t('Reviewers')}</h3>
                             <div className="list">
                                 {this.renderReviews()}
                             </div>

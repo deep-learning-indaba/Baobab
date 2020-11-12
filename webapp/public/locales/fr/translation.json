@@ -309,6 +309,9 @@
     "Post": "Publier",
     "Applications Status": "Statut des applications",
     "Are you sure you want to delete this reviewer?": "Voulez-vous vraiment supprimer ce réviseur?",
-    "No": "Non"
+    "No": "Non",
+    "Assign Reviewer": "Attribuer un réviseur",
+    "Reviews Allocated": "Avis attribués",
+    "Reviews Completed": "Examens terminés"
 
 }

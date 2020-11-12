@@ -309,6 +309,9 @@
     "Post": "Post",
     "Applications Status": "Applications Status",
     "Are you sure you want to delete this reviewer?": "Are you sure you want to delete this reviewer?",
-    "No": "No"
-    
+    "No": "No",
+    "Assign Reviewer": "Assign Reviewer",
+    "Reviews Allocated": "Reviews Allocated",
+    "Reviews Completed": "Reviews Completed"
+
 }

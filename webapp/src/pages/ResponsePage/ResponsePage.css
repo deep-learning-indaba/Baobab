@@ -21,11 +21,11 @@
     text-align: left;
 }
 
-button {
+.table-wrapper.response-page button {
     margin-bottom: 10px;
 }
 
-label {
+.table-wrapper.response-page label {
     font-size: 12px;
     color: grey;
     margin: 0 1px;

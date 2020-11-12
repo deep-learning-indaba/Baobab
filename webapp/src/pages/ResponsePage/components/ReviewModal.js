@@ -10,28 +10,39 @@ class ReviewModal extends Component {
     };
 
 
-    handleSelect(reviewer) {
-        const updateReviews = this.state.selectedReviews;
-        
-        if (updateReviews.includes(reviewer)) {
-            updateReviews.splice(updateReviews.indexOf(reviewer), 1)
-        }
-        else {
-            updateReviews.push(reviewer)
-        };
+    handlePost(reviewers) {
+        this.props.handlePost(reviewers);
 
         this.setState({
-            selectedReviews: updateReviews
+            selectedReviews: []
         });
+    }
+
+    
+
+    handleSelect(reviewer) {
+        const updateReviews = this.state.selectedReviews;
+
+            if (updateReviews.includes(reviewer)) {
+                updateReviews.splice(updateReviews.indexOf(reviewer), 1)
+            }
+            else {
+                updateReviews.push(reviewer)
+            };
+
+            this.setState({
+                selectedReviews: updateReviews
+            });
+        
     };
 
 
 
     renderModal() {
         const { selectedReviews } = this.state;
-        
-        const { reviewers, handlePost, t } = this.props;
-       
+
+        const { reviewers, t } = this.props;
+
 
         if (this.props.event) {
             return (
@@ -52,10 +63,10 @@ class ReviewModal extends Component {
                                         key={val.reviewer_user_id}
                                     >
                                         <label> {val.user_title} {val.firstname} {val.lastname} </label>
-                                        
+
                                         <div>
-                                        <p>Reviews Allocated: {val.reviews_allocated} </p>
-                                        <p>Reviews Completed: {val.reviews_completed} </p>
+                                            <p> {t('Reviews Allocated')} : {val.reviews_allocated} </p>
+                                            <p> {t('Reviews Completed')} : {val.reviews_completed} </p>
                                         </div>
 
                                     </button>
@@ -74,7 +85,7 @@ class ReviewModal extends Component {
                                     type="button"
                                     data-dismiss="modal"
                                     className="btn btn-primary"
-                                    onClick={(e) => handlePost(selectedReviews)}
+                                    onClick={(e) => this.handlePost(selectedReviews)}
                                 >
                                     {t('Post')}
                                 </button>
