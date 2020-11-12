@@ -11,7 +11,7 @@ class EventConfigComponent extends Component {
     this.state = {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
-      inputValues: null,
+      formData: {},
       hasBeenUpdated: false,
       loading: true,
       error: "",
@@ -23,7 +23,7 @@ class EventConfigComponent extends Component {
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
           loading: false,
-          // preEvent: result.event,
+          preEvent: result.event,
           updatedEvent: result.event,
           hasBeenUpdated: false,
           error: result.error
@@ -39,13 +39,13 @@ class EventConfigComponent extends Component {
     });
   };
 
+
+
   onClickSubmit = () => {
-    const formatEventRequest = this.state.updatedEvent;
-    this.hasBeenEdited(formatEventRequest);
     // PUT
     eventService.update(this.state.updatedEvent).then(result => {
       this.setState({
-        // preEvent: result.event,
+        preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
         error: result.error
@@ -53,40 +53,31 @@ class EventConfigComponent extends Component {
     });
   };
 
-  hasBeenEdited = (newEvent) => {
-  
-    const compare = this.state.updatedEvent != newEvent;
-      this.setState({
-        hasBeenUpdated: compare ? true : false
-      });
-    
-    /*
-     let isEdited = false;
-    for (var propname in this.state.preEvent) {
-      if (this.state.updatedEvent[propname] !== this.state.preEvent[propname]) {
-        isEdited = true;
-      }
-    }
+
+  hasBeenEdited = () => {
+    const { updatedEvent, preEvent } = this.state;
+
+    const valdiate = updatedEvent !== preEvent;
+
     this.setState({
-      hasBeenUpdated: isEdited
+      hasBeenUpdated: valdiate ? true : false
     });
-    */
   };
+
 
   updateEventDetails = (fieldName, key, e) => {
     let u = {
-      ...this.state.inputValues,
+      ...this.state.updatedEvent,
       [fieldName]: {
         [key]: e.target.value
       }
-    };
+    }
 
     this.setState({
-      inputValues: u
-    },
-      () => this.hasBeenEdited()
-    );
+      updatedEvent: u
+    }, () => this.hasBeenEdited())
   };
+
 
   updateDateTimeEventDetails = (fieldName, value) => {
     let u = {
@@ -101,11 +92,13 @@ class EventConfigComponent extends Component {
     );
   };
 
+
   render() {
     const {
       loading,
       error,
       updatedEvent,
+      preEvent,
       hasBeenUpdated
     } = this.state;
 
@@ -167,8 +160,8 @@ class EventConfigComponent extends Component {
                   {t("Event Name")}
                 </label>
                 <div className="w-100">
-                  {updatedEvent &&
-                    Object.keys(updatedEvent.name).map(val => {
+                  {preEvent &&
+                    Object.keys(preEvent.name).map(val => {
                       return <div className="col-sm-12 mt-1">
                         <input
                           onChange={e => this.updateEventDetails("name", val, e)}
@@ -193,8 +186,8 @@ class EventConfigComponent extends Component {
                   {t("Description")}
                 </label>
                 <div className="w-100">
-                  {updatedEvent &&
-                    Object.keys(updatedEvent.description).map(val => {
+                  {preEvent &&
+                    Object.keys(preEvent.description).map(val => {
                       return <div className="col-sm-12 mt-1">
                         <textarea
                           onChange={e => this.updateEventDetails("description", val, e)}
@@ -255,220 +248,273 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="start_date">
-                {t("Start Date")}
-              </label>
 
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("start_date", e)}
-                  value={new Date(updatedEvent.start_date)} />
+            {/* Date Picker Section */}
+            <div className="date-picker-section">
+
+              {/*Item*/}
+              <div className="date-item col-sm-6">
+                <div className="col-sm-6">
+                  <label className={"col-form-label"} htmlFor="start_date">
+                    {t("Start Date")}
+                  </label>
+
+                  <div>
+                    <DateTimePicker
+                      clearIcon={null}
+                      disableClock={true}
+                      onChange={e =>
+                        this.updateDateTimeEventDetails("start_date", e)}
+                      value={new Date(updatedEvent.start_date)} />
+                  </div>
+                </div>
+
+                <div className="col-sm-6">
+                  <label className={"col-form-label"} htmlFor="end_date">
+                    {t("End Date")}
+                  </label>
+
+                  <div >
+                    <DateTimePicker
+                      clearIcon={null}
+                      disableClock={true}
+                      onChange={e => this.updateDateTimeEventDetails("end_date", e)}
+                      value={new Date(updatedEvent.end_date)} />
+                  </div>
+                </div>
               </div>
 
-              <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
-                {t("End Date")}
-              </label>
+              {/*Item*/}
+              <div className="date-item col-sm-6">
 
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e)}
-                  value={new Date(updatedEvent.end_date)} />
+                <div className="col-sm-6">
+
+                </div>
+                <div className="col-sm-6">
+
+                </div>
+                <label
+                  className={"col-form-label"}
+                  htmlFor="application_open">
+                  {t("Application Open")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("application_open", e)}
+                    value={new Date(updatedEvent.application_open)} />
+                </div>
+
+                <label
+                  className={" col-form-label"}
+                  htmlFor="application_close"
+                >
+                  {t("Application Close")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("application_close", e)
+                    }
+                    value={new Date(updatedEvent.application_close)} />
+                </div>
+              </div>
+
+              {/*Item*/}
+              <div className="date-item col-sm-6">
+
+                <div className="col-sm-6">
+
+                </div>
+                <div className="col-sm-6">
+
+                </div>
+                <label
+                  className={"col-form-label"}
+                  htmlFor="review_open">
+                  {t("Review Open")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("review_open", e)}
+                    value={new Date(updatedEvent.review_open)} />
+                </div>
+
+                <label
+                  className={"col-form-label"}
+                  htmlFor="review_close">
+                  {t("Review Close")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("review_close", e)}
+                    value={new Date(updatedEvent.review_close)} />
+                </div>
+              </div>
+
+              {/*Item*/}
+              <div className="date-item col-sm-6">
+
+                <div className="col-sm-6">
+
+                </div>
+                <div className="col-sm-6">
+
+                </div>
+                <label
+                  className={"col-form-label"}
+                  htmlFor="selection_open">
+                  {t("Selection Open")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("selection_open", e)}
+                    value={new Date(updatedEvent.selection_open)} />
+                </div>
+
+                <label
+                  className={"col-form-label"}
+                  htmlFor="selection_close">
+                  {t("Selection Close")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("selection_close", e)}
+                    value={new Date(updatedEvent.selection_close)} />
+                </div>
+              </div>
+
+              {/*Item*/}
+              <div className="date-item col-sm-6">
+
+                <div className="col-sm-6">
+
+                </div>
+                <div className="col-sm-6">
+
+                </div>
+                <label className={"col-form-label"} htmlFor="offer_open">
+                  {t("Offer Open")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("offer_open", e)}
+                    value={new Date(updatedEvent.offer_open)} />
+                </div>
+
+                <label
+                  className={"col-form-label"}
+                  htmlFor="offer_close">
+                  {t("Offer Close")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("offer_close", e)}
+                    value={new Date(updatedEvent.offer_close)} />
+                </div>
+              </div>
+
+              {/*Item*/}
+              <div className="date-item col-sm-6">
+
+                <div className="col-sm-6">
+
+                </div>
+                <div className="col-sm-6">
+
+                </div>
+                <label
+                  className={"col-form-label"}
+                  htmlFor="registration_open">
+                  {t("Registration Open")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("registration_open", e)}
+                    value={new Date(updatedEvent.registration_open)} />
+                </div>
+
+                <label
+                  className={"col-form-label"}
+                  htmlFor="registration_close">
+                  {t("Registration Close")}
+                </label>
+
+                <div >
+                  <DateTimePicker
+                    clearIcon={null}
+                    disableClock={true}
+                    onChange={e =>
+                      this.updateDateTimeEventDetails("registration_close", e)}
+                    value={new Date(updatedEvent.registration_close)}
+                  />
+                </div>
               </div>
             </div>
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="application_open">
-                {t("Application Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("application_open", e)}
-                  value={new Date(updatedEvent.application_open)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="application_close"
-              >
-                {t("Application Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("application_close", e)
-                  }
-                  value={new Date(updatedEvent.application_close)} />
-              </div>
-
-            </div>
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="review_open">
-                {t("Review Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_open", e)}
-                  value={new Date(updatedEvent.review_open)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="review_close">
-                {t("Review Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_close", e)}
-                  value={new Date(updatedEvent.review_close)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="selection_open">
-                {t("Selection Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_open", e)}
-                  value={new Date(updatedEvent.selection_open)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="selection_close">
-                {t("Selection Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_close", e)}
-                  value={new Date(updatedEvent.selection_close)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="offer_open">
-                {t("Offer Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_open", e)}
-                  value={new Date(updatedEvent.offer_open)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="offer_close">
-                {t("Offer Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_close", e)}
-                  value={new Date(updatedEvent.offer_close)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="registration_open">
-                {t("Registration Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_open", e)}
-                  value={new Date(updatedEvent.registration_open)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="registration_close">
-                {t("Registration Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_close", e)}
-                  value={new Date(updatedEvent.registration_close)}
-                />
-              </div>
-            </div>
           </form>
 
           <hr></hr>
 
-          <div className={"form-group row"}>
-            <div className={"col-sm-4 ml-md-auto"}>
-              <button
-                className="btn btn-danger btn-lg btn-block"
-                onClick={() => this.onClickCancel()} >
-                {t("Cancel")}
-              </button>
-            </div>
+          {hasBeenUpdated &&
+            <div className={"form-group row"}>
+              <div className={"col-sm-4 ml-md-auto"}>
+                <button
+                  className="btn btn-danger btn-lg btn-block"
+                  onClick={() => this.onClickCancel()} >
+                  {t("Cancel")}
+                </button>
+              </div>
 
-            {hasBeenUpdated &&
+
               <div className={"col-sm-4 "}>
                 <button
                   onClick={() => this.onClickSubmit()}
                   className="btn btn-success btn-lg btn-block"
-                // disabled={!hasBeenUpdated}
+                  disabled={!hasBeenUpdated}
                 >
                   {t("Update Event")}
                 </button>
               </div>
+            </div>
 
-            }
 
-          </div>
+          }
+
         </div>
       </div>
     );

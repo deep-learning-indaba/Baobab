@@ -11,6 +11,18 @@
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
 }
+
 .body {
   padding-top: 0em;
 }
+
+/* Date Pickers Section */
+.date-picker-section {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.date-item {
+  display: flex;
+}
+
