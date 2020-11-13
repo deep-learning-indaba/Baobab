@@ -30,7 +30,8 @@ answer_fields = {
     'id': fields.Integer,
     'question_id': fields.Integer,
     'question': fields.String(attribute='question.headline'),
-    'value': fields.String(attribute='value_display')
+    'value': fields.String(attribute='value_display'),
+    'question_type': fields.String(attribute='question.type')
 }
 
 response_fields = {
@@ -177,6 +178,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
     @auth_required
+    @marshal_with(review_response_fields)
     def post(self):
         args = self.post_req_parser.parse_args()
         validation_result = self.validate_scores(args['scores'])
@@ -200,9 +202,10 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
             review_response.submit()
         review_repository.add_model(review_response)
 
-        return {}, 201
+        return review_response, 201
 
     @auth_required
+    @marshal_with(review_response_fields)
     def put(self):
         args = self.post_req_parser.parse_args()
         validation_result = self.validate_scores(args['scores'])
@@ -229,7 +232,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
             review_response.submit()
         db.session.commit()
 
-        return {}, 200
+        return review_response, 200
 
     
     def get_review_scores(self, scores):
