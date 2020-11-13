@@ -72,11 +72,13 @@ function submit(responseId, reviewFormId, scores, shouldUpdate, isSubmitted) {
   return promise
     .then(function(response) {
       return {
+        reviewResponse: response.data,
         error: ""
       };
     })
     .catch(function(error) {
       return {
+        reviewResponse: null,
         error:
           error.response && error.response.data
             ? error.response.data.message

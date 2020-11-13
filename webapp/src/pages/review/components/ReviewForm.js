@@ -24,6 +24,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const MULTI_FILE = "multi-file";
 const SECTION_DIVIDER = "section-divider";
+const HEADING = "heading";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -72,27 +73,34 @@ class ReviewQuestionComponent extends Component {
                     />
                   );
             case INFORMATION:
-                return (
-                    <p>{answer && answer.value && answer.value.trim() 
-                            ? <Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify> 
-                            : this.props.t("No Answer Provided")}
-                    </p>
-                )
+                if (answer && answer.type === "information") {
+                    return "";
+                }
+                if (answer && answer.value && answer.value.trim()) {
+                    return (
+                        <p className="answer"><Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify></p>
+                    );
+                }
+                return <p className="answer">{this.props.t("No Answer Provided")}</p>
+            case HEADING:
+                return "";
             case FILE:
-                return <div>
+                return <div className="answer">
                     {answer && answer.value && answer.value.trim()
-                        ? <a href={baseUrl + "/api/v1/file?filename=" + answer.value}>{this.props.t("View File")}</a>
+                        ? <div><a href={baseUrl + "/api/v1/file?filename=" + answer.value} target="_blank">{this.props.t("View File")}</a><br/><span className="small-text">*{this.props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span></div>
                         : <p>{this.props.t("NO FILE UPLOADED")}</p>}
                 </div>
             case MULTI_FILE:
                 if (answer && answer.value) {
                     const answerFiles = JSON.parse(answer.value);
-                    return <div>
-                        {answerFiles.map((file, i) => <a key={file.name + `_${i}`} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a>)}
+                    return <div className="answer">
+                        {answerFiles.map((file, i) => <div><a key={file.name + `_${i}`} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)}
+                        <br/>
+                        <span className="small-text">*{this.props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
                     </div> 
                 }
                 else {
-                    return <p>{this.props.t("NO FILE UPLOADED")}</p>;
+                    return <p className="answer">{this.props.t("NO FILE UPLOADED")}</p>;
                 }
                 
             case CHECKBOX:
@@ -150,7 +158,6 @@ class ReviewQuestionComponent extends Component {
         if (model.answer) {
             return model.answer.question;
         }
-        return "No Headline";
     }
 
     linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
@@ -159,7 +166,7 @@ class ReviewQuestionComponent extends Component {
         if (model.question.type === SECTION_DIVIDER) {
             return <div><hr/><h3>{this.getHeadline(model)}</h3></div>;
         }
-        else if (model.question.type === INFORMATION || model.question.type === FILE || model.question.type === MULTI_FILE) {
+        else if (model.question.type === INFORMATION || model.question.type === FILE || model.question.type === MULTI_FILE || model.question.type === HEADING) {
             return <h5>{this.getHeadline(model)}</h5>;
         }
         else {
@@ -168,8 +175,13 @@ class ReviewQuestionComponent extends Component {
     }
 
     render() {
-        const className = (this.props.model.question.type === INFORMATION || this.props.model.question.type === FILE || this.props.model.question.type === MULTI_FILE)
-            ? "question information" : "question";
+        let className = "question";
+        if (this.props.model.question.type === INFORMATION || this.props.model.question.type === FILE || this.props.model.question.type === MULTI_FILE || this.props.model.question.type === HEADING) {
+            className = className + " information";
+        }
+        else if (this.props.model.question.type !== SECTION_DIVIDER) {
+            className = className + " review";
+        }
 
         return (
             <div className={className}>
@@ -207,7 +219,8 @@ class ReviewForm extends Component {
             currentSkip: 0,
             flagModalVisible: false,
             flagValue: "",
-            totalScore: 0
+            totalScore: 0,
+            stale: false
         }
 
     }
@@ -247,7 +260,8 @@ class ReviewForm extends Component {
             isSubmitting: false,
             flagModalVisible: false,
             flagValue: "",
-            totalScore: totalScore
+            totalScore: totalScore,
+            stale: false
         }, () => {
             window.scrollTo(0, 0);
         });
@@ -300,16 +314,18 @@ class ReviewForm extends Component {
         this.setState({
             questionModels: newQuestionModels,
             validationStale: true,
-            totalScore: totalScore
+            totalScore: totalScore,
+            stale: true,
+            saveSuccess: false
         });
     }
 
-    validate = (questionModel, updatedScore) => {
+    validate = (questionModel, updatedScore, checkRequired) => {
         let errors = [];
         const question = questionModel.question;
         const score = updatedScore || questionModel.score;
 
-        if (question.is_required && (!score || !score.value)) {
+        if (checkRequired && question.is_required && (!score || !score.value)) {
             errors.push(this.props.t("An answer/rating is required."));
         }
 
@@ -323,11 +339,11 @@ class ReviewForm extends Component {
         return errors.join("; ");
     };
 
-    isValidated = () => {
+    isValidated = (checkRequired) => {
         const validatedModels = this.state.questionModels.map(q => {
             return {
                 ...q,
-                validationError: this.validate(q)
+                validationError: this.validate(q, null, checkRequired)
             };
         });
 
@@ -346,34 +362,51 @@ class ReviewForm extends Component {
 
     save = () => {
         const scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
-        this.setState({
-            isSubmitting: true
-        }, () => {
-            const shouldUpdate = this.state.form.review_response;
-            reviewService
-                .submit(
-                    this.state.form.response.id,
-                    this.state.form.review_form.id,
-                    scores,
-                    shouldUpdate,
-                    false)
-                .then(response => {
-                    if (response.error) {
-                        this.setState({
-                            error: response.error,
-                            isSubmitting: false
-                        });
-                    }
-                    else {
-                        this.loadForm();
-                    }
-                });
-        });
+        if (this.isValidated(false)) {
+            this.setState({
+                isSubmitting: true,
+                saveValidationFailed: false
+            }, () => {
+                const shouldUpdate = this.state.form.review_response;
+                reviewService
+                    .submit(
+                        this.state.form.response.id,
+                        this.state.form.review_form.id,
+                        scores,
+                        shouldUpdate,
+                        false)
+                    .then(response => {
+                        if (response.error) {
+                            this.setState({
+                                error: response.error,
+                                isSubmitting: false,
+                                saveError: response.error
+                            });
+                        }
+                        else {
+                            this.setState({
+                                saveSuccess: true,
+                                stale: false,
+                                isSubmitting: false,
+                                form: {
+                                    ...this.state.form,
+                                    review_response: response.reviewResponse
+                                }
+                            });
+                        }
+                    });
+            });
+        }
+        else {
+            this.setState({
+                saveValidationFailed: true
+            });
+        }
     }
 
     submit = () => {
         let scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
-        if (this.isValidated()) {
+        if (this.isValidated(true)) {
             this.setState({
                 isSubmitting: true
             }, () => {
@@ -552,14 +585,15 @@ class ReviewForm extends Component {
 
                 <hr />
                 <div>
-                    {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with event admins outside of the system.")}
+                    {t("Response ID")}: <span className="font-weight-bold">{form.response.id}</span> - {t("Please quote this in any correspondence with admins outside of the system.")}
                 </div>
 
                 <hr />
 
-                <div className="text-center">
+                <div className="floating-bar">
                     <button disabled={isSubmitting} 
-                        className="btn btn-info"
+                        className={"btn btn-info"}
+                        disabled={!this.state.stale}
                         onClick={this.save}>
                             {isSubmitting && (
                                 <span
@@ -570,6 +604,25 @@ class ReviewForm extends Component {
                             )}
                             {t("Save for later")}
                     </button>
+
+                    {this.state.saveValidationFailed && 
+                        <span className="save-validation-failed alert alert-danger">
+                            <i class="fa fa-exclamation"/> {this.props.t("Please fix validation errors before saving")}
+                        </span>
+                    }
+
+                    {this.state.saveSuccess && 
+                        <span className="save-validation-failed alert alert-success">
+                            {this.props.t("Saved")}
+                        </span>
+                    }
+
+                    {this.state.saveError && 
+                         <span className="save-validation-failed alert alert-danger">
+                            <i class="fa fa-exclamation"/> {this.state.saveError}
+                        </span>
+                    }
+
                 </div>
 
                 <div class="buttons">
