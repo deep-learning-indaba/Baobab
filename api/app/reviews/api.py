@@ -16,7 +16,7 @@ from app.reviews.repository import ReviewConfigurationRepository as review_confi
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -155,6 +155,29 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             skip = reviews_remaining_count - 1
         
         return skip
+
+class ResponseReviewAPI(restful.Resource):
+    @auth_required
+    @marshal_with(review_fields)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('response_id', type=int, required=True)
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+
+        response_id = args['response_id']
+        event_id = args['event_id']
+
+        review_form = review_repository.get_review_form(event_id)
+        response = review_repository.get_response_by_reviewer(response_id, g.current_user['id'])
+
+        if response is None:
+            return RESPONSE_NOT_FOUND
+
+        review_response = review_repository.get_review_response(review_form.id, response_id, g.current_user['id'])
+
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
 
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):

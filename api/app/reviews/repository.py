@@ -160,6 +160,14 @@ class ReviewRepository():
         return review_response
 
     @staticmethod
+    def get_response_by_reviewer(response_id, reviewer_user_id):
+        return (db.session.query(Response)
+                    .filter_by(id=response_id)
+                    .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                    .filter_by(ResponseReviewer.reviewer_user_id=reviewer_user_id)
+                    .first())
+
+    @staticmethod
     def add_model(model):
         db.session.add(model)
         db.session.commit()
