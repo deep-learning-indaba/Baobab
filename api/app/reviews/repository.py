@@ -175,6 +175,16 @@ class ReviewRepository():
         return reviews
 
     @staticmethod
+    def get_review_list(reviewer_user_id, event_id):
+        reviews = (db.session.query(Response, ReviewResponse)                        
+                        .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                        .filter_by(reviewer_user_id=reviewer_user_id)
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                        .filter_by(event_id=event_id)
+                        .outerjoin(ReviewResponse, Response.id == ReviewResponse.response_id))
+        return reviews
+
+    @staticmethod
     def get_review_history_count(reviewer_user_id, application_form_id):
         count = (db.session.query(ReviewResponse)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)

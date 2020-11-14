@@ -434,3 +434,52 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         reviews = [ReviewHistoryModel(review) for review in reviews]
         return {'reviews': reviews, 'num_entries': num_entries, 'current_pagenumber': page_number, 'total_pages': total_pages}
+
+class ReviewListAPI(restful.Resource):
+
+    @staticmethod
+    def _serialize_answer(answer, language):
+        translation = answer.question.get_translation(language)
+        if not translation:
+            translation = answer.question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
+        return {
+            'headline': translation.headline,
+            'value': answer.value_display
+        }
+
+    @staticmethod
+    def _serialize_response(response, review_response, language):
+        info = [
+            ReviewListAPI._serialize_answer(answer, language)
+            for answer in response.answers if answer.question.key == 'review-identifier']
+
+        submitted = None
+        if review_response and review_response.submitted_timestamp:
+            submitted = review_response.submitted_timestamp.isoformat()
+
+        return {
+            'response_id': response.id,
+            'language': response.language,
+            'information': info,
+            'started': review_response is not None,
+            'submitted': submitted
+        }
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+        language = args['language']
+        
+        if not user_repository.get_by_id(user_id).is_reviewer(event_id):
+            return FORBIDDEN
+
+        responses_to_review = review_repository.get_review_list(user_id, event_id)
+
+        return [ReviewListAPI._serialize_response(response, review_response, language)
+                for response, review_response in responses_to_review]
