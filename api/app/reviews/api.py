@@ -16,7 +16,7 @@ from app.reviews.repository import ReviewConfigurationRepository as review_confi
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -170,6 +170,9 @@ class ResponseReviewAPI(restful.Resource):
         event_id = args['event_id']
 
         review_form = review_repository.get_review_form(event_id)
+        if review_form is None:
+            return REVIEW_FORM_NOT_FOUND
+
         response = review_repository.get_response_by_reviewer(response_id, g.current_user['id'])
 
         if response is None:
