@@ -51,11 +51,11 @@ class ReviewListComponent extends Component {
             .getReviewList(this.props.event ? this.props.event.id : 0)
             .then(response => {
                 const result = this.processReviewList(response.reviewList);
-
+                const sortedReviewList = result.reviewList.sort((a, b) => a.response_id - b.response_id);
                 this.setState({
                     isLoading: false,
-                    originalReviewList: result.reviewList,
-                    reviewList: result.reviewList,
+                    originalReviewList: sortedReviewList,
+                    reviewList: sortedReviewList,
                     infoColumns: result.columns,
                     error: response.error,
                     numReviews: result.numReviews,
@@ -133,7 +133,7 @@ class ReviewListComponent extends Component {
         }
 
         const actionCell = props => {
-            let reviewLink = `${this.props.event.key}/review/${props.original.response_id}`
+            let reviewLink = `/${this.props.event.key}/review/${props.original.response_id}`
             if (props.original.started && props.original.submitted) {
                 return <Link to={reviewLink}>{this.props.t("Edit")}</Link>;
             }

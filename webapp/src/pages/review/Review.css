@@ -85,4 +85,12 @@
 .review-form-container .save-validation-failed {
     position: absolute;
     margin-left: 2em;
+    margin-top: 7px;
+}
+
+.review-form-container .return-to-list {
+    position: absolute;
+    left: 10;
+    margin-left: 100px;
+    margin-top: 7px;
 }

@@ -68,9 +68,9 @@ class ReviewHistoryComponent extends Component {
     const columns = [
       {
         Header: " ",
-        accessor: "review_response_id",
+        accessor: "response_id",
         Cell: row => {
-          return <Link to={"review/" + row.row.review_response_id}>
+          return <Link to={"review/" + row.row.response_id}>
             <i className="fa fa-edit"></i></Link>
         },
         filterable: false

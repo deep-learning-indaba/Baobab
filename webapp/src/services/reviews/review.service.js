@@ -11,7 +11,8 @@ export const reviewService = {
   assignReviews,
   getReviewSummary,
   getReviewHistory,
-  getReviewList
+  getReviewList,
+  getResponseReview
 };
 
 function getReviewForm(eventId, skip) {
@@ -39,6 +40,28 @@ function getReviewForm(eventId, skip) {
 function getReviewResponse(id) {
   return axios
     .get(baseUrl + "/api/v1/reviewresponse?id=" + id, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        form: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        form: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function getResponseReview(responseId, eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/responsereview?response_id=${responseId}&event_id=${eventId}`, {
       headers: authHeader()
     })
     .then(function(response) {
