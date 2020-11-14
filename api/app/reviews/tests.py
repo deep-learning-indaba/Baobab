@@ -1258,7 +1258,6 @@ class ReviewListAPITest(ApiTestCase):
         user4 = self.add_user('user4@mail.com')
 
         application_form1 = self.create_application_form(self.event1.id)
-        review_form1 = self.add_review_form(application_form1.id)
         section1 = self.add_section(application_form1.id)
         question1 = self.add_question(application_form1.id, section1.id)
         question1.key = 'review-identifier'
@@ -1271,6 +1270,11 @@ class ReviewListAPITest(ApiTestCase):
         question3 = self.add_question(application_form1.id, section1.id)
         self.add_question_translation(question3.id, 'en', 'Headline 3 EN')
         self.add_question_translation(question3.id, 'fr', 'Headline 3 FR')
+
+        review_form1 = self.add_review_form(application_form1.id)
+        review_q1 = self.add_review_question(review_form1.id, weight=1)
+        review_q2 = self.add_review_question(review_form1.id, weight=0)
+        review_q3 = self.add_review_question(review_form1.id, weight=1)
 
         application_form2 = self.create_application_form(self.event2.id)
         review_form2 = self.add_review_form(application_form2.id)
@@ -1303,11 +1307,15 @@ class ReviewListAPITest(ApiTestCase):
         self.add_response_reviewer(event1_response1.id, self.reviewer1.id)
         review_response1 = self.add_review_response(self.reviewer1.id, event1_response1.id, review_form1.id)
         review_response1.submit()
+        self.add_review_score(review_response1.id, review_q1.id, 10.5)
+        self.add_review_score(review_response1.id, review_q2.id, 100)
+        self.add_review_score(review_response1.id, review_q3.id, 'Hello world')
 
         # Reviewer 1 incomplete review
         self.review_response1_submitted = review_response1.submitted_timestamp.isoformat()
         self.add_response_reviewer(event1_response2.id, self.reviewer1.id)
         review_response2 = self.add_review_response(self.reviewer1.id, event1_response2.id, review_form1.id)
+        self.add_review_score(review_response2.id, review_q1.id, 13)
 
         # Reviewer 1 not started review
         self.add_response_reviewer(event1_response3.id, self.reviewer1.id)
@@ -1340,6 +1348,7 @@ class ReviewListAPITest(ApiTestCase):
         self.assertEqual(data[0]['information'][1]['value'], 'Second answer')
         self.assertTrue(data[0]['started'])
         self.assertEqual(data[0]['submitted'], self.review_response1_submitted)
+        self.assertEqual(data[0]['total_score'], 10.5)
 
         self.assertEqual(data[1]['response_id'], 2)
         self.assertEqual(data[1]['language'], 'fr')
@@ -1350,6 +1359,7 @@ class ReviewListAPITest(ApiTestCase):
         self.assertEqual(data[1]['information'][1]['value'], 'Fifth answer')
         self.assertTrue(data[1]['started'])
         self.assertIsNone(data[1]['submitted'])
+        self.assertEqual(data[1]['total_score'], 13)
 
         self.assertEqual(data[2]['response_id'], 3)
         self.assertEqual(data[2]['language'], 'en')
@@ -1360,3 +1370,4 @@ class ReviewListAPITest(ApiTestCase):
         self.assertEqual(data[2]['information'][1]['value'], 'Eigth answer')
         self.assertFalse(data[2]['started'])
         self.assertIsNone(data[2]['submitted'])
+        self.assertEqual(data[2]['total_score'], 0.0)

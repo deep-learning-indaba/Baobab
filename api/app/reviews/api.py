@@ -463,7 +463,8 @@ class ReviewListAPI(restful.Resource):
             'language': response.language,
             'information': info,
             'started': review_response is not None,
-            'submitted': submitted
+            'submitted': submitted,
+            'total_score': review_response.calculate_score() if review_response is not None else 0.0
         }
 
     @auth_required
