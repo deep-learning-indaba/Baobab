@@ -101,12 +101,14 @@ class ReviewListComponent extends Component {
             {
                 Header: "ID",
                 accessor: "response_id",
-                filterable: false
+                filterable: false,
+                width: 100
             },
             {
                 Header: this.props.t("Language"),
                 accessor: "language",
-                filterable: false
+                filterable: false,
+                width: 100
             }
         ];
 
@@ -161,14 +163,16 @@ class ReviewListComponent extends Component {
             id: "score",
             Header: this.props.t("Total Score"),
             accessor: "total_score",
-            Cell: totalScoreCell
+            Cell: totalScoreCell,
+            width: 100
         });
 
         columns.push({
             id: "action",
             Header: this.props.t("Action"),
             accessor: r => r.response_id,
-            Cell: actionCell
+            Cell: actionCell,
+            width: 100
         });
 
         return (
