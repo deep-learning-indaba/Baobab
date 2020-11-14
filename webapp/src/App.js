@@ -170,7 +170,7 @@ class EventNav extends Component {
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
-                      to={`/${this.props.eventKey}/review`}
+                      to={`/${this.props.eventKey}/reviewlist`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >

@@ -10,7 +10,8 @@ export const reviewService = {
   getReviewAssignments,
   assignReviews,
   getReviewSummary,
-  getReviewHistory
+  getReviewHistory,
+  getReviewList
 };
 
 function getReviewForm(eventId, skip) {
@@ -187,6 +188,32 @@ function getReviewHistory(
     .catch(function(error) {
       return {
         reviewHistory: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+
+function getReviewList(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewlist?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        reviewList: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewList: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
