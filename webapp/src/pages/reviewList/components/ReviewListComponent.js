@@ -122,8 +122,8 @@ class ReviewListComponent extends Component {
         
         const statusCell = props => {
             if (props.original.started && props.original.submitted) {
-                return <span class="badge badge-success">{this.props.t("Submitted")} {Date.parse(props.original.submitted)}</span>;
-            }
+                return <div><span class="badge badge-success">{this.props.t("Submitted")}</span> <span className="submitted-date">{(new Date(props.original.submitted)).toLocaleString("en-GB")}</span></div>;
+            }  
             if (props.original.started) {
                 return <span class="badge badge-warning">{this.props.t("In Progress")}</span>;
             }

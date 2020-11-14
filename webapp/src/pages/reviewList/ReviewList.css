@@ -26,3 +26,7 @@
 .review-list-container .checkbox-top {
     text-align: left;
 }
+
+.review-list-container .submitted-date {
+    font-size: 0.9em;
+}
