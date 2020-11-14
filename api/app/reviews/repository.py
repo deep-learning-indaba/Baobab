@@ -164,7 +164,7 @@ class ReviewRepository():
         return (db.session.query(Response)
                     .filter_by(id=response_id)
                     .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
-                    .filter_by(ResponseReviewer.reviewer_user_id=reviewer_user_id)
+                    .filter_by(reviewer_user_id=reviewer_user_id)
                     .first())
 
     @staticmethod
