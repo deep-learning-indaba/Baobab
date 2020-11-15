@@ -1,6 +1,6 @@
 from datetime import datetime
-
 from app import db
+from app.utils import misc
 
 class ReviewForm(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -117,6 +117,12 @@ class ReviewResponse(db.Model):
     def submit(self):
         self.is_submitted = True
         self.submitted_timestamp = datetime.now()
+
+    def calculate_score(self):
+        return sum([
+            misc.try_parse_float(score.value) * score.review_question.weight for score in self.review_scores
+            if score.review_question.weight > 0
+        ])
 
 
 class ReviewScore(db.Model):

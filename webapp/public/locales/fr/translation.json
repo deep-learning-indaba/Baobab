@@ -307,5 +307,13 @@
     "New tag": "Nouveau tag",
     "Total Score": "Score Total",
     "Please fix validation errors before saving": "Veuillez corriger les erreurs de validation avant d'enregistrer",
-    "Saved": "Enregistré"
+    "Saved": "Enregistré",
+    "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "Vous avez {{numReviews}} avis attribués, dont {{numCompleted}} sont terminés",
+    "Edit": "Éditer",
+    "Language": "Langue",
+    "Action": "Action",
+    "You have completed all your reviews, thank you!": "Vous avez terminé tous vos commentaires, merci!",
+    "You have no reviews assigned": "Vous n'avez attribué aucun avis",
+    "Hide Completed": "Masquer terminé",
+    "Return to review list": "Revenir à la liste de révision"
 }

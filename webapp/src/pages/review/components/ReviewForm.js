@@ -12,6 +12,7 @@ import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
 
 import Linkify from 'react-linkify';
+import { Link } from "react-router-dom";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import { Trans, withTranslation } from 'react-i18next'
 
@@ -228,11 +229,19 @@ class ReviewForm extends Component {
     processResponse = (response) => {
         let questionModels = null;
 
+        if (response.error) {
+            this.setState({
+                error: JSON.stringify(response.error),
+                isLoading: false
+            });
+            return;
+        }
+
         if (!response.form.review_response || (response.form.review_response.id === 0 && !response.form.review_response.scores)) {
             response.form.review_response = null;
         }
 
-        if (response.form && (response.form.reviews_remaining_count > 0 || response.form.review_response)) {
+        if (response.form) {
             questionModels = response.form.review_form.review_questions.map(q => {
                 let score = null;
                 if (response.form.review_response) {
@@ -269,7 +278,7 @@ class ReviewForm extends Component {
 
     loadForm = (responseId) => {
         if (responseId) {
-            reviewService.getReviewResponse(responseId)
+            reviewService.getResponseReview(responseId, this.props.event ? this.props.event.id : 0)
                 .then(this.processResponse);
         } else {
             reviewService.getReviewForm(
@@ -281,7 +290,7 @@ class ReviewForm extends Component {
 
     componentDidMount() {
         const { id } = this.props.match.params
-        this.loadForm(id);
+        this.loadForm(id);  // NB: This is the RESPONSE (to the application form) id
     }
 
     computeTotalScore = (questionModels) => {
@@ -427,7 +436,7 @@ class ReviewForm extends Component {
                         }
                         else {
                             if (this.props.match.params && this.props.match.params.id > 0) {
-                                this.props.history.push(`${this.props.event.key}/reviewHistory`)
+                                this.props.history.push(`/${this.props.event.key}/reviewlist`)
                             }
                             else {
                                 this.loadForm();
@@ -530,6 +539,7 @@ class ReviewForm extends Component {
         }
 
         const t = this.props.t;
+        const editMode = this.props.match.params && this.props.match.params.id > 0;
 
         if (isLoading) {
             return (
@@ -547,7 +557,7 @@ class ReviewForm extends Component {
             </div>;
         }
 
-        if (!form.review_response && form.reviews_remaining_count === 0) {
+        if (!editMode && form.reviews_remaining_count === 0) {
             return (
                 <div class="review-form-container">
                     <div class="alert alert-success alert-container">
@@ -606,14 +616,13 @@ class ReviewForm extends Component {
                     </button>
 
                     {this.state.saveValidationFailed && 
-                        <span className="save-validation-failed alert alert-danger">
+                        <span className="save-validation-failed text-danger">
                             <i class="fa fa-exclamation"/> {this.props.t("Please fix validation errors before saving")}
                         </span>
                     }
 
                     {this.state.saveSuccess && 
-                        <span className="save-validation-failed alert alert-success">
-                            {this.props.t("Saved")}
+                        <span><span className="save-validation-failed text-success">{this.props.t("Saved")}</span><span className="return-to-list"><Link to={`/${this.props.event.key}/reviewlist`}>{this.props.t("Return to review list")}...</Link></span>
                         </span>
                     }
 
@@ -664,7 +673,7 @@ class ReviewForm extends Component {
                     </div>
                 }
                 <br />
-                {!form.review_response &&
+                {!editMode &&
                     <div class="alert alert-info">
                         <span class="fa fa-info-circle"></span> <Trans i18nKey="reviewsRemaining">You have {{reviewsRemainingCount}} reviews remaining</Trans>
                     </div>

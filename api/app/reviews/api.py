@@ -16,7 +16,7 @@ from app.reviews.repository import ReviewConfigurationRepository as review_confi
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -155,6 +155,32 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             skip = reviews_remaining_count - 1
         
         return skip
+
+class ResponseReviewAPI(restful.Resource):
+    @auth_required
+    @marshal_with(review_fields)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('response_id', type=int, required=True)
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+
+        response_id = args['response_id']
+        event_id = args['event_id']
+
+        review_form = review_repository.get_review_form(event_id)
+        if review_form is None:
+            return REVIEW_FORM_NOT_FOUND
+
+        response = review_repository.get_response_by_reviewer(response_id, g.current_user['id'])
+
+        if response is None:
+            return RESPONSE_NOT_FOUND
+
+        review_response = review_repository.get_review_response(review_form.id, response_id, g.current_user['id'])
+
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
 
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
@@ -434,3 +460,53 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         reviews = [ReviewHistoryModel(review) for review in reviews]
         return {'reviews': reviews, 'num_entries': num_entries, 'current_pagenumber': page_number, 'total_pages': total_pages}
+
+class ReviewListAPI(restful.Resource):
+
+    @staticmethod
+    def _serialize_answer(answer, language):
+        translation = answer.question.get_translation(language)
+        if not translation:
+            translation = answer.question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
+        return {
+            'headline': translation.headline,
+            'value': answer.value_display
+        }
+
+    @staticmethod
+    def _serialize_response(response, review_response, language):
+        info = [
+            ReviewListAPI._serialize_answer(answer, language)
+            for answer in response.answers if answer.question.key == 'review-identifier']
+
+        submitted = None
+        if review_response and review_response.submitted_timestamp:
+            submitted = review_response.submitted_timestamp.isoformat()
+
+        return {
+            'response_id': response.id,
+            'language': response.language,
+            'information': info,
+            'started': review_response is not None,
+            'submitted': submitted,
+            'total_score': review_response.calculate_score() if review_response is not None else 0.0
+        }
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+        language = args['language']
+        
+        if not user_repository.get_by_id(user_id).is_reviewer(event_id):
+            return FORBIDDEN
+
+        responses_to_review = review_repository.get_review_list(user_id, event_id)
+
+        return [ReviewListAPI._serialize_response(response, review_response, language)
+                for response, review_response in responses_to_review]

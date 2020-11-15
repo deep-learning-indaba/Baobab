@@ -10,7 +10,9 @@ export const reviewService = {
   getReviewAssignments,
   assignReviews,
   getReviewSummary,
-  getReviewHistory
+  getReviewHistory,
+  getReviewList,
+  getResponseReview
 };
 
 function getReviewForm(eventId, skip) {
@@ -38,6 +40,28 @@ function getReviewForm(eventId, skip) {
 function getReviewResponse(id) {
   return axios
     .get(baseUrl + "/api/v1/reviewresponse?id=" + id, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        form: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        form: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function getResponseReview(responseId, eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/responsereview?response_id=${responseId}&event_id=${eventId}`, {
       headers: authHeader()
     })
     .then(function(response) {
@@ -187,6 +211,32 @@ function getReviewHistory(
     .catch(function(error) {
       return {
         reviewHistory: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+
+function getReviewList(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewlist?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        reviewList: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewList: null,
         error:
           error.response && error.response.data
             ? error.response.data.message

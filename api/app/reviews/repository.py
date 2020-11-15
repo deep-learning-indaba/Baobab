@@ -160,6 +160,14 @@ class ReviewRepository():
         return review_response
 
     @staticmethod
+    def get_response_by_reviewer(response_id, reviewer_user_id):
+        return (db.session.query(Response)
+                    .filter_by(id=response_id)
+                    .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                    .filter_by(reviewer_user_id=reviewer_user_id)
+                    .first())
+
+    @staticmethod
     def add_model(model):
         db.session.add(model)
         db.session.commit()
@@ -172,6 +180,16 @@ class ReviewRepository():
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .join(Response, ReviewResponse.response_id == Response.id)
                         .join(AppUser, Response.user_id == AppUser.id))
+        return reviews
+
+    @staticmethod
+    def get_review_list(reviewer_user_id, event_id):
+        reviews = (db.session.query(Response, ReviewResponse)                        
+                        .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                        .filter_by(reviewer_user_id=reviewer_user_id)
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                        .filter_by(event_id=event_id)
+                        .outerjoin(ReviewResponse, Response.id == ReviewResponse.response_id))
         return reviews
 
     @staticmethod

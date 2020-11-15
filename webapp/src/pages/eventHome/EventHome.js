@@ -4,6 +4,7 @@ import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
 import Review from "../review";
+import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
 import ReviewHistory from "../reviewHistory";
 import EventStats from "../eventStats";
@@ -188,6 +189,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/review/:id`}
           render={(props) => <Review {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviewlist`}
+          render={(props) => <ReviewList {...props} event={event} />}
         />
         <Route
           exact
