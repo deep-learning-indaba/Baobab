@@ -255,7 +255,7 @@
     "Thank you for your contribution!": "Je vous remercie de votre participation.",
     "Flag Response": "Signaler une réponse",
     "Response ID": "Numéro d’identification de la réponse",
-    "Please quote this in any correspondence with event admins outside of the system.": "Veuillez le citer dans toute correspondance avec les administrateurs de l’événement en dehors du système.",
+    "Please quote this in any correspondence with admins outside of the system.": "Veuillez le citer dans toute correspondance avec les administrateurs en dehors du système.",
     "Go Back": "Retour en arrière",
     "Skip": "Passer",
     "There are one or more validation errors, please correct before submitting.": "Il y a une ou plusieurs erreurs de validation, veuillez les corriger avant de soumettre.",
@@ -304,5 +304,16 @@
     "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer ce tag?",
     "Save": "Enregistrer",
     "Add Tags": "Ajouter des tags",
-    "New tag": "Nouveau tag"
+    "New tag": "Nouveau tag",
+    "Total Score": "Score Total",
+    "Please fix validation errors before saving": "Veuillez corriger les erreurs de validation avant d'enregistrer",
+    "Saved": "Enregistré",
+    "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "Vous avez {{numReviews}} avis attribués, dont {{numCompleted}} sont terminés",
+    "Edit": "Éditer",
+    "Language": "Langue",
+    "Action": "Action",
+    "You have completed all your reviews, thank you!": "Vous avez terminé tous vos commentaires, merci!",
+    "You have no reviews assigned": "Vous n'avez attribué aucun avis",
+    "Hide Completed": "Masquer terminé",
+    "Return to review list": "Revenir à la liste de révision"
 }

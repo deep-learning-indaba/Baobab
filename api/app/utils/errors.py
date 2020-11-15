@@ -120,3 +120,4 @@ DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for thi
 BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)
 TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
+REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)

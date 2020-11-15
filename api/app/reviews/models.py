@@ -1,6 +1,6 @@
 from datetime import datetime
-
 from app import db
+from app.utils import misc
 
 class ReviewForm(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -95,6 +95,8 @@ class ReviewResponse(db.Model):
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=False)
     language = db.Column(db.String(2), nullable=False)
+    is_submitted = db.Column(db.Boolean(), nullable=False)
+    submitted_timestamp = db.Column(db.DateTime(), nullable=True)
 
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
@@ -109,8 +111,18 @@ class ReviewResponse(db.Model):
         self.review_form_id = review_form_id
         self.reviewer_user_id = reviewer_user_id
         self.response_id = response_id
-        self.submitted_timestamp = datetime.now()
         self.language = language
+        self.is_submitted = False
+
+    def submit(self):
+        self.is_submitted = True
+        self.submitted_timestamp = datetime.now()
+
+    def calculate_score(self):
+        return sum([
+            misc.try_parse_float(score.value) * score.review_question.weight for score in self.review_scores
+            if score.review_question.weight > 0
+        ])
 
 
 class ReviewScore(db.Model):
