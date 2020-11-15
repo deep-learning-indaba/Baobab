@@ -274,7 +274,7 @@ def get_question(form_id, en_headline):
 def upgrade():
     event = db.session.query(Event).filter_by(key='prc').first()
     application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
-    organisation_question = get_question(application_form.id, 'Name of organisation')
+    organisation_question = get_question(application_form.id, 'Name of organization')
     organisation_question.key = 'review-identifier'
     country_question = get_question(application_form.id, 'Country')
     country_question.key = 'review-identifier'
@@ -283,7 +283,7 @@ def upgrade():
 def downgrade():
     event = db.session.query(Event).filter_by(key='prc').first()
     application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
-    organisation_question = get_question(application_form.id, 'Name of organisation')
+    organisation_question = get_question(application_form.id, 'Name of organization')
     organisation_question.key = None
     country_question = get_question(application_form.id, 'Country')
     country_question.key = None
