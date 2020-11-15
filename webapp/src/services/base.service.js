@@ -33,8 +33,8 @@ axios.interceptors.response.use(
       error.response.data.type === "UNAUTHORIZED"
     ) {
       // Redirect if you receive unauth, but only if you aren't on the home page
+      localStorage.removeItem("user");
       if (history && history.location && history.location.pathname !== "/") {
-        localStorage.removeItem("user");
         history.push("/login");
       }
     } else throw error;

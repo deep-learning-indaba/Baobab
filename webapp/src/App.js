@@ -292,18 +292,24 @@ class AppComponent extends Component {
     super(props);
 
     this.state = {
-      user: {},
+      user: null,
       collapsed: true,
       eventKey: null,
-      currentEvent: null
+      currentEvent: null,
+      error: null
     };
 
     this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
-    this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
+    userService.authRefresh().then(user => {
+      if (!user.error) {
+        localStorage.setItem("user", JSON.stringify(user));
+        this.setState({
+          user: user
+        });
+      }
     });
   }
 
@@ -399,6 +405,7 @@ class AppComponent extends Component {
             user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
+              {this.state.error && <div className="alert alert-danger">{this.state.error}</div>}
               <Switch>
                 <Route
                   exact
