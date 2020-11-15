@@ -292,7 +292,7 @@ class AppComponent extends Component {
     super(props);
 
     this.state = {
-      user: null,
+      user: JSON.parse(localStorage.getItem("user")),
       collapsed: true,
       eventKey: null,
       currentEvent: null,
@@ -309,6 +309,9 @@ class AppComponent extends Component {
         this.setState({
           user: user
         });
+      }
+      else {
+        localStorage.removeItem("user");
       }
     });
   }
