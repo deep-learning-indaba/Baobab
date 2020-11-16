@@ -66,6 +66,7 @@ jobs:
             echo "Updated setuptools v - $(pip --setuptools)"
             pip install -r requirements.txt
             DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
+          no_output_timeout: 30m
 
   migrate-prod:
     docker:
