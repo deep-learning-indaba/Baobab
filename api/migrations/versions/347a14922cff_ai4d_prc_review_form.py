@@ -1377,6 +1377,9 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 
     print('Added section 5')
     print('FINISHED MIGRATION 347a14922cff')
+    
+    db.session.commit()
+    db.session.flush()
 
 def downgrade():
     event = db.session.query(Event).filter_by(key='prc').first()
