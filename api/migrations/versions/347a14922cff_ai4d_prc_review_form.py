@@ -415,6 +415,7 @@ def add_divider(form_id, order, headlines, descriptions):
     return add_question(form_id, 'section-divider', False, order, headlines=headlines, descriptions=descriptions)
 
 def upgrade():
+    print('STARTING MIGRATION 347a14922cff')
     event = db.session.query(Event).filter_by(key='prc').first()
 
     event.review_open = datetime.date(2020, 11, 7)
@@ -1374,6 +1375,8 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
         'fr': u"""Veuillez fournir tout commentaire final sur l’ensemble de la demande. Ces commentaires seront pris en compte dans les discussions."""
     })
 
+    print('Added section 5')
+    print('FINISHED MIGRATION 347a14922cff')
 
 def downgrade():
     event = db.session.query(Event).filter_by(key='prc').first()
