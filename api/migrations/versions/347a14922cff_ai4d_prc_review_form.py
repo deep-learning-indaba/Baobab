@@ -431,6 +431,8 @@ def upgrade():
     db.session.add(config)
     db.session.commit()
 
+    print('Added review configuration')
+
     # Set up questions
     divider1 = add_question(form.id, 'section-divider', False, 1, headlines={
         'en': 'Evaluation of proposals',
@@ -602,6 +604,8 @@ Une recherche de haute qualité est pertinente, fait preuve d’intégrité, de 
         'en': 'Please comment on the applicant’s expertise.',
         'fr': u"Veuillez commenter l'expertise du candidat."
     })
+
+    print('Added section 1')
 
     add_divider(form.id, 16, {
         'en': 'Section II: Policy Research',
@@ -1068,6 +1072,8 @@ Scale:
         'fr': u"""Veuillez formuler des commentaires, le cas échéant, sur l’un des points ci-dessus dans la section II."""
     })
 
+    print('Added section 2')
+
     add_divider(form.id, 58, headlines={
         'en': 'Section III: Policy Engagement Experience',
         'fr': u'Section III : Expérience de l’engagement politique'
@@ -1224,6 +1230,8 @@ Scale:
         'fr': u"""Veuillez commenter, si nécessaire, l’un des points ci-dessus dans la section III."""
     })
 
+    print('Added section 3')
+
     add_divider(form.id, 70, headlines={
         'en': "Section IV: Budget",
         'fr': "Section IV: Budget"
@@ -1280,6 +1288,8 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
         'fr': u"""L’équipe d’administration des subventions du CRDI examinera tous les budgets de manière indépendante et leur évaluation sera discutée lors du processus de sélection final. Toutefois, étant donné l’importance des budgets en termes de force institutionnelle, de planification et de stratégie de recherche et d’atténuation des risques, veuillez donner votre avis sur le budget proposé par le candidat et faire part de vos commentaires ou de vos idées concernant"""
     })
     
+    print('Added section 4')
+
     add_divider(form.id, 74, headlines={
         'en': "Section V: Overall quality of application",
         'fr': u"Section V : Qualité générale de la demande"
