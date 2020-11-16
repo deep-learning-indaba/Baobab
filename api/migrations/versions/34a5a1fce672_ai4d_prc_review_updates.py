@@ -487,7 +487,7 @@ def upgrade():
     db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).delete()
     db.session.commit()
 
-    db.session.query(ReviewResponse).filter_by(review_form_id=form.id).delete()
+    # db.session.query(ReviewResponse).filter_by(review_form_id=form.id).delete()
 
     print('Removed existing form, repopulating...')
 
