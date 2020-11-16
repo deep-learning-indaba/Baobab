@@ -472,6 +472,7 @@ def add_divider(form_id, headlines, descriptions):
     return add_question(form_id, 'section-divider', False, headlines=headlines, descriptions=descriptions)
 
 def upgrade():
+    print('Start migration 34a5a1fce672')
     event = db.session.query(Event).filter_by(key='prc').first()
     application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
     form = db.session.query(ReviewForm).filter_by(application_form_id=application_form.id).first()
