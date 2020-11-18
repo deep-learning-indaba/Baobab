@@ -95,12 +95,9 @@
   margin: 0 10px 0 0;
 }
 
-.submit .btn {
-
-}
 
 .submit .btn-success {
-  background: hsl(131, 35%, 68%);
+  background: hsl(131deg, 47%, 76%);
   color: hsl(132, 18%, 29%);
   border: none;
 }
