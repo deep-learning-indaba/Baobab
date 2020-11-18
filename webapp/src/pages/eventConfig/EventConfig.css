@@ -16,13 +16,98 @@
   padding-top: 0em;
 }
 
+.col-form-label {
+  font-size: 17px;
+}
+
 /* Date Pickers Section */
 .date-picker-section {
   display: flex;
   flex-wrap: wrap;
+  margin-top: 2%;
+  font-family: 'Open Sans', sans-serif;
+}
+
+.date-picker-section .col-md-5 {
+  padding-bottom: 2%;
 }
 
 .date-item {
+  margin: 2% 1% 1% 0;
+  padding: 1% 1% 2% 1%;
+
+}
+
+.date-item p {
+  text-align: left;
+  margin: 0 10px;
+  font-weight: bold;
+  color: grey;
+}
+
+.first-col {
+  border: 1px solid hsl(204deg, 14%, 93%);
+  margin: 0 10px 0 0;
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.second-col {
+  background: hsl(210deg, 20%, 98%);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.date-item:hover {
+  background: hsl(0, 0%, 98%);
+}
+
+.date-item:hover p {
+  color: hsl(218, 24%, 57%);
+  font-size: 16px;
+}
+
+.date-item label {
+  color: grey;
+  font-size: 10px;
+}
+
+.date-item-sections {
   display: flex;
+}
+
+.date-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 10px;
+
+}
+
+/* Handle Submit and Cancel Section */
+.submit {
+  padding-left: 10px;
+  display: flex;
+}
+
+.submit .col-sm-4 {
+  padding: 0;
+  margin: 0 10px 0 0;
+}
+
+.submit .btn {
+
+}
+
+.submit .btn-success {
+  background: hsl(131, 35%, 68%);
+  color: hsl(132, 18%, 29%);
+  border: none;
+}
+
+.submit .btn-danger {
+  background: hsl(6, 64%, 87%);
+  color: hsl(0, 50%, 30%);
+  border: none;
 }
 
