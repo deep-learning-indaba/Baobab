@@ -476,6 +476,7 @@ def add_divider(form_id, headlines, descriptions):
     return add_question(form_id, 'section-divider', False, headlines=headlines, descriptions=descriptions)
 
 def upgrade():
+    print('Starting 6b64b8037b7b')
     event = db.session.query(Event).filter_by(key='prc').first()
     application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
     form = db.session.query(ReviewForm).filter_by(application_form_id=application_form.id).first()
@@ -490,7 +491,7 @@ def upgrade():
     db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).delete()
     db.session.commit()
 
-    db.session.query(ReviewResponse).filter_by(review_form_id=form.id).delete()
+    # db.session.query(ReviewResponse).filter_by(review_form_id=form.id).delete()
 
     print('Removed existing form, repopulating...')
 
