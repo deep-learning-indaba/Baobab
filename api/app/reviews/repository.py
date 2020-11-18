@@ -189,7 +189,7 @@ class ReviewRepository():
                         .filter_by(reviewer_user_id=reviewer_user_id)
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                         .filter_by(event_id=event_id)
-                        .outerjoin(ReviewResponse, Response.id == ReviewResponse.response_id))
+                        .outerjoin(ReviewResponse, and_(Response.id == ReviewResponse.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id)))
         return reviews
 
     @staticmethod
