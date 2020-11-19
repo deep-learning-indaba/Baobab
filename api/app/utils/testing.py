@@ -23,7 +23,7 @@ from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
-from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse
+from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
 from app.tags.models import Tag, TagTranslation
 
 
@@ -217,6 +217,24 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_form
 
+    def add_review_question(self, review_form_id, headings=None, weight=0):
+        headings = headings or {
+            'en': 'Heading En',
+            'fr': 'Heading Fr'
+        }
+        
+        review_question = ReviewQuestion(review_form_id, None, type='short-text', is_required=True, order=1, weight=weight)
+        db.session.add(review_question)
+        db.session.commit()
+
+        db.session.add_all([
+            ReviewQuestionTranslation(review_question.id, k, headline=v)
+            for k, v in headings.iteritems()
+        ])
+        db.session.commit()
+
+        return review_question
+
     def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
         email_template = EmailTemplate(template_key, event_id, subject, template, language)
         db.session.add(email_template)
@@ -339,6 +357,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rr)
         db.session.commit()
         return rr
+
+    def add_review_score(self, review_response_id, review_question_id, value):
+        rs = ReviewScore(review_question_id, value)
+        rs.review_response_id = review_response_id
+        db.session.add(rs)
+        db.session.commit()
+        return rs
 
     def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False, candidate_response=None):
         offer_date = offer_date or datetime.now()

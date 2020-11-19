@@ -318,6 +318,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         db.session.add(review_response)
         db.session.commit()
 
@@ -412,6 +413,9 @@ class ReviewsApiTest(ApiTestCase):
             ReviewResponse(1, 3, 2, 'en'),
             ReviewResponse(1, 4, 1, 'en')
         ]
+        for rr in review_responses:
+            rr.submit()
+
         db.session.add_all(review_responses)
         db.session.commit()
     
@@ -565,7 +569,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -575,7 +579,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_can_still_submit_inactive_response_reviewer(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -592,7 +596,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_saving_review_response(self):
         self.seed_static_data()
         self.setup_response_reviewer()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -610,6 +614,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
         db.session.add(review_response)
         db.session.commit()
@@ -617,7 +622,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_updating_review_response(self):
         self.seed_static_data()
         self.setup_existing_review_response()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en'})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -1232,3 +1237,137 @@ class ReviewsApiTest(ApiTestCase):
         self.assertDictEqual(data['review_form']['review_questions'][1]['options'][0], {'label': 'fr1', 'value': 'fr'})
         self.assertEqual(data['review_form']['review_questions'][1]['validation_regex'], 'FR Regex')        
         self.assertEqual(data['review_form']['review_questions'][1]['validation_text'], 'FR Validation Message')
+
+
+class ReviewListAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.event1 = self.add_event(key='event1')
+        self.event2 = self.add_event(key='event2')
+
+        self.reviewer1 = self.add_user('reviewer1@mail.com')
+        self.reviewer2 = self.add_user('reviewer2@mail.com')
+        self.event1.add_event_role('reviewer', self.reviewer1.id)
+        self.event2.add_event_role('reviewer', self.reviewer1.id)
+        self.event1.add_event_role('reviewer', self.reviewer2.id)
+        self.event2.add_event_role('reviewer', self.reviewer2.id)
+
+        self.user1 = self.add_user('user1@mail.com')
+        user2 = self.add_user('user2@mail.com')
+        user3 = self.add_user('user3@mail.com')
+        user4 = self.add_user('user4@mail.com')
+
+        application_form1 = self.create_application_form(self.event1.id)
+        section1 = self.add_section(application_form1.id)
+        question1 = self.add_question(application_form1.id, section1.id)
+        question1.key = 'review-identifier'
+        self.add_question_translation(question1.id, 'en', 'Headline 1 EN')
+        self.add_question_translation(question1.id, 'fr', 'Headline 1 FR')
+        question2 = self.add_question(application_form1.id, section1.id)
+        question2.key = 'review-identifier'
+        self.add_question_translation(question2.id, 'en', 'Headline 2 EN')
+        self.add_question_translation(question2.id, 'fr', 'Headline 2 FR')
+        question3 = self.add_question(application_form1.id, section1.id)
+        self.add_question_translation(question3.id, 'en', 'Headline 3 EN')
+        self.add_question_translation(question3.id, 'fr', 'Headline 3 FR')
+
+        review_form1 = self.add_review_form(application_form1.id)
+        review_q1 = self.add_review_question(review_form1.id, weight=1)
+        review_q2 = self.add_review_question(review_form1.id, weight=0)
+        review_q3 = self.add_review_question(review_form1.id, weight=1)
+
+        application_form2 = self.create_application_form(self.event2.id)
+        review_form2 = self.add_review_form(application_form2.id)
+
+        event1_response1 = self.add_response(application_form1.id, self.user1.id, is_submitted=True)
+        self.add_answer(event1_response1.id, question1.id, 'First answer')
+        self.add_answer(event1_response1.id, question2.id, 'Second answer')
+        self.add_answer(event1_response1.id, question3.id, 'Third answer')
+
+        event1_response2 = self.add_response(application_form1.id, user2.id, is_submitted=True, language='fr')
+        self.add_answer(event1_response2.id, question1.id, 'Forth answer')
+        self.add_answer(event1_response2.id, question2.id, 'Fifth answer')
+        self.add_answer(event1_response2.id, question3.id, 'Sixth answer')
+
+        event1_response3 = self.add_response(application_form1.id, user3.id, is_submitted=True)
+        self.add_answer(event1_response3.id, question1.id, 'Seventh answer')
+        self.add_answer(event1_response3.id, question2.id, 'Eigth answer')
+        self.add_answer(event1_response3.id, question3.id, 'Ninth answer')
+
+        event1_response4 = self.add_response(application_form1.id, user4.id, is_submitted=True, language='zu')
+        self.add_answer(event1_response4.id, question1.id, 'Tenth answer')
+        self.add_answer(event1_response4.id, question2.id, 'Eleventh answer')
+        self.add_answer(event1_response4.id, question3.id, 'Twelfth answer')
+
+        event2_response1 = self.add_response(application_form2.id, self.user1.id, is_submitted=True)
+        event2_response2 = self.add_response(application_form2.id, user2.id, is_submitted=True, language='fr')
+        event2_response3 = self.add_response(application_form2.id, user3.id, is_submitted=True)
+
+        # Review 1 completed review
+        self.add_response_reviewer(event1_response1.id, self.reviewer1.id)
+        review_response1 = self.add_review_response(self.reviewer1.id, event1_response1.id, review_form1.id)
+        review_response1.submit()
+        self.add_review_score(review_response1.id, review_q1.id, 10.5)
+        self.add_review_score(review_response1.id, review_q2.id, 100)
+        self.add_review_score(review_response1.id, review_q3.id, 'Hello world')
+
+        # Reviewer 1 incomplete review
+        self.review_response1_submitted = review_response1.submitted_timestamp.isoformat()
+        self.add_response_reviewer(event1_response2.id, self.reviewer1.id)
+        review_response2 = self.add_review_response(self.reviewer1.id, event1_response2.id, review_form1.id)
+        self.add_review_score(review_response2.id, review_q1.id, 13)
+
+        # Reviewer 1 not started review
+        self.add_response_reviewer(event1_response3.id, self.reviewer1.id)
+
+        # Confounders
+        self.add_response_reviewer(event1_response2.id, self.reviewer2.id)
+        self.add_response_reviewer(event1_response3.id, self.reviewer2.id)
+        self.add_response_reviewer(event2_response1.id, self.reviewer1.id)
+        self.add_response_reviewer(event2_response2.id, self.reviewer2.id)
+
+    def test_review_list(self):
+        self.seed_static_data()
+        params ={'event_id' : 1, 'language': 'en'}
+
+        response = self.app.get(
+            '/api/v1/reviewlist', 
+            headers=self.get_auth_header_for('reviewer1@mail.com'), 
+            data=params)  
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 3)
+
+        self.assertEqual(data[0]['response_id'], 1)
+        self.assertEqual(data[0]['language'], 'en')
+        self.assertEqual(len(data[0]['information']), 2)
+        self.assertEqual(data[0]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[0]['information'][0]['value'], 'First answer')
+        self.assertEqual(data[0]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[0]['information'][1]['value'], 'Second answer')
+        self.assertTrue(data[0]['started'])
+        self.assertEqual(data[0]['submitted'], self.review_response1_submitted)
+        self.assertEqual(data[0]['total_score'], 10.5)
+
+        self.assertEqual(data[1]['response_id'], 2)
+        self.assertEqual(data[1]['language'], 'fr')
+        self.assertEqual(len(data[1]['information']), 2)
+        self.assertEqual(data[1]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[1]['information'][0]['value'], 'Forth answer')
+        self.assertEqual(data[1]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[1]['information'][1]['value'], 'Fifth answer')
+        self.assertTrue(data[1]['started'])
+        self.assertIsNone(data[1]['submitted'])
+        self.assertEqual(data[1]['total_score'], 13)
+
+        self.assertEqual(data[2]['response_id'], 3)
+        self.assertEqual(data[2]['language'], 'en')
+        self.assertEqual(len(data[2]['information']), 2)
+        self.assertEqual(data[2]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[2]['information'][0]['value'], 'Seventh answer')
+        self.assertEqual(data[2]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[2]['information'][1]['value'], 'Eigth answer')
+        self.assertFalse(data[2]['started'])
+        self.assertIsNone(data[2]['submitted'])
+        self.assertEqual(data[2]['total_score'], 0.0)

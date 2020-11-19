@@ -255,7 +255,7 @@
     "Thank you for your contribution!": "Thank you for your contribution!",
     "Flag Response": "Flag Response",
     "Response ID": "Response ID",
-    "Please quote this in any correspondence with event admins outside of the system.": "Please quote this in any correspondence with event admins outside of the system.",
+    "Please quote this in any correspondence with admins outside of the system.": "Please quote this in any correspondence with admins outside of the system.",
     "Go Back": "Go Back",
     "Skip": "Skip",
     "There are one or more validation errors, please correct before submitting.": "There are one or more validation errors, please correct before submitting.",
@@ -307,4 +307,15 @@
     "New tag": "New tag",
     "Total Score": "Total Score",
     "Event configuration": "Event configuration"
+    "Please fix validation errors before saving": "Please fix validation errors before saving",
+    "Saved": "Saved",
+    "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed",
+    "Edit": "Edit",
+    "Language": "Language",
+    "Action": "Action",
+    "You have completed all your reviews, thank you!": "You have completed all your reviews, thank you!",
+    "You have no reviews assigned": "You have no reviews assigned",
+    "Hide Completed": "Hide Completed",
+    "Return to review list": "Return to review list"
+
 }
