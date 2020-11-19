@@ -45,22 +45,27 @@ class EventConfigComponent extends Component {
 
 
   onClickSubmit = () => {
-    const formatUpdatedEvent = this.state.updatedEvent;
+    /*
+         const formatUpdatedEvent = this.state.updatedEvent;
     const keys = Object.keys(this.state.updatedEvent)
     Object.values(this.state.updatedEvent).map((val, index) => {
-      if (val) {
-        let validate = new Date(val);
-        if (validate && validate != "Invalid Date") {
-          formatUpdatedEvent[keys[index]] = validate.toISOString()
+      if (val && val.length > 1) {
+        if (typeof val != "number") {
+          let validate = new Date(val);
+          if (validate && validate != "Invalid Date") {
+            formatUpdatedEvent[keys[index]] = validate.toISOString()
+          }
         }
       }
-     
     });
 
     console.log(formatUpdatedEvent)
+    */
+
     
+
     // PUT
-    eventService.update(this.state.updatedEvent).then(result => {
+        eventService.update(this.state.updatedEvent).then(result => {
       console.log(result)
       this.setState({
         preEvent: result.event,
@@ -69,6 +74,7 @@ class EventConfigComponent extends Component {
         error: Object.values(result.error)
       });
     });
+
   };
 
 
@@ -522,7 +528,7 @@ class EventConfigComponent extends Component {
                         disableClock={true}
                         onChange={e =>
                           this.updateDateTimeEventDetails("registration_close", e)}
-                        value={new Date(updatedEvent.registration_close).toISOString()}
+                        value={new Date(updatedEvent.registration_close)}
                       />
                     </div>
                   </div>
