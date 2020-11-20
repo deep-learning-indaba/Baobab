@@ -1,11 +1,18 @@
+
+/* Universal */
+.event-config-wrapper input[type='checkbox'] {
+margin: 0 5px 0 0;
+}
+
+
 .react-datetime-picker__wrapper {
-  width: 100%;
+  min-width: 200px;
   height: calc(2.25rem + 2px);
   padding: 0.375rem 0.75rem;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: #495057;
+  color: hsl(210, 9%, 31%);
   background-color: #fff;
   background-clip: padding-box;
   border: 1px solid #ced4da;
@@ -20,12 +27,22 @@
   font-size: 17px;
 }
 
+/* Form Fields */
+
+.event-config-wrapper .col-sm-10.flex {
+  display: flex;
+  align-items: center;
+  color: grey;
+  }
+  
+
 /* Date Pickers Section */
 .date-picker-section {
   display: flex;
   flex-wrap: wrap;
   margin-top: 2%;
   font-family: 'Open Sans', sans-serif;
+  padding-left: 0;
 }
 
 .date-picker-section .col-md-5 {
@@ -41,8 +58,6 @@
 .date-item p {
   text-align: left;
   margin: 0 10px;
-  font-weight: bold;
-  color: grey;
 }
 
 .first-col {
@@ -50,12 +65,14 @@
   margin: 0 10px 0 0;
   border-radius: 4px;
   padding: 20px;
+  margin: 1%;
 }
 
 .second-col {
   background: hsl(210deg, 20%, 98%);
   border-radius: 4px;
   padding: 20px;
+  margin: 1%;
 }
 
 .date-item:hover {
@@ -74,6 +91,7 @@
 
 .date-item-sections {
   display: flex;
+  padding: 10px 0;
 }
 
 .date-picker {
@@ -81,7 +99,6 @@
   flex-direction: column;
   align-items: flex-start;
   margin: 0 10px;
-
 }
 
 /* Handle Submit and Cancel Section */
