@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { eventService } from "../../../services/events";
+import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
 import DateTimePicker from "react-datetime-picker";
 import Select from 'react-select';
@@ -9,7 +9,7 @@ import {
   TextField
 } from '@material-ui/core';
 
-class EventConfigComponent extends Component {
+ export class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -144,8 +144,8 @@ class EventConfigComponent extends Component {
         { value: t('call'), label: 'call' }
       ],
       travelGrant: [
-        { value: "yes", label: "yes" },
-        { value: "no", label: "no" },
+        { value: t("yes"), label: t("yes") },
+        { value: t("no"), label: t("no") },
       ]
     };
 
