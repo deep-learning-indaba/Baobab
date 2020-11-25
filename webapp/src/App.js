@@ -170,7 +170,7 @@ class EventNav extends Component {
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
-                      to={`/${this.props.eventKey}/review`}
+                      to={`/${this.props.eventKey}/reviewlist`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
@@ -292,18 +292,27 @@ class AppComponent extends Component {
     super(props);
 
     this.state = {
-      user: {},
+      user: JSON.parse(localStorage.getItem("user")),
       collapsed: true,
       eventKey: null,
-      currentEvent: null
+      currentEvent: null,
+      error: null
     };
 
     this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
-    this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
+    userService.authRefresh().then(user => {
+      if (!user.error) {
+        localStorage.setItem("user", JSON.stringify(user));
+        this.setState({
+          user: user
+        });
+      }
+      else {
+        localStorage.removeItem("user");
+      }
     });
   }
 
@@ -399,6 +408,7 @@ class AppComponent extends Component {
             user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
+              {this.state.error && <div className="alert alert-danger">{this.state.error}</div>}
               <Switch>
                 <Route
                   exact

@@ -57,6 +57,7 @@ def user_info(user, roles):
         'token': generate_token(user),
         'firstname': user.firstname,
         'lastname': user.lastname,
+        'email': user.email,
         'title': user.user_title,
         'is_admin': user.is_admin,
         'primary_language': user.user_primaryLanguage,
@@ -307,6 +308,19 @@ class AuthenticationAPI(AuthenticateMixin, restful.Resource):
             LOGGER.debug("User not found for {}".format(args['email']))
 
         return BAD_CREDENTIALS
+
+
+class AuthenticationRefreshAPI(restful.Resource):
+
+    @auth_required
+    def get(self):
+        user_id = g.current_user['id']
+        user = user_repository.get_by_id(user_id)
+        if not user:
+            return UNAUTHORIZED
+
+        roles = db.session.query(EventRole).filter(EventRole.user_id == user.id).all()
+        return user_info(user, roles)
 
 
 class PasswordResetRequestAPI(restful.Resource):

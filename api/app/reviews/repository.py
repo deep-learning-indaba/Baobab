@@ -1,5 +1,5 @@
 from sqlalchemy.sql import exists
-from sqlalchemy import and_, func, cast, Date
+from sqlalchemy import and_, or_, func, cast, Date
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
@@ -98,7 +98,7 @@ class ReviewRepository():
                     .join(Response)
                     .filter_by(is_withdrawn=False, application_form_id=application_form_id, is_submitted=True)
                     .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id))
-                    .filter_by(id=None)
+                    .filter(or_(ReviewResponse.id == None, ReviewResponse.is_submitted == False))
                     .all()[0][0]
         )
         return remaining
@@ -111,7 +111,7 @@ class ReviewRepository():
                     .join(ResponseReviewer)
                     .filter_by(reviewer_user_id=reviewer_user_id, active=True)
                     .outerjoin(ReviewResponse, and_(ReviewResponse.response_id==ResponseReviewer.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id))
-                    .filter_by(id=None)
+                    .filter(or_(ReviewResponse.id == None, ReviewResponse.is_submitted == False))
                     .order_by(ResponseReviewer.response_id)
                     .offset(skip)
                     .first()
@@ -160,18 +160,36 @@ class ReviewRepository():
         return review_response
 
     @staticmethod
+    def get_response_by_reviewer(response_id, reviewer_user_id):
+        return (db.session.query(Response)
+                    .filter_by(id=response_id)
+                    .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                    .filter_by(reviewer_user_id=reviewer_user_id)
+                    .first())
+
+    @staticmethod
     def add_model(model):
         db.session.add(model)
         db.session.commit()
         
     @staticmethod
     def get_review_history(reviewer_user_id, application_form_id):
-        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser)
+        reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, Response)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.application_form_id == application_form_id)
                         .join(Response, ReviewResponse.response_id == Response.id)
                         .join(AppUser, Response.user_id == AppUser.id))
+        return reviews
+
+    @staticmethod
+    def get_review_list(reviewer_user_id, event_id):
+        reviews = (db.session.query(Response, ReviewResponse)                        
+                        .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                        .filter_by(reviewer_user_id=reviewer_user_id)
+                        .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                        .filter_by(event_id=event_id)
+                        .outerjoin(ReviewResponse, and_(Response.id == ReviewResponse.response_id, ReviewResponse.reviewer_user_id==reviewer_user_id)))
         return reviews
 
     @staticmethod

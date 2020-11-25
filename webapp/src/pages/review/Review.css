@@ -2,13 +2,6 @@
     margin-top: 2em;
 }
 
-.review-form-container .question.information {
-    padding: 2%;
-    background: #eee;
-    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
-    border-radius: 4px;
-}
-
 .review-form-container {
     padding-left: 3em;
     padding-right: 3em;
@@ -25,6 +18,10 @@
 
 .review-form-container .form-group .rowC p {
     text-align: left;
+}
+
+.review-form-container .form-control {
+    border: 2px solid #8ea7bf;
 }
 
 .buttons {
@@ -52,4 +49,48 @@
 .review-total-score {
     margin-left: 12px;
     font-weight: bold;
+}
+
+.question .answer {
+    border: 1px solid #ccc;
+    padding: 1em;
+}
+
+.question.review {
+    padding-left: 2em;
+}
+
+.question.review:before {
+    content: '?';
+    position: absolute;
+    margin-left: -1em;
+    font-size: 30px;
+    color: #ddd;
+    margin-top: -5px;
+}
+
+.review-form-container .floating-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    left: 0;
+    padding-top: 0.5em;
+    text-align: center;
+    margin-bottom: -0.2em;
+    box-shadow: 0px 1px 10px 0px rgba(0,0,0,0.15);
+}
+
+.review-form-container .save-validation-failed {
+    position: absolute;
+    margin-left: 2em;
+    margin-top: 7px;
+}
+
+.review-form-container .return-to-list {
+    position: absolute;
+    left: 10;
+    margin-left: 100px;
+    margin-top: 7px;
 }

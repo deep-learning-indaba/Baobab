@@ -13,7 +13,8 @@ export const userService = {
   confirmPasswordReset,
   verifyEmail,
   resendVerification,
-  addComment
+  addComment,
+  authRefresh
 };
 
 function login(email, password) {
@@ -113,7 +114,21 @@ function get() {
     .get(baseUrl + `/api/v1/user`, { headers: authHeader() })
     .then(function(response) {
       // handle success
-      return response.data;
+      const user = response.data;
+      return user;
+    })
+    .catch(function(error) {
+      // handle error
+      return { error: error };
+    });
+}
+
+function authRefresh() {
+  return axios
+    .get(baseUrl + '/api/v1/authenticationrefresh', { headers: authHeader() })
+    .then(function(response) {
+      const user = response.data;
+      return user;
     })
     .catch(function(error) {
       // handle error

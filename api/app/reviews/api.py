@@ -16,7 +16,7 @@ from app.reviews.repository import ReviewConfigurationRepository as review_confi
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -30,7 +30,8 @@ answer_fields = {
     'id': fields.Integer,
     'question_id': fields.Integer,
     'question': fields.String(attribute='question.headline'),
-    'value': fields.String(attribute='value_display')
+    'value': fields.String(attribute='value_display'),
+    'question_type': fields.String(attribute='question.type')
 }
 
 response_fields = {
@@ -73,7 +74,9 @@ review_fields = {
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
     'reviews_remaining_count': fields.Integer,
-    'review_response': fields.Nested(review_response_fields)
+    'review_response': fields.Nested(review_response_fields),
+    'is_submitted': fields.Boolean,
+    'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
 def _serialize_review_form(review_form, language):
@@ -135,7 +138,9 @@ class ReviewAPI(ReviewMixin, restful.Resource):
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'])
+        review_response = None if response is None else review_repository.get_review_response(review_form.id, response.id, g.current_user['id']) 
+
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'], review_response)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
@@ -150,6 +155,32 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             skip = reviews_remaining_count - 1
         
         return skip
+
+class ResponseReviewAPI(restful.Resource):
+    @auth_required
+    @marshal_with(review_fields)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('response_id', type=int, required=True)
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+
+        response_id = args['response_id']
+        event_id = args['event_id']
+
+        review_form = review_repository.get_review_form(event_id)
+        if review_form is None:
+            return REVIEW_FORM_NOT_FOUND
+
+        response = review_repository.get_response_by_reviewer(response_id, g.current_user['id'])
+
+        if response is None:
+            return RESPONSE_NOT_FOUND
+
+        review_response = review_repository.get_review_response(review_form.id, response_id, g.current_user['id'])
+
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
 
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
@@ -173,6 +204,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
 
     @auth_required
+    @marshal_with(review_response_fields)
     def post(self):
         args = self.post_req_parser.parse_args()
         validation_result = self.validate_scores(args['scores'])
@@ -184,6 +216,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
         language = args['language']
+        is_submitted = args['is_submitted']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
@@ -191,11 +224,14 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
         review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
         review_response.review_scores = self.get_review_scores(scores)
+        if is_submitted:
+            review_response.submit()
         review_repository.add_model(review_response)
 
-        return {}, 201
+        return review_response, 201
 
     @auth_required
+    @marshal_with(review_response_fields)
     def put(self):
         args = self.post_req_parser.parse_args()
         validation_result = self.validate_scores(args['scores'])
@@ -206,6 +242,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         review_form_id = args['review_form_id']
         reviewer_user_id = g.current_user['id']
         scores = args['scores']
+        is_submitted = args['is_submitted']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
@@ -217,9 +254,11 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         
         db.session.query(ReviewScore).filter(ReviewScore.review_response_id==review_response.id).delete()
         review_response.review_scores = self.get_review_scores(scores)
+        if is_submitted:
+            review_response.submit()
         db.session.commit()
 
-        return {}, 200
+        return review_response, 200
 
     
     def get_review_scores(self, scores):
@@ -366,6 +405,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         return random.sample(responses, min(len(responses), num_reviews))
 
 _review_history_fields = {
+    'response_id': fields.Integer,
     'review_response_id' : fields.Integer,
     'submitted_timestamp' : fields.DateTime(dt_format='iso8601'),
     'reviewed_user_id': fields.String
@@ -380,6 +420,7 @@ review_history_fields = {
 
 class ReviewHistoryModel:
     def __init__(self, review):
+        self.response_id = review.Response.id
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
         self.reviewed_user_id  = review.AppUser.id
@@ -419,3 +460,53 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         reviews = [ReviewHistoryModel(review) for review in reviews]
         return {'reviews': reviews, 'num_entries': num_entries, 'current_pagenumber': page_number, 'total_pages': total_pages}
+
+class ReviewListAPI(restful.Resource):
+
+    @staticmethod
+    def _serialize_answer(answer, language):
+        translation = answer.question.get_translation(language)
+        if not translation:
+            translation = answer.question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
+        return {
+            'headline': translation.headline,
+            'value': answer.value_display
+        }
+
+    @staticmethod
+    def _serialize_response(response, review_response, language):
+        info = [
+            ReviewListAPI._serialize_answer(answer, language)
+            for answer in response.answers if answer.question.key == 'review-identifier']
+
+        submitted = None
+        if review_response and review_response.submitted_timestamp:
+            submitted = review_response.submitted_timestamp.isoformat()
+
+        return {
+            'response_id': response.id,
+            'language': response.language,
+            'information': info,
+            'started': review_response is not None,
+            'submitted': submitted,
+            'total_score': review_response.calculate_score() if review_response is not None else 0.0
+        }
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+        language = args['language']
+        
+        if not user_repository.get_by_id(user_id).is_reviewer(event_id):
+            return FORBIDDEN
+
+        responses_to_review = review_repository.get_review_list(user_id, event_id)
+
+        return [ReviewListAPI._serialize_response(response, review_response, language)
+                for response, review_response in responses_to_review]

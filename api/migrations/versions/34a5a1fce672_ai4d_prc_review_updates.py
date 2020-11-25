@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-"""Set up AI4D Policy Research Centres Call Review Form
+"""AI4D PRC Review Updates
 
-Revision ID: 347a14922cff
-Revises: 4b5d67699684
-Create Date: 2020-11-07 15:49:09.428467
+Revision ID: 34a5a1fce672
+Revises: e1f99a034c22
+Create Date: 2020-11-12 18:05:38.615824
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '347a14922cff'
-down_revision = '4b5d67699684'
+revision = '34a5a1fce672'
+down_revision = 'e1f99a034c22'
 
 from alembic import op
 import sqlalchemy as sa
@@ -349,13 +349,56 @@ class ReviewConfiguration(Base):
     drop_optional_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=True)
     drop_optional_agreement_values = db.Column(db.String(), nullable=True)
 
-    review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
-    review_question = db.relationship('ReviewQuestion', foreign_keys=[drop_optional_question_id])
+class ReviewScore(Base):
+    __tablename__ = 'review_score'
+    __table_args__ = {'extend_existing': True}
 
-def add_question(review_form_id, type, is_required, order, weight=0, question_id=None, 
+    id = db.Column(db.Integer(), primary_key=True)
+    review_response_id = db.Column(db.Integer(), db.ForeignKey('review_response.id'), nullable=False)
+    review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
+    value = db.Column(db.String(), nullable=False)
+
+    def __init__(self,
+                 review_question_id,
+                 value):
+        self.review_question_id = review_question_id
+        self.value = value
+
+class ReviewResponse(Base):
+    __tablename__ = 'review_response'
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer(), primary_key=True)
+    review_form_id = db.Column(db.Integer(), db.ForeignKey('review_form.id'), nullable=False)
+    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
+    submitted_timestamp = db.Column(db.DateTime(), nullable=False)
+    language = db.Column(db.String(2), nullable=False)
+    is_submitted = db.Column(db.Boolean(), nullable=False)
+    submitted_timestamp = db.Column(db.DateTime(), nullable=True)
+
+    def __init__(self,
+                 review_form_id,
+                 reviewer_user_id,
+                 response_id,
+                 language):
+        self.review_form_id = review_form_id
+        self.reviewer_user_id = reviewer_user_id
+        self.response_id = response_id
+        self.language = language
+        self.is_submitted = False
+
+    def submit(self):
+        self.is_submitted = True
+        self.submitted_timestamp = datetime.now()
+
+current_order = 1
+
+def add_question(review_form_id, type, is_required, weight=0, question_id=None, 
                  descriptions=None, headlines=None, placeholders=None, options=None, 
                  validation_regexs=None, validation_texts=None):
-    question = ReviewQuestion(review_form_id, question_id, type, is_required, order, weight)
+    global current_order
+    question = ReviewQuestion(review_form_id, question_id, type, is_required, current_order, weight)
     db.session.add(question)
     db.session.commit()
     en = ReviewQuestionTranslation(
@@ -379,6 +422,8 @@ def add_question(review_form_id, type, is_required, order, weight=0, question_id
     db.session.add_all([en, fr])
     db.session.commit()
 
+    current_order += 1
+
     return question, en, fr
 
 def get_question(en_headline):
@@ -386,7 +431,7 @@ def get_question(en_headline):
     fr = db.session.query(QuestionTranslation).filter_by(language='fr', question_id=en.question_id).first()
     return en.question, en, fr
 
-def add_evaluation_question(form_id, order, headlines, descriptions, min_score, max_score):
+def add_evaluation_question(form_id, headlines, descriptions, min_score, max_score):
     validation_regex = '^({})$'.format('|'.join([str(i) for i in range(max_score, min_score-1, -1)]))
     validation_text = {
         'en': 'Enter a number between {} and {}'.format(min_score, max_score),
@@ -396,46 +441,59 @@ def add_evaluation_question(form_id, order, headlines, descriptions, min_score, 
         'en': 'Enter a score between {} and {}'.format(min_score, max_score),
         'fr': 'Saisissez un score compris entre {} et {}'.format(min_score, max_score)
     }
-    return add_question(form_id, 'short-text', True, order, 1, headlines=headlines, 
+    return add_question(form_id, 'short-text', True, 1, headlines=headlines, 
             descriptions=descriptions, validation_regexs={'en': validation_regex, 'fr': validation_regex}, 
             validation_texts=validation_text, placeholders=placeholders)
 
-def add_comment_question(form_id, order, headlines, descriptions, is_required=False):
-    return add_question(form_id, 'long-text', is_required, order, weight=1, descriptions=descriptions, headlines=headlines)
+def add_comment_question(form_id, headlines, descriptions, is_required=False):
+    return add_question(form_id, 'long-text', is_required, weight=1, descriptions=descriptions, headlines=headlines)
 
-def add_information_question(form_id, order, en_headline, type='information'):
+def add_information_question(form_id, en_headline, type='information', heading_override=False, description_override=None):
     question, en, fr = get_question(en_headline)
+    
     headlines = {
-        'en': en.headline,
-        'fr': fr.headline
+        'en': None if heading_override else en.headline,
+        'fr': None if heading_override else fr.headline
     }
-    return add_question(form_id, type, False, order, question_id=question.id, headlines=headlines)
+    descriptions = {
+        'en': description_override['en'] if description_override is not None else en.description,
+        'fr': description_override['fr'] if description_override is not None else fr.description
+    }
 
-def add_divider(form_id, order, headlines, descriptions):
-    return add_question(form_id, 'section-divider', False, order, headlines=headlines, descriptions=descriptions)
+    if question.type == 'information':
+        return add_heading(form_id, headlines)
+
+    return add_question(form_id, type, False, question_id=question.id, headlines=headlines, descriptions=descriptions)
+
+def add_heading(form_id, headlines):
+    return add_question(form_id, 'heading', False, headlines=headlines)
+
+def add_divider(form_id, headlines, descriptions):
+    return add_question(form_id, 'section-divider', False, headlines=headlines, descriptions=descriptions)
 
 def upgrade():
-    print('STARTING MIGRATION 347a14922cff')
-    event = db.session.query(Event).filter_by(key='prc').first()
+    print('Start migration 34a5a1fce672')
 
-    event.review_open = datetime.date(2020, 11, 7)
-    event.review_close = datetime.date(2020, 11, 30)
-    db.session.commit()
+#     event = db.session.query(Event).filter_by(key='prc').first()
+#     application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
+#     form = db.session.query(ReviewForm).filter_by(application_form_id=application_form.id).first()
 
-    application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
-    form = ReviewForm(application_form.id, datetime.date(2020, 11, 30))
-    db.session.add(form)
-    db.session.commit()
+#     questions = db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).all()
 
-    # Review configuration
-    config = ReviewConfiguration(review_form_id=form.id, num_reviews_required=5, num_optional_reviews=0)
-    db.session.add(config)
-    db.session.commit()
+#     for q in questions:
+#         db.session.query(ReviewQuestionTranslation).filter_by(review_question_id=q.id).delete()
+#         db.session.query(ReviewScore).filter_by(review_question_id=q.id).delete()
+#     db.session.commit()
 
-    print('Added review configuration')
+#     db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).delete()
+#     db.session.commit()
 
-    # Set up questions
-#     divider1 = add_question(form.id, 'section-divider', False, 1, headlines={
+#     db.session.query(ReviewResponse).filter_by(review_form_id=form.id).delete()
+
+#     print('Removed existing form, repopulating...')
+
+#     # Set up questions
+#     divider1 = add_question(form.id, 'section-divider', False, headlines={
 #         'en': 'Evaluation of proposals',
 #         'fr': u'Évaluation des propositions'
 #     }, descriptions={
@@ -457,7 +515,7 @@ def upgrade():
 # """
 #     })
 
-#     divider2 = add_question(form.id, 'section-divider', False, 2, headlines={
+#     divider2 = add_question(form.id, 'section-divider', False, headlines={
 #         'en': 'Section I: Organization capacity and experience',
 #         'fr': u'Section I: Capacité et expérience de l’organisation'
 #     }, descriptions={
@@ -481,15 +539,15 @@ def upgrade():
 # """
 #     })
 
-#     add_information_question(form.id, 3, 'How many people in total work in your organization?')
-#     add_information_question(form.id, 4, 'Of these, how many are full time policy researchers?')
-#     add_information_question(form.id, 5, "Please provide the names and CVs of your organization's principal researchers (up to five)", 'multi-file')
+#     add_information_question(form.id, '1. Organizational capacity and experience')
+#     add_information_question(form.id, 'How many people in total work in your organization?')
+#     add_information_question(form.id, 'Of these, how many are full time policy researchers?')
+#     add_information_question(form.id, "Please provide the names and CVs of your organization's principal researchers (up to five)", 'multi-file')
 
-#     review_q1 = add_evaluation_question(form.id, 6, headlines={
-#         'en': 'Evaluating Question I.1',
-#         'fr': u'Évaluation de la question I.1'
-#     }, descriptions={
-#         'en': """Assessment of research team: After reviewing the CVs of the principal researchers, assess the strength of the research team with respect to achieving the goals and strategy of the proposed research agenda. 
+#     review_q1 = add_evaluation_question(form.id, headlines=None, descriptions={
+#         'en': """Please review the makeup of the organization in terms of staffing and answer the following question.
+
+# Assessment of research team: After reviewing the CVs of the principal researchers, assess the strength of the research team with respect to achieving the goals and strategy of the proposed research agenda. 
 # \[Total possible points = 10\]
 
 # **Scale:**
@@ -507,20 +565,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 7, headlines={
-#         'en': "Comments?",
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
 #         'fr': u"Des commentaires?"
-#     }, descriptions={
-#         'en': "Please comment on the applicant’s organizational capacity and experience.",
-#         'fr': u"Veuillez commenter la capacité d’organisation et l’expérience du candidat."
-#     })
+#     }, headlines=None)
 
-#     add_information_question(form.id, 8, '2. Mission for Responsible AI')
+#     add_information_question(form.id, '2. Mission for Responsible AI')
 
-#     add_evaluation_question(form.id, 9, headlines={
-#         'en': 'Evaluating Question I.2',
-#         'fr': u'Évaluation de la question I.2.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does this mission statement of the organization relate to advancing the principles of responsible AI? 
 # \[Total possible points = 15\]
 
@@ -540,21 +592,15 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_comment_question(form.id, 10, headlines={
-#         'en': 'Comments?',
-#         'fr': 'Des commentaires?'
-#     }, descriptions={
-#         'en': 'Please comment on the applicant’s discussion of their mission for responsible AI.',
-#         'fr': u"Veuillez commenter la discussion du candidat sur sa mission pour l’IA responsable."
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 11, '3. Demonstrated expertise')
-#     add_information_question(form.id, 12, 'Examples')
+#     add_information_question(form.id, '3. Demonstrated expertise')
+#     add_information_question(form.id, 'Examples')
 
-#     add_evaluation_question(form.id, 13, headlines={
-#         'en': 'Evaluating Question I.3',
-#         'fr': u'Évaluation de la question I.3.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant demonstrate knowledge and expertise with at least three of the key research areas? 
 # \[Total possible points = 15\]
 
@@ -573,13 +619,10 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_evaluation_question(form.id, 14, headlines={
-#         'en': 'Evaluating Question I.3',
-#         'fr': u'Évaluation de la question I.3.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Please review the examples provided by the applicant from the organization’s research portfolio. Based on what they’ve written and provided, to what extent does the organization demonstrate an ability to produce high quality policy research on these issues? 
 # \[Total possible points = 15\]
-# High quality research is relevant, shows integrity, legitimacy, importance (originality) and is well positioned for use. Please refer to the [Research Quality Plus](https://www.idrc.ca/en/research-in-action/research-quality-plus) assessment instrument if you have questions.
+# *High quality research is relevant, shows integrity, legitimacy, importance (originality) and is well positioned for use. Please refer to the [Research Quality Plus](https://www.idrc.ca/en/research-in-action/research-quality-plus) assessment instrument if you have questions.*
 
 # **Scale:**
 # 0 - 5 : Limited track record of producing high quality research
@@ -598,17 +641,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
     
-#     add_comment_question(form.id, 15, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
-#         'en': 'Please comment on the applicant’s expertise.',
-#         'fr': u"Veuillez commenter l'expertise du candidat."
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     print('Added section 1')
+#     print('Finished configuring Section I')
 
-#     add_divider(form.id, 16, {
+#     add_divider(form.id, {
 #         'en': 'Section II: Policy Research',
 #         'fr': u'Section II: Recherche sur les politiques'
 #     }, {
@@ -644,11 +684,8 @@ def upgrade():
 # """
 #     })
 
-#     add_information_question(form.id, 17, '1. Research background, problem statement and justification')
-#     add_evaluation_question(form.id, 18, headlines={
-#         'en': 'Evaluating Question II.1',
-#         'fr': u'Évaluation de la question II.1.'
-#     }, descriptions={
+#     add_information_question(form.id, '1. Research background, problem statement and justification')
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant clearly articulate why these priorities are significant for the AI4D research agenda of the organization and the contexts in which they work? 
 # \[Total possible points = 10\]
 
@@ -667,10 +704,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 19, headlines={
-#         'en': 'Evaluating Question II.1',
-#         'fr': u'Évaluation de la question II.1.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant demonstrate the ability to draw upon evidence to support the background, context and arguments for why these are the priorities for their research? 
 # \[Total possible points = 10\]
 
@@ -689,10 +723,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 20, headlines={
-#         'en': 'Evaluating Question II.1',
-#         'fr': u'Évaluation de la question II.1.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant demonstrate the ability to write on complex issues succinctly and intelligently? 
 # \[Total possible points = 5\]
 
@@ -711,20 +742,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=5)
 
-#     add_comment_question(form.id, 21, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
-#         'en': 'Please comment on the applicant’s research justification. ',
-#         'fr': u"Veuillez commenter la justification de la recherche du candidat."
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 22, '2. General and specific objectives')
+#     add_information_question(form.id, '2. General and specific objectives')
 
-#     add_evaluation_question(form.id, 23, headlines={
-#         'en': 'Evaluating Question II.2',
-#         'fr': u'Évaluation de la question II.2.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent are the general and specific objectives appropriate and logically connected to problem statement and justification? Are they feasible? 
 # \[Total possible points = 10\]
 
@@ -743,20 +768,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 24, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
-#         'en': 'Please comment on the applicant’s objectives.',
-#         'fr': u"Veuillez commenter les objectifs du demandeur."
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 25, '3. Methodology and approach')
-#     add_information_question(form.id, 26, 'Approach')
-#     add_evaluation_question(form.id, 27, headlines={
-#         'en': 'Evaluating Question II.3: approach to research',
-#         'fr': u'Évaluation de la sous-question II.3: Approche de la recherche'
-#     }, descriptions={
+#     add_information_question(form.id, '3. Methodology and approach')
+#     add_information_question(form.id, 'Approach')
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate a coherent approach to achieving their research objectives? 
 # \[Total possible points = 10\]
 
@@ -775,17 +794,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 28, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 29, 'Policy research')
+#     add_information_question(form.id, 'Policy research')
 
-#     add_evaluation_question(form.id, 30, headlines={
-#         'en': 'Evaluating Question II.3: policy research',
-#         'fr': u'Évaluation de la sous-question II.3: Recherche sur les politiques'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent is the conceptual and theoretical framework appropriate to the research question at hand? How well is the framework linked to the proposed research design? 
 # \[Total possible points = 10\]
 
@@ -804,15 +820,12 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 31, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_evaluation_question(form.id, 32, headlines={
-#         'en': 'Evaluating Question II.3: policy research',
-#         'fr': u'Évaluation de la sous-question II.3: Recherche sur les politiques'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate a rigorous approach to answering their research questions? 
 # \[Total possible points = 10\]
 
@@ -831,18 +844,24 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 33, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 34, 'Gender and inclusion')
-#     add_information_question(form.id, 35, 'Gender and inclusion: Supporting documents')
+#     add_information_question(form.id, 'Gender and inclusion', description_override={
+#         'en': """How has your organization addressed gender-equality and other kinds of inclusion and diversity dimensions socioeconomic, political, cultural, ethnic in its policy research? 
+# How do you anticipate this will improve with this AI4D support? 
+# Please give a brief explanation of your strategy with gender, inclusion and diversity related issues as it relates to AI/advanced technologies and offer examples of the research work. 
 
-#     add_evaluation_question(form.id, 36, headlines={
-#         'en': 'Evaluating Question II.3: gender and inclusion',
-#         'fr': u'Évaluation de la sous-question II.3: Genre et inclusion'
-#     }, descriptions={
+# Please provide examples PDF or links to material that demonstrates your strategy and research on gender, inclusion and diversity.
+
+# Maximum 750 words""",
+#     'fr': ""
+#     })
+#     add_information_question(form.id, 'Gender and inclusion: Supporting documents', type='multi-file')
+
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate in-depth knowledge of gender-related dimensions of AI4D? 
 # \[Total possible points = 10\]
 
@@ -861,10 +880,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 37, headlines={
-#         'en': 'Evaluating Question II.3: gender and inclusion',
-#         'fr': u'Évaluation de la sous-question II.3: Genre et inclusion'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate in-depth knowledge of other inclusion-related dimensions of AI4D, such as socioeconomics, cultural/ethnic and broader social inclusion issues? 
 # \[Total possible points = 10\]
 
@@ -883,10 +899,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 38, headlines={
-#         'en': 'Evaluating Question II.3: gender and inclusion',
-#         'fr': u'Évaluation de la sous-question II.3: Genre et inclusion'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Considering the answer on gender and inclusion and the examples provided by the applicant, to what extent does the organization demonstrate in-depth knowledge of gender and inclusion-related issues/challenges in AI and advanced technologies? 
 # \[Total possible points = 5\]
 
@@ -905,17 +918,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=5)
 
-#     add_comment_question(form.id, 39, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 40, 'Ethical considerations')
+#     add_information_question(form.id, 'Ethical considerations')
 
-#     add_evaluation_question(form.id, 41, headlines={
-#         'en': 'Evaluating Question II.3: ethics',
-#         'fr': u'Évaluation de la sous-question II.3: Éthique'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Please assess the applicant’s ethics review process for their research. Does the applicant outline a clear and independent process for reviewing and ensuring the privacy, dignity, and integrity of individuals who are the subjects of their research? 
 # \[Total possible points = 5\]
 
@@ -934,17 +944,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=5)
 
-#     add_comment_question(form.id, 42, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 43, '4. Capacity development')
+#     add_information_question(form.id, '4. Capacity development')
 
-#     add_evaluation_question(form.id, 44, headlines={
-#         'en': 'Evaluating Question II.4',
-#         'fr': u'Évaluation de la question II.4.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant clearly identify where they need the most capacity building to improve work and outcomes to advance responsible AI in their country/region - and offer a coherent, reasonable strategy for addressing the gap? 
 # \[Total possible points = 10\]
 
@@ -963,17 +970,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 45, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 46, '5. Communicating for influence')
+#     add_information_question(form.id, '5. Communicating for influence')
 
-#     add_evaluation_question(form.id, 47, headlines={
-#         'en': 'Evaluating Question II.5',
-#         'fr': u'Évaluation de la question II.5.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Please review the applicant's description of their research communications strategy. To what extent does the organization demonstrate an ability or approach to communicate their research well to influence policy? 
 # \[Total possible points = 10\]
 
@@ -992,17 +996,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_comment_question(form.id, 48, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 49, '6. Results')
+#     add_information_question(form.id, '6. Results')
 
-#     add_evaluation_question(form.id, 50, headlines={
-#         'en': 'Evaluating Question II.6',
-#         'fr': u'Évaluation de la question II.6.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent are the proposed markers for measuring success for the organization in the context of this project specific, appropriate, achievable, timely and measurable? 
 # \[Total possible points = 15\]
 
@@ -1021,17 +1022,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_comment_question(form.id, 51, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 52, '7. Project schedule')
+#     add_information_question(form.id, '7. Project schedule')
 
-#     add_evaluation_question(form.id, 53, headlines={
-#         'en': 'Evaluating Question II.7',
-#         'fr': u'Évaluation de la question II.7.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant demonstrate a clear and realistic project schedule for achieving their objectives with outputs and milestones as they relate to the budget? 
 # \[Total possible points = 5\]
 
@@ -1050,32 +1048,26 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=5)
 
-#     add_comment_question(form.id, 54, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 55, '8. Supplemental documentation (optional).')
+#     add_information_question(form.id, '8. Supplemental documentation (optional).')
 
-#     add_comment_question(form.id, 56, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
+#     add_comment_question(form.id, headlines=None, descriptions={
 #         'en': """Please review the supplemental documentation and provide your assessment of these documents. This question is not weighted, but your assessment will be taken into consideration should there be a tie, or a close score that requires an assessment of the applicant’s overall work.""",
 #         'fr': u"""Veuillez examiner les documents complémentaires et donner votre évaluation de ces documents. Cette question n’est pas pondérée, mais votre évaluation sera prise en considération en cas d’égalité ou de score serré nécessitant une évaluation de l’ensemble du travail du candidat."""
 #     })
 
-#     add_comment_question(form.id, 57, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
-#         'en': """Please comment as needed on any of the above in Section II.""",
-#         'fr': u"""Veuillez formuler des commentaires, le cas échéant, sur l’un des points ci-dessus dans la section II."""
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     print('Added section 2')
+#     print('Finished configuring Section II')
 
-#     add_divider(form.id, 58, headlines={
+#     add_divider(form.id, headlines={
 #         'en': 'Section III: Policy Engagement Experience',
 #         'fr': u'Section III : Expérience de l’engagement politique'
 #     }, descriptions={
@@ -1095,16 +1087,14 @@ def upgrade():
 # """
 #     })
 
-#     add_information_question(form.id, 59, '1. Policy engagement')
+#     add_information_question(form.id, '1. Policy engagement')
 
-#     add_evaluation_question(form.id, 60, headlines={
-#         'en': 'Evaluating Question III.1',
-#         'fr': u'Évaluation de la question III.1.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate quality engagement with national governing institutions (e.g. government departments, bodies and agencies, as well as regulators, and other public-sector institutions) on advanced technology issues?  \[Total possible points = 15\] 
 # *Note: For the purposes of this initiative, having national policy influence is critical.*
 
 # Applicant receives and responds to requests for input from governments/other regulatory institutions.
+
 # **Scale:**
 # 0 - 5 : Limited quality engagement 
 # 6 - 10 : Some quality engagement
@@ -1122,14 +1112,9 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_evaluation_question(form.id, 61, headlines={
-#         'en': 'Evaluating Question III.1',
-#         'fr': u'Évaluation de la question III.1.'
-#     }, descriptions={
-#         'en': """To what extent does the organization demonstrate quality engagement with national governing institutions (e.g. government departments, bodies and agencies, as well as regulators, and other public-sector institutions) on advanced technology issues?  \[Total possible points = 15\] 
-# *Note: For the purposes of this initiative, having national policy influence is critical.*
+#     add_evaluation_question(form.id, headlines=None, descriptions={
+#         'en': """Applicant proactively engages with policy makers (such as on steering committees, or on emerging policy issues).
 
-# Applicant proactively engages with policy makers (such as on steering committees, or on emerging policy issues).
 # **Scale:**
 # 0 - 5 : Limited quality engagement 
 # 6 - 10 : Some quality engagement
@@ -1147,10 +1132,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_evaluation_question(form.id, 62, headlines={
-#         'en': 'Evaluating Question III.1',
-#         'fr': u'Évaluation de la question III.1.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Please review the three examples of policy engagement. To what extent does the applicant demonstrate an ability to engage with policy makers on substantive/technical policy issues? 
 # \[Total possible points = 15\]
 
@@ -1169,17 +1151,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_comment_question(form.id, 63, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions=None)
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     add_information_question(form.id, 64, '2. Informing debates and policies')
+#     add_information_question(form.id, '2. Informing debates and policies')
 
-#     add_evaluation_question(form.id, 65, headlines={
-#         'en': 'Evaluating Question III.2',
-#         'fr': u'Évaluation de la question III.2.'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the applicant demonstrate an ability to inform public debate and policy processes nationally or regionally? 
 # \[Total possible points = 15\]
 
@@ -1198,13 +1177,10 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_information_question(form.id, 66, '3. Regional engagement')
-#     add_information_question(form.id, 67, 'Regional engagement')
+#     add_information_question(form.id, '3. Regional engagement')
+#     add_information_question(form.id, 'Regional engagement', heading_override=True)
 
-#     add_evaluation_question(form.id, 68, headlines={
-#         'en': 'Evaluating Question III.3',
-#         'fr': u'Évaluation de la question III.3'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """To what extent does the organization demonstrate clear regional/international engagement on AI/advanced technology policy issues with other governments, public sector institutions, bi-lateral, multilateral or international institutions/organizations or multi stakeholder fora? 
 # \[Total possible points = 15\]
 
@@ -1223,17 +1199,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=15)
 
-#     add_comment_question(form.id, 69, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
-#         'en': """Please comment as needed on any of the above in Section III.""",
-#         'fr': u"""Veuillez commenter, si nécessaire, l’un des points ci-dessus dans la section III."""
-#     })
+#     add_comment_question(form.id, descriptions={
+#         'en': "Comments",
+#         'fr': u"Des commentaires?"
+#     }, headlines=None)
 
-#     print('Added section 3')
+#     print('Finished configuring Section III')
 
-#     add_divider(form.id, 70, headlines={
+#     add_divider(form.id, headlines={
 #         'en': "Section IV: Budget",
 #         'fr': "Section IV: Budget"
 #     }, descriptions={
@@ -1255,12 +1228,9 @@ def upgrade():
 # """
 #     })
 
-#     add_information_question(form.id, 71, 'Budget', 'file')
+#     add_information_question(form.id, 'Budget', 'file')
 
-#     add_evaluation_question(form.id, 72, headlines={
-#         'en': 'Evaluating the budget',
-#         'fr': u'Évaluation du budget'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Please review the applicant’s budget and consider the coherence and clarity, the appropriateness of budget lines for proposed activities and the budget’s alignment with the research plan.
 # In terms of overall coherence, appropriateness to research activities and fiscal management, please rate the applicant’s budget. 
 # \[Total possible points = 30\]
@@ -1281,17 +1251,14 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=30)
 
-#     add_comment_question(form.id, 73, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
+#     add_comment_question(form.id, headlines=None, descriptions={
 #         'en': """IDRC’s grants administration team will be reviewing all of the budgets independently, and their assessment will be discussed during the final selection process. However, given the significance of budgets in terms of institutional strength, research planning and strategy, and risk mitigation, please provide feedback on the applicant’s proposed budget, and offer any input or insights you may have regarding the soundness of the applicant’s budget in relation to their research objectives and overall plan.""",
 #         'fr': u"""L’équipe d’administration des subventions du CRDI examinera tous les budgets de manière indépendante et leur évaluation sera discutée lors du processus de sélection final. Toutefois, étant donné l’importance des budgets en termes de force institutionnelle, de planification et de stratégie de recherche et d’atténuation des risques, veuillez donner votre avis sur le budget proposé par le candidat et faire part de vos commentaires ou de vos idées concernant"""
 #     })
     
-#     print('Added section 4')
+#     print('Finished configuring Section IV')
 
-#     add_divider(form.id, 74, headlines={
+#     add_divider(form.id, headlines={
 #         'en': "Section V: Overall quality of application",
 #         'fr': u"Section V : Qualité générale de la demande"
 #     }, descriptions={
@@ -1301,10 +1268,7 @@ def upgrade():
 # \[Total des points possibles = 25\]"""
 #     })
 
-#     add_evaluation_question(form.id, 75, headlines={
-#         'en': 'Overall quality of application',
-#         'fr': u'Qualité générale de la demande'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Is the overall application well-articulated and does it demonstrate clarity of purpose and potential impact for AI4D? 
 # \[Total possible points = 10\]
 
@@ -1323,10 +1287,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 76, headlines={
-#         'en': 'Overall quality of application',
-#         'fr': u'Qualité générale de la demande'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Does the proposal demonstrate in-depth, well-rounded, and multi-disciplinary knowledge of AI and advanced technology policy themes and issues? 
 # \[Total possible points = 10\]
 
@@ -1345,10 +1306,7 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=10)
 
-#     add_evaluation_question(form.id, 77, headlines={
-#         'en': 'Overall quality of application',
-#         'fr': u'Qualité générale de la demande'
-#     }, descriptions={
+#     add_evaluation_question(form.id, headlines=None, descriptions={
 #         'en': """Does the proposal demonstrate a clear strategy of how the organization will benefit from the support offered by this initiative and add to debates on the AI and advanced technology policy themes in the region? 
 # \[Total possible points = 5\]
 
@@ -1367,36 +1325,13 @@ def upgrade():
 # """
 #     }, min_score=0, max_score=5)
 
-#     add_comment_question(form.id, 78, headlines={
-#         'en': 'Comments?',
-#         'fr': u'Des commentaires?'
-#     }, descriptions={
+#     add_comment_question(form.id, headlines=None, descriptions={
 #         'en': """Please provide any final comments on the overall application. These will feed into discussions""",
 #         'fr': u"""Veuillez fournir tout commentaire final sur l’ensemble de la demande. Ces commentaires seront pris en compte dans les discussions."""
 #     })
 
-#     print('Added section 5')
-#     print('FINISHED MIGRATION 347a14922cff')
-    
-#     db.session.commit()
-#     db.session.flush()
+#     print('DONE')
+
 
 def downgrade():
-    event = db.session.query(Event).filter_by(key='prc').first()
-    application_form = db.session.query(ApplicationForm).filter_by(event_id=event.id).first()
-    form = db.session.query(ReviewForm).filter_by(application_form_id=application_form.id).first()
-
-    questions = db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).all()
-
-    for q in questions:
-        db.session.query(ReviewQuestionTranslation).filter_by(review_question_id=q.id).delete()
-    db.session.commit()
-
-    db.session.query(ReviewQuestion).filter_by(review_form_id=form.id).delete()
-    db.session.commit()
-
-    db.session.query(ReviewConfiguration).filter_by(review_form_id=form.id).delete()
-    db.session.commit()
-
-    db.session.query(ReviewForm).filter_by(id=form.id).delete()
-    db.session.commit()
+    pass
