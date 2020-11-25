@@ -1,11 +1,10 @@
-
 /* Universal */
 .event-config-wrapper input[type='checkbox'] {
-margin: 0 5px 0 0;
+  margin: 0 5px 0 0;
 }
 
 
-.react-datetime-picker__wrapper {
+.event-config-wrapper .react-datetime-picker__wrapper {
   min-width: 200px;
   height: calc(2.25rem + 2px);
   padding: 0.375rem 0.75rem;
@@ -19,25 +18,42 @@ margin: 0 5px 0 0;
   border-radius: 0.25rem;
 }
 
-.body {
+.event-config-wrapper  .body {
   padding-top: 0em;
 }
 
-.col-form-label {
-  font-size: 17px;
+.event-config-wrapper  .col-form-label {
+  font-size: 19px;
 }
 
 /* Form Fields */
+
+html .event-config-wrapper  .badge {
+  margin: 12px;
+  font-size: 13px;
+}
+
+html .event-config-wrapper  .form-group {
+  margin-bottom: 2em;
+}
 
 .event-config-wrapper .col-sm-10.flex {
   display: flex;
   align-items: center;
   color: grey;
-  }
-  
+}
+
+html .event-config-wrapper  .MuiGrid-justify-xs-space-around {
+  justify-content: flex-start;
+}
+
+html .event-config-wrapper  .MuiFormControl-root.MuiTextField-root {
+  width: 15%;
+}
+
 
 /* Date Pickers Section */
-.date-picker-section {
+.event-config-wrapper .date-picker-section {
   display: flex;
   flex-wrap: wrap;
   margin-top: 2%;
@@ -45,17 +61,17 @@ margin: 0 5px 0 0;
   padding-left: 0;
 }
 
-.date-picker-section .col-md-5 {
+.event-config-wrapper .date-picker-section .col-md-5 {
   padding-bottom: 2%;
 }
 
-.date-item {
+.event-config-wrapper .date-item {
   margin: 2% 1% 1% 0;
   padding: 1% 1% 2% 1%;
 
 }
 
-.date-item p {
+.event-config-wrapper .date-item p {
   text-align: left;
   margin: 0 10px;
 }
@@ -75,26 +91,26 @@ margin: 0 5px 0 0;
   margin: 1%;
 }
 
-.date-item:hover {
+.event-config-wrapper .date-item:hover {
   background: hsl(0, 0%, 98%);
 }
 
-.date-item:hover p {
+.event-config-wrapper .date-item:hover p {
   color: hsl(218, 24%, 57%);
   font-size: 16px;
 }
 
-.date-item label {
+.event-config-wrapper .date-item label {
   color: grey;
   font-size: 10px;
 }
 
-.date-item-sections {
+.event-config-wrapper .date-item-sections {
   display: flex;
   padding: 10px 0;
 }
 
-.date-picker {
+.event-config-wrapper .date-picker {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -102,26 +118,25 @@ margin: 0 5px 0 0;
 }
 
 /* Handle Submit and Cancel Section */
-.submit {
+.event-config-wrapper .submit {
   padding-left: 10px;
   display: flex;
 }
 
-.submit .col-sm-4 {
+.event-config-wrapper .submit .col-sm-4 {
   padding: 0;
   margin: 0 10px 0 0;
 }
 
 
-.submit .btn-success {
+.event-config-wrapper .submit .btn-success {
   background: hsl(131deg, 47%, 76%);
   color: hsl(132, 18%, 29%);
   border: none;
 }
 
-.submit .btn-danger {
+.event-config-wrapper .submit .btn-danger {
   background: hsl(6, 64%, 87%);
   color: hsl(0, 50%, 30%);
   border: none;
 }
-

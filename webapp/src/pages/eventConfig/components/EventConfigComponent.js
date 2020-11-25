@@ -3,7 +3,11 @@ import { eventService } from "../../../services/events";
 import { withRouter } from "react-router";
 import DateTimePicker from "react-datetime-picker";
 import Select from 'react-select';
+import * as moment from 'moment';
 import { withTranslation } from 'react-i18next';
+import {
+  TextField
+} from '@material-ui/core';
 
 class EventConfigComponent extends Component {
   constructor(props) {
@@ -14,7 +18,7 @@ class EventConfigComponent extends Component {
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
       loading: true,
-      error: "",
+      error: ""
     };
   };
 
@@ -46,26 +50,8 @@ class EventConfigComponent extends Component {
 
 
   onClickSubmit = () => {
- /*
-    const formatUpdatedEvent = this.state.updatedEvent;
-    const keys = Object.keys(this.state.updatedEvent)
-    Object.values(this.state.updatedEvent).map((val, index) => {
-      if (val && val.length > 1) {
-        if (typeof val != "number") {
-          let validate = new Date(val);
-          if (validate && validate != "Invalid Date") {
-            formatUpdatedEvent[keys[index]] = validate.toISOString()
-          }
-        }
-      }
-    });
-
-    console.log(formatUpdatedEvent)
- */
-
-
     // PUT
-        eventService.update(this.state.updatedEvent).then(result => {
+    eventService.update(this.state.updatedEvent).then(result => {
       console.log(result)
       this.setState({
         preEvent: result.event,
@@ -74,21 +60,18 @@ class EventConfigComponent extends Component {
         error: Object.values(result.error)
       });
     });
-   
+
   };
 
 
   handleDates = (fieldName, e) => {
-
-      let formatDate = {
+    let formatDate = {
       target: {
-      value: e.toISOString()
-    }
-    }
-    this.updateEventDetails(fieldName, formatDate)
-    
-  
-  }
+        value: e.toISOString()
+      }
+    };
+    this.updateEventDetails(fieldName, formatDate);
+  };
 
 
 
@@ -110,7 +93,7 @@ class EventConfigComponent extends Component {
       // Some values are not nested, etsting against different values
       [fieldName]: key ? { [key]: e.target.value }
         :
-        e.target ? e.target.value 
+        e.target ? e.target.value
           :
           e.value
     };
@@ -162,10 +145,16 @@ class EventConfigComponent extends Component {
       ],
       travelGrant: [
         { value: "yes", label: "yes" },
-        {value: "no", label: "no"},
+        { value: "no", label: "no" },
       ]
-    }
-      
+    };
+
+    // format current date for MUI Time Picker
+    const currentTime = () => {
+      let date = moment().format('h:mm');
+      return date.length == 4 ? String(date).padStart(5, '0') : date;
+    };
+
 
     /* Loading */
     if (loading) {
@@ -178,14 +167,14 @@ class EventConfigComponent extends Component {
           </div>
         </div>
       );
-    }
+    };
 
     /* Error */
     if (error) {
       return <div className="alert alert-danger alert-container">
         {error}
       </div>;
-    }
+    };
 
 
     return (
@@ -204,13 +193,19 @@ class EventConfigComponent extends Component {
 
               {/* Organisation Name */}
               <div className="col-sm-10">
+                <span
+                  id="organisation_id"
+                  class="badge badge-primary">{updatedEvent.organisation_name}</span>
+                {/*
                 <input
                   readOnly
                   type="text"
                   className={"form-control-plaintext readonly"}
                   id="organisation_id"
-                  value={updatedEvent.organisation_name}
+                  value={}
                 />
+                */}
+                
               </div>
             </div>
 
@@ -286,13 +281,11 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-              <option disabled>Does this event provide travel grants for participants</option>
+                <option disabled>{t('Does this event provide travel grants for participants')}</option>
                 <Select
                   onChange={e => this.updateEventDetails("travel_grant", e)}
                   options={options.travelGrant}
-                /> 
-                
-                  {/*"Does this event provide travel grants for participants"*/}
+                />
               </div>
             </div>
 
@@ -323,11 +316,16 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <input
+              <span
+                  id="key"
+                  class="badge badge-primary">{updatedEvent.key}</span>
+                {/*
+                 <input
                   readOnly
                   className={"form-control-plaintext readonly"}
-                  id="key"
                   value={updatedEvent.key} />
+                */}
+               
               </div>
             </div>
 
@@ -363,6 +361,30 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
+            {/* Time */}
+            <div className={"form-group row"}>
+              <label className={"col-sm-2 col-form-label"}
+                htmlFor="url">
+                {t("Time")}
+              </label>
+              <div className="col-sm-10">
+                <TextField
+                   onChange={e => this.updateEventDetails("time", e)}
+                  id="time"
+                  label="Times are in UTC"
+                  type="time"
+                  defaultValue={currentTime()}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  inputProps={{
+                    step: 300, // 5 min
+                  }}
+                />
+
+
+              </div>
+            </div>
 
             <hr style={{ "marginTop": "50px" }}></hr>
 
