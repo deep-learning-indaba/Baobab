@@ -196,15 +196,6 @@ import {
                 <span
                   id="organisation_id"
                   class="badge badge-primary">{updatedEvent.organisation_name}</span>
-                {/*
-                <input
-                  readOnly
-                  type="text"
-                  className={"form-control-plaintext readonly"}
-                  id="organisation_id"
-                  value={}
-                />
-                */}
                 
               </div>
             </div>
@@ -319,12 +310,6 @@ import {
               <span
                   id="key"
                   class="badge badge-primary">{updatedEvent.key}</span>
-                {/*
-                 <input
-                  readOnly
-                  className={"form-control-plaintext readonly"}
-                  value={updatedEvent.key} />
-                */}
                
               </div>
             </div>

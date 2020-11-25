@@ -324,7 +324,9 @@
     "Application": "Application" ,
     "Selection": "Sélection",
     "Miniconf Url":  "Miniconf Url",
-    "Time": "Temps"
-
+    "Time": "Temps",
+    "Event": "Événement",
+    "Award": "Award",
+    "Call": "Appeler"
 
 }

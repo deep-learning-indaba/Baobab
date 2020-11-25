@@ -1,5 +1,5 @@
 import React from "react";
-import { shallow, mount } from "enzyme";
+import { shallow } from "enzyme";
 import { eventService } from "../../../services/events/events.service";
 import { EventConfigComponent } from "../components/EventConfigComponent";
 
@@ -29,7 +29,7 @@ describe("EventConfigComponent Tests", () => {
   it("Check if eventService API calls occur", async () => {
     const result = await eventService.getEvent(1);
     expect(result.error).toBeTruthy()
-  })
+  });
 
 
   it("Check if function onClickCancel works.", () => {
@@ -40,7 +40,7 @@ describe("EventConfigComponent Tests", () => {
 
   it("Check if function updateEventDetails works.", () => {
 
-    let e = { target: { value: "test" } }
+    let e = { target: { value: "test" } };
 
     let prevState = wrapper.state().hasBeenUpdated;
 
