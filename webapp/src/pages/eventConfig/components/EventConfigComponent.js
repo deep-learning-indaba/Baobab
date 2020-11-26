@@ -9,7 +9,7 @@ import {
   TextField
 } from '@material-ui/core';
 
- export class EventConfigComponent extends Component {
+export class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
@@ -23,7 +23,7 @@ import {
   };
 
 
-
+  // Populate State
   componentDidMount() {
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
@@ -35,11 +35,17 @@ import {
           error: result.error
         });
       });
-    };
+    }
+    else {
+      this.setState({
+        loading: false,
+        newEvent: {}
+      })
+    }
   };
 
 
-
+  // on Click Cancel
   onClickCancel = () => {
     this.setState({
       updatedEvent: this.state.preEvent,
@@ -48,7 +54,7 @@ import {
   };
 
 
-
+  // on Click Submit
   onClickSubmit = () => {
     // PUT
     eventService.update(this.state.updatedEvent).then(result => {
@@ -64,6 +70,7 @@ import {
   };
 
 
+  // Handle Date Selectors
   handleDates = (fieldName, e) => {
     let formatDate = {
       target: {
@@ -74,7 +81,7 @@ import {
   };
 
 
-
+  // Has Been Edited
   hasBeenEdited = () => {
     const { updatedEvent, preEvent } = this.state;
     const valdiate = updatedEvent !== preEvent;
@@ -85,18 +92,20 @@ import {
   };
 
 
-
+  // Update Event Details
   updateEventDetails = (fieldName, e, key) => {
+    let value = e.target ? e.target.value : e.value;
 
-    let u = {
-      ...this.state.updatedEvent,
-      // Some values are not nested, etsting against different values
-      [fieldName]: key ? { [key]: e.target.value }
-        :
-        e.target ? e.target.value
-          :
-          e.value
-    };
+    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedEvent) : false;
+
+    // Some values are not nested, testing against different values
+    let u = objValue ?
+      objValue
+      :
+      {
+        ...this.state.newEvent,
+        [fieldName]: value
+      }
 
     this.setState({
       updatedEvent: u
@@ -104,7 +113,50 @@ import {
   };
 
 
+  // Create New Event Details
+  createEventDetails = (fieldName, e, key) => {
+    let value = e.target ? e.target.value : e.value;
 
+    // handle selector values
+    if (fieldName == "languages") {
+      value = e.map(val => {
+        return { value: val.value, label: val.label }
+      })
+    }
+
+    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.newEvent) : false;
+   // Some values are not nested, etsting against different values
+    let u = objValue ?
+      objValue
+      :
+      {
+        ...this.state.newEvent,
+        [fieldName]: value
+      }
+
+    this.setState({
+      newEvent: u
+    }, () => this.hasBeenEdited());
+  }
+
+
+  // Handle Object Values
+  handleObjValues(fieldName, e, key, stateVal) {
+    let stateObj;
+    let value = e.target ? e.target.value : e.value;
+    let stateUpdate = stateVal;
+
+    stateObj = {
+      ...stateUpdate[fieldName],
+      [key]: value
+
+    }
+    stateUpdate[fieldName] = stateObj
+    return stateUpdate
+  }
+
+
+  // Update Time Details
   updateDateTimeEventDetails = (fieldName, value) => {
     let u = {
       ...this.state.updatedEvent,
@@ -126,10 +178,11 @@ import {
       error,
       updatedEvent,
       preEvent,
-      hasBeenUpdated
+      hasBeenUpdated,
+      newEvent
     } = this.state;
 
-    const t = this.props.t;
+    const { t, event, organisation } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -148,6 +201,19 @@ import {
         { value: t("no"), label: t("no") },
       ]
     };
+
+    // Selector Languages
+    /*
+      const languages = organisation.languages.map(val => {
+      return { value: Object.values(val)[0], label: Object.values(val)[1] }
+    })
+    */
+    const languages = [
+      { value: "en", label: "English" },
+      { value: "fr", label: "French" }
+    ]
+
+
 
     // format current date for MUI Time Picker
     const currentTime = () => {
@@ -177,26 +243,115 @@ import {
     };
 
 
+    /* Create Mode */
+    if (!event) {
+      return <div className="create-event-wrapper">
+
+        {/* Heading */}
+        <h1>Create Event</h1>
+
+        {/* Card Area */}
+        <div className="card">
+          <form>
+
+            {/* Langauges */}
+            <div className={"form-group row"}>
+              <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor="languages">
+                {t("Langauges")}
+              </label>
+              <div className="col-sm-10">
+                <Select
+                  isMulti
+                  onChange={e => this.createEventDetails("languages", e)}
+                  options={languages}
+                />
+              </div>
+            </div>
+
+            {/* Conditinal form fields */}
+            {newEvent.languages &&
+
+              <section>
+                {/* Description */}
+                <div className={"form-group row"}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="languages">
+                    {t("Description")}
+                </label>
+
+                <div className="col-sm-10">
+                { 
+                    newEvent.languages.map(val => {
+                      return <div className="text-area" key={val} >
+                        <textarea
+                          onChange={e => this.createEventDetails("description", e, val.value)}
+                          className="form-control"
+                          id="description"
+                          placeHolder={val.value}
+                        />
+                      </div>
+                    })
+                  }
+                </div>
+          
+                </div>
+
+                {/* Name */}
+                <div className={"form-group row"}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="name">
+                    {t("Name")}
+                </label>
+                
+                <div className="col-sm-10">
+                {
+                    newEvent.languages.map(val => {
+                      return <div className="text-area" key={val} >
+                        <textarea
+                          onChange={e => this.createEventDetails("name", e, val.value)}
+                          className="form-control"
+                          id="name"
+                          placeHolder={val.value}
+                        />
+                      </div>
+                    })
+                  }
+                </div>
+                 
+                </div>
+
+              </section>
+            }
+
+
+          </form>
+
+        </div>
+      </div>
+    };
+
+
     return (
       <div className="event-config-wrapper">
         <div className="card">
 
           <form>
 
+            {/* Organisation Name */}
             <div className={"form-group row"}>
-
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="organisation_id">
                 {t("Organisation")}
               </label>
-
-              {/* Organisation Name */}
               <div className="col-sm-10">
                 <span
                   id="organisation_id"
                   class="badge badge-primary">{updatedEvent.organisation_name}</span>
-                
               </div>
             </div>
 
@@ -307,10 +462,10 @@ import {
               </label>
 
               <div className="col-sm-10">
-              <span
+                <span
                   id="key"
                   class="badge badge-primary">{updatedEvent.key}</span>
-               
+
               </div>
             </div>
 
@@ -354,7 +509,7 @@ import {
               </label>
               <div className="col-sm-10">
                 <TextField
-                   onChange={e => this.updateEventDetails("time", e)}
+                  onChange={e => this.updateEventDetails("time", e)}
                   id="time"
                   label="Times are in UTC"
                   type="time"
@@ -630,9 +785,6 @@ import {
                 </div>
               </div>
 
-              {/*
-              
-              */}
 
             </div>
           </form>

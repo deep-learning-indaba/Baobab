@@ -140,3 +140,20 @@ html .event-config-wrapper  .MuiFormControl-root.MuiTextField-root {
   color: hsl(0, 50%, 30%);
   border: none;
 }
+
+/* Create Event */
+
+.create-event-wrapper h1 {
+  text-align: left;
+  color: hsl(0deg, 0%, 64%);
+  margin-left: 40px;
+}
+
+.create-event-wrapper .text-area {
+  margin: 5px 0;
+}
+
+.create-event-wrapper label {
+  font-size: 19px;
+  padding-top: 0;
+}

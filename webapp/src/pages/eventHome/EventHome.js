@@ -89,7 +89,7 @@ class EventHome extends Component {
 
   render() {
     const { event, error, isLoading } = this.state;
-    const { match } = this.props;
+    const { match, organisation } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -152,7 +152,7 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/eventConfig`}
-          render={(props) => <EventConfig {...props} event={event} />}
+          render={(props) => <EventConfig {...props} event={null} organisation={organisation} />}
         />
 
         <Route
