@@ -84,24 +84,42 @@ import {
     });
   };
 
-
-
+   
+     // Update Event Details
   updateEventDetails = (fieldName, e, key) => {
+    let value = e.target ? e.target.value : e.value;
 
-    let u = {
-      ...this.state.updatedEvent,
-      // Some values are not nested, etsting against different values
-      [fieldName]: key ? { [key]: e.target.value }
-        :
-        e.target ? e.target.value
-          :
-          e.value
-    };
+    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedEvent) : false;
+
+    // Some values are not nested, testing against different values
+    let u = objValue ?
+      objValue
+      :
+      {
+        ...this.state.newEvent,
+        [fieldName]: value
+      }
 
     this.setState({
       updatedEvent: u
     }, () => this.hasBeenEdited())
   };
+
+
+  // Handle Object Values
+  handleObjValues(fieldName, e, key, stateVal) {
+    let stateObj;
+    let value = e.target ? e.target.value : e.value;
+    let stateUpdate = stateVal;
+
+    stateObj = {
+      ...stateUpdate[fieldName],
+      [key]: value
+
+    }
+    stateUpdate[fieldName] = stateObj
+    return stateUpdate
+  }
 
 
 
