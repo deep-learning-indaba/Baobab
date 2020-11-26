@@ -33,8 +33,8 @@ class Home extends Component {
                 if (response.events) {
                     this.setState({
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
-                        awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
-                        calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
+                        awards: response.events.filter(e => e.event_type === 'AWARD' && (e.is_event_opening || e.is_event_open)),
+                        calls: response.events.filter(e => e.event_type === "CALL" && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
                     });
                 }
@@ -71,21 +71,21 @@ class Home extends Component {
                     <h3 className="text-center">{this.props.t(description)}</h3>
                     <div className="card">
 
-                    <table className="event-table">
-                        <tbody>
-                            {events.map(e => {
-                                return (<tr key={e.key}>
-                                    <td>
-                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                        {e.start_date + " to " + e.end_date}
-                                    </td>
-                                    <td>{this.statusDisplay(e)}</td>
-                                </tr>)
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>);
+                        <table className="event-table">
+                            <tbody>
+                                {events.map(e => {
+                                    return (<tr key={e.key}>
+                                        <td>
+                                            <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                            {e.start_date + " to " + e.end_date}
+                                        </td>
+                                        <td>{this.statusDisplay(e)}</td>
+                                    </tr>)
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>);
         }
         return <div></div>
     }
@@ -98,7 +98,7 @@ class Home extends Component {
             console.log("this.state.organisation.name:", this.state.organisation.name);
             console.log("this.props.i18n.language:", this.props.i18n.language);
         }
-        
+
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
         }
@@ -123,6 +123,16 @@ class Home extends Component {
                 {this.renderEventTable(this.state.awards, "Awards")}
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
                 {this.renderEventTable(this.state.attended, "Past Events")}
+
+                { this.props.user.is_admin &&
+                    <div className="create-event-wrapper">
+                        <div className="card">
+                            <NavLink to="/eventConfig">Add Event</NavLink>
+                        </div>
+
+                    </div>
+                }
+
 
             </div >)
     }

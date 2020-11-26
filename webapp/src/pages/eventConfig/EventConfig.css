@@ -18,22 +18,22 @@
   border-radius: 0.25rem;
 }
 
-.event-config-wrapper  .body {
+.event-config-wrapper .body {
   padding-top: 0em;
 }
 
-.event-config-wrapper  .col-form-label {
+.event-config-wrapper .col-form-label {
   font-size: 19px;
 }
 
 /* Form Fields */
 
-html .event-config-wrapper  .badge {
+html .event-config-wrapper .badge {
   margin: 12px;
   font-size: 13px;
 }
 
-html .event-config-wrapper  .form-group {
+html .event-config-wrapper .form-group {
   margin-bottom: 2em;
 }
 
@@ -43,11 +43,11 @@ html .event-config-wrapper  .form-group {
   color: grey;
 }
 
-html .event-config-wrapper  .MuiGrid-justify-xs-space-around {
+html .event-config-wrapper .MuiGrid-justify-xs-space-around {
   justify-content: flex-start;
 }
 
-html .event-config-wrapper  .MuiFormControl-root.MuiTextField-root {
+html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   width: 15%;
 }
 
@@ -156,4 +156,21 @@ html .event-config-wrapper  .MuiFormControl-root.MuiTextField-root {
 .create-event-wrapper label {
   font-size: 19px;
   padding-top: 0;
+}
+
+.create-event-wrapper .submit .col-sm-4 {
+  padding-left: 0;
+  margin: 15px 0;
+}
+
+.create-event-wrapper .submit .btn-success {
+  background: hsl(131deg, 47%, 76%);
+  color: hsl(132, 18%, 29%);
+  border: none;
+}
+
+.create-event-wrapper .submit .btn-danger {
+  background: hsl(6, 64%, 87%);
+  color: hsl(0, 50%, 30%);
+  border: none;
 }

@@ -17,6 +17,7 @@ export class EventConfigComponent extends Component {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
+      newEvent: this.emptyEvent,
       loading: true,
       error: ""
     };
@@ -83,8 +84,9 @@ export class EventConfigComponent extends Component {
 
   // Has Been Edited
   hasBeenEdited = () => {
-    const { updatedEvent, preEvent } = this.state;
-    const valdiate = updatedEvent !== preEvent;
+    console.log(this.state.newEvent)
+    const { updatedEvent, preEvent, newEvent } = this.state;
+    const valdiate = updatedEvent !== preEvent || Object.values(newEvent);
 
     this.setState({
       hasBeenUpdated: valdiate ? true : false
@@ -125,7 +127,7 @@ export class EventConfigComponent extends Component {
     }
 
     let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.newEvent) : false;
-   // Some values are not nested, etsting against different values
+    // Some values are not nested, etsting against different values
     let u = objValue ?
       objValue
       :
@@ -202,17 +204,11 @@ export class EventConfigComponent extends Component {
       ]
     };
 
-    // Selector Languages
-    /*
-      const languages = organisation.languages.map(val => {
+
+    // Languages
+    const languages = organisation.languages.map(val => {
       return { value: Object.values(val)[0], label: Object.values(val)[1] }
     })
-    */
-    const languages = [
-      { value: "en", label: "English" },
-      { value: "fr", label: "French" }
-    ]
-
 
 
     // format current date for MUI Time Picker
@@ -271,7 +267,7 @@ export class EventConfigComponent extends Component {
             </div>
 
             {/* Conditinal form fields */}
-            {newEvent.languages &&
+            {newEvent.languages && newEvent.languages.length == true &&
 
               <section>
                 {/* Description */}
@@ -280,23 +276,23 @@ export class EventConfigComponent extends Component {
                     className={"col-sm-2 col-form-label"}
                     htmlFor="languages">
                     {t("Description")}
-                </label>
+                  </label>
 
-                <div className="col-sm-10">
-                { 
-                    newEvent.languages.map(val => {
-                      return <div className="text-area" key={val} >
-                        <textarea
-                          onChange={e => this.createEventDetails("description", e, val.value)}
-                          className="form-control"
-                          id="description"
-                          placeHolder={val.value}
-                        />
-                      </div>
-                    })
-                  }
-                </div>
-          
+                  <div className="col-sm-10">
+                    {
+                      newEvent.languages.map(val => {
+                        return <div className="text-area" key={val} >
+                          <textarea
+                            onChange={e => this.createEventDetails("description", e, val.value)}
+                            className="form-control"
+                            id="description"
+                            placeHolder={val.value}
+                          />
+                        </div>
+                      })
+                    }
+                  </div>
+
                 </div>
 
                 {/* Name */}
@@ -305,32 +301,53 @@ export class EventConfigComponent extends Component {
                     className={"col-sm-2 col-form-label"}
                     htmlFor="name">
                     {t("Name")}
-                </label>
-                
-                <div className="col-sm-10">
-                {
-                    newEvent.languages.map(val => {
-                      return <div className="text-area" key={val} >
-                        <textarea
-                          onChange={e => this.createEventDetails("name", e, val.value)}
-                          className="form-control"
-                          id="name"
-                          placeHolder={val.value}
-                        />
-                      </div>
-                    })
-                  }
-                </div>
-                 
-                </div>
+                  </label>
 
+                  <div className="col-sm-10">
+                    {
+                      newEvent.languages.map(val => {
+                        return <div className="text-area" key={val} >
+                          <textarea
+                            onChange={e => this.createEventDetails("name", e, val.value)}
+                            className="form-control"
+                            id="name"
+                            placeHolder={val.value}
+                          />
+                        </div>
+                      })
+                    }
+                  </div>
+                </div>
               </section>
             }
 
 
           </form>
-
         </div>
+
+        {/* Form Submittion and Cancel */}
+        {hasBeenUpdated && newEvent.languages.length == true &&
+          <div className={"form-group row submit"}>
+            <div className={"col-sm-4"}>
+              <button
+                className="btn btn-danger btn-lg btn-block"
+                onClick={() => this.onClickCancel()} >
+                {t("Cancel")}
+              </button>
+            </div>
+
+
+            <div className={"col-sm-4"}>
+              <button
+                onClick={() => this.onClickSubmit()}
+                className="btn btn-success btn-lg btn-block"
+                disabled={!hasBeenUpdated}
+              >
+                {t("Update Event")}
+              </button>
+            </div>
+          </div>
+        }
       </div>
     };
 
