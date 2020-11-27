@@ -1,10 +1,11 @@
 import React, { Component } from 'react';
 import './Home.css';
-import { NavLink } from "react-router-dom";
+
 import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
+import EventKeyModal from './components/eventKeyModal'
 
 
 class Home extends Component {
@@ -60,10 +61,13 @@ class Home extends Component {
         });
     }
 
+
+    // Status Display
     statusDisplay(e) {
         return <EventStatus longForm={false} event={e} />;
     }
 
+    // Render Event Table
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (
@@ -90,46 +94,64 @@ class Home extends Component {
         return <div></div>
     }
 
+    renderEventKeyModal() {
+        return
+    }
+
     render() {
+        const {
+            organisation,
+            upcomingEvents,
+            awards,
+            calls,
+            attended,
+            createEventKey
+        } = this.state;
+
         const t = this.props.t;
-        let logo = this.state.organisation && this.state.organisation.large_logo;
+
+        let logo = organisation && organisation.large_logo;
         // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
         if (this.state.organisation) {
             console.log("this.state.organisation.name:", this.state.organisation.name);
             console.log("this.props.i18n.language:", this.props.i18n.language);
         }
 
-        if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
+        if (organisation && organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
         }
 
         return (
             <div>
                 <div>
-                    <img src={this.state.organisation &&
+                    <img src={organisation &&
                         require("../../images/" + logo)}
                         className="img-fluid large-logo" alt="logo" />
                 </div>
 
                 {!this.props.user &&
                     <div className="text-center">
-                        {this.state.organisation &&
-                            <h2 className="Blurb text-center">{t("Welcome to") + " "} {this.state.organisation.system_name}</h2>}
+                        {organisation &&
+                            <h2 className="Blurb text-center">{t("Welcome to") + " "} {organisation.system_name}</h2>}
                         <p className="text-center"><NavLink to="/createAccount" id="nav-signup">{t("Sign Up")}</NavLink> {t("for an account in order to apply for an event, award or call for proposals")}. <NavLink id="nav-login" to="/login">{t("Sign In")}</NavLink> {t("if you already have one")}.</p>
                     </div>
                 }
 
-                {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
-                {this.renderEventTable(this.state.awards, "Awards")}
-                {this.renderEventTable(this.state.calls, "Calls for Proposals")}
-                {this.renderEventTable(this.state.attended, "Past Events")}
+                {this.renderEventTable(upcomingEvents, "Upcoming Events")}
+                {this.renderEventTable(awards, "Awards")}
+                {this.renderEventTable(calls, "Calls for Proposals")}
+                {this.renderEventTable(attended, "Past Events")}
+
+              
+                {/* Create Event Button */}
+                
+                <EventKeyModal t={t} />
 
                 { this.props.user.is_admin &&
                     <div className="create-event-wrapper">
                         <div className="card">
-                            <NavLink to="/eventConfig">Add Event</NavLink>
+                       <button data-toggle="modal" type="button" data-target="#eventKeyModal"> Add Event </button>
                         </div>
-
                     </div>
                 }
 

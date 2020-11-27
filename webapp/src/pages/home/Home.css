@@ -39,18 +39,24 @@ table.event-table tbody {
     padding: 10px 20px;
 }
 
-.create-event-wrapper a {
+.create-event-wrapper button {
     font-size: 20px;
     color: grey;
+    background: none;
+    border: none;
+    outline: none;
 }
 
-.create-event-wrapper .card:hover a {
-    color: white;
-    text-decoration: none;
+.create-event-wrapper .content {
+    display: flex;
 }
 
-.create-event-wrapper .card:hover {
-    background: hsl(213, 33%, 18%);
+/* Event Key Modal */
+
+.event-key-link {
     color: white;
-    transition: 300ms;
+    background: hsl(208deg, 97%, 54%);
+    border-radius: 5px;
+    padding: 7px 15px;
+    margin-bottom: 10px;
 }

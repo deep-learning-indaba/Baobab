@@ -6,7 +6,8 @@ import Select from 'react-select';
 import * as moment from 'moment';
 import { withTranslation } from 'react-i18next';
 import {
-  TextField
+  TextField,
+  Button
 } from '@material-ui/core';
 
 export class EventConfigComponent extends Component {
