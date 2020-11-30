@@ -8,6 +8,7 @@ import { withTranslation } from 'react-i18next';
 import EventKeyModal from './components/eventKeyModal'
 
 
+
 class Home extends Component {
 
     constructor(props) {
@@ -16,7 +17,8 @@ class Home extends Component {
             upcomingEvents: null,
             awards: null,
             organisation: null,
-            errors: []
+            errors: [],
+         
         };
     };
 
@@ -62,6 +64,7 @@ class Home extends Component {
     };
 
 
+
     // Status Display
     statusDisplay(e) {
         return <EventStatus longForm={false} event={e} />;
@@ -99,13 +102,8 @@ class Home extends Component {
 
         if (this.props.user && this.props.user.is_admin) {
             return (
-                <div>
+                <div className="event-pop-up">
                     <EventKeyModal t={t} />
-                    <div className="create-event-btn-wrapper">
-                        <div className="card">
-                            <button data-toggle="modal" type="button" data-target="#eventKeyModal"> Add Event </button>
-                        </div>
-                    </div>
                 </div>
             )
         };
@@ -119,6 +117,7 @@ class Home extends Component {
             awards,
             calls,
             attended,
+            open
         } = this.state;
 
         const t = this.props.t;
@@ -156,12 +155,11 @@ class Home extends Component {
                 {this.renderEventTable(attended, "Past Events")}
 
 
-                {/* Create Event Button */}
-                { this.renderEventKeyModal()}
+                {this.renderEventKeyModal()}
 
-
-
-            </div >)
+       
+            </div >
+        )
     }
 }
 
