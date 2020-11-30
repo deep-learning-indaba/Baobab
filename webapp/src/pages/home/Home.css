@@ -29,28 +29,60 @@ table.event-table tbody {
 
 /* Create Event Button */
 
-.create-event-wrapper {
-   width: 90%;
+.create-event-btn-wrapper {
+    width: 90%;
 }
 
-.create-event-wrapper .card {
+.create-event-btn-wrapper .card {
     margin-top: 15px;
     transition: 300ms;
     padding: 10px 20px;
 }
 
-.create-event-wrapper a {
+.create-event-btn-wrapper button {
     font-size: 20px;
+    color: grey;
+    background: none;
+    border: none;
+    outline: none;
+}
+
+.create-event-btn-wrapper .content {
+    display: flex;
+}
+
+/* Event Key Modal */
+
+.event-pop-up .card.add-event {
+    color: grey;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 90%;
+    padding: 10px 0;
+}
+
+.event-pop-up .card.add-event p {
+    margin: 0;
+}
+
+
+.MuiPaper-root {
+    padding: 50px 100px 100px 100px;
+}
+
+.MuiDialogTitle-root.event-pop-up {
+    padding-left: 0;
     color: grey;
 }
 
-.create-event-wrapper .card:hover a {
-    color: white;
-    text-decoration: none;
+.event-key-link {
+    margin: 20px 0;
 }
 
-.create-event-wrapper .card:hover {
-    background: hsl(213, 33%, 18%);
-    color: white;
-    transition: 300ms;
+.event-key-link a {
+    color: grey;
+    border: 1px solid lightgrey;
+    padding: 5px;
+    border-radius: 5px;
 }
