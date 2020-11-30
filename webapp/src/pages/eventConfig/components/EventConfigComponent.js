@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
+import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import DateTimePicker from "react-datetime-picker";
 import Select from 'react-select';
 import * as moment from 'moment';
@@ -20,7 +21,9 @@ export class EventConfigComponent extends Component {
       hasBeenUpdated: false,
       newEvent: this.emptyEvent,
       loading: true,
-      error: ""
+      error: "",
+      fileUpload: null,
+      file: null
     };
   };
 
@@ -81,6 +84,38 @@ export class EventConfigComponent extends Component {
     };
     this.updateEventDetails(fieldName, formatDate);
   };
+
+
+  // Handle Upload
+  handleUploads(file) {
+
+    const fileReader = new FileReader();
+
+    fileReader.onloadend = () => {
+      try {
+        this.setState({
+          file: JSON.parse(fileReader.result),
+          fileUpload: false
+        }) 
+       }catch(e){
+        this.setState({
+            error: "File is not valid format"
+          })
+       }
+    }
+
+    if (file !== undefined) {
+      fileReader.readAsText(file);
+    }
+      
+  }
+
+
+
+  // Toggle Upload Button
+  toggleUploadBtn(condition) {
+    condition ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
+  }
 
 
   // Has Been Edited
@@ -182,7 +217,9 @@ export class EventConfigComponent extends Component {
       updatedEvent,
       preEvent,
       hasBeenUpdated,
-      newEvent
+      newEvent,
+      fileUpload,
+      file
     } = this.state;
 
     const { t, event, organisation } = this.props;
@@ -218,6 +255,11 @@ export class EventConfigComponent extends Component {
       return date.length == 4 ? String(date).padStart(5, '0') : date;
     };
 
+    // Export Event as Json
+    const eventJson = encodeURIComponent(
+      JSON.stringify(this.state.updatedEvent)
+    )
+
 
     /* Loading */
     if (loading) {
@@ -244,11 +286,36 @@ export class EventConfigComponent extends Component {
     if (!event) {
       return <div className="create-event-wrapper">
 
-        {/* Heading */}
-        <h1>Create Event</h1>
-
         {/* Card Area */}
         <div className="card">
+
+          {/* Import Button */}
+          <div className="export-btn-wrapper">
+
+            <div>
+
+              <div className="MuiButtonBase-root-wrapper">
+                <Button
+                  onClick={(e) => this.toggleUploadBtn(fileUpload)}
+                  variant="contained"
+                  color="default"
+                  startIcon={<CloudUploadIcon />}
+                >
+                  Import
+                  </Button>
+              </div>
+              {fileUpload &&
+                <input
+                  type="file"
+                  onChange={(e) => this.handleUploads(e.target.files[0])}
+                >
+
+                </input>
+              }
+            </div>
+          </div>
+
+
           <form>
 
             {/* Langauges */}
@@ -353,9 +420,23 @@ export class EventConfigComponent extends Component {
     };
 
 
+    /* Deafault to Edit Mode */
     return (
       <div className="event-config-wrapper">
+
         <div className="card">
+
+          {/* Export Button */}
+          <div className="export-btn-wrapper">
+            <Button
+              variant="contained"
+              href={`data:text/json;charset=utf-8,${eventJson}`}
+              download={`event.json`}
+            >
+              Export
+            </Button>
+          </div>
+
 
           <form>
 

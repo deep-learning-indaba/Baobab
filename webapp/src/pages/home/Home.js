@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './Home.css';
-
+import { NavLink } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
@@ -17,8 +17,8 @@ class Home extends Component {
             awards: null,
             organisation: null,
             errors: []
-        }
-    }
+        };
+    };
 
     componentDidMount() {
         if (this.props.user) {
@@ -30,7 +30,7 @@ class Home extends Component {
                             response.error
                         ]
                     }));
-                }
+                };
                 if (response.events) {
                     this.setState({
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
@@ -38,13 +38,13 @@ class Home extends Component {
                         calls: response.events.filter(e => e.event_type === "CALL" && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
                     });
-                }
+                };
             });
-        }
+        };
 
         if (this.props.setEvent) {
             this.props.setEvent(null, null);
-        }
+        };
 
         organisationService.getOrganisation().then(response => {
             if (response.error) {
@@ -54,12 +54,12 @@ class Home extends Component {
                         response.error
                     ]
                 }));
-            }
+            };
             this.setState({
                 organisation: response.organisation,
             });
         });
-    }
+    };
 
 
     // Status Display
@@ -90,13 +90,27 @@ class Home extends Component {
                         </table>
                     </div>
                 </div>);
-        }
+        };
         return <div></div>
-    }
+    };
 
     renderEventKeyModal() {
-        return
-    }
+        const t = this.props.t;
+
+        if (this.props.user && this.props.user.is_admin) {
+            return (
+                <div>
+                    <EventKeyModal t={t} />
+                    <div className="create-event-btn-wrapper">
+                        <div className="card">
+                            <button data-toggle="modal" type="button" data-target="#eventKeyModal"> Add Event </button>
+                        </div>
+                    </div>
+                </div>
+            )
+        };
+    };
+
 
     render() {
         const {
@@ -105,7 +119,6 @@ class Home extends Component {
             awards,
             calls,
             attended,
-            createEventKey
         } = this.state;
 
         const t = this.props.t;
@@ -142,18 +155,10 @@ class Home extends Component {
                 {this.renderEventTable(calls, "Calls for Proposals")}
                 {this.renderEventTable(attended, "Past Events")}
 
-              
-                {/* Create Event Button */}
-                
-                <EventKeyModal t={t} />
 
-                { this.props.user.is_admin &&
-                    <div className="create-event-wrapper">
-                        <div className="card">
-                       <button data-toggle="modal" type="button" data-target="#eventKeyModal"> Add Event </button>
-                        </div>
-                    </div>
-                }
+                {/* Create Event Button */}
+                { this.renderEventKeyModal()}
+
 
 
             </div >)

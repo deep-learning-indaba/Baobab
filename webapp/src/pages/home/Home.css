@@ -29,17 +29,17 @@ table.event-table tbody {
 
 /* Create Event Button */
 
-.create-event-wrapper {
+.create-event-btn-wrapper {
    width: 90%;
 }
 
-.create-event-wrapper .card {
+.create-event-btn-wrapper .card {
     margin-top: 15px;
     transition: 300ms;
     padding: 10px 20px;
 }
 
-.create-event-wrapper button {
+.create-event-btn-wrapper button {
     font-size: 20px;
     color: grey;
     background: none;
@@ -47,7 +47,7 @@ table.event-table tbody {
     outline: none;
 }
 
-.create-event-wrapper .content {
+.create-event-btn-wrapper .content {
     display: flex;
 }
 

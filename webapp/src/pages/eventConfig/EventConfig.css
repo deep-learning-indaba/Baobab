@@ -26,7 +26,22 @@
   font-size: 19px;
 }
 
+/* Edit Mode */
+
 /* Form Fields */
+
+.event-config-wrapper .export-btn-wrapper {
+display: flex;
+justify-content: flex-end;
+margin: 15px;
+}
+
+.event-config-wrapper .MuiButtonBase-root {
+  color: hsla(0, 0%, 100%, 0.87);
+  background-color: hsl(213deg, 34%, 32%);
+}
+
+
 
 html .event-config-wrapper .badge {
   margin: 12px;
@@ -143,11 +158,6 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
 
 /* Create Event */
 
-.create-event-wrapper h1 {
-  text-align: left;
-  color: hsl(0deg, 0%, 64%);
-  margin-left: 40px;
-}
 
 .create-event-wrapper .text-area {
   margin: 5px 0;
@@ -174,3 +184,25 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   color: hsl(0, 50%, 30%);
   border: none;
 }
+
+.create-event-wrapper .export-btn-wrapper {
+  display: flex;
+  margin: 20px 15px 60px 15px;
+  }
+
+
+  .MuiButtonBase-root-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    margin: 5px 0;
+  }
+  
+  .create-event-wrapper .MuiButtonBase-root {
+    color: hsla(0, 0%, 100%, 0.87);
+    background-color: hsl(213deg, 34%, 32%);
+    padding: 11px;
+  }
+
+  html .create-event-wrapper input#file-upload-button {
+    padding: 10px 50px;
+  }
