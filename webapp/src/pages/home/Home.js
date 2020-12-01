@@ -102,7 +102,7 @@ class Home extends Component {
 
         if (this.props.user && this.props.user.is_admin) {
             return (
-                <div className="event-pop-up">
+                <div >
                     <EventKeyModal t={t} />
                 </div>
             )

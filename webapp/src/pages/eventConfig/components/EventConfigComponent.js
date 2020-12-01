@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import CreateComponent from './CreateComponent';
 import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
 import CloudUploadIcon from '@material-ui/icons/CloudUpload';
@@ -30,6 +31,7 @@ export class EventConfigComponent extends Component {
 
   // Populate State
   componentDidMount() {
+    // Edit Event
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
@@ -41,10 +43,25 @@ export class EventConfigComponent extends Component {
         });
       });
     }
+    // Create Event
     else {
       this.setState({
         loading: false,
-        newEvent: {}
+        newEvent: {
+          organistation_id: this.props.organisation.id,
+          start_date: null,
+          end_date: null,
+          application_open: null,
+          application_close: null,
+          review_open: null,
+          review_close: null,
+          selection_open: null,
+          selection_close: null,
+          offer_open: null,
+          offer_close: null,
+          registration_open: null,
+          registration_close: null,
+        }
       })
     }
   };
@@ -60,7 +77,7 @@ export class EventConfigComponent extends Component {
 
 
   // on Click Submit
-  onClickSubmit = () => {
+  submitEvent = () => {
     // PUT
     eventService.update(this.state.updatedEvent).then(result => {
       console.log(result)
@@ -71,18 +88,39 @@ export class EventConfigComponent extends Component {
         error: Object.values(result.error)
       });
     });
+  };
 
+
+  createEvent = () => {
+    // Create
+    eventService.create(this.state.newEvent).then(result => {
+      console.log(result)
+      this.setState({
+        preEvent: result.event,
+        updatedEvent: result.event,
+        hasBeenUpdated: false,
+        error: Object.values(result.error)
+      });
+    });
   };
 
 
   // Handle Date Selectors
   handleDates = (fieldName, e) => {
-    let formatDate = {
+
+    let formatDate = e.toISOString();
+    formatDate = formatDate.substring(0, formatDate.length - 5) + "Z";
+
+    console.log(formatDate)
+
+    let dateObj = {
       target: {
-        value: e.toISOString()
+        value: formatDate
       }
-    };
-    this.updateEventDetails(fieldName, formatDate);
+    }
+
+    this.state.preEvent ?
+      this.updateEventDetails(fieldName, dateObj) : this.createEventDetails(fieldName, dateObj)
   };
 
 
@@ -96,20 +134,19 @@ export class EventConfigComponent extends Component {
         this.setState({
           file: JSON.parse(fileReader.result),
           fileUpload: false
-        }) 
-       }catch(e){
+        })
+      } catch (e) {
         this.setState({
-            error: "File is not valid format"
-          })
-       }
+          error: "File is not valid format"
+        })
+      }
     }
 
     if (file !== undefined) {
       fileReader.readAsText(file);
     }
-      
-  }
 
+  }
 
 
   // Toggle Upload Button
@@ -120,14 +157,14 @@ export class EventConfigComponent extends Component {
 
   // Has Been Edited
   hasBeenEdited = () => {
-    console.log(this.state.newEvent)
     const { updatedEvent, preEvent, newEvent } = this.state;
-    const valdiate = updatedEvent !== preEvent || Object.values(newEvent);
+    const valdiate = updatedEvent !== preEvent || this.state.newEvent && Object.values(newEvent);
 
     this.setState({
       hasBeenUpdated: valdiate ? true : false
     });
   };
+
 
 
   // Update Event Details
@@ -141,7 +178,7 @@ export class EventConfigComponent extends Component {
       objValue
       :
       {
-        ...this.state.newEvent,
+        ...this.state.updatedEvent,
         [fieldName]: value
       }
 
@@ -149,6 +186,7 @@ export class EventConfigComponent extends Component {
       updatedEvent: u
     }, () => this.hasBeenEdited())
   };
+
 
 
   // Create New Event Details
@@ -172,6 +210,7 @@ export class EventConfigComponent extends Component {
         [fieldName]: value
       }
 
+
     this.setState({
       newEvent: u
     }, () => this.hasBeenEdited());
@@ -192,21 +231,6 @@ export class EventConfigComponent extends Component {
     stateUpdate[fieldName] = stateObj
     return stateUpdate
   }
-
-
-  // Update Time Details
-  updateDateTimeEventDetails = (fieldName, value) => {
-    let u = {
-      ...this.state.updatedEvent,
-      [fieldName]: value
-    };
-
-    this.setState({
-      updatedEvent: u
-    },
-      () => this.hasBeenEdited()
-    );
-  };
 
 
 
@@ -282,141 +306,21 @@ export class EventConfigComponent extends Component {
     };
 
 
-    /* Create Mode */
+    // Create Mode 
     if (!event) {
-      return <div className="create-event-wrapper">
-
-        {/* Card Area */}
-        <div className="card">
-
-          {/* Import Button */}
-          <div className="export-btn-wrapper">
-
-            <div>
-
-              <div className="MuiButtonBase-root-wrapper">
-                <Button
-                  onClick={(e) => this.toggleUploadBtn(fileUpload)}
-                  variant="contained"
-                  color="default"
-                  startIcon={<CloudUploadIcon />}
-                >
-                  Import
-                  </Button>
-              </div>
-              {fileUpload &&
-                <input
-                  type="file"
-                  onChange={(e) => this.handleUploads(e.target.files[0])}
-                >
-
-                </input>
-              }
-            </div>
-          </div>
-
-
-          <form>
-
-            {/* Langauges */}
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="languages">
-                {t("Langauges")}
-              </label>
-              <div className="col-sm-10">
-                <Select
-                  isMulti
-                  onChange={e => this.createEventDetails("languages", e)}
-                  options={languages}
-                />
-              </div>
-            </div>
-
-            {/* Conditinal form fields */}
-            {newEvent.languages && newEvent.languages.length == true &&
-
-              <section>
-                {/* Description */}
-                <div className={"form-group row"}>
-                  <label
-                    className={"col-sm-2 col-form-label"}
-                    htmlFor="languages">
-                    {t("Description")}
-                  </label>
-
-                  <div className="col-sm-10">
-                    {
-                      newEvent.languages.map(val => {
-                        return <div className="text-area" key={val} >
-                          <textarea
-                            onChange={e => this.createEventDetails("description", e, val.value)}
-                            className="form-control"
-                            id="description"
-                            placeHolder={val.value}
-                          />
-                        </div>
-                      })
-                    }
-                  </div>
-
-                </div>
-
-                {/* Name */}
-                <div className={"form-group row"}>
-                  <label
-                    className={"col-sm-2 col-form-label"}
-                    htmlFor="name">
-                    {t("Name")}
-                  </label>
-
-                  <div className="col-sm-10">
-                    {
-                      newEvent.languages.map(val => {
-                        return <div className="text-area" key={val} >
-                          <textarea
-                            onChange={e => this.createEventDetails("name", e, val.value)}
-                            className="form-control"
-                            id="name"
-                            placeHolder={val.value}
-                          />
-                        </div>
-                      })
-                    }
-                  </div>
-                </div>
-              </section>
-            }
-
-
-          </form>
-        </div>
-
-        {/* Form Submittion and Cancel */}
-        {hasBeenUpdated && newEvent.languages.length == true &&
-          <div className={"form-group row submit"}>
-            <div className={"col-sm-4"}>
-              <button
-                className="btn btn-danger btn-lg btn-block"
-                onClick={() => this.onClickCancel()} >
-                {t("Cancel")}
-              </button>
-            </div>
-
-
-            <div className={"col-sm-4"}>
-              <button
-                onClick={() => this.onClickSubmit()}
-                className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenUpdated}
-              >
-                {t("Update Event")}
-              </button>
-            </div>
-          </div>
-        }
-      </div>
+      return <CreateComponent
+        onClickCancel={(e) => this.onClickCancel()}
+        languages={languages}
+        newEvent={newEvent}
+        fileUpload={fileUpload}
+        t={t}
+        createEvent={(e) => this.createEvent()}
+        organisation={organisation}
+        fileUpload={fileUpload}
+        createEventDetails={(fieldName, e) => this.createEventDetails(fieldName, e)}
+        handleDates={(fieldName, e) => this.handleDates(fieldName, e)}
+        hasBeenUpdated={hasBeenUpdated}
+      />
     };
 
 
@@ -644,6 +548,7 @@ export class EventConfigComponent extends Component {
 
                       <div>
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -659,6 +564,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e => this.handleDates("end_date", e)}
@@ -682,6 +588,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -699,6 +606,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -725,6 +633,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -741,6 +650,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -773,6 +683,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -789,6 +700,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -812,6 +724,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -829,6 +742,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -854,6 +768,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -871,6 +786,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
+                          format={"dd/mm/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -904,7 +820,7 @@ export class EventConfigComponent extends Component {
 
               <div className={"col-sm-4"}>
                 <button
-                  onClick={() => this.onClickSubmit()}
+                  onClick={() => this.submitEvent()}
                   className="btn btn-success btn-lg btn-block"
                   disabled={!hasBeenUpdated}
                 >
