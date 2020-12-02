@@ -8,29 +8,30 @@ import {
 } from '@material-ui/core';
 
 export class CreateComponent extends Component {
-    constructor(props) {
-        super(props);
-
-    };
-
-
 
     handleUpdates(fieldName, e) {
         this.props.createEventDetails(fieldName, e)
-    }
-
+    };
 
     handleDates(fieldName, e) {
         this.props.handleDates(fieldName, e)
-    }
+    };
 
     onClickSubmit() {
         this.props.createEvent()
-    }
+    };
 
     onClickCancel() {
         this.props.onClickCancel()
-    }
+    };
+
+    toggleUploadBtn() {
+        this.props.toggleUploadBtn()
+    };
+
+    handleUploads(e) {
+        this.props.handleUploads(e)
+    };
 
 
 
@@ -40,16 +41,15 @@ export class CreateComponent extends Component {
             t,
             organisation,
             fileUpload,
-            newEvent,
-            hasBeenUpdated
+            updatedNewEvent,
+            hasBeenUpdated,
         } = this.props;
 
 
         // Languages
         const languages = organisation.languages.map(val => {
             return { value: Object.values(val)[0], label: Object.values(val)[1] }
-        })
-
+        });
 
 
         return <div className="create-event-wrapper event-config-wrapper">
@@ -59,12 +59,10 @@ export class CreateComponent extends Component {
 
                 {/* Import Button */}
                 <div className="export-btn-wrapper">
-
                     <div>
-
                         <div className="MuiButtonBase-root-wrapper">
                             <Button
-                                onClick={(e) => this.toggleUploadBtn(fileUpload)}
+                                onClick={(e) => this.toggleUploadBtn()}
                                 variant="contained"
                                 color="default"
                                 startIcon={<CloudUploadIcon />}
@@ -76,16 +74,13 @@ export class CreateComponent extends Component {
                             <input
                                 type="file"
                                 onChange={(e) => this.handleUploads(e.target.files[0])}
-                            >
-
-                            </input>
+                            /> 
                         }
                     </div>
                 </div>
 
 
                 <form>
-
                     {/* Langauges */}
                     <div className={"form-group row"}>
                         <label
@@ -103,7 +98,7 @@ export class CreateComponent extends Component {
                     </div>
 
                     {/* Conditinal form fields */}
-                    {newEvent.languages && newEvent.languages.length == true &&
+                    {updatedNewEvent.languages && updatedNewEvent.languages.length == true &&
 
                         <section>
                             {/* Description */}
@@ -116,7 +111,7 @@ export class CreateComponent extends Component {
 
                                 <div className="col-sm-10">
                                     {
-                                        newEvent.languages.map(val => {
+                                        updatedNewEvent.languages.map(val => {
                                             return <div className="text-area" key={val} >
                                                 <textarea
                                                     onChange={e => this.handleUpdates("description", e, val.value)}
@@ -128,7 +123,6 @@ export class CreateComponent extends Component {
                                         })
                                     }
                                 </div>
-
                             </div>
 
                             {/* Name */}
@@ -141,7 +135,7 @@ export class CreateComponent extends Component {
 
                                 <div className="col-sm-10">
                                     {
-                                        newEvent.languages.map(val => {
+                                        updatedNewEvent.languages.map(val => {
                                             return <div className="text-area" key={val} >
                                                 <textarea
                                                     onChange={e => this.handleUpdates("name", e, val.value)}
@@ -169,7 +163,6 @@ export class CreateComponent extends Component {
                                 onChange={e => this.handleUpdates("key", e)}
                                 className="form-control"
                             />
-
                         </div>
                     </div>
 
@@ -207,7 +200,7 @@ export class CreateComponent extends Component {
 
                     <hr style={{ "marginTop": "50px" }}></hr>
 
-                    {hasBeenUpdated &&
+ 
                         < div className="date-picker-section col-md-12">
                             {/* Left Col */}
                             <div className="first-col">
@@ -228,7 +221,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={(e) =>
                                                         this.handleDates("start_date", e)}
-                                                    value={newEvent.start_date ? new Date(newEvent.start_date) : null} />
+                                                    value={updatedNewEvent.start_date ? new Date(updatedNewEvent.start_date) : null} />
                                             </div>
                                         </div>
 
@@ -243,7 +236,7 @@ export class CreateComponent extends Component {
                                                     clearIcon={null}
                                                     disableClock={true}
                                                     onChange={e => this.handleDates("end_date", e)}
-                                                    value={newEvent.end_date ? new Date(newEvent.end_date) : null} />
+                                                    value={updatedNewEvent.end_date ? new Date(updatedNewEvent.end_date) : null} />
                                             </div>
                                         </div>
                                     </div>
@@ -268,7 +261,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("application_open", e)}
-                                                    value={newEvent.application_open ? new Date(newEvent.application_open) : null} />
+                                                    value={updatedNewEvent.application_open ? new Date(updatedNewEvent.application_open) : null} />
                                             </div>
                                         </div>
                                         <div className="date-picker">
@@ -287,7 +280,7 @@ export class CreateComponent extends Component {
                                                     onChange={e =>
                                                         this.handleDates("application_close", e)
                                                     }
-                                                    value={newEvent.application_close ? new Date(newEvent.application_close) : null} />
+                                                    value={updatedNewEvent.application_close ? new Date(updatedNewEvent.application_close) : null} />
                                             </div>
                                         </div>
 
@@ -313,7 +306,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("review_open", e)}
-                                                    value={newEvent.review_open ? new Date(newEvent.review_open) : null} />
+                                                    value={updatedNewEvent.review_open ? new Date(updatedNewEvent.review_open) : null} />
                                             </div>
                                         </div>
                                         <div className="date-picker">
@@ -330,7 +323,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("review_close", e)}
-                                                    value={newEvent.review_close ? new Date(newEvent.review_close) : null} />
+                                                    value={updatedNewEvent.review_close ? new Date(updatedNewEvent.review_close) : null} />
                                             </div>
                                         </div>
 
@@ -338,7 +331,6 @@ export class CreateComponent extends Component {
                                 </div>
 
                             </div>
-
 
 
                             {/* Right Col */}
@@ -363,7 +355,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("selection_open", e)}
-                                                    value={newEvent.selection_open ? new Date(newEvent.selection_open) : null} />
+                                                    value={updatedNewEvent.selection_open ? new Date(updatedNewEvent.selection_open) : null} />
                                             </div>
                                         </div>
                                         <div className="date-picker">
@@ -380,7 +372,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("selection_close", e)}
-                                                    value={newEvent.selection_close ? new Date(newEvent.selection_close) : null} />
+                                                    value={updatedNewEvent.selection_close ? new Date(updatedNewEvent.selection_close) : null} />
                                             </div>
                                         </div>
 
@@ -404,7 +396,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("offer_open", e)}
-                                                    value={newEvent.offer_open ? new Date(newEvent.offer_open) : null} />
+                                                    value={updatedNewEvent.offer_open ? new Date(updatedNewEvent.offer_open) : null} />
                                             </div>
                                         </div>
                                         <div className="date-picker">
@@ -422,7 +414,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("offer_close", e)}
-                                                    value={newEvent.offer_close ? new Date(newEvent.offer_close) : null} />
+                                                    value={updatedNewEvent.offer_close ? new Date(updatedNewEvent.offer_close) : null} />
                                             </div>
                                         </div>
 
@@ -448,7 +440,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("registration_open", e)}
-                                                    value={newEvent.registration_open ? new Date(newEvent.registration_open) : null} />
+                                                    value={updatedNewEvent.registration_open ? new Date(updatedNewEvent.registration_open) : null} />
                                             </div>
                                         </div>
 
@@ -466,7 +458,7 @@ export class CreateComponent extends Component {
                                                     disableClock={true}
                                                     onChange={e =>
                                                         this.handleDates("registration_close", e)}
-                                                    value={newEvent.registration_close ? new Date(newEvent.registration_close) : null}
+                                                    value={updatedNewEvent.registration_close ? new Date(updatedNewEvent.registration_close) : null}
                                                 />
                                             </div>
                                         </div>
@@ -474,15 +466,13 @@ export class CreateComponent extends Component {
                                 </div>
                             </div>
                         </div>
-                    }
-
-
+                    
 
                 </form>
             </div>
 
             {/* Form Submittion and Cancel */}
-            {hasBeenUpdated && newEvent.languages.length == true &&
+            {hasBeenUpdated && updatedNewEvent.languages.length == true &&
                 <div className={"form-group row submit"}>
                     <div className={"col-sm-4"}>
                         <button

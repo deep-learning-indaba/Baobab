@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import CreateComponent from './CreateComponent';
 import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
-import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import DateTimePicker from "react-datetime-picker";
 import Select from 'react-select';
 import * as moment from 'moment';
@@ -20,7 +19,7 @@ export class EventConfigComponent extends Component {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
-      newEvent: this.emptyEvent,
+      updatedNewEvent: this.emptyEvent,
       loading: true,
       error: "",
       fileUpload: null,
@@ -45,25 +44,28 @@ export class EventConfigComponent extends Component {
     }
     // Create Event
     else {
+      let eventDetails = {
+        organistation_id: this.props.organisation.id,
+        start_date: new Date(),
+        end_date: new Date(),
+        application_open: new Date(),
+        application_close: new Date(),
+        review_open: new Date(),
+        review_close: new Date(),
+        selection_open: new Date(),
+        selection_close: new Date(),
+        offer_open: new Date(),
+        offer_close: new Date(),
+        registration_open: new Date(),
+        registration_close: new Date(),
+      };
+
       this.setState({
         loading: false,
-        newEvent: {
-          organistation_id: this.props.organisation.id,
-          start_date: null,
-          end_date: null,
-          application_open: null,
-          application_close: null,
-          review_open: null,
-          review_close: null,
-          selection_open: null,
-          selection_close: null,
-          offer_open: null,
-          offer_close: null,
-          registration_open: null,
-          registration_close: null,
-        }
-      })
-    }
+        preNewEvent: eventDetails,
+        updatedNewEvent: eventDetails
+      });
+    };
   };
 
 
@@ -85,7 +87,10 @@ export class EventConfigComponent extends Component {
         preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
-        error: Object.values(result.error)
+      });
+    }).catch(result => {
+      this.setState({
+        error: result.statusCode
       });
     });
   };
@@ -93,7 +98,7 @@ export class EventConfigComponent extends Component {
 
   createEvent = () => {
     // Create
-    eventService.create(this.state.newEvent).then(result => {
+    eventService.create(this.state.updatedNewEvent).then(result => {
       console.log(result)
       this.setState({
         preEvent: result.event,
@@ -107,17 +112,14 @@ export class EventConfigComponent extends Component {
 
   // Handle Date Selectors
   handleDates = (fieldName, e) => {
-
     let formatDate = e.toISOString();
     formatDate = formatDate.substring(0, formatDate.length - 5) + "Z";
-
-    console.log(formatDate)
 
     let dateObj = {
       target: {
         value: formatDate
       }
-    }
+    };
 
     this.state.preEvent ?
       this.updateEventDetails(fieldName, dateObj) : this.createEventDetails(fieldName, dateObj)
@@ -126,42 +128,43 @@ export class EventConfigComponent extends Component {
 
   // Handle Upload
   handleUploads(file) {
-
     const fileReader = new FileReader();
 
     fileReader.onloadend = () => {
       try {
         this.setState({
+          updatedNewEvent: JSON.parse(fileReader.result),
           file: JSON.parse(fileReader.result),
-          fileUpload: false
-        })
+          fileUpload: false,
+        });
       } catch (e) {
         this.setState({
           error: "File is not valid format"
         })
-      }
-    }
+      };
+    };
 
     if (file !== undefined) {
       fileReader.readAsText(file);
-    }
-
-  }
+    };
+  };
 
 
   // Toggle Upload Button
-  toggleUploadBtn(condition) {
-    condition ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
-  }
+  toggleUploadBtn() {
+    this.state.file ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
+  };
 
 
   // Has Been Edited
   hasBeenEdited = () => {
-    const { updatedEvent, preEvent, newEvent } = this.state;
-    const valdiate = updatedEvent !== preEvent || this.state.newEvent && Object.values(newEvent);
+    const { updatedEvent, preEvent, updatedNewEvent, preNewEvent } = this.state;
+    const validate = updatedEvent !== preEvent || updatedNewEvent !== preNewEvent;
+
+    console.log(validate)
 
     this.setState({
-      hasBeenUpdated: valdiate ? true : false
+      hasBeenUpdated: validate ? true : false
     });
   };
 
@@ -180,11 +183,11 @@ export class EventConfigComponent extends Component {
       {
         ...this.state.updatedEvent,
         [fieldName]: value
-      }
+      };
 
     this.setState({
       updatedEvent: u
-    }, () => this.hasBeenEdited())
+    }, () => this.hasBeenEdited());
   };
 
 
@@ -197,22 +200,21 @@ export class EventConfigComponent extends Component {
     if (fieldName == "languages") {
       value = e.map(val => {
         return { value: val.value, label: val.label }
-      })
-    }
+      });
+    };
 
-    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.newEvent) : false;
+    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedNewEvent) : false;
     // Some values are not nested, etsting against different values
     let u = objValue ?
       objValue
       :
       {
-        ...this.state.newEvent,
+        ...this.state.updatedNewEvent,
         [fieldName]: value
-      }
-
+      };
 
     this.setState({
-      newEvent: u
+      updatedNewEvent: u
     }, () => this.hasBeenEdited());
   }
 
@@ -226,9 +228,9 @@ export class EventConfigComponent extends Component {
     stateObj = {
       ...stateUpdate[fieldName],
       [key]: value
+    };
 
-    }
-    stateUpdate[fieldName] = stateObj
+    stateUpdate[fieldName] = stateObj;
     return stateUpdate
   }
 
@@ -241,9 +243,8 @@ export class EventConfigComponent extends Component {
       updatedEvent,
       preEvent,
       hasBeenUpdated,
-      newEvent,
+      updatedNewEvent,
       fileUpload,
-      file
     } = this.state;
 
     const { t, event, organisation } = this.props;
@@ -270,8 +271,8 @@ export class EventConfigComponent extends Component {
     // Languages
     const languages = organisation.languages.map(val => {
       return { value: Object.values(val)[0], label: Object.values(val)[1] }
-    })
-
+    });
+      
 
     // format current date for MUI Time Picker
     const currentTime = () => {
@@ -282,7 +283,7 @@ export class EventConfigComponent extends Component {
     // Export Event as Json
     const eventJson = encodeURIComponent(
       JSON.stringify(this.state.updatedEvent)
-    )
+    );
 
 
     /* Loading */
@@ -311,12 +312,14 @@ export class EventConfigComponent extends Component {
       return <CreateComponent
         onClickCancel={(e) => this.onClickCancel()}
         languages={languages}
-        newEvent={newEvent}
+        updatedNewEvent={updatedNewEvent}
         fileUpload={fileUpload}
         t={t}
         createEvent={(e) => this.createEvent()}
+        toggleUploadBtn={(e) => this.toggleUploadBtn()}
         organisation={organisation}
         fileUpload={fileUpload}
+        handleUploads={(e) => this.handleUploads(e)}
         createEventDetails={(fieldName, e) => this.createEventDetails(fieldName, e)}
         handleDates={(fieldName, e) => this.handleDates(fieldName, e)}
         hasBeenUpdated={hasBeenUpdated}
@@ -796,12 +799,10 @@ export class EventConfigComponent extends Component {
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
-
-
             </div>
+
           </form>
 
           <hr></hr>
