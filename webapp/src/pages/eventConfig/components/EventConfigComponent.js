@@ -36,7 +36,7 @@ export class EventConfigComponent extends Component {
         this.setState({
           loading: false,
           preEvent: result.event,
-          updatedEvent: result.event,
+          updatedEvent: this.props.history.location.state ? this.props.history.location.state : result.event,
           hasBeenUpdated: false,
           error: result.error
         });
@@ -63,7 +63,8 @@ export class EventConfigComponent extends Component {
       this.setState({
         loading: false,
         preNewEvent: eventDetails,
-        updatedNewEvent: eventDetails
+        updatedNewEvent: this.props.history.location.state ? this.props.history.location.state : eventDetails
+
       });
     };
   };
@@ -127,10 +128,12 @@ export class EventConfigComponent extends Component {
 
 
   // Handle Upload
-  handleUploads(file) {
+  handleUploads = (file) => {
     const fileReader = new FileReader();
 
     fileReader.onloadend = () => {
+      console.log(JSON.parse(fileReader.result))
+
       try {
         this.setState({
           updatedNewEvent: JSON.parse(fileReader.result),
@@ -151,7 +154,7 @@ export class EventConfigComponent extends Component {
 
 
   // Toggle Upload Button
-  toggleUploadBtn() {
+  toggleUploadBtn = () => {
     this.state.file ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
   };
 
@@ -161,7 +164,6 @@ export class EventConfigComponent extends Component {
     const { updatedEvent, preEvent, updatedNewEvent, preNewEvent } = this.state;
     const validate = updatedEvent !== preEvent || updatedNewEvent !== preNewEvent;
 
-    console.log(validate)
 
     this.setState({
       hasBeenUpdated: validate ? true : false
@@ -215,12 +217,12 @@ export class EventConfigComponent extends Component {
 
     this.setState({
       updatedNewEvent: u
-    }, () => this.hasBeenEdited());
+    }, () => this.hasBeenEdited(), this.storeState());
   }
 
 
   // Handle Object Values
-  handleObjValues(fieldName, e, key, stateVal) {
+  handleObjValues = (fieldName, e, key, stateVal) => {
     let stateObj;
     let value = e.target ? e.target.value : e.value;
     let stateUpdate = stateVal;
@@ -235,6 +237,23 @@ export class EventConfigComponent extends Component {
   }
 
 
+  //Store state for Error Handling Redirects
+  storeState = (state) => {
+    this.props.history.location.state = state;
+  }
+
+
+  // Redirect User to Form
+  redirectUser = () => {
+    this.setState({
+      newEvent: this.props.history.location.state
+    })
+  }
+
+
+
+
+
 
   render() {
     const {
@@ -245,6 +264,7 @@ export class EventConfigComponent extends Component {
       hasBeenUpdated,
       updatedNewEvent,
       fileUpload,
+      file
     } = this.state;
 
     const { t, event, organisation } = this.props;
@@ -272,7 +292,7 @@ export class EventConfigComponent extends Component {
     const languages = organisation.languages.map(val => {
       return { value: Object.values(val)[0], label: Object.values(val)[1] }
     });
-      
+
 
     // format current date for MUI Time Picker
     const currentTime = () => {
@@ -301,9 +321,13 @@ export class EventConfigComponent extends Component {
 
     /* Error */
     if (error) {
-      return <div className="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return <div className="card" >
+        <div className="alert alert-danger alert-container">
+          {error}
+        </div>
+        <Button onClick={(e) => this.redirectUser()} >Back to Form</Button>
+      </div>
+
     };
 
 
@@ -315,6 +339,7 @@ export class EventConfigComponent extends Component {
         updatedNewEvent={updatedNewEvent}
         fileUpload={fileUpload}
         t={t}
+        fie={file}
         createEvent={(e) => this.createEvent()}
         toggleUploadBtn={(e) => this.toggleUploadBtn()}
         organisation={organisation}
@@ -368,8 +393,9 @@ export class EventConfigComponent extends Component {
                   {t("Event Name")}
                 </label>
                 <div className="w-100">
-                  {preEvent &&
-                    Object.keys(preEvent.name).map(val => {
+                  {/* For error Redirects whe want to autofill the form where the user left off, thus using updatedEvent not preEvent: see component did mount */}
+                  {updatedEvent &&
+                    Object.keys(updatedEvent.name).map(val => {
                       return <div key={val} className="col-sm-12 mt-1">
                         <input
                           onChange={e => this.updateEventDetails("name", e, val)}
@@ -809,7 +835,7 @@ export class EventConfigComponent extends Component {
 
           {/* Form Submittion and Cancel */}
           {hasBeenUpdated &&
-            <div className={"form-group row submit"}>
+            <div className={"form-group row submit event"}>
               <div className={"col-sm-4"}>
                 <button
                   className="btn btn-danger btn-lg btn-block"

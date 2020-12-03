@@ -76,6 +76,7 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   padding-left: 0;
 }
 
+
 .event-config-wrapper .date-picker-section .col-md-5 {
   padding-bottom: 2%;
 }
@@ -133,24 +134,24 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
 }
 
 /* Handle Submit and Cancel Section */
-.event-config-wrapper .submit {
+.event.submit {
   padding-left: 10px;
   display: flex;
 }
 
-.event-config-wrapper .submit .col-sm-4 {
+.event.submit .col-sm-4 {
   padding: 0;
   margin: 0 10px 0 0;
 }
 
 
-.event-config-wrapper .submit .btn-success {
+.event.submit .btn-success {
   background: hsl(131deg, 47%, 76%);
   color: hsl(132, 18%, 29%);
   border: none;
 }
 
-.event-config-wrapper .submit .btn-danger {
+.event.submit .btn-danger {
   background: hsl(6, 64%, 87%);
   color: hsl(0, 50%, 30%);
   border: none;
@@ -166,6 +167,17 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
 .create-event-wrapper label {
   font-size: 19px;
   padding-top: 0;
+}
+
+
+.create-event-wrapper .date-picker-section {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.create-event-wrapper .date-picker-section.disable {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .create-event-wrapper .submit .col-sm-4 {
