@@ -157,6 +157,11 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   border: none;
 }
 
+.event.submit .submit .col-sm-4 {
+  padding-left: 0;
+  margin: 15px 0;
+}
+
 /* Create Event */
 
 
@@ -180,22 +185,6 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   pointer-events: none;
 }
 
-.create-event-wrapper .submit .col-sm-4 {
-  padding-left: 0;
-  margin: 15px 0;
-}
-
-.create-event-wrapper .submit .btn-success {
-  background: hsl(131deg, 47%, 76%);
-  color: hsl(132, 18%, 29%);
-  border: none;
-}
-
-.create-event-wrapper .submit .btn-danger {
-  background: hsl(6, 64%, 87%);
-  color: hsl(0, 50%, 30%);
-  border: none;
-}
 
 .create-event-wrapper .export-btn-wrapper {
   display: flex;

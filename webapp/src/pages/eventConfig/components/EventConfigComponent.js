@@ -19,11 +19,11 @@ export class EventConfigComponent extends Component {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
-      updatedNewEvent: this.emptyEvent,
       loading: true,
       error: "",
       fileUpload: null,
-      file: null
+      file: null,
+      success: false
     };
   };
 
@@ -42,31 +42,12 @@ export class EventConfigComponent extends Component {
         });
       });
     }
-    // Create Event
+    // Disable Loading for Create Mode
     else {
-      let eventDetails = {
-        organistation_id: this.props.organisation.id,
-        start_date: new Date(),
-        end_date: new Date(),
-        application_open: new Date(),
-        application_close: new Date(),
-        review_open: new Date(),
-        review_close: new Date(),
-        selection_open: new Date(),
-        selection_close: new Date(),
-        offer_open: new Date(),
-        offer_close: new Date(),
-        registration_open: new Date(),
-        registration_close: new Date(),
-      };
-
       this.setState({
         loading: false,
-        preNewEvent: eventDetails,
-        updatedNewEvent: this.props.history.location.state ? this.props.history.location.state : eventDetails
-
-      });
-    };
+      })
+    }
   };
 
 
@@ -88,7 +69,7 @@ export class EventConfigComponent extends Component {
         preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
-      });
+      }, () => this.redirectUser());
     }).catch(result => {
       this.setState({
         error: result.statusCode
@@ -96,19 +77,6 @@ export class EventConfigComponent extends Component {
     });
   };
 
-
-  createEvent = () => {
-    // Create
-    eventService.create(this.state.updatedNewEvent).then(result => {
-      console.log(result)
-      this.setState({
-        preEvent: result.event,
-        updatedEvent: result.event,
-        hasBeenUpdated: false,
-        error: Object.values(result.error)
-      });
-    });
-  };
 
 
   // Handle Date Selectors
@@ -122,47 +90,14 @@ export class EventConfigComponent extends Component {
       }
     };
 
-    this.state.preEvent ?
-      this.updateEventDetails(fieldName, dateObj) : this.createEventDetails(fieldName, dateObj)
-  };
-
-
-  // Handle Upload
-  handleUploads = (file) => {
-    const fileReader = new FileReader();
-
-    fileReader.onloadend = () => {
-      console.log(JSON.parse(fileReader.result))
-
-      try {
-        this.setState({
-          updatedNewEvent: JSON.parse(fileReader.result),
-          file: JSON.parse(fileReader.result),
-          fileUpload: false,
-        });
-      } catch (e) {
-        this.setState({
-          error: "File is not valid format"
-        })
-      };
-    };
-
-    if (file !== undefined) {
-      fileReader.readAsText(file);
-    };
-  };
-
-
-  // Toggle Upload Button
-  toggleUploadBtn = () => {
-    this.state.file ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
+      this.updateEventDetails(fieldName, dateObj)
   };
 
 
   // Has Been Edited
   hasBeenEdited = () => {
-    const { updatedEvent, preEvent, updatedNewEvent, preNewEvent } = this.state;
-    const validate = updatedEvent !== preEvent || updatedNewEvent !== preNewEvent;
+    const { updatedEvent, preEvent} = this.state;
+    const validate = updatedEvent !== preEvent;
 
 
     this.setState({
@@ -193,34 +128,6 @@ export class EventConfigComponent extends Component {
   };
 
 
-
-  // Create New Event Details
-  createEventDetails = (fieldName, e, key) => {
-    let value = e.target ? e.target.value : e.value;
-
-    // handle selector values
-    if (fieldName == "languages") {
-      value = e.map(val => {
-        return { value: val.value, label: val.label }
-      });
-    };
-
-    let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedNewEvent) : false;
-    // Some values are not nested, etsting against different values
-    let u = objValue ?
-      objValue
-      :
-      {
-        ...this.state.updatedNewEvent,
-        [fieldName]: value
-      };
-
-    this.setState({
-      updatedNewEvent: u
-    }, () => this.hasBeenEdited(), this.storeState());
-  }
-
-
   // Handle Object Values
   handleObjValues = (fieldName, e, key, stateVal) => {
     let stateObj;
@@ -237,21 +144,14 @@ export class EventConfigComponent extends Component {
   }
 
 
-  //Store state for Error Handling Redirects
-  storeState = (state) => {
-    this.props.history.location.state = state;
-  }
-
-
   // Redirect User to Form
   redirectUser = () => {
     this.setState({
-      newEvent: this.props.history.location.state
-    })
+      success: true
+    }, () => setTimeout(() => {
+      this.props.history.push("/")
+    }, 4000))
   }
-
-
-
 
 
 
@@ -264,7 +164,8 @@ export class EventConfigComponent extends Component {
       hasBeenUpdated,
       updatedNewEvent,
       fileUpload,
-      file
+      file,
+      success
     } = this.state;
 
     const { t, event, organisation } = this.props;
@@ -325,10 +226,17 @@ export class EventConfigComponent extends Component {
         <div className="alert alert-danger alert-container">
           {error}
         </div>
-        <Button onClick={(e) => this.redirectUser()} >Back to Form</Button>
       </div>
-
     };
+
+        /* Success */
+        if (success) {
+          return <div className="card" >
+            <div className="alert alert-success alert-container">
+              {t('Success')}
+            </div>
+          </div>
+        };
 
 
     // Create Mode 
@@ -339,7 +247,7 @@ export class EventConfigComponent extends Component {
         updatedNewEvent={updatedNewEvent}
         fileUpload={fileUpload}
         t={t}
-        fie={file}
+        file={file}
         createEvent={(e) => this.createEvent()}
         toggleUploadBtn={(e) => this.toggleUploadBtn()}
         organisation={organisation}
@@ -577,7 +485,7 @@ export class EventConfigComponent extends Component {
 
                       <div>
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -593,7 +501,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e => this.handleDates("end_date", e)}
@@ -617,7 +525,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -635,7 +543,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -662,7 +570,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -679,7 +587,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -712,7 +620,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -729,7 +637,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -753,7 +661,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -771,7 +679,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -797,7 +705,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
@@ -815,7 +723,7 @@ export class EventConfigComponent extends Component {
 
                       <div >
                         <DateTimePicker
-                          format={"dd/mm/yyyy"}
+                          format={"MM/dd/yyyy"}
                           clearIcon={null}
                           disableClock={true}
                           onChange={e =>
