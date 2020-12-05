@@ -153,6 +153,20 @@ export class EventConfigComponent extends Component {
     }, 4000))
   }
 
+  // Error Handling
+  errorHandling(error) {
+    this.setState({
+      error: error
+    })
+  }
+
+  // Success handling
+  successHandling() {
+    this.setState({
+      success: true
+    })
+  }
+
 
 
   render() {
@@ -162,9 +176,6 @@ export class EventConfigComponent extends Component {
       updatedEvent,
       preEvent,
       hasBeenUpdated,
-      updatedNewEvent,
-      fileUpload,
-      file,
       success
     } = this.state;
 
@@ -222,40 +233,30 @@ export class EventConfigComponent extends Component {
 
     /* Error */
     if (error) {
-      return <div className="card" >
-        <div className="alert alert-danger alert-container">
+      return  <div className="alert alert-danger alert-container">
           {error}
         </div>
-      </div>
     };
 
         /* Success */
         if (success) {
-          return <div className="card" >
-            <div className="alert alert-success alert-container">
+          return <div className="alert alert-success alert-container">
               {t('Success')}
             </div>
-          </div>
+        
         };
 
 
     // Create Mode 
     if (!event) {
       return <CreateComponent
-        onClickCancel={(e) => this.onClickCancel()}
         languages={languages}
-        updatedNewEvent={updatedNewEvent}
-        fileUpload={fileUpload}
         t={t}
-        file={file}
-        createEvent={(e) => this.createEvent()}
         toggleUploadBtn={(e) => this.toggleUploadBtn()}
         organisation={organisation}
-        fileUpload={fileUpload}
-        handleUploads={(e) => this.handleUploads(e)}
-        createEventDetails={(fieldName, e) => this.createEventDetails(fieldName, e)}
-        handleDates={(fieldName, e) => this.handleDates(fieldName, e)}
-        hasBeenUpdated={hasBeenUpdated}
+        errorHandling={(error) => this.errorHandling(error)}
+        redirectUser={(e) => this.redirectUser()}
+        successHandling={(e) => this.successHandling()}
       />
     };
 

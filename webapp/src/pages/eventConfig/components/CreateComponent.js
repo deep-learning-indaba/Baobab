@@ -58,18 +58,24 @@ export class CreateComponent extends Component {
     };
 
 
-    createEvent = () => {
+    onClickSubmit = () => {
         // Create
         eventService.create(this.state.updatedEvent).then(result => {
             console.log(result)
-            this.setState({
-                preEvent: result.event,
-                updatedEvent: result.event,
-                hasBeenUpdated: false,
-                error: Object.values(result.error)
-            });
+            result.statusCode == 200 ? this.successHandling() :  this.props.errorHandling(Object.values(result.error))
+        }).catch(error => {
+            this.props.errorHandling(error)
         });
     };
+
+
+    // Success Handling
+    successHandling() {
+        this.props.successHandling()
+        setTimeout(() => {
+            this.props.redirectUser()
+        }, 4000)
+    }
 
 
     // Handle Date Selectors
@@ -174,19 +180,11 @@ export class CreateComponent extends Component {
     }
 
 
-    // Redirect User to Form
-    redirectUser = () => {
-        this.setState({
-            success: true
-        }, () => setTimeout(() => {
-            this.props.history.push("/")
-        }, 4000))
-    }
-
-
     //Date Values Handler
     dateValHandler(param) {
-        return this.state.hasBeenUpdated || this.state.file ? new Date(this.state.updatedEvent[param]) : null;
+        if (this.state.updatedEvent) {
+            return this.state.updatedEvent[param] ? new Date(this.state.updatedEvent[param]) : null;
+        }        
     }
 
 
@@ -200,7 +198,6 @@ export class CreateComponent extends Component {
             updatedEvent,
             hasBeenUpdated,
             file,
-            preEvent
         } = this.state;
 
         const { t, organisation } = this.props;
@@ -245,7 +242,6 @@ export class CreateComponent extends Component {
 
 
                 <form>
-
                     {/* Langauges */}
                     {!file &&
                         <div className={"form-group row"}>
@@ -264,7 +260,7 @@ export class CreateComponent extends Component {
                         </div>
                     }
 
-            
+
                     {hasBeenUpdated && !file &&
                         <div>
                             {/* Description */}
@@ -322,37 +318,40 @@ export class CreateComponent extends Component {
                     {file &&
                         <section>
                             {/* Description */}
-                            < div className={"form-group row"}>
-                                <label
-                                    className={"col-sm-2 col-form-label"}
-                                    htmlFor="languages">
-                                    {t("Description")}
-                                </label>
+                            {updatedEvent.description &&
+                                < div className={"form-group row"}>
+                                    <label
+                                        className={"col-sm-2 col-form-label"}
+                                        htmlFor="languages">
+                                        {t("Description")}
+                                    </label>
 
-                                <div className="col-sm-10">
-                                    {
-                                        Object.keys(updatedEvent.description).map(val => {
-                                            return <div>
-                                                <div>
-                                                    <label
-                                                        className={"col-sm-2 col-form-label"}
-                                                        htmlFor="Description">
-                                                        {val}
-                                                    </label>
+                                    <div className="col-sm-10">
+                                        {
+                                            Object.keys(updatedEvent.description).map(val => {
+                                                return <div>
+                                                    <div>
+                                                        <label
+                                                            className={"col-sm-2 col-form-label"}
+                                                            htmlFor="Description">
+                                                            {val}
+                                                        </label>
+                                                    </div>
+                                                    <div>
+                                                        < textarea
+                                                            onChange={e => this.createEventDetails("name", e)}
+                                                            className="form-control"
+                                                            id="name"
+                                                            value={updatedEvent.description[val]}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    < textarea
-                                                        onChange={e => this.createEventDetails("name", e)}
-                                                        className="form-control"
-                                                        id="name"
-                                                        value={updatedEvent.description[val]}
-                                                    />
-                                                </div>
-                                            </div>
-                                        })
-                                    }
+                                            })
+                                        }
+                                    </div>
                                 </div>
-                            </div>
+                            }
+
 
                             {/* Name */}
                             <div className={"form-group row"}>
@@ -399,8 +398,8 @@ export class CreateComponent extends Component {
                                         id="organisation_id"
                                         class="badge badge-primary">{updatedEvent.organisation_name}</span>
                                 </div>
-                        </div>
-                        
+                            </div>
+
 
                             {/* Event Type */}
                             {updatedEvent.event_type &&
@@ -433,7 +432,7 @@ export class CreateComponent extends Component {
                                         <option disabled>{t('Does this event provide travel grants for participants')}</option>
                                         <Select
                                             onChange={e => this.createEventDetails("travel_grant", e)}
-                                            value={updatedEvent.travel_grant}
+                                            value={{label:updatedEvent.travel_grant, value:updatedEvent.travel_grant }}
                                         />
                                     </div>
                                 </div>
@@ -487,12 +486,11 @@ export class CreateComponent extends Component {
                                 </div>
                             }
                         </section>
-
                     }
 
 
                     {/* Conditinal form fields */}
-                    {hasBeenUpdated || file &&
+                    {hasBeenUpdated &&
                         <section>
                             {/* Key */}
                             <div className={"form-group row"}>
@@ -821,7 +819,7 @@ export class CreateComponent extends Component {
                 </form>
             </div>
 
-            
+
             {/* Form Submittion and Cancel */}
             {
                 hasBeenUpdated &&
