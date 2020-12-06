@@ -6,7 +6,6 @@ import Select from 'react-select';
 import { withTranslation } from 'react-i18next';
 import {
     Button,
-    TextField
 } from '@material-ui/core';
 
 export class CreateComponent extends Component {
@@ -23,6 +22,8 @@ export class CreateComponent extends Component {
             success: false
         };
     };
+
+
 
     componentDidMount() {
         // Create Event
@@ -46,7 +47,8 @@ export class CreateComponent extends Component {
             preEvent: eventDetails,
             updatedEvent: eventDetails
         });
-    }
+    };
+
 
 
     // on Click Cancel
@@ -58,15 +60,17 @@ export class CreateComponent extends Component {
     };
 
 
+
     onClickSubmit = () => {
         // Create
         eventService.create(this.state.updatedEvent).then(result => {
             console.log(result)
-            result.statusCode == 200 ? this.successHandling() :  this.props.errorHandling(Object.values(result.error))
+            result.statusCode == 200 ? this.successHandling() : this.props.errorHandling(Object.values(result.error))
         }).catch(error => {
             this.props.errorHandling(error)
         });
     };
+
 
 
     // Success Handling
@@ -76,6 +80,7 @@ export class CreateComponent extends Component {
             this.props.redirectUser()
         }, 4000)
     }
+
 
 
     // Handle Date Selectors
@@ -93,8 +98,11 @@ export class CreateComponent extends Component {
     };
 
 
+
     // Handle Upload
     handleUploads = (file) => {
+        const t = this.props.t;
+
         const fileReader = new FileReader();
 
         fileReader.onloadend = () => {
@@ -108,7 +116,7 @@ export class CreateComponent extends Component {
                 }, () => this.hasBeenEdited());
             } catch (e) {
                 this.setState({
-                    error: "File is not valid format"
+                    error: t("File is not in a valid format")
                 })
             };
         };
@@ -119,10 +127,12 @@ export class CreateComponent extends Component {
     };
 
 
+
     // Toggle Upload Button
     toggleUploadBtn = () => {
         this.state.file ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
     };
+
 
 
     // Has Been Edited
@@ -135,6 +145,7 @@ export class CreateComponent extends Component {
             hasBeenUpdated: validate ? true : false
         });
     };
+
 
 
     // Create New Event Details
@@ -161,7 +172,8 @@ export class CreateComponent extends Component {
         this.setState({
             updatedEvent: u
         }, () => this.hasBeenEdited());
-    }
+    };
+
 
 
     // Handle Object Values
@@ -177,17 +189,16 @@ export class CreateComponent extends Component {
 
         stateUpdate[fieldName] = stateObj;
         return stateUpdate
-    }
+    };
+
 
 
     //Date Values Handler
     dateValHandler(param) {
         if (this.state.updatedEvent) {
             return this.state.updatedEvent[param] ? new Date(this.state.updatedEvent[param]) : null;
-        }        
-    }
-
-
+        }
+    };
 
 
 
@@ -203,8 +214,6 @@ export class CreateComponent extends Component {
         const { t, organisation } = this.props;
 
 
-
-
         // Languages
         const languages = organisation.languages.map(val => {
             return { value: Object.values(val)[0], label: Object.values(val)[1] }
@@ -215,6 +224,13 @@ export class CreateComponent extends Component {
 
             {/* Card Area */}
             <div className="card">
+
+                {/* Card Heading */}
+                <div className="card-heading">
+                    <h1>Create</h1>
+                    <h5>Event</h5>
+                </div>
+
 
                 {/* Import Button */}
                 {!file &&
@@ -227,7 +243,7 @@ export class CreateComponent extends Component {
                                     color="default"
                                     startIcon={<CloudUploadIcon />}
                                 >
-                                    Import
+                                {t('Import')}
                   </Button>
                             </div>
                             {fileUpload &&
@@ -240,7 +256,7 @@ export class CreateComponent extends Component {
                     </div>
                 }
 
-
+                {/* All Fields */}
                 <form>
                     {/* Langauges */}
                     {!file &&
@@ -261,6 +277,97 @@ export class CreateComponent extends Component {
                     }
 
 
+                    {/* Fields for Uploaded Data */}
+                    {file &&
+                        <section>
+                            {/* Description */}
+                            {updatedEvent.description &&
+                                < div className={"form-group row"}>
+                                    <label
+                                        className={"col-sm-2 col-form-label"}
+                                        htmlFor="languages">
+                                        {t("Description")}
+                                    </label>
+
+                                    <div className="col-sm-10">
+                                        {
+                                            Object.keys(updatedEvent.description).map(val => {
+                                                return <div>
+                                                    <div>
+                                                        <label
+                                                            className={"col-sm-2 col-form-label file-label"}
+                                                            htmlFor="Description">
+                                                            {val}
+                                                        </label>
+                                                    </div>
+                                                    <div>
+                                                        < textarea
+                                                            onChange={e => this.createEventDetails("name", e)}
+                                                            className="form-control"
+                                                            id="name"
+                                                            value={updatedEvent.description[val]}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            })
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+
+                            {/* Name */}
+                            <div className={"form-group row"}>
+                                <label
+                                    className={"col-sm-2 col-form-label"}
+                                    htmlFor="name">
+                                    {t("Name")}
+                                </label>
+
+                                <div className="col-sm-10">
+                                    {
+                                        Object.keys(updatedEvent.name).map(val => {
+                                            return <div>
+                                                <div>
+                                                    <label
+                                                        className={"col-sm-2 col-form-label file-label"}
+                                                        htmlFor="name">
+                                                        {val}
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    < textarea
+                                                        onChange={e => this.createEventDetails("name", e)}
+                                                        className="form-control"
+                                                        id="name"
+                                                        value={updatedEvent.name[val]}
+                                                    />
+                                                </div>
+                                            </div>
+                                        })
+                                    }
+                                </div>
+                            </div>
+
+                            {/* Organisation Name */}
+                            <div className={"form-group row"}>
+                                <label
+                                    className={"col-sm-2 col-form-label"}
+                                    htmlFor="organisation_id">
+                                    {t("Organisation")}
+                                </label>
+                                <div className="col-sm-10">
+                                    <span
+                                        id="organisation_id"
+                                        class="badge badge-primary">{updatedEvent.organisation_name}</span>
+                                </div>
+                            </div>
+
+                        </section>
+                    }
+
+
+                    {/* Fields for User Input */}
                     {hasBeenUpdated && !file &&
                         <div>
                             {/* Description */}
@@ -314,182 +421,7 @@ export class CreateComponent extends Component {
                     }
 
 
-
-                    {file &&
-                        <section>
-                            {/* Description */}
-                            {updatedEvent.description &&
-                                < div className={"form-group row"}>
-                                    <label
-                                        className={"col-sm-2 col-form-label"}
-                                        htmlFor="languages">
-                                        {t("Description")}
-                                    </label>
-
-                                    <div className="col-sm-10">
-                                        {
-                                            Object.keys(updatedEvent.description).map(val => {
-                                                return <div>
-                                                    <div>
-                                                        <label
-                                                            className={"col-sm-2 col-form-label"}
-                                                            htmlFor="Description">
-                                                            {val}
-                                                        </label>
-                                                    </div>
-                                                    <div>
-                                                        < textarea
-                                                            onChange={e => this.createEventDetails("name", e)}
-                                                            className="form-control"
-                                                            id="name"
-                                                            value={updatedEvent.description[val]}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            })
-                                        }
-                                    </div>
-                                </div>
-                            }
-
-
-                            {/* Name */}
-                            <div className={"form-group row"}>
-                                <label
-                                    className={"col-sm-2 col-form-label"}
-                                    htmlFor="name">
-                                    {t("Name")}
-                                </label>
-
-                                <div className="col-sm-10">
-                                    {
-                                        Object.keys(updatedEvent.name).map(val => {
-                                            return <div>
-                                                <div>
-                                                    <label
-                                                        className={"col-sm-2 col-form-label"}
-                                                        htmlFor="name">
-                                                        {val}
-                                                    </label>
-                                                </div>
-                                                <div>
-                                                    < textarea
-                                                        onChange={e => this.createEventDetails("name", e)}
-                                                        className="form-control"
-                                                        id="name"
-                                                        value={updatedEvent.name[val]}
-                                                    />
-                                                </div>
-                                            </div>
-                                        })
-                                    }
-                                </div>
-                            </div>
-
-                            {/* Organisation Name */}
-                            <div className={"form-group row"}>
-                                <label
-                                    className={"col-sm-2 col-form-label"}
-                                    htmlFor="organisation_id">
-                                    {t("Organisation")}
-                                </label>
-                                <div className="col-sm-10">
-                                    <span
-                                        id="organisation_id"
-                                        class="badge badge-primary">{updatedEvent.organisation_name}</span>
-                                </div>
-                            </div>
-
-
-                            {/* Event Type */}
-                            {updatedEvent.event_type &&
-                                <div className={"form-group row"}>
-                                    <label className={"col-sm-2 col-form-label"}
-                                        htmlFor="event-type">
-                                        {t("Event Type")}
-                                    </label>
-
-                                    <div className="col-sm-10">
-                                        <Select
-                                            onChange={e => this.createEventDetails("event_type", e)}
-                                            value={updatedEvent.event_type}
-                                        />
-                                    </div>
-                                </div>
-                            }
-
-
-                            {/* Travel Grants */}
-                            {updatedEvent.travel_grant &&
-
-                                < div className={"form-group row"}>
-                                    <label className={"col-sm-2 col-form-label"}
-                                        htmlFor="travel-grants">
-                                        {t("Travel Grants")}
-                                    </label>
-
-                                    <div className="col-sm-10">
-                                        <option disabled>{t('Does this event provide travel grants for participants')}</option>
-                                        <Select
-                                            onChange={e => this.createEventDetails("travel_grant", e)}
-                                            value={{label:updatedEvent.travel_grant, value:updatedEvent.travel_grant }}
-                                        />
-                                    </div>
-                                </div>
-                            }
-
-
-                            {/* Miniconf Url */}
-                            {updatedEvent.miniconf_url &&
-                                <div className={"form-group row"}>
-                                    <label className={"col-sm-2 col-form-label"}
-                                        htmlFor="travel-grants">
-                                        {t("MiniConf Url")}
-                                    </label>
-
-                                    <div className="col-sm-10">
-                                        <textarea
-                                            value={updatedEvent.miniconf_url}
-                                            className="w-100"
-                                            placeholder={t("If this is a virtual MiniConf event, enter the URL to the miniconf site")}
-                                            onChange={e => this.createEventDetails("miniconf_url", e)}
-                                            className="form-control"
-                                            id="description"
-                                        />
-                                    </div>
-                                </div>
-                            }
-
-
-                            {/* Time */}
-                            {updatedEvent.time &&
-                                <div className={"form-group row"}>
-                                    <label className={"col-sm-2 col-form-label"}
-                                        htmlFor="url">
-                                        {t("Time")}
-                                    </label>
-                                    <div className="col-sm-10">
-                                        <TextField
-                                            onChange={e => this.createEventDetails("time", e)}
-                                            id="time"
-                                            label="Times are in UTC"
-                                            type="time"
-                                            value={updatedEvent.time}
-                                            InputLabelProps={{
-                                                shrink: true,
-                                            }}
-                                            inputProps={{
-                                                step: 300, // 5 min
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            }
-                        </section>
-                    }
-
-
-                    {/* Conditinal form fields */}
+                    {/* Conditinally Rendered fields - User Input */}
                     {hasBeenUpdated &&
                         <section>
                             {/* Key */}
@@ -545,6 +477,7 @@ export class CreateComponent extends Component {
                     }
 
 
+                    {/* Divider Line */}
                     <hr style={{ "marginTop": "50px" }}></hr>
 
 
@@ -819,12 +752,11 @@ export class CreateComponent extends Component {
                 </form>
             </div>
 
-
             {/* Form Submittion and Cancel */}
             {
                 hasBeenUpdated &&
-                <div className={"form-group row submit event"}>
-                    <div className={"col-sm-4"}>
+                <div className={"form-group row submit event w-100"}>
+                    <div className="col-sm-4">
                         <button
                             className="btn btn-danger btn-lg btn-block"
                             onClick={(e) => this.onClickCancel()} >
@@ -833,7 +765,7 @@ export class CreateComponent extends Component {
                     </div>
 
 
-                    <div className={"col-sm-4"}>
+                    <div className="col-sm-4">
                         <button
                             onClick={(e) => this.onClickSubmit()}
                             className="btn btn-success btn-lg btn-block"
@@ -844,6 +776,7 @@ export class CreateComponent extends Component {
                     </div>
                 </div>
             }
+
         </div >
     };
 }

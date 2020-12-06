@@ -21,7 +21,6 @@ export class EventConfigComponent extends Component {
       hasBeenUpdated: false,
       loading: true,
       error: "",
-      fileUpload: null,
       file: null,
       success: false
     };
@@ -65,11 +64,15 @@ export class EventConfigComponent extends Component {
     // PUT
     eventService.update(this.state.updatedEvent).then(result => {
       console.log(result)
+      // Error handling
+      result.statusCode == 200 ?
       this.setState({
         preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
-      }, () => this.redirectUser());
+      }, () => this.redirectUser())
+      : this.errorHandling(result.error)
+      
     }).catch(result => {
       this.setState({
         error: result.statusCode
@@ -95,13 +98,13 @@ export class EventConfigComponent extends Component {
 
 
   // Has Been Edited
-  hasBeenEdited = () => {
+  hasBeenEdited = (objValue) => {
     const { updatedEvent, preEvent} = this.state;
     const validate = updatedEvent !== preEvent;
 
-
+// Exisitng Object Values that have been updated need to be manually checked 
     this.setState({
-      hasBeenUpdated: validate ? true : false
+      hasBeenUpdated: validate || objValue ? true : false
     });
   };
 
@@ -113,7 +116,7 @@ export class EventConfigComponent extends Component {
 
     let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedEvent) : false;
 
-    // Some values are not nested, testing against different values
+    // Some values are Objects with values, testing against different values
     let u = objValue ?
       objValue
       :
@@ -124,7 +127,7 @@ export class EventConfigComponent extends Component {
 
     this.setState({
       updatedEvent: u
-    }, () => this.hasBeenEdited());
+    }, () => this.hasBeenEdited(objValue));
   };
 
 
@@ -155,9 +158,12 @@ export class EventConfigComponent extends Component {
 
   // Error Handling
   errorHandling(error) {
+    let errorMessage = error ? error : "There was an error";
     this.setState({
-      error: error
-    })
+      error: errorMessage
+    },() => {setTimeout(() => {
+      window.location.reload()
+    },3000)})
   }
 
   // Success handling
@@ -272,7 +278,7 @@ export class EventConfigComponent extends Component {
             <Button
               variant="contained"
               href={`data:text/json;charset=utf-8,${eventJson}`}
-              download={`event.json`}
+              download={`event-${this.props.event.key}.json`}
             >
               Export
             </Button>
@@ -740,7 +746,7 @@ export class EventConfigComponent extends Component {
 
           </form>
 
-          <hr></hr>
+        </div>
 
           {/* Form Submittion and Cancel */}
           {hasBeenUpdated &&
@@ -765,8 +771,6 @@ export class EventConfigComponent extends Component {
               </div>
             </div>
           }
-
-        </div>
       </div>
     );
   }
