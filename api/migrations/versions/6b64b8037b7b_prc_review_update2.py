@@ -496,6 +496,8 @@ def upgrade():
     print('Removed existing form, repopulating...')
 
     # Set up questions
+    
+
     divider1 = add_question(form.id, 'section-divider', False, headlines={
         'en': 'Evaluation of proposals',
         'fr': u'Évaluation des propositions'
