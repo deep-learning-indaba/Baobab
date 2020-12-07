@@ -8,6 +8,7 @@ from sqlalchemy.sql import func, exists
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import Event, EventRole
+from app.events.repository import EventRepository as event_repository
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
@@ -15,7 +16,7 @@ from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND
 
 from app.utils import misc
@@ -110,6 +111,12 @@ def _serialize_review_form(review_form, language):
     }
 
     return form
+
+
+def _add_reviewer_role(user_id, event_id):
+    event_role = EventRole('reviewer', user_id, event_id)
+    db.session.add(event_role)
+    db.session.commit()
 
 
 class ReviewResponseUser():
@@ -354,7 +361,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
             return USER_NOT_FOUND
         
         if not reviewer_user.is_reviewer(event_id):
-            self.add_reviewer_role(reviewer_user.id, event_id)
+            _add_reviewer_role(reviewer_user.id, event_id)
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
 
@@ -375,12 +382,6 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                 event=event,
                 user=reviewer_user)
         return {}, 201
-
-    
-    def add_reviewer_role(self, user_id, event_id):
-        event_role = EventRole('reviewer', user_id, event_id)
-        db.session.add(event_role)
-        db.session.commit()
     
     def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
@@ -510,3 +511,41 @@ class ReviewListAPI(restful.Resource):
 
         return [ReviewListAPI._serialize_response(response, review_response, language)
                 for response, review_response in responses_to_review]
+
+class ResponseReviewAssignmentAPI(restful.Resource):
+    @event_admin_required
+    def post(self, event_id):                   
+        parser = reqparse.RequestParser()
+        parser.add_argument('response_ids', type=int, required=True, action='append')
+        parser.add_argument('reviewer_email', type=str, required=True)
+        args = parser.parse_args()                      
+
+        response_ids = args['response_ids']
+        # TODO: Filter these to only the event_id in question
+        reviewer_email = args['reviewer_email']
+
+        event = event_repository.get_by_id(event_id)
+
+        reviewer_user = user_repository.get_by_email(reviewer_email, g.organisation.id)
+        if reviewer_user is None:
+            return USER_NOT_FOUND
+        
+        if not reviewer_user.is_reviewer(event_id):
+            _add_reviewer_role(reviewer_user.id, event_id)
+
+        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
+        db.session.add_all(response_reviewers)
+        db.session.commit()
+        
+        if len(response_ids) > 0:
+            email_user(
+                'reviews-assigned',
+                template_parameters=dict(
+                    num_reviews=len(response_ids),
+                    baobab_host=misc.get_baobab_host(),
+                    system_name=g.organisation.system_name,
+                    event_key=event.key
+                ),
+                event=event,
+                user=reviewer_user)
+        return {}, 201
