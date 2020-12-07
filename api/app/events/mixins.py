@@ -1,10 +1,11 @@
 from datetime import datetime
 
 from flask_restful import reqparse
+from app.utils import misc
 
 
 class EventMixin(object):
-    dt_format = lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ')
+    dt_format = lambda x: datetime.strptime(x, misc.ISO_8601_UTC_FORMAT)
 
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('id', type=int, required=False)

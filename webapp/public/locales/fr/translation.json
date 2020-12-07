@@ -306,6 +306,7 @@
     "Add Tags": "Ajouter des tags",
     "New tag": "Nouveau tag",
     "Total Score": "Score Total",
+    "Event Configuration": "Configuration D'événement",
     "Please fix validation errors before saving": "Veuillez corriger les erreurs de validation avant d'enregistrer",
     "Saved": "Enregistré",
     "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "Vous avez {{numReviews}} avis attribués, dont {{numCompleted}} sont terminés",
@@ -315,5 +316,17 @@
     "You have completed all your reviews, thank you!": "Vous avez terminé tous vos commentaires, merci!",
     "You have no reviews assigned": "Vous n'avez attribué aucun avis",
     "Hide Completed": "Masquer terminé",
-    "Return to review list": "Revenir à la liste de révision"
+    "Return to review list": "Revenir à la liste de révision",
+    "Event Type": "Type d'événement",
+    "Travel Grants": "Travel Grants" ,
+    "Date": "Date" ,
+    "Start": "Démarrer",
+    "Application": "Application" ,
+    "Selection": "Sélection",
+    "Miniconf Url":  "Miniconf Url",
+    "Time": "Temps",
+    "Event": "Événement",
+    "Award": "Award",
+    "Call": "Appeler"
+
 }

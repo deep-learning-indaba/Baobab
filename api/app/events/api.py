@@ -31,12 +31,15 @@ from app.utils.errors import (
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
 from app.utils.emailer import email_user
+from app.utils import misc
 from app.events.repository import EventRepository as event_repository
 from app.organisation.models import Organisation
 from app.events.models import EventType
 import app.events.status as event_status
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_config_repository
+import pytz
+
 
 def status_info(status):
     if status is None:
@@ -82,29 +85,39 @@ def event_info(user_id, event, status, language):
     }
 
 
+def _extract_utc_date(attr):
+    def _utc_date(e):
+        if isinstance(e, Event):
+            # return pytz.utc.localize(getattr(e, attr))
+            return getattr(e, attr).strftime(misc.ISO_8601_UTC_FORMAT)
+        return None
+    return _utc_date
+
+
 event_fields = {
     'id': fields.Integer,
     'name': fields.Raw(attribute=lambda event: event.get_all_name_translations() if isinstance(event, Event) else {}),
     'description': fields.Raw(attribute=lambda event: event.get_all_description_translations() if isinstance(event, Event) else {}),
     'key': fields.String,
-    'start_date': fields.DateTime(dt_format='iso8601'),
-    'end_date': fields.DateTime(dt_format='iso8601'),
+    'start_date': fields.String(attribute=_extract_utc_date('start_date')),
+    'end_date': fields.String(attribute=_extract_utc_date('end_date')),
     'email_from': fields.String,
     'organisation_name': fields.String(attribute='organisation.name'),
     'organisation_id': fields.String(attribute='organisation.id'),
     'url': fields.String,
-    'application_open': fields.DateTime(dt_format='iso8601'),
-    'application_close': fields.DateTime(dt_format='iso8601'),
-    'review_open': fields.DateTime(dt_format='iso8601'),
-    'review_close': fields.DateTime(dt_format='iso8601'),
-    'selection_open': fields.DateTime(dt_format='iso8601'),
-    'selection_close': fields.DateTime(dt_format='iso8601'),
-    'offer_open': fields.DateTime(dt_format='iso8601'),
-    'offer_close': fields.DateTime(dt_format='iso8601'),
-    'registration_open': fields.DateTime(dt_format='iso8601'),
-    'registration_close': fields.DateTime(dt_format='iso8601'),
+    'application_open': fields.String(attribute=_extract_utc_date('application_open')),
+    'application_close': fields.String(attribute=_extract_utc_date('application_close')),
+    'review_open': fields.String(attribute=_extract_utc_date('review_open')),
+    'review_close': fields.String(attribute=_extract_utc_date('review_close')),
+    'selection_open': fields.String(attribute=_extract_utc_date('selection_open')),
+    'selection_close': fields.String(attribute=_extract_utc_date('selection_close')),
+    'offer_open': fields.String(attribute=_extract_utc_date('offer_open')),
+    'offer_close': fields.String(attribute=_extract_utc_date('offer_close')),
+    'registration_open': fields.String(attribute=_extract_utc_date('registration_open')),
+    'registration_close': fields.String(attribute=_extract_utc_date('registration_close')),
     'travel_grant': fields.Boolean,
-    'miniconf_url': fields.String
+    'miniconf_url': fields.String,
+    'event_type': fields.String
 }
 
 
