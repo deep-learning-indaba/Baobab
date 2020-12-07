@@ -1375,6 +1375,7 @@ class ReviewListAPITest(ApiTestCase):
 class ResponseReviewerAssignmentApiTest(ApiTestCase):
     def seed_static_data(self):
         self.event = self.add_event(key='event1')
+        self.event2 = self.add_event(key='event2')
         self.event_admin = self.add_user('eventadmin@mail.com')
         self.reviewer = self.add_user('reviewer@mail.com')
         self.reviewer_user_id = self.reviewer.id
@@ -1386,9 +1387,12 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
         self.event.add_event_role('admin', self.event_admin.id)
         
         application_form = self.create_application_form(self.event.id)
+        application_form2 = self.create_application_form(self.event2.id)
         self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.add_response(application_form.id, self.user2.id, is_submitted=True)
         self.add_response(application_form.id, self.user3.id, is_submitted=True)
+
+        self.event2_response_id = self.add_response(application_form2.id, self.user1.id, is_submitted=True).id
         
         self.add_email_template('reviews-assigned')
 
@@ -1412,3 +1416,15 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
         
         for rr in response_reviewers:
             self.assertEqual(rr.reviewer_user_id, self.reviewer_user_id)
+
+    def test_response_for_different_event_forbidden(self):
+        self.seed_static_data()
+
+        params = {'event_id' : 1, 'response_ids': [1, 2, self.event2_response_id], 'reviewer_email': 'reviewer@mail.com'}
+
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer', 
+            headers=self.get_auth_header_for('eventadmin@mail.com'), 
+            data=params)
+
+        self.assertEqual(response.status_code, 403)

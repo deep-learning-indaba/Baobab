@@ -9,6 +9,7 @@ from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import Event, EventRole
 from app.events.repository import EventRepository as event_repository
+from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
@@ -521,8 +522,15 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         args = parser.parse_args()                      
 
         response_ids = args['response_ids']
-        # TODO: Filter these to only the event_id in question
         reviewer_email = args['reviewer_email']
+
+        filtered_response_ids = response_repository.filter_ids_to_event(response_ids, event_id)
+
+        print('response_ids:', response_ids)
+        print('filtered_response_ids:', filtered_response_ids)
+
+        if set(filtered_response_ids) != set(response_ids):
+            return FORBIDDEN
 
         event = event_repository.get_by_id(event_id)
 
