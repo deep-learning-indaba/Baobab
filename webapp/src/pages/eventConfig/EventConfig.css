@@ -72,10 +72,15 @@ html .event-config-wrapper .form-group {
 
 
 /* Date Pickers Section */
+
+.event-config-wrapper .time-warning {
+  opacity: 1;
+  text-align: left;
+}
+
 .event-config-wrapper .date-picker-section {
   display: flex;
   flex-wrap: wrap;
-  margin-top: 2%;
   font-family: 'Open Sans', sans-serif;
   padding-left: 0;
 }

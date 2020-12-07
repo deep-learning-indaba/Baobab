@@ -24,6 +24,10 @@ export class EventConfigComponent extends Component {
 
   // Populate State
   componentDidMount() {
+    // Secure Component
+    if (!this.props.event) {
+      window.location == "/"
+    }
     // Edit Event
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
@@ -236,526 +240,490 @@ export class EventConfigComponent extends Component {
       return <div className="alert alert-success alert-container">
         {t('Success')}
       </div>
-
     };
 
+      /* Navigation Redirects */
+      if (!this.props.event) {
+        return <div className="alert alert-success alert-container">
+          {t('This route is not allowed')}
+        </div>
+      };
 
-    if (!this.props.event) {
+
+  /* Default to Edit Mode */
+    if (this.props.event) {
       return (
-        <NewEvent organisation={organisation} />
-      )
-    }
-
-
-    /* Default to Edit Mode */
-    return (
-      <div className="event-config-wrapper">
-
-        <div className="card">
-
-          {/* Export button */}
-          <div className="export-btn-wrapper">
-            <button
-              className="btn btn-secondary"
-              variant="contained"
-            >
-              <a href={`data:text/json;charset=utf-8,${eventJson}`}
-                download={`event-${this.props.event.key}.json`}>
-                {t('Export')}
-              </a>
-
-            </button>
-          </div>
-
-
-          <form>
-
-            {/* Organisation Name */}
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="organisation_id">
-                {t("Organisation")}
-              </label>
-              <div className="col-sm-10">
-                <span
-                  id="organisation_id"
-                  class="badge badge-primary">{updatedEvent.organisation_name}</span>
-              </div>
+        <div className="event-config-wrapper">
+  
+          <div className="card">
+  
+            {/* Export button */}
+            <div className="export-btn-wrapper">
+              <button
+                className="btn btn-secondary"
+                variant="contained"
+              >
+                <a href={`data:text/json;charset=utf-8,${eventJson}`}
+                  download={`event-${this.props.event.key}.json`}>
+                  {t('Export')}
+                </a>
+  
+              </button>
             </div>
-
-            {/* Name */}
-            <div className={"form-group row"}>
-              <div className="d-flex w-100">
-                <label className={"col-sm-2 col-form-label"} htmlFor="name">
-                  {t("Event Name")}
-                </label>
-                <div className="w-100">
-                  {/* For error Redirects whe want to autofill the form where the user left off, thus using updatedEvent not preEvent: see component did mount */}
-                  {updatedEvent &&
-                    Object.keys(updatedEvent.name).map(val => {
-                      return <div key={val} className="col-sm-12 mt-1">
-                        <label className={"col-sm-2 custom-label"}>{val}</label>
-                        <input
-                          onChange={e => this.updateEventDetails("name", e, val)}
-                          type="text"
-                          className="form-control "
-                          id="name"
-                          value={updatedEvent.name[val]}
-                        />
-                      </div>
-                    })
-                  }
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className={"form-group row"}>
-              <div className="d-flex w-100">
+  
+  
+            <form>
+  
+              {/* Organisation Name */}
+              <div className={"form-group row"}>
                 <label
                   className={"col-sm-2 col-form-label"}
-                  htmlFor="description">
-                  {t("Description")}
+                  htmlFor="organisation_id">
+                  {t("Organisation")}
                 </label>
-                <div className="w-100">
-                  {updatedEvent &&
-                    Object.keys(updatedEvent.description).map(val => {
-                      return <div key={val} className="col-sm-12 mt-1">
-                        <label className={"col-sm-2 custom-label"}>{val}</label>
-                        <textarea
-                          onChange={e => this.updateEventDetails("description", e, val)}
-                          className="form-control"
-                          id="description"
-                          value={updatedEvent.description[val]}
-                        />
+                <div className="col-sm-10">
+                  <span
+                    id="organisation_id"
+                    class="badge badge-primary">{updatedEvent.organisation_name}</span>
+                </div>
+              </div>
+  
+              {/* Name */}
+              <div className={"form-group row"}>
+                <div className="d-flex w-100">
+                  <label className={"col-sm-2 col-form-label"} htmlFor="name">
+                    {t("Event Name")}
+                  </label>
+                  <div className="w-100">
+                    {/* For error Redirects whe want to autofill the form where the user left off, thus using updatedEvent not preEvent: see component did mount */}
+                    {updatedEvent &&
+                      Object.keys(updatedEvent.name).map(val => {
+                        return <div key={val} className="col-sm-12 mt-1">
+                          <label className={"col-sm-2 custom-label"}>{val}</label>
+                          <input
+                            onChange={e => this.updateEventDetails("name", e, val)}
+                            type="text"
+                            className="form-control "
+                            id="name"
+                            value={updatedEvent.name[val]}
+                          />
+                        </div>
+                      })
+                    }
+                  </div>
+                </div>
+              </div>
+  
+              {/* Description */}
+              <div className={"form-group row"}>
+                <div className="d-flex w-100">
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="description">
+                    {t("Description")}
+                  </label>
+                  <div className="w-100">
+                    {updatedEvent &&
+                      Object.keys(updatedEvent.description).map(val => {
+                        return <div key={val} className="col-sm-12 mt-1">
+                          <label className={"col-sm-2 custom-label"}>{val}</label>
+                          <textarea
+                            onChange={e => this.updateEventDetails("description", e, val)}
+                            className="form-control"
+                            id="description"
+                            value={updatedEvent.description[val]}
+                          />
+                        </div>
+                      })
+                    }
+                  </div>
+                </div>
+              </div>
+  
+              {/* Event Type */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="event-type">
+                  {t("Event Type")}
+                </label>
+  
+                <div className="col-sm-10">
+                  <FormSelect
+                    options={options.eventType}
+                    onChange={e => this.updateEventDetails("event_type", e)}
+                    value={{ value: `${updatedEvent.event_type}`, label: `${updatedEvent.event_type}` }}
+                  />
+                </div>
+              </div>
+  
+              {/* Travel Grants */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="travel-grants">
+                  {t("Travel Grants")}
+                </label>
+  
+                <div className="col-sm-10">
+                  <option className="custom-label" disabled>{t('Does this event provide travel grants for participants')}</option>
+                  <FormSelect
+                    onChange={e => this.updateEventDetails("travel_grant", e)}
+                    options={options.travelGrant}
+                    value={{ value: `${updatedEvent.travel_grant}`, label: `${updatedEvent.travel_grant}` }}
+                  />
+  
+                </div>
+              </div>
+  
+              {/* Miniconf Url */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="travel-grants">
+                  {t("MiniConf Url")}
+                </label>
+  
+                <div className="col-sm-10">
+                  <textarea
+                    className="w-100"
+                    placeholder={t("If this is a virtual MiniConf event, enter the URL to the miniconf site")}
+                    onChange={e => this.updateEventDetails("miniconf_url", e)}
+                    className="form-control"
+                    id="description"
+                  />
+                </div>
+  
+              </div>
+  
+              {/* Key */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="key">
+                  {t("Key")}
+                </label>
+  
+                <div className="col-sm-10">
+                  <span
+                    id="key"
+                    class="badge badge-primary">{updatedEvent.key}</span>
+  
+                </div>
+              </div>
+  
+              {/* Email From */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
+                  {t("Email From")}
+                </label>
+  
+                <div className="col-sm-10">
+                  <input
+                    onChange={e => this.updateEventDetails("email_from", e)}
+                    type="email"
+                    className="form-control"
+                    id="email_from"
+                    value={updatedEvent.email_from} />
+                </div>
+              </div>
+  
+              {/* URL */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  {t("URL")}
+                </label>
+                <div className="col-sm-10">
+                  <input
+                    onChange={e => this.updateEventDetails("url", e)}
+                    type="text"
+                    className="form-control"
+                    id="url"
+                    value={updatedEvent.url} />
+                </div>
+              </div>
+  
+  
+              <hr style={{ "marginTop": "50px" }}></hr>
+  
+              {/* UTC Time request */}
+              <div className="col-md-12 time-warning">
+                      <span class="badge badge-warning">{t('Times will automatically convert to UTC')}</span>
                       </div>
-                    })
-                  }
-                </div>
-              </div>
-            </div>
-
-            {/* Event Type */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="event-type">
-                {t("Event Type")}
-              </label>
-
-              <div className="col-sm-10">
-                <FormSelect
-                  options={options.eventType}
-                  onChange={e => this.updateEventDetails("event_type", e)}
-                  value={{ value: `${updatedEvent.event_type}`, label: `${updatedEvent.event_type}` }}
-                />
-              </div>
-            </div>
-
-            {/* Travel Grants */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="travel-grants">
-                {t("Travel Grants")}
-              </label>
-
-              <div className="col-sm-10">
-                <option className="custom-label" disabled>{t('Does this event provide travel grants for participants')}</option>
-                <FormSelect
-                  onChange={e => this.updateEventDetails("travel_grant", e)}
-                  options={options.travelGrant}
-                  value={{ value: `${updatedEvent.travel_grant}`, label: `${updatedEvent.travel_grant}` }}
-                />
-
-              </div>
-            </div>
-
-            {/* Miniconf Url */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="travel-grants">
-                {t("MiniConf Url")}
-              </label>
-
-              <div className="col-sm-10">
-                <textarea
-                  className="w-100"
-                  placeholder={t("If this is a virtual MiniConf event, enter the URL to the miniconf site")}
-                  onChange={e => this.updateEventDetails("miniconf_url", e)}
-                  className="form-control"
-                  id="description"
-                />
-              </div>
-
-            </div>
-
-            {/* Key */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="key">
-                {t("Key")}
-              </label>
-
-              <div className="col-sm-10">
-                <span
-                  id="key"
-                  class="badge badge-primary">{updatedEvent.key}</span>
-
-              </div>
-            </div>
-
-            {/* Email From */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                {t("Email From")}
-              </label>
-
-              <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("email_from", e)}
-                  type="email"
-                  className="form-control"
-                  id="email_from"
-                  value={updatedEvent.email_from} />
-              </div>
-            </div>
-
-            {/* URL */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
-                {t("URL")}
-              </label>
-              <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("url", e)}
-                  type="text"
-                  className="form-control"
-                  id="url"
-                  value={updatedEvent.url} />
-              </div>
-            </div>
-
-            {/* Time */}
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
-                {t("Time")}
-              </label>
-
-              <div className="col-sm-10">
-                <div>
-                  <label className="col-sm-6 custom-label">{t('Times need to be in UTC')}</label>
-                </div>
-
-                <input
-                  onChange={e => this.updateEventDetails("time", e)}
-                  type="time"
-                  value={updatedEvent.time ? updatedEvent.time : null}
-                />
-              </div>
-            </div>
-
-            <hr style={{ "marginTop": "50px" }}></hr>
-
-
-            {/* Date Picker Section */}
-            <div className="date-picker-section col-md-12">
-              {/* Left Col */}
-              <div className="first-col">
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Date')}</p>
-                  <div className="date-item-sections">
-                    <div className="date-picker">
-                      <label className={"col-form-label"} htmlFor="start_date">
-                        {t("Start")}
-                      </label>
-
-                      <div>
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("start_date", e)}
-                          value={new Date(updatedEvent.start_date)} />
+  
+  
+              {/* Date Picker Section */}
+              <div className="date-picker-section col-md-12">
+                {/* Left Col */}
+                <div className="first-col">
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Date')}</p>
+                    <div className="date-item-sections">
+                      <div className="date-picker">
+                        <label className={"col-form-label"} htmlFor="start_date">
+                          {t("Start")}
+                        </label>
+  
+                        <div>
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("start_date", e)}
+                            value={new Date(updatedEvent.start_date)} />
+                        </div>
+                      </div>
+  
+                      <div className="date-picker">
+                        <label className={"col-form-label"} htmlFor="end_date">
+                          {t("End Date")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e => this.handleDates("end_date", e)}
+                            value={new Date(updatedEvent.end_date)} />
+                        </div>
                       </div>
                     </div>
-
-                    <div className="date-picker">
-                      <label className={"col-form-label"} htmlFor="end_date">
-                        {t("End Date")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e => this.handleDates("end_date", e)}
-                          value={new Date(updatedEvent.end_date)} />
+                  </div>
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Application')}</p>
+                    <div className="date-item-sections">
+  
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="application_open">
+                          {t("Open")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("application_open", e)}
+                            value={new Date(updatedEvent.application_open)} />
+                        </div>
+                      </div>
+                      <div className="date-picker">
+                        <label
+                          className={" col-form-label"}
+                          htmlFor="application_close"
+                        >
+                          {t("Close")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("application_close", e)
+                            }
+                            value={new Date(updatedEvent.application_close)} />
+                        </div>
+                      </div>
+  
+                    </div>
+                  </div>
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Review')}</p>
+                    <div className="date-item-sections">
+  
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="review_open">
+                          {t("Open")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("review_open", e)}
+                            value={new Date(updatedEvent.review_open)} />
+                        </div>
+                      </div>
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="review_close">
+                          {t("Close")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("review_close", e)}
+                            value={new Date(updatedEvent.review_close)} />
+                        </div>
+                      </div>
+  
+                    </div>
+                  </div>
+  
+                </div>
+  
+  
+  
+                {/* Right Col */}
+                <div className="second-col">
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Selection')}</p>
+                    <div className="date-item-sections">
+  
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="selection_open">
+                          {t("Open")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("selection_open", e)}
+                            value={new Date(updatedEvent.selection_open)} />
+                        </div>
+                      </div>
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="selection_close">
+                          {t("Close")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("selection_close", e)}
+                            value={new Date(updatedEvent.selection_close)} />
+                        </div>
+                      </div>
+  
+                    </div>
+                  </div>
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Offer')}</p>
+                    <div className="date-item-sections">
+  
+                      <div className="date-picker">
+                        <label className={"col-form-label"} htmlFor="offer_open">
+                          {t("Open")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("offer_open", e)}
+                            value={new Date(updatedEvent.offer_open)} />
+                        </div>
+                      </div>
+                      <div className="date-picker">
+  
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="offer_close">
+                          {t("Close")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("offer_close", e)}
+                            value={new Date(updatedEvent.offer_close)} />
+                        </div>
+                      </div>
+  
+                    </div>
+                  </div>
+  
+                  {/*Item*/}
+                  <div className="date-item">
+                    <p>{t('Registration')}</p>
+                    <div className="date-item-sections">
+  
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="registration_open">
+                          {t("Open")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("registration_open", e)}
+                            value={new Date(updatedEvent.registration_open)} />
+                        </div>
+                      </div>
+  
+                      <div className="date-picker">
+                        <label
+                          className={"col-form-label"}
+                          htmlFor="registration_close">
+                          {t("Close")}
+                        </label>
+  
+                        <div >
+                          <DateTimePicker
+                            clearIcon={null}
+                            onChange={e =>
+                              this.handleDates("registration_close", e)}
+                            value={new Date(updatedEvent.registration_close)}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Application')}</p>
-                  <div className="date-item-sections">
-
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="application_open">
-                        {t("Open")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("application_open", e)}
-                          value={new Date(updatedEvent.application_open)} />
-                      </div>
-                    </div>
-                    <div className="date-picker">
-                      <label
-                        className={" col-form-label"}
-                        htmlFor="application_close"
-                      >
-                        {t("Close")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("application_close", e)
-                          }
-                          value={new Date(updatedEvent.application_close)} />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Review')}</p>
-                  <div className="date-item-sections">
-
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="review_open">
-                        {t("Open")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("review_open", e)}
-                          value={new Date(updatedEvent.review_open)} />
-                      </div>
-                    </div>
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="review_close">
-                        {t("Close")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("review_close", e)}
-                          value={new Date(updatedEvent.review_close)} />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
               </div>
-
-
-
-              {/* Right Col */}
-              <div className="second-col">
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Selection')}</p>
-                  <div className="date-item-sections">
-
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="selection_open">
-                        {t("Open")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("selection_open", e)}
-                          value={new Date(updatedEvent.selection_open)} />
-                      </div>
-                    </div>
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="selection_close">
-                        {t("Close")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("selection_close", e)}
-                          value={new Date(updatedEvent.selection_close)} />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Offer')}</p>
-                  <div className="date-item-sections">
-
-                    <div className="date-picker">
-                      <label className={"col-form-label"} htmlFor="offer_open">
-                        {t("Open")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("offer_open", e)}
-                          value={new Date(updatedEvent.offer_open)} />
-                      </div>
-                    </div>
-                    <div className="date-picker">
-
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="offer_close">
-                        {t("Close")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("offer_close", e)}
-                          value={new Date(updatedEvent.offer_close)} />
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/*Item*/}
-                <div className="date-item">
-                  <p>{t('Registration')}</p>
-                  <div className="date-item-sections">
-
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="registration_open">
-                        {t("Open")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("registration_open", e)}
-                          value={new Date(updatedEvent.registration_open)} />
-                      </div>
-                    </div>
-
-                    <div className="date-picker">
-                      <label
-                        className={"col-form-label"}
-                        htmlFor="registration_close">
-                        {t("Close")}
-                      </label>
-
-                      <div >
-                        <DateTimePicker
-                          format={"MM/dd/yyyy"}
-                          clearIcon={null}
-                          disableClock={true}
-                          onChange={e =>
-                            this.handleDates("registration_close", e)}
-                          value={new Date(updatedEvent.registration_close)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </form>
-
-        </div>
-
-        {/* Form Submittion and Cancel */}
-        {hasBeenUpdated &&
-          <div className={"form-group row submit event"}>
-            <div className={"col-sm-4"}>
-              <button
-                className="btn btn-danger btn-lg btn-block"
-                onClick={() => this.onClickCancel()} >
-                {t("Cancel")}
-              </button>
-            </div>
-
-
-            <div className={"col-sm-4"}>
-              <button
-                onClick={() => this.submitEvent()}
-                className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenUpdated}
-              >
-                {t("Update Event")}
-              </button>
-            </div>
+  
+            </form>
+  
           </div>
-        }
-      </div>
-    );
+  
+          {/* Form Submittion and Cancel */}
+          {hasBeenUpdated &&
+            <div className={"form-group row submit event"}>
+              <div className={"col-sm-4"}>
+                <button
+                  className="btn btn-danger btn-lg btn-block"
+                  onClick={() => this.onClickCancel()} >
+                  {t("Cancel")}
+                </button>
+              </div>
+  
+  
+              <div className={"col-sm-4"}>
+                <button
+                  onClick={() => this.submitEvent()}
+                  className="btn btn-success btn-lg btn-block"
+                  disabled={!hasBeenUpdated}
+                >
+                  {t("Update Event")}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      );
+    }
+   
   }
 }
 

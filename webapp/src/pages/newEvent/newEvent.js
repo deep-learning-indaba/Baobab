@@ -50,7 +50,7 @@ export class NewEvent extends Component {
 
 
     // on Click Cancel
-    onClickCancel = () => {
+    onClickCancel() {
         this.setState({
             updatedEvent: this.state.preEvent,
             hasBeenUpdated: false
@@ -59,7 +59,7 @@ export class NewEvent extends Component {
 
 
 
-    onClickSubmit = () => {
+    onClickSubmit() {
         // Create
         eventService.create(this.state.updatedEvent).then(result => {
             console.log(result)
@@ -73,7 +73,9 @@ export class NewEvent extends Component {
 
     // Success Handling
     successHandling() {
-        this.props.successHandling()
+        this.setState({
+            success: true
+        })
         setTimeout(() => {
             this.redirectUser()
         }, 4000)
@@ -82,7 +84,7 @@ export class NewEvent extends Component {
 
 
     // Handle Date Selectors
-    handleDates = (fieldName, e) => {
+    handleDates(fieldName, e) {
         let formatDate = e.toISOString();
         formatDate = formatDate.substring(0, formatDate.length - 5) + "Z";
 
@@ -98,7 +100,7 @@ export class NewEvent extends Component {
 
 
     // Handle Upload
-    handleUploads = (file) => {
+    handleUploads(file) {
         const t = this.props.t;
 
         const fileReader = new FileReader();
@@ -127,14 +129,14 @@ export class NewEvent extends Component {
 
 
     // Toggle Upload Button
-    toggleUploadBtn = () => {
+    toggleUploadBtn() {
         this.state.file ? this.setState({ fileUpload: false }) : this.setState({ fileUpload: true })
     };
 
 
 
     // Has Been Edited
-    hasBeenEdited = () => {
+    hasBeenEdited() {
         const { updatedEvent, preEvent } = this.state;
         const validate = updatedEvent !== preEvent;
 
@@ -147,7 +149,7 @@ export class NewEvent extends Component {
 
 
     // Create New Event Details
-    createEventDetails = (fieldName, e, key) => {
+    createEventDetails(fieldName, e, key) {
         let value = e.target ? e.target.value : e.value;
 
         // handle selector values
@@ -175,7 +177,7 @@ export class NewEvent extends Component {
 
 
     // Handle Object Values
-    handleObjValues = (fieldName, e, key, stateVal) => {
+    handleObjValues(fieldName, e, key, stateVal) {
         let stateObj;
         let value = e.target ? e.target.value : e.value;
         let stateUpdate = stateVal;
@@ -190,7 +192,7 @@ export class NewEvent extends Component {
     };
 
     // Redirect User to Form
-    redirectUser = () => {
+    redirectUser() {
         this.setState({
             success: true
         }, () => setTimeout(() => {
@@ -516,8 +518,16 @@ export class NewEvent extends Component {
                     <hr style={{ "marginTop": "50px" }}></hr>
 
 
+                    {/* UTC Time request */}
+                    <div className={hasBeenUpdated || file ? "col-md-12 time-warning" : "col-md-12 time-warning disable"}>
+                    <span class="badge badge-warning">{t('Times will automatically convert to UTC')}</span>
+                    </div>
+                    
+
+
                     {/* Date Form Fields */}
                     < div className={hasBeenUpdated || file ? "date-picker-section col-md-12" : "date-picker-section col-md-12 disable"}>
+
                         {/* Left Col */}
                         <div className="first-col">
 
@@ -532,9 +542,7 @@ export class NewEvent extends Component {
 
                                         <div>
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={(e) =>
                                                     this.handleDates("start_date", e)}
                                                 value={this.dateValHandler('start_date')} />
@@ -548,9 +556,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e => this.handleDates("end_date", e)}
                                                 value={this.dateValHandler('end_date')} />
                                         </div>
@@ -572,9 +578,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("application_open", e)}
                                                 value={this.dateValHandler('application_open')} />
@@ -590,9 +594,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("application_close", e)
                                                 }
@@ -617,9 +619,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("review_open", e)}
                                                 value={this.dateValHandler('review_open')} />
@@ -634,9 +634,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("review_close", e)}
                                                 value={this.dateValHandler('review_close')} />
@@ -666,9 +664,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("selection_open", e)}
                                                 value={this.dateValHandler('selection_open')} />
@@ -683,9 +679,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("selection_close", e)}
                                                 value={this.dateValHandler('selection_close')} />
@@ -707,9 +701,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("offer_open", e)}
                                                 value={this.dateValHandler('offer_open')} />
@@ -725,9 +717,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("offer_close", e)}
                                                 value={this.dateValHandler('offer_close')} />
@@ -751,9 +741,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("registration_open", e)}
                                                 value={this.dateValHandler('registration_open')} />
@@ -769,9 +757,7 @@ export class NewEvent extends Component {
 
                                         <div >
                                             <DateTimePicker
-                                                format={"MM/dd/yyyy"}
                                                 clearIcon={null}
-                                                disableClock={true}
                                                 onChange={e =>
                                                     this.handleDates("registration_close", e)}
                                                 value={this.dateValHandler('registration_close')}

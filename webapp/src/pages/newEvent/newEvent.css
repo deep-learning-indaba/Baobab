@@ -1,199 +1,207 @@
 /* Universal */
-  
-  .create-event-wrapper .first-col {
-    border: 1px solid hsl(204deg, 14%, 93%);
-    margin: 0 10px 0 0;
-    border-radius: 4px;
-    padding: 20px;
-    margin: 1%;
-  }
-  
-  .create-event-wrapper .second-col {
-    background: hsl(210deg, 20%, 98%);
-    border-radius: 4px;
-    padding: 20px;
-    margin: 1%;
-  }
 
-  .create-event-wrapper form {
-      margin-top: 30px;
-  }
-  
-  .create-event-wrapper .react-datetime-picker__wrapper {
-    min-width: 200px;
-    height: calc(2.25rem + 2px);
-    padding: 0.375rem 0.75rem;
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: hsl(210, 9%, 31%);
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-  }
-  
-  .create-event-wrapper .body {
-    padding-top: 0em;
-  }
-  
-  .create-event-wrapper .col-form-label {
-    font-size: 19px;
-  }
-  
-  .create-event-wrapper .custom-label {
-    font-size: 13px;
-    color: grey;
-    padding: 0;
-  }
+.create-event-wrapper .first-col {
+  border: 1px solid hsl(204deg, 14%, 93%);
+  margin: 0 10px 0 0;
+  border-radius: 4px;
+  padding: 20px;
+  margin: 1%;
+}
 
-  /* Form Fields */
-  .create-event-wrapper .export-btn-wrapper {
+.create-event-wrapper .second-col {
+  background: hsl(210deg, 20%, 98%);
+  border-radius: 4px;
+  padding: 20px;
+  margin: 1%;
+}
+
+.create-event-wrapper form {
+  margin-top: 30px;
+}
+
+.create-event-wrapper .react-datetime-picker__wrapper {
+  min-width: 200px;
+  height: calc(2.25rem + 2px);
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: hsl(210, 9%, 31%);
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+}
+
+.create-event-wrapper .body {
+  padding-top: 0em;
+}
+
+.create-event-wrapper .col-form-label {
+  font-size: 19px;
+}
+
+.create-event-wrapper .custom-label {
+  font-size: 13px;
+  color: grey;
+  padding: 0;
+}
+
+/* Form Fields */
+.create-event-wrapper .export-btn-wrapper {
   display: flex;
   justify-content: flex-end;
   margin: 15px;
-  }
-  
-  html .create-event-wrapper .badge {
-    margin: 12px;
-    font-size: 13px;
-  }
-  
-  html .create-event-wrapper .form-group {
-    margin-bottom: 2em;
-  }
-  
-  .create-event-wrapper .col-sm-10.flex {
-    display: flex;
-    align-items: center;
-    color: grey;
-  }
-  
-  
-  /* Date Pickers Section */
-  .create-event-wrapper .date-picker-section {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: 2%;
-    font-family: 'Open Sans', sans-serif;
-    padding-left: 0;
-  }
-  
-  .create-event-wrapper .date-picker-section .col-md-5 {
-    padding-bottom: 2%;
-  }
-  
-  .create-event-wrapper .date-item {
-    margin: 2% 1% 1% 0;
-    padding: 1% 1% 2% 1%;
-  }
-  
-  .create-event-wrapper .date-item p {
-    text-align: left;
-    margin: 0 10px;
-  }
-  
-  .create-event-wrapper .date-item:hover {
-    background: hsl(0, 0%, 98%);
-  }
-  
-  .create-event-wrapper .date-item:hover p {
-    color: hsl(218, 24%, 57%);
-    font-size: 16px;
-  }
-  
-  .create-event-wrapper .date-item label {
-    color: grey;
-    font-size: 10px;
-  }
-  
-  .create-event-wrapper .date-item-sections {
-    display: flex;
-    padding: 10px 0;
-  }
-  
-  .create-event-wrapper .date-picker {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    margin: 0 10px;
-  }
-  
-  /* Handle Submit and Cancel Section */
-  .event.submit {
-    display: flex;
-  }
-  
-  .event.submit .col-sm-4 {
-    padding: 0;
-    margin: 30px 10px 0 0;
-  }
-  
-  .event.submit .btn-success {
-    background: hsl(131deg, 47%, 76%);
-    color: hsl(132, 18%, 29%);
-    border: none;
-  }
-  
-  .event.submit .btn-danger {
-    background: hsl(6, 64%, 87%);
-    color: hsl(0, 50%, 30%);
-    border: none;
-  }
-  
-  /* Create Event */
-  
-  .card-heading {
-    display: flex;
-    align-items: baseline;
-  }
-  
-  .card-heading h1 {
+}
+
+html .create-event-wrapper .badge {
+  margin: 12px;
+  font-size: 13px;
+}
+
+html .create-event-wrapper .form-group {
+  margin-bottom: 2em;
+}
+
+.create-event-wrapper .col-sm-10.flex {
+  display: flex;
+  align-items: center;
+  color: grey;
+}
+
+.create-event-wrapper .time-warning {
+  opacity: 1;
+  text-align: left;
+}
+
+.create-event-wrapper .time-warning.disable {
+  opacity: 0.4;
+}
+
+
+/* Date Pickers Section */
+.create-event-wrapper .date-picker-section {
+  display: flex;
+  flex-wrap: wrap;
+  font-family: 'Open Sans', sans-serif;
+  padding-left: 0;
+}
+
+.create-event-wrapper .date-picker-section .col-md-5 {
+  padding-bottom: 2%;
+}
+
+.create-event-wrapper .date-item {
+  margin: 2% 1% 1% 0;
+  padding: 1% 1% 2% 1%;
+}
+
+.create-event-wrapper .date-item p {
+  text-align: left;
+  margin: 0 10px;
+}
+
+.create-event-wrapper .date-item:hover {
+  background: hsl(0, 0%, 98%);
+}
+
+.create-event-wrapper .date-item:hover p {
+  color: hsl(218, 24%, 57%);
+  font-size: 16px;
+}
+
+.create-event-wrapper .date-item label {
+  color: grey;
+  font-size: 10px;
+}
+
+.create-event-wrapper .date-item-sections {
+  display: flex;
+  padding: 10px 0;
+}
+
+.create-event-wrapper .date-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 10px;
+}
+
+/* Handle Submit and Cancel Section */
+.event.submit {
+  display: flex;
+}
+
+.event.submit .col-sm-4 {
+  padding: 0;
+  margin: 30px 10px 0 0;
+}
+
+.event.submit .btn-success {
+  background: hsl(131deg, 47%, 76%);
+  color: hsl(132, 18%, 29%);
+  border: none;
+}
+
+.event.submit .btn-danger {
+  background: hsl(6, 64%, 87%);
+  color: hsl(0, 50%, 30%);
+  border: none;
+}
+
+/* Create Event */
+
+.card-heading {
+  display: flex;
+  align-items: baseline;
+}
+
+.card-heading h1 {
   color: hsl(213deg, 20%, 52%);
   font-weight: bold;
-  }
-  
-  .card-heading h5 {
+}
+
+.card-heading h5 {
   color: lightgrey;
   margin: 0 5px;
-  }
-  
-  
-  .create-event-wrapper .text-area {
-    margin: 5px 0;
-  }
-  
-  .create-event-wrapper .custom-label {
-    font-size: 12px;
-    padding: 0;
-    color: grey;
-  }
-  
-  
-  .create-event-wrapper .date-picker-section {
-    opacity: 1;
-    pointer-events: all;
-  }
-  
-  .create-event-wrapper .date-picker-section.disable {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-  
-  
-  .create-event-wrapper .export-btn-wrapper {
-    display: flex;
-    margin: 20px 15px 60px 15px;
-    }
-  
-  
-    .MuiButtonBase-root-wrapper {
-      display: flex;
-      justify-content: flex-start;
-      margin: 5px 0;
-    }
+}
 
 
-    html .create-event-wrapper input#file-upload-button {
-      padding: 10px 50px;
-    }
+.create-event-wrapper .text-area {
+  margin: 5px 0;
+}
+
+.create-event-wrapper .custom-label {
+  font-size: 12px;
+  padding: 0;
+  color: grey;
+}
+
+
+.create-event-wrapper .date-picker-section {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.create-event-wrapper .date-picker-section.disable {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+
+.create-event-wrapper .export-btn-wrapper {
+  display: flex;
+  margin: 20px 15px 60px 15px;
+}
+
+
+.MuiButtonBase-root-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  margin: 5px 0;
+}
+
+
+html .create-event-wrapper input#file-upload-button {
+  padding: 10px 50px;
+}

@@ -146,7 +146,7 @@ class EventNav extends Component {
                     {t('Invited Guests')}
                   </NavLink>
                   <NavLink
-                    to={`/${this.props.eventKey}/eventConfig`}
+                    to={this.props.event ? `/${this.props.eventKey}/eventConfig` : `/newEvent`}
                     className="dropdown-item"
                     onClick={this.props.toggleMenu}
                   >
@@ -360,7 +360,7 @@ class AppComponent extends Component {
     });
   };
 
-  
+
   render() {
     const t = this.props.t;
 
@@ -467,6 +467,10 @@ class AppComponent extends Component {
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route exact path="/reference/:token" component={Reference} />
                 <Route
+                  path="/newEvent"
+                  render={(props) => <NewEvent {...props} t={t} organisation={this.props.organisation} />}
+                />
+                <Route
                   path="/:eventKey"
                   render={props => (
                     <EventHome {...props}
@@ -477,10 +481,6 @@ class AppComponent extends Component {
                       organisation={this.props.organisation}
                     />
                   )}
-                />
-                <Route
-                  path="/newEvent"
-                  render={(props) => <NewEvent {...props} organisation={this.props.organisation} />}
                 />
               </Switch>
             </div>

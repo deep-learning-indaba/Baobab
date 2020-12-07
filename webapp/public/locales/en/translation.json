@@ -332,7 +332,9 @@
     "Loading...": "Loading...",
     "There was an error please Contact Baobab Team": "There was an error please Contact Baobab Team",
     "Import": "Import",
-    "Export": "Export"
+    "Export": "Export",
+    "File is not in a valid format": "File is not in a valid format",
+    "There was an error": "There was an error"
 
 }
    
