@@ -1,15 +1,10 @@
 import React, { Component } from "react";
-import CreateComponent from './CreateComponent';
 import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
+import NewEvent from '../../newEvent/newEvent';
 import DateTimePicker from "react-datetime-picker";
-import Select from 'react-select';
-import * as moment from 'moment';
 import { withTranslation } from 'react-i18next';
-import {
-  TextField,
-  Button
-} from '@material-ui/core';
+import FormSelect from '../../../components/form/FormSelect';
 
 export class EventConfigComponent extends Component {
   constructor(props) {
@@ -32,6 +27,7 @@ export class EventConfigComponent extends Component {
     // Edit Event
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
+        console.log(result)
         this.setState({
           loading: false,
           preEvent: result.event,
@@ -44,7 +40,7 @@ export class EventConfigComponent extends Component {
     // Disable Loading for Create Mode
     else {
       this.setState({
-        loading: false,
+        loading: false
       })
     }
   };
@@ -66,13 +62,13 @@ export class EventConfigComponent extends Component {
       console.log(result)
       // Error handling
       result.statusCode == 200 ?
-      this.setState({
-        preEvent: result.event,
-        updatedEvent: result.event,
-        hasBeenUpdated: false,
-      }, () => this.redirectUser())
-      : this.errorHandling(result.error)
-      
+        this.setState({
+          preEvent: result.event,
+          updatedEvent: result.event,
+          hasBeenUpdated: false,
+        }, () => this.redirectUser())
+        : this.errorHandling(result.error)
+
     }).catch(result => {
       this.setState({
         error: result.statusCode
@@ -93,16 +89,16 @@ export class EventConfigComponent extends Component {
       }
     };
 
-      this.updateEventDetails(fieldName, dateObj)
+    this.updateEventDetails(fieldName, dateObj)
   };
 
 
   // Has Been Edited
   hasBeenEdited = (objValue) => {
-    const { updatedEvent, preEvent} = this.state;
+    const { updatedEvent, preEvent } = this.state;
     const validate = updatedEvent !== preEvent;
 
-// Exisitng Object Values that have been updated need to be manually checked 
+    // Exisitng Object Values that have been updated need to be manually checked 
     this.setState({
       hasBeenUpdated: validate || objValue ? true : false
     });
@@ -113,6 +109,7 @@ export class EventConfigComponent extends Component {
   // Update Event Details
   updateEventDetails = (fieldName, e, key) => {
     let value = e.target ? e.target.value : e.value;
+
 
     let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedEvent) : false;
 
@@ -161,9 +158,11 @@ export class EventConfigComponent extends Component {
     let errorMessage = error ? error : "There was an error";
     this.setState({
       error: errorMessage
-    },() => {setTimeout(() => {
-      window.location.reload()
-    },3000)})
+    }, () => {
+      setTimeout(() => {
+        window.location.reload()
+      }, 3000)
+    })
   }
 
   // Success handling
@@ -200,23 +199,11 @@ export class EventConfigComponent extends Component {
         { value: t('call'), label: 'call' }
       ],
       travelGrant: [
-        { value: t("yes"), label: t("yes") },
-        { value: t("no"), label: t("no") },
+        { value: t("true"), label: t("true") },
+        { value: t("false"), label: t("false") },
       ]
     };
 
-
-    // Languages
-    const languages = organisation.languages.map(val => {
-      return { value: Object.values(val)[0], label: Object.values(val)[1] }
-    });
-
-
-    // format current date for MUI Time Picker
-    const currentTime = () => {
-      let date = moment().format('h:mm');
-      return date.length == 4 ? String(date).padStart(5, '0') : date;
-    };
 
     // Export Event as Json
     const eventJson = encodeURIComponent(
@@ -239,49 +226,45 @@ export class EventConfigComponent extends Component {
 
     /* Error */
     if (error) {
-      return  <div className="alert alert-danger alert-container">
-          {error}
-        </div>
+      return <div className="alert alert-danger alert-container">
+        {error}
+      </div>
     };
 
-        /* Success */
-        if (success) {
-          return <div className="alert alert-success alert-container">
-              {t('Success')}
-            </div>
-        
-        };
+    /* Success */
+    if (success) {
+      return <div className="alert alert-success alert-container">
+        {t('Success')}
+      </div>
 
-
-    // Create Mode 
-    if (!event) {
-      return <CreateComponent
-        languages={languages}
-        t={t}
-        toggleUploadBtn={(e) => this.toggleUploadBtn()}
-        organisation={organisation}
-        errorHandling={(error) => this.errorHandling(error)}
-        redirectUser={(e) => this.redirectUser()}
-        successHandling={(e) => this.successHandling()}
-      />
     };
 
 
-    /* Deafault to Edit Mode */
+    if (!this.props.event) {
+      return (
+        <NewEvent organisation={organisation} />
+      )
+    }
+
+
+    /* Default to Edit Mode */
     return (
       <div className="event-config-wrapper">
 
         <div className="card">
 
-          {/* Export Button */}
+          {/* Export button */}
           <div className="export-btn-wrapper">
-            <Button
+            <button
+              className="btn btn-secondary"
               variant="contained"
-              href={`data:text/json;charset=utf-8,${eventJson}`}
-              download={`event-${this.props.event.key}.json`}
             >
-              Export
-            </Button>
+              <a href={`data:text/json;charset=utf-8,${eventJson}`}
+                download={`event-${this.props.event.key}.json`}>
+                {t('Export')}
+              </a>
+
+            </button>
           </div>
 
 
@@ -312,12 +295,13 @@ export class EventConfigComponent extends Component {
                   {updatedEvent &&
                     Object.keys(updatedEvent.name).map(val => {
                       return <div key={val} className="col-sm-12 mt-1">
+                        <label className={"col-sm-2 custom-label"}>{val}</label>
                         <input
                           onChange={e => this.updateEventDetails("name", e, val)}
                           type="text"
                           className="form-control "
                           id="name"
-                          placeholder={val}
+                          value={updatedEvent.name[val]}
                         />
                       </div>
                     })
@@ -335,14 +319,15 @@ export class EventConfigComponent extends Component {
                   {t("Description")}
                 </label>
                 <div className="w-100">
-                  {preEvent &&
-                    Object.keys(preEvent.description).map(val => {
+                  {updatedEvent &&
+                    Object.keys(updatedEvent.description).map(val => {
                       return <div key={val} className="col-sm-12 mt-1">
+                        <label className={"col-sm-2 custom-label"}>{val}</label>
                         <textarea
                           onChange={e => this.updateEventDetails("description", e, val)}
                           className="form-control"
                           id="description"
-                          placeholder={val}
+                          value={updatedEvent.description[val]}
                         />
                       </div>
                     })
@@ -359,9 +344,10 @@ export class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <Select
-                  onChange={e => this.updateEventDetails("event_type", e)}
+                <FormSelect
                   options={options.eventType}
+                  onChange={e => this.updateEventDetails("event_type", e)}
+                  value={{ value: `${updatedEvent.event_type}`, label: `${updatedEvent.event_type}` }}
                 />
               </div>
             </div>
@@ -374,11 +360,13 @@ export class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <option disabled>{t('Does this event provide travel grants for participants')}</option>
-                <Select
+                <option className="custom-label" disabled>{t('Does this event provide travel grants for participants')}</option>
+                <FormSelect
                   onChange={e => this.updateEventDetails("travel_grant", e)}
                   options={options.travelGrant}
+                  value={{ value: `${updatedEvent.travel_grant}`, label: `${updatedEvent.travel_grant}` }}
                 />
+
               </div>
             </div>
 
@@ -454,22 +442,17 @@ export class EventConfigComponent extends Component {
                 htmlFor="url">
                 {t("Time")}
               </label>
+
               <div className="col-sm-10">
-                <TextField
+                <div>
+                  <label className="col-sm-6 custom-label">{t('Times need to be in UTC')}</label>
+                </div>
+
+                <input
                   onChange={e => this.updateEventDetails("time", e)}
-                  id="time"
-                  label="Times are in UTC"
                   type="time"
-                  defaultValue={currentTime()}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    step: 300, // 5 min
-                  }}
+                  value={updatedEvent.time ? updatedEvent.time : null}
                 />
-
-
               </div>
             </div>
 
@@ -748,29 +731,29 @@ export class EventConfigComponent extends Component {
 
         </div>
 
-          {/* Form Submittion and Cancel */}
-          {hasBeenUpdated &&
-            <div className={"form-group row submit event"}>
-              <div className={"col-sm-4"}>
-                <button
-                  className="btn btn-danger btn-lg btn-block"
-                  onClick={() => this.onClickCancel()} >
-                  {t("Cancel")}
-                </button>
-              </div>
-
-
-              <div className={"col-sm-4"}>
-                <button
-                  onClick={() => this.submitEvent()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!hasBeenUpdated}
-                >
-                  {t("Update Event")}
-                </button>
-              </div>
+        {/* Form Submittion and Cancel */}
+        {hasBeenUpdated &&
+          <div className={"form-group row submit event"}>
+            <div className={"col-sm-4"}>
+              <button
+                className="btn btn-danger btn-lg btn-block"
+                onClick={() => this.onClickCancel()} >
+                {t("Cancel")}
+              </button>
             </div>
-          }
+
+
+            <div className={"col-sm-4"}>
+              <button
+                onClick={() => this.submitEvent()}
+                className="btn btn-success btn-lg btn-block"
+                disabled={!hasBeenUpdated}
+              >
+                {t("Update Event")}
+              </button>
+            </div>
+          </div>
+        }
       </div>
     );
   }

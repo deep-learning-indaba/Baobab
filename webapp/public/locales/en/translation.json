@@ -327,7 +327,12 @@
     "Time": "Time",
     "Event": "Event",
     "Award": "Award",
-    "Call": "Call"
+    "Call": "Call",
+    "Success": "Success",
+    "Loading...": "Loading...",
+    "There was an error please Contact Baobab Team": "There was an error please Contact Baobab Team",
+    "Import": "Import",
+    "Export": "Export"
 
 }
    

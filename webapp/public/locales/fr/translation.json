@@ -326,13 +326,15 @@
     "Miniconf Url":  "Miniconf Url",
     "Time": "Temps",
     "Event": "Événement",
-    "Award": "Award",
+    "Award": "Award", 
     "Call": "Appeler",
     "Success": "Success",
     "Loading...": "Chargement ...",
     "There was an error please Contact Baobab Team": "Une erreur s'est produite, veuillez contacter l'équipe Baobab",
     "Import": "Importer",
-    "Export": "Exporter"
+    "Export": "Exporter",
+    "File is not in a valid format": "Le fichier n'est pas dans un format valide",
+    "There was an error": "Il y a eu une erreur"
 
 }
 

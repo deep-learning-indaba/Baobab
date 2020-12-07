@@ -154,7 +154,6 @@ class EventHome extends Component {
           path={`${match.path}/eventConfig`}
           render={(props) => <EventConfig {...props} event={event} organisation={organisation} />}
         />
-
         <Route
           exact
           path={`${match.path}/eventStats`}

@@ -1,14 +1,12 @@
 import React, { Component } from "react";
-import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import DateTimePicker from "react-datetime-picker";
-import { eventService } from "../../../services/events/events.service";
+import { eventService } from "../../services/events/events.service";
 import Select from 'react-select';
+import './newEvent.css';
 import { withTranslation } from 'react-i18next';
-import {
-    Button,
-} from '@material-ui/core';
 
-export class CreateComponent extends Component {
+
+export class NewEvent extends Component {
     constructor(props) {
         super(props);
 
@@ -65,9 +63,9 @@ export class CreateComponent extends Component {
         // Create
         eventService.create(this.state.updatedEvent).then(result => {
             console.log(result)
-            result.statusCode == 200 ? this.successHandling() : this.props.errorHandling(Object.values(result.error))
+            result.statusCode == 200 ? this.successHandling() : this.errorHandling(Object.values(result.error))
         }).catch(error => {
-            this.props.errorHandling(error)
+            this.errorHandling(error)
         });
     };
 
@@ -77,7 +75,7 @@ export class CreateComponent extends Component {
     successHandling() {
         this.props.successHandling()
         setTimeout(() => {
-            this.props.redirectUser()
+            this.redirectUser()
         }, 4000)
     }
 
@@ -191,6 +189,28 @@ export class CreateComponent extends Component {
         return stateUpdate
     };
 
+    // Redirect User to Form
+    redirectUser = () => {
+        this.setState({
+            success: true
+        }, () => setTimeout(() => {
+            this.props.history.push("/")
+        }, 4000))
+    }
+
+    // Error Handling
+    errorHandling(error) {
+        const t = this.props.t;
+
+        let errorMessage = error ? error : t("There was an error");
+        this.setState({
+            error: errorMessage
+        }, () => {
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000)
+        })
+    }
 
 
     //Date Values Handler
@@ -209,6 +229,8 @@ export class CreateComponent extends Component {
             updatedEvent,
             hasBeenUpdated,
             file,
+            error,
+            success
         } = this.state;
 
         const { t, organisation } = this.props;
@@ -220,7 +242,23 @@ export class CreateComponent extends Component {
         });
 
 
-        return <div className="create-event-wrapper event-config-wrapper">
+        /* Error */
+        if (error) {
+            return <div className="alert alert-danger alert-container">
+                {error}
+            </div>
+        };
+
+        /* Success */
+        if (success) {
+            return <div className="alert alert-success alert-container">
+                {t('Success')}
+            </div>
+
+        };
+
+
+        return <div className="create-event-wrapper">
 
             {/* Card Area */}
             <div className="card">
@@ -237,14 +275,11 @@ export class CreateComponent extends Component {
                     <div className="export-btn-wrapper">
                         <div>
                             <div className="MuiButtonBase-root-wrapper">
-                                <Button
+                                <button className="btn btn-secondary"
                                     onClick={(e) => this.toggleUploadBtn()}
-                                    variant="contained"
-                                    color="default"
-                                    startIcon={<CloudUploadIcon />}
                                 >
-                                {t('Import')}
-                  </Button>
+                                    {t('Import')}
+                                </button>
                             </div>
                             {fileUpload &&
                                 <input
@@ -295,7 +330,7 @@ export class CreateComponent extends Component {
                                                 return <div>
                                                     <div>
                                                         <label
-                                                            className={"col-sm-2 col-form-label file-label"}
+                                                            className={"col-sm-2 col-form-label custom-label"}
                                                             htmlFor="Description">
                                                             {val}
                                                         </label>
@@ -330,7 +365,7 @@ export class CreateComponent extends Component {
                                             return <div>
                                                 <div>
                                                     <label
-                                                        className={"col-sm-2 col-form-label file-label"}
+                                                        className={"col-sm-2 col-form-label custom-label"}
                                                         htmlFor="name">
                                                         {val}
                                                     </label>
@@ -781,4 +816,4 @@ export class CreateComponent extends Component {
     };
 }
 
-export default withTranslation()(CreateComponent);
+export default withTranslation()(NewEvent);

@@ -76,14 +76,14 @@
     display: none;
 }
 
-.btn.tag {
+.btn.custom-white {
     background: none;
     border: 1px solid grey;
     pointer-events: all;
     opacity: 1;
 }
 
-.btn.tag.hide {
+.btn.custom-white.hide {
     background: none;
     pointer-events: none;
     opacity: 0.5;

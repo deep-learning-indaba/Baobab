@@ -319,7 +319,6 @@ class ResponseListForm extends Component {
             questions,
             toggleList,
             responseTable,
-            btnUpdate,
             tags,
             selectedTags,
             selectedQuestions,
@@ -362,7 +361,7 @@ class ResponseListForm extends Component {
                                 type="button"
                                 className="btn btn-success">{t("Update")}</button> :
                                 <button onClick={(e) => this.toggleList(toggleList, "tag")}
-                                    className={toggleList == "question" ? "btn tag hide" : "btn tag"}
+                                    className={toggleList == "question" ? "btn custom-white hide" : "btn custom-white"}
                                     type="button"
                                     aria-haspopup="true"
                                     aria-expanded="false">

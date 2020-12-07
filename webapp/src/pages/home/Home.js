@@ -5,7 +5,6 @@ import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
-import EventKeyModal from './components/eventKeyModal'
 
 
 
@@ -89,6 +88,7 @@ class Home extends Component {
                                         <td>{this.statusDisplay(e)}</td>
                                     </tr>)
                                 })}
+                                 {this.renderAddEvent()}
                             </tbody>
                         </table>
                     </div>
@@ -97,13 +97,15 @@ class Home extends Component {
         return <div></div>
     };
 
-    renderEventKeyModal() {
+    renderAddEvent() {
         const t = this.props.t;
 
-        if (this.props.user && this.props.user.is_admin) {
+        if (this.props.user && this.props.user.is_admin ) {
             return (
-                <div >
-                    <EventKeyModal t={t} />
+                <div>
+                    <button className="btn btn-secondary">
+                    <NavLink className to="/newEvent">{t(`Add Event`)}</NavLink>
+                    </button>
                 </div>
             )
         };
@@ -154,8 +156,7 @@ class Home extends Component {
                 {this.renderEventTable(calls, "Calls for Proposals")}
                 {this.renderEventTable(attended, "Past Events")}
 
-
-                {this.renderEventKeyModal()}
+               
 
        
             </div >

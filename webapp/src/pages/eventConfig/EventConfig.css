@@ -40,7 +40,12 @@
   font-size: 19px;
 }
 
-/* Edit Mode */
+.event-config-wrapper .custom-label {
+  font-size: 13px;
+  color: grey;
+  padding: 0;
+}
+
 /* Form Fields */
 
 .event-config-wrapper .export-btn-wrapper {
@@ -49,10 +54,6 @@ justify-content: flex-end;
 margin: 15px;
 }
 
-.event-config-wrapper .MuiButtonBase-root {
-  color: hsla(0, 0%, 100%, 0.87);
-  background-color: hsl(213deg, 34%, 32%);
-}
 
 html .event-config-wrapper .badge {
   margin: 12px;
@@ -69,13 +70,6 @@ html .event-config-wrapper .form-group {
   color: grey;
 }
 
-html .event-config-wrapper .MuiGrid-justify-xs-space-around {
-  justify-content: flex-start;
-}
-
-html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
-  width: 15%;
-}
 
 /* Date Pickers Section */
 .event-config-wrapper .date-picker-section {
@@ -148,69 +142,3 @@ html .event-config-wrapper .MuiFormControl-root.MuiTextField-root {
   border: none;
 }
 
-/* Create Event */
-
-.card-heading {
-  display: flex;
-  align-items: baseline;
-}
-
-.card-heading h1 {
-color: hsl(213deg, 20%, 52%);
-font-weight: bold;
-}
-
-.card-heading h5 {
-color: lightgrey;
-margin: 0 5px;
-}
-
-
-.create-event-wrapper .text-area {
-  margin: 5px 0;
-}
-
-.event-config-wrapper .create-event-wrapper label {
-  font-size: 14px;
-  padding: 0;
-}
-
-.create-event-wrapper .file-label {
-  font-size: 12px;
-  padding: 0;
-  color: grey;
-}
-
-
-.create-event-wrapper .date-picker-section {
-  opacity: 1;
-  pointer-events: all;
-}
-
-.create-event-wrapper .date-picker-section.disable {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-
-.create-event-wrapper .export-btn-wrapper {
-  display: flex;
-  margin: 20px 15px 60px 15px;
-  }
-
-
-  .MuiButtonBase-root-wrapper {
-    display: flex;
-    justify-content: flex-start;
-    margin: 5px 0;
-  }
-  
-  .create-event-wrapper .MuiButtonBase-root {
-    color: hsla(0, 0%, 100%, 0.87);
-    background-color: hsl(213deg, 34%, 32%);
-    padding: 11px;
-  }
-
-  html .create-event-wrapper input#file-upload-button {
-    padding: 10px 50px;
-  }
