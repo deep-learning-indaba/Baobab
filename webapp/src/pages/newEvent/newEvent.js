@@ -239,9 +239,9 @@ export class NewEvent extends Component {
 
 
         // Languages
-        const languages = organisation.languages.map(val => {
+        const languages = organisation ? organisation.languages.map(val => {
             return { value: Object.values(val)[0], label: Object.values(val)[1] }
-        });
+        }) : null;
 
 
         /* Error */

@@ -26,7 +26,7 @@ export class EventConfigComponent extends Component {
   componentDidMount() {
     // Secure Component
     if (!this.props.event) {
-      window.location == "/"
+      this.props.history.push("/newEvent")
     }
     // Edit Event
     if (this.props.event) {
@@ -132,6 +132,15 @@ export class EventConfigComponent extends Component {
   };
 
 
+  updateReviewDetails = (fieldName, e) => {
+    let objValue = {
+      "event_id": this.props.event ? this.props.event.id : null,
+      "num_reviews_required": 2,
+      "num_optional_reviews": 1
+    };
+  }
+
+
   // Handle Object Values
   handleObjValues = (fieldName, e, key, stateVal) => {
     let stateObj;
@@ -183,12 +192,11 @@ export class EventConfigComponent extends Component {
       loading,
       error,
       updatedEvent,
-      preEvent,
       hasBeenUpdated,
       success
     } = this.state;
 
-    const { t, event, organisation } = this.props;
+    const { t, event } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -242,21 +250,21 @@ export class EventConfigComponent extends Component {
       </div>
     };
 
-      /* Navigation Redirects */
-      if (!this.props.event) {
-        return <div className="alert alert-success alert-container">
-          {t('This route is not allowed')}
-        </div>
-      };
+    /* Navigation Redirects */
+    if (!event) {
+      return <div className="alert alert-success alert-container">
+        {t('This route is not allowed')}
+      </div>
+    };
 
 
-  /* Default to Edit Mode */
-    if (this.props.event) {
+    /* Default to Edit Mode */
+    if (event) {
       return (
         <div className="event-config-wrapper">
-  
+
           <div className="card">
-  
+
             {/* Export button */}
             <div className="export-btn-wrapper">
               <button
@@ -264,16 +272,16 @@ export class EventConfigComponent extends Component {
                 variant="contained"
               >
                 <a href={`data:text/json;charset=utf-8,${eventJson}`}
-                  download={`event-${this.props.event.key}.json`}>
+                  download={`event-${event.key}.json`}>
                   {t('Export')}
                 </a>
-  
+
               </button>
             </div>
-  
-  
+
+
             <form>
-  
+
               {/* Organisation Name */}
               <div className={"form-group row"}>
                 <label
@@ -287,7 +295,7 @@ export class EventConfigComponent extends Component {
                     class="badge badge-primary">{updatedEvent.organisation_name}</span>
                 </div>
               </div>
-  
+
               {/* Name */}
               <div className={"form-group row"}>
                 <div className="d-flex w-100">
@@ -313,7 +321,7 @@ export class EventConfigComponent extends Component {
                   </div>
                 </div>
               </div>
-  
+
               {/* Description */}
               <div className={"form-group row"}>
                 <div className="d-flex w-100">
@@ -339,14 +347,14 @@ export class EventConfigComponent extends Component {
                   </div>
                 </div>
               </div>
-  
+
               {/* Event Type */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="event-type">
                   {t("Event Type")}
                 </label>
-  
+
                 <div className="col-sm-10">
                   <FormSelect
                     options={options.eventType}
@@ -355,14 +363,14 @@ export class EventConfigComponent extends Component {
                   />
                 </div>
               </div>
-  
+
               {/* Travel Grants */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="travel-grants">
                   {t("Travel Grants")}
                 </label>
-  
+
                 <div className="col-sm-10">
                   <option className="custom-label" disabled>{t('Does this event provide travel grants for participants')}</option>
                   <FormSelect
@@ -370,17 +378,17 @@ export class EventConfigComponent extends Component {
                     options={options.travelGrant}
                     value={{ value: `${updatedEvent.travel_grant}`, label: `${updatedEvent.travel_grant}` }}
                   />
-  
+
                 </div>
               </div>
-  
+
               {/* Miniconf Url */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="travel-grants">
                   {t("MiniConf Url")}
                 </label>
-  
+
                 <div className="col-sm-10">
                   <textarea
                     className="w-100"
@@ -390,30 +398,30 @@ export class EventConfigComponent extends Component {
                     id="description"
                   />
                 </div>
-  
+
               </div>
-  
+
               {/* Key */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="key">
                   {t("Key")}
                 </label>
-  
+
                 <div className="col-sm-10">
                   <span
                     id="key"
                     class="badge badge-primary">{updatedEvent.key}</span>
-  
+
                 </div>
               </div>
-  
+
               {/* Email From */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
                   {t("Email From")}
                 </label>
-  
+
                 <div className="col-sm-10">
                   <input
                     onChange={e => this.updateEventDetails("email_from", e)}
@@ -423,7 +431,7 @@ export class EventConfigComponent extends Component {
                     value={updatedEvent.email_from} />
                 </div>
               </div>
-  
+
               {/* URL */}
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
@@ -439,21 +447,54 @@ export class EventConfigComponent extends Component {
                     value={updatedEvent.url} />
                 </div>
               </div>
-  
-  
+
+              {/* Review - Number of reviews required */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  {t("URL")}
+                </label>
+                <div className="col-sm-10">
+                  <label className="col-sm-6 custom-label">{t('Description: The minimum number of reviews that are required per application response.')}</label>
+                  <input
+                    onChange={e => this.updateReviewDetails("reviews_required", e)}
+                    type="number"
+                    className="form-control"
+                    value={updatedEvent.reviews_required ? updatedEvent.reviews_required : null} />
+                </div>
+              </div>
+
+
+              {/* Review - Number of optional reviews */}
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  {t("URL")}
+                </label>
+                <div className="col-sm-10">
+                  <label className="col-sm-6 custom-label">The number of optional reviews over and above the required number. The total number of reviewers that can be assigned to a response is (Number of reviews required) + (Number of optional reviews)</label>
+                  <input
+                    onChange={e => this.updateReviewDetails("num_optional_reviews", e)}
+                    type="text"
+                    className="form-control"
+                    value={updatedEvent.num_optional_reviews ? updatedEvent.num_optional_reviews : null} />
+                </div>
+              </div>
+
+
               <hr style={{ "marginTop": "50px" }}></hr>
-  
+
               {/* UTC Time request */}
               <div className="col-md-12 time-warning">
-                      <span class="badge badge-warning">{t('Times will automatically convert to UTC')}</span>
-                      </div>
-  
-  
+                <span class="badge badge-warning">{t('Times will automatically convert to UTC')}</span>
+              </div>
+
+
               {/* Date Picker Section */}
               <div className="date-picker-section col-md-12">
                 {/* Left Col */}
                 <div className="first-col">
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Date')}</p>
@@ -462,7 +503,7 @@ export class EventConfigComponent extends Component {
                         <label className={"col-form-label"} htmlFor="start_date">
                           {t("Start")}
                         </label>
-  
+
                         <div>
                           <DateTimePicker
                             clearIcon={null}
@@ -471,12 +512,12 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.start_date)} />
                         </div>
                       </div>
-  
+
                       <div className="date-picker">
                         <label className={"col-form-label"} htmlFor="end_date">
                           {t("End Date")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -486,19 +527,19 @@ export class EventConfigComponent extends Component {
                       </div>
                     </div>
                   </div>
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Application')}</p>
                     <div className="date-item-sections">
-  
+
                       <div className="date-picker">
                         <label
                           className={"col-form-label"}
                           htmlFor="application_open">
                           {t("Open")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -514,7 +555,7 @@ export class EventConfigComponent extends Component {
                         >
                           {t("Close")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -524,22 +565,22 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.application_close)} />
                         </div>
                       </div>
-  
+
                     </div>
                   </div>
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Review')}</p>
                     <div className="date-item-sections">
-  
+
                       <div className="date-picker">
                         <label
                           className={"col-form-label"}
                           htmlFor="review_open">
                           {t("Open")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -554,7 +595,7 @@ export class EventConfigComponent extends Component {
                           htmlFor="review_close">
                           {t("Close")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -563,29 +604,29 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.review_close)} />
                         </div>
                       </div>
-  
+
                     </div>
                   </div>
-  
+
                 </div>
-  
-  
-  
+
+
+
                 {/* Right Col */}
                 <div className="second-col">
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Selection')}</p>
                     <div className="date-item-sections">
-  
+
                       <div className="date-picker">
                         <label
                           className={"col-form-label"}
                           htmlFor="selection_open">
                           {t("Open")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -600,7 +641,7 @@ export class EventConfigComponent extends Component {
                           htmlFor="selection_close">
                           {t("Close")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -609,20 +650,20 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.selection_close)} />
                         </div>
                       </div>
-  
+
                     </div>
                   </div>
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Offer')}</p>
                     <div className="date-item-sections">
-  
+
                       <div className="date-picker">
                         <label className={"col-form-label"} htmlFor="offer_open">
                           {t("Open")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -632,13 +673,13 @@ export class EventConfigComponent extends Component {
                         </div>
                       </div>
                       <div className="date-picker">
-  
+
                         <label
                           className={"col-form-label"}
                           htmlFor="offer_close">
                           {t("Close")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -647,22 +688,22 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.offer_close)} />
                         </div>
                       </div>
-  
+
                     </div>
                   </div>
-  
+
                   {/*Item*/}
                   <div className="date-item">
                     <p>{t('Registration')}</p>
                     <div className="date-item-sections">
-  
+
                       <div className="date-picker">
                         <label
                           className={"col-form-label"}
                           htmlFor="registration_open">
                           {t("Open")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -671,14 +712,14 @@ export class EventConfigComponent extends Component {
                             value={new Date(updatedEvent.registration_open)} />
                         </div>
                       </div>
-  
+
                       <div className="date-picker">
                         <label
                           className={"col-form-label"}
                           htmlFor="registration_close">
                           {t("Close")}
                         </label>
-  
+
                         <div >
                           <DateTimePicker
                             clearIcon={null}
@@ -692,11 +733,11 @@ export class EventConfigComponent extends Component {
                   </div>
                 </div>
               </div>
-  
+
             </form>
-  
+
           </div>
-  
+
           {/* Form Submittion and Cancel */}
           {hasBeenUpdated &&
             <div className={"form-group row submit event"}>
@@ -707,8 +748,8 @@ export class EventConfigComponent extends Component {
                   {t("Cancel")}
                 </button>
               </div>
-  
-  
+
+
               <div className={"col-sm-4"}>
                 <button
                   onClick={() => this.submitEvent()}
@@ -723,7 +764,7 @@ export class EventConfigComponent extends Component {
         </div>
       );
     }
-   
+
   }
 }
 
