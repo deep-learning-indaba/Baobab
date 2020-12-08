@@ -12,7 +12,8 @@ export const reviewService = {
   getReviewSummary,
   getReviewHistory,
   getReviewList,
-  getResponseReview
+  getResponseReview,
+  assignResponsesToReviewer
 };
 
 function getReviewForm(eventId, skip) {
@@ -237,6 +238,32 @@ function getReviewList(eventId) {
     .catch(function(error) {
       return {
         reviewList: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function assignResponsesToReviewer(eventId, responseIds, reviewerEmail) {
+  const assignment = {
+    event_id: eventId,
+    response_ids: responseIds,
+    reviewer_email: reviewerEmail
+  };
+
+  return axios
+    .post(baseUrl + "/api/v1/assignresponsereviewer", assignment, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
         error:
           error.response && error.response.data
             ? error.response.data.message

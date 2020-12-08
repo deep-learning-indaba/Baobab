@@ -1371,3 +1371,60 @@ class ReviewListAPITest(ApiTestCase):
         self.assertFalse(data[2]['started'])
         self.assertIsNone(data[2]['submitted'])
         self.assertEqual(data[2]['total_score'], 0.0)
+
+class ResponseReviewerAssignmentApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.event = self.add_event(key='event1')
+        self.event2 = self.add_event(key='event2')
+        self.event_admin = self.add_user('eventadmin@mail.com')
+        self.reviewer = self.add_user('reviewer@mail.com')
+        self.reviewer_user_id = self.reviewer.id
+
+        self.user1 = self.add_user('user1@mail.com')
+        self.user2 = self.add_user('user2@mail.com')
+        self.user3 = self.add_user('user3@mail.com')
+
+        self.event.add_event_role('admin', self.event_admin.id)
+        
+        application_form = self.create_application_form(self.event.id)
+        application_form2 = self.create_application_form(self.event2.id)
+        self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.add_response(application_form.id, self.user2.id, is_submitted=True)
+        self.add_response(application_form.id, self.user3.id, is_submitted=True)
+
+        self.event2_response_id = self.add_response(application_form2.id, self.user1.id, is_submitted=True).id
+        
+        self.add_email_template('reviews-assigned')
+
+    def test_responses_assigned(self):
+        self.seed_static_data()
+
+        params = {'event_id' : 1, 'response_ids': [1, 2], 'reviewer_email': 'reviewer@mail.com'}
+
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer', 
+            headers=self.get_auth_header_for('eventadmin@mail.com'), 
+            data=params)
+
+        self.assertEqual(response.status_code, 201)
+
+        response_reviewers = (db.session.query(ResponseReviewer)
+                   .join(Response, ResponseReviewer.response_id == Response.id)
+                   .filter_by(application_form_id=1).all())
+
+        self.assertEqual(len(response_reviewers), 2)
+        
+        for rr in response_reviewers:
+            self.assertEqual(rr.reviewer_user_id, self.reviewer_user_id)
+
+    def test_response_for_different_event_forbidden(self):
+        self.seed_static_data()
+
+        params = {'event_id' : 1, 'response_ids': [1, 2, self.event2_response_id], 'reviewer_email': 'reviewer@mail.com'}
+
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer', 
+            headers=self.get_auth_header_for('eventadmin@mail.com'), 
+            data=params)
+
+        self.assertEqual(response.status_code, 403)

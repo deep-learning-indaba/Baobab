@@ -334,10 +334,16 @@
     "Import": "Import",
     "Export": "Export",
     "File is not in a valid format": "File is not in a valid format",
+<<<<<<< HEAD
     "There was an error": "There was an error",
     "Times will automatically convert to UTC": "Times will automatically convert to UTC",
     "Network Error": "Network Error"
 
+=======
+    "There was an error": "There was an error"
+    "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
+    "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}"
+>>>>>>> 2344d79c830c758aa80c8b23be05f9d4cac0d8d9
 }
    
  
