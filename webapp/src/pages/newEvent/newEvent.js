@@ -26,7 +26,7 @@ export class NewEvent extends Component {
     componentDidMount() {
         // Create Event
         let eventDetails = {
-            organisation_id: this.props.organisation.id,
+            organisation_id: this.props.organisation ? this.props.organisation.id : null,
             start_date: null,
             end_date: null,
             application_open: null,
@@ -241,13 +241,13 @@ export class NewEvent extends Component {
         // Languages
         const languages = organisation ? organisation.languages.map(val => {
             return { value: Object.values(val)[0], label: Object.values(val)[1] }
-        }) : null;
+        }) : null ;
 
 
         /* Error */
-        if (error) {
+        if (error || !organisation) {
             return <div className="alert alert-danger alert-container">
-                {error}
+                {error ? error : t('Network Error')}
             </div>
         };
 

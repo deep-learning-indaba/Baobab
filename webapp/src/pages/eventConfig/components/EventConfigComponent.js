@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { eventService } from "../../../services/events/events.service";
 import { withRouter } from "react-router";
-import NewEvent from '../../newEvent/newEvent';
 import DateTimePicker from "react-datetime-picker";
 import { withTranslation } from 'react-i18next';
 import FormSelect from '../../../components/form/FormSelect';
@@ -24,10 +23,10 @@ export class EventConfigComponent extends Component {
 
   // Populate State
   componentDidMount() {
-    // Secure Component
+    // Redirect if Event prop = false
     if (!this.props.event) {
-      this.props.history.push("/newEvent")
-    }
+      this.props.history.push("/newEvent");
+    };
     // Edit Event
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
@@ -114,7 +113,6 @@ export class EventConfigComponent extends Component {
   updateEventDetails = (fieldName, e, key) => {
     let value = e.target ? e.target.value : e.value;
 
-
     let objValue = key ? this.handleObjValues(fieldName, e, key, this.state.updatedEvent) : false;
 
     // Some values are Objects with values, testing against different values
@@ -130,15 +128,6 @@ export class EventConfigComponent extends Component {
       updatedEvent: u
     }, () => this.hasBeenEdited(objValue));
   };
-
-
-  updateReviewDetails = (fieldName, e) => {
-    let objValue = {
-      "event_id": this.props.event ? this.props.event.id : null,
-      "num_reviews_required": 2,
-      "num_optional_reviews": 1
-    };
-  }
 
 
   // Handle Object Values
@@ -307,7 +296,7 @@ export class EventConfigComponent extends Component {
                     {updatedEvent &&
                       Object.keys(updatedEvent.name).map(val => {
                         return <div key={val} className="col-sm-12 mt-1">
-                          <label className={"col-sm-2 custom-label"}>{val}</label>
+                          <label className={"col-sm-12 custom-label"}>{val}</label>
                           <input
                             onChange={e => this.updateEventDetails("name", e, val)}
                             type="text"
@@ -334,7 +323,7 @@ export class EventConfigComponent extends Component {
                     {updatedEvent &&
                       Object.keys(updatedEvent.description).map(val => {
                         return <div key={val} className="col-sm-12 mt-1">
-                          <label className={"col-sm-2 custom-label"}>{val}</label>
+                          <label className={"col-sm-12 custom-label"}>{val}</label>
                           <textarea
                             onChange={e => this.updateEventDetails("description", e, val)}
                             className="form-control"
@@ -452,15 +441,15 @@ export class EventConfigComponent extends Component {
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="url">
-                  {t("URL")}
+                  {t("Reviews Required")}
                 </label>
                 <div className="col-sm-10">
-                  <label className="col-sm-6 custom-label">{t('Description: The minimum number of reviews that are required per application response.')}</label>
+                  <label className="col-sm-12 custom-label">{t('Description: The minimum number of reviews that are required per application response.')}</label>
                   <input
-                    onChange={e => this.updateReviewDetails("reviews_required", e)}
+                    onChange={e => this.updateEventDetails("reviewers", e, "num_reviews_required")}
                     type="number"
                     className="form-control"
-                    value={updatedEvent.reviews_required ? updatedEvent.reviews_required : null} />
+                    value={updatedEvent.reviewers ? updatedEvent.reviewers.reviews_required : null} />
                 </div>
               </div>
 
@@ -469,15 +458,15 @@ export class EventConfigComponent extends Component {
               <div className={"form-group row"}>
                 <label className={"col-sm-2 col-form-label"}
                   htmlFor="url">
-                  {t("URL")}
+                  {t("Number of Optional Reviews")}
                 </label>
                 <div className="col-sm-10">
-                  <label className="col-sm-6 custom-label">The number of optional reviews over and above the required number. The total number of reviewers that can be assigned to a response is (Number of reviews required) + (Number of optional reviews)</label>
+                  <label className="col-sm-12 custom-label">{t('The number of optional reviews over and above the required number. The total number of reviewers that can be assigned to a response is (Number of reviews required) + (Number of optional reviews)')}</label>
                   <input
-                    onChange={e => this.updateReviewDetails("num_optional_reviews", e)}
-                    type="text"
+                    onChange={e => this.updateEventDetails("reviewers", e, "num_optional_reviews")}
+                    type="number"
                     className="form-control"
-                    value={updatedEvent.num_optional_reviews ? updatedEvent.num_optional_reviews : null} />
+                    value={updatedEvent.reviewers ? updatedEvent.reviewers.num_optional_reviews : null} />
                 </div>
               </div>
 
