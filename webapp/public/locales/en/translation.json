@@ -334,7 +334,9 @@
     "Import": "Import",
     "Export": "Export",
     "File is not in a valid format": "File is not in a valid format",
-    "There was an error": "There was an error"
+    "There was an error": "There was an error",
+    "Times will automatically convert to UTC": "Times will automatically convert to UTC",
+    "Network Error": "Network Error"
 
 }
    

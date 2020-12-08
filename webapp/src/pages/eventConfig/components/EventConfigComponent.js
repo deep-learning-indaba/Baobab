@@ -26,8 +26,8 @@ export class EventConfigComponent extends Component {
   componentDidMount() {
     // Secure Component
     if (!this.props.event) {
-      window.location == "/"
-    }
+      this.props.history.push("/newEvent");
+    };
     // Edit Event
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
@@ -183,7 +183,6 @@ export class EventConfigComponent extends Component {
       loading,
       error,
       updatedEvent,
-      preEvent,
       hasBeenUpdated,
       success
     } = this.state;
@@ -241,14 +240,6 @@ export class EventConfigComponent extends Component {
         {t('Success')}
       </div>
     };
-
-      /* Navigation Redirects */
-      if (!this.props.event) {
-        return <div className="alert alert-success alert-container">
-          {t('This route is not allowed')}
-        </div>
-      };
-
 
   /* Default to Edit Mode */
     if (this.props.event) {
@@ -437,6 +428,39 @@ export class EventConfigComponent extends Component {
                     className="form-control"
                     id="url"
                     value={updatedEvent.url} />
+                </div>
+              </div>
+
+                     {/* Review - Number of reviews required */}
+                     <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  {t("URL")}
+                </label>
+                <div className="col-sm-10">
+                  <label className="col-sm-6 custom-label">{t('Description: The minimum number of reviews that are required per application response.')}</label>
+                  <input
+                    onChange={e => this.updateReviewDetails("reviews_required", e)}
+                    type="text"
+                    className="form-control"
+                    value={updatedEvent.reviews_required ? updatedEvent.reviews_required : null } />
+                </div>
+              </div>
+
+
+                     {/* Review - Number of optional reviews */}
+                     <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  {t("URL")}
+                </label>
+                <div className="col-sm-10">
+                <label className="col-sm-6 custom-label">The number of optional reviews over and above the required number. The total number of reviewers that can be assigned to a response is (Number of reviews required) + (Number of optional reviews)</label>
+                  <input
+                     onChange={e => this.updateReviewDetails("num_optional_reviews", e)}
+                    type="text"
+                    className="form-control"
+                    value={updatedEvent.num_optional_reviews ? updatedEvent.num_optional_reviews : null} />
                 </div>
               </div>
   
