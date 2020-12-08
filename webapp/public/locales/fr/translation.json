@@ -336,6 +336,8 @@
     "File is not in a valid format": "Le fichier n'est pas dans un format valide",
     "There was an error": "Il y a eu une erreur",
     "Times will automatically convert to UTC": "Les heures seront automatiquement converties en UTC"
+    "Assign Reviewer (they must already have an account)": "Attribuer un réviseur (ils doivent déjà avoir un compte)",
+    "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}"
 
 }
 

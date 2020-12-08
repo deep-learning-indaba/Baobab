@@ -335,7 +335,8 @@
     "Export": "Export",
     "File is not in a valid format": "File is not in a valid format",
     "There was an error": "There was an error"
-
+    "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
+    "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}"
 }
    
  

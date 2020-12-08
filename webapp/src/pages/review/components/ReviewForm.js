@@ -26,6 +26,7 @@ const FILE = "file";
 const MULTI_FILE = "multi-file";
 const SECTION_DIVIDER = "section-divider";
 const HEADING = "heading";
+const SUB_HEADING = "sub-heading";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -143,6 +144,8 @@ class ReviewQuestionComponent extends Component {
                 return (
                     <hr/>
                 )
+            case SUB_HEADING:
+                return "";
             default:
                 return (
                     <p className="text-danger">
@@ -167,6 +170,9 @@ class ReviewQuestionComponent extends Component {
         if (model.question.type === SECTION_DIVIDER) {
             return <div><hr/><h3>{this.getHeadline(model)}</h3></div>;
         }
+        if (model.question.type === SUB_HEADING) {
+            return <h3>{this.getHeadline(model)}</h3>
+        }
         else if (model.question.type === INFORMATION || model.question.type === FILE || model.question.type === MULTI_FILE || model.question.type === HEADING) {
             return <h5>{this.getHeadline(model)}</h5>;
         }
@@ -180,7 +186,7 @@ class ReviewQuestionComponent extends Component {
         if (this.props.model.question.type === INFORMATION || this.props.model.question.type === FILE || this.props.model.question.type === MULTI_FILE || this.props.model.question.type === HEADING) {
             className = className + " information";
         }
-        else if (this.props.model.question.type !== SECTION_DIVIDER) {
+        else if (this.props.model.question.type !== SECTION_DIVIDER && this.props.model.question.type !== SUB_HEADING) {
             className = className + " review";
         }
 
