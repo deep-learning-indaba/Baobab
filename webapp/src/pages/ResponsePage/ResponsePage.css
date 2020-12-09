@@ -233,6 +233,7 @@ flex-wrap: wrap;
 .question-answer-block p.answer {
     color: #212529;
     font-size: 17px;
+    white-space: pre-wrap;
 }
 
  html .answerer {
