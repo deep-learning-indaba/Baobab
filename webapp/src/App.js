@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import EventHome from "./pages/eventHome";
+import NewEvent from './pages/newEvent/newEvent';
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
@@ -145,6 +146,13 @@ class EventNav extends Component {
                     {t('Invited Guests')}
                   </NavLink>
                   <NavLink
+                    to={this.props.event ? `/${this.props.eventKey}/eventConfig` : `/newEvent`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Event Configuration')}
+                  </NavLink>
+                  <NavLink
                     to={`/${this.props.eventKey}/responseList`}
                     className="dropdown-item"
                     onClick={this.props.toggleMenu}
@@ -238,8 +246,8 @@ class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{    
-        const currentUser = JSON.parse(localStorage.getItem("user"))   
+      this.props.i18n.changeLanguage(lang).then(() => {
+        const currentUser = JSON.parse(localStorage.getItem("user"))
         if (currentUser) {
           // We send a put request to the user service to update the language on the back-end. 
           // Note the language is automatically sent with every request through axios
@@ -338,7 +346,7 @@ class AppComponent extends Component {
         });
       });
     }
-    
+
   }
 
   toggleMenu = () => {
@@ -351,6 +359,7 @@ class AppComponent extends Component {
       currentEvent: event
     });
   };
+
 
   render() {
     const t = this.props.t;
@@ -446,7 +455,7 @@ class AppComponent extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
-                   <Route
+                <Route
                   exact
                   path="/responseList"
                   render={props => (
@@ -458,18 +467,25 @@ class AppComponent extends Component {
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route exact path="/reference/:token" component={Reference} />
                 <Route
+                  path="/newEvent"
+                  render={(props) => <NewEvent {...props} t={t} organisation={this.props.organisation} />}
+                />
+                <Route
                   path="/:eventKey"
                   render={props => (
                     <EventHome {...props}
                       setEvent={this.setEvent}
                       user={this.state.user}
                       eventKey={this.state.eventKey}
-                      event={this.state.currentEvent} />
+                      event={this.state.currentEvent}
+                      organisation={this.props.organisation}
+                    />
                   )}
                 />
               </Switch>
             </div>
           </div>
+
           <footer className="text-muted">
             <div className="container-flex">
               <div>
@@ -508,6 +524,7 @@ class AppComponent extends Component {
                   )}
               </div>
             </div>
+
           </footer>
           <CookieConsent
             cookieName="baobab-cookie-consent"
