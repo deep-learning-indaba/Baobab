@@ -24,5 +24,11 @@ table.event-table tbody {
 }
 
 .event-table-container {
-    max-width: 90%;
+    width: 90%;
 }
+
+html .event-table-container .btn a {
+color: white;
+}
+
+

@@ -2,6 +2,9 @@ import uuid
 from flask import g
 
 
+ISO_8601_UTC_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+
+
 def get_baobab_host():
     return g.organisation.system_url
 

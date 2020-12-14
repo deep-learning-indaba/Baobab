@@ -25,6 +25,11 @@
   color: #40798C;
 }
 
+html .btn a {
+  color: white;
+  text-decoration: none;
+}
+
 body {
   background: #F9fafb;
   font-family: 'Open Sans', sans-serif;

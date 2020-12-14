@@ -101,7 +101,10 @@ export function update(event) {
         offer_open: event.offer_open,
         offer_close: event.offer_close,
         registration_open: event.registration_open,
-        registration_close: event.registration_close
+        registration_close: event.registration_close,
+        event_type: event.event_type,
+        travel_grant: event.travel_grant,
+        miniconf_url: event.miniconf_url
       },
       { headers: authHeader() }
     )

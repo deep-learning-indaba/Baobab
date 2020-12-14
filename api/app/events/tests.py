@@ -487,6 +487,7 @@ class EventAPITest(ApiTestCase):
             data=json.dumps(self.test_event_data_dict),
             content_type='application/json')
         data = json.loads(response.data)
+
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(data['name']), 2)
         self.assertEqual(len(data['description']), 2)
