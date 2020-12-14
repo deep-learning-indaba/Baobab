@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Router, Route, NavLink, Switch } from "react-router-dom";
 import Home from "./pages/home";
 import EventHome from "./pages/eventHome";
-import NewEvent from './pages/newEvent/newEvent';
+import EventConfig from './pages/eventConfig/EventConfig';
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
@@ -467,8 +467,13 @@ class AppComponent extends Component {
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route exact path="/reference/:token" component={Reference} />
                 <Route
-                  path="/newEvent"
-                  render={(props) => <NewEvent {...props} t={t} organisation={this.props.organisation} />}
+                  exact
+                  path="/eventConfig"
+                  render={(props) => <EventConfig {...props}
+                    t={t}
+                    organisation={this.props.organisation}
+                    event={this.state.currentEvent}
+                  />}
                 />
                 <Route
                   path="/:eventKey"
