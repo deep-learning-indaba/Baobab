@@ -257,4 +257,15 @@ html .pills.table {
     margin-bottom: 0;
 }
 
+.review-assign-container {
+    text-align: center;
+    width: 88vw;
+    -webkit-justify-content: center;
+    justify-content: center;
+    margin-top: 5em;
+}
 
+.assign-button {
+    margin-left: 1em;
+    margin-top: 5px;
+}

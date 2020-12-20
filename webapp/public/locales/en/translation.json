@@ -312,8 +312,7 @@
     "No": "No",
     "Assign Reviewer": "Assign Reviewer",
     "Reviews Allocated": "Reviews Allocated",
-    "Reviews Completed": "Reviews Completed"
-
+    "Reviews Completed": "Reviews Completed",
     "Please fix validation errors before saving": "Please fix validation errors before saving",
     "Saved": "Saved",
     "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed",
@@ -323,6 +322,7 @@
     "You have completed all your reviews, thank you!": "You have completed all your reviews, thank you!",
     "You have no reviews assigned": "You have no reviews assigned",
     "Hide Completed": "Hide Completed",
-    "Return to review list": "Return to review list"
-
+    "Return to review list": "Return to review list",
+    "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
+    "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}"
 }

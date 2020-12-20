@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import '../ResponseList.css';
-import { withTranslation } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next'
 import { responsesService } from '../../../services/responses/responses.service';
 import ReactTable from 'react-table';
 import "react-table/react-table.css";
@@ -9,6 +9,8 @@ import { NavLink } from "react-router-dom";
 import { tagsService } from '../../../services/tags/tags.service';
 import { applicationFormService } from '../../../services/applicationForm/applicationForm.service';
 import Loading from "../../../components/Loading";
+import FormTextBox from "../../../components/form/FormTextBox";
+import { reviewService } from '../../../services/reviews/review.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -50,9 +52,10 @@ class ResponseListForm extends Component {
     refreshResponses() {
         this.toggleList(false);
         const { selectedTags, selectedQuestions, includeUnsubmitted } = this.state;
+
         responsesService.getResponseList(this.props.event.id, includeUnsubmitted, selectedQuestions).then(resp => {
             this.setState({
-                responses: resp.responses.filter(r => selectedTags.length == 0 || r.tags.some(t => selectedTags.includes(t))),
+                responses: resp.responses.filter(r => selectedTags.length == 0 || r.tags.map(t => t.name).some(t => selectedTags.includes(t))),
                 error: resp.error
             }, this.handleData);
         });
@@ -61,6 +64,9 @@ class ResponseListForm extends Component {
     // Handle/Format Data
     handleData = () => {
         const { responses } = this.state;
+        this.setState({
+            selectedResponseIds: responses.map(r => r.response_id)
+        });
 
         if (!responses) {
             console.log('ERROR: responses is not defined: ', responses);
@@ -71,6 +77,8 @@ class ResponseListForm extends Component {
         this.toggleList(false);
 
         // Handle Answers and Reviews
+
+        // TODO: Change this to a map and don't mutate the state. 
         responses.forEach(val => {
             let handleAnswers = [];
             let handleReviews = [];
@@ -311,6 +319,31 @@ class ResponseListForm extends Component {
         }, () => this.refreshResponses());
     }
 
+    handleChange = event => {
+        const value = event.target.value;
+        this.setState({ 
+            newReviewerEmail: value,
+            reviewerAssignError: "",
+            reviewerAssignSuccess: ""
+        });
+    };
+
+    assignReviewer = () => {
+        reviewService.assignResponsesToReviewer(this.props.event.id, this.state.selectedResponseIds, this.state.newReviewerEmail)
+            .then(response => {
+                this.setState({
+                    reviewerAssignError: response.error,
+                    newReviewerEmail: response.error ? this.state.newReviewerEmail : "",
+                    numReviewsAssigned: response.error ? 0 : this.state.selectedResponseIds.length,
+                    assignedReviewerEmail: response.error ? "" : this.state.newReviewerEmail,
+                    reviewerAssignSuccess: !response.error
+                });
+                if (!response.error) {
+                    this.refreshResponses();
+                }
+            });
+    }
+
     render() {
         // Translation
         const t = this.props.t;
@@ -325,7 +358,12 @@ class ResponseListForm extends Component {
             selectedTags,
             selectedQuestions,
             error,
-            isLoading
+            isLoading,
+            numReviewsAssigned,
+            assignedReviewerEmail,
+            reviewerAssignError,
+            newReviewerEmail,
+            reviewerAssignSuccess
         } = this.state
 
         if (error) {
@@ -453,6 +491,33 @@ class ResponseListForm extends Component {
                             minRows={0}
                         />
                     }
+                </div>
+
+                <div className="review-assign-container">
+                    <FormTextBox
+                        id={"newReviewEmail"}
+                        name={'newReviewEmail'}
+                        label={t("Assign Reviewer (they must already have an account)")}
+                        placeholder={t("Email")}
+                        onChange={this.handleChange}
+                        value={newReviewerEmail}
+                        key={"i_newReviewEmail"} />
+
+                    <button
+                        class="btn btn-primary float-right"
+                        onClick={() => { this.assignReviewer() }}
+                        disabled={!newReviewerEmail}>
+                        {t("Assign")}
+                    </button>
+
+                    {reviewerAssignError && <span className="alert alert-danger">
+                        {JSON.stringify(this.state.reviewerAssignError)}
+                    </span>}
+
+                    {reviewerAssignSuccess && <span className="alert alert-success">
+                        <Trans i18nKey="reviewsAssigned">Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}</Trans>
+                    </span>}
+
                 </div>
 
             </section>
