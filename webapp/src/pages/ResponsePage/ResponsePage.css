@@ -32,15 +32,6 @@
 }
 
 
-.table-wrapper.response-page .btn-primary {
-    background: hsl(208deg, 84%, 59%);
-    border: none;
-    outline: none;
-    width: 100%;
-    color: white;
-}
-
-
 /* Flex Box Classes */
 .flex {
     display: flex;
@@ -215,6 +206,7 @@ html .headings-lower label {
     padding: 3px 15px;
     border-radius: 8px;
     margin: 10px 5px;
+    height: 3.5em;
 }
 
 .reviewers-section .list .add-reviewer .btn {

@@ -25,4 +25,9 @@ table.event-table tbody {
 
 .event-table-container {
     max-width: 90%;
+    margin-top: 3em;
+}
+
+.event-table-container .card {
+    margin-top: 1em;
 }

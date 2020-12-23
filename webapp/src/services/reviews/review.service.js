@@ -11,19 +11,11 @@ export const reviewService = {
   assignReviews,
   getReviewSummary,
   getReviewHistory,
-  assignReviewer,
-  removeReviewer
+  removeReviewer,
   getReviewList,
   getResponseReview,
   assignResponsesToReviewer
 };
-
-
-function assignReviewer() {
-  return new Promise(resolve => {
-    resolve({status: 201})
-  })
-}
 
 function removeReviewer() {
   return new Promise(resolve => {

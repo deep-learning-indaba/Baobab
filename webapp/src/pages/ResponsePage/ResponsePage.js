@@ -11,6 +11,7 @@ import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import Loading from "../../components/Loading";
 import { ConfirmModal } from "react-bootstrap4-modal";
+import * as moment from 'moment';
 
 
 class ResponsePage extends Component {
@@ -79,6 +80,11 @@ class ResponsePage extends Component {
 
     // Render Page HTML
     // Generate Applciation Status
+
+    formatDate = (dateString) => {
+        return moment(dateString).format('D MMM YYYY, H:mm:ss [(UTC)]');
+    }
+
     applicationStatus() {
         const data = this.state.applicationData;
         if (data) {
@@ -87,13 +93,15 @@ class ResponsePage extends Component {
             const withdrawn = data.is_withdrawn;
 
             if (unsubmitted) {
-                return ["unsubmitted" + " " + data.started_timestamp]
+                return <span><span class="badge badge-pill badge-secondary">Unsubmitted</span> {this.formatDate(data.started_timestamp)}</span>
             };
             if (submitted) {
-                return ["submitted" + " " + data.submitted_timestamp]
+                return <span><span class="badge badge-pill badge-success">Submitted</span> {this.formatDate(data.started_timestamp)}</span>
+                // return ["submitted" + " " + this.formatDate(data.submitted_timestamp)]
             };
             if (withdrawn) {
-                return ["withdrawn" + " " + data.withdrawn_timestamp]
+                return <span><span class="badge badge-pill badge-danger">Withdrawn</span> {this.formatDate(data.started_timestamp)}</span>
+                //return ["withdrawn" + " " + this.formatDate(data.withdrawn_timestamp)]
             };
         };
     };
@@ -287,7 +295,7 @@ class ResponsePage extends Component {
     cancelRemoveTag = () => {
         this.setState({
             tagToRemove: null,
-            removeModalVisible: false,
+            removeTagModalVisible: false,
         });
     };
 
@@ -424,45 +432,39 @@ class ResponsePage extends Component {
         });
     };
 
-    postReviewerService(data) {
-        const updateAssignedReviews = this.state.applicationData;
-        const updateUnassignedReviewers = this.state.reviewers;
-        const {applicationData } = this.state;
+    postReviewerService(reviewer) {
+        const { applicationData } = this.state;
 
-        // extract multiple values 
-        const request = data.forEach(val => {
-            return {
-                "response_id": applicationData.id,
-                "event_id": this.props.event.id,
-                "reviewer_user_id": val.reviewer_user_id
-            };
-        });
+        reviewService.assignResponsesToReviewer(this.props.event.id, [applicationData.id], reviewer.email)
+            .then(response => {
+                if (response.error) {
+                    this.error(response.error);
+                }
+                else {
+                    const newReviewer = {
+                        "reviewer_user_id": reviewer.reviewer_user_id, 
+                        "user_title": reviewer.user_title, 
+                        "firstname": reviewer.firstname, 
+                        "lastname": reviewer.lastname, 
+                        "completed": false
+                    }
 
-        reviewService.assignReviewer(request).then(response => {
-            if (response.status == 201) {
-                console.log(response)
-                // add reviewer to "applicationData" local state
-                data.forEach(val => {
-                    updateAssignedReviews.reviewers.unshift({
-                        "reviewer_user_id": val.reviewer_user_id, "user_title": val.user_title, "firstname": val.firstname, "lastname": val.lastname, "completed": false
+                    const newReviewers = [...applicationData.reviewers];
+                    const index = newReviewers.indexOf(null);
+                    if (index > -1) {
+                        newReviewers.splice(index, 1, newReviewer);
+                    } else {
+                        newReviewers.push(newReviewer);
+                    }
+
+                    this.setState({
+                        applicationData: {
+                            ...applicationData, 
+                            reviewers: newReviewers
+                        }
                     });
-
-                    // remove added reviewers from "reviewers" local state
-                    let index = updateUnassignedReviewers.indexOf(val.reviewer_user_id)
-                    if (index) {
-                        updateUnassignedReviewers.splice(index, 1)
-                    };
-                });
-
-               
-                this.setState({
-                    applicationData: updateAssignedReviews,
-                    reviewers: updateUnassignedReviewers
-                });
-            };
-        }).catch(error => {
-            this.error(error.message);
-        });
+                }
+            });
     };
 
     // Render Review Modal
@@ -475,7 +477,6 @@ class ResponsePage extends Component {
             t={this.props.t}
         />
     };
-
 
     renderDeleteReviewerModal() {
         const t = this.props.t;
@@ -560,8 +561,9 @@ class ResponsePage extends Component {
 
                         {/* User details Right Tab */}
                         <div>
-                            <div className="user-details right"><label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
-                                <button className="btn btn-primary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
+                            <div className="user-details right">
+                                <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
+                                <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
                             </div>
 
                         </div>

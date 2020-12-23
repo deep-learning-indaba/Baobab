@@ -5,7 +5,7 @@ class ReviewModal extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            selectedReviews: []
+            selectedReviewer: null
         }
     };
 
@@ -14,32 +14,22 @@ class ReviewModal extends Component {
         this.props.handlePost(reviewers);
 
         this.setState({
-            selectedReviews: []
+            selectedReviewer: null
         });
     }
 
     
 
     handleSelect(reviewer) {
-        const updateReviews = this.state.selectedReviews;
-
-            if (updateReviews.includes(reviewer)) {
-                updateReviews.splice(updateReviews.indexOf(reviewer), 1)
-            }
-            else {
-                updateReviews.push(reviewer)
-            };
-
-            this.setState({
-                selectedReviews: updateReviews
-            });
-        
+        this.setState({
+            selectedReviewer: reviewer
+        });
     };
 
 
 
     renderModal() {
-        const { selectedReviews } = this.state;
+        const { selectedReviewer } = this.state;
 
         const { reviewers, t } = this.props;
 
@@ -59,7 +49,7 @@ class ReviewModal extends Component {
                             <div className="modal-body">
                                 {reviewers && reviewers.map(val => {
                                     return <button onClick={(e) => this.handleSelect(val)}
-                                        className={selectedReviews.includes(val) ? "review-select active" : "review-select"}
+                                        className={selectedReviewer === val ? "review-select active" : "review-select"}
                                         key={val.reviewer_user_id}
                                     >
                                         <label> {val.user_title} {val.firstname} {val.lastname} </label>
@@ -85,9 +75,9 @@ class ReviewModal extends Component {
                                     type="button"
                                     data-dismiss="modal"
                                     className="btn btn-primary"
-                                    onClick={(e) => this.handlePost(selectedReviews)}
+                                    onClick={(e) => this.handlePost(selectedReviewer)}
                                 >
-                                    {t('Post')}
+                                    {t('Assign')}
                                 </button>
                             </div>
                         </div>
