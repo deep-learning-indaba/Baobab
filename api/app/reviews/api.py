@@ -295,6 +295,7 @@ class ReviewCountView():
         self.lastname = count.lastname
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
+        self.reviewer_user_id = count.reviewer_user_id
 
 class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
     @auth_required
