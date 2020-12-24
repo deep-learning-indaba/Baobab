@@ -18,7 +18,7 @@ from app.reviews.repository import ReviewConfigurationRepository as review_confi
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required, event_admin_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND
+from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -527,9 +527,6 @@ class ResponseReviewAssignmentAPI(restful.Resource):
 
         filtered_response_ids = response_repository.filter_ids_to_event(response_ids, event_id)
 
-        print('response_ids:', response_ids)
-        print('filtered_response_ids:', filtered_response_ids)
-
         if set(filtered_response_ids) != set(response_ids):
             return FORBIDDEN
 
@@ -558,3 +555,26 @@ class ResponseReviewAssignmentAPI(restful.Resource):
                 event=event,
                 user=reviewer_user)
         return {}, 201
+
+    @event_admin_required
+    def delete(self, event_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('response_id', type=int, required=True)
+        parser.add_argument('reviewer_user_id', type=int, required=True)
+        args = parser.parse_args()                     
+
+        response_id = args['response_id']
+        reviewer_user_id = args['reviewer_user_id']
+
+        review_form = review_repository.get_review_form(event_id)
+        if not review_form:
+            return REVIEW_FORM_NOT_FOUND
+
+        # If the reviewer has already completed the review, action can't be completed
+        review_response = review_repository.get_review_response(review_form.id, response_id, reviewer_user_id)
+        if review_response:
+            return REVIEW_ALREADY_COMPLETED
+
+        review_repository.delete_response_reviewer(response_id, reviewer_user_id)
+
+        return {}, 200
