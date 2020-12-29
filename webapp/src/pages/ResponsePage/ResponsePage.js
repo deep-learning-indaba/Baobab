@@ -97,11 +97,9 @@ class ResponsePage extends Component {
             };
             if (submitted) {
                 return <span><span class="badge badge-pill badge-success">Submitted</span> {this.formatDate(data.started_timestamp)}</span>
-                // return ["submitted" + " " + this.formatDate(data.submitted_timestamp)]
             };
             if (withdrawn) {
                 return <span><span class="badge badge-pill badge-danger">Withdrawn</span> {this.formatDate(data.started_timestamp)}</span>
-                //return ["withdrawn" + " " + this.formatDate(data.withdrawn_timestamp)]
             };
         };
     };
@@ -343,42 +341,26 @@ class ResponsePage extends Component {
                 const reviews = this.state.applicationData.reviewers.map((val, index) => {
                     let num = index + 1;
                     //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
-                    if (!val) {
-                        return <div
-                            className="add-reviewer"
-                            key={index}
-                        >
-                            <button
-                                data-toggle="modal"
-                                type="button"
-                                data-target="#exampleModalReview"
-                                className="btn btn-light">
-                                Assign Reviewer
-                                </button>
+                    return <div className="reviewer">
+                        <label>{this.props.t("Reviewer") + " " + num}</label>
+                        <div>
+                            <p>{val.user_title} {val.firstname} {val.lastname}</p>
+                            
+                            {val.completed ? <p className="review-completed">{this.props.t("Completed")}</p>
+                                :
+                                <p
+                                    className="review-incompleted" >
+                                    {this.props.t("Incomplete")}
+                                    <button
+                                        className="trash-review"
+                                        onClick={(e) => this.removeReview(val.reviewer_user_id)} >
+                                        <i className="far fa-trash-alt cursor-pointer"></i>
+                                    </button>
+
+                                </p>
+                            }
                         </div>
-                    }
-                    else {
-                        return <div className="reviewer">
-                            <label>{"Reviewer" + num}</label>
-                            <div>
-                                <p>{val.user_title} {val.firstname} {val.lastname}</p>
-                                
-                                {val.completed ? <p className="review-completed">Completed</p>
-                                    :
-                                    <p
-                                        className="review-incompleted" >
-                                        Incomplete
-                                     <button
-                                            className="trash-review"
-                                            onClick={(e) => this.removeReview(val.reviewer_user_id)} >
-                                            <i className="far fa-trash-alt cursor-pointer"></i>
-                                        </button>
-    
-                                    </p>
-                                }
-                            </div>
-                        </div>
-                    };
+                    </div>
                 });
     
                 return reviews
@@ -397,7 +379,6 @@ class ResponsePage extends Component {
 
     removeReviewerService() {
         const { applicationData, reviewToRemove } = this.state;
-        const updateReviews = this.state.applicationData;
         const { event } = this.props;
 
         reviewService.deleteResponseReviewer(event.id, applicationData.id, reviewToRemove)
@@ -442,13 +423,7 @@ class ResponsePage extends Component {
                         "completed": false
                     }
 
-                    const newReviewers = [...applicationData.reviewers];
-                    const index = newReviewers.indexOf(null);
-                    if (index > -1) {
-                        newReviewers.splice(index, 1, newReviewer);
-                    } else {
-                        newReviewers.push(newReviewer);
-                    }
+                    const newReviewers = [...applicationData.reviewers, newReviewer];
 
                     this.setState({
                         applicationData: {
@@ -465,7 +440,7 @@ class ResponsePage extends Component {
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
-            reviewers={this.state.reviewers}
+            reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
         />
@@ -573,6 +548,15 @@ class ResponsePage extends Component {
                         <h3>{t('Reviewers')}</h3>
                             <div className="list">
                                 {this.renderReviews()}
+                                <div className="add-reviewer">
+                                    <button
+                                        data-toggle="modal"
+                                        type="button"
+                                        data-target="#exampleModalReview"
+                                        className="btn btn-light">
+                                        {t("Assign Reviewer")}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="divider"></div>

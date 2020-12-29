@@ -61,6 +61,7 @@ class ReviewModal extends Component {
 
                                     </button>
                                 })}
+                                {!reviewers && <span>{t("There are no more reviewers available")}</span>}
 
 
                             </div>

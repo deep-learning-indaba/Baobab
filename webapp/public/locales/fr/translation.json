@@ -312,7 +312,7 @@
     "No": "Non",
     "Assign Reviewer": "Attribuer un réviseur",
     "Reviews Allocated": "Avis attribués",
-    "Reviews Completed": "Examens terminés"
+    "Reviews Completed": "Examens terminés",
     "Please fix validation errors before saving": "Veuillez corriger les erreurs de validation avant d'enregistrer",
     "Saved": "Enregistré",
     "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "Vous avez {{numReviews}} avis attribués, dont {{numCompleted}} sont terminés",
@@ -324,6 +324,7 @@
     "Hide Completed": "Masquer terminé",
     "Return to review list": "Revenir à la liste de révision",
     "Assign Reviewer (they must already have an account)": "Attribuer un réviseur (ils doivent déjà avoir un compte)",
-    "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}"
+    "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}",
+    "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles"
 }
 
