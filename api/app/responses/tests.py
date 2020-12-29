@@ -953,7 +953,7 @@ class ResponseDetailAPITest(ApiTestCase):
         self.assertEqual(len(data['tags']), 2)
         self.assertEqual(data['tags'][0]['name'], 'Tag 1 en')
         self.assertEqual(data['tags'][1]['name'], 'Tag 2 en')
-        self.assertEqual(len(data['reviewers']), 3)
+        self.assertEqual(len(data['reviewers']), 2)
         self.assertEqual(data['reviewers'][0]['user_title'], 'Mx')
         self.assertEqual(data['reviewers'][0]['firstname'], 'Skittles')
         self.assertEqual(data['reviewers'][0]['lastname'], 'Cat')
@@ -962,7 +962,6 @@ class ResponseDetailAPITest(ApiTestCase):
         self.assertEqual(data['reviewers'][1]['firstname'], 'Finn')
         self.assertEqual(data['reviewers'][1]['lastname'], 'Dog')
         self.assertFalse(data['reviewers'][1]['completed'])
-        self.assertIsNone(data['reviewers'][2])
 
 
     def test_response_detail_admin_only(self):

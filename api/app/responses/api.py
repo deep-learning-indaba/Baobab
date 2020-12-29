@@ -430,7 +430,7 @@ class ResponseDetailAPI(restful.Resource):
             'firstname': response.user.firstname,
             'lastname': response.user.lastname,
             'tags': [ResponseDetailAPI._serialize_tag(rt.tag, language) for rt in response.response_tags],
-            'reviewers': _pad_list([ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers], num_reviewers)
+            'reviewers': [ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers]
         }
 
     @event_admin_required
