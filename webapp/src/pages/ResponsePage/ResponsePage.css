@@ -368,3 +368,11 @@ color: hsl(0, 64%, 61%);
     padding-bottom: 4px;
     padding-right: 4px;
 }
+
+.question-answer-block .question-description {
+    font-size: 0.9em;
+}
+
+.question-answer-block .question-headline {
+    color: #666;
+}

@@ -136,7 +136,9 @@ class ResponsePage extends Component {
                 return <h4>{q.headline}</h4>
             };
             return <div key={q.id} className="question-answer-block">
-                <p>{q.headline}</p>
+                <p><span className="question-headline">{q.headline}</span>
+                    {q.description && <span className="question-description"><br/>{q.description}</span>}
+                </p>
                 <h6>{this.renderAnswer(q.id, q.type, q.headline, q.options)}</h6>
             </div>
         });
@@ -174,7 +176,7 @@ class ResponsePage extends Component {
                 let choices = [];
                 options.forEach(opt => {
                     if (a.value == opt.value) {
-                        choices.push(<div key={opt.label}><label className="answer">{opt.label}</label></div>)
+                        choices.push(<div key={opt.label}>{opt.label}</div>)
                     };
                 });
                 return <div key={choices}>{choices}</div>
@@ -309,7 +311,7 @@ class ResponsePage extends Component {
                     className="btn badge badge-info"
                 >
                     {tag.name}
-                    <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt"></i></span>
+                    <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt cursor-pointer"></i></span>
             })
                 :
                 null
@@ -369,7 +371,7 @@ class ResponsePage extends Component {
                                      <button
                                             className="trash-review"
                                             onClick={(e) => this.removeReview(val.reviewer_user_id)} >
-                                            <i className="far fa-trash-alt"></i>
+                                            <i className="far fa-trash-alt cursor-pointer"></i>
                                         </button>
     
                                     </p>
@@ -403,13 +405,14 @@ class ResponsePage extends Component {
                 if (response.error) {
                     this.error(response.error);
                 } else {
-                    const newReviewers = applicationData.reviewers.filter(r => r.reviewer_user_id !== reviewToRemove);
-
+                    const newReviewers = applicationData.reviewers.filter(r => r === null || r.reviewer_user_id !== reviewToRemove);
+                    
                     this.setState({
                         applicationData: {
                             ...applicationData, 
                             reviewers: newReviewers
-                        }
+                        },
+                        removeReviewerModalVisible: false
                     });
                 }
             })

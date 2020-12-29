@@ -275,15 +275,16 @@ function assignResponsesToReviewer(eventId, responseIds, reviewerEmail) {
 }
 
 function deleteResponseReviewer(eventId, responseId, reviewerUserId) {
-  const deletion = {
+  const deleteParams = {
     event_id: eventId,
     response_id: responseId,
     reviewer_user_id: reviewerUserId
   };
 
   return axios
-    .delete(baseUrl + "/api/v1/assignresponsereviewer", assignment, {
-      headers: authHeader()
+    .delete(baseUrl + "/api/v1/assignresponsereviewer", {
+      headers: authHeader(),
+      params: deleteParams
     })
     .then(function(response) {
       return {
