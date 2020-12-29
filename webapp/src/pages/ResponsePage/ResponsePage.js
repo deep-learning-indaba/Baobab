@@ -394,35 +394,25 @@ class ResponsePage extends Component {
     };
 
     removeReviewerService() {
-        const { applicationData, reviewToRemove, reviewers } = this.state;
+        const { applicationData, reviewToRemove } = this.state;
         const updateReviews = this.state.applicationData;
         const { event } = this.props;
 
-        reviewService.removeReviewer({
-            "response_id": applicationData.id,
-            "event_id": event.id,
-            "reviewer_user_id": reviewToRemove
-        }).then(response => {
-            if (response.status == 200) {
-                updateReviews.reviewers.map((val, index) => {
-                    if (val) {
-                        if (val.reviewer_user_id == reviewToRemove) {
-                            updateReviews.reviewers.splice(index, 1);
-                            reviewers.push(val)
-                        };
-                        
-                    };
-                });
+        reviewService.deleteResponseReviewer(event.id, applicationData.id, reviewToRemove)
+            .then(response => {
+                if (response.error) {
+                    this.error(response.error);
+                } else {
+                    const newReviewers = applicationData.reviewers.filter(r => r.reviewer_user_id !== reviewToRemove);
 
-                this.setState({
-                    applicationData: updateReviews,
-                    removeReviewerModalVisible: false,
-                    reviewToRemove: null
-                });
-            };
-        }).catch(error => {
-            this.error(error.message);
-        });
+                    this.setState({
+                        applicationData: {
+                            ...applicationData, 
+                            reviewers: newReviewers
+                        }
+                    });
+                }
+            })
     };
 
     cancelRemoveReviewer() {

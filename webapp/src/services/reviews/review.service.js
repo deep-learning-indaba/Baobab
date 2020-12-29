@@ -11,17 +11,11 @@ export const reviewService = {
   assignReviews,
   getReviewSummary,
   getReviewHistory,
-  removeReviewer,
   getReviewList,
   getResponseReview,
-  assignResponsesToReviewer
+  assignResponsesToReviewer,
+  deleteResponseReviewer
 };
-
-function removeReviewer() {
-  return new Promise(resolve => {
-    resolve({status: 200})
-  })
-}
 
 function getReviewForm(eventId, skip) {
   return axios
@@ -263,6 +257,32 @@ function assignResponsesToReviewer(eventId, responseIds, reviewerEmail) {
 
   return axios
     .post(baseUrl + "/api/v1/assignresponsereviewer", assignment, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function deleteResponseReviewer(eventId, responseId, reviewerUserId) {
+  const deletion = {
+    event_id: eventId,
+    response_id: responseId,
+    reviewer_user_id: reviewerUserId
+  };
+
+  return axios
+    .delete(baseUrl + "/api/v1/assignresponsereviewer", assignment, {
       headers: authHeader()
     })
     .then(function(response) {
