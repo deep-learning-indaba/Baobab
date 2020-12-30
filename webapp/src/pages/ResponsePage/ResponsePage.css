@@ -301,9 +301,14 @@ font-size: 15px;
     color: hsl(120, 41%, 47%);
 }
 
-.review-incompleted {
-color: hsl(0, 64%, 61%);
+.review-not-started {
+    color: hsl(0, 64%, 61%);
 }
+
+.review-started {
+    color: #e8a64a;
+}
+
 
 /* Response Details Section and Sub-Sections */
 .response-details {

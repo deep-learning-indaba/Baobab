@@ -325,6 +325,7 @@
     "Return to review list": "Revenir à la liste de révision",
     "Assign Reviewer (they must already have an account)": "Attribuer un réviseur (ils doivent déjà avoir un compte)",
     "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}",
-    "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles"
+    "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles",
+    "Not Started": "Pas commencé"
 }
 

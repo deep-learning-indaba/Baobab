@@ -346,17 +346,17 @@ class ResponsePage extends Component {
                         <div>
                             <p>{val.user_title} {val.firstname} {val.lastname}</p>
                             
-                            {val.completed ? <p className="review-completed">{this.props.t("Completed")}</p>
-                                :
+                            {val.status === "completed" && <p className="review-completed">{this.props.t("Completed")}</p>}
+                            {val.status === "started" && <p className="review-started">{this.props.t("In Progress")}</p>}
+                            {val.status === "not_started" &&
                                 <p
-                                    className="review-incompleted" >
-                                    {this.props.t("Incomplete")}
+                                    className="review-not-started" >
+                                    {this.props.t("Not Started")}
                                     <button
                                         className="trash-review"
                                         onClick={(e) => this.removeReview(val.reviewer_user_id)} >
                                         <i className="far fa-trash-alt cursor-pointer"></i>
                                     </button>
-
                                 </p>
                             }
                         </div>

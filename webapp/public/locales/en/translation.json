@@ -325,5 +325,6 @@
     "Return to review list": "Return to review list",
     "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
     "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}",
-    "There are no more reviewers available": "There are no more reviewers available"
+    "There are no more reviewers available": "There are no more reviewers available",
+    "Not Started": "Not Started"
 }
