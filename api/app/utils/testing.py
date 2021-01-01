@@ -352,10 +352,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return answer
 
-    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en'):
+    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en', is_submitted=False):
         rr = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
+        if is_submitted:
+            rr.submit()
         db.session.add(rr)
         db.session.commit()
+
         return rr
 
     def add_review_score(self, review_response_id, review_question_id, value):

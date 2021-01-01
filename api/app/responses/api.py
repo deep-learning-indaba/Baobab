@@ -226,11 +226,19 @@ def _pad_list(lst, length):
     lst.extend([None] * diff)
     return lst
 
+def _review_response_status(review_response):
+    status = 'not_started'
+    if review_response is not None:
+        status = 'completed' if review_response.is_submitted else 'started'
+    return status
+
 def _serialize_reviewer(response_reviewer, review_response):
+    
     return {
         'reviewer_id': response_reviewer.reviewer_user_id,
         'reviewer_name': '{} {} {}'.format(response_reviewer.user.user_title, response_reviewer.user.firstname, response_reviewer.user.lastname),
-        'review_response_id': None if review_response is None else review_response.id
+        'review_response_id': None if review_response is None else review_response.id,
+        'status': _review_response_status(review_response)
     }
 
 def _serialize_answer(answer, language):
@@ -402,14 +410,13 @@ class ResponseDetailAPI(restful.Resource):
             completed = False
         else:
             review_response = review_repository.get_review_response(review_form_id, response_reviewer.response_id, response_reviewer.reviewer_user_id)
-            completed = review_response is not None
 
         return {
             'reviewer_user_id': response_reviewer.user.id,
             'user_title': response_reviewer.user.user_title,
             'firstname': response_reviewer.user.firstname,
             'lastname': response_reviewer.user.lastname,
-            'completed': completed
+            'status': _review_response_status(review_response)
         }
 
 
@@ -430,7 +437,7 @@ class ResponseDetailAPI(restful.Resource):
             'firstname': response.user.firstname,
             'lastname': response.user.lastname,
             'tags': [ResponseDetailAPI._serialize_tag(rt.tag, language) for rt in response.response_tags],
-            'reviewers': _pad_list([ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers], num_reviewers)
+            'reviewers': [ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers]
         }
 
     @event_admin_required

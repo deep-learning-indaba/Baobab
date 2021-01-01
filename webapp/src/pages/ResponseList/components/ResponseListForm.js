@@ -38,10 +38,11 @@ class ResponseListForm extends Component {
             responsesService.getResponseList(this.props.event.id, false, []),
             applicationFormService.getQuestionList(this.props.event.id)
         ]).then(responses => {
+            console.log(responses)
             this.setState({
                 tags: responses[0].tags,
                 responses: responses[1].responses,
-                questions: responses[2].questions.filter(q => q.type !== "information"),
+                questions: responses[2].questions ? responses[2].questions.filter(q => q.type !== "information") : null,
                 error: responses[0].error || responses[1].error || responses[2].error,
                 isLoading: false
             }, this.handleData);
@@ -63,14 +64,15 @@ class ResponseListForm extends Component {
     // Handle/Format Data
     handleData = () => {
         const { responses } = this.state;
-        this.setState({
-            selectedResponseIds: responses.map(r => r.response_id)
-        });
 
         if (!responses) {
             console.log('ERROR: responses is not defined: ', responses);
             return;
         }
+
+        this.setState({
+            selectedResponseIds: responses.map(r => r.response_id)
+        });
 
         // disable question list
         this.toggleList(false);
@@ -463,7 +465,7 @@ class ResponseListForm extends Component {
 
                         {/* List Questions */}
                         <div className={toggleList == "question" ? "question-list show" : "question-list "}>
-                            {questions.length && questions.map(val => {
+                            {questions && questions.length && questions.map(val => {
                                 return <div className={selectedQuestions.includes(val.question_id) ? "questions-item hide" : "questions-item"} key={val.headline + "" + val.value} >
                                     <input onClick={(e) => this.questionSelector(val.question_id)} className="question-list-inputs" type="checkbox" value="" id={val.question_id} />
                                     <label style={{ marginLeft: "5px" }} className="form-check-label" htmlFor={val.question_id}>

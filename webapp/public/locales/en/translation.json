@@ -306,6 +306,13 @@
     "Add Tags": "Add Tags",
     "New tag": "New tag",
     "Total Score": "Total Score",
+    "Post": "Post",
+    "Applications Status": "Applications Status",
+    "Are you sure you want to delete this reviewer?": "Are you sure you want to delete this reviewer?",
+    "No": "No",
+    "Assign Reviewer": "Assign Reviewer",
+    "Reviews Allocated": "Reviews Allocated",
+    "Reviews Completed": "Reviews Completed",
     "Please fix validation errors before saving": "Please fix validation errors before saving",
     "Saved": "Saved",
     "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed",
@@ -317,5 +324,7 @@
     "Hide Completed": "Hide Completed",
     "Return to review list": "Return to review list",
     "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
-    "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}"
+    "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}",
+    "There are no more reviewers available": "There are no more reviewers available",
+    "Not Started": "Not Started"
 }

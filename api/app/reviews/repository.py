@@ -252,6 +252,11 @@ class ReviewRepository():
                   .filter_by(event_id=event_id)
                   .all())
 
+    @staticmethod
+    def delete_response_reviewer(response_id, reviewer_user_id):
+        db.session.query(ResponseReviewer).filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id).delete()
+        db.session.commit()
+
 class ReviewConfigurationRepository():
 
     @staticmethod
@@ -269,3 +274,4 @@ class ReviewConfigurationRepository():
                     .filter(ApplicationForm.event_id == event_id)
                     .first())
         return config
+
