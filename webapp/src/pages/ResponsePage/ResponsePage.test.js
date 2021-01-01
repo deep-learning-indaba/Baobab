@@ -2,7 +2,6 @@ import React from "react";
 import { shallow } from "enzyme";
 import ResponsePage from "./ResponsePage";
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
-import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 
 jest.mock('react-i18next', () => ({
@@ -50,17 +49,53 @@ const formData = {
     ]
 }
 
+const reviewersData = [
+    {
+        reviewer_user_id: 1,
+        user_title: "Mr",
+        firstname: "Joe",
+        lastname: "Bloggs",
+        status: "completed"
+    },
+    {
+        reviewer_user_id: 2,
+        user_title: "Ms",
+        firstname: "Jane",
+        lastname: "Bloggs",
+        status: "started"
+    }
+]
+
+const applicationData = {
+    id: 1,
+    application_form_id: 1,
+    user_id: 1,
+    is_submitted: false,
+    submitted_timestamp: null,
+    is_withdrawn: false,
+    withdrawn_timestamp: null,
+    started_timestamp: "2020-01-01",
+    answers: [],
+    language: "en",
+    user_title: "Mx",
+    firstname: "Finn",
+    lastname: "Dog",
+    tags: [],
+    reviewers: []
+}
+
 // Tests
 test("Check if Response Page renders.", () => {
     const wrapper = shallow(<ResponsePage {...props} />);
     expect(wrapper.length).toEqual(1);
 });
 
-test("Check if Question and Answerer html renders.", async () => {
+test("Check if Question and Answer html renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
     wrapper.setState({
         applicationForm: formData,
-        applicationData: true,
+        reviewers: reviewersData,
+        applicationData: applicationData,
         isLoading: false
     })
     expect(wrapper.find('.Q-A').length).toBeTruthy();
@@ -71,42 +106,11 @@ test("Check if tag list renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
     wrapper.setState({
         isLoading: false,
-        applicationData: true,
+        applicationData: applicationData,
+        reviewers: reviewersData,
         tagMenu: true,
         tagList: [{headline: ""},{headline: ""}],
         eventLanguages: ["En", "Fr"]
     })
     expect(wrapper.find('.tag-response.show').length).toEqual(1);
 });
-
-
-test("Check if responsesService API works.", async () => {
-    const response = await responsesService.getResponseDetail(props.match.params.id, props.event.id);
-    expect(response).toBeTruthy();
-});
-
-test("Check if applicationFormService API works.", async () => {
-    const response = await applicationFormService.getForEvent(props.event.id);
-     expect(response).toBeTruthy();
- });
- 
-
- test("Check if tagsService API works.", async () => {
-     const response = await tagsService.getTagList(props.event.id);
-     expect(response).toBeTruthy();
- });
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
-

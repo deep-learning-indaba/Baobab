@@ -64,14 +64,15 @@ class ResponseListForm extends Component {
     // Handle/Format Data
     handleData = () => {
         const { responses } = this.state;
-        this.setState({
-            selectedResponseIds: responses.map(r => r.response_id)
-        });
 
         if (!responses) {
             console.log('ERROR: responses is not defined: ', responses);
             return;
         }
+
+        this.setState({
+            selectedResponseIds: responses.map(r => r.response_id)
+        });
 
         // disable question list
         this.toggleList(false);

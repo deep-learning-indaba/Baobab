@@ -11,7 +11,7 @@ import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import Loading from "../../components/Loading";
 import { ConfirmModal } from "react-bootstrap4-modal";
-import * as moment from 'moment';
+import moment from 'moment'
 
 
 class ResponsePage extends Component {
@@ -340,7 +340,7 @@ class ResponsePage extends Component {
             if (this.state.applicationData.reviewers) {
                 const reviews = this.state.applicationData.reviewers.map((val, index) => {
                     let num = index + 1;
-                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "completed": false},
+                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed"},
                     return <div className="reviewer">
                         <label>{this.props.t("Reviewer") + " " + num}</label>
                         <div>
