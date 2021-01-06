@@ -120,7 +120,17 @@ class ReviewAPI(ReviewMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        
+        print(args)
+        response_id = args['response_id']
+        review_form_id = args['review_form_id']
+        reviewer_user_id = g.current_user['id']
+
+        response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
+        if response_reviewer is None:
+            return FORBIDDEN
+
+        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return EVENT_NOT_FOUND
@@ -129,8 +139,9 @@ class ReviewAPI(ReviewMixin, restful.Resource):
 
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
+        review_response = review_repository.get_review_response_with_form(g.current_user['id'], reviewer_user.id)
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
-        print(response)
+
         reference = reference_repository.get_all_by_response_id(response.id)
         
         return ReviewResponseUser(review_form, response, reviews_remaining_count, reference)

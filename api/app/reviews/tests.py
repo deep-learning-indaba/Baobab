@@ -1293,6 +1293,7 @@ class ReferenceReviewRequest(ApiTestCase):
     def static_seed_data(self):
         # User, country and organisation is set up by ApiTestCase
         self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
+
         event = self.add_event()
         self.add_to_db(event)
 
@@ -1427,9 +1428,13 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(answers)
         db.session.commit()
 
+        response_review = ResponseReviewer(self.test_response.id, self.first_user.id)
+        db.session.add(response_review)
+        db.session.commit()
+
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
 
-        # db.session.flush()
+        db.session.flush()
 
     def test_get_reference_request_by_event_id(self):
         self.static_seed_data()
@@ -1444,8 +1449,7 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'response_id': 1}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
 
         data = json.loads(response.data)
