@@ -306,6 +306,13 @@
     "Add Tags": "Ajouter des tags",
     "New tag": "Nouveau tag",
     "Total Score": "Score Total",
+    "Post": "Publier",
+    "Applications Status": "Statut des applications",
+    "Are you sure you want to delete this reviewer?": "Voulez-vous vraiment supprimer ce réviseur?",
+    "No": "Non",
+    "Assign Reviewer": "Attribuer un réviseur",
+    "Reviews Allocated": "Avis attribués",
+    "Reviews Completed": "Examens terminés",
     "Please fix validation errors before saving": "Veuillez corriger les erreurs de validation avant d'enregistrer",
     "Saved": "Enregistré",
     "You have {{numReviews}} reviews assigned, of which {{numCompleted}} are completed": "Vous avez {{numReviews}} avis attribués, dont {{numCompleted}} sont terminés",
@@ -317,5 +324,8 @@
     "Hide Completed": "Masquer terminé",
     "Return to review list": "Revenir à la liste de révision",
     "Assign Reviewer (they must already have an account)": "Attribuer un réviseur (ils doivent déjà avoir un compte)",
-    "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}"
+    "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}",
+    "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles",
+    "Not Started": "Pas commencé"
 }
+

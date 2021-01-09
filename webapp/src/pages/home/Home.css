@@ -6,6 +6,7 @@ img.large-logo {
 
 .event-table-container {
     max-width: 90%;
+    margin-top: 2em;
 }
 
 .event{
@@ -65,7 +66,3 @@ img.large-logo {
         padding-left: 0;
     }
 }
-
-
-
-

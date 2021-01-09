@@ -1,44 +1,43 @@
 import React, { Component } from 'react'
 
-// TODO: Need to add validation - can't add a duplicate tag name and can't leave a language blank
-
-class Form extends Component {
+class TagModal extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            tagTranslations: {}
+            tags: {}
         }
     };
 
 
     handleSubmit() {
-        const { tagTranslations } = this.state;
-        this.props.postTag(tagTranslations);
-        // clear inout fields
+        const { tags } = this.state;
+        this.props.postTag(tags);
+        // clear input fields
         Array.from(document.querySelectorAll("input")).forEach(
             input => (input.value = "")
           );
   
         this.setState({
-            tagTranslations: {}
+            tags: {}
         });
-    }
+    };
 
 
     handleChange(event, label) {
-        const { tagTranslations } = this.state;
+        const { tags } = this.state;
+        let addTags = tags;
     
         if (event.target.value) {
-            tagTranslations[label] = event.target.value;
+            addTags[label] = { headline: event.target.value, id: label }
         }
         else {
-           delete tagTranslations[label];
+           delete addTags[label]
         };
       
         this.setState({
-            tagTranslations: tagTranslations
+            tags: addTags
         });
-    }
+    };
 
 
     renderTagModal() {
@@ -52,9 +51,9 @@ class Form extends Component {
                     <input key={val} onChange={(e) => this.handleChange(e, val)}></input>
                 </div>
             });
-            
+
             return (
-                <div className="modal fade" id="newTagModal" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div className="modal fade" id="exampleModalTag" tabIndex="-1" role="dialog" aria-labelledby="exampleModal" aria-hidden="true">
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -88,8 +87,8 @@ class Form extends Component {
                     </div>
                 </div>
             )
-        }
-    }
+        };
+    };
 
 
     render() {
@@ -99,7 +98,7 @@ class Form extends Component {
                 {modal}
             </div>
         )
-    }
-}
+    };
+};
 
-export default Form
+export default TagModal

@@ -163,7 +163,10 @@ class ReviewAssignmentComponent extends Component {
           {error}
         </div>}
 
-        <span className="review-padding">{t("Total Unallocated Reviews:")} {reviewSummary.reviews_unallocated}</span>
+        {reviewSummary &&
+         <span className="review-padding">{t("Total Unallocated Reviews:")} {reviewSummary.reviews_unallocated }</span>
+        }
+       
 
         <ReactTable
           data={reviewers}

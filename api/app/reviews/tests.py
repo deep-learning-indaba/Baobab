@@ -1388,9 +1388,12 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
         
         application_form = self.create_application_form(self.event.id)
         application_form2 = self.create_application_form(self.event2.id)
-        self.add_response(application_form.id, self.user1.id, is_submitted=True)
-        self.add_response(application_form.id, self.user2.id, is_submitted=True)
-        self.add_response(application_form.id, self.user3.id, is_submitted=True)
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.response2 = self.add_response(application_form.id, self.user2.id, is_submitted=True)
+        self.response3 = self.add_response(application_form.id, self.user3.id, is_submitted=True)
+
+        self.add_review_form(application_form.id)
+        self.add_review_form(application_form2.id)
 
         self.event2_response_id = self.add_response(application_form2.id, self.user1.id, is_submitted=True).id
         
@@ -1428,3 +1431,42 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
             data=params)
 
         self.assertEqual(response.status_code, 403)
+
+    def test_delete(self):
+        """Test that a review assignment can be deleted."""
+        self.seed_static_data()
+
+        # Assign a reviewer
+        response_id = self.response1.id
+        self.add_response_reviewer(response_id, self.reviewer_user_id)
+
+        params = {'event_id' : 1, 'response_id': self.response1.id, 'reviewer_user_id': self.reviewer_user_id}
+
+        response = self.app.delete(
+            '/api/v1/assignresponsereviewer', 
+            headers=self.get_auth_header_for('eventadmin@mail.com'), 
+            data=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Check that it was actually deleted
+        response_reviewer = db.session.query(ResponseReviewer).filter_by(response_id=response_id, reviewer_user_id=self.reviewer_user_id).first()
+        self.assertIsNone(response_reviewer)
+
+    def test_delete_not_allowed_if_completed(self):
+        """Test that a review assignment can't be deleted if the review has been completed."""
+        self.seed_static_data()
+
+        # Assign a reviewer and create a review resposne
+        response_id = self.response1.id
+        self.add_response_reviewer(response_id, self.reviewer_user_id)
+        self.add_review_response(self.reviewer_user_id, response_id)
+
+        params = {'event_id' : 1, 'response_id': self.response1.id, 'reviewer_user_id': self.reviewer_user_id}
+
+        response = self.app.delete(
+            '/api/v1/assignresponsereviewer', 
+            headers=self.get_auth_header_for('eventadmin@mail.com'), 
+            data=params)
+
+        self.assertEqual(response.status_code, 400)
