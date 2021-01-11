@@ -1314,15 +1314,6 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(users)
         db.session.commit()
 
-        # events = [
-        #     self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ',
-        #                    datetime(2019, 8, 25), datetime(2019, 8, 31),
-        #                    'KENYADABA2019'),
-        #     self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa',
-        #                    datetime(2018, 9, 9), datetime(2018, 9, 15),
-        #                    'INDABA2020', 2)
-        # ]
-        # db.session.commit()
 
         event_roles = [
             EventRole('admin', 10, 1),
@@ -1399,13 +1390,6 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
-        # review_configs = [
-        #     ReviewConfiguration(review_form_id=review_forms[0].id, num_reviews_required=3, num_optional_reviews=0),
-        #     ReviewConfiguration(review_form_id=review_forms[1].id, num_reviews_required=3, num_optional_reviews=0)
-        # ]
-        # db.session.add_all(review_configs)
-        # db.session.commit()
-
         review_questions = [
             ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
             ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
@@ -1417,8 +1401,13 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.test_response = Response(  # Nominating other
             1, self.first_user.id)
+        self.test_response.submit()
 
-        self.add_to_db(self.test_response)
+        db.session.add(self.test_response)
+        db.session.commit()
+
+        # self.add_to_db(self.test_response)
+
         answers = [
             Answer(self.test_response.id, questions[5].id, 'Mx'),
             Answer(self.test_response.id, questions[6].id, 'Skittles'),
@@ -1449,12 +1438,12 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1, 'response_id': 1}
+        params = {'event_id': 1}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
 
         data = json.loads(response.data)
         print(data)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 6)
 
         self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)

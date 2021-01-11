@@ -104,12 +104,12 @@ review_fields = {
 
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, reference_fields, review_response=None):
+    def __init__(self, review_form, response, reviews_remaining_count, fields, review_response=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
-        self.reference_response = reference_fields
+        self.reference_response = fields
         self.review_response = review_response
 
 
@@ -120,31 +120,29 @@ class ReviewAPI(ReviewMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        print(args)
-        response_id = args['response_id']
-        review_form_id = args['review_form_id']
-        reviewer_user_id = g.current_user['id']
 
-        response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
-        if response_reviewer is None:
-            return FORBIDDEN
+        # response_reviewer = review_repository.get_response_reviewer(event_id)
+        # if response_reviewer is None:
+        #     return FORBIDDEN
 
-        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id)
+        # review_response = ReviewResponse(event_id)
 
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return EVENT_NOT_FOUND
+        print("review_app_id:", review_form.application_form_id)
+        print("user:", g.current_user['id'])
 
         reviews_remaining_count = review_repository.get_remaining_reviews_count(g.current_user['id'], review_form.application_form_id)
-
+        print("review_count:", reviews_remaining_count)
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
-        review_response = review_repository.get_review_response_with_form(g.current_user['id'], reviewer_user.id)
+        # review_response = review_repository.get_review_response_with_form(g.current_user['id'], reviewer_user.id)
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
 
         reference = reference_repository.get_all_by_response_id(response.id)
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count, reference)
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, reference_fields, reference)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
