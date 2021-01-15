@@ -1295,7 +1295,6 @@ class ReferenceReviewRequest(ApiTestCase):
         self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
 
         event = self.add_event()
-        self.add_to_db(event)
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
         reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', password='abc', organisation_id=1, )
@@ -1313,7 +1312,6 @@ class ReferenceReviewRequest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
         db.session.commit()
-
 
         event_roles = [
             EventRole('admin', 10, 1),
@@ -1439,12 +1437,12 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
 
         params = {'event_id': 1}
-        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('r1@r.com'), data=params)
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
         print(data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data), 5)
 
         self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)
         self.assertEqual(data['references'][0]['token'], reference_req.token)
