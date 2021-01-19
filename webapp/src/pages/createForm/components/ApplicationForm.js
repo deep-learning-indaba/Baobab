@@ -133,8 +133,10 @@ const ApplicationForm = (props) => {
             checked={nominate}
             onChange={e => handleCheckChanged(e)}
           />
-          <span htmlFor="nomination-chck" className="nomination-info">{t('Allow candidates to nominate others using this application form \
-          (Users will be able to submit multiple nominations, including for themselves. If this option is unchecked, a candidate can only apply for themselves)')}
+          <span htmlFor="nomination-chck" className="nomination-info">
+            {t('Allow candidates to nominate others using this application form'
+            + '(Users will be able to submit multiple nominations, including for themselves.'
+            + ' If this option is unchecked, a candidate can only apply for themselves)')}
           </span>
         </div>
         <div className="dates-container">
