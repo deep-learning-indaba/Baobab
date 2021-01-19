@@ -3,6 +3,7 @@ import "./EventHome.css";
 import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
+import Form from '../createForm';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -224,6 +225,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/responsePage/:id`}
           render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/applicationform`}
+          render={(props) => <Form {...props} event={event} />}
         />
         
       </div>
