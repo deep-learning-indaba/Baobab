@@ -151,6 +151,13 @@ class EventNav extends Component {
                   >
                     {t('Response List')}
                   </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/applicationform`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Create New Form')}
+                  </NavLink>
                 </div>
               </li>
             )}
