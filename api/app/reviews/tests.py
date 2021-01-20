@@ -1440,13 +1440,17 @@ class ReferenceReviewRequest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
-        print(data)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 5)
 
-        self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)
-        self.assertEqual(data['references'][0]['token'], reference_req.token)
-        self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 1)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
 
     def test_get_reference_request_with_two_references(self):
 
