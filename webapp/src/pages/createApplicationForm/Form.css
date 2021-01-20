@@ -1,5 +1,5 @@
 /* Application form */
-.top-bar {
+.application-form-wrap .top-bar {
   background: white;
   border: none;
   border-bottom: thin #e6e6e6 solid;
@@ -8,16 +8,16 @@
   height: 4em;
 }
 
-.icon-title {
+.application-form-wrap .icon-title {
   float: left;
 }
 
-.form-icon {
+.application-form-wrap .form-icon {
   width: 40px;
   height: 40px;
 }
 
-.create-form-btn {
+.application-form-wrap .create-form-btn {
   float: right;
   border: none;
   background: #1f2d3e;
@@ -29,69 +29,110 @@
   transition-timing-function: ease-out;
 }
 
-.create-form-btn:hover, .create-form-btn:focus {
+.application-form-wrap .create-form-btn:hover,
+.application-form-wrap .create-form-btn:focus {
   cursor: pointer;
   background: #c9c7c7;
   color: #333;
 }
 
-.title {
+.application-form-wrap .title {
   font-weight: bold;
   margin-left: 1em;
 }
 
-.icon {
+.application-form-wrap .icon {
   width: 1.7em;
   height: 2em;
 }
 
-.application-form-wrapper {
+.application-form-wrap .application-form-wrapper {
   width: 60%;
   margin-top: 1em;
 }
 
-.nominations-desc {
+.application-form-wrap .nominations-desc {
   padding: 1em;
 }
 
-.further-description {
+.application-form-wrap .further-description {
   font-size: 0.7rem;
 }
 
-.nomination-chck {
+.application-form-wrap .nomination-chck {
   margin-right: 10px;
   width: 0.9em;
   height: 0.9em;
 }
 
-.dates {
+.application-form-wrap .dates {
   display: block;
   font-weight: bold;
   font-size: 1.1rem;
   margin-top: 0.5em;
 }
 
-.dates-container {
+.application-form-wrap .dates-container {
   text-align: left;
   padding-left: 1em;
   
 }
 
-.date {
+.application-form-wrap .date {
   font-weight: lighter;
   font-size: 0.9em;
   margin-left: 2em;
 }
+.application-form-wrap .add-section-icon:hover,
+.application-form-wrap .add-section-icon:focus {
+  color: #fff;
+  /* background: grey; */
+}
+.application-form-wrap .add-section-btn {
+  /* float: right; */
+  padding: 5px;
+  margin-right: 2em;
+  margin-top: 12em;
+  /* margin-bottom: 3em; */
+  border: solid thin #333;
+  width: 3em;
+  height: 3em;
+  border-radius: 50%;
+  background-color: #fff; 
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  outline: none;
+  position: fixed;
+  z-index: 1;
+}
+
+.application-form-wrap .add-section-btn:hover:after {
+  content: attr(data-title);
+  font-size: 0.7rem;
+  font-family: Arial;
+  position: absolute;
+  padding: 0.1em 0.7em;
+  border-radius: 5px;
+  left: -10px;
+  bottom: 5em;
+  width: 7em;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  background-color: #333;
+  color: #fff;
+}
 /* Section */
 
-.section-wrapper {
+.application-form-wrap .section-wrapper {
   text-align: left;
   margin-top: 1em;
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
 }
 
-.section-number {
+.application-form-wrap .section-number {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   color: white;
@@ -100,7 +141,7 @@
   padding: 0.5em 1em;
 }
 
-.title-description {
+.application-form-wrap .title-description {
   border-top: solid 0.5rem #1f2d3e;
   border-top-right-radius: 5px;
   padding: 1em;
@@ -108,7 +149,8 @@
   box-shadow: 0px 0.3em 5px 0px #e8e6e6;
 }
 
-.section-inputs {
+.application-form-wrap .section-inputs,
+.application-form-wrap .question-inputs {
   outline: none;
   border: none;
   border-bottom: solid #e8e6e6 thin;
@@ -117,11 +159,11 @@
   width: 90%;
 }
 
-.section-title {
+.application-form-wrap .section-title {
   font-size: 1.8em;
 }
 
-.title-desc-toggle {
+.application-form-wrap .title-desc-toggle {
   float: right;
   border: none;
   padding: 5px;
@@ -135,12 +177,15 @@
   outline: none;
 }
 
-.title-desc-toggle:hover, .title-desc-toggle:focus {
+.application-form-wrap .title-desc-toggle:hover,
+.application-form-wrap .title-desc-toggle:focus,
+.application-form-wrap .add-section-btn:hover,
+.application-form-wrap .add-section-btn:focus {
   background-color: #333;
   cursor: pointer;
 }
 
-.delete-section {
+.application-form-wrap .delete-section {
   display: block;
   width: 10em;
   background: #fff;
@@ -152,24 +197,67 @@
   transition-timing-function: ease-out;
 }
 
-.delete-section:hover, .delete-section:hover {
+.application-form-wrap .delete-section:hover,
+.application-form-wrap .delete-section:hover {
   background-color: rgb(168, 167, 167);
   cursor: pointer;
 }
 
-.dropdown-menu {
+.application-form-wrap .dropdown-menu {
   transition: left 0.4s ease-in-out, opacity 0.6s ease-in-out;
 }
 
-.section-desc {
+.application-form-wrap .section-desc,
+.application-form-wrap .question-headline {
   margin-top: 0.5em;
   width: 100%;
+}
+
+.application-form-wrap .add-question-btn {
+  border: solid thin #333;
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  background-color: #fff; 
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  outline: none;
+  position: relative;
+}
+
+.application-form-wrap .add-question-btn:hover:after { 
+  content: attr(data-title);
+  font-size: 0.7rem;
+  font-family: Arial;
+  position: absolute;
+  padding: 0.1em 0.7em;
+  border-radius: 5px;
+  background-color: #333;
+  left: -2.5em;
+  bottom: 3.5em;
+  width: 8em;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  color: white;
+}
+
+
+.application-form-wrap .add-question-btn:hover {
+  background-color: #333;
+  cursor: pointer;
+}
+
+.add-question-wrapper {
+  text-align: end;
+  padding: 0.5em 2em;
 }
 
 
 /* Question */
 
-.headline-description {
+.application-form-wrap .headline-description {
   border-top-right-radius: 5px;
   padding: 1em;
   background: #fff;
@@ -178,7 +266,7 @@
   height: fit-content;
 }
 
-.question-title {
+.application-form-wrap .question-title {
   font-size: 1em;
   font-weight: bolder;
   max-width: 60%;
@@ -187,7 +275,7 @@
   border-radius: 5px;
 }
 
-.action-btns {
+.application-form-wrap .action-btns {
   padding: 0.5em;
   padding-bottom: 0;
   display: flex;
@@ -196,43 +284,43 @@
   margin-top: 1em; 
 }
 
-.select-form {
+.application-form-wrap .select-form {
   width: 30%;
   display: inline-table;
   margin: 0 1em;
   box-shadow: none;
 }
 
-.require-chckbox {
+.application-form-wrap .require-chckbox {
   border-left: solid thin #ecebeb;
   padding: 0 1em;
   padding-top: 0.7em;
   margin-left: 1em;
 }
 
-.require-check {
+.application-form-wrap .require-check {
   margin-right: 0.5em;
 }
 
-.option-inputs {
+.application-form-wrap .option-inputs {
   padding: 0.7em;
   border: solid thin #ecebeb;
   border-radius: 5px;
 }
 
-.options-table {
+.application-form-wrap .options-table {
   background: '#fff';
 }
 
-.dropdown-text {
+.application-form-wrap .dropdown-text {
   width: 2.5em;
   display: inline-table 
 }
-.fa-color {
+.application-form-wrap .fa-color {
   color: grey;
 }
 
-.delete-qstion {
+.application-form-wrap .delete-qstion {
   width: 3em;
   height: 3em;
   border: none;
@@ -246,16 +334,17 @@
 
 }
 
-.delete-qstion:hover, .delete-qstion:hover {
+.application-form-wrap .delete-qstion:hover,
+.application-form-wrap .delete-qstion:hover {
   background-color: rgb(168, 167, 167);
   cursor: pointer;
 }
 
-.duplicate-qstion {
+.application-form-wrap .duplicate-qstion {
   margin-right: 5px;
 }
 
-.delete-qstion:hover:after { 
+.application-form-wrap .delete-qstion:hover:after { 
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -272,22 +361,22 @@
   color: white;
 }
 
-.question-footer {
+.application-form-wrap .question-footer {
   margin-left: auto;
   display: flex;
 }
 
-.options {
+.application-form-wrap .options {
   margin: 1em;
 }
 
-.delete-row {
+.application-form-wrap .delete-row {
   position: relative;
   color: rgb(139, 15, 15);
   margin-left: 0.5em;
 }
 
-.delete-row:hover:after { 
+.application-form-wrap .delete-row:hover:after { 
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -304,16 +393,16 @@
   color: white;
 }
 
-.add-row {
+.application-form-wrap .add-row {
   color: #28a745;
 }
 
-.fa-table-btns {
+.application-form-wrap .fa-table-btns {
   position: relative;
   margin-left: 0.5em;
 }
 
-.fa-table-btns:hover:after { 
+.application-form-wrap .fa-table-btns:hover:after { 
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;

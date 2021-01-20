@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { default as ReactSelect } from "react-select";
+import { option } from './util';
 
-const Section = ({
+const Question = ({
     inputs, t, questions, setQuestions, num,
     setSection, sections
 }) => {
@@ -47,70 +48,66 @@ const Section = ({
     setQuestions([...questions]);
   }
 
-  const option = props => {
-    const { value } = props;
-    const label = <div>
-      <div className='dropdown-text'>
-        <i className={props.faClass}></i>
-      </div>
-      {t(props.label)}
-    </div>
-    return {
-      label,
-      value
-    }
-  }
-
   const options = [
     option({
       value: 'short-text',
       label: 'Short Text',
-      faClass: 'fa fa-align-left fa-xs fa-color'
+      faClass: 'fa fa-align-left fa-xs fa-color',
+      t
     }),
     option({
       value: 'long-text',
       label: 'Long Text',
-      faClass: 'fas fa-align-justify fa-color'
+      faClass: 'fas fa-align-justify fa-color',
+      t
     }),
     option({
       value: 'markdown',
       label: 'Markdown',
-      faClass: 'fab fa-markdown fa-color'
+      faClass: 'fab fa-markdown fa-color',
+      t
     }),
     option({
       value: 'single-choice',
       label: 'Single Choice',
-      faClass: 'fas fa-check-circle fa-color'
+      faClass: 'fas fa-check-circle fa-color',
+      t
     }),
     option({
       value: 'multi-choice',
       label: 'Multi Choice',
-      faClass: 'far fa-caret-square-down fa-color'
+      faClass: 'far fa-caret-square-down fa-color',
+      t
     }),
     option({
       value: 'multi-checkbox',
       label: 'Multi Checkbox',
-      faClass: 'fas fa-check-square fa-color'
+      faClass: 'fas fa-check-square fa-color',
+      t
     }),
     option({
       value: 'file',
       label: 'File',
-      faClass: 'fas fa-cloud-upload-alt fa-color'
+      faClass: 'fas fa-cloud-upload-alt fa-color',
+      t
     }),
     option({
       value: 'date',
       label: 'Date',
-      faClass: 'fas fa-calendar-alt fa-color'
+      faClass: 'fas fa-calendar-alt fa-color',
+      t
     }),
     option({
       value: 'reference',
       label: 'Reference',
-      faClass: 'fas fa-user fa-color'
+      faClass: 'fas fa-user fa-color',
+      t
     }),
     option({
       value: 'multi-file',
       label: 'Multi File',
-      faClass: 'fas fa-cloud fa-color'
+      faClass: 'fas fa-cloud fa-color',
+      t
     }),
   ];
   const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'markdown'];
@@ -128,6 +125,7 @@ const Section = ({
               name="headline"
               value={input.headline}
               onChange={handleChange('headline')}
+              placeholder={t('Headline')}
               className="section-inputs question-title"
               onBlur={updateQuestions}
             />
@@ -158,12 +156,12 @@ const Section = ({
           </div>
           {withPlaceHolder.includes(input.type && input.type.value) && (
             <input
-            name="section-desc"
+            name="question-headline"
             type="text"
             value={input.placeholder}
             placeholder={t('Placeholder')}
             onChange={handleChange('placeholder')}
-            className="section-inputs section-desc"
+            className="question-inputs question-headline"
             onFocus={updateQuestions}
             onBlur={updateQuestions}
           />
@@ -262,4 +260,4 @@ const Section = ({
   )
 }
 
-export default Section;
+export default Question;

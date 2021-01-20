@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { Trans } from 'react-i18next';
 import Question from './Question';
 
 const Section = ({
   t, num, setSection, sections, inputs,
-  addSection, addQuestion
+  addQuestion
 }) => {
   const [input, setInput] = useState({
     name: inputs.name,
@@ -22,6 +23,7 @@ const Section = ({
   const handleQuestions = (inpt) => {
     setInput({...input, questions: inpt})
   }
+  const numSections = sections.length
   return (
     <>
       <div
@@ -29,7 +31,7 @@ const Section = ({
         // onBlur={updateSections}
       >
         <div className="section-number">
-          <label>{t('Section') + ` ${num} ` + t('of') + ` ${sections.length}`  }</label>
+          <Trans i18nKey='sectionPlace' >Section {{num}} of {{numSections}}</Trans>
         </div>
         <div className="title-description">
           <div className="section-header">
@@ -52,7 +54,7 @@ const Section = ({
             <div className="dropdown-menu" aria-labelledby="title-desc-toggle">
               <button
                 className="delete-section"
-                onClick={() => addSection()}
+                
               >
                 {t("Add Section")}
               </button>
@@ -61,12 +63,6 @@ const Section = ({
               </button>
               <button className="delete-section">
                 {t("Duplicate Section")}
-              </button>
-              <button
-                className="delete-section"
-                onClick={() => addQuestion(inputs.id)}
-              >
-                {t("Add Question")}
               </button>
             </div>
           </div>
@@ -92,6 +88,15 @@ const Section = ({
             sections={sections}
             />
         ))}
+        <div className='add-question-wrapper'>
+          <button
+            className="add-question-btn"
+            data-title="Add Question"
+            onClick={() => addQuestion(inputs.id)}
+          >
+            <i class="fas fa-plus add-section-icon"></i>
+          </button>
+        </div>
       </div>
     </>
   )
