@@ -13,7 +13,7 @@ from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewRe
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
-from app.references.api import reference_fields
+# from app.references.api import reference_fields
 from app.references.repository import ReferenceRequestRepository as reference_repository
 
 from app.users.models import AppUser, Country, UserCategory
@@ -94,23 +94,40 @@ review_response_fields = {
     'scores': fields.List(fields.Nested(review_scores_fields), attribute='review_scores')
 }
 
+reference_fields = {
+    'firstname': fields.String,
+    'title': fields.String,
+    'lastname': fields.String,
+    'relation': fields.String,
+    'uploaded_document': fields.String,
+}
+
 review_fields = {
     'review_form': fields.Nested(review_form_fields),
     'response': fields.Nested(response_fields),
     'user': fields.Nested(user_fields),
     'reviews_remaining_count': fields.Integer,
-    'review_response': fields.Nested(review_response_fields)
+    'review_response': fields.Nested(review_response_fields),
+    'references': fields.List(fields.Nested(reference_fields)),
 }
 
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, fields, review_response=None):
+    def __init__(self, review_form, response, reviews_remaining_count, reference_response=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
-        self.reference_response = fields
-        self.review_response = review_response
+        self.references = reference_response
+
+
+class ReviewResponseReference():
+    def __init__(self, title, firstname, lastname, relation, uploaded_document):
+        self.title = title
+        self.firstname = firstname
+        self.lastname = lastname
+        self.relation = relation
+        self.uploaded_document = uploaded_document
 
 
 class ReviewAPI(ReviewMixin, restful.Resource):
@@ -120,12 +137,6 @@ class ReviewAPI(ReviewMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-
-        # response_reviewer = review_repository.get_response_reviewer(event_id)
-        # if response_reviewer is None:
-        #     return FORBIDDEN
-
-        # review_response = ReviewResponse(event_id)
 
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
@@ -140,9 +151,15 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         # review_response = review_repository.get_review_response_with_form(g.current_user['id'], reviewer_user.id)
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
 
-        reference = reference_repository.get_all_by_response_id(response.id)
+        reference_requests = reference_repository.get_all_by_response_id(response.id)
+        references = []
+        for r in reference_requests:
+            reference = reference_repository.get_reference_by_reference_request_id(r.id)
+            references.append(
+                ReviewResponseReference(r.title, r.firstname, r.lastname, r.relation, reference.uploaded_document)
+            )
         
-        return ReviewResponseUser(review_form, response, reviews_remaining_count, reference_fields, reference)
+        return ReviewResponseUser(review_form, response, reviews_remaining_count, references)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
         if skip is None:
