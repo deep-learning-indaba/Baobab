@@ -1456,7 +1456,7 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.static_seed_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
-        reference_req2 = ReferenceRequest(1, 'Mrs', 'John', 'Jones', 'Manager', 'john@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
         reference_request_repository.create(reference_req)
         reference_request_repository.create(reference_req2)
 
@@ -1476,12 +1476,39 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
         data = json.loads(response.data)
-        print(data)
-        self.assertDictEqual(data['references'][0], REFERENCE_DETAIL)
-        # self.assertEqual(data['references'][0]['token'], reference_req.token)
-        # self.assertEqual(data['references'][0]['uploaded_document'], 'DOCT-UPLOAD-78999')
-        #
-        # self.assertDictEqual(data['references'][1], REFERENCE_DETAIL_2)
-        # self.assertEqual(data['references'][1]['token'], reference_req2.token)
-        # self.assertEqual(data['references'][1]['uploaded_document'], 'DOCT-UPLOAD-78979')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 2)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+        self.assertDictEqual(data['references'][1], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
+    def test_get_review_no_reference(self):
+        """
+        In this test, there is no reference attached to the application at all for review (i.e. no reference request)
+        """
+        pass
+
+    def test_get_reference_not_yet_submitted(self):
+        """
+        In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet
+        """
+        pass
+
