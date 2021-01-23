@@ -1518,6 +1518,43 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(len(data), 6)
         self.assertEqual(len(data['references']), 0)
 
+    def test_two_references_only_one_submitted(self):
+        """
+        In this test, two references have been requested, but only one submitted (two ids exists, one reference submitted)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 2)
+        self.assertEqual(data['references'][0], 0)
+
+        self.assertDictEqual(data['references'][1], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
     def test_get_review_no_reference(self):
         """
         In this test, there is no reference attached to the application at all for review (i.e. no reference request)
@@ -1533,4 +1570,3 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(len(data), 6)
 
         self.assertEqual(len(data['references']), 0)
-        
