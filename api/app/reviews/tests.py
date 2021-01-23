@@ -1500,15 +1500,37 @@ class ReferenceReviewRequest(ApiTestCase):
             u'uploaded_document': u'DOCT-UPLOAD-78979',
         })
 
+
+    def test_get_reference_not_yet_submitted(self):
+        """
+        In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 0)
+
     def test_get_review_no_reference(self):
         """
         In this test, there is no reference attached to the application at all for review (i.e. no reference request)
         """
-        pass
+        self.static_seed_data()
 
-    def test_get_reference_not_yet_submitted(self):
-        """
-        In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet
-        """
-        pass
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        # TODO: confirm this makes sense: references is an empty list in data
+        self.assertEqual(len(data), 6)
+
+        self.assertEqual(len(data['references']), 0)
+        
