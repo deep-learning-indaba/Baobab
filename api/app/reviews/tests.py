@@ -1544,10 +1544,10 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 6)
-        self.assertEqual(len(data['references']), 2)
-        self.assertEqual(data['references'][0], 0)
+        self.assertEqual(len(data['references']), 1)
 
-        self.assertDictEqual(data['references'][1], {
+
+        self.assertDictEqual(data['references'][0], {
             u'title': u'Mrs',
             u'firstname': u'Jane',
             u'lastname': u'Jones',
