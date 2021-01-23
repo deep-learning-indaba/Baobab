@@ -155,9 +155,10 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         references = []
         for r in reference_requests:
             reference = reference_repository.get_reference_by_reference_request_id(r.id)
-            references.append(
-                ReviewResponseReference(r.title, r.firstname, r.lastname, r.relation, reference.uploaded_document)
-            )
+            if reference is not None:
+                references.append(
+                    ReviewResponseReference(r.title, r.firstname, r.lastname, r.relation, reference.uploaded_document)
+                )
         
         return ReviewResponseUser(review_form, response, reviews_remaining_count, references)
 
