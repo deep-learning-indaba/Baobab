@@ -1,15 +1,21 @@
 import React from 'react';
 
-export const option = props => {
-  const { value, t } = props;
-  const label = <div>
+export const option = ({ value, t, label: l, faClass }) => {
+  const label = faClass ? <div>
     <div className='dropdown-text'>
-      <i className={props.faClass}></i>
+      <i className={faClass}></i>
     </div>
-    {t(props.label)}
+    {t(l)}
   </div>
+  : t(l);
   return {
     label,
     value
   }
 }
+
+export const langObject = (langs, value) => langs && langs.reduce((obj, item) => Object.assign(obj,
+  {
+    [item.code]: value
+  }
+), {});

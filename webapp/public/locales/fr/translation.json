@@ -329,9 +329,9 @@
     "Not Started": "Pas commencé",
     "Form title": "Titre du formulaire",
     "Allow candidates to nominate others using this application form (Users will be able to submit multiple nominations, including for themselves. If this option is unchecked, a candidate can only apply for themselves)": "Autoriser les candidats à en proposer d'autres à l'aide de ce formulaire de candidature (les utilisateurs pourront soumettre plusieurs candidatures, y compris pour eux-mêmes. Si cette option n'est pas cochée, un candidat ne peut postuler que pour lui-même)",
-    "Application opens": "L'application s'ouvre",
+    "Application opens ": "L'application s'ouvre ",
     "Application closes": "L'application se ferme",
-    "sectionPlace": "Section {{num}} de {{numSections}}",
+    "sectionPlace": "Section {{index}} de {{numSections}}",
     "Add Section":  "Ajouter Section",
     "Delete Section": "Suprimer Section",
     "Duplicate Section": "Dupliquer section",
@@ -348,6 +348,7 @@
     "Choose type": "Choisissez la Category",
     "Placeholder": "Text Substituant",
     "Value": "Valuer",
-    "Required": "Obligatoire"
+    "Required": "Obligatoire",
+    "Duplicate": "Dupliquer"
 }
 

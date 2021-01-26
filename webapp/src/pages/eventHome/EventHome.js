@@ -3,7 +3,7 @@ import "./EventHome.css";
 import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
-import Form from '../createApplicationForm';
+import ApplicationFormSetting from '../createApplicationForm';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -90,7 +90,7 @@ class EventHome extends Component {
 
   render() {
     const { event, error, isLoading } = this.state;
-    const { match } = this.props;
+    const { match, organisation } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -229,7 +229,11 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/applicationform`}
-          render={(props) => <Form {...props} event={event} />}
+          render={(props) => <ApplicationFormSetting
+            {...props}
+            event={event}
+            languages={organisation.languages}
+            />}
         />
         
       </div>

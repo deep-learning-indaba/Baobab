@@ -1,36 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useTranslation } from 'react-i18next'
+import { default as ReactSelect } from "react-select";
 import { eventService } from '../../../services/events';
 import icon from '../icon.svg';
 import Section from './Section';
 import Loading from '../../../components/Loading';
+import Context from '../../../context';
+import { option, langObject } from './util';
 
 const ApplicationForm = (props) => {
+  const { languages } = props;
+  const { t } = useTranslation();
+  const lang = languages;
+  const { appFormData, setAppFormData } = useContext(Context);
   const [nominate, setNominate] = useState(false);
+  const [language, setLanguage] = useState({
+    label: lang && lang[0]? lang[0].description : 'English',
+    value: lang && lang[0]? lang[0].code : 'en'
+  });
+
   const [event, setEvent] = useState({
     loading: true,
     event: null,
     error: null,
   });
+
   const [sections, setSections] = useState([{
-    id: 1,
-    name: 'Untitled Section',
-    description: '',
+    id: `${Math.random()}`,
+    name: langObject(lang, t('Untitled Section')),
+    description: langObject(lang, ''),
     questions: [
       {
         id: `${Math.random()}`,
         order: 1,
-        headline: '',
-        placeholder: '',
+        headline: langObject(lang, ''),
+        placeholder: langObject(lang, ''),
         type: null,
-        options: [],
-        value: '',
-        label: '',
+        options: langObject(lang, []),
+        value: langObject(lang, ''),
+        label: langObject(lang, ''),
         required: false
       }
     ]
   }]);
-  const { t } = useTranslation();
 
   useEffect(() => {
     eventService.getEvent(props.event.id).then( res => {
@@ -39,47 +51,78 @@ const ApplicationForm = (props) => {
         event: res.event,
         error: res.error
       })
-    })
+    });
+    setAppFormData(sections);
   }, []);
+
+  useEffect(() => {
+    setSections(appFormData);
+  }, [appFormData]);
+
   const handleCheckChanged = (e) => {
-    setNominate(e.target.checked);
+    const val = e.target.checked;
+    setTimeout(() => {
+      setSections(appFormData);
+      setNominate(val);
+    }, 1);
   }
+
+  const handleLanguageChange = (e) => {
+    setLanguage(e);
+  }
+
   const handleSection = (input) => {
     setSections(input)
   }
+
   const addSection = () => {
-    const id = sections.length + 1;
-    setSections([...sections, {
-      id: id,
-      name: 'Untitled Section',
-      description: '',
+    setTimeout(() => setSections([...appFormData, {
+      id: `${Math.random()}`,
+      name: langObject(lang, t('Untitled Section')),
+      description: langObject(lang, ''),
       questions: [
         {
-          id: 1,
+          id: `${Math.random()}`,
           order: 1,
-          headline: '',
-          placeholder: '',
+          headline: langObject(lang, ''),
+          placeholder: langObject(lang, ''),
           type: null,
-          options: [],
-          value: '',
-          label: '',
+          options: langObject(lang, []),
+          value: langObject(lang, ''),
+          label: langObject(lang, ''),
           required: false
         }
       ]
-    }]);
+    }]), 1);
   }
+
   const addQuestion = (sectionId) => {
     let newSections = sections.map(e => {
       if(e.id === sectionId) {
         return {...e, questions: [...e.questions, {
           id: `${Math.random()}`,
           order: e.questions.length && e.questions.length + 1,
-          headline: '',
-          placeholder: '',
+          headline: {
+            en: '',
+            fr: ''
+          },
+          placeholder: {
+            en: '',
+            fr: ''
+          },
           type: null,
-          options: [],
-          value: '',
-          label: '',
+          options: {
+            en: [],
+            fr: []
+          },
+          value: {
+            en: '',
+            fr: ''
+          },
+          label: {
+            en: '',
+            fr: ''
+          },
           required: false
         }]}
       }
@@ -87,6 +130,15 @@ const ApplicationForm = (props) => {
     });
     setSections(newSections);
   } 
+
+  const options = () => {
+    return lang.map(l => option({
+      value: l.code,
+      label: l.description,
+      t
+    }));
+  }
+
   const dateFormat = (date) => {
     return new Date(date).toLocaleDateString('en-GB', {
       weekday: 'short',
@@ -124,7 +176,7 @@ const ApplicationForm = (props) => {
 
     return (
       <>
-      <div style={{ textAlign: 'end', width: '61%' }}>
+        <div style={{ textAlign: 'end', width: '61%' }}>
           <button
             className='add-section-btn'
             data-title="Add Section"
@@ -132,7 +184,6 @@ const ApplicationForm = (props) => {
           >
             <i class="fas fa-plus fa-lg add-section-icon"></i>
           </button>
-          {/* <i className="far fa-plus-circle fa-lg add-section-icon"></i> */}
         </div>
       <div className="application-form-wrapper">
         <div className="nominations-desc">
@@ -163,17 +214,42 @@ const ApplicationForm = (props) => {
             </span>
           </span>
         </div>
+        <ReactSelect
+          id='select-language'
+          options={options()}
+          onChange={e => handleLanguageChange(e)}
+          value={language}
+          defaultValue={language}
+          className='select-language'
+          styles={{
+            control: (base, state) => ({
+              ...base,
+              boxShadow: "none",
+              border: state.isFocused && "none",
+              transition: state.isFocused && 'color,background-color 1.5s ease-out',
+              background: state.isFocused && 'lightgray',
+              color: '#fff'
+            }),
+            option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused && "#1f2d3e",
+                color: state.isFocused && "#fff"
+            })
+          }}
+          menuPlacement="auto"
+        />
         {
-          sections.map(section => (
+          sections.map((section, i) => (
             <Section
               t={t}
               key={section.id}
-              num={section.id}
+              sectionIndex={i}
               setSection={handleSection}
               inputs={section}
               sections={sections}
               addSection={addSection}
               addQuestion={addQuestion}
+              lang={language.value}
             />
           ))
         }

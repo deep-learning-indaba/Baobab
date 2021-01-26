@@ -18,37 +18,60 @@ test('Check if Application Form Page renders.', () => {
 
 test('Check if the Section Component renders.', () => {
   // Render Section Component.
-  const num = 1;
   const t = jest.fn();
   const setSection = jest.fn();
   const sections = [];
+  const sectionIndex = 0;
+  const lang = 'en';
   const inputs = {
-    id: 1,
-    name: 'Untitled Section',
-    description: '',
+    id: `${Math.random()}`,
+    name: {
+      en: 'Untitled Section',
+      fr: 'Section sans titre'
+    },
+    description: {
+      en: '',
+      fr: ''
+    },
     questions: [
       {
         id: `${Math.random()}`,
         order: 1,
-        headline: '',
-        placeholder: '',
+        headline: {
+          en: '',
+          fr: ''
+        },
+        placeholder: {
+          en: '',
+          fr: ''
+        },
         type: null,
-        options: [],
-        value: '',
-        label: '',
+        options: {
+          en: [],
+          fr: []
+        },
+        value: {
+          en: '',
+          fr: ''
+        },
+        label: {
+          en: '',
+          fr: ''
+        },
         required: false
       }
     ]
-    };
+  };
   const addSection = jest.fn(); 
   const addQuestion = jest.fn();
   const props = {
-    num,
     setSection,
     sections,
     inputs,
     addSection,
     addQuestion,
+    sectionIndex,
+    lang,
     t
   };
   const wrapper = shallow(<Section {...props} />);
@@ -57,43 +80,117 @@ test('Check if the Section Component renders.', () => {
 
 test('Check if the Question Component renders.', () => {
   // Render Question Component.
-  const num = 1;
   const t = jest.fn();
+  const sectionId = 1;
+  const  sections = [{
+    id: `${Math.random()}`,
+    name: {
+      en: 'Untitled Section',
+      fr: 'Section sans titre'
+    },
+    description: {
+      en: '',
+      fr: ''
+    },
+    language: {label: 'English', value: 'en'},
+    questions: [
+      {
+        id: `${Math.random()}`,
+        order: 1,
+        headline: {
+          en: '',
+          fr: ''
+        },
+        placeholder: {
+          en: '',
+          fr: ''
+        },
+        type: null,
+        options: {
+          en: [],
+          fr: []
+        },
+        value: {
+          en: '',
+          fr: ''
+        },
+        label: {
+          en: '',
+          fr: ''
+        },
+        required: false
+      }
+    ]
+  }]
+  const lang = 'en';
+
   const questions = [{
     id: `${Math.random()}`,
     order: 1,
-    headline: '',
-    placeholder: '',
+    headline: {
+      en: '',
+      fr: ''
+    },
+    placeholder: {
+      en: '',
+      fr: ''
+    },
     type: null,
-    options: [],
-    value: '',
-    label: '',
+    options: {
+      en: [],
+      fr: []
+    },
+    value: {
+      en: '',
+      fr: ''
+    },
+    label: {
+      en: '',
+      fr: ''
+    },
     required: false
   }];
   const inputs = {
     id: `${Math.random()}`,
     order: 1,
-    headline: '',
-    placeholder: '',
+    headline: {
+      en: '',
+      fr: ''
+    },
+    placeholder: {
+      en: '',
+      fr: ''
+    },
     type: null,
-    options: [],
-    value: '',
-    label: '',
+    options: {
+      en: [],
+      fr: []
+    },
+    value: {
+      en: '',
+      fr: ''
+    },
+    label: {
+      en: '',
+      fr: ''
+    },
     required: false
   };
-  const setQuestions = jest.fn();
+
   const props = {
-    num,
-    setQuestions,
     questions,
     inputs,
-    t
+    t,
+    sectionId,
+    sections,
+    lang
   };
   const wrapper = shallow(<Question {...props} />);
   expect(wrapper.length).toEqual(1);
 });
 
 test('Check if the Form Component renders', () => {
-  const wrapper = shallow(<Form />);
+  const languages = [{ code: 'en', description: 'English' }];
+  const wrapper = shallow(<Form languages={languages} />);
   expect(wrapper.length).toEqual(1);
 })

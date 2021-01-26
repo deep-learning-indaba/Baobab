@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { default as ReactSelect } from "react-select";
 import { option } from './util';
+import Context from '../../../context';
 
 const Question = ({
-    inputs, t, questions, setQuestions, num,
-    setSection, sections
+    inputs, t, questions,sectionId,
+    sections, lang
 }) => {
+  const { setAppFormData } = useContext(Context);
   const [input, setInput] = useState({
     headline: inputs.headline,
     placeholder: inputs.placeholder,
@@ -19,7 +21,8 @@ const Question = ({
   });
 
   const handleChange = (prop) => (e) => {
-    setInput({...input, [prop]: e.target.value});
+    const target = input[prop];
+    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
   }
   const handleTypeChange = (e) => {
     setInput({...input, type: e});
@@ -29,23 +32,38 @@ const Question = ({
   }
 
   const handleAddOption = () => {
-    setInput({...input, options: [{
+    const opt = input.options;
+    setInput({...input, options: {...opt, [lang]: [{
       id: `${Math.random()}`,
-      value: input.value,
-      label: input.label,
-    }, ...input.options]});
+      value: input.value[lang],
+      label: input.label[lang],
+    }, ...input.options[lang]]}});
   }
+
   const resetInputs = () => {
-    setInput({...input, value: '', label: ''});
+    const { value, label } = input;
+    setInput({...input, value: {...value, [lang]: ''},
+    label: {...label, [lang]: ''}});
+    updateQuestions();
   }
+
   const handleDeleteOption = (id, e) => {
-    const newOptions = input.options.filter(e => e.id !== id);
-    setInput({...input, options: [...newOptions]})
+    const newOptions = input.options[lang].filter(e => e.id !== id);
+    const opt = input.options;
+    setInput({...input, options: {...opt, [lang]: [...newOptions]}})
   }
 
   const updateQuestions = () => { // Update questions in the sections form when question loses focus
-    questions[num-1] = input;
-    setQuestions([...questions]);
+    const updatedQuestions = questions.map(q => {
+      if(q.id === input.id) return input;
+      return q;
+    });
+  
+    const updatedSections = sections.map(s => {
+      if(s.id === sectionId) return {...s, questions: updatedQuestions};
+      return s
+    });
+    setAppFormData(updatedSections);
   }
 
   const options = [
@@ -110,20 +128,20 @@ const Question = ({
       t
     }),
   ];
+
   const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'markdown'];
   const withOptions = ['multi-choice', 'multi-checkbox'];
   return (
     <>
       <div
         className="section-wrapper"
-        onBlur={updateQuestions}
       >
         <div className="headline-description">
           <div className="question-header">
             <input
               type="text"
               name="headline"
-              value={input.headline}
+              value={input.headline[lang]}
               onChange={handleChange('headline')}
               placeholder={t('Headline')}
               className="section-inputs question-title"
@@ -134,6 +152,7 @@ const Question = ({
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
+              value={input.type}
               defaultValue={input.type || null}
               className='select-form'
               styles={{
@@ -156,15 +175,14 @@ const Question = ({
           </div>
           {withPlaceHolder.includes(input.type && input.type.value) && (
             <input
-            name="question-headline"
-            type="text"
-            value={input.placeholder}
-            placeholder={t('Placeholder')}
-            onChange={handleChange('placeholder')}
-            className="question-inputs question-headline"
-            onFocus={updateQuestions}
-            onBlur={updateQuestions}
-          />
+              name="question-headline"
+              type="text"
+              value={input.placeholder[lang]}
+              placeholder={t('Placeholder')}
+              onChange={handleChange('placeholder')}
+              className="question-inputs question-headline"
+              onBlur={updateQuestions}
+            />
           )}
           {withOptions.includes(input.type && input.type.value) && (
             <div className="options">
@@ -177,7 +195,6 @@ const Question = ({
                       <input
                         type='text'
                         placeholder={t('Value')}
-                        value={input.value}
                         onChange={handleChange('value')}
                         className='option-inputs'
                       />
@@ -186,7 +203,6 @@ const Question = ({
                       <input
                         type='text'
                         placeholder='Label'
-                        value={input.label}
                         onChange={handleChange('label')}
                         className='option-inputs'
                       />
@@ -202,14 +218,14 @@ const Question = ({
                   </tr>
                 </tbody>
                 <tbody className='options-row'>
-                  {input.options.map((option, i) => (
+                  {input.options[lang].map((option, i) => (
                     <tr key={i} className='options-row'>
                       <td className='options-row'>
                         <input
                           type='text'
                           value={option.value}
                           className='option-inputs'
-                          // disabled
+                          disabled
                         />
                       </td>
                       <td className='options-row'>
@@ -217,7 +233,7 @@ const Question = ({
                           type='text'
                           value={option.label}
                           className='option-inputs'
-                          // disabled
+                          disabled
                         />
                       </td>
                       <td className='options-row'>
@@ -236,10 +252,16 @@ const Question = ({
           
           <div className="action-btns">
             <div className="question-footer">
-              <button className="delete-qstion duplicate-qstion" data-title="Duplicate">
+              <button
+                className="delete-qstion duplicate-qstion"
+                data-title="Duplicate"
+              >
                 <i className="far fa-copy fa-md fa-color"></i>
               </button>
-              <button className="delete-qstion delete-btn" data-title="Delete">
+              <button
+                className="delete-qstion delete-btn"
+                data-title={t('Delete')}
+              >
                 <i className="far fa-trash-alt fa-md fa-color"></i>
               </button>
               <div className='require-chckbox'>
@@ -249,6 +271,7 @@ const Question = ({
                   checked={input.required}
                   onChange={e => handleCheckChanged(e)}
                   className='require-check'
+                  onBlur={updateQuestions}
                 />
                 <label htmlFor={`required_${input.id}`}>{t('Required')}</label>
               </div>

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
+import Context from '../../../context';
 
 const Section = ({
-  t, num, setSection, sections, inputs,
-  addQuestion
+  t, sectionIndex, setSection, sections, inputs,
+  addQuestion, lang
 }) => {
+  const { setAppFormData } = useContext(Context);
+
   const [input, setInput] = useState({
     name: inputs.name,
     description: inputs.description,
@@ -14,30 +17,40 @@ const Section = ({
   });
 
   const handleChange = (prop) => (e) => {
-    setInput({...input, [prop]: e.target.value});
+    const target = input[prop];
+    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
   }
+
   const updateSections = () => { // Update sections in the application form when section loses focus
-    sections[num-1] = input;
-    setSection([...sections]);
+    const updatedSections = sections.map(s => {
+      if(s.id === input.id) return input;
+      return s;
+    })
+    setAppFormData([...updatedSections]);
   }
+
   const handleQuestions = (inpt) => {
-    setInput({...input, questions: inpt})
+    setInput({...input, questions: inpt});
   }
-  const numSections = sections.length
+
+  const numSections = sections.length;
+  const index = sectionIndex + 1;
+
   return (
     <>
       <div
         className="section-wrapper"
-        // onBlur={updateSections}
+        id={`section-${input.id}`}
+        key={input.id}
       >
         <div className="section-number">
-          <Trans i18nKey='sectionPlace' >Section {{num}} of {{numSections}}</Trans>
+          <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
         </div>
         <div className="title-description">
           <div className="section-header">
             <input
               type="text"
-              value={input.name}
+              value={input.name[lang]}
               onChange={handleChange('name')}
               className="section-inputs section-title"
               onBlur={updateSections}
@@ -52,12 +65,6 @@ const Section = ({
               <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
             </button>
             <div className="dropdown-menu" aria-labelledby="title-desc-toggle">
-              <button
-                className="delete-section"
-                
-              >
-                {t("Add Section")}
-              </button>
               <button className="delete-section">
                 {t("Delete Section")}
               </button>
@@ -69,10 +76,11 @@ const Section = ({
           <input
             name="section-desc"
             type="text"
-            value={input.description}
+            value={input.description[lang]}
             placeholder={t('Description')}
             onChange={handleChange('description')}
             className="section-inputs section-desc"
+            onBlur={updateSections}
            /> 
         </div>
 
@@ -86,12 +94,14 @@ const Section = ({
             setQuestions={handleQuestions}
             setSection={setSection}
             sections={sections}
+            sectionId={input.id}
+            lang={lang}
             />
         ))}
         <div className='add-question-wrapper'>
           <button
             className="add-question-btn"
-            data-title="Add Question"
+            data-title={t('Add Question')}
             onClick={() => addQuestion(inputs.id)}
           >
             <i class="fas fa-plus add-section-icon"></i>

@@ -86,14 +86,11 @@
 .application-form-wrap .add-section-icon:hover,
 .application-form-wrap .add-section-icon:focus {
   color: #fff;
-  /* background: grey; */
 }
 .application-form-wrap .add-section-btn {
-  /* float: right; */
   padding: 5px;
   margin-right: 2em;
   margin-top: 12em;
-  /* margin-bottom: 3em; */
   border: solid thin #333;
   width: 3em;
   height: 3em;
@@ -123,6 +120,7 @@
   background-color: #333;
   color: #fff;
 }
+
 /* Section */
 
 .application-form-wrap .section-wrapper {
@@ -161,6 +159,13 @@
 
 .application-form-wrap .section-title {
   font-size: 1.8em;
+}
+
+.application-form-wrap .select-language {
+  width: 20%;
+  float: right;
+  margin: 0 2em;
+  box-shadow: none;
 }
 
 .application-form-wrap .title-desc-toggle {
@@ -249,7 +254,7 @@
   cursor: pointer;
 }
 
-.add-question-wrapper {
+.application-form-wrap .add-question-wrapper {
   text-align: end;
   padding: 0.5em 2em;
 }
