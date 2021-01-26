@@ -8,11 +8,10 @@ import ReactTooltip from 'react-tooltip';
 import { NavLink } from "react-router-dom";
 import { tagsService } from '../../../services/tags/tags.service';
 import { applicationFormService } from '../../../services/applicationForm/applicationForm.service';
+import AnswerValue from "../../../components/answerValue";
 import Loading from "../../../components/Loading";
 import FormTextBox from "../../../components/form/FormTextBox";
 import { reviewService } from '../../../services/reviews/review.service';
-
-const baseUrl = process.env.REACT_APP_API_URL;
 
 class ResponseListForm extends Component {
     constructor(props) {
@@ -63,7 +62,7 @@ class ResponseListForm extends Component {
 
     // Handle/Format Data
     handleData = () => {
-        const { responses } = this.state;
+        const { questions, responses } = this.state;
 
         if (!responses) {
             console.log('ERROR: responses is not defined: ', responses);
@@ -98,33 +97,31 @@ class ResponseListForm extends Component {
             // Check if anwser should be displayed in table based on state.selected, then extract only the value's
             val.answers.forEach(answer => {
                 // format anwers display based on type
-
+                const question = questions.find(q => answer.question_id === q.question_id);
                 if (answer.type.includes("text")) {
                     handleAnswers.push([{
-                        headline: answer.headline, value: <div key={answer.headline} data-tip={answer.value}><p>{answer.value}</p><ReactTooltip
-                            className="Tooltip"
-                        />
-                        </div>
+                        headline: answer.headline,
+                        value: (
+                            <div key={answer.headline} data-tip={answer.value}>
+                                <p><AnswerValue answer={answer} question={question} /></p>
+                                <ReactTooltip className="Tooltip"/>
+                            </div>
+                        )
                     }])
                 }
 
                 else if (answer.type == "file") {
                     handleAnswers.push([{
                         headline: answer.headline,
-                        value: <a key={answer.headline} target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{answer.value}</a>
+                        value: <AnswerValue answer={answer} question={question} />
                     }])
                 }
 
                 else if (answer.type == "multi-file") {
-                    const answerFiles = JSON.parse(answer.value);
-                    let files = [];
-                    if (Array.isArray(answerFiles) && answerFiles.length > 0) {
-                        files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)
-                    }
-                    else {
-                        files = "No files uploaded";
-                    }
-                    handleAnswers.push([{ headline: answer.headline, value: <div key={answer.headline}>{files}</div> }])
+                    handleAnswers.push([{
+                        headline: answer.headline,
+                        value: <div key={answer.headline}><AnswerValue answer={answer} question={question} /></div>
+                    }])
                 }
 
                 else if (answer.type.includes("choice")) {
@@ -132,13 +129,24 @@ class ResponseListForm extends Component {
                     answer.options.forEach((opt => {
                         if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
                     }))
-                    handleAnswers.push([{ headline: answer.headline, value: <div key={choices}>{choices}</div> }])
+                    handleAnswers.push([{
+                        headline: answer.headline,
+                        value: (
+                            <div key={choices}>
+                                <AnswerValue answer={answer} question={question} />
+                            </div>
+                        )
+                    }])
                 }
 
                 else {
                     handleAnswers.push([{
-                        headline: answer.headline, value: <div key={answer.headline}><p>{answer.value}</p>
-                        </div>
+                        headline: answer.headline,
+                        value: (
+                            <div key={answer.headline}>
+                                <p><AnswerValue answer={answer} question={question} /></p>
+                            </div>
+                        )
                     }])
                 }
             })

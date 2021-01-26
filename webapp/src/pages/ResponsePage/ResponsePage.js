@@ -9,6 +9,7 @@ import { applicationFormService } from '../../services/applicationForm/applicati
 import { reviewService } from '../../services/reviews/review.service';
 import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
+import AnswerValue from "../../components/answerValue";
 import Loading from "../../components/Loading";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
@@ -118,7 +119,7 @@ class ResponsePage extends Component {
                     <div className="flex baseline"><h3>{section.name}</h3></div>
                     { /*Q & A*/}
                     <div className="Q-A">
-                        {this.renderQuestions(section)}
+                        {this.renderResponses(section)}
                     </div>
                 </div>)
             });
@@ -127,9 +128,11 @@ class ResponsePage extends Component {
         return html
     };
 
-    // Render Questions 
-    renderQuestions(section) {
+    // Render questions and answers
+    renderResponses(section) {
+        const applicationData = this.state.applicationData;
         const questions = section.questions.map(q => {
+            const a = applicationData.answers.find(a => a.question_id === q.id);
             if (q.type === "information") {
                 return <h4>{q.headline}</h4>
             };
@@ -137,7 +140,7 @@ class ResponsePage extends Component {
                 <p><span className="question-headline">{q.headline}</span>
                     {q.description && <span className="question-description"><br/>{q.description}</span>}
                 </p>
-                <h6>{this.renderAnswer(q.id, q.type, q.headline, q.options)}</h6>
+                <h6><AnswerValue answer={a} question={q} /></h6>
             </div>
         });
         return questions
