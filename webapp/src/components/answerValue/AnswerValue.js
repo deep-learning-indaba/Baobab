@@ -1,24 +1,13 @@
 import React from "react";
 import { withTranslation } from 'react-i18next';
 
-const baseUrl = process.env.REACT_APP_API_URL;
+import MultiFileValue from './MultiFileValue'
 
+const baseUrl = process.env.REACT_APP_API_URL;
 const FILE = "file";
 const INFORMATION = 'information'
 const MULTI_CHOICE = "multi-choice";
 const MULTI_FILE = 'multi-file';
-
-function MultiFileValue({value}) {
-  const values = JSON.parse(value);
-  return <ul>
-    {values.map(v => 
-      <li key={"file_" + v.id}>
-        <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + v.file}>
-          {v.name}
-        </a>
-      </li>)}
-  </ul>
-}
 
 function AnswerValue({answer, question, t}) {
   if (answer && answer.question_type) {
@@ -32,7 +21,9 @@ function AnswerValue({answer, question, t}) {
   }
 
   if (answer && answer.value) {
-    answer.value.trim()
+    if (typeof answer.value === "string") {
+      answer.value.trim()
+    }
     switch (question.type) {
       case MULTI_CHOICE:
         const opts = question.options || answer.options
