@@ -21,9 +21,6 @@ function AnswerValue({answer, question, t}) {
   }
 
   if (answer && answer.value) {
-    if (typeof answer.value === "string") {
-      answer.value.trim()
-    }
     switch (question.type) {
       case MULTI_CHOICE:
         const opts = question.options || answer.options
