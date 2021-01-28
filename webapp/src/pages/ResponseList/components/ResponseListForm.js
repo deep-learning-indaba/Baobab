@@ -94,61 +94,17 @@ class ResponseListForm extends Component {
                 </NavLink>;
             }
 
-            // Check if anwser should be displayed in table based on state.selected, then extract only the value's
             val.answers.forEach(answer => {
-                // format anwers display based on type
                 const question = questions.find(q => answer.question_id === q.question_id);
-                if (answer.type.includes("text")) {
-                    handleAnswers.push([{
-                        headline: answer.headline,
-                        value: (
-                            <div key={answer.headline} data-tip={answer.value}>
-                                <p><AnswerValue answer={answer} question={question} /></p>
-                                <ReactTooltip className="Tooltip"/>
-                            </div>
-                        )
-                    }])
-                }
-
-                else if (answer.type == "file") {
-                    handleAnswers.push([{
-                        headline: answer.headline,
-                        value: <AnswerValue answer={answer} question={question} />
-                    }])
-                }
-
-                else if (answer.type == "multi-file") {
-                    handleAnswers.push([{
-                        headline: answer.headline,
-                        value: <div key={answer.headline}><AnswerValue answer={answer} question={question} /></div>
-                    }])
-                }
-
-                else if (answer.type.includes("choice")) {
-                    let choices = [];
-                    answer.options.forEach((opt => {
-                        if (answer.value == opt.value) { choices.push(<div key={opt.label}><label>{opt.label}</label></div>) }
-                    }))
-                    handleAnswers.push([{
-                        headline: answer.headline,
-                        value: (
-                            <div key={choices}>
-                                <AnswerValue answer={answer} question={question} />
-                            </div>
-                        )
-                    }])
-                }
-
-                else {
-                    handleAnswers.push([{
-                        headline: answer.headline,
-                        value: (
-                            <div key={answer.headline}>
-                                <p><AnswerValue answer={answer} question={question} /></p>
-                            </div>
-                        )
-                    }])
-                }
+                handleAnswers.push([{
+                    headline: answer.headline,
+                    value: (
+                        <div key={answer.headline} data-tip={answer.value}>
+                            <AnswerValue answer={answer} question={question} />
+                            <ReactTooltip className="Tooltip"/>
+                        </div>
+                    )
+                }])
             })
 
             // extract only the tag names
