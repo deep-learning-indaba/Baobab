@@ -1,3 +1,4 @@
+import Linkify from 'react-linkify';
 import React from "react";
 import { withTranslation } from 'react-i18next';
 
@@ -48,7 +49,7 @@ function AnswerValue({answer, question, t}) {
           </span>
         </div>
       default:
-        return answer.value;
+        return <Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify>
     }
   }
   return t("No answer provided.");

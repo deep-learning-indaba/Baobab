@@ -1,3 +1,4 @@
+import Linkify from 'react-linkify';
 import React from 'react';
 import { shallow } from 'enzyme';
 
@@ -108,13 +109,16 @@ describe('AnswerValue Tests', () => {
     expect(wrapper.equals("No answer provided.")).toEqual(true);
   });
 
-  it('Renders answer value for all other types.', () => {
+  it('Renders linkified answer value for all other types.', () => {
     const answer = { value: 'lorem' }
     const question = { type: 'ipsum' }
     const wrapper = shallow(
       <AnswerValue answer={answer} question={question} />
     );
-    expect(wrapper.equals("lorem")).toEqual(true);
+
+    expect(wrapper.contains(
+      <Linkify properties={{ target: '_blank' }}>lorem</Linkify>
+    )).toEqual(true);
   });
 
 });
