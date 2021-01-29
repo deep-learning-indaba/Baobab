@@ -14,7 +14,8 @@ export const option = ({ value, t, label: l, faClass }) => {
   }
 }
 
-export const langObject = (langs, value) => langs && langs.reduce((obj, item) => Object.assign(obj,
+export const langObject = (langs, value) => langs
+  && langs.reduce((obj, item) => Object.assign(obj,
   {
     [item.code]: value
   }

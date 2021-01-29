@@ -1,13 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { default as ReactSelect } from "react-select";
 import { option } from './util';
-import Context from '../../../context';
 
 const Question = ({
-    inputs, t, questions,sectionId,
-    sections, lang
+    inputs, t, questions,
+    lang, setSection, section
 }) => {
-  const { setAppFormData } = useContext(Context);
+  // const { setAppFormData } = useContext(Context);
   const [input, setInput] = useState({
     headline: inputs.headline,
     placeholder: inputs.placeholder,
@@ -58,12 +57,7 @@ const Question = ({
       if(q.id === input.id) return input;
       return q;
     });
-  
-    const updatedSections = sections.map(s => {
-      if(s.id === sectionId) return {...s, questions: updatedQuestions};
-      return s
-    });
-    setAppFormData(updatedSections);
+    setSection({...section, questions: updatedQuestions});
   }
 
   const options = [
@@ -135,6 +129,7 @@ const Question = ({
     <>
       <div
         className="section-wrapper"
+        onMouseOut={updateQuestions}
       >
         <div className="headline-description">
           <div className="question-header">
@@ -145,14 +140,12 @@ const Question = ({
               onChange={handleChange('headline')}
               placeholder={t('Headline')}
               className="section-inputs question-title"
-              onBlur={updateQuestions}
             />
             <ReactSelect
               id={input.id}
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
-              value={input.type}
               defaultValue={input.type || null}
               className='select-form'
               styles={{
@@ -181,7 +174,6 @@ const Question = ({
               placeholder={t('Placeholder')}
               onChange={handleChange('placeholder')}
               className="question-inputs question-headline"
-              onBlur={updateQuestions}
             />
           )}
           {withOptions.includes(input.type && input.type.value) && (
@@ -202,7 +194,7 @@ const Question = ({
                     <td className='options-row'>
                       <input
                         type='text'
-                        placeholder='Label'
+                        placeholder={t('Label')}
                         onChange={handleChange('label')}
                         className='option-inputs'
                       />
@@ -271,7 +263,6 @@ const Question = ({
                   checked={input.required}
                   onChange={e => handleCheckChanged(e)}
                   className='require-check'
-                  onBlur={updateQuestions}
                 />
                 <label htmlFor={`required_${input.id}`}>{t('Required')}</label>
               </div>

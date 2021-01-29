@@ -4,8 +4,7 @@ import Question from './Question';
 import Context from '../../../context';
 
 const Section = ({
-  t, sectionIndex, setSection, sections, inputs,
-  addQuestion, lang
+  t, sectionIndex, sections, inputs, lang
 }) => {
   const { setAppFormData } = useContext(Context);
 
@@ -29,6 +28,36 @@ const Section = ({
     setAppFormData([...updatedSections]);
   }
 
+  const addQuestion = () => {
+    const qsts = input.questions;
+    setInput({...input, questions: [...qsts, {
+      id: `${Math.random()}`,
+      order: qsts.length && qsts.length + 1,
+      headline: {
+        en: '',
+        fr: ''
+      },
+      placeholder: {
+        en: '',
+        fr: ''
+      },
+      type: null,
+      options: {
+        en: [],
+        fr: []
+      },
+      value: {
+        en: '',
+        fr: ''
+      },
+      label: {
+        en: '',
+        fr: ''
+      },
+      required: false
+    }]});
+  }
+
   const handleQuestions = (inpt) => {
     setInput({...input, questions: inpt});
   }
@@ -42,6 +71,7 @@ const Section = ({
         className="section-wrapper"
         id={`section-${input.id}`}
         key={input.id}
+        onBlur={updateSections}
       >
         <div className="section-number">
           <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
@@ -53,7 +83,6 @@ const Section = ({
               value={input.name[lang]}
               onChange={handleChange('name')}
               className="section-inputs section-title"
-              onBlur={updateSections}
             />
             <button
               className="title-desc-toggle"
@@ -80,7 +109,6 @@ const Section = ({
             placeholder={t('Description')}
             onChange={handleChange('description')}
             className="section-inputs section-desc"
-            onBlur={updateSections}
            /> 
         </div>
 
@@ -92,9 +120,10 @@ const Section = ({
             num={question.id}
             questions={input.questions}
             setQuestions={handleQuestions}
-            setSection={setSection}
+            setSection={setInput}
             sections={sections}
             sectionId={input.id}
+            section={input}
             lang={lang}
             />
         ))}
@@ -102,7 +131,7 @@ const Section = ({
           <button
             className="add-question-btn"
             data-title={t('Add Question')}
-            onClick={() => addQuestion(inputs.id)}
+            onMouseUp={() => addQuestion()}
           >
             <i class="fas fa-plus add-section-icon"></i>
           </button>

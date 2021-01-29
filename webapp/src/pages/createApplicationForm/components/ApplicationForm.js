@@ -44,6 +44,7 @@ const ApplicationForm = (props) => {
     ]
   }]);
 
+
   useEffect(() => {
     eventService.getEvent(props.event.id).then( res => {
       setEvent({
@@ -96,41 +97,6 @@ const ApplicationForm = (props) => {
     }]), 1);
   }
 
-  const addQuestion = (sectionId) => {
-    let newSections = sections.map(e => {
-      if(e.id === sectionId) {
-        return {...e, questions: [...e.questions, {
-          id: `${Math.random()}`,
-          order: e.questions.length && e.questions.length + 1,
-          headline: {
-            en: '',
-            fr: ''
-          },
-          placeholder: {
-            en: '',
-            fr: ''
-          },
-          type: null,
-          options: {
-            en: [],
-            fr: []
-          },
-          value: {
-            en: '',
-            fr: ''
-          },
-          label: {
-            en: '',
-            fr: ''
-          },
-          required: false
-        }]}
-      }
-      return e;
-    });
-    setSections(newSections);
-  } 
-
   const options = () => {
     return lang.map(l => option({
       value: l.code,
@@ -180,7 +146,7 @@ const ApplicationForm = (props) => {
           <button
             className='add-section-btn'
             data-title="Add Section"
-            onClick={() => addSection()}
+            onMouseUp={() => addSection()}
           >
             <i class="fas fa-plus fa-lg add-section-icon"></i>
           </button>
@@ -248,7 +214,6 @@ const ApplicationForm = (props) => {
               inputs={section}
               sections={sections}
               addSection={addSection}
-              addQuestion={addQuestion}
               lang={language.value}
             />
           ))

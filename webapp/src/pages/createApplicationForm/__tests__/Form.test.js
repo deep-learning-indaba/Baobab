@@ -7,10 +7,12 @@ import Form from '../Form';
 
 test('Check if Application Form Page renders.', () => {
   // Render Application Form Page.
+  const languages = [{ code: 'en', description: 'English' }];
   const props = {
     event: {
       id: '2021'
-    }
+    },
+    languages
   }
   const wrapper = shallow(<ApplicationForm {...props} />);
   expect(wrapper.length).toEqual(1);
@@ -82,6 +84,46 @@ test('Check if the Question Component renders.', () => {
   // Render Question Component.
   const t = jest.fn();
   const sectionId = 1;
+  const section = {
+    id: `${Math.random()}`,
+    name: {
+      en: 'Untitled Section',
+      fr: 'Section sans titre'
+    },
+    description: {
+      en: '',
+      fr: ''
+    },
+    language: {label: 'English', value: 'en'},
+    questions: [
+      {
+        id: `${Math.random()}`,
+        order: 1,
+        headline: {
+          en: '',
+          fr: ''
+        },
+        placeholder: {
+          en: '',
+          fr: ''
+        },
+        type: null,
+        options: {
+          en: [],
+          fr: []
+        },
+        value: {
+          en: '',
+          fr: ''
+        },
+        label: {
+          en: '',
+          fr: ''
+        },
+        required: false
+      }
+    ]
+  }
   const  sections = [{
     id: `${Math.random()}`,
     name: {
@@ -183,7 +225,8 @@ test('Check if the Question Component renders.', () => {
     t,
     sectionId,
     sections,
-    lang
+    lang,
+    section
   };
   const wrapper = shallow(<Question {...props} />);
   expect(wrapper.length).toEqual(1);
@@ -191,6 +234,9 @@ test('Check if the Question Component renders.', () => {
 
 test('Check if the Form Component renders', () => {
   const languages = [{ code: 'en', description: 'English' }];
-  const wrapper = shallow(<Form languages={languages} />);
+  const props = {
+    languages
+  };
+  const wrapper = shallow(<Form {...props} />);
   expect(wrapper.length).toEqual(1);
 })
