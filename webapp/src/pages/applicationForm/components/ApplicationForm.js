@@ -17,6 +17,7 @@ import FormReferenceRequest from "./ReferenceRequest";
 import Loading from "../../../components/Loading";
 import _ from "lodash";
 import { withTranslation } from 'react-i18next';
+import AnswerValue from '../../../components/answerValue'
 
 
 
@@ -456,49 +457,6 @@ class Section extends React.Component {
   }
 }
 
-
-function MultiFileValue(props) {
-  const value = JSON.parse(props.value);
-  return <ul>
-    {value.map(v=><li key={"file_" + v.id}><a target="_blank" href={baseUrl + "/api/v1/file?filename=" + v.file}>{v.name}</a></li>)}
-  </ul>
-}
-
-function AnswerValue(props) {
-  if (props.qm.question.type === INFORMATION) {
-    return "";
-  }
-
-  if (props.qm.answer && props.qm.answer.value) {
-    switch (props.qm.question.type) {
-      case MULTI_CHOICE:
-        const options = props.qm.question.options.filter(o => o.value === props.qm.answer.value);
-        if (options && options.length > 0) {
-          return options[0].label;
-        }
-        else {
-          return props.qm.answer.value;
-        }
-      case FILE:
-        return <div>
-          <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + props.qm.answer.value}>{props.t("Uploaded File")}</a>
-          <br/>
-          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
-        </div>
-      case MULTI_FILE:
-        return <div>
-          <MultiFileValue value={props.qm.answer.value}/>
-          <br/>
-          <span className="small-text">*{props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
-        </div>
-      default:
-        return props.qm.answer.value;
-    }
-  }
-  return props.t("No answer provided.");
-}
-
-
 class ConfirmationComponent extends React.Component {
 
   render() {
@@ -545,7 +503,9 @@ class ConfirmationComponent extends React.Component {
                         </div>
                         <div class="row">
                           <div class="col">
-                            <p class="answer-value"><AnswerValue qm={qm} t={t} /></p>
+                            <p class="answer-value">
+                              <AnswerValue answer={qm.answer} question={qm.question} />
+                            </p>
                           </div>
                         </div>
                       </div>
