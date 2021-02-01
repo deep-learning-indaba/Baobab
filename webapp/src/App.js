@@ -151,6 +151,13 @@ class EventNav extends Component {
                   >
                     {t('Response List')}
                   </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/applicationform`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Form Settings')}
+                  </NavLink>
                 </div>
               </li>
             )}
@@ -464,7 +471,9 @@ class AppComponent extends Component {
                       setEvent={this.setEvent}
                       user={this.state.user}
                       eventKey={this.state.eventKey}
-                      event={this.state.currentEvent} />
+                      event={this.state.currentEvent}
+                      organisation={this.props.organisation}
+                      />
                   )}
                 />
               </Switch>
