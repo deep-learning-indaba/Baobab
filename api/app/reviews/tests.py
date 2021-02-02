@@ -1518,6 +1518,50 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(len(data), 6)
         self.assertEqual(len(data['references']), 0)
 
+    def test_get_reference_submitted_later(self):
+        """
+        In this test, a reference has been requested, but the reference is only submitted after the second check
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'),
+                                data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 0)
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data['references']), 2)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+
     def test_two_references_only_one_submitted(self):
         """
         In this test, two references have been requested, but only one submitted (two ids exists, one reference submitted)
