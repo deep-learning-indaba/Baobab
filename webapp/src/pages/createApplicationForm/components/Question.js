@@ -1,6 +1,6 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, createRef } from 'react';
 import { default as ReactSelect } from "react-select";
-import { option } from './util';
+import { option, shuffleArray, initialImages, Bubble, AnimateBubbles  } from './util';
 
 const Question = ({
     inputs, t, questions,
@@ -18,6 +18,12 @@ const Question = ({
     label: inputs.label,
     required: inputs.required
   });
+  const [images, setImages] = useState(initialImages);
+
+  const reorder = () => {
+    const shuffledImages = shuffleArray(images);
+    setImages(shuffledImages);
+  };
 
   const handleChange = (prop) => (e) => {
     const target = input[prop];
@@ -267,6 +273,18 @@ const Question = ({
                 <label htmlFor={`required_${input.id}`}>{t('Required')}</label>
               </div>
             </div>
+          </div>
+          <div className="bubbles-group">
+            {/* <AnimateBubbles>
+              {images.map(({ id, text }) => (
+                <Bubble key={id} id={id} text={text} ref={createRef()} />
+              ))}
+            </AnimateBubbles> */}
+          </div>
+          <div className="button-wrapper">
+            <button className="button" onClick={reorder}>
+              Re-order images
+            </button>
           </div>
         </div>
       </div>

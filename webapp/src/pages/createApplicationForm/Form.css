@@ -172,6 +172,10 @@
   float: right;
   border: none;
   padding: 5px;
+  /* text-align: center; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 3em;
   height: 3em;
   border-radius: 50%;
@@ -180,6 +184,13 @@
   transition-duration: 1s;
   transition-timing-function: ease-out;
   outline: none;
+}
+
+.confirm-modal {
+  /* position: absolute; */
+  top: 30%;
+   /* left: 50%;  */
+  /* transform: translate(-50%, -50%) !important;  */
 }
 
 .application-form-wrap .title-desc-toggle:hover,
@@ -192,7 +203,7 @@
 
 .application-form-wrap .delete-section {
   display: block;
-  width: 10em;
+  width: 12em;
   background: #fff;
   border: none;
   text-align: left;
@@ -200,6 +211,15 @@
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
+}
+
+.application-form-wrap .fa-section {
+  margin-right: 0.5em;
+}
+
+.application-form-wrap .fa-duplicate {
+  margin-right: 0.7em;
+  margin-left: 0.5em;
 }
 
 .application-form-wrap .delete-section:hover,
@@ -423,3 +443,66 @@
   background-color: gray;
   color: white;
 }
+
+html {
+  font-family: sans-serif;
+}
+
+.circle {
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+  background-color: rgb(235, 207, 51);
+  position: relative;
+  margin: 0.6rem;
+  box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.2),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 2px 1px -1px rgba(0, 0, 0, 0.12);
+}
+
+.text {
+  text-align: center;
+  margin: 5px;
+  font-size: 14px;
+}
+
+.image {
+  background-position: center center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border-radius: 50%;
+  color: black;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.button-wrapper {
+  text-align: center;
+}
+
+.button {
+  margin: 2rem 0.4rem;
+  color: #ffffff;
+  padding: 0.5rem 2rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.5s ease;
+  background-color: #2e81d4;
+}
+
+.button:hover {
+  background-color: #042c55;
+}
+
+.bubbles-wrapper {
+  display: flex;
+}
+
+.bubbles-group {
+  display: flex;
+  margin: 1rem auto;
+}
+

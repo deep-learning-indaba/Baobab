@@ -1,16 +1,19 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef, forwardRef } from 'react';
 import { Trans } from 'react-i18next';
+import { ConfirmModal } from "react-bootstrap4-modal";
 import Question from './Question';
 import Context from '../../../context';
+// import useIsMounted from './util';
 
-const Section = ({
-  t, sectionIndex, sections, inputs, lang
-}) => {
+const Section = forwardRef(({
+  t, sectionIndex, sections, inputs, lang, setSection
+}, ref) => {
   const { setAppFormData } = useContext(Context);
-
+  const [isModelVisible, setIsModelVisible] = useState(false);
   const [input, setInput] = useState({
     name: inputs.name,
     description: inputs.description,
+    order: inputs.order,
     id: inputs.id,
     questions: inputs.questions
   });
@@ -62,16 +65,36 @@ const Section = ({
     setInput({...input, questions: inpt});
   }
 
+  const handleOkDelete = () => {
+    const updatedSections = sections.filter(s => s.id !== input.id);
+    setAppFormData(updatedSections);
+  }
+
+  const handleConfirm = () => {
+    setIsModelVisible(!isModelVisible);
+  }
+
+  const handleMoveUp = () => {
+    const nSec = sections;
+    [nSec[sectionIndex-1], nSec[sectionIndex]] = [nSec[sectionIndex], nSec[sectionIndex-1]];
+    const newSec = nSec.map((s, i) => {
+      return {...s, order: i+1}
+    });
+    
+    setSection(newSec);
+  }
+
   const numSections = sections.length;
   const index = sectionIndex + 1;
+  const isDisabled = sections.length === 1 ? true : false;
 
   return (
-    <>
       <div
         className="section-wrapper"
-        id={`section-${input.id}`}
+        id={`section-${sectionIndex}`}
         key={input.id}
-        onBlur={updateSections}
+        onBlur={!isModelVisible && updateSections}
+        ref={ref}
       >
         <div className="section-number">
           <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
@@ -84,23 +107,46 @@ const Section = ({
               onChange={handleChange('name')}
               className="section-inputs section-title"
             />
-            <button
+            <div
+              id="toggleTitle"
               className="title-desc-toggle"
-              name="title-desc-toggle"
+              role="button"
               data-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
               <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
-            </button>
-            <div className="dropdown-menu" aria-labelledby="title-desc-toggle">
-              <button className="delete-section">
+            </div>
+            <div className="dropdown-menu" aria-labelledby="toggleTitle">
+              <button
+                className="dropdown-item delete-section"
+                disabled={isDisabled}
+                onClick={handleConfirm}
+                >
+                <i className="far fa-trash-alt fa-section"></i>
                 {t("Delete Section")}
               </button>
-              <button className="delete-section">
+              <button className="dropdown-item delete-section" >
+                <i className="far fa-copy fa-section fa-duplicate"></i>
                 {t("Duplicate Section")}
               </button>
+              <button
+                className="dropdown-item delete-section"
+                onClick={handleMoveUp}
+                disabled={index === 1}
+              >
+                <i class="fas fa-angle-up fa-section fa-duplicate"></i>
+                {t("Move Section Up")}
+              </button>
+              <button
+                disabled={index === sections.length}
+                className="dropdown-item delete-section"
+              >
+                <i class="fas fa-angle-down fa-section fa-duplicate"></i>
+                {t("Move Section Down")}
+              </button>
             </div>
+            
           </div>
           <input
             name="section-desc"
@@ -136,9 +182,24 @@ const Section = ({
             <i class="fas fa-plus add-section-icon"></i>
           </button>
         </div>
+        {
+          isModelVisible && (
+            <ConfirmModal
+              className='confirm-modal'
+              visible={true}
+              centered
+              onOK={handleOkDelete}
+              onCancel={() => handleConfirm()}
+              okText={t("Yes - Delete")}
+              cancelText={t("No - Don't delete")}>
+              <p>
+                {t("Are you sure you want to detele this section?")}
+              </p>
+            </ConfirmModal>
+          )
+        }
       </div>
-    </>
   )
-}
+})
 
 export default Section;
