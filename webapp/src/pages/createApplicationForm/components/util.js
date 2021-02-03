@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export const option = ({ value, t, label: l, faClass }) => {
   const label = faClass ? <div>

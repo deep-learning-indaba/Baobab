@@ -29,6 +29,7 @@ const ApplicationForm = (props) => {
     id: `${Math.random()}`,
     name: langObject(lang, t('Untitled Section')),
     description: langObject(lang, ''),
+    order: Math.floor(Math.random() * 10) + 1,
     questions: [
       {
         id: `${Math.random()}`,
@@ -81,6 +82,7 @@ const ApplicationForm = (props) => {
       id: `${Math.random()}`,
       name: langObject(lang, t('Untitled Section')),
       description: langObject(lang, ''),
+      order: Math.floor(Math.random() * 10) + 1,
       questions: [
         {
           id: `${Math.random()}`,
@@ -205,7 +207,8 @@ const ApplicationForm = (props) => {
           menuPlacement="auto"
         />
         {
-          sections.map((section, i) => (
+          sections.sort((a, b) => a.order - b.order)
+          .map((section, i) => (
             <Section
               t={t}
               key={section.id}
