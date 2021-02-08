@@ -19,6 +19,7 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
     def get(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('filename', type=str, required=True)
+        req_parser.add_argument('rename', type=str, required=False)
         args = req_parser.parse_args()
 
         bucket = storage.get_storage_bucket()
@@ -26,7 +27,11 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
-            return send_file(temp.name, as_attachment=True, attachment_filename=args['filename'], mimetype='application/pdf')
+            renamed = args['rename'] or args['filename']
+            return send_file(
+                temp.name, 
+                as_attachment=True, 
+                attachment_filename=args['rename'] or args['filename'])
 
 
     def post(self):

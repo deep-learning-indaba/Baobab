@@ -1,12 +1,16 @@
-import React, { useContext, useState, createRef } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { default as ReactSelect } from "react-select";
-import { option, shuffleArray, initialImages, Bubble, AnimateBubbles  } from './util';
+import {
+  option, Modal, handleMove
+} from './util';
 
-const Question = ({
-    inputs, t, questions,
-    lang, setSection, section
-}) => {
-  // const { setAppFormData } = useContext(Context);
+const Question = forwardRef(({
+    inputs, t, questions, sectionId, setSections,
+    lang, setSection, section, sections,
+    setApplytransition, questionIndex, setQuestionAnimation,
+    handleDrag, handleDrop
+}, ref) => {
+  const [isModelVisible, setIsModelVisible] = useState(false);
   const [input, setInput] = useState({
     headline: inputs.headline,
     placeholder: inputs.placeholder,
@@ -18,12 +22,6 @@ const Question = ({
     label: inputs.label,
     required: inputs.required
   });
-  const [images, setImages] = useState(initialImages);
-
-  const reorder = () => {
-    const shuffledImages = shuffleArray(images);
-    setImages(shuffledImages);
-  };
 
   const handleChange = (prop) => (e) => {
     const target = input[prop];
@@ -55,7 +53,7 @@ const Question = ({
   const handleDeleteOption = (id, e) => {
     const newOptions = input.options[lang].filter(e => e.id !== id);
     const opt = input.options;
-    setInput({...input, options: {...opt, [lang]: [...newOptions]}})
+    setInput({...input, options: {...opt, [lang]: [...newOptions]}});
   }
 
   const updateQuestions = () => { // Update questions in the sections form when question loses focus
@@ -63,7 +61,63 @@ const Question = ({
       if(q.id === input.id) return input;
       return q;
     });
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: updatedQuestions}
+      }
+      return s
+    });
     setSection({...section, questions: updatedQuestions});
+    setQuestionAnimation(false);
+    setApplytransition(false);
+  }
+
+  const handleOkDelete = () => {
+    const newQuestions = questions.filter(q => q.id !== input.id);
+    const updatedSection = {...section, questions: newQuestions};
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = updatedSection
+      }
+      return s;
+    });
+    setSection(updatedSection);
+    setSections(updatedSections);
+    setQuestionAnimation(false);
+  }
+
+  const handleConfirm = () => {
+    setIsModelVisible(!isModelVisible);
+    setApplytransition(false);
+  }
+
+  const handleMoveQUp = () => {
+    handleMove({
+      elements: questions,
+      index: questionIndex,
+      setState: setSection,
+      section: section,
+      setAnimation: setQuestionAnimation,
+      sections,
+      setSection: setSections,
+      u: true
+    });
+  }
+
+  const handleMoveQDown = () => {
+    handleMove({
+      elements: questions,
+      index: questionIndex,
+      setState: setSection,
+      section: section,
+      setAnimation: setQuestionAnimation,
+      sections,
+      setSection: setSections,
+    });
+  }
+
+  const handleDropOver = (e) => {
+    e.preventDefault();
   }
 
   const options = [
@@ -135,7 +189,14 @@ const Question = ({
     <>
       <div
         className="section-wrapper"
-        onMouseOut={updateQuestions}
+        onBlur={updateQuestions}
+        key={input.id}
+        id={input.id}
+        ref={ref}
+        draggable={true}
+        onDragOver={handleDropOver}
+        onDragStart={handleDrag}
+        onDrop={handleDrop}
       >
         <div className="headline-description">
           <div className="question-header">
@@ -148,7 +209,6 @@ const Question = ({
               className="section-inputs question-title"
             />
             <ReactSelect
-              id={input.id}
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
@@ -171,6 +231,22 @@ const Question = ({
               }}
               menuPlacement="auto"
             />
+            <div className='move-btns-wrapper'>
+              <button
+                className="move-btn"
+                data-title={t("Move up")}
+                onClick={handleMoveQUp}
+              >
+                <i class="fas fa-chevron-up fa-move"></i>
+              </button>
+              <button
+                className="move-btn"
+                data-title={t("Move down")}
+                onClick={handleMoveQDown}
+              >
+                <i class="fas fa-chevron-down fa-move"></i>
+              </button>
+            </div>
           </div>
           {withPlaceHolder.includes(input.type && input.type.value) && (
             <input
@@ -208,7 +284,7 @@ const Question = ({
                     <td className='options-row'>
                       <i
                         className="fas fa-plus-circle  fa-lg fa-table-btns add-row"
-                        data-title='Add'
+                        data-title={t('Add')}
                         onMouseDown={handleAddOption}
                         onMouseUp={resetInputs}
                       ></i>
@@ -236,7 +312,7 @@ const Question = ({
                       </td>
                       <td className='options-row'>
                         <i
-                          data-title='Delete'
+                          data-title={t('Delete')}
                           className="fas fa-minus-circle fa-lg fa-table-btns delete-row"
                           onClick={e => handleDeleteOption(option.id, e)}
                         ></i>
@@ -259,6 +335,7 @@ const Question = ({
               <button
                 className="delete-qstion delete-btn"
                 data-title={t('Delete')}
+                onClick={handleConfirm}
               >
                 <i className="far fa-trash-alt fa-md fa-color"></i>
               </button>
@@ -274,22 +351,18 @@ const Question = ({
               </div>
             </div>
           </div>
-          <div className="bubbles-group">
-            {/* <AnimateBubbles>
-              {images.map(({ id, text }) => (
-                <Bubble key={id} id={id} text={text} ref={createRef()} />
-              ))}
-            </AnimateBubbles> */}
-          </div>
-          <div className="button-wrapper">
-            <button className="button" onClick={reorder}>
-              Re-order images
-            </button>
-          </div>
         </div>
+        {isModelVisible && (
+            <Modal
+              t={t}
+              element='question'
+              handleOkDelete={handleOkDelete}
+              handleConfirm={handleConfirm}
+            />
+          )}
       </div>
     </>
   )
-}
+})
 
 export default Question;

@@ -1,24 +1,29 @@
-import React, { useState, useEffect, useContext, createRef } from 'react';
+import React, { useState, useEffect, createRef } from 'react';
 import { useTranslation } from 'react-i18next'
 import { default as ReactSelect } from "react-select";
 import { eventService } from '../../../services/events';
 import icon from '../icon.svg';
 import Section from './Section';
 import Loading from '../../../components/Loading';
-import Context from '../../../context';
-import { option, langObject, AnimateBubbles, Bubble, shuffleArray, initialImages } from './util';
+import {
+  option, langObject, AnimateSections,
+  drop, drag
+ } from './util';
 
 
 const ApplicationForm = (props) => {
   const { languages } = props;
   const { t } = useTranslation();
   const lang = languages;
-  const { appFormData, setAppFormData } = useContext(Context);
   const [nominate, setNominate] = useState(false);
+
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
     value: lang && lang[0]? lang[0].code : 'en'
   });
+
+  const [dragId, setDragId] = useState();
+  const [applyTransition, setApplytransition] = useState(false);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -26,11 +31,10 @@ const ApplicationForm = (props) => {
     error: null,
   });
 
-  const [applyTransition, setApplytransition] = useState(false)
 
   const [sections, setSections] = useState([{
     id: `${Math.random()}`,
-    name: langObject(lang, t('Untitled Section 1')),
+    name: langObject(lang, t('Untitled Section')),
     description: langObject(lang, ''),
     order: 1,
     questions: [
@@ -46,55 +50,7 @@ const ApplicationForm = (props) => {
         required: false
       }
     ]
-  },
-  {
-    id: `${Math.random()}`,
-    name: langObject(lang, t('Untitled Section 2')),
-    description: langObject(lang, ''),
-    order: 2,
-    questions: [
-      {
-        id: `${Math.random()}`,
-        order: 1,
-        headline: langObject(lang, ''),
-        placeholder: langObject(lang, ''),
-        type: null,
-        options: langObject(lang, []),
-        value: langObject(lang, ''),
-        label: langObject(lang, ''),
-        required: false
-      }
-    ]
-  },
-  {
-    id: `${Math.random()}`,
-    name: langObject(lang, t('Untitled Section 3')),
-    description: langObject(lang, ''),
-    order: 3,
-    questions: [
-      {
-        id: `${Math.random()}`,
-        order: 1,
-        headline: langObject(lang, ''),
-        placeholder: langObject(lang, ''),
-        type: null,
-        options: langObject(lang, []),
-        value: langObject(lang, ''),
-        label: langObject(lang, ''),
-        required: false
-      }
-    ]
-  }
-]);
-
-console.log('=-=-=-=- sections ', sections);
-
-  const [images, setImages] = useState(initialImages);
-
-    const reorder = () => {
-      const shuffledImages = shuffleArray(images);
-      setImages(shuffledImages);
-    };
+  }]);
 
   useEffect(() => {
     eventService.getEvent(props.event.id).then( res => {
@@ -104,16 +60,7 @@ console.log('=-=-=-=- sections ', sections);
         error: res.error
       })
     });
-    setAppFormData(sections);
   }, []);
-
-  // useEffect(() => {
-  //   setSections(appFormData);
-  // }, [appFormData]);
-  // useEffect(() => {
-  //   setApplytransition(true);
-  //   return setApplytransition(false);
-  // }, [applyTransition]);
 
   const handleCheckChanged = (e) => {
     const val = e.target.checked;
@@ -133,11 +80,11 @@ console.log('=-=-=-=- sections ', sections);
   }
 
   const addSection = () => {
-    setSections([...sections, {
+    setTimeout(() => setSections([...sections, {
       id: `${Math.random()}`,
       name: langObject(lang, t('Untitled Section')),
       description: langObject(lang, ''),
-      order: Math.floor(Math.random() * 10) + 1,
+      order: sections.length + 1,
       questions: [
         {
           id: `${Math.random()}`,
@@ -151,7 +98,27 @@ console.log('=-=-=-=- sections ', sections);
           required: false
         }
       ]
-    }]);
+    }]), 1);
+    setApplytransition(false);
+  }
+
+  const handleDrag = (e) => {
+    drag(e, setDragId);
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    drop({
+      event: e,
+      elements: sections,
+      dragId,
+      setState: setSections,
+      setAnimation: setApplytransition
+    });
+    setApplytransition(false);
   }
 
   const options = () => {
@@ -183,126 +150,9 @@ console.log('=-=-=-=- sections ', sections);
       </div>
     );
   }
-  // const FormSection = () => {
-  //   const {loading, event: evnt, error } = event;
-  //   const [images, setImages] = useState(initialImages);
 
-  //   const reorder = () => {
-  //     const shuffledImages = shuffleArray(images);
-  //     setImages(shuffledImages);
-  //   };
- 
-  //   if (loading) {
-  //     return <Loading />
-  //   }
-  //   if (error) {
-  //     return (
-  //       <div className='alert alert-danger alert-container'>
-  //         {error}
-  //       </div>
-  //     )
-  //   }
-
-  //   return (
-  //     <>
-  //       <div style={{ textAlign: 'end', width: '61%' }}>
-  //         <button
-  //           className='add-section-btn'
-  //           data-title="Add Section"
-  //           onMouseUp={() => addSection()}
-  //         >
-  //           <i class="fas fa-plus fa-lg add-section-icon"></i>
-  //         </button>
-  //       </div>
-  //     <div className="application-form-wrapper">
-  //       <div className="nominations-desc">
-  //         <input
-  //           id="nomination-chck"
-  //           className="nomination-chck"
-  //           type="checkbox"
-  //           checked={nominate}
-  //           onChange={e => handleCheckChanged(e)}
-  //         />
-  //         <span htmlFor="nomination-chck" className="nomination-info">
-  //           {t('Allow candidates to nominate others using this application form'
-  //           + '(Users will be able to submit multiple nominations, including for themselves.'
-  //           + ' If this option is unchecked, a candidate can only apply for themselves)')}
-  //         </span>
-  //       </div>
-  //       <div className="dates-container">
-  //         <span className="dates">
-  //           {t('Application opens ') + ' :'}
-  //           <span className="date">
-  //             {`${dateFormat(evnt.application_open)}`}
-  //           </span>
-  //         </span>
-  //         <span className="dates">
-  //           {t('Application closes ') + ' :'}
-  //           <span className="date">
-  //             {`${dateFormat(evnt.application_close)}`}
-  //           </span>
-  //         </span>
-  //       </div>
-  //       <ReactSelect
-  //         id='select-language'
-  //         options={options()}
-  //         onChange={e => handleLanguageChange(e)}
-  //         value={language}
-  //         defaultValue={language}
-  //         className='select-language'
-  //         styles={{
-  //           control: (base, state) => ({
-  //             ...base,
-  //             boxShadow: "none",
-  //             border: state.isFocused && "none",
-  //             transition: state.isFocused && 'color,background-color 1.5s ease-out',
-  //             background: state.isFocused && 'lightgray',
-  //             color: '#fff'
-  //           }),
-  //           option: (base, state) => ({
-  //               ...base,
-  //               backgroundColor: state.isFocused && "#1f2d3e",
-  //               color: state.isFocused && "#fff"
-  //           })
-  //         }}
-  //         menuPlacement="auto"
-  //       />
-  //       {/* <AnimationReorder> */}
-  //         {
-  //           sections
-  //           .map((section, i) => (
-  //             <Section
-  //               t={t}
-  //               key={section.id}
-  //               // id={section.id}
-  //               sectionIndex={i}
-  //               setSection={handleSection}
-  //               inputs={section}
-  //               sections={sections}
-  //               addSection={addSection}
-  //               lang={language.value}
-  //               ref={createRef()}
-  //             />
-  //           ))
-  //         }
-  //       {/* </AnimationReorder> */}
-  //       <div className="bubbles-group">
-  //           <AnimateBubbles>
-  //             {images.map(({ id, text }) => (
-  //               <Bubble key={id} id={id} text={text} ref={createRef()} />
-  //             ))}
-  //           </AnimateBubbles>
-  //         </div>
-  //         <div className="button-wrapper">
-  //           <button className="button" onClick={reorder}>
-  //             Re-order images
-  //           </button>
-  //         </div>
-  //     </div>
-  //     </>
-  //   )
-  // }
   const {loading, event: evnt, error } = event;
+
   if (loading) {
     return <Loading />
   }
@@ -317,8 +167,6 @@ console.log('=-=-=-=- sections ', sections);
     <>
       <div className='application-form-wrap'>
         <TopBar />
-        
-        {/* <FormSection /> */}
         <div style={{ textAlign: 'end', width: '61%' }}>
           <button
             className='add-section-btn'
@@ -381,14 +229,17 @@ console.log('=-=-=-=- sections ', sections);
           }}
           menuPlacement="auto"
         />
-        <AnimateBubbles applyTransition={applyTransition} setApplytransition={setApplytransition}>
+        <AnimateSections
+          applyTransition={applyTransition}
+          setApplytransition={setApplytransition}
+        >
           {
             sections
             .map((section, i) => (
               <Section
                 t={t}
                 key={section.id}
-                // id={section.id}
+                id={section.id}
                 sectionIndex={i}
                 setSection={handleSection}
                 inputs={section}
@@ -396,22 +247,14 @@ console.log('=-=-=-=- sections ', sections);
                 addSection={addSection}
                 lang={language.value}
                 ref={createRef()}
+                handleDrag={handleDrag}
+                handleDrop={handleDrop}
+                setApplytransition={setApplytransition}
+                handleDragOver={handleDragOver}
               />
             ))
           }
-        </AnimateBubbles>
-        {/* <div className="bubbles-group">
-            <AnimateBubbles>
-              {images.map(({ id, text }) => (
-                <Bubble key={id} id={id} text={text} ref={createRef()} />
-              ))}
-            </AnimateBubbles>
-          </div>
-          <div className="button-wrapper">
-            <button className="button" onClick={reorder}>
-              Re-order images
-            </button>
-          </div> */}
+        </AnimateSections>
       </div>
       </div>
     </>

@@ -529,7 +529,7 @@ class AppComponent extends Component {
           >
             <h5>{t('cookieTitle')}</h5>
             <span style={{ fontSize: "0.8em" }}>
-              {t('cookieText')}
+              {t('cookieText')}{" "}
               <a
                 href={
                   "/" +

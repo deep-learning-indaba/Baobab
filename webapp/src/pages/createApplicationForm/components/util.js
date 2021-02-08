@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, forwardRef } from "react";
+import React, {
+  useState, useEffect, useLayoutEffect, useRef 
+} from "react";
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 export const option = ({ value, t, label: l, faClass }) => {
   const label = faClass ? <div>
@@ -21,6 +24,11 @@ export const langObject = (langs, value) => langs
   }
 ), {});
 
+/**
+ * Keeps an eye on React rerenders
+ * similar to componentWillReceiveProps or componentDidUpdate
+ * @param {HTMLElement} value - current child's vale
+ */
 const usePrevious = value => {
   const prevChildrenRef = useRef();
   useEffect(() => {
@@ -30,23 +38,15 @@ const usePrevious = value => {
   return prevChildrenRef.current;
 }
 
-// const calculateBoundingBox = children => {
-//   const boundingBoxes = {};
-
-//   React.Children.forEach(children, child => {
-//     const domNode = child.ref.current;
-//     const nodeBoundingBox = domNode.getBoundingClientRect();
-
-//     boundingBoxes[child.key] = nodeBoundingBox;
-//   });
-
-//   return boundingBoxes;
-// }
-
+/**
+ * Calculates the position of each child in the DOM
+ * whenever children props change
+ * @param {array} children - Component's children
+ * @returns {object} - stores measurements of each child
+ */
 
 export const calculateBoundingBoxes = children => {
   const boundingBoxes = {};
-
   React.Children.forEach(children, child => {
     const domNode = child.ref.current;
     const nodeBoundingBox = domNode.getBoundingClientRect();
@@ -57,57 +57,16 @@ export const calculateBoundingBoxes = children => {
   return boundingBoxes;
 };
 
-// export const AnimationReorder = ({ children }) => {
-//   // console.log('*)*)*)*)*)* children ', children);
-//   const [boundingBox, setBoundingBox] = useState({});
-//   const [prevBoundingBox, setPrevBoundingBox] = useState({});
-//   const prevChildren = usePrevious(children);
-
-//   useLayoutEffect(() => {
-//     const newBoundingBox = calculateBoundingBoxes(children);
-//     setBoundingBox(newBoundingBox);
-//   }, [children]);
-
-//   useLayoutEffect(() => {
-//     const prevBoundingBox = calculateBoundingBoxes(prevChildren);
-//     setPrevBoundingBox(prevBoundingBox);
-//   }, [prevChildren]);
-
-//   useEffect(() => {
-//     const hasPrevBoundingBox = Object.keys(prevBoundingBox).length;
-//     // console.log('------- prev bounfding box', prevBoundingBox);
-//     if(hasPrevBoundingBox) {
-//       React.Children.forEach(children, child => {
-//         const domNode = child.ref.current;
-//         const firstBox = prevBoundingBox[child.key];
-//         const lastBox = boundingBox[child.key];
-//         const changeInX = firstBox.y - lastBox.y;
-//         // console.log('------- first box', firstBox, lastBox);
-
-//         if (!changeInX) {
-//           // console.log('------- change In X', domNode);
-//           requestAnimationFrame(() => {
-//             // Before the DOM paints, invert child to old position
-//             domNode.style.transform = `translateY(${changeInX}px)`;
-//             domNode.style.transition = "transform 0s";
-
-//             requestAnimationFrame(() => {
-//               // After the previous frame, remove
-//               // the transistion to play the animation
-//               domNode.style.transform = "";
-//               domNode.style.transition = "transform 500ms";
-//             });
-//           });
-//         }
-//       });
-//     }
-//   }, [boundingBox, prevBoundingBox, children]);
-
-//   return children;
-// }
-
-export const AnimateBubbles = ({ children, applyTransition, setApplytransition }) => {
-  console.log('________anime ', applyTransition);
+/**
+ * Animates the form page upon sections re-ordering
+ * @param {object} props - Components children, applyTransition and it's setter
+ * @returns {array} - the list of component's children
+ */
+export const AnimateSections = ({
+  children,
+  applyTransition,
+  setApplytransition
+}) => {
   const [boundingBox, setBoundingBox] = useState({});
   const [prevBoundingBox, setPrevBoundingBox] = useState({});
   const prevChildren = usePrevious(children);
@@ -128,16 +87,22 @@ export const AnimateBubbles = ({ children, applyTransition, setApplytransition }
     if (applyTransition && hasPrevBoundingBox) {
       React.Children.forEach(children, (child) => {
         const domNode = child.ref.current;
-        const firstBox = prevBoundingBox[child.key];
-        const lastBox = boundingBox[child.key];
+        const firstBox = prevBoundingBox[child.key]; //previous position
+        const lastBox = boundingBox[child.key]; //current position
         const f = firstBox && firstBox.top;
         const l = lastBox && lastBox.top;
-        const changeInX = f - l;
+        let changeInY = f - l;
+        if (Math.abs(changeInY) > 700) {
+          changeInY = changeInY > 0 ? 487.421875 : -487.421875;
+        } else {
+          changeInY = changeInY;
+        }
+        console.log('InY ===== ', changeInY);
 
-        if (changeInX) {
+        if (changeInY) {
           requestAnimationFrame(() => {
             // Before the DOM paints, invert child to old position
-            domNode.style.transform = `translateY(${changeInX}px)`;
+            domNode.style.transform = `translateY(${changeInY}px)`;
             domNode.style.transition = "transform 0s";
 
             requestAnimationFrame(() => {
@@ -146,7 +111,6 @@ export const AnimateBubbles = ({ children, applyTransition, setApplytransition }
               domNode.style.transform = "";
               domNode.style.transition = "transform 500ms";
             });
-            setApplytransition(false);
           });
         }
       });
@@ -156,33 +120,105 @@ export const AnimateBubbles = ({ children, applyTransition, setApplytransition }
   return children;
 };
 
-export function shuffleArray(array) {
-  return array
-    .map(a => ({ sort: Math.random(), value: a }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(a => a.value);
+
+export const drag = (event, setDragId) => {
+  setDragId(event.currentTarget.id);
 }
 
-const IMAGE_URL = "https://loremflickr.com/120/120/sun";
+export const drop = ({
+  event,
+  elements,
+  dragId,
+  setState,
+  section,
+  setAnimation,
+  setSection,
+  sections
+}) => {
 
-export const Bubble = forwardRef(({ text, id }, ref) => (
-  <div ref={ref}>
-    <div className="circle">
-      <span
-        className="image"
-        style={{
-          backgroundImage: `url('${IMAGE_URL}?random=${id}')`
-        }}
-      />
-    </div>
-    <p className="text">{text}</p>
-  </div>
-));
+  const dragSection = elements.find( s => {
+    return s.id === dragId
+  });
+  const dropSection = elements
+    .find(e => e.id === event.currentTarget.id);
 
-export const initialImages =  [
-  { id: "1", text: "Image 1" },
-  { id: "2", text: "Image 2" },
-  { id: "3", text: "Image 3" },
-  { id: "4", text: "Image 4" },
-  { id: "5", text: "Image 5" }
-];
+  const dragSectionOrder = dragSection.order;
+  const dropSectionOrder = dropSection.order;
+  const newEl = elements.map(s => {
+    if (s.id === dragId) {
+      s.order = dropSectionOrder;
+    }
+    if(s.id === event.currentTarget.id) {
+      s.order = dragSectionOrder;
+    }
+    return s;
+  }).sort((a,b) => a.order - b.order);
+  
+  if (section) {
+    const newSections = sections.map(s => {
+      if (s.id === section.id) {
+        s.questions = newEl;
+      }
+      return s;
+    })
+    setState({...section, questions: newEl});
+    setSection(newSections);
+  } else {
+    setState(newEl);
+  }
+  setAnimation && setAnimation(true);
+}
+
+export const Modal = ({
+  element, t, handleOkDelete,
+  handleConfirm
+}) => (
+  <ConfirmModal
+    className='confirm-modal'
+    visible={true}
+    centered
+    onOK={handleOkDelete}
+    onCancel={() => handleConfirm()}
+    okText={t("Yes - Delete")}
+    cancelText={t("No - Don't delete")}>
+    <p>
+      {t(`Are you sure you want to delete this ${element}?`)}
+    </p>
+  </ConfirmModal>
+)
+
+/**
+ * Handles move up or down of an element
+ * @param {Object} - elements, index,setState, ... 
+ */
+export const handleMove = ({
+  elements,
+  index,
+  setState,
+  section,
+  sections,
+  setSection,
+  u,
+  setAnimation
+}) => {
+  const nEl = elements;
+  if ((u && index !== 0) || (!u && index !== elements.length - 1)) {
+    [nEl[u ? index - 1 : index + 1], nEl[index]] = [nEl[index], nEl[u ? index - 1 : index + 1]];
+    const newEl = nEl.map((e, i) => {
+      return {...e, order: i + 1}
+    });
+    if (section) {
+      const newSections = sections.map(s => {
+        if (s.id === section.id) {
+          s.questions = newEl;
+        }
+        return s;
+      })
+      setState({...section, questions: newEl})
+      setSection(newSections);
+    } else {
+      setState(newEl);
+    }
+    setAnimation && setAnimation(true);
+  } 
+}

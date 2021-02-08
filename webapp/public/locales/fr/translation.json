@@ -349,6 +349,12 @@
     "Placeholder": "Text Substituant",
     "Value": "Valuer",
     "Required": "Obligatoire",
-    "Duplicate": "Dupliquer"
+    "Duplicate": "Dupliquer",
+    "Are you sure you want to delete this question": "Êtes-vous sûr vouloir suprimer cette question",
+    "Are you sure you want to delete this section": "Êtes-vous sûr vouloir suprimer cette section",
+    "Move down": "Faire Descendre",
+    "Move up": "Faire Monter",
+    "Move Section Down": "Faire Descendre Section",
+    "Move Section Up": "Faire Monter Section"
 }
 
