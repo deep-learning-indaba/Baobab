@@ -141,14 +141,10 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return EVENT_NOT_FOUND
-        print("review_app_id:", review_form.application_form_id)
-        print("user:", g.current_user['id'])
 
         reviews_remaining_count = review_repository.get_remaining_reviews_count(g.current_user['id'], review_form.application_form_id)
-        print("review_count:", reviews_remaining_count)
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
-        # review_response = review_repository.get_review_response_with_form(g.current_user['id'], reviewer_user.id)
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
 
         reference_requests = reference_repository.get_all_by_response_id(response.id)
