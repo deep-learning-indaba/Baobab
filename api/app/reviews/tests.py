@@ -1297,25 +1297,18 @@ class ReferenceReviewRequest(ApiTestCase):
         event = self.add_event()
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
-        reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms', password='abc', organisation_id=1, )
-        reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr', password='abc', organisation_id=1, )
-        reviewer4 = AppUser('r4@r.com', 'reviewer', '4', 'Ms', password='abc', organisation_id=1, )
         candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', password='abc', organisation_id=1, )
-        candidate2 = AppUser('c2@c.com', 'candidate', '2', 'Ms', password='abc', organisation_id=1, )
-        candidate3 = AppUser('c3@c.com', 'candidate', '3', 'Mr', password='abc', organisation_id=1, )
-        candidate4 = AppUser('c4@c.com', 'candidate', '4', 'Ms', password='abc', organisation_id=1, )
         system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', password='abc', organisation_id=1, is_admin=True)
         event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', password='abc', organisation_id=1)
-        users = [reviewer1, reviewer2, reviewer3, reviewer4, candidate1, candidate2, candidate3, candidate4, system_admin,
-                 event_admin]
+        users = [reviewer1, candidate1, system_admin, event_admin]
         for user in users:
             user.verify()
         db.session.add_all(users)
         db.session.commit()
 
         event_roles = [
-            EventRole('admin', 10, 1),
-            EventRole('reviewer', 3, 1)
+            EventRole('admin', 4, 1),
+            EventRole('reviewer', 1, 1)
         ]
         db.session.add_all(event_roles)
         db.session.commit()
@@ -1324,59 +1317,6 @@ class ReferenceReviewRequest(ApiTestCase):
             self.create_application_form(1, True, False),
         ]
         db.session.add_all(application_form)
-        db.session.commit()
-
-        sections = [
-            Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(1, 'Reference', 'Details of referree', 2)
-        ]
-        db.session.add_all(sections)
-        db.session.commit()
-
-        options = [
-            {
-                "value": "indaba-2017",
-                "label": "Yes, I attended the 2017 Indaba"
-            },
-            {
-                "value": "indaba-2018",
-                "label": "Yes, I attended the 2018 Indaba"
-            },
-            {
-                "value": "indaba-2017-2018",
-                "label": "Yes, I attended both Indabas"
-            },
-            {
-                "value": "none",
-                "label": "No"
-            }
-        ]
-        questions = [
-            Question(1, sections[0].id, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1,
-                     'long_text', ''),
-            Question(1, sections[0].id, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2,
-                     'long_text', ''),
-            Question(1, sections[0].id, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1,
-                     'long_text', ''),
-            Question(1, sections[0].id, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text',
-                     ''),
-            Question(1, sections[0].id, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None,
-                     True, None, options),
-            Question(1, sections[1].id,
-                     'title', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(1, sections[1].id,
-                     'firstname', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(1, sections[1].id,
-                     'lastname', 'Enter 50 to 150 words', 3, 'long_text', ''),
-            Question(1, sections[1].id,
-                     'email', 'Enter 50 to 150 words', 4, 'long_text', ''),
-        ]
-
-        questions[5].key = 'nomination_title'
-        questions[6].key = 'nomination_firstname'
-        questions[7].key = 'nomination_lastname'
-        questions[8].key = 'nomination_email'
-        db.session.add_all(questions)
         db.session.commit()
 
         closed_review = ReviewForm(1, datetime(2018, 4, 30))
@@ -1388,31 +1328,11 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
-        review_questions = [
-            ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
-            ReviewQuestion(2, 3, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(2, 4, None, None, 'information', None, None, False, 2, None, None, 0)
-        ]
-        db.session.add_all(review_questions)
-        db.session.commit()
-
         self.test_response = Response(  # Nominating other
             1, self.first_user.id)
         self.test_response.submit()
 
         db.session.add(self.test_response)
-        db.session.commit()
-
-        # self.add_to_db(self.test_response)
-
-        answers = [
-            Answer(self.test_response.id, questions[5].id, 'Mx'),
-            Answer(self.test_response.id, questions[6].id, 'Skittles'),
-            Answer(self.test_response.id, questions[7].id, 'Cat'),
-            Answer(self.test_response.id, questions[8].id, 'skittles@box.com'),
-        ]
-        db.session.add_all(answers)
         db.session.commit()
 
         response_review = ResponseReviewer(self.test_response.id, self.first_user.id)
@@ -1500,7 +1420,6 @@ class ReferenceReviewRequest(ApiTestCase):
             u'uploaded_document': u'DOCT-UPLOAD-78979',
         })
 
-
     def test_get_reference_not_yet_submitted(self):
         """
         In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet)
@@ -1527,6 +1446,12 @@ class ReferenceReviewRequest(ApiTestCase):
         reference_request_repository.create(reference_req)
 
         params = {'event_id': 1}
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'),
                                 data=params)
 
@@ -1535,11 +1460,6 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 6)
         self.assertEqual(len(data['references']), 0)
-
-        REFERENCE_DETAIL = {
-            'token': reference_req.token,
-            'uploaded_document': 'DOCT-UPLOAD-78999',
-        }
 
         response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
@@ -1552,7 +1472,7 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 6)
-        self.assertEqual(len(data['references']), 2)
+        self.assertEqual(len(data['references']), 1)
         self.assertDictEqual(data['references'][0], {
             u'title': u'Mr',
             u'firstname': u'John',
@@ -1590,7 +1510,6 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(len(data), 6)
         self.assertEqual(len(data['references']), 1)
 
-
         self.assertDictEqual(data['references'][0], {
             u'title': u'Mrs',
             u'firstname': u'Jane',
@@ -1610,7 +1529,5 @@ class ReferenceReviewRequest(ApiTestCase):
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        # TODO: confirm this makes sense: references is an empty list in data
         self.assertEqual(len(data), 6)
-
         self.assertEqual(len(data['references']), 0)
