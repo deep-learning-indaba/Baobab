@@ -65,7 +65,6 @@ const ApplicationForm = (props) => {
   const handleCheckChanged = (e) => {
     const val = e.target.checked;
     setTimeout(() => {
-      setSections(appFormData);
       setNominate(val);
     }, 1);
   }
