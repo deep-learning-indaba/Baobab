@@ -1,5 +1,6 @@
 import axios from "axios";
 import history from "../History";
+import i18n from 'i18next';
 
 export function authHeader() {
   // return authorization header with basic auth credentials
@@ -32,10 +33,18 @@ axios.interceptors.response.use(
       error.response.data.type === "UNAUTHORIZED"
     ) {
       // Redirect if you receive unauth, but only if you aren't on the home page
-      if (history && history.location && history.location.pathname != "/") {
-        localStorage.removeItem("user");
+      localStorage.removeItem("user");
+      if (history && history.location && history.location.pathname !== "/") {
         history.push("/login");
       }
     } else throw error;
   }
 );
+
+axios.interceptors.request.use(
+  request => {
+    request.params = request.params || {};
+    request.params['language'] = i18n.language;
+    return request;
+  }
+)

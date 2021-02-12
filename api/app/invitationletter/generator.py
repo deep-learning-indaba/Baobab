@@ -14,20 +14,6 @@ from app.utils import errors
 from google.oauth2 import service_account
 from six import string_types
 
-INVITATION_EMAIL_BODY = """
-Dear {user_title} {first_name} {last_name},
-
-
-Your official invitation letter is attached!
-
-
-If you have any queries, please forward them to info@deeplearningindaba.com  
-
-
-Kind Regards,
-The Deep Learning Indaba Team
-"""
-
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
@@ -80,7 +66,7 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
+             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date, user):
 
     check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
@@ -132,15 +118,14 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     if not event:
         return errors.EVENT_NOT_FOUND
 
-    subject = "Invitation Letter for " + event.name
-
     try:
-        emailer.send_mail(recipient=email,
-                        subject=subject,
-                        body_text=INVITATION_EMAIL_BODY.format(
-                        user_title=user_title, first_name=firstname, last_name=lastname),
-                        file_name="InvitationLetter.pdf",
-                        file_path=template_pdf)
+        emailer.email_user(
+            'invitation-letter',
+            event=event,
+            user=user,
+            file_name="InvitationLetter.pdf",
+            file_path=template_pdf
+        )
 
         LOGGER.debug('successfully sent email...')
         return True

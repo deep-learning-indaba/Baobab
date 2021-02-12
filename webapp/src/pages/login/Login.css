@@ -1,6 +1,12 @@
 @media all and (min-width: 480px) {
     .Login {
       padding: 1em 0 4em 0;
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
     }
   
     .Login form {

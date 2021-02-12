@@ -8,13 +8,14 @@ export const applicationFormService = {
     submit,
     getResponse,
     updateResponse,
-    withdraw
+    withdraw,
+    getQuestionList
 };
 
 
 function getForEvent(eventId) {
     return axios
-    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId)
+    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId, { 'headers': authHeader() })
     .then(response => {
         let formSpec = null;
         if (response) formSpec = response.data;
@@ -172,4 +173,33 @@ function withdraw(id) {
           };
         }
       });
+}
+
+function getQuestionList(eventId) {
+  return axios
+    .get(baseUrl + "/api/v1/questions", { 
+        "headers": authHeader(),
+        "params": {
+            event_id: eventId
+        }
+    })
+    .then(response => {
+        let questions = null;
+        if (response) questions = response.data;
+        return {
+            questions: questions,
+            status: response.status,
+            message: response.statusText
+        }
+    })
+    .catch(function(error){
+        return{
+            questions: null,
+            error:
+                error.response && error.response.data
+                ? error.response.data.message
+                : error.message,
+            status: error.response && error.response.status
+        };
+    });
 }

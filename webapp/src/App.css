@@ -30,6 +30,11 @@ body {
   font-family: 'Open Sans', sans-serif;
 }
 
+html button:active {
+  border: none;
+  outline: none;
+}
+
 .Body{
   background: #F9fafb;;
   min-height: 80vh;
@@ -87,8 +92,8 @@ footer .btn {
 }
 
 .navbar-light .navbar-nav .nav-link.active {
-  background: #f1f2f3;  
   font-weight: bold;
+  border-bottom: 3px solid #27A844;
 }
 
 .navbar-light .navbar-nav .nav-item .nav-link{
@@ -153,4 +158,22 @@ label {
 
 .disabled-form-control {
   color: rgba(0, 0, 0, 0.3);
+}
+
+.language-navbar {
+  padding-right: .5em;
+  border-right: 1px solid rgba(255,255,255,.25);
+  margin-right: .5em;
+}
+
+.menu-icon {
+  margin-right: .1em;
+}
+
+div.vertical-space {
+  margin-top: 2em;
+}
+
+div.card-container {
+  margin: 0 auto;
 }

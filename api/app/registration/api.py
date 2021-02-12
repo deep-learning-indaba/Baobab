@@ -19,28 +19,12 @@ from app.users.models import AppUser
 from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required, admin_required
-from app.utils.emailer import send_mail
+from app.utils.emailer import email_user
 from app.utils import misc
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
 
-OFFER_EMAIL_BODY = """
-Dear {user_title} {first_name} {last_name},
-
-Congratulations! You've been selected to attend {event_name}!
-
-Please follow the link below to see details and accept your offer: {host}/offer
-You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
-
-If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
-We will read all of these and if there is anything we can do to accommodate you, we may extend you a new offer in a subsequent round.
-
-If you have any queries, please contact us at {event_email_from}
-
-Kind Regards,
-The {event_name} organisers
-"""
 
 def offer_info(offer_entity, requested_travel=None):
     return {
@@ -147,7 +131,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         accommodation_award = args['accommodation_award']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
-        event_name = event.name
+        event_name = event.get_name('en')
         event_email_from = event.email_from
 
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
@@ -181,16 +165,15 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.add(offer_entity)
         db.session.commit()
 
-        if user.email:
-            email_body_template = email_template or OFFER_EMAIL_BODY
-            send_mail(recipient=user.email, subject='{} Application Status Update'.format(event_name),
-                      body_text=email_body_template.format(
-                            user_title=user.user_title, first_name=user.firstname, last_name=user.lastname,
-                            event_name=event_name, host=misc.get_baobab_host(),
-                            expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
-                            event_email_from=event_email_from))
-
-            LOGGER.debug("Sent an offer email to {}".format(user.email))
+        email_user(
+            'offer',
+            template_parameters=dict(
+                host=misc.get_baobab_host(),
+                expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
+                event_email_from=event_email_from
+            ),
+            event=event,
+            user=user)
 
         return offer_info(offer_entity), 201
 

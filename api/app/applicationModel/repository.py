@@ -1,10 +1,6 @@
 from app import db
-from app.applicationModel.models import ApplicationForm, Section, Question
-from app.users.models import AppUser
+from app.applicationModel.models import ApplicationForm, Question, Section
 from app.events.models import Event
-from app.attendance.models import Attendance
-from sqlalchemy.sql import exists
-from app import LOGGER
 
 
 class ApplicationFormRepository():
@@ -20,22 +16,10 @@ class ApplicationFormRepository():
             .first()
 
     @staticmethod
-    def get_sections_by_app_id(app_id):
-        return db.session.query(Section)\
-            .filter_by(application_form_id=app_id)\
-            .all()
-
-    @staticmethod
-    def get_section_by_app_id_and_section_name(app_id, section_name):
-        # TODO: replace "name" with "key" to make this more robust (independent of "name" change)
-        return db.session.query(Section)\
-            .filter_by(application_form_id=app_id, name=section_name)\
-            .first()
-
-    @staticmethod
-    def get_section_by_id(section_id):
-        return db.session.query(Section).get(section_id)
-
-    @staticmethod
-    def get_question_by_id(question_id):
-        return db.session.query(Question).get(question_id)
+    def get_questions_for_event(event_id):
+        return (db.session.query(Question)
+                    .join(ApplicationForm, Question.application_form_id == ApplicationForm.id)
+                    .filter_by(event_id=event_id)
+                    .join(Section, Question.section_id == Section.id)
+                    .order_by(Section.order, Question.order)
+                    .all())

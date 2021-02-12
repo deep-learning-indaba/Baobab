@@ -1,3 +1,5 @@
+// TODO: ADD TRANSLATION
+
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
@@ -135,7 +137,7 @@ class Offer extends Component {
 
             <div className="col">
               <NavLink className="btn btn-primary" to={`/${this.props.event.key}/registration`}>
-                Proceed to Registration >
+                Proceed to Registration 
               </NavLink>
             </div>
           </div>

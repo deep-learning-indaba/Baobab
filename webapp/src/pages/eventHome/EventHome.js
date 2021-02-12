@@ -3,7 +3,9 @@ import "./EventHome.css";
 import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
+import ApplicationFormSetting from '../createApplicationForm';
 import Review from "../review";
+import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
 import ReviewHistory from "../reviewHistory";
 import EventStats from "../eventStats";
@@ -19,6 +21,8 @@ import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
+import ResponseList from "../ResponseList/ResponseList"
+import ResponsePage from "../ResponsePage/ResponsePage"
 
 
 class EventInfo extends Component {
@@ -86,7 +90,7 @@ class EventHome extends Component {
 
   render() {
     const { event, error, isLoading } = this.state;
-    const { match } = this.props;
+    const { match, organisation } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -95,9 +99,9 @@ class EventHome extends Component {
 
     if (isLoading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border" style={loadingStyle} role="status">
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       );
@@ -125,6 +129,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/`}
           render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
+        />
+             <Route
+          exact
+          path={`${match.path}/responseList`}
+          render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
@@ -184,6 +193,11 @@ class EventHome extends Component {
         />
         <Route
           exact
+          path={`${match.path}/reviewlist`}
+          render={(props) => <ReviewList {...props} event={event} />}
+        />
+        <Route
+          exact
           path={`${match.path}/profile-list`}
           render={(props) => <ProfileList {...props} event={event} />}
         />
@@ -207,6 +221,21 @@ class EventHome extends Component {
           path={`${match.path}/registrationAdmin`}
           render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
+          <Route
+          exact
+          path={`${match.path}/responsePage/:id`}
+          render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/applicationform`}
+          render={(props) => <ApplicationFormSetting
+            {...props}
+            event={event}
+            languages={organisation.languages}
+            />}
+        />
+        
       </div>
     );
   }

@@ -4,8 +4,9 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import column_property
 
-from app import db
+from app import db, LOGGER
 from app.applicationModel.models import Question
+from app.tags.models import Tag
 
 
 class Response(db.Model):
@@ -20,12 +21,15 @@ class Response(db.Model):
     is_withdrawn = db.Column(db.Boolean(), nullable=False)
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
+    language = db.Column(db.String(2), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer', order_by='Answer.order')
+    response_tags = db.relationship('ResponseTag')
+    reviewers = db.relationship('ResponseReviewer')
 
-    def __init__(self, application_form_id, user_id):
+    def __init__(self, application_form_id, user_id, language):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = False
@@ -33,6 +37,7 @@ class Response(db.Model):
         self.is_withdrawn = False
         self.withdrawn_timestamp = None
         self.started_timestamp = date.today()
+        self.language = language
 
     def submit(self):
         self.is_submitted = True
@@ -70,8 +75,12 @@ class Answer(db.Model):
     
     @property
     def value_display(self):
-        if self.question.type == 'multi-choice' and self.question.options is not None:
-            option = [option for option in self.question.options if option['value'] == self.value]
+        question_translation = self.question.get_translation(self.response.language)
+        if question_translation is None:
+            LOGGER.error('Missing {} translation for question {}'.format(self.response.language, self.question.id))
+            question_translation = self.question.get_translation('en')
+        if self.question.type == 'multi-choice' and question_translation.options is not None:
+            option = [option for option in question_translation.options if option['value'] == self.value]
             if option:
                 return option[0]['label']
         return self.value
@@ -93,3 +102,16 @@ class ResponseReviewer(db.Model):
 
     def deactivate(self):
         self.active = False
+
+
+class ResponseTag(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+
+    response = db.relationship('Response', foreign_keys=[response_id])
+    tag = db.relationship('Tag', foreign_keys=[tag_id])
+
+    def __init__(self, response_id, tag_id):
+        self.response_id = response_id
+        self.tag_id = tag_id

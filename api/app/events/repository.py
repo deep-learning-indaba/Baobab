@@ -4,6 +4,9 @@ from app.events.models import Event
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
+from app.registration.models import Offer
+from app.invitedGuest.models import InvitedGuest
+from sqlalchemy import and_, or_
 
 
 class EventRepository():
@@ -19,18 +22,10 @@ class EventRepository():
                          .first() is not None
 
     @staticmethod
-    def get_by_key_with_organisation(event_key):
-        return db.session.query(Event, Organisation)\
+    def get_by_key(event_key):
+        return db.session.query(Event)\
                          .filter_by(key=event_key)\
-                         .join(Organisation, Organisation.id == Event.organisation_id)\
                          .first()
-
-    @staticmethod
-    def get_by_id_with_organisation(event_id):
-        return db.session.query(Event, Organisation)\
-                         .filter_by(id=event_id)\
-                         .join(Organisation, Organisation.id == Event.organisation_id)\
-                         .one_or_none()
 
     @staticmethod
     def get_event_by_response_id(response_id):
@@ -43,10 +38,19 @@ class EventRepository():
 
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
-        return db.session.query(Event, Organisation)\
+        return db.session.query(Event)\
                          .filter(Event.end_date >= datetime.now())\
                          .filter_by(organisation_id=organisation_id)\
-                         .join(Organisation, Organisation.id==Event.organisation_id)\
+                         .all()
+
+    @staticmethod
+    def get_attended_by_user_for_organisation(organisation_id, user_id):
+        return db.session.query(Event)\
+                         .filter(Event.end_date < datetime.now())\
+                         .filter_by(organisation_id=organisation_id)\
+                         .outerjoin(Offer, and_(Event.id == Offer.event_id, Offer.user_id == user_id, Offer.candidate_response == True))\
+                         .outerjoin(InvitedGuest, and_(Event.id == InvitedGuest.event_id, InvitedGuest.user_id == user_id))\
+                         .filter(or_(Offer.id != None, InvitedGuest.id != None))\
                          .all()
 
     @staticmethod
