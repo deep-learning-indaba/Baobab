@@ -13,7 +13,6 @@ from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewRe
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
-# from app.references.api import reference_fields
 from app.references.repository import ReferenceRequestRepository as reference_repository
 
 from app.users.models import AppUser, Country, UserCategory
@@ -113,12 +112,12 @@ review_fields = {
 
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, reference_response=None):
+    def __init__(self, review_form, response, reviews_remaining_count, reference_responses=None):
         self.review_form = review_form
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
-        self.references = reference_response
+        self.references = reference_responses
 
 
 class ReviewResponseReference():
@@ -419,10 +418,10 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         reviewer = review_repository.get_reviewer(event_id, user_id)
         if not reviewer:
             return FORBIDDEN
-
+        # TODO: remove
         form_id = review_repository.get_form_id(event_id)
 
-        reviews = review_repository.get_review_history(user_id, form_id)
+        reviews = review_repository.get_review_history(user_id, event_id)
 
         if sort_column == 'review_response_id':
             reviews = reviews.order_by(ReviewResponse.id)

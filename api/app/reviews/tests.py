@@ -1310,14 +1310,13 @@ class ReferenceReviewRequest(ApiTestCase):
             EventRole('admin', 4, 1),
             EventRole('reviewer', 1, 1)
         ]
+
         db.session.add_all(event_roles)
         db.session.commit()
 
         application_form = [
             self.create_application_form(1, True, False),
         ]
-        db.session.add_all(application_form)
-        db.session.commit()
 
         closed_review = ReviewForm(1, datetime(2018, 4, 30))
         closed_review.close()
@@ -1332,9 +1331,10 @@ class ReferenceReviewRequest(ApiTestCase):
             1, self.first_user.id)
         self.test_response.submit()
 
+        # self.add_response(self.test_response, self.first_user.id, is_submitted=True, is_withdrawn=False)
         db.session.add(self.test_response)
         db.session.commit()
-
+        #
         response_review = ResponseReviewer(self.test_response.id, self.first_user.id)
         db.session.add(response_review)
         db.session.commit()

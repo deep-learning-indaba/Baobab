@@ -162,6 +162,7 @@ class ReviewRepository():
         db.session.commit()
         
     @staticmethod
+    # TODO update to include event_id
     def get_review_history(reviewer_user_id, application_form_id):
         reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
@@ -216,7 +217,7 @@ class ReviewRepository():
 
     @staticmethod
     def get_candidate_response_ids(event_id, reviewer_user_id, reviews_required):
-        candidate_responses = db.session.query(Response.id) \
+        candidate_response_ids = db.session.query(Response.id) \
             .filter(Response.user_id != reviewer_user_id,
                     Response.is_submitted == True,
                     Response.is_withdrawn == False) \
@@ -226,7 +227,7 @@ class ReviewRepository():
             .group_by(Response.id) \
             .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required) \
             .all()
-        return candidate_responses
+        return candidate_response_ids
 
     @staticmethod
     def get_already_assigned(reviewer_user_id):
@@ -235,6 +236,7 @@ class ReviewRepository():
             .all()
         return already_assigned
 
+    # TODO: use get user repository rather then user.is_reviewer(event_id)
     @staticmethod
     def get_reviewer(event_id, user_id):
         reviewer = db.session.query(AppUser).get(user_id).is_reviewer(event_id)
