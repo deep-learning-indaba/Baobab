@@ -9,7 +9,7 @@ import {
   drag, drop
 } from './util';
 
-const Section = forwardRef(({
+export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,
   setApplytransition

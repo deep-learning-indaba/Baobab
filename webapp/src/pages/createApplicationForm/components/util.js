@@ -94,10 +94,7 @@ export const AnimateSections = ({
         let changeInY = f - l;
         if (Math.abs(changeInY) > 700) {
           changeInY = changeInY > 0 ? 487.421875 : -487.421875;
-        } else {
-          changeInY = changeInY;
         }
-        console.log('InY ===== ', changeInY);
 
         if (changeInY) {
           requestAnimationFrame(() => {
