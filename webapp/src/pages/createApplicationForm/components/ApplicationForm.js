@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createRef } from 'react';
+import React, { useState, useEffect, createRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next'
 import { default as ReactSelect } from "react-select";
 import { eventService } from '../../../services/events';
@@ -24,6 +24,7 @@ const ApplicationForm = (props) => {
 
   const [dragId, setDragId] = useState();
   const [applyTransition, setApplytransition] = useState(false);
+  const [parentDropable, setParentDropable] = useState(true)
 
   const [event, setEvent] = useState({
     loading: true,
@@ -74,7 +75,6 @@ const ApplicationForm = (props) => {
   }
 
   const handleSection = (input) => {
-    setApplytransition(true);
     setSections(input);
   }
 
@@ -98,11 +98,12 @@ const ApplicationForm = (props) => {
         }
       ]
     }]), 1);
-    setApplytransition(false);
   }
 
   const handleDrag = (e) => {
-    drag(e, setDragId);
+    if(parentDropable) {
+      drag(e, setDragId);
+    }
   }
 
   const handleDragOver = (e) => {
@@ -110,14 +111,15 @@ const ApplicationForm = (props) => {
   };
 
   const handleDrop = (e) => {
-    drop({
-      event: e,
-      elements: sections,
-      dragId,
-      setState: setSections,
-      setAnimation: setApplytransition
-    });
-    setApplytransition(false);
+    if (parentDropable) {
+      drop({
+        event: e,
+        elements: sections,
+        dragId,
+        setState: setSections,
+        setAnimation: setApplytransition
+      });
+    }
   }
 
   const options = () => {
@@ -250,6 +252,8 @@ const ApplicationForm = (props) => {
                 handleDrop={handleDrop}
                 setApplytransition={setApplytransition}
                 handleDragOver={handleDragOver}
+                setParentDropable={setParentDropable}
+                parentDropable={parentDropable}
               />
             ))
           }

@@ -64,8 +64,7 @@ export const calculateBoundingBoxes = children => {
  */
 export const AnimateSections = ({
   children,
-  applyTransition,
-  setApplytransition
+  applyTransition
 }) => {
   const [boundingBox, setBoundingBox] = useState({});
   const [prevBoundingBox, setPrevBoundingBox] = useState({});
@@ -89,12 +88,12 @@ export const AnimateSections = ({
         const domNode = child.ref.current;
         const firstBox = prevBoundingBox[child.key]; //previous position
         const lastBox = boundingBox[child.key]; //current position
-        const f = firstBox && firstBox.top;
-        const l = lastBox && lastBox.top;
+        const f = firstBox && firstBox.y;
+        const l = lastBox && lastBox.y;
         let changeInY = f - l;
-        if (Math.abs(changeInY) > 700) {
-          changeInY = changeInY > 0 ? 487.421875 : -487.421875;
-        }
+        // if (Math.abs(changeInY) > 700) {
+        //   changeInY = changeInY > 0 ? 487.421875 : -487.421875;
+        // }
 
         if (changeInY) {
           requestAnimationFrame(() => {
@@ -132,15 +131,18 @@ export const drop = ({
   setSection,
   sections
 }) => {
-
   const dragSection = elements.find( s => {
     return s.id === dragId
   });
+
   const dropSection = elements
     .find(e => e.id === event.currentTarget.id);
 
+  if (!dragSection) return;
+
   const dragSectionOrder = dragSection.order;
   const dropSectionOrder = dropSection.order;
+
   const newEl = elements.map(s => {
     if (s.id === dragId) {
       s.order = dropSectionOrder;
@@ -158,7 +160,6 @@ export const drop = ({
       }
       return s;
     })
-    setState({...section, questions: newEl});
     setSection(newSections);
   } else {
     setState(newEl);
@@ -195,27 +196,29 @@ export const handleMove = ({
   section,
   sections,
   setSection,
-  u,
+  isUp,
   setAnimation
 }) => {
   const nEl = elements;
-  if ((u && index !== 0) || (!u && index !== elements.length - 1)) {
-    [nEl[u ? index - 1 : index + 1], nEl[index]] = [nEl[index], nEl[u ? index - 1 : index + 1]];
+
+  if ((isUp && index !== 0) || (!isUp && index !== elements.length - 1)) {
+  
+    [nEl[isUp ? index - 1 : index + 1], nEl[index]] = [nEl[index], nEl[isUp ? index - 1 : index + 1]];
     const newEl = nEl.map((e, i) => {
       return {...e, order: i + 1}
     });
+    
     if (section) {
       const newSections = sections.map(s => {
         if (s.id === section.id) {
-          s.questions = newEl;
+          s = {...section, questions: newEl};
         }
         return s;
       })
-      setState({...section, questions: newEl})
       setSection(newSections);
     } else {
       setState(newEl);
     }
     setAnimation && setAnimation(true);
-  } 
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect } from 'react';
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove
@@ -11,77 +11,113 @@ const Question = forwardRef(({
     handleDrag, handleDrop
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
-  const [input, setInput] = useState({
-    headline: inputs.headline,
-    placeholder: inputs.placeholder,
-    id: inputs.id,
-    order: inputs.order,
-    type: inputs.type,
-    options: inputs.options,
-    value: inputs.value,
-    label: inputs.label,
-    required: inputs.required
-  });
 
   const handleChange = (prop) => (e) => {
-    const target = input[prop];
-    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
-  }
-  const handleTypeChange = (e) => {
-    setInput({...input, type: e});
-  }
-  const handleCheckChanged = (e) => {
-    setInput({...input, 'required': e.target.checked});
-  }
-
-  const handleAddOption = () => {
-    const opt = input.options;
-    setInput({...input, options: {...opt, [lang]: [{
-      id: `${Math.random()}`,
-      value: input.value[lang],
-      label: input.label[lang],
-    }, ...input.options[lang]]}});
-  }
-
-  const resetInputs = () => {
-    const { value, label } = input;
-    setInput({...input, value: {...value, [lang]: ''},
-    label: {...label, [lang]: ''}});
-    updateQuestions();
-  }
-
-  const handleDeleteOption = (id, e) => {
-    const newOptions = input.options[lang].filter(e => e.id !== id);
-    const opt = input.options;
-    setInput({...input, options: {...opt, [lang]: [...newOptions]}});
-  }
-
-  const updateQuestions = () => { // Update questions in the sections form when question loses focus
-    const updatedQuestions = questions.map(q => {
-      if(q.id === input.id) return input;
-      return q;
-    });
+    const target = inputs[prop];
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
-        s = {...section, questions: updatedQuestions}
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, [prop]: {...target, [lang]: e.target.value}}
+          }
+          return q
+        })}
       }
       return s
     });
-    setSection({...section, questions: updatedQuestions});
-    setQuestionAnimation(false);
-    setApplytransition(false);
+    setSections(updatedSections)
+  }
+  const handleTypeChange = (e) => {
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, type: e}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections)
+  }
+  const handleCheckChanged = (e) => {
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, required: e.target.checked}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const handleAddOption = () => {
+    const opt = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, options: {...opt, [lang]: [{
+              id: `${Math.random()}`,
+              value: inputs.value[lang],
+              label: inputs.label[lang],
+            }, ...opt[lang]]}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const resetInputs = () => {
+    const { value, label } = inputs;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, value: {...value, [lang]: '',
+              label: {...label, [lang]: ''}}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const handleDeleteOption = (id, e) => {
+    const newOptions = inputs.options[lang].filter(o => o.id !== id);
+    const opt = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, options: {...opt, [lang]: newOptions}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
   const handleOkDelete = () => {
-    const newQuestions = questions.filter(q => q.id !== input.id);
-    const updatedSection = {...section, questions: newQuestions};
+    const newQuestions = questions.filter(q => q.id !== inputs.id);
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
-        s = updatedSection
+        s = {...s, questions: newQuestions}
       }
       return s;
     });
-    setSection(updatedSection);
     setSections(updatedSections);
     setQuestionAnimation(false);
   }
@@ -91,7 +127,7 @@ const Question = forwardRef(({
     setApplytransition(false);
   }
 
-  const handleMoveQUp = () => {
+  const handleMoveQeustionUp = () => {
     handleMove({
       elements: questions,
       index: questionIndex,
@@ -100,11 +136,12 @@ const Question = forwardRef(({
       setAnimation: setQuestionAnimation,
       sections,
       setSection: setSections,
-      u: true
+      id: inputs.id,
+      isUp: true
     });
   }
 
-  const handleMoveQDown = () => {
+  const handleMoveQuestionDown = () => {
     handleMove({
       elements: questions,
       index: questionIndex,
@@ -112,6 +149,7 @@ const Question = forwardRef(({
       section: section,
       setAnimation: setQuestionAnimation,
       sections,
+      id: inputs.id,
       setSection: setSections,
     });
   }
@@ -189,9 +227,9 @@ const Question = forwardRef(({
     <>
       <div
         className="section-wrapper"
-        onBlur={updateQuestions}
-        key={input.id}
-        id={input.id}
+        // onBlur={updateQuestions}
+        key={inputs.id}
+        id={inputs.id}
         ref={ref}
         draggable={true}
         onDragOver={handleDropOver}
@@ -203,7 +241,7 @@ const Question = forwardRef(({
             <input
               type="text"
               name="headline"
-              value={input.headline[lang]}
+              value={inputs.headline[lang]}
               onChange={handleChange('headline')}
               placeholder={t('Headline')}
               className="section-inputs question-title"
@@ -212,7 +250,7 @@ const Question = forwardRef(({
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
-              defaultValue={input.type || null}
+              defaultValue={inputs.type || null}
               className='select-form'
               styles={{
                 control: (base, state) => ({
@@ -235,30 +273,30 @@ const Question = forwardRef(({
               <button
                 className="move-btn"
                 data-title={t("Move up")}
-                onClick={handleMoveQUp}
+                onClick={handleMoveQeustionUp}
               >
                 <i class="fas fa-chevron-up fa-move"></i>
               </button>
               <button
                 className="move-btn"
                 data-title={t("Move down")}
-                onClick={handleMoveQDown}
+                onClick={handleMoveQuestionDown}
               >
                 <i class="fas fa-chevron-down fa-move"></i>
               </button>
             </div>
           </div>
-          {withPlaceHolder.includes(input.type && input.type.value) && (
+          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
             <input
               name="question-headline"
               type="text"
-              value={input.placeholder[lang]}
+              value={inputs.placeholder[lang]}
               placeholder={t('Placeholder')}
               onChange={handleChange('placeholder')}
               className="question-inputs question-headline"
             />
           )}
-          {withOptions.includes(input.type && input.type.value) && (
+          {withOptions.includes(inputs.type && inputs.type.value) && (
             <div className="options">
               <table
                 className='options-table'
@@ -270,6 +308,7 @@ const Question = forwardRef(({
                         type='text'
                         placeholder={t('Value')}
                         onChange={handleChange('value')}
+                        value={inputs.value[lang]}
                         className='option-inputs'
                       />
                     </td>
@@ -277,6 +316,7 @@ const Question = forwardRef(({
                       <input
                         type='text'
                         placeholder={t('Label')}
+                        value={inputs.label[lang]}
                         onChange={handleChange('label')}
                         className='option-inputs'
                       />
@@ -292,7 +332,7 @@ const Question = forwardRef(({
                   </tr>
                 </tbody>
                 <tbody className='options-row'>
-                  {input.options[lang].map((option, i) => (
+                  {inputs.options[lang].map((option, i) => (
                     <tr key={i} className='options-row'>
                       <td className='options-row'>
                         <input
@@ -342,12 +382,12 @@ const Question = forwardRef(({
               <div className='require-chckbox'>
                 <input
                   type='checkbox'
-                  id={`required_${input.id}`}
-                  checked={input.required}
+                  id={`required_${inputs.id}`}
+                  checked={inputs.required}
                   onChange={e => handleCheckChanged(e)}
                   className='require-check'
                 />
-                <label htmlFor={`required_${input.id}`}>{t('Required')}</label>
+                <label htmlFor={`required_${inputs.id}`}>{t('Required')}</label>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import React,
 {
-  useState, forwardRef, createRef
+  useState, forwardRef, createRef, useCallback, useEffect
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
@@ -12,10 +12,9 @@ import {
 export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,
-  setApplytransition
+  setApplytransition, setParentDropable, parentDropable
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
-  const [parentDropable, setParentDropable] = useState(true)
 
   const [input, setInput] = useState({
     name: inputs.name,
@@ -24,26 +23,27 @@ export const Section = forwardRef(({
     id: inputs.id,
     questions: inputs.questions
   });
+
   const [questionAnimation, setQuestionAnimation] = useState(false);
   const [dragId, setDragId] = useState();
+  console.log('Just updated  Section input', input);
+  console.log('-------- Questions and sections received', inputs, sections);
 
   const handleChange = (prop) => (e) => {
-    const target = input[prop];
-    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
-  }
-
-  const updateSections = () => { // Update sections in the application form when section loses focus
+    const target = inputs[prop];
     const updatedSections = sections.map(s => {
-      if(s.id === input.id) return input;
+      if(s.id === inputs.id) {
+        s = {...s, [prop]: {...target, [lang]: e.target.value}};
+      }
       return s;
     });
-    setSection([...updatedSections]);
+    setSection(updatedSections);
     setQuestionAnimation(false);
     setApplytransition(false);
   }
 
   const addQuestion = () => {
-    const qsts = input.questions;
+    const qsts = inputs.questions;
     const qst = {
       id: `${Math.random()}`,
       order: qsts.length + 1,
@@ -72,18 +72,20 @@ export const Section = forwardRef(({
     }
     const updatedSections = sections.map(s => {
       if (s.id === input.id) {
-        s = {...input, questions: [...qsts, qst]};
+        s = {...inputs, questions: [...qsts, qst]};
       }
       return s;
     });
-    setInput({...input, questions: [...qsts, qst]});
+    // setInput({...input, questions: [...qsts, qst]});
+    setSection(updatedSections);
     setApplytransition(false);
     setQuestionAnimation(false);
   }
 
-  const handleQuestions = (inpt) => {
-    setInput({...input, questions: inpt});
-  }
+  // const handleQuestions = (inpt) => {
+  //   console.log('-------- from Section handleQuestions', input.questions);
+  //   setInput({...input, questions: inpt});
+  // }
 
   const handleOkDelete = () => {
     const updatedSections = sections.filter(s => s.id !== input.id);
@@ -94,34 +96,36 @@ export const Section = forwardRef(({
     setIsModelVisible(!isModelVisible);
   }
 
-  const handleMoveSUp = () => {
+  const handleMoveSectionUp = () => {
     handleMove({
       elements: sections,
       index: sectionIndex,
       setState: setSection,
-      u: true
+      setAnimation: setApplytransition,
+      isUp: true
     });
   }
 
-  const handleMoveSDown = () => {
+  const handleMoveSectionDown = () => {
     handleMove({
       elements: sections,
       index: sectionIndex,
-      setState: setSection
+      setState: setSection,
+      setAnimation: setApplytransition
     });
   }
 
-  const handleDragQ = (e) => {
+  const handleDragQuestion = (e) => {
     drag(e, setDragId);
-  }
+    setParentDropable(false);
+  };
 
-  const handleDropQ = (e) => {
+  const handleDropQuestion = (e) => {
     drop({
       event: e,
-      elements: input.questions,
+      elements: inputs.questions,
       dragId,
-      setState: setInput,
-      section: input,
+      section: inputs,
       setAnimation: setQuestionAnimation,
       setSection: setSection,
       sections
@@ -131,23 +135,18 @@ export const Section = forwardRef(({
   }
 
   const handleMouseDown = () => {
+    console.log('Mouse in')
     setParentDropable(true);
-  }
-
-  const handleMouseOut = () => {
-    setParentDropable(false);
-  }
+  };
 
   const numSections = sections.length;
   const index = sectionIndex + 1;
-  const isDisabled = sections.length === 1 ? true : false;
-
+  const isDeleteDisabled = sections.length === 1 ? true : false;
   return (
     <div
       className="section-wrapper"
-      id={input.id}
-      key={input.id}
-      onBlur={!isModelVisible && updateSections}
+      id={inputs.id}
+      key={inputs.id}
       ref={ref}
       draggable={parentDropable}
       onDragOver={e => e.preventDefault()}
@@ -157,7 +156,7 @@ export const Section = forwardRef(({
       <div
         className="section-number"
         onMouseDown={handleMouseDown}
-        onMouseOut={handleMouseOut}
+        style={{ cursor: 'grab'}}
       >
         <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
       </div>
@@ -165,7 +164,7 @@ export const Section = forwardRef(({
         <div className="section-header">
           <input
             type="text"
-            value={input.name[lang]}
+            value={inputs.name[lang]}
             onChange={handleChange('name')}
             className="section-inputs section-title"
           />
@@ -182,7 +181,7 @@ export const Section = forwardRef(({
           <div className="dropdown-menu" aria-labelledby="toggleTitle">
             <button
               className="dropdown-item delete-section"
-              disabled={isDisabled}
+              disabled={isDeleteDisabled}
               onClick={handleConfirm}
               >
               <i className="far fa-trash-alt fa-section"></i>
@@ -194,7 +193,7 @@ export const Section = forwardRef(({
             </button>
             <button
               className="dropdown-item delete-section"
-              onClick={handleMoveSUp}
+              onClick={handleMoveSectionUp}
               disabled={index === 1}
             >
               <i class="fas fa-angle-up fa-section fa-duplicate"></i>
@@ -203,7 +202,7 @@ export const Section = forwardRef(({
             <button
               disabled={index === sections.length}
               className="dropdown-item delete-section"
-              onClick={handleMoveSDown}
+              onClick={handleMoveSectionDown}
             >
               <i class="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
@@ -214,7 +213,7 @@ export const Section = forwardRef(({
         <input
           name="section-desc"
           type="text"
-          value={input.description[lang]}
+          value={inputs.description[lang]}
           placeholder={t('Description')}
           onChange={handleChange('description')}
           className="section-inputs section-desc"
@@ -224,27 +223,27 @@ export const Section = forwardRef(({
         applyTransition={questionAnimation}
         setApplytransition={setQuestionAnimation}
       >
-        {input.questions.map((question, i) => (
+        {inputs.questions.map((question, i) => (
           <Question
             inputs={question}
             key={question.id}
             t={t}
             ref={createRef()}
             num={question.id}
-            questions={input.questions}
-            setQuestions={handleQuestions}
+            questions={inputs.questions}
             setSection={setInput}
             setSections={setSection}
             sections={sections}
-            sectionId={input.id}
-            section={input}
+            sectionId={inputs.id}
+            section={inputs}
             lang={lang}
             setApplytransition={setApplytransition}
             questionIndex={i}
             setQuestionAnimation={setQuestionAnimation}
-            handleDrag={handleDragQ}
-            handleDrop={handleDropQ}
+            handleDrag={handleDragQuestion}
+            handleDrop={handleDropQuestion}
             setParentDropable={setParentDropable}
+            parentDropable={parentDropable}
             />
         ))}
       </AnimateSections>
