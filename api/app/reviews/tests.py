@@ -3,7 +3,6 @@ import json
 import copy
 import itertools
 
-
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.events.models import Event, EventRole
@@ -1485,7 +1484,7 @@ class ReferenceReviewRequest(ApiTestCase):
         # User, country and organisation is set up by ApiTestCase
         self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
 
-        event = self.add_event()
+        self.event = self.add_event()
 
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
         candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', password='abc', organisation_id=1, )
@@ -1497,12 +1496,9 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(users)
         db.session.commit()
 
-        event_roles = [
-            EventRole('admin', 4, 1),
-            EventRole('reviewer', 1, 1)
-        ]
+        self.event.add_event_role('admin', 4),
+        self.event.add_event_role('reviewer', 1),
 
-        db.session.add_all(event_roles)
         db.session.commit()
 
         application_form = [
@@ -1518,17 +1514,9 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
-        self.test_response = Response(  # Nominating other
-            1, self.first_user.id)
-        self.test_response.submit()
+        self.test_response = self.add_response(1, self.first_user.id, language='en')
 
-        # self.add_response(self.test_response, self.first_user.id, is_submitted=True, is_withdrawn=False)
-        db.session.add(self.test_response)
-        db.session.commit()
-        #
-        response_review = ResponseReviewer(self.test_response.id, self.first_user.id)
-        db.session.add(response_review)
-        db.session.commit()
+        self.response_review = self.add_response_reviewer(self.test_response.id, self.first_user.id)
 
         self.first_headers = self.get_auth_header_for("firstuser@mail.com")
 
@@ -1564,7 +1552,9 @@ class ReferenceReviewRequest(ApiTestCase):
         })
 
     def test_get_reference_request_with_two_references(self):
-
+        """
+        In this test, there are two references requested and submitted
+        """
         self.static_seed_data()
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
@@ -1671,7 +1661,6 @@ class ReferenceReviewRequest(ApiTestCase):
             u'relation': u'Supervisor',
             u'uploaded_document': u'DOCT-UPLOAD-78999',
         })
-
 
     def test_two_references_only_one_submitted(self):
         """
