@@ -578,3 +578,8 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         review_repository.delete_response_reviewer(response_id, reviewer_user_id)
 
         return {}, 200
+
+
+class ReviewResponseDetailList(restful.Resource):
+    def get(self):
+        return 200
