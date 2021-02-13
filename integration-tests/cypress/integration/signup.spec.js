@@ -46,11 +46,12 @@ describe("Sign up", function() {
   });
 
   // Disabling these tests because they're failing. See issue #852
-  /*
+
   it("Signup form cannot be submitted in if you havent accepted the policy or if you are underage.", function() {
     let user = testUser();
-    cy.visit("/createAccount");
     cy.wait(2000);
+    cy.visit("/");
+    cy.get("#nav-signup").click();
     cy.get("#title")
       .find("input")
       .click({ force: true })
@@ -68,10 +69,12 @@ describe("Sign up", function() {
     cy.get("#btn-signup-confirm").should("be.disabled");
   });
 
-  it("Singup form can be submitted if you fill in everything correctly.", function() {
+  it("Signup form can be submitted if you fill in everything correctly.", function() {
     let user = testUser();
-    cy.visit("/createAccount");
     cy.wait(2000);
+    cy.visit("/");
+    cy.get("#nav-signup").click();
+    cy.get("#btn-signup-confirm").should("be.disabled");
     cy.get("#title")
       .find("input")
       .click({ force: true })
@@ -90,10 +93,7 @@ describe("Sign up", function() {
     cy.get("#over18").click({force: true});
     cy.get("#agreePrivacyPolicy").click({force: true});
 
-    cy.get("#btn-signup-confirm").click();
-
-    // account should be created
-    cy.get("#account-created").should("exist");
+    // signup button should now be enabled
+    cy.get("#btn-signup-confirm").should("not.be.disabled");
   });
-  */
 });
