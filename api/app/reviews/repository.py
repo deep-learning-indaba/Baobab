@@ -175,11 +175,11 @@ class ReviewRepository():
         
     @staticmethod
     # TODO S: update to include event_id
-    def get_review_history(reviewer_user_id, application_form_id):
+    def get_review_history(reviewer_user_id, event_id):
         reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, Response)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == application_form_id)
+                        .filter(ReviewForm.application_form_id == event_id)
                         .join(Response, ReviewResponse.response_id == Response.id)
                         .join(AppUser, Response.user_id == AppUser.id))
         return reviews
@@ -195,11 +195,11 @@ class ReviewRepository():
         return reviews
 
     @staticmethod
-    def get_review_history_count(reviewer_user_id, application_form_id):
+    def get_review_history_count(reviewer_user_id, event_id):
         count = (db.session.query(ReviewResponse)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == application_form_id)
+                        .filter(ReviewForm.application_form_id == event_id)
                         .count())
         return count
 
