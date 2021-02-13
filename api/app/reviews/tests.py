@@ -1486,16 +1486,11 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.event = self.add_event()
 
-        reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1, )
-        candidate1 = AppUser('c1@c.com', 'candidate', '1', 'Mr', password='abc', organisation_id=1, )
-        system_admin = AppUser('sa@sa.com', 'system_admin', '1', 'Ms', password='abc', organisation_id=1, is_admin=True)
-        event_admin = AppUser('ea@ea.com', 'event_admin', '1', 'Ms', password='abc', organisation_id=1)
-        users = [reviewer1, candidate1, system_admin, event_admin]
-        for user in users:
-            user.verify()
-        db.session.add_all(users)
-        db.session.commit()
-
+        # TODO: S: confirm this works once 400 / 200 error is resolved
+        self.system_admin = self.add_user('sa@sa.com', is_admin=True)
+        non_admin_users = self.add_n_users(3)
+        users = non_admin_users.append(self.system_admin)
+        # TODO: confirm indices
         self.event.add_event_role('admin', 4),
         self.event.add_event_role('reviewer', 1),
 
