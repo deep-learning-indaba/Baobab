@@ -469,7 +469,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
     def get(self):
         args = self.get_req_parser.parse_args()
         user_id = g.current_user['id']
-        event_id =args['event_id']
+        event_id = args['event_id']
         page_number = args['page_number']
         limit = args['limit']
         sort_column = args['sort_column']
@@ -477,8 +477,6 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         reviewer = review_repository.get_reviewer(event_id, user_id)
         if not reviewer:
             return FORBIDDEN
-        # TODO: S: remove form id, get review history will use event id when updated
-        form_id = review_repository.get_form_id(event_id)
 
         reviews = review_repository.get_review_history(user_id, event_id)
 
@@ -490,7 +488,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         reviews = reviews.slice(page_number*limit, page_number*limit + limit).all()
 
-        num_entries = review_repository.get_review_history_count(user_id, form_id)
+        num_entries = review_repository.get_review_history_count(user_id, event_id)
 
         total_pages = ceil(float(num_entries)/limit)
 
