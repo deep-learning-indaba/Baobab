@@ -45,6 +45,9 @@ class Question(db.Model):
     def get_translation(self, language):
         question_translation = self.question_translations.filter_by(language=language).first()
         return question_translation
+    
+    def is_review_identifier(self):
+        return self.key == 'review-identifier'
 
 
 class Section(db.Model):

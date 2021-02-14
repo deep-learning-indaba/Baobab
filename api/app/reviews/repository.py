@@ -257,6 +257,15 @@ class ReviewRepository():
         db.session.query(ResponseReviewer).filter_by(response_id=response_id, reviewer_user_id=reviewer_user_id).delete()
         db.session.commit()
 
+    @staticmethod
+    def get_all_review_responses_by_event(event_id):
+        return (
+            db.session.query(ReviewResponse)
+            .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+            .join(ApplicationForm, ApplicationForm.id == ReviewForm.application_form_id)
+            .filter_by(event_id=event_id)
+        )
+
 class ReviewConfigurationRepository():
 
     @staticmethod

@@ -15,6 +15,7 @@ from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewRe
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
+from app.reviews.view_models import ReviewResponseDetail
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required, event_admin_required
@@ -581,5 +582,8 @@ class ResponseReviewAssignmentAPI(restful.Resource):
 
 
 class ReviewResponseDetailList(restful.Resource):
-    def get(self):
-        return 200
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        review_responses = review_repository.get_all_review_responses_by_event(event_id)
+        return [ReviewResponseDetail(review_response) for review_response in review_responses], 200
