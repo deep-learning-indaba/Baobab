@@ -28,7 +28,13 @@ class FileUploadComponent extends Component {
           })
           .then(response => {
             if (response.fileId && this.props.onChange) {
-              this.props.onChange(this.props.id, response.fileId);
+              this.props.onChange(
+                this.props.id,
+                JSON.stringify({
+                  filename: response.fileId,
+                  rename: file.name
+                })
+              );
             }
             this.setState({
               uploaded: response.fileId !== "",
