@@ -1,6 +1,6 @@
 import React,
 {
-  useState, forwardRef, createRef, useCallback, useEffect
+  useState, forwardRef, createRef
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
@@ -15,19 +15,9 @@ export const Section = forwardRef(({
   setApplytransition, setParentDropable, parentDropable
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
-
-  const [input, setInput] = useState({
-    name: inputs.name,
-    description: inputs.description,
-    order: inputs.order,
-    id: inputs.id,
-    questions: inputs.questions
-  });
-
   const [questionAnimation, setQuestionAnimation] = useState(false);
   const [dragId, setDragId] = useState();
-  console.log('Just updated  Section input', input);
-  console.log('-------- Questions and sections received', inputs, sections);
+  const [showingQuestions, setShowingQuestions] = useState(true);
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -38,7 +28,6 @@ export const Section = forwardRef(({
       return s;
     });
     setSection(updatedSections);
-    setQuestionAnimation(false);
     setApplytransition(false);
   }
 
@@ -71,24 +60,18 @@ export const Section = forwardRef(({
       required: false
     }
     const updatedSections = sections.map(s => {
-      if (s.id === input.id) {
+      if (s.id === inputs.id) {
         s = {...inputs, questions: [...qsts, qst]};
       }
       return s;
     });
-    // setInput({...input, questions: [...qsts, qst]});
     setSection(updatedSections);
     setApplytransition(false);
     setQuestionAnimation(false);
   }
 
-  // const handleQuestions = (inpt) => {
-  //   console.log('-------- from Section handleQuestions', input.questions);
-  //   setInput({...input, questions: inpt});
-  // }
-
   const handleOkDelete = () => {
-    const updatedSections = sections.filter(s => s.id !== input.id);
+    const updatedSections = sections.filter(s => s.id !== inputs.id);
     setSection(updatedSections);
   }
 
@@ -135,9 +118,13 @@ export const Section = forwardRef(({
   }
 
   const handleMouseDown = () => {
-    console.log('Mouse in')
     setParentDropable(true);
   };
+
+  const showQuestions = () => {
+    setShowingQuestions(!showingQuestions);
+    setQuestionAnimation(false);
+  }
 
   const numSections = sections.length;
   const index = sectionIndex + 1;
@@ -219,6 +206,14 @@ export const Section = forwardRef(({
           className="section-inputs section-desc"
           /> 
       </div>
+      <div className="arrow-wrapper">
+        <button className="arrow-btn" onClick={showQuestions}>
+          <i
+            className="arrow-btns"
+            style={showingQuestions ? { transform: 'rotate(45deg) skew(120deg, 120deg)'}
+              : { transform: 'rotate(-135deg) skew(120deg, 120deg)'}}></i>
+        </button>
+      </div>
       <AnimateSections
         applyTransition={questionAnimation}
         setApplytransition={setQuestionAnimation}
@@ -231,7 +226,6 @@ export const Section = forwardRef(({
             ref={createRef()}
             num={question.id}
             questions={inputs.questions}
-            setSection={setInput}
             setSections={setSection}
             sections={sections}
             sectionId={inputs.id}
@@ -244,14 +238,18 @@ export const Section = forwardRef(({
             handleDrop={handleDropQuestion}
             setParentDropable={setParentDropable}
             parentDropable={parentDropable}
+            showingQuestions={showingQuestions}
             />
         ))}
       </AnimateSections>
-      <div className='add-question-wrapper'>
+      <div
+        className='add-question-wrapper'
+      >
         <button
           className="add-question-btn"
           data-title={t('Add Question')}
           onMouseUp={() => addQuestion()}
+          style={!showingQuestions ? {display: 'none'}: {}}
         >
           <i class="fas fa-plus add-section-icon"></i>
         </button>

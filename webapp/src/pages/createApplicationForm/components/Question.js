@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useEffect } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove
@@ -6,9 +6,9 @@ import {
 
 const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
-    lang, setSection, section, sections,
+    lang, section, sections,
     setApplytransition, questionIndex, setQuestionAnimation,
-    handleDrag, handleDrop
+    handleDrag, handleDrop, showingQuestions
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
 
@@ -131,7 +131,6 @@ const Question = forwardRef(({
     handleMove({
       elements: questions,
       index: questionIndex,
-      setState: setSection,
       section: section,
       setAnimation: setQuestionAnimation,
       sections,
@@ -145,7 +144,6 @@ const Question = forwardRef(({
     handleMove({
       elements: questions,
       index: questionIndex,
-      setState: setSection,
       section: section,
       setAnimation: setQuestionAnimation,
       sections,
@@ -227,7 +225,6 @@ const Question = forwardRef(({
     <>
       <div
         className="section-wrapper"
-        // onBlur={updateQuestions}
         key={inputs.id}
         id={inputs.id}
         ref={ref}
@@ -235,6 +232,7 @@ const Question = forwardRef(({
         onDragOver={handleDropOver}
         onDragStart={handleDrag}
         onDrop={handleDrop}
+        style={showingQuestions ? {display: 'block'} : {display: 'none'}}
       >
         <div className="headline-description">
           <div className="question-header">

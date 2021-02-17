@@ -38,6 +38,8 @@ const ApplicationForm = (props) => {
     name: langObject(lang, t('Untitled Section')),
     description: langObject(lang, ''),
     order: 1,
+    depends_on_question_id: null,
+    show_for_values: null,
     questions: [
       {
         id: `${Math.random()}`,
