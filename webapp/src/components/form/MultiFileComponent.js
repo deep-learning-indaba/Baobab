@@ -5,8 +5,6 @@ import { withTranslation } from 'react-i18next';
 import ReactToolTip from "react-tooltip";
 import { getDownloadURL } from '../../utils/files';
 
-const baseUrl = process.env.REACT_APP_API_URL;
-
  class MultiFileComponent extends React.Component {
     constructor(props) {
         super(props);
