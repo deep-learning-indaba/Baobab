@@ -50,8 +50,7 @@ describe("Sign up", function() {
   it("Signup form cannot be submitted in if you havent accepted the policy or if you are underage.", function() {
     let user = testUser();
     cy.wait(2000);
-    cy.visit("/");
-    cy.get("#nav-signup").click();
+    cy.visit("/createAccount");
     cy.get("#title")
       .find("input")
       .click({ force: true })
