@@ -3,6 +3,7 @@ import "./Style.css";
 import tick from '../../images/tick.png'
 import { withTranslation } from 'react-i18next';
 import ReactToolTip from "react-tooltip";
+import { getDownloadURL } from '../../utils/files';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -132,7 +133,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
                         <ReactToolTip type="info" place="top" effect="solid" />
                         <a onClick={this.del} className={file ? "bin show" : "bin"} data-tip={t("Delete")}><i className="fas fa-trash"></i></a>
                         <ReactToolTip type="info" place="top" effect="solid" />
-                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={baseUrl + "/api/v1/file?filename=" + file} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={getDownloadURL(file)} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
                         <ReactToolTip type="info" place="top" effect="solid" />
                     </div>
                     {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}

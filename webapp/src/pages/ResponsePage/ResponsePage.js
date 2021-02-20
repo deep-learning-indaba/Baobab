@@ -13,6 +13,7 @@ import AnswerValue from "../../components/answerValue";
 import Loading from "../../components/Loading";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
+import { getDownloadURL } from '../../utils/files';
 
 
 class ResponsePage extends Component {
@@ -158,14 +159,14 @@ class ResponsePage extends Component {
         else {
             // file
             if (type == "file") {
-                return <a className="answer file" key={a.value} target="_blank" href={baseUrl + "/api/v1/file?filename=" + a.value}>{this.props.t("Uploaded File")}</a>
+                return <a className="answer file" key={a.value} target="_blank" href={getDownloadURL(a.value)}>{this.props.t("Uploaded File")}</a>
             }
             // multi-file
             else if (type == "multi-file") {
                 const answerFiles = JSON.parse(a.value);
                 let files = [];
                 if (Array.isArray(answerFiles) && answerFiles.length > 0) {
-                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)
+                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={getDownloadURL(file.file)}>{file.name}</a></div>)
                 }
                 else {
                     files = "No files uploaded";
