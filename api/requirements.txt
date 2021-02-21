@@ -39,3 +39,4 @@ tldextract
 parameterized
 mock
 pyrsistent==0.16.0
+rsa==4.0
