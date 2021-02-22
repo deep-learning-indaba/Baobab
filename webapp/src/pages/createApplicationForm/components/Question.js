@@ -127,7 +127,7 @@ const Question = forwardRef(({
     setApplytransition(false);
   }
 
-  const handleMoveQeustionUp = () => {
+  const handleMoveQuestionUp = () => {
     handleMove({
       elements: questions,
       index: questionIndex,
@@ -271,7 +271,7 @@ const Question = forwardRef(({
               <button
                 className="move-btn"
                 data-title={t("Move up")}
-                onClick={handleMoveQeustionUp}
+                onClick={handleMoveQuestionUp}
               >
                 <i class="fas fa-chevron-up fa-move"></i>
               </button>
