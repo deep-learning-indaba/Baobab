@@ -254,8 +254,8 @@ class AttendanceApiTest(ApiTestCase):
                       headers=header, data=params)
       
         response = json.loads(attendance_response.data)
-        self.assertEquals(response['is_invitedguest'],True)
-        self.assertEquals(response['invitedguest_role'],role)
+        self.assertEqual(response['is_invitedguest'],True)
+        self.assertEqual(response['invitedguest_role'],role)
 
         # No Invited Guest since he/she has already been signed in.
         params = { 'event_id': 1,
@@ -286,7 +286,7 @@ class AttendanceApiTest(ApiTestCase):
         data = json.loads(result.data)
         occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
         num_occurences_in_attendance_list = len(occurences_in_attendance_list)
-        self.assertEquals(num_occurences_in_attendance_list,1)
+        self.assertEqual(num_occurences_in_attendance_list,1)
 
 
     def test_cannot_register_attendance_twice(self):

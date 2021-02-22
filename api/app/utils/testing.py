@@ -229,7 +229,7 @@ class ApiTestCase(unittest.TestCase):
 
         db.session.add_all([
             ReviewQuestionTranslation(review_question.id, k, headline=v)
-            for k, v in headings.iteritems()
+            for k, v in headings.items()
         ])
         db.session.commit()
 
@@ -387,7 +387,7 @@ class ApiTestCase(unittest.TestCase):
         return offer
 
     def add_invited_guest(self, user_id, event_id=1, role='Guest'):
-        print('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role))
+        print(('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role)))
         guest = InvitedGuest(event_id, user_id, role)
         db.session.add(guest)
         db.session.commit()
@@ -398,7 +398,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(tag)
         db.session.commit()
         translations = [
-            TagTranslation(tag.id, k, name) for k, name in names.iteritems()
+            TagTranslation(tag.id, k, name) for k, name in names.items()
         ]
         db.session.add_all(translations)
         db.session.commit()

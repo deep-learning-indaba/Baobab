@@ -6,7 +6,7 @@ import json
 def _get_answer_value(answer, question, question_translation):
     if answer is None:
         if question_translation.language == 'fr':  # TODO: Add proper language support for back-end text
-            return u'Aucune réponse fournie'
+            return 'Aucune réponse fournie'
         else:
             return 'No answer provided'
 
@@ -18,7 +18,7 @@ def _get_answer_value(answer, question, question_translation):
     
     if question.type == 'file' and answer.value:
         if question_translation.language == 'fr':
-            return u'Fichier téléchargé'
+            return 'Fichier téléchargé'
         else:
             return 'Uploaded File'
 
