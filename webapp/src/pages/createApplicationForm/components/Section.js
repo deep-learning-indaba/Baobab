@@ -5,19 +5,21 @@ import React,
 import { Trans } from 'react-i18next';
 import Question from './Question';
 import {
-  Modal, AnimateSections, handleMove,
-  drag, drop
+  Modal, AnimateSections, handleMove, langObject,
+  drag, drop, option, Dependency, dependencyChange
 } from './util';
 
 export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
-  setSection, handleDrag, handleDrop,
+  setSection, handleDrag, handleDrop,langs,
   setApplytransition, setParentDropable, parentDropable
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [questionAnimation, setQuestionAnimation] = useState(false);
   const [dragId, setDragId] = useState();
   const [showingQuestions, setShowingQuestions] = useState(true);
+  const [style, setStyle] = useState({});
+  const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -36,28 +38,17 @@ export const Section = forwardRef(({
     const qst = {
       id: `${Math.random()}`,
       order: qsts.length + 1,
-      headline: {
-        en: '',
-        fr: ''
-      },
-      placeholder: {
-        en: '',
-        fr: ''
-      },
+      headline: langObject(langs, ''),
+      placeholder: langObject(langs, ''),
       type: null,
-      options: {
-        en: [],
-        fr: []
-      },
-      value: {
-        en: '',
-        fr: ''
-      },
-      label: {
-        en: '',
-        fr: ''
-      },
-      required: false
+      options: langObject(langs, []),
+      value: langObject(langs, ''),
+      label: langObject(langs, ''),
+      required: false,
+      depends_on_question_id: null,
+      show_for_values: null,
+      validation_regex: langObject(langs, ''),
+      validation_text: langObject(langs, '')
     }
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
@@ -126,9 +117,58 @@ export const Section = forwardRef(({
     setQuestionAnimation(false);
   }
 
+  const handleHideHover = () => {
+    setStyle({
+      backgroundColor: 'rgb(168, 167, 167)',
+      cursor: 'pointer'
+    });
+  }
+
+  const handleMouseOut = () => {
+    setStyle({})
+  }
+
+  const handleHideOrShowDetails = () => {
+    setHideOrShowDetails(!hideOrShowDetails);
+  }
+
+  const handlequestionDependency = (e) => {
+    const updatedSections = sections.map(s => {
+      if (s.id === inputs.id) {
+        s = {...inputs, depends_on_question_id: e.value};
+      }
+      return s;
+    });
+    setSection(updatedSections);
+  }
+
+  const handleDependencyChange = (prop) => (e) => {
+    dependencyChange({
+      prop:prop,
+      e:e,
+      sections:sections,
+      inputs:inputs,
+      setSection:setSection
+    })
+  }
+
+  const options = [];
+  const questions = inputs.questions;
+  for(let i = 0; i < questions.length; i++) {
+    options.push(option({
+      value: questions[i].id,
+      label: questions[i].headline[lang]
+        ? questions[i].headline[lang] : questions[i].order,
+      t
+    }))
+  }
+
   const numSections = sections.length;
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
+  const dependentQuestion = inputs.questions
+    .find(e => e.id === inputs.depends_on_question_id);
+
   return (
     <div
       className="section-wrapper"
@@ -195,22 +235,58 @@ export const Section = forwardRef(({
               {t("Move Section Down")}
             </button>
           </div>
+          <div
+            className='toogle-section-details-wrapper'
+            onMouseOver={handleHideHover}
+            onMouseOut={handleMouseOut}
+            onClick={handleHideOrShowDetails}
+          >
+            {!hideOrShowDetails ? (
+              <div className='toogle-section-details' style={style}>
+                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+              </div>
+            ): 
+              <div className='toogle-section-details' style={style}>
+                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+              </div>
+            }
+          </div>
           
         </div>
-        <input
-          name="section-desc"
-          type="text"
-          value={inputs.description[lang]}
-          placeholder={t('Description')}
-          onChange={handleChange('description')}
-          className="section-inputs section-desc"
-          /> 
+        <div
+          className='desc-dependency-div'
+          style={hideOrShowDetails ? {display: 'none'} : {}}
+        >
+          <input
+            name="section-desc"
+            type="text"
+            value={inputs.description[lang]}
+            placeholder={t('Description')}
+            onChange={handleChange('description')}
+            className="section-inputs section-desc"
+            />
+          <Dependency
+            options={options}
+            handlequestionDependency={handlequestionDependency}
+            inputs={inputs}
+            dependentQuestion={dependentQuestion}
+            handleDependencyChange={handleDependencyChange}
+            lang={lang}
+            t={t}
+            />
+        </div>
       </div>
       <div className="arrow-wrapper">
-        <button className="arrow-btn" onClick={showQuestions}>
+        <button
+          className="arrow-btn"
+          onClick={showQuestions}
+        >
           <i
             className="arrow-btns"
-            style={showingQuestions ? { transform: 'rotate(45deg) skew(120deg, 120deg)'}
+            style={showingQuestions 
+              ? { transform: 'rotate(45deg) skew(120deg, 120deg)'}
               : { transform: 'rotate(-135deg) skew(120deg, 120deg)'}}></i>
         </button>
       </div>
@@ -231,6 +307,7 @@ export const Section = forwardRef(({
             sectionId={inputs.id}
             section={inputs}
             lang={lang}
+            langs={langs}
             setApplytransition={setApplytransition}
             questionIndex={i}
             setQuestionAnimation={setQuestionAnimation}
@@ -239,6 +316,7 @@ export const Section = forwardRef(({
             setParentDropable={setParentDropable}
             parentDropable={parentDropable}
             showingQuestions={showingQuestions}
+            optionz={options}
             />
         ))}
       </AnimateSections>

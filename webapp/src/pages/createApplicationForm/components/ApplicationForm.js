@@ -50,7 +50,11 @@ const ApplicationForm = (props) => {
         options: langObject(lang, []),
         value: langObject(lang, ''),
         label: langObject(lang, ''),
-        required: false
+        required: false,
+        depends_on_question_id: null,
+        show_for_values: null,
+        validation_regex: langObject(lang, ''),
+        validation_text: langObject(lang, '')
       }
     ]
   }]);
@@ -96,7 +100,11 @@ const ApplicationForm = (props) => {
           options: langObject(lang, []),
           value: langObject(lang, ''),
           label: langObject(lang, ''),
-          required: false
+          required: false,
+          depends_on_question_id: null,
+          show_for_values: null,
+          validation_regex: langObject(lang, ''),
+          validation_text: langObject(lang, '')
         }
       ]
     }]), 1);
@@ -249,6 +257,7 @@ const ApplicationForm = (props) => {
                 sections={sections}
                 addSection={addSection}
                 lang={language.value}
+                langs={lang}
                 ref={createRef()}
                 handleDrag={handleDrag}
                 handleDrop={handleDrop}

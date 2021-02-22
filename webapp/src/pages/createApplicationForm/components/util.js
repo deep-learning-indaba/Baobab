@@ -2,6 +2,7 @@ import React, {
   useState, useEffect, useLayoutEffect, useRef 
 } from "react";
 import { ConfirmModal } from "react-bootstrap4-modal";
+import { default as ReactSelect } from "react-select";
 
 export const option = ({ value, t, label: l, faClass }) => {
   const label = faClass ? <div>
@@ -168,22 +169,32 @@ export const drop = ({
 }
 
 export const Modal = ({
-  element, t, handleOkDelete,
-  handleConfirm
-}) => (
-  <ConfirmModal
-    className='confirm-modal'
-    visible={true}
-    centered
-    onOK={handleOkDelete}
-    onCancel={() => handleConfirm()}
-    okText={t("Yes - Delete")}
-    cancelText={t("No - Don't delete")}>
-    <p>
-      {t(`Are you sure you want to delete this ${element}?`)}
-    </p>
-  </ConfirmModal>
-)
+  element, t, handleOkDelete, inputs,
+  handleConfirm, sections, questions
+}) => {
+  const dependentSections = sections
+    && sections.filter(s => s.depends_on_question_id === inputs.id);
+  const dependentQestions = questions
+  && questions.filter(q => q.depends_on_question_id === inputs.id);
+
+  const message = dependentSections.length || dependentQestions.length
+    ?  'This Question is a dependency of other sections/questions. Are you sure you still want to delete it?'
+    : `Are you sure you want to delete this ${element}?`;
+  return(
+    <ConfirmModal
+      className='confirm-modal'
+      visible={true}
+      centered
+      onOK={handleOkDelete}
+      onCancel={() => handleConfirm()}
+      okText={t("Yes - Delete")}
+      cancelText={t("No - Don't delete")}>
+      <p>
+        {t(message)}
+      </p>
+    </ConfirmModal>
+  )
+}
 
 /**
  * Handles move up or down of an element
@@ -221,4 +232,241 @@ export const handleMove = ({
     }
     setAnimation && setAnimation(true);
   }
+}
+
+export const Dependency = ({
+  options, handlequestionDependency, inputs, lang,
+  dependentQuestion, handleDependencyChange, t
+}) => {
+  const dependency = options.find(o => o.value === inputs.depends_on_question_id);
+  
+  return (
+    <div className='dependency-wrapper'>
+      <ReactSelect
+        options={options}
+        placeholder={t('Depends on question')}
+        onChange={e => handlequestionDependency(e)}
+        value={dependency ? dependency : null}
+        className='select-dependency'
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            boxShadow: "none",
+            border: "none",
+            transition: state.isFocused 
+              && 'color,background-color 1.5s ease-out',
+            background: state.isFocused
+              && 'lightgray',
+            color: '#fff'
+          }),
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              && "lightgray",
+            color: state.isFocused && "#fff"
+          })
+        }}
+        menuPlacement="auto"
+      />
+      {dependentQuestion && dependentQuestion.type
+        && dependentQuestion.type.value === 'single-choice'
+        && (
+        <div className='dependency-radio-wrapper'>
+          <input
+            id='single_choice'
+            type='checkbox'
+            className='single-choice-check'
+            checked={inputs.show_for_values}
+            onChange={handleDependencyChange('single')}
+            />
+          <label htmlFor='single_choice'>
+            {inputs.show_for_values ? 'True' : 'False'}
+          </label>
+        </div>
+      )}
+      {dependentQuestion && dependentQuestion.type
+        && dependentQuestion.type.value === 'multi-choice'
+        && dependentQuestion.options[lang].map((option, i) => (
+        <div className='dependency-options-wrapper'>
+          <input
+            id={option.id}
+            key={option.id}
+            type='checkbox'
+            className='single-choice-check'
+            checked={inputs.show_for_values
+              && inputs.show_for_values.length
+              && inputs.show_for_values.includes(option.label)}
+            onChange={handleDependencyChange(option.label)}
+          />
+          <label htmlFor={option.id}>{option.label}</label>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export const validationText = (min, max) => {
+  if (max && !min) {
+    return `You may enter no more that ${max} words`
+  } else if (!max && min){
+    return `You must enter atleast ${min} words`
+  } else if (max && min) {
+    return `You must enter ${min} to ${max} words`
+  } else {
+    return '';
+  }
+}
+
+export const Validation = ({
+  t, options, inputs, lang, handleChange
+}) => {
+  const [isFriendlyMode, setIsFriendlyMode] = useState(true);
+  const maxMin = isFriendlyMode
+    && inputs.validation_regex[lang]
+    && inputs.validation_regex[lang].split('{')[1]
+    && inputs.validation_regex[lang].split('{')[1].split(',');
+  const max = maxMin && parseInt(maxMin[1].split('}')[0]);
+  const min = maxMin && parseInt(maxMin[0]);
+
+  const handleChangeMode = () => {
+    setIsFriendlyMode(!isFriendlyMode);
+  }
+
+  return (
+    <div className='validation-wrapper'>
+      <span
+        className='regex-label'
+        >
+          {t('Regular Expressions')}
+        </span>
+      <ReactSelect
+        options={options}
+        placeholder={t('Enter Mode')}
+        onChange={handleChangeMode}
+        defaultValue={options[0]}
+        className='select-dependency select-validation'
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            boxShadow: "none",
+            border: "none",
+            transition: state.isFocused 
+              && 'color,background-color 1.5s ease-out',
+            background: state.isFocused
+              && 'lightgray',
+            color: '#fff',
+          }),
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              && "lightgray",
+            color: state.isFocused && "#fff"
+          })
+        }}
+        menuPlacement="auto"
+      />
+      {isFriendlyMode
+        ? (
+          <>
+            <input
+              type="number"
+              className='validaion-input'
+              placeholder={t('MIN')}
+              onChange={handleChange('min')}
+              min={0}
+              />
+            <input
+              type="number"
+              onChange={handleChange('max')}
+              className='validaion-input'
+              placeholder={t('MAX')}
+              min={min && min + 1}
+              />
+          </>
+        ) : (
+          <input
+            type="text"
+            className='validaion-input advanced-regex'
+            placeholder={t('Enter Your Regex')}
+            onChange={handleChange('validation_regex')}
+            value={t(inputs.validation_regex[lang])}
+            />
+        )
+      }
+      
+      <input
+        disabled={isFriendlyMode}
+        type="text"
+        className='validaion-text'
+        placeholder={t('Validation Text')}
+        value={t(inputs.validation_text[lang])}
+        onChange={handleChange('validation_text')}
+      />
+    </div>
+  );
+}
+
+export const dependencyChange = ({
+  prop, e, sections, inputs, setSection,
+  sectionId, question
+}) => {
+  let updatedSections;
+  if (prop === 'single') {
+    if (question) {
+      updatedSections = sections.map(s => {
+        if (s.id === sectionId) {
+          s = {...s, questions: s.questions.map(q => {
+            if (q.id === inputs.id) {
+              q = {...q, show_for_values: e.target.checked}
+            }
+            return q
+          })}
+        }
+        return s
+      });
+    } else {
+      updatedSections = sections.map(s => {
+        if (s.id === inputs.id) {
+          s = {...s, show_for_values: e.target.checked}
+        }
+        return s
+      });
+    }
+  } else {
+    if (question) {
+      updatedSections = sections.map(s => {
+        if (s.id === sectionId) {
+          s = {...s, questions: s.questions.map(q => {
+            if (q.id === inputs.id) {
+              const showForValue  = q.show_for_values;
+              if(e.target.checked) {
+                q = {...q, show_for_values: showForValue && showForValue.length
+                  ? !showForValue.includes(prop) && [...showForValue, prop]
+                  : [prop] }
+              }else {
+                q = {...q, show_for_values: showForValue.filter(o => o !== prop)}
+              }
+            }
+            return q
+          })}
+        }
+        return s
+      });
+    } else {
+      updatedSections = sections.map(s => {
+        if (s.id === inputs.id) {
+          const showForValue  = s.show_for_values;
+          if(e.target.checked) {
+            s = {...s, show_for_values: showForValue && showForValue.length
+              ? !showForValue.includes(prop) && [...showForValue, prop]
+              : [prop] }
+          } else {
+            s = {...s, show_for_values: showForValue.filter(o => o !== prop)}
+          }
+        }
+        return s
+      });
+    }
+  }
+  setSection(updatedSections);
 }
