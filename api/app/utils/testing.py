@@ -68,7 +68,6 @@ class ApiTestCase(unittest.TestCase):
         if os.path.exists("/code/api/app/utils/names.txt"):
             with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
-            names = [n.decode('utf-8', 'replace') for n in names]
         else:
             # why yes, these are names of African Hollywood actors (according to Wikipedia)
             names = ["Mehcad Brooks", "Malcolm Barrett", "Nick Cannon", "Lamorne Morris", "Neil Brown Jr.",
