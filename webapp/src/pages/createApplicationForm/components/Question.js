@@ -1,63 +1,159 @@
-import React, { useContext, useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { default as ReactSelect } from "react-select";
-import { option } from './util';
+import {
+  option, Modal, handleMove
+} from './util';
 
-const Question = ({
-    inputs, t, questions,
-    lang, setSection, section
-}) => {
-  // const { setAppFormData } = useContext(Context);
-  const [input, setInput] = useState({
-    headline: inputs.headline,
-    placeholder: inputs.placeholder,
-    id: inputs.id,
-    order: inputs.order,
-    type: inputs.type,
-    options: inputs.options,
-    value: inputs.value,
-    label: inputs.label,
-    required: inputs.required
-  });
+const Question = forwardRef(({
+    inputs, t, questions, sectionId, setSections,
+    lang, section, sections,
+    setApplytransition, questionIndex, setQuestionAnimation,
+    handleDrag, handleDrop, showingQuestions
+}, ref) => {
+  const [isModelVisible, setIsModelVisible] = useState(false);
 
   const handleChange = (prop) => (e) => {
-    const target = input[prop];
-    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
+    const target = inputs[prop];
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, [prop]: {...target, [lang]: e.target.value}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections)
   }
   const handleTypeChange = (e) => {
-    setInput({...input, type: e});
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, type: e}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections)
   }
   const handleCheckChanged = (e) => {
-    setInput({...input, 'required': e.target.checked});
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, required: e.target.checked}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
   const handleAddOption = () => {
-    const opt = input.options;
-    setInput({...input, options: {...opt, [lang]: [{
-      id: `${Math.random()}`,
-      value: input.value[lang],
-      label: input.label[lang],
-    }, ...input.options[lang]]}});
+    const opt = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, options: {...opt, [lang]: [{
+              id: `${Math.random()}`,
+              value: inputs.value[lang],
+              label: inputs.label[lang],
+            }, ...opt[lang]]}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
   const resetInputs = () => {
-    const { value, label } = input;
-    setInput({...input, value: {...value, [lang]: ''},
-    label: {...label, [lang]: ''}});
-    updateQuestions();
+    const { value, label } = inputs;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, value: {...value, [lang]: '',
+              label: {...label, [lang]: ''}}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
   const handleDeleteOption = (id, e) => {
-    const newOptions = input.options[lang].filter(e => e.id !== id);
-    const opt = input.options;
-    setInput({...input, options: {...opt, [lang]: [...newOptions]}})
+    const newOptions = inputs.options[lang].filter(o => o.id !== id);
+    const opt = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, options: {...opt, [lang]: newOptions}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
-  const updateQuestions = () => { // Update questions in the sections form when question loses focus
-    const updatedQuestions = questions.map(q => {
-      if(q.id === input.id) return input;
-      return q;
+  const handleOkDelete = () => {
+    const newQuestions = questions.filter(q => q.id !== inputs.id);
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...s, questions: newQuestions}
+      }
+      return s;
     });
-    setSection({...section, questions: updatedQuestions});
+    setSections(updatedSections);
+    setQuestionAnimation(false);
+  }
+
+  const handleConfirm = () => {
+    setIsModelVisible(!isModelVisible);
+    setApplytransition(false);
+  }
+
+  const handleMoveQuestionUp = () => {
+    handleMove({
+      elements: questions,
+      index: questionIndex,
+      section: section,
+      setAnimation: setQuestionAnimation,
+      sections,
+      setSection: setSections,
+      id: inputs.id,
+      isUp: true
+    });
+  }
+
+  const handleMoveQuestionDown = () => {
+    handleMove({
+      elements: questions,
+      index: questionIndex,
+      section: section,
+      setAnimation: setQuestionAnimation,
+      sections,
+      id: inputs.id,
+      setSection: setSections,
+    });
+  }
+
+  const handleDropOver = (e) => {
+    e.preventDefault();
   }
 
   const options = [
@@ -129,24 +225,30 @@ const Question = ({
     <>
       <div
         className="section-wrapper"
-        onMouseOut={updateQuestions}
+        key={inputs.id}
+        id={inputs.id}
+        ref={ref}
+        draggable={true}
+        onDragOver={handleDropOver}
+        onDragStart={handleDrag}
+        onDrop={handleDrop}
+        style={showingQuestions ? {display: 'block'} : {display: 'none'}}
       >
         <div className="headline-description">
           <div className="question-header">
             <input
               type="text"
               name="headline"
-              value={input.headline[lang]}
+              value={inputs.headline[lang]}
               onChange={handleChange('headline')}
               placeholder={t('Headline')}
               className="section-inputs question-title"
             />
             <ReactSelect
-              id={input.id}
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
-              defaultValue={input.type || null}
+              defaultValue={inputs.type || null}
               className='select-form'
               styles={{
                 control: (base, state) => ({
@@ -165,18 +267,34 @@ const Question = ({
               }}
               menuPlacement="auto"
             />
+            <div className='move-btns-wrapper'>
+              <button
+                className="move-btn"
+                data-title={t("Move up")}
+                onClick={handleMoveQuestionUp}
+              >
+                <i class="fas fa-chevron-up fa-move"></i>
+              </button>
+              <button
+                className="move-btn"
+                data-title={t("Move down")}
+                onClick={handleMoveQuestionDown}
+              >
+                <i class="fas fa-chevron-down fa-move"></i>
+              </button>
+            </div>
           </div>
-          {withPlaceHolder.includes(input.type && input.type.value) && (
+          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
             <input
               name="question-headline"
               type="text"
-              value={input.placeholder[lang]}
+              value={inputs.placeholder[lang]}
               placeholder={t('Placeholder')}
               onChange={handleChange('placeholder')}
               className="question-inputs question-headline"
             />
           )}
-          {withOptions.includes(input.type && input.type.value) && (
+          {withOptions.includes(inputs.type && inputs.type.value) && (
             <div className="options">
               <table
                 className='options-table'
@@ -188,6 +306,7 @@ const Question = ({
                         type='text'
                         placeholder={t('Value')}
                         onChange={handleChange('value')}
+                        value={inputs.value[lang]}
                         className='option-inputs'
                       />
                     </td>
@@ -195,6 +314,7 @@ const Question = ({
                       <input
                         type='text'
                         placeholder={t('Label')}
+                        value={inputs.label[lang]}
                         onChange={handleChange('label')}
                         className='option-inputs'
                       />
@@ -202,7 +322,7 @@ const Question = ({
                     <td className='options-row'>
                       <i
                         className="fas fa-plus-circle  fa-lg fa-table-btns add-row"
-                        data-title='Add'
+                        data-title={t('Add')}
                         onMouseDown={handleAddOption}
                         onMouseUp={resetInputs}
                       ></i>
@@ -210,7 +330,7 @@ const Question = ({
                   </tr>
                 </tbody>
                 <tbody className='options-row'>
-                  {input.options[lang].map((option, i) => (
+                  {inputs.options[lang].map((option, i) => (
                     <tr key={i} className='options-row'>
                       <td className='options-row'>
                         <input
@@ -230,7 +350,7 @@ const Question = ({
                       </td>
                       <td className='options-row'>
                         <i
-                          data-title='Delete'
+                          data-title={t('Delete')}
                           className="fas fa-minus-circle fa-lg fa-table-btns delete-row"
                           onClick={e => handleDeleteOption(option.id, e)}
                         ></i>
@@ -253,25 +373,34 @@ const Question = ({
               <button
                 className="delete-qstion delete-btn"
                 data-title={t('Delete')}
+                onClick={handleConfirm}
               >
                 <i className="far fa-trash-alt fa-md fa-color"></i>
               </button>
               <div className='require-chckbox'>
                 <input
                   type='checkbox'
-                  id={`required_${input.id}`}
-                  checked={input.required}
+                  id={`required_${inputs.id}`}
+                  checked={inputs.required}
                   onChange={e => handleCheckChanged(e)}
                   className='require-check'
                 />
-                <label htmlFor={`required_${input.id}`}>{t('Required')}</label>
+                <label htmlFor={`required_${inputs.id}`}>{t('Required')}</label>
               </div>
             </div>
           </div>
         </div>
+        {isModelVisible && (
+            <Modal
+              t={t}
+              element='question'
+              handleOkDelete={handleOkDelete}
+              handleConfirm={handleConfirm}
+            />
+          )}
       </div>
     </>
   )
-}
+})
 
 export default Question;
