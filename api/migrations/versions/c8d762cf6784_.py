@@ -28,29 +28,29 @@ def upgrade():
     sa.Column('group', sa.String(length=100), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column(u'app_user', sa.Column('affiliation', sa.String(length=255), nullable=False))
-    op.add_column(u'app_user', sa.Column('deleted_datetime_utc', sa.DateTime(), nullable=True))
-    op.add_column(u'app_user', sa.Column('department', sa.String(length=255), nullable=False))
-    op.add_column(u'app_user', sa.Column('firstname', sa.String(length=100), nullable=False))
-    op.add_column(u'app_user', sa.Column('is_deleted', sa.Boolean(), nullable=False))
-    op.add_column(u'app_user', sa.Column('lastname', sa.String(length=100), nullable=False))
-    op.add_column(u'app_user', sa.Column('nationality_country_id', sa.Integer(), nullable=False))
-    op.add_column(u'app_user', sa.Column('residence_country_id', sa.Integer(), nullable=False))
-    op.add_column(u'app_user', sa.Column('user_category_id', sa.Integer(), nullable=False))
-    op.add_column(u'app_user', sa.Column('user_disability', sa.String(length=255), nullable=False))
-    op.add_column(u'app_user', sa.Column('user_ethnicity', sa.String(length=50), nullable=False))
-    op.add_column(u'app_user', sa.Column('user_gender', sa.String(length=20), nullable=False))
-    op.add_column(u'app_user', sa.Column('user_title', sa.String(length=20), nullable=False))
-    op.alter_column(u'app_user', 'active',
+    op.add_column('app_user', sa.Column('affiliation', sa.String(length=255), nullable=False))
+    op.add_column('app_user', sa.Column('deleted_datetime_utc', sa.DateTime(), nullable=True))
+    op.add_column('app_user', sa.Column('department', sa.String(length=255), nullable=False))
+    op.add_column('app_user', sa.Column('firstname', sa.String(length=100), nullable=False))
+    op.add_column('app_user', sa.Column('is_deleted', sa.Boolean(), nullable=False))
+    op.add_column('app_user', sa.Column('lastname', sa.String(length=100), nullable=False))
+    op.add_column('app_user', sa.Column('nationality_country_id', sa.Integer(), nullable=False))
+    op.add_column('app_user', sa.Column('residence_country_id', sa.Integer(), nullable=False))
+    op.add_column('app_user', sa.Column('user_category_id', sa.Integer(), nullable=False))
+    op.add_column('app_user', sa.Column('user_disability', sa.String(length=255), nullable=False))
+    op.add_column('app_user', sa.Column('user_ethnicity', sa.String(length=50), nullable=False))
+    op.add_column('app_user', sa.Column('user_gender', sa.String(length=20), nullable=False))
+    op.add_column('app_user', sa.Column('user_title', sa.String(length=20), nullable=False))
+    op.alter_column('app_user', 'active',
                existing_type=sa.BOOLEAN(),
                nullable=False)
-    op.alter_column(u'app_user', 'email',
+    op.alter_column('app_user', 'email',
                existing_type=sa.VARCHAR(length=255),
                nullable=False)
-    op.alter_column(u'app_user', 'is_admin',
+    op.alter_column('app_user', 'is_admin',
                existing_type=sa.BOOLEAN(),
                nullable=False)
-    op.alter_column(u'app_user', 'password',
+    op.alter_column('app_user', 'password',
                existing_type=sa.VARCHAR(length=255),
                nullable=False)
     op.create_foreign_key('app_user_residence_country_id', 'app_user', 'country', ['residence_country_id'], ['id'])
@@ -66,31 +66,31 @@ def downgrade():
     op.drop_constraint('app_user_residence_country_id', 'app_user', type_='foreignkey')
     op.drop_constraint('app_user_nationality_country_id', 'app_user', type_='foreignkey')
     op.drop_constraint('app_user_user_category_id', 'app_user', type_='foreignkey')
-    op.alter_column(u'app_user', 'password',
+    op.alter_column('app_user', 'password',
                existing_type=sa.VARCHAR(length=255),
                nullable=True)
-    op.alter_column(u'app_user', 'is_admin',
+    op.alter_column('app_user', 'is_admin',
                existing_type=sa.BOOLEAN(),
                nullable=True)
-    op.alter_column(u'app_user', 'email',
+    op.alter_column('app_user', 'email',
                existing_type=sa.VARCHAR(length=255),
                nullable=True)
-    op.alter_column(u'app_user', 'active',
+    op.alter_column('app_user', 'active',
                existing_type=sa.BOOLEAN(),
                nullable=True)
-    op.drop_column(u'app_user', 'user_title')
-    op.drop_column(u'app_user', 'user_gender')
-    op.drop_column(u'app_user', 'user_ethnicity')
-    op.drop_column(u'app_user', 'user_disability')
-    op.drop_column(u'app_user', 'user_category_id')
-    op.drop_column(u'app_user', 'residence_country_id')
-    op.drop_column(u'app_user', 'nationality_country_id')
-    op.drop_column(u'app_user', 'lastname')
-    op.drop_column(u'app_user', 'is_deleted')
-    op.drop_column(u'app_user', 'firstname')
-    op.drop_column(u'app_user', 'department')
-    op.drop_column(u'app_user', 'deleted_datetime_utc')
-    op.drop_column(u'app_user', 'affiliation')
+    op.drop_column('app_user', 'user_title')
+    op.drop_column('app_user', 'user_gender')
+    op.drop_column('app_user', 'user_ethnicity')
+    op.drop_column('app_user', 'user_disability')
+    op.drop_column('app_user', 'user_category_id')
+    op.drop_column('app_user', 'residence_country_id')
+    op.drop_column('app_user', 'nationality_country_id')
+    op.drop_column('app_user', 'lastname')
+    op.drop_column('app_user', 'is_deleted')
+    op.drop_column('app_user', 'firstname')
+    op.drop_column('app_user', 'department')
+    op.drop_column('app_user', 'deleted_datetime_utc')
+    op.drop_column('app_user', 'affiliation')
     op.drop_table('user_category')
     op.drop_table('country')
     # ### end Alembic commands ###

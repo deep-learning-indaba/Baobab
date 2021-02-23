@@ -55,31 +55,31 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
     
 Malheureusement, votre candidature à {event_name} a échoué.
 Veuillez réessayer l'année prochaine!
     
 Cordialement,
 Les organisateurs de {event_name}"""
-    session.add(EmailTemplate('outcome-rejected', None, u'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
+    session.add(EmailTemplate('outcome-rejected', None, 'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
     
 Ce courriel sert à vous informer que vous êtes maintenant sur la liste d'attente pour {event_name}.
 Nous vous contacterons si une place se libère.
     
 Cordialement,
 Les organisateurs de {event_name}"""
-    session.add(EmailTemplate('outcome-waitlist', None, u'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
+    session.add(EmailTemplate('outcome-waitlist', None, 'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Bienvenue sur {event_name}! Nous sommes tellement excités que vous ayez réussi.
 
@@ -89,11 +89,11 @@ Cordialement,
 Les organisateurs de {event_name}
 """
 
-    session.add(EmailTemplate('attendance-confirmation', None, u'Bienvenue à {event_name}!', template, 'fr'))
+    session.add(EmailTemplate('attendance-confirmation', None, 'Bienvenue à {event_name}!', template, 'fr'))
 
 #########
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Merci d’avoir rempli le formulaire d’inscription pour les invités. Vous trouverez ci-dessous
 une copie de vos réponses à des fins de consultation ultérieure.
@@ -104,11 +104,11 @@ Cordialement,
 l’équipe {event_name}
 """
 
-    session.add(EmailTemplate('guest-registration-confirmation', None, u'Inscription à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('guest-registration-confirmation', None, 'Inscription à {event_name}', template, 'fr'))
 
 #########
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Veuillez trouver ci-joint votre lettre d'invitation officielle à {event_name}.
 
@@ -116,12 +116,12 @@ Cordialement,
 l’équipe {event_name}
 """
 
-    session.add(EmailTemplate('invitation-letter', None, u"Lettre d'invitation à {event_name}", template, 'fr'))
+    session.add(EmailTemplate('invitation-letter', None, "Lettre d'invitation à {event_name}", template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Nous sommes heureux de vous inviter à {event_name} en qualité de {role}.
 
@@ -129,12 +129,12 @@ Veuillez répondre à ce courriel si vous avez des questions ou des préoccupati
 
 Cordialement,
 Les organisateurs de {event_name}"""
-    session.add(EmailTemplate('guest-invitation', None, u'Votre invitation à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('guest-invitation', None, 'Votre invitation à {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Nous sommes heureux de vous inviter à {event_name} en qualité de {role}.
 
@@ -146,12 +146,12 @@ Veuillez répondre à ce courriel si vous avez des questions ou des préoccupati
 
 Cordialement,
 Les organisateurs de {event_name}"""
-    session.add(EmailTemplate('guest-invitation-with-registration', None, u'Votre invitation à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('guest-invitation-with-registration', None, 'Votre invitation à {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Nous sommes heureux de vous inviter à {event_name} en qualité de {role}.
 Veuillez suivre les instructions ci-dessous pour accéder à notre système de gestion des
@@ -167,12 +167,12 @@ Veuillez répondre à ce courriel si vous avez des questions ou des préoccupati
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('new-guest-no-registration', None, u'Votre invitation à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('new-guest-no-registration', None, 'Votre invitation à {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Nous sommes heureux de vous inviter à {event_name} en qualité de {role}.
 Veuillez suivre les instructions ci-dessous pour accéder à notre système de gestion des
@@ -189,12 +189,12 @@ Veuillez répondre à ce courriel si vous avez des questions ou des préoccupati
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('new-guest-registration', None, u'Votre invitation à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('new-guest-registration', None, 'Votre invitation à {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 {candidate} a présenté sa candidature pour participer à {event_name}({event_url}).
 
@@ -211,12 +211,12 @@ Cordialement,
 L’équipe de {event_name}
 
 """
-    session.add(EmailTemplate('reference-request-self-nomination', None, u'DEMANDE DE RÉFÉRENCE – {event_name}', template, 'fr'))
+    session.add(EmailTemplate('reference-request-self-nomination', None, 'DEMANDE DE RÉFÉRENCE – {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 {candidate} a été désigné(e) pour participer à {event_name}({event_url}).
 
@@ -232,12 +232,12 @@ Veuillez cliquer sur ce lien {link} pour télécharger votre lettre de recommand
 Cordialement,
 L’équipe de {event_name}
 """
-    session.add(EmailTemplate('reference-request', None, u'DEMANDE DE RÉFÉRENCE – {event_name}', template, 'fr'))
+    session.add(EmailTemplate('reference-request', None, 'DEMANDE DE RÉFÉRENCE – {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Félicitations ! Votre candidature a été retenue pour {event_name} !
 
@@ -252,12 +252,12 @@ Cordialement,
 Les organisateurs de {event_name}
 
 """
-    session.add(EmailTemplate('offer', None, u'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
+    session.add(EmailTemplate('offer', None, 'Mise à jour de l’état de la demande pour {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Merci d’avoir rempli le formulaire d’inscription. 
 Veuillez noter que votre place est en attente de confirmation à la réception du paiement. Vous recevrez une correspondance avec les instructions de paiement dans les prochains jours.
@@ -269,13 +269,13 @@ Voici une copie de vos réponses :
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('registration-pending-confirmation', None, u'Inscription à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('registration-pending-confirmation', None, 'Inscription à {event_name}', template, 'fr'))
     
 #########
 
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Merci d’avoir rempli le formulaire d’inscription. 
 Votre place est maintenant confirmée et nous nous réjouissons de vous accueillir à l'événement!
@@ -287,12 +287,12 @@ Voici une copie de vos réponses :
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('registration-with-confirmation', None, u'Inscription à {event_name}', template, 'fr'))
+    session.add(EmailTemplate('registration-with-confirmation', None, 'Inscription à {event_name}', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
     
 Votre inscription à {event_name} a été confirmée! Cela signifie que tous les paiements requis ont été effectués.
 
@@ -301,12 +301,12 @@ Nous attendons avec impatience de vous voir à l'événement!
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('registration-confirmed', None, u"La confirmation d'inscription à {event_name}", template, 'fr'))
+    session.add(EmailTemplate('registration-confirmed', None, "La confirmation d'inscription à {event_name}", template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 {num_reviews} tâches de révision vous ont été attribuées dans {system_name}. Veuillez consulter {baobab_host}/{event_key}/review pour commencer.
 
@@ -317,11 +317,11 @@ Merci de nous aider à passer en revue les demandes pour {event_name} !
 Cordialement,
 Les organisateurs de {event_name}
 """
-    session.add(EmailTemplate('reviews-assigned', None, u'Des tâches de révision vous ont été attribuées dans {system_name}', template, 'fr'))
+    session.add(EmailTemplate('reviews-assigned', None, 'Des tâches de révision vous ont été attribuées dans {system_name}', template, 'fr'))
     
     # Update the English template
     en_template = session.query(EmailTemplate).filter_by(key='reviews-assigned', language='en').first()
-    en_template.template = u"""Dear {title} {firstname} {lastname},
+    en_template.template = """Dear {title} {firstname} {lastname},
 
 You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
 Note that if you were already logged in to {system_name}, you will need to log out and log in again to pick up the changes to your profile. 
@@ -335,7 +335,7 @@ The {event_name} Organisers
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Merci d’avoir créé un nouveau compte {system}. Veuillez cliquer sur le lien suivant pour
 vérifier votre adresse électronique :
@@ -345,12 +345,12 @@ vérifier votre adresse électronique :
 Cordialement,
 {organisation}
 """
-    session.add(EmailTemplate('verify-email', None, u'Courriel {system} Vérification', template, 'fr'))
+    session.add(EmailTemplate('verify-email', None, 'Courriel {system} Vérification', template, 'fr'))
     
 #########
 
 
-    template = u"""Madame / Monsieur {lastname},
+    template = """Madame / Monsieur {lastname},
 
 Vous avez récemment demandé une réinitialisation de votre mot de passe sur {system_name}.
 Pour ce faire, veuillez cliquer sur le lien suivant : {host}/resetPassword?resetToken={token}
@@ -360,7 +360,7 @@ Si vous n’avez pas demandé la réinitialisation de votre mot de passe, veuill
 Cordialement,
 {organisation}
 """
-    session.add(EmailTemplate('password-reset', None, u'Réinitialisation du mot de passe pour {system_name}', template, 'fr'))
+    session.add(EmailTemplate('password-reset', None, 'Réinitialisation du mot de passe pour {system_name}', template, 'fr'))
 
 #########
 
@@ -374,10 +374,10 @@ Cordialement,
 L’équipe de {event_name}
 """
 
-    session.add(EmailTemplate('confirmation-response', None, u'Votre demande pour {event_name}', template, 'fr'))
+    session.add(EmailTemplate('confirmation-response', None, 'Votre demande pour {event_name}', template, 'fr'))
 
     en_template = session.query(EmailTemplate).filter_by(key='confirmation-response', language='en').first()
-    en_template.template = u"""Dear {title} {firstname} {lastname},
+    en_template.template = """Dear {title} {firstname} {lastname},
 
 Thank you for applying to {event_description}. Your application is being reviewed by our committee and we will get back to you as soon as possible. Included below is a copy of your responses.
 

@@ -281,7 +281,7 @@ class ResponseListAPI(restful.Resource):
         question_ids = args['question_ids[]']
         language = args['language']
         
-        print('Include unsubmitted:', include_unsubmitted)
+        print(('Include unsubmitted:', include_unsubmitted))
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
 
