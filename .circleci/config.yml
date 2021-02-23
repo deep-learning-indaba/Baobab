@@ -139,6 +139,7 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             nvm install v13.12.0 && nvm use v13.12.0 && nvm alias default v13.12.0
             node -v
+            gcloud components update
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
@@ -160,6 +161,7 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
             nvm install v13.12.0 && nvm use v13.12.0 && nvm alias default v13.12.0
             node -v
+            gcloud components update
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
