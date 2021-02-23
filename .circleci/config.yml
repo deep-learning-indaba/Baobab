@@ -7,7 +7,7 @@ jobs:
       - run:
           name: Start container
           command: |
-            python --version
+            python3 --version
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
@@ -16,9 +16,9 @@ jobs:
       - run:
           name: Run migrations
           command: |
-            docker-compose run web python api/run.py db upgrade --directory api/migrations
-            docker-compose run web python api/run.py db downgrade --directory api/migrations
-            docker-compose run web python api/run.py db upgrade --directory api/migrations
+            docker-compose run web python3 api/run.py db upgrade --directory api/migrations
+            docker-compose run web python3 api/run.py db downgrade --directory api/migrations
+            docker-compose run web python3 api/run.py db upgrade --directory api/migrations
       - run:
           name: Run unit tests
           command: docker-compose run  web nosetests -v 
@@ -31,7 +31,7 @@ jobs:
           name: Run integration tests
           command: |
             docker-compose build cypress
-            docker-compose run web python ./api/run.py db upgrade --directory api/migrations
+            docker-compose run web python3 ./api/run.py db upgrade --directory api/migrations
             docker-compose run cypress
 
   front-end-tests:
@@ -61,11 +61,11 @@ jobs:
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
-            echo "Current setuptools v- $(pip --setuptools)"
-            pip install --upgrade setuptools==44.0.0 
-            echo "Updated setuptools v - $(pip --setuptools)"
-            pip install -r requirements.txt
-            DATABASE_URL=$STAGING_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
+            echo "Current setuptools v- $(pip3 --setuptools)"
+            pip3 install --upgrade setuptools==44.0.0 
+            echo "Updated setuptools v - $(pip3 --setuptools)"
+            pip3 install -r requirements.txt
+            DATABASE_URL=$STAGING_DB_PROXY python3 run.py db upgrade # Temporarily update the database url to the proxy and run migrations
           no_output_timeout: 30m
 
   migrate-prod:
@@ -85,14 +85,14 @@ jobs:
             ./cloud_sql_proxy -dir=/cloudsql -instances=baobab:us-central1:baobab -credential_file=cloud_proxy.key & # Run the cloud_sql_proxy
             # Run the migrations
             cd api
-            echo "Current pip v- $(pip --version)"
-            pip install --upgrade pip==20.0.1
-            echo "Updated pip v - $(pip --version)"
-            echo "Current setuptools v- $(pip --setuptools)"
-            pip install --upgrade setuptools==44.0.0 
-            echo "Updated setuptools v - $(pip --setuptools)"
-            pip install -r requirements.txt
-            DATABASE_URL=$PROD_DB_PROXY python run.py db upgrade # Temporarily update the database url to the proxy and run migrations
+            echo "Current pip v- $(pip3 --version)"
+            pip3 install --upgrade pip==20.0.1
+            echo "Updated pip v - $(pip3 --version)"
+            echo "Current setuptools v- $(pip3 --setuptools)"
+            pip3 install --upgrade setuptools==44.0.0 
+            echo "Updated setuptools v - $(pip3 --setuptools)"
+            pip3 install -r requirements.txt
+            DATABASE_URL=$PROD_DB_PROXY python3 run.py db upgrade # Temporarily update the database url to the proxy and run migrations
           no_output_timeout: 1h
 
   deploy-backend-test:
