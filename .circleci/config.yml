@@ -134,6 +134,8 @@ jobs:
       - run:
           name: Deploy to test
           command: |
+            apt-get update -qq
+            apt-get install -y nodejs
             curl -o- -L https://yarnpkg.com/install.sh | sh
             export PATH=~/.yarn/bin:$PATH
             export NVM_DIR="/opt/circleci/.nvm"
