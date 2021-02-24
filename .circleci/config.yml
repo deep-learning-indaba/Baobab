@@ -128,7 +128,7 @@ jobs:
 
   deploy-test:
     docker:
-      - image: launcher.gcr.io/google/nodejs
+      - image: boiyaa/google-cloud-sdk-nodejs:latest
     steps:
       - checkout
       - run:
