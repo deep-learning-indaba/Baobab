@@ -1,6 +1,5 @@
 service: staging-frontend
 runtime: python37
-threadsafe: true
 
 handlers:
   - url: /(.*\.(gif|png|jpg|css|js|pdf|json)(|\.map))$
