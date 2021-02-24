@@ -127,7 +127,6 @@ jobs:
             gcloud app deploy prod.yaml --version=v1
 
   deploy-test:
-    machine: true
     docker:
       - image: gcr.io/google-appengine/python
     steps:
