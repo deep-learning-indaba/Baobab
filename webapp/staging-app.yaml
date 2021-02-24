@@ -13,14 +13,3 @@ handlers:
     upload: build/index.html
     secure: always
     redirect_http_response_code: 301
-
-skip_files:
-  - ^(.*/)?.*/assets/.*$
-  - ^(.*/)?.*/test/.*$
-  - ^(.*/)?.*/templates/.*$
-  - ^(.*/)?.*/node_modules/.*$
-
-  - ^(assets/.*)
-  - ^(test/.*)
-  - ^(templates/.*)
-  - ^(node_modules/.*)
