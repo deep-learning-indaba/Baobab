@@ -149,7 +149,8 @@ jobs:
             gcloud app deploy staging-app.yaml dispatch.yaml
 
   deploy-prod:
-    machine: true
+    docker:
+      - image: boiyaa/google-cloud-sdk-nodejs:latest
     steps:
       - checkout
       - run:
