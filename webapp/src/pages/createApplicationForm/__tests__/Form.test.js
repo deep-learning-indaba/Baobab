@@ -4,6 +4,7 @@ import ApplicationForm from '../components/ApplicationForm';
 import {Section} from '../components/Section';
 import Question from '../components/Question';
 import Form from '../Form';
+import { option } from '../components/util';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => {
@@ -158,6 +159,7 @@ test('Check if the Question Component renders.', () => {
       }
     ]
   }
+
   const  sections = [{
     id: `${Math.random()}`,
     name: {
@@ -198,6 +200,7 @@ test('Check if the Question Component renders.', () => {
       }
     ]
   }]
+
   const lang = 'en';
 
   const questions = [{
@@ -226,6 +229,7 @@ test('Check if the Question Component renders.', () => {
     },
     required: false
   }];
+
   const inputs = {
     id: `${Math.random()}`,
     order: 1,
@@ -253,6 +257,18 @@ test('Check if the Question Component renders.', () => {
     required: false
   };
 
+  const options = [
+    option({
+      value: 'short-text',
+      label: 'Short Text',
+      t
+    }),
+    option({
+      value: 'long-text',
+      label: 'Long Text',
+      t
+    })]
+
   const props = {
     questions,
     inputs,
@@ -270,7 +286,8 @@ test('Check if the Question Component renders.', () => {
     setQuestionAnimation,
     handleDrag,
     handleDrop,
-    setParentDropable
+    setParentDropable,
+    options
   };
   const ref = React.createRef();
   const wrapper = mount(

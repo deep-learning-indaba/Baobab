@@ -278,9 +278,9 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
     
     def validate_scores(self, scores):
         for score in scores:
-            if 'review_question_id' not in score.keys():
+            if 'review_question_id' not in list(score.keys()):
                 return self.get_error_message('review_question_id')
-            if 'value' not in score.keys():
+            if 'value' not in list(score.keys()):
                 return self.get_error_message('value')
     
     def get_error_message(self, key):

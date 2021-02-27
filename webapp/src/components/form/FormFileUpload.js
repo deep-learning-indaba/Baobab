@@ -3,8 +3,7 @@ import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 import { withTranslation } from 'react-i18next';
-
-const baseUrl = process.env.REACT_APP_API_URL;
+import { getDownloadURL } from "../../utils/files";
 
 class FormFileUpload extends React.Component {
   shouldDisplayError = () => {
@@ -68,7 +67,7 @@ class FormFileUpload extends React.Component {
                 <div class="progress-bar" role="progressbar" style={progressStyle} aria-valuemin="0" aria-valuemax="100"></div>
             </div>}
             {(this.props.uploaded || this.props.value) && 
-              <a href={baseUrl + "/api/v1/file?filename=" + this.props.value} class="text-success uploaded-status">{t('Uploaded file')}</a>}
+              <a href={getDownloadURL(this.props.value)} class="text-success uploaded-status">{t('Uploaded file')}</a>}
         </FormGroup>
       </div>
     );

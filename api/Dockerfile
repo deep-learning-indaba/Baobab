@@ -1,6 +1,6 @@
 FROM gcr.io/google-appengine/python
 
-RUN virtualenv /env
+RUN virtualenv /env -p python3.7
 
 # Setting these environment variables are the same as running
 # source /env/bin/activate.
@@ -16,6 +16,6 @@ RUN mkdir /code
 ADD . /code/
 WORKDIR /code
 
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 RUN locale -a
 EXPOSE 5000

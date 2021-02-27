@@ -19,7 +19,7 @@ def generate_token(user, expiration=TWO_WEEKS):
         'id': user.id,
         'email': user.email,
         'is_admin': user.is_admin
-    })
+    }).decode('utf-8')
 
 
 def verify_token(token):
