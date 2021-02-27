@@ -34,14 +34,19 @@ const Question = forwardRef(({
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
-
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
+            let regex = q.validation_regex[lang];
+            if (prop === 'min' || prop === 'max') {
+              if (!q.validation_regex[lang].split('{')[1]) {
+                regex = `^\s*(\S+(\s+|$)){0,0}$`
+              }
+            }
             const maxMin = (prop === 'min' || prop === 'max')
-              && q.validation_regex[lang]
-              && q.validation_regex[lang].split('{')[1].split(',');
+              && regex
+              && regex.split('{')[1].split(',');
 
             if (prop === 'min') {
               const validation = q.validation_regex;
@@ -99,6 +104,8 @@ const Question = forwardRef(({
       }
       return s
     });
+    setApplytransition(false)
+    setQuestionAnimation(false)
     setSections(updatedSections)
   }
 
@@ -206,14 +213,15 @@ const Question = forwardRef(({
 
   const handleOkDelete = () => {
     const questionsWithNoDependency = questions.map(q => {
-      if (q.depends_on_question_id === inputs.id) {
+      if (q.depends_on_question_id
+        && q.depends_on_question_id === inputs.id) {
         q = {...q, depends_on_question_id: null}
       }
       return q
     });
     const sectionsWithNoDependency = sections.map(s => {
       if (s.id === sectionId) {
-        if (s.depends_on_question_id === inputs.id) {
+        if (s.depends_on_question_id && s.depends_on_question_id === inputs.id) {
           s = {...s, depends_on_question_id: null}
         }
         s = {...s, questions: questionsWithNoDependency}
@@ -410,7 +418,7 @@ const Question = forwardRef(({
   const validationOptions = [
     option({
       value: 'friendly-mode',
-      label: 'Friendly Mode',
+      label: 'Word Limit',
       t
     }),
     option({
@@ -424,6 +432,7 @@ const Question = forwardRef(({
   const withOptions = ['multi-choice', 'multi-checkbox'];
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
+  const dependencyOptions = optionz.filter(e => e.order < inputs.order);
 
   const dependentQuestion = section.questions
     .find(e => e.id === inputs.depends_on_question_id);
@@ -572,31 +581,55 @@ const Question = forwardRef(({
           )}
           {withReferals.includes(inputs.type && inputs.type.value) && (
             <div className='referals-wrapper'>
-              <input
-                type='number'
-                min={0}
-                placeholder={t('Enter Minum Number of Referrals')}
-                className='referals-input'
-                value={inputs.options.min_num_referral}
-                onChange={handlereferralsChange('min')}
-               />
-              <input
-                type='number'
-                min={0}
-                placeholder={t('Enter Maximum Number of Referrals')}
-                className='referals-input'
-                onChange={handlereferralsChange('max')}
-                value={inputs.options.max_num_referral}
-               />
+              <div className="min-wrapper">
+                <label
+                  htmlFor="min-ref"
+                  className="validation-label referalls-label"
+                  >
+                  {t('Minimum Number of Referrals')}
+                  </label>
+                <input
+                  type='number'
+                  min={0}
+                  placeholder={t('Enter Minimum Number of Referrals')}
+                  className='referals-input'
+                  value={inputs.options.min_num_referral}
+                  onChange={handlereferralsChange('min')}
+                />
+              </div>
+              <div className="min-wrapper">
+                <label
+                  htmlFor="max-ref"
+                  className="validation-label referalls-label"
+                  >
+                    {t('Maximum Number of Referrals')}
+                </label>
+                <input
+                  type='number'
+                  min={0}
+                  placeholder={t('Enter Maximum Number of Referrals')}
+                  className='referals-input'
+                  onChange={handlereferralsChange('max')}
+                  value={inputs.options.max_num_referral}
+                />
+              </div>
               <div className='error-label'>{t(errorMessage)}</div>
             </div>
           )}
           {withExtention.includes(inputs.type && inputs.type.value) && (
             <div className='extensions-wrapper'>
+              <label
+                htmlFor="extensions"
+                className="extension-label"
+              >
+                {t('Extensions (E.g .csv,.xls)')}
+              </label>
               <input
+                name="extensions"
+                id="extensions"
                 type='text'
                 placeholder={
-                  t('Please enter a list of file extensions, each starting with a period and separated with comas. E.g .csv,.xls')}
+                  t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
                 className='question-inputs question-headline'
                 value={inputs.options[lang].accept
                   && inputs.options[lang].accept.join(',')}
@@ -605,7 +638,7 @@ const Question = forwardRef(({
             </div>
           )}
           <Dependency
-            options={optionz.filter(o => o.value !== inputs.id)}
+            options={dependencyOptions}
             handlequestionDependency={handlequestionDependency}
             handleDependencyChange={handleDependencyChange}
             dependentQuestion={dependentQuestion}

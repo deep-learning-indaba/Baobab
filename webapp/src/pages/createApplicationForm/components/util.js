@@ -175,11 +175,24 @@ export const Modal = ({
   const dependentSections = sections
     && sections.filter(s => s.depends_on_question_id === inputs.id);
   const dependentQestions = questions
-  && questions.filter(q => q.depends_on_question_id === inputs.id);
+    && questions.filter(q => q.depends_on_question_id === inputs.id);
+  const questionsInSection = inputs.questions;
+  const sectionDependency = questionsInSection && sections.find(s => {
+    let isDependent = false;
+    questionsInSection.forEach(q => {
+      if (s.depends_on_question_id === q.id) {
+        isDependent = true;
+      }
+    })
+    return isDependent;
+  })
+  let message = `Are you sure you want to delete this ${element}?`;
+  if (questionsInSection && sectionDependency) {
+    message = 'One or more questions in this section is a dependency of other sections. Are you sure you still want to delete it?'
+  } else if (dependentSections.length || dependentQestions.length) {
+    message = 'This Question is a dependency of other sections/questions. Are you sure you still want to delete it?'
+  }
 
-  const message = dependentSections.length || dependentQestions.length
-    ?  'This Question is a dependency of other sections/questions. Are you sure you still want to delete it?'
-    : `Are you sure you want to delete this ${element}?`;
   return(
     <ConfirmModal
       className='confirm-modal'
@@ -272,16 +285,30 @@ export const Dependency = ({
         && dependentQuestion.type.value === 'single-choice'
         && (
         <div className='dependency-radio-wrapper'>
-          <input
-            id='single_choice'
-            type='checkbox'
-            className='single-choice-check'
-            checked={inputs.show_for_values}
-            onChange={handleDependencyChange('single')}
-            />
-          <label htmlFor='single_choice'>
-            {inputs.show_for_values ? 'True' : 'False'}
-          </label>
+          <div className="min-wrapper">
+            <input
+              id='true-radio'
+              type='radio'
+              className='single-choice-check'
+              checked={inputs.show_for_values}
+              onChange={handleDependencyChange('single')}
+              />
+            <label htmlFor='true-radio'>
+              {'True'}
+            </label>
+          </div>
+          <div className="min-wrapper false-radio">
+            <input
+              id="false-radio"
+              type='radio'
+              className='single-choice-check'
+              checked={!inputs.show_for_values}
+              onChange={handleDependencyChange('single')}
+              />
+            <label htmlFor='false-radio'>
+              {'False'}
+            </label>
+          </div>
         </div>
       )}
       {dependentQuestion && dependentQuestion.type
@@ -309,7 +336,7 @@ export const validationText = (min, max) => {
   if (max && !min) {
     return `You may enter no more that ${max} words`
   } else if (!max && min){
-    return `You must enter atleast ${min} words`
+    return `You must enter at least ${min} words`
   } else if (max && min) {
     return `You must enter ${min} to ${max} words`
   } else {
@@ -318,7 +345,7 @@ export const validationText = (min, max) => {
 }
 
 export const Validation = ({
-  t, options, inputs, lang, handleChange
+  t, options, inputs, lang, handleChange, sections, setSection
 }) => {
   const [isFriendlyMode, setIsFriendlyMode] = useState(true);
   const maxMin = isFriendlyMode
@@ -368,40 +395,77 @@ export const Validation = ({
       {isFriendlyMode
         ? (
           <>
-            <input
-              type="number"
-              className='validaion-input'
-              placeholder={t('MIN')}
-              onChange={handleChange('min')}
-              min={0}
-              />
-            <input
-              type="number"
-              onChange={handleChange('max')}
-              className='validaion-input'
-              placeholder={t('MAX')}
-              min={min && min + 1}
-              />
+            <div className="min-wrapper">
+              <label
+                htmlFor="minimum"
+                className="validation-label">
+                {t('Min')}
+              </label>
+              <input
+                id="minimum"
+                name="minimum"
+                type="number"
+                className='validaion-input'
+                placeholder={t('MIN')}
+                onChange={handleChange('min')}
+                min={0}
+                />
+            </div>
+            <div className="min-wrapper">
+              <label
+                htmlFor="maximum"
+                className="validation-label">
+                {t('Max')}
+              </label>
+              <input
+                id="maximum"
+                name="maximum"
+                type="number"
+                onChange={handleChange('max')}
+                className='validaion-input'
+                placeholder={t('MAX')}
+                min={min && min + 1}
+                />
+            </div>
           </>
         ) : (
-          <input
-            type="text"
-            className='validaion-input advanced-regex'
-            placeholder={t('Enter Your Regex')}
-            onChange={handleChange('validation_regex')}
-            value={t(inputs.validation_regex[lang])}
-            />
+          <div className="min-wrapper">
+            <label
+              htmlFor="regex"
+              className="validation-label"
+              >
+              {t('Enter Your Regex')}
+            </label>
+            <input
+              name="regex"
+              id="regex"
+              type="text"
+              className='validaion-input advanced-regex'
+              placeholder={t('Enter Your Regex')}
+              onChange={handleChange('validation_regex')}
+              value={t(inputs.validation_regex[lang])}
+              />
+          </div>
         )
       }
-      
-      <input
-        disabled={isFriendlyMode}
-        type="text"
-        className='validaion-text'
-        placeholder={t('Validation Text')}
-        value={t(inputs.validation_text[lang])}
-        onChange={handleChange('validation_text')}
-      />
+      <div className="min-wrapper">
+        <label
+          htmlFor="validation"
+          className="validation-label"
+          >
+          {t('Validation Text')}
+          </label>
+        <input
+          id="validation"
+          name="validation"
+          disabled={isFriendlyMode}
+          type="text"
+          className='validaion-text'
+          placeholder={t('Validation Text')}
+          value={t(inputs.validation_text[lang])}
+          onChange={handleChange('validation_text')}
+        />
+      </div>
     </div>
   );
 }
@@ -417,7 +481,7 @@ export const dependencyChange = ({
         if (s.id === sectionId) {
           s = {...s, questions: s.questions.map(q => {
             if (q.id === inputs.id) {
-              q = {...q, show_for_values: e.target.checked}
+              q = {...q, show_for_values: !q.show_for_values}
             }
             return q
           })}
@@ -427,7 +491,7 @@ export const dependencyChange = ({
     } else {
       updatedSections = sections.map(s => {
         if (s.id === inputs.id) {
-          s = {...s, show_for_values: e.target.checked}
+          s = {...s, show_for_values: !s.show_for_values}
         }
         return s
       });

@@ -62,8 +62,20 @@ export const Section = forwardRef(({
   }
 
   const handleOkDelete = () => {
-    const updatedSections = sections.filter(s => s.id !== inputs.id);
-    setSection(updatedSections);
+    const questionsInSection = inputs.questions;
+    const sectionsWithoutDependency = sections.map(s => {
+        questionsInSection.forEach(q => {
+          if (s.depends_on_question_id === q.id) {
+            s = {...s, depends_on_question_id: null}
+          }
+        })
+      return s;
+    })
+    const updatedSections = sectionsWithoutDependency.filter(s => s.id !== inputs.id);
+    const orderedSections = updatedSections.map((s,i) => {
+      return {...s, order: i + 1}
+    })
+    setSection(orderedSections);
   }
 
   const handleConfirm = () => {
@@ -155,13 +167,32 @@ export const Section = forwardRef(({
   const options = [];
   const questions = inputs.questions;
   for(let i = 0; i < questions.length; i++) {
-    options.push(option({
-      value: questions[i].id,
+    const opt = option({
+      value: `${questions[i].id}`,
       label: questions[i].headline[lang]
         ? questions[i].headline[lang] : questions[i].order,
       t
-    }))
-  }
+    })
+    opt["order"] = questions[i].order;
+    options.push(opt);
+  };
+
+  const sectionOptions = [];
+  sections.forEach(e => {
+    if (e.order < inputs.order) {
+      e.questions.forEach(q => {
+        const opt = option({
+          value: `${q.id}`,
+          label: q.headline[lang]
+            ? `${e.order}. ${q.headline[lang]}`
+            : `${e.order}. ${q.order}`,
+            t
+        })
+        opt['order'] = q.order;
+        sectionOptions.push(opt);
+      })
+    }
+  });
 
   const numSections = sections.length;
   const index = sectionIndex + 1;
@@ -268,7 +299,7 @@ export const Section = forwardRef(({
             className="section-inputs section-desc"
             />
           <Dependency
-            options={options}
+            options={sectionOptions}
             handlequestionDependency={handlequestionDependency}
             inputs={inputs}
             dependentQuestion={dependentQuestion}
@@ -339,6 +370,8 @@ export const Section = forwardRef(({
             element='section'
             handleOkDelete={handleOkDelete}
             handleConfirm={handleConfirm}
+            inputs={inputs}
+            sections={sections}
           />
         )
       }

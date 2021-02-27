@@ -367,12 +367,14 @@
     "Are you sure you want to delete this {{element}}": "Voulez-vous vraiment supprimer cet {{element}}?",
     "Depends on question": "Dépend de la question",
     "You may enter no more that {{max}} words": "Vous ne pouvez saisir que {{max}} mots",
-    "You must enter atleast {{min}} words": "Vous devez saisir au moins {{min}} mots",
+    "You must enter at least {{min}} words": "Vous devez saisir au moins {{min}} mots",
     "You must enter ${min} to {{max}} words": "Vous devez saisir entre {{min}} et {{max}} mots",
     "Regular Expressions": "Expressions régulières",
     "MIN": "MIN",
     "MAX": "MAX",
     "Enter Your Regex": "Saisissez votre expression régulière",
-    "Validation Text": "Texte de validation"
+    "Validation Text": "Texte de validation",
+    "Word Limit": "Limite de mots",
+    "Advanced Mode": "Mode avancé"
 }
 

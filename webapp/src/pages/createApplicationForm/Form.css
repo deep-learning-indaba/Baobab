@@ -630,7 +630,7 @@
   border: solid #e8e6e6 thin;
   padding: 10px;
   font-size: 0.8rem;
-  width: 30%;
+  width: 20em;
 }
 
 .advanced-regex {
@@ -650,7 +650,7 @@
 }
 
 .referals-input {
-  width: 40%;
+  width: 20em;
   border: none;
   border-bottom: solid #e8e6e6 thin;
   box-shadow: 0px 0.3em 5px 0px #e8e6e6;
@@ -664,5 +664,29 @@
 }
 
 .extensions-wrapper {
+  margin-top: 1em;
+}
+
+.min-wrapper {
   margin-top: 0.5em;
+  display: inline-block;
+}
+
+.validation-label {
+  display: block;
+  font-size: 0.8em;
+  padding-left: 1em;
+}
+
+.referalls-label {
+  font-size: 1em;
+  padding-left: 0.8em;
+}
+
+.extension-label {
+  padding-left: 0.5em;
+}
+
+.false-radio {
+  margin-left: 1em;
 }
