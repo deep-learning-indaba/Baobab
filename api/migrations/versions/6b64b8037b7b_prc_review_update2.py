@@ -500,7 +500,7 @@ def upgrade():
 
     divider1 = add_question(form.id, 'section-divider', False, headlines={
         'en': 'Evaluation of proposals',
-        'fr': u'Évaluation des propositions'
+        'fr': 'Évaluation des propositions'
     }, descriptions={
         'en': """Below are a series of weighted, multiple choice questions intended to evaluate the applicant’s proposal. The evaluation is divided up into the sections from the application: 
     I. Organization capacity and experience; 
@@ -510,7 +510,7 @@ def upgrade():
     V. Overall Assessment. 
 At the end of each question and/or section, please reflect in your own words what you think of the answers in that section. Each evaluation question corresponds with the section and numbered question in the proposal.
 """,
-        'fr': u"""Vous trouverez ci-dessous une série de questions à choix multiples pondérées destinées à évaluer la proposition du candidat. L’évaluation est divisée en plusieurs sections à partir de la candidature: 
+        'fr': """Vous trouverez ci-dessous une série de questions à choix multiples pondérées destinées à évaluer la proposition du candidat. L’évaluation est divisée en plusieurs sections à partir de la candidature: 
     I. Capacité et expérience de l’organisation; 
     II. Recherche sur les politiques;
     III. Expérience en matière d’engagement politique; et 
@@ -522,7 +522,7 @@ At the end of each question and/or section, please reflect in your own words wha
 
     divider2 = add_question(form.id, 'section-divider', False, headlines={
         'en': 'Section I: Organization capacity and experience',
-        'fr': u'Section I: Capacité et expérience de l’organisation'
+        'fr': 'Section I: Capacité et expérience de l’organisation'
     }, descriptions={
         'en': """Please review and evaluate the applicant’s answers on organizational capacity, experience and mission.
 \[Total possible points = 55\]
@@ -533,7 +533,7 @@ Evaluation criteria:
     - Fit between proposed research agenda and the organization’s mission.
     - Demonstrated research quality (output, citations, research metrics) that addresses numerous facets of advanced technology policy. Please see the [Research Quality Plus](https://www.idrc.ca/en/research-in-action/research-quality-plus) assessment instrument for guidance.
 """,
-        'fr': u"""Veuillez examiner et évaluer les réponses du candidat sur la capacité organisationnelle, l’expérience et la mission.
+        'fr': """Veuillez examiner et évaluer les réponses du candidat sur la capacité organisationnelle, l’expérience et la mission.
 \[Total des points possibles = 55\]
 
 Critères d’évaluation:
@@ -560,7 +560,7 @@ Assessment of research team: After reviewing the CVs of the principal researcher
 4 - 7 : Research team is adequate but needs some broad capacity development
 8 - 10 : Research team is strong (although they might still benefit from limited capacity development)
 """,
-        'fr': u"""Évaluation de l’équipe de recherche: Après avoir examiné les CV des principaux chercheurs, évaluez la force de l’équipe de recherche en ce qui concerne la réalisation des objectifs et de la stratégie du programme de recherche proposé. 
+        'fr': """Évaluation de l’équipe de recherche: Après avoir examiné les CV des principaux chercheurs, évaluez la force de l’équipe de recherche en ce qui concerne la réalisation des objectifs et de la stratégie du programme de recherche proposé. 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -572,7 +572,7 @@ Assessment of research team: After reviewing the CVs of the principal researcher
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id,form.application_form_id,  '2. Mission for Responsible AI')
@@ -586,7 +586,7 @@ Assessment of research team: After reviewing the CVs of the principal researcher
 6 - 10 : Somewhat demonstrates mission and the significance
 11 - 15 : Superior demonstration of mission and the significance
 """,
-        'fr': u"""Dans quelle mesure cette déclaration de mission de l’organisation est-elle liée à la promotion des
+        'fr': """Dans quelle mesure cette déclaration de mission de l’organisation est-elle liée à la promotion des
 principes de l’IA responsable? 
 \[Total des points possibles = 15\]
 
@@ -599,7 +599,7 @@ principes de l’IA responsable?
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '3. Demonstrated expertise')
@@ -614,7 +614,7 @@ principes de l’IA responsable?
 6 - 10 : Some demonstrated knowledge and expertise in at least two areas
 11 - 15 : Superior/significant demonstrated knowledge and expertise in three areas
 """,
-        'fr': u"""Dans quelle mesure le candidat démontre-t-il des connaissances et une expertise dans au moins trois des principaux domaines de recherche? 
+        'fr': """Dans quelle mesure le candidat démontre-t-il des connaissances et une expertise dans au moins trois des principaux domaines de recherche? 
 \[Total des points possibles = 15\]
 
 **Scale:**
@@ -634,7 +634,7 @@ principes de l’IA responsable?
 6 - 10 : Demonstrates variable research quality with some high-quality research
 11 - 15 : Significant experience producing high quality research
 """,
-        'fr': u"""Veuillez examiner les exemples fournis par le candidat à partir du portefeuille de recherche de l’organisme. Sur la base de ce qu’ils ont écrit et fourni, dans quelle mesure l’organisme démontre-t-il sa capacité à produire des recherches politiques de haute qualité sur ces questions? 
+        'fr': """Veuillez examiner les exemples fournis par le candidat à partir du portefeuille de recherche de l’organisme. Sur la base de ce qu’ils ont écrit et fourni, dans quelle mesure l’organisme démontre-t-il sa capacité à produire des recherches politiques de haute qualité sur ces questions? 
 \[Total des points possibles = 15\]
 
 Une recherche de haute qualité est pertinente, fait preuve d’intégrité, de légitimité, d’importance (originalité) et est bien placée pour être utilisée. Veuillez-vous référer à l’instrument d’évaluation [Qualité de la recherche plus](https://idl-bnc-idrc.dspacedirect.org/bitstream/handle/10625/56600/IDL-56600.pdf?sequence=2&amp;isAllowed=y) si vous avez des questions.
@@ -648,14 +648,14 @@ Une recherche de haute qualité est pertinente, fait preuve d’intégrité, de 
     
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     print('Finished configuring Section I')
 
     add_divider(form.id, {
         'en': 'Section II: Policy Research',
-        'fr': u'Section II: Recherche sur les politiques'
+        'fr': 'Section II: Recherche sur les politiques'
     }, {
         'en': """Please review and evaluate the applicant’s answers on their research, objectives and methodologies.
 \[Total possible points = 135\]
@@ -672,7 +672,7 @@ Evaluation criteria, proposals must demonstrate:
     - Clear articulation of results and the metrics to gauge them.
     - Clear and appropriate project management plan that is tied to budget.
 """,
-        'fr': u"""Veuillez examiner et évaluer les réponses des candidats sur leurs recherches, leurs objectifs et leurs méthodologies.
+        'fr': """Veuillez examiner et évaluer les réponses des candidats sur leurs recherches, leurs objectifs et leurs méthodologies.
 \[Total des points possibles = 135\]
 
 Critères d’évaluation: Les propositions doivent démontrer :
@@ -699,7 +699,7 @@ Critères d’évaluation: Les propositions doivent démontrer :
 4 - 7 : Substantive clarity of research priorities
 8 - 10 : Superior/significant clarity of research priorities
 """,
-        'fr': u"""Dans quelle mesure le candidat explique-t-il clairement pourquoi ces priorités sont importantes pour l’agenda de recherche IAPD de l’organisation et les contextes dans lesquels elles s’inscrivent? 
+        'fr': """Dans quelle mesure le candidat explique-t-il clairement pourquoi ces priorités sont importantes pour l’agenda de recherche IAPD de l’organisation et les contextes dans lesquels elles s’inscrivent? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -718,7 +718,7 @@ Critères d’évaluation: Les propositions doivent démontrer :
 4 - 7 : Substantive demonstrated ability
 8 - 10 : Superior/significant demonstrated ability
 """,
-        'fr': u"""Dans quelle mesure le candidat démontre-t-il sa capacité à s’appuyer sur des preuves pour étayer le contexte et les arguments qui expliquent pourquoi il s’agit là des priorités de sa recherche? 
+        'fr': """Dans quelle mesure le candidat démontre-t-il sa capacité à s’appuyer sur des preuves pour étayer le contexte et les arguments qui expliquent pourquoi il s’agit là des priorités de sa recherche? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -737,7 +737,7 @@ Critères d’évaluation: Les propositions doivent démontrer :
 2 - 3 : Some ability to write on complex issues (some good ideas, structure may lack coherence)
 4 - 5 : Superior/significant ability to write on complex issues (exceptionally clear and coherent)
 """,
-        'fr': u"""Dans quelle mesure le candidat démontre-t-il sa capacité à écrire sur des questions complexes de manière succincte et intelligente? 
+        'fr': """Dans quelle mesure le candidat démontre-t-il sa capacité à écrire sur des questions complexes de manière succincte et intelligente? 
 \[Total des points possibles = 5\]
 
 Scale: 
@@ -749,7 +749,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '2. General and specific objectives')
@@ -763,7 +763,7 @@ Scale:
 4 - 7 : Objectives need improvement, but are relatively appropriate and connected to problem statement
 8 - 10 : Objectives are coherent, flow logically, and are appropriate and feasible
 """,
-        'fr': u"""Dans quelle mesure les objectifs généraux et spécifiques sont-ils appropriés et logiquement liés à l’énoncé et à la justification du problème? Sont-ils réalisables? 
+        'fr': """Dans quelle mesure les objectifs généraux et spécifiques sont-ils appropriés et logiquement liés à l’énoncé et à la justification du problème? Sont-ils réalisables? 
 \[Total des points possibles = 10\]
 
 **Scale:** 
@@ -775,7 +775,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '3. Methodology and approach')
@@ -789,7 +789,7 @@ Scale:
 4 - 7 : Some demonstrated coherence
 8 - 10 : Significant demonstrated coherence
 """,
-        'fr': u"""Dans quelle mesure l’organisme fait-il preuve d’une approche cohérente pour atteindre ses objectifs de recherche? 
+        'fr': """Dans quelle mesure l’organisme fait-il preuve d’une approche cohérente pour atteindre ses objectifs de recherche? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -801,7 +801,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, 'Policy research')
@@ -815,7 +815,7 @@ Scale:
 4 - 7 : Some demonstrated strategy in linking framework to research design
 8 - 10 : Significant demonstrated strategy in linking framework to research design
 """,
-        'fr': u"""Dans quelle mesure le cadre conceptuel et théorique est-il adapté à la question de recherche en question? Dans quelle mesure le cadre est-il lié à la conception de la recherche proposée? 
+        'fr': """Dans quelle mesure le cadre conceptuel et théorique est-il adapté à la question de recherche en question? Dans quelle mesure le cadre est-il lié à la conception de la recherche proposée? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -827,7 +827,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_evaluation_question(form.id, headlines=None, descriptions={
@@ -839,7 +839,7 @@ Scale:
 4 - 7 : Some demonstrated rigor
 8 - 10 : Significant/superior demonstrated rigor
 """,
-        'fr': u"""Dans quelle mesure l’organisation fait-elle preuve de rigueur dans ses réponses aux questions de recherche? 
+        'fr': """Dans quelle mesure l’organisation fait-elle preuve de rigueur dans ses réponses aux questions de recherche? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -851,7 +851,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, 'Gender and inclusion', description_override={
@@ -875,7 +875,7 @@ Maximum 750 words""",
 4 - 7 : Substantive demonstrated ability with gender related issues
 8 - 10 : Superior/significant demonstrated ability with gender related issues
 """,
-        'fr': u"""Dans quelle mesure l’organisation fait-elle preuve d’une connaissance approfondie des dimensions de genre d’IAPD? 
+        'fr': """Dans quelle mesure l’organisation fait-elle preuve d’une connaissance approfondie des dimensions de genre d’IAPD? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -894,7 +894,7 @@ Maximum 750 words""",
 4 - 7 : Substantive demonstrated understanding of inclusion-related challenges
 8 - 10 : Significant demonstrated understanding of inclusion-related challenges
 """,
-        'fr': u"""Dans quelle mesure l’organisation démontre-t-elle une connaissance approfondie d’autres dimensions de l’IAPD liées à l’inclusion, telles que la socio-économie, la culture/ethnie et les questions plus larges d’inclusion sociale? 
+        'fr': """Dans quelle mesure l’organisation démontre-t-elle une connaissance approfondie d’autres dimensions de l’IAPD liées à l’inclusion, telles que la socio-économie, la culture/ethnie et les questions plus larges d’inclusion sociale? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -913,7 +913,7 @@ Maximum 750 words""",
 2 - 3 : Some knowledge of gender and inclusion-related issues
 4 - 5 : Superior/significant knowledge of gender and inclusion-related issues
 """,
-        'fr': u"""Compte tenu de la réponse sur le genre et l’inclusion et des exemples fournis par le candidat, dans quelle mesure l’organisation démontre-t-elle une connaissance approfondie des questions et des défis liés au genre et à l’inclusion dans le domaine de l’IA et des technologies avancées? 
+        'fr': """Compte tenu de la réponse sur le genre et l’inclusion et des exemples fournis par le candidat, dans quelle mesure l’organisation démontre-t-elle une connaissance approfondie des questions et des défis liés au genre et à l’inclusion dans le domaine de l’IA et des technologies avancées? 
 \[Total des points possibles = 5\]
 
 **Scale:**
@@ -925,7 +925,7 @@ Maximum 750 words""",
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, 'Ethical considerations')
@@ -939,7 +939,7 @@ Maximum 750 words""",
 2 - 3 : Some research ethics protocols
 4 - 5 : Significant research ethics protocols
 """,
-        'fr': u"""Veuillez évaluer le processus d’évaluation éthique du candidat pour sa recherche. Le candidat décrit-il un processus clair et indépendant pour évaluer et garantir la vie privée, la dignité et l’ntégrité des personnes qui font l’objet de ses recherches? 
+        'fr': """Veuillez évaluer le processus d’évaluation éthique du candidat pour sa recherche. Le candidat décrit-il un processus clair et indépendant pour évaluer et garantir la vie privée, la dignité et l’ntégrité des personnes qui font l’objet de ses recherches? 
 \[Total des points possibles = 5\]
 
 **Scale:**
@@ -951,7 +951,7 @@ Maximum 750 words""",
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '4. Capacity development')
@@ -965,7 +965,7 @@ Maximum 750 words""",
 4 - 7 : Some ability to identify capacity development needs
 8 - 10 : Significant ability to identify capacity development needs
 """,
-        'fr': u"""Dans quelle mesure le candidat identifie-t-il clairement les domaines dans lesquels il a le plus besoin de renforcer ses capacités pour améliorer le travail et les résultats afin de faire progresser l’IA responsable dans son pays/région - et propose-t-il une stratégie cohérente et raisonnable pour combler les lacunes?
+        'fr': """Dans quelle mesure le candidat identifie-t-il clairement les domaines dans lesquels il a le plus besoin de renforcer ses capacités pour améliorer le travail et les résultats afin de faire progresser l’IA responsable dans son pays/région - et propose-t-il une stratégie cohérente et raisonnable pour combler les lacunes?
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -977,7 +977,7 @@ Maximum 750 words""",
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '5. Communicating for influence')
@@ -991,7 +991,7 @@ Maximum 750 words""",
 4 - 7 : Some demonstrated ability to communicate research
 8 - 10 : Significant/superior demonstrated ability to communicate research
 """,
-        'fr': u"""Veuillez examiner la description par le candidat de sa stratégie de communication sur la recherche. Dans quelle mesure l’organisme démontre-t-il une capacité ou une approche pour bien communiquer sur sa recherche afin d’influencer les politiques? 
+        'fr': """Veuillez examiner la description par le candidat de sa stratégie de communication sur la recherche. Dans quelle mesure l’organisme démontre-t-il une capacité ou une approche pour bien communiquer sur sa recherche afin d’influencer les politiques? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -1003,7 +1003,7 @@ Maximum 750 words""",
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '6. Results')
@@ -1017,7 +1017,7 @@ Maximum 750 words""",
 6 - 10 : Some articulation of success, markers may lack clarity, specificity, appropriateness, feasibility, or measurability
 11- 15 : Clear vision of success matched with strong, measurable markers
 """,
-        'fr': u"""Dans quelle mesure les marqueurs proposés pour mesurer le succès de l’organisation dans le cadre de ce projet sont-ils spécifiques, appropriés, réalisables, opportuns et mesurables? 
+        'fr': """Dans quelle mesure les marqueurs proposés pour mesurer le succès de l’organisation dans le cadre de ce projet sont-ils spécifiques, appropriés, réalisables, opportuns et mesurables? 
 \[Total des points possibles = 15\]
 
 **Scale:**
@@ -1029,7 +1029,7 @@ Maximum 750 words""",
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '7. Project schedule')
@@ -1043,7 +1043,7 @@ Maximum 750 words""",
 2 - 3 : Some demonstration of how to achieve project objectives
 4 - 5 : Superior/significant demonstration of how to achieve project objectives
 """,
-        'fr': u"""Dans quelle mesure le demandeur démontre-t-il un calendrier de projet clair et réaliste pour atteindre ses objectifs, avec des résultats et des étapes en rapport avec le budget? 
+        'fr': """Dans quelle mesure le demandeur démontre-t-il un calendrier de projet clair et réaliste pour atteindre ses objectifs, avec des résultats et des étapes en rapport avec le budget? 
 \[Total des points possibles = 5\]
 
 Scale: 
@@ -1055,26 +1055,26 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '8. Supplemental documentation (optional).')
 
     add_comment_question(form.id, headlines=None, descriptions={
         'en': """Please review the supplemental documentation and provide your assessment of these documents. This question is not weighted, but your assessment will be taken into consideration should there be a tie, or a close score that requires an assessment of the applicant’s overall work.""",
-        'fr': u"""Veuillez examiner les documents complémentaires et donner votre évaluation de ces documents. Cette question n’est pas pondérée, mais votre évaluation sera prise en considération en cas d’égalité ou de score serré nécessitant une évaluation de l’ensemble du travail du candidat."""
+        'fr': """Veuillez examiner les documents complémentaires et donner votre évaluation de ces documents. Cette question n’est pas pondérée, mais votre évaluation sera prise en considération en cas d’égalité ou de score serré nécessitant une évaluation de l’ensemble du travail du candidat."""
     })
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     print('Finished configuring Section II')
 
     add_divider(form.id, headlines={
         'en': 'Section III: Policy Engagement Experience',
-        'fr': u'Section III : Expérience de l’engagement politique'
+        'fr': 'Section III : Expérience de l’engagement politique'
     }, descriptions={
         'en': """Please review and evaluate the applicant’s answers on their policy engagement experience.
 \[Total possible points: 75\]
@@ -1105,7 +1105,7 @@ Applicant receives and responds to requests for input from governments/other reg
 6 - 10 : Some quality engagement
 11- 15 : Significant quality engagement
 """,
-        'fr': u"""Dans quelle mesure l’organisation fait-elle preuve d’un engagement de qualité avec les institutions nationales de gouvernance (par exemple, les ministères, les organismes et les agences gouvernementales, ainsi que les régulateurs et autres institutions du secteur public) sur les questions de technologie avancée? 
+        'fr': """Dans quelle mesure l’organisation fait-elle preuve d’un engagement de qualité avec les institutions nationales de gouvernance (par exemple, les ministères, les organismes et les agences gouvernementales, ainsi que les régulateurs et autres institutions du secteur public) sur les questions de technologie avancée? 
 \[Total des points possibles = 15\]
 *Note: Pour les besoins de cette initiative, il est essentiel d'avoir une influence sur les politiques nationales.*
 
@@ -1125,7 +1125,7 @@ Le candidat reçoit et répond aux demandes de contribution des gouvernements/au
 6 - 10 : Some quality engagement
 11- 15 : Significant quality engagement
 """,
-        'fr': u"""Dans quelle mesure l’organisation fait-elle preuve d’un engagement de qualité avec les institutions nationales de gouvernance (par exemple, les ministères, les organismes et les agences gouvernementales, ainsi que les régulateurs et autres institutions du secteur public) sur les questions de technologie avancée? 
+        'fr': """Dans quelle mesure l’organisation fait-elle preuve d’un engagement de qualité avec les institutions nationales de gouvernance (par exemple, les ministères, les organismes et les agences gouvernementales, ainsi que les régulateurs et autres institutions du secteur public) sur les questions de technologie avancée? 
 \[Total des points possibles = 15\]
 *Note: Pour les besoins de cette initiative, il est essentiel d'avoir une influence sur les politiques nationales.*
 
@@ -1146,7 +1146,7 @@ Le candidat s’engage de manière proactive auprès des décideurs politiques, 
 6 - 10 : Some demonstrated ability to engage with policy makers on substantive/technical policy issues
 11- 15 : Significant/superior demonstrated ability to engage with policy makers on substantive/technical policy issues
 """,
-        'fr': u"""Veuillez examiner les trois exemples d’engagement politique. Dans quelle mesure le candidat démontre-t-il une capacité à s’engager auprès des décideurs politiques sur des questions politiques de fond/techniques? 
+        'fr': """Veuillez examiner les trois exemples d’engagement politique. Dans quelle mesure le candidat démontre-t-il une capacité à s’engager auprès des décideurs politiques sur des questions politiques de fond/techniques? 
 \[Total des points possibles = 15\]
 
 **Scale:**
@@ -1158,7 +1158,7 @@ Le candidat s’engage de manière proactive auprès des décideurs politiques, 
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     add_information_question(form.id, form.application_form_id, '2. Informing debates and policies')
@@ -1172,7 +1172,7 @@ Le candidat s’engage de manière proactive auprès des décideurs politiques, 
 6 - 10 : Some demonstrated ability
 11- 15 : Significant demonstrated ability
 """,
-        'fr': u"""Dans quelle mesure le candidat démontre-t-il une capacité à informer le débat public et les processus politiques au niveau national ou régional? 
+        'fr': """Dans quelle mesure le candidat démontre-t-il une capacité à informer le débat public et les processus politiques au niveau national ou régional? 
 \[Total des points possibles = 15\]
 
 **Scale:**
@@ -1194,7 +1194,7 @@ Scale:
 6 - 10 : Substantive regional/international engagement
 11- 15 : Significant regional/international engagement
 """,
-        'fr': u"""Dans quelle mesure l’organisation fait-elle preuve d’un engagement régional/international clair sur les questions de politique technologique avancée et d’IA avec d’autres gouvernements, des institutions du secteur public, des institutions/organisations bilatérales, multilatérales ou internationales ou des forums multipartites? 
+        'fr': """Dans quelle mesure l’organisation fait-elle preuve d’un engagement régional/international clair sur les questions de politique technologique avancée et d’IA avec d’autres gouvernements, des institutions du secteur public, des institutions/organisations bilatérales, multilatérales ou internationales ou des forums multipartites? 
 \[Total des points possibles = 15\]
 
 **Scale:**
@@ -1206,7 +1206,7 @@ Scale:
 
     add_comment_question(form.id, descriptions={
         'en': "Comments",
-        'fr': u"Des commentaires?"
+        'fr': "Des commentaires?"
     }, headlines=None)
 
     print('Finished configuring Section III')
@@ -1245,7 +1245,7 @@ In terms of overall coherence, appropriateness to research activities and fiscal
 11 - 20 : Budget substantively demonstrates coherence and appropriateness for research and policy impact
 21 - 30 : Budget demonstrates superior coherence and appropriateness for research and policy impact
 """,
-        'fr': u"""Veuillez examiner le budget du candidat et considérer la cohérence et la clarté, la pertinence des lignes budgétaires pour les activités proposées et l’alignement du budget sur le plan de recherche.
+        'fr': """Veuillez examiner le budget du candidat et considérer la cohérence et la clarté, la pertinence des lignes budgétaires pour les activités proposées et l’alignement du budget sur le plan de recherche.
 En termes de cohérence globale, d’adéquation aux activités de recherche et de gestion budgétaire, veuillez évaluer le budget du candidat. 
 \[Total des points possibles = 30\]
 
@@ -1258,18 +1258,18 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 
     add_comment_question(form.id, headlines=None, descriptions={
         'en': """IDRC’s grants administration team will be reviewing all of the budgets independently, and their assessment will be discussed during the final selection process. However, given the significance of budgets in terms of institutional strength, research planning and strategy, and risk mitigation, please provide feedback on the applicant’s proposed budget, and offer any input or insights you may have regarding the soundness of the applicant’s budget in relation to their research objectives and overall plan.""",
-        'fr': u"""L’équipe d’administration des subventions du CRDI examinera tous les budgets de manière indépendante et leur évaluation sera discutée lors du processus de sélection final. Toutefois, étant donné l’importance des budgets en termes de force institutionnelle, de planification et de stratégie de recherche et d’atténuation des risques, veuillez donner votre avis sur le budget proposé par le candidat et faire part de vos commentaires ou de vos idées concernant"""
+        'fr': """L’équipe d’administration des subventions du CRDI examinera tous les budgets de manière indépendante et leur évaluation sera discutée lors du processus de sélection final. Toutefois, étant donné l’importance des budgets en termes de force institutionnelle, de planification et de stratégie de recherche et d’atténuation des risques, veuillez donner votre avis sur le budget proposé par le candidat et faire part de vos commentaires ou de vos idées concernant"""
     })
     
     print('Finished configuring Section IV')
 
     add_divider(form.id, headlines={
         'en': "Section V: Overall quality of application",
-        'fr': u"Section V : Qualité générale de la demande"
+        'fr': "Section V : Qualité générale de la demande"
     }, descriptions={
         'en': """Taking the proposal as a whole, please answer the following questions.
 \[Total possible points = 25\]""",
-        'fr': u"""En prenant la proposition dans son ensemble, veuillez répondre aux questions suivantes.
+        'fr': """En prenant la proposition dans son ensemble, veuillez répondre aux questions suivantes.
 \[Total des points possibles = 25\]"""
     })
 
@@ -1282,7 +1282,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 4 - 7 : Somewhat well-articulated and clear
 8 - 10 : Very well-articulated and clear
 """,
-        'fr': u"""La demande globale est-elle bien articulée et démontre-t-elle la clarté de l’objectif et l’impact potentiel pour IAPD? 
+        'fr': """La demande globale est-elle bien articulée et démontre-t-elle la clarté de l’objectif et l’impact potentiel pour IAPD? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -1301,7 +1301,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 4 - 7 : Some multi-disciplinary knowledge
 8 - 10 : Significant multi-disciplinary knowledge
 """,
-        'fr': u"""La proposition démontre-t-elle une connaissance approfondie, bien équilibrée et pluridisciplinaire des thèmes et des questions de politique en matière d’IA et de technologies avancées? 
+        'fr': """La proposition démontre-t-elle une connaissance approfondie, bien équilibrée et pluridisciplinaire des thèmes et des questions de politique en matière d’IA et de technologies avancées? 
 \[Total des points possibles = 10\]
 
 **Scale:**
@@ -1320,7 +1320,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 2 - 3 : Some
 4 - 5 : Significant
 """,
-        'fr': u"""La proposition présente-t-elle une stratégie claire quant à la manière dont l’organisation bénéficiera du soutien offert par cette initiative et contribue-t-elle aux débats sur les thèmes de l’IA et de la politique en matière de technologies avancées dans la région? 
+        'fr': """La proposition présente-t-elle une stratégie claire quant à la manière dont l’organisation bénéficiera du soutien offert par cette initiative et contribue-t-elle aux débats sur les thèmes de l’IA et de la politique en matière de technologies avancées dans la région? 
 \[Total des points possibles = 5\]
 
 **Scale:**
@@ -1332,7 +1332,7 @@ En termes de cohérence globale, d’adéquation aux activités de recherche et 
 
     add_comment_question(form.id, headlines=None, descriptions={
         'en': """Please provide any final comments on the overall application. These will feed into discussions""",
-        'fr': u"""Veuillez fournir tout commentaire final sur l’ensemble de la demande. Ces commentaires seront pris en compte dans les discussions."""
+        'fr': """Veuillez fournir tout commentaire final sur l’ensemble de la demande. Ces commentaires seront pris en compte dans les discussions."""
     })
 
     print('DONE')

@@ -442,7 +442,7 @@ class UserCommentAPITest(ApiTestCase):
             self.seed_static_data()
 
             params = {'event_id': self.event1_id, 'user_id': self.user2['id'], 'comment': 'Comment1'}
-            print('Sending params: ', params)
+            print(('Sending params: ', params))
             response = self.app.post('/api/v1/user-comment', headers={'Authorization': self.user1['token']}, data=json.dumps(params), content_type='application/json')
             data = json.loads(response.data)
 
