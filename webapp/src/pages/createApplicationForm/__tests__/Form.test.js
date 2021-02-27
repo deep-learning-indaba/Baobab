@@ -257,7 +257,7 @@ test('Check if the Question Component renders.', () => {
     required: false
   };
 
-  const options = [
+  const optionz = [
     option({
       value: 'short-text',
       label: 'Short Text',
@@ -287,7 +287,7 @@ test('Check if the Question Component renders.', () => {
     handleDrag,
     handleDrop,
     setParentDropable,
-    options
+    optionz
   };
   const ref = React.createRef();
   const wrapper = mount(
