@@ -16,9 +16,6 @@ class ReviewDetailsPage extends Component {
             isLoading: true,
             reviewDetails: [],
         }
-        this.identifierCell = this.identifierCell.bind(this);
-        this.responseIDCell = this.responseIDCell.bind(this);
-        this.scoreCell = this.scoreCell.bind(this);
     }
 
     componentDidMount() {
