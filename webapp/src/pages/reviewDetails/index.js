@@ -23,7 +23,7 @@ class ReviewDetailsPage extends Component {
     }
 
     responseIDCell = props => {
-        let reviewLink = `/${this.props.event.key}/review/${props.value}`
+        const reviewLink = `/${this.props.event.key}/review/${props.value}`
         return <Link to={reviewLink}>{props.value}</Link>;
     }
 
