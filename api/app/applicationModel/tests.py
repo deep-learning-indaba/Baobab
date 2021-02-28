@@ -159,8 +159,7 @@ class ApplicationFormApiTest(ApiTestCase):
 
 
 APPLICATION_FORM_POST_DATA = {
-  "id": 2,
-  "event_id": 2, 
+  "event_id": 1, 
   "is_open": True, 
   "nominations": False, 
   "sections": [
@@ -175,10 +174,14 @@ APPLICATION_FORM_POST_DATA = {
       },
       "order": 1,
       "depends_on_question_id": None,
-      "show_for_values": None,
+      "show_for_values": {
+          "en": None,
+          "fr": None
+      },
       "key": "candidate_information",
       "questions": [
         {
+          "id": 1,    
           "validation_regex": {
              "en": None, 
              "fr": None
@@ -189,21 +192,21 @@ APPLICATION_FORM_POST_DATA = {
                   {"value": "masters", "label": "A masters student"}, 
                 ],
               "fr": [
-                  {"value": "undergrad", "label": u"un étudiant de premier cycle"}, 
-                  {"value": "masters", "label": u"un étudiant en maîtrise"}, 
+                  {"value": "undergrad", "label": "un étudiant de premier cycle"}, 
+                  {"value": "masters", "label": "un étudiant en maîtrise"}, 
                 ],
           },
           "description": {
-              "en": None, 
-              "fr": None
+              "en": "Question 1 en", 
+              "fr": "Question 1 fr"
           },
           "headline": {
-              "en": "Question 1", 
-              "fr": "Question 1"
+              "en": "Question 1 en", 
+              "fr": "Question 1 fr"
           },
           "placeholder": {
               "en": "Select an Option...",
-              "fr": u"Sélectionnez une option"
+              "fr": "Sélectionnez une option"
           },
           "is_required": True, 
           "type": "multi-choice", 
@@ -211,90 +214,119 @@ APPLICATION_FORM_POST_DATA = {
               "en": None,
               "fr": None
           },
-          "order": 1
+          "order": 1,
+          "depends_on_question_id": 3,
+          "key": None,
+          "show_for_values": {
+              "en": ["the-matrix", "terminator"],
+              "fr": ["the-matrix", "terminator"]
+          }
         },
         {
+          "id": 2,    
           "validation_regex": {
-             "en": "regex", 
-             "fr": "regex"
+             "en": "^Moo$", 
+             "fr": "^moo$"
           },
           "options": {
               "en": None,
-              "fr": None
+              "fr": None,
           },
           "description": {
-              "en": "English Description", 
-              "fr": u"description en français"
+              "en": "Question 2 en", 
+              "fr": "Question 2 fr"
           },
           "headline": {
-              "en": "Question 2", 
-              "fr": "Question 2"
+              "en": "Question 2 en", 
+              "fr": "Question 2 fr"
           },
           "placeholder": {
+              "en": "Enter some text...",
+              "fr": "Entrez du texte ..."
+          },
+          "is_required": False, 
+          "type": "short-text", 
+          "validation_text": {
+              "en": "You must enter the word Moo",
+              "fr": "Vous devez entrer le mot Moo"
+          },
+          "order": 2,
+          "depends_on_question_id": None,
+          "key": None,
+          "show_for_values": {
               "en": None,
               "fr": None
-          },
-          "is_required": True, 
-          "type": "long-text", 
-          "validation_text": {
-              "en": "You must enter 1 million words",
-              "fr": u"Vous devez saisir 1 million de mots"
-          },
-          "order": 2
+          }
         }
-      ]
+      ], 
     },  # End section 1
     {
       "name": {
          "en": "Section 2",
-         "fr": "Section 2"
+         "fr": "Section 2 fr"
       },
       "description": {
-         "en": "Description of the section",
-         "fr": "Description de la section"
+         "en": "Description of the section 2",
+         "fr": "Description de la section 2"
       },
       "order": 2,
-      "depends_on_question_id": None,  # TODO: ADD THIS
-      "show_for_values": None,  # TODO: ADD THIS
+      "depends_on_question_id": 1,
+      "show_for_values": {
+          "en": ["masters"],
+          "fr": ["masters"],
+      },
       "key": None,
       "questions": [
-          {
+        {
+          "id": 3,    
           "validation_regex": {
-             "en": "blah", 
-             "fr": "blah"
+             "en": None, 
+             "fr": None
           },
           "options": {
+              "en": [
+                  {"value": "the-matrix", "label": "The Matrix"}, 
+                  {"value": "terminator", "label": "Terminator"}, 
+                ],
+              "fr": [
+                  {"value": "the-matrix", "label": "La matrice"}, 
+                  {"value": "terminator", "label": "Terminator"}, 
+                ],
+          },
+          "description": {
+              "en": "Question 3 en", 
+              "fr": "Question 3 fr"
+          },
+          "headline": {
+              "en": "Question 3 en", 
+              "fr": "Question 3 fr"
+          },
+          "placeholder": {
+              "en": "Select an Option...",
+              "fr": "Sélectionnez une option"
+          },
+          "is_required": True, 
+          "type": "multi-choice", 
+          "validation_text": {
               "en": None,
               "fr": None
           },
-          "description": {
-              "en": "English Description", 
-              "fr": u"description en français"
-          },
-          "headline": {
-              "en": "Question 3", 
-              "fr": "Question 3"
-          },
-          "placeholder": {
-              "en": "Placeholder",
-              "fr": "Espace réservé"
-          }, 
-          "is_required": False, 
-          "type": "short-text", 
-          "validation_text": {
-              "en": "Enter a valid number",
-              "fr": u"Entrez un numéro valide"
-          },
-          "order": 1
-        }
-      ]
-    }  # End section 2
+          "order": 1,
+          "depends_on_question_id": None,
+          "key": "review-identifier",
+          "show_for_values": {
+              "en": None,
+              "fr": None
+          }
+        },
+      ], 
+    },  # End section 2
   ]
 }
 
 class ApplicationFormCreateTest(ApiTestCase):
     """
-    Test the Application Form API's PUT method
+    Test the Application Form Detail API's POST method
     """
 
     def _seed_data_create(self):
@@ -312,7 +344,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self._seed_data_create()
 
         response = self.app.post(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_POST_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.event_admin.email)
@@ -327,7 +359,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self._seed_data_create()
 
         response = self.app.post(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.normal_user.email)
@@ -342,7 +374,7 @@ class ApplicationFormCreateTest(ApiTestCase):
         self._seed_data_create()
 
         response = self.app.post(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_POST_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.system_admin.email)
@@ -370,6 +402,11 @@ class ApplicationFormCreateTest(ApiTestCase):
         self.assertDictEqual(section0_question0['headline'],
                          APPLICATION_FORM_POST_DATA['sections'][0]['questions'][0]['headline'])
 
+        section0_question1 = section0['questions'][1]
+        self.assertIsNotNone(section0_question1['id'])
+        self.assertDictEqual(section0_question1['headline'],
+                         APPLICATION_FORM_POST_DATA['sections'][0]['questions'][1]['headline'])
+
         section1 = response_data['sections'][1]
         self.assertIsNotNone(section1['id'])
         self.assertDictEqual(section1['name'], APPLICATION_FORM_POST_DATA['sections'][1]['name'])
@@ -379,11 +416,6 @@ class ApplicationFormCreateTest(ApiTestCase):
         self.assertIsNotNone(section1_question0['id'])
         self.assertDictEqual(section1_question0['headline'],
                          APPLICATION_FORM_POST_DATA['sections'][1]['questions'][0]['headline'])
-
-        section1_question1 = section1['questions'][1]
-        self.assertIsNotNone(section1_question1['id'])
-        self.assertDictEqual(section1_question1['headline'],
-                         APPLICATION_FORM_POST_DATA['sections'][1]['questions'][1]['headline'])
 
 
 APPLICATION_FORM_PUT_DATA = {
@@ -624,6 +656,8 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self.assertIsNotNone(section3_question1_actual['id'])
         for key in section3_question1_expected.keys():
             self.assertEqual(section3_question1_actual[key], section3_question1_expected[key], key)
+
+
 class QuestionListApiTest(ApiTestCase):
     def _seed_static_data(self):
         self.user1 = self.add_user('user1@mail.com')

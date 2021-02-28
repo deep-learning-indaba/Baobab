@@ -30,6 +30,7 @@ rest_api.add_resource(users_api.AdminOnlyAPI, '/api/v1/admin')
 rest_api.add_resource(users_api.EmailerAPI,
                       '/api/v1/admin/emailer')
 rest_api.add_resource(form_api.ApplicationFormAPI, '/api/v1/application-form')
+rest_api.add_resource(form_api.ApplicationFormDetailAPI, '/api/v1/application-form-detail')
 rest_api.add_resource(responses_api.ResponseAPI, '/api/v1/response')
 rest_api.add_resource(content_api.CountryContentAPI,
                       '/api/v1/content/countries')

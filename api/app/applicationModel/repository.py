@@ -15,10 +15,10 @@ class ApplicationFormRepository():
             .filter_by(event_id=event_id)\
             .first()
 
-    def add_form(application_form):
-        db.session.add(application_form)
+    def add(obj):
+        db.session.add(obj)
         db.session.commit()
-        return application_form
+        return obj
 
     @staticmethod
     def get_questions_for_event(event_id):
