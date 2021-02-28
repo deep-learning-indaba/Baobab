@@ -581,9 +581,72 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         return {}, 200
 
 
-class ReviewResponseDetailList(restful.Resource):
+class ReviewResponseDetailListAPI(restful.Resource):
+    @staticmethod
+    def _serialise_identifier(answer, language):
+        question_translation = answer.question.get_translation(language)
+        if question_translation is None:
+            question_translation = answer.question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
+        
+        return {
+            'headline': question_translation.headline,
+            'value': answer.value_display
+        }
+    
+    @staticmethod
+    def _serialise_scores(review_score, language):
+        review_question_translation = review_score.review_question.get_translation(language)
+        if review_question_translation is None:
+            review_question_translation = review_score.review_question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_score.review_question.id))
+        
+        return {
+            'headline': review_question_translation.headline,
+            'description': review_question_translation.description,
+            'type': review_score.review_question.type,
+            'score': review_score.value,
+            'weight': review_score.review_question.weight,
+        }
+        
+
+    @staticmethod
+    def _serialise_review_response(review_response):
+        return {
+            'review_response_id': review_response.id,
+            'response_id': review_response.response_id,
+
+            'reviewer_user_title': review_response.reviewer_user.user_title,
+            'reviewer_user_firstname': review_response.reviewer_user.firstname,
+            'reviewer_user_lastname': review_response.reviewer_user.lastname,
+        
+            'response_user_title': review_response.response.user.user_title,
+            'response_user_firstname': review_response.response.user.firstname,
+            'response_user_lastname': review_response.response.user.lastname,
+
+            'identifiers': [
+                ReviewResponseDetailListAPI._serialise_identifier(answer, review_response.language)
+                for answer in review_response.response.answers
+                if answer.question.is_review_identifier()
+            ],
+
+            'scores': [
+                ReviewResponseDetailListAPI._serialise_scores(review_score, review_response.language)
+                for review_score in review_response.review_scores
+                if (review_score.review_question.type == 'multi-choice'
+                    or review_score.review_question.type == 'long-text'
+                    or review_score.review_question.type == 'short-text'
+                )
+            ],
+
+            'total': review_response.calculate_score()
+        }
+    
     @auth_required
     @event_admin_required
     def get(self, event_id):
         review_responses = review_repository.get_all_review_responses_by_event(event_id)
-        return [ReviewResponseDetail(review_response) for review_response in review_responses], 200
+        return [
+            ReviewResponseDetailListAPI._serialise_review_response(review_response)
+            for review_response in review_responses
+        ], 200
