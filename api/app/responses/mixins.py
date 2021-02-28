@@ -19,3 +19,9 @@ class ResponseMixin(object):
 
     del_req_parser = reqparse.RequestParser()
     del_req_parser.add_argument('id', type=int, required=True)
+
+class ResponseTagMixin(object):
+    req_parser = reqparse.RequestParser()
+    req_parser.add_argument('event_id', type=int, required=True)
+    req_parser.add_argument('tag_id', type=int, required=True)
+    req_parser.add_argument('response_id', type=int, required=True)

@@ -6,35 +6,32 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 from flask_redis import FlaskRedis
-from utils.logger import Logger
+from .utils.logger import Logger
 from flask_admin import Admin, AdminIndexView, helpers, expose
 from flask_admin.contrib.sqla import ModelView
 import flask_login as login
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
 import tldextract
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 app = Flask(__name__)
 app.config.from_object('config')
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
-print(app.config['SQLALCHEMY_DATABASE_URI'])
+print((app.config['SQLALCHEMY_DATABASE_URI']))
 rest_api = restful.Api(app)
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 redis = FlaskRedis(app)
 LOGGER = Logger().get_logger()
 
-import routes
+from . import routes
 
 migrate = Migrate(app, db)
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
-from organisation.resolver import OrganisationResolver
+from .organisation.resolver import OrganisationResolver
 
 def get_domain():
     # TODO: Remove this test-related hack!
@@ -64,17 +61,17 @@ def populate_organisation():
 
 # set optional bootswatch theme
 app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
-from applicationModel.models import Question, Section
-from responses.models import Response, Answer, ResponseReviewer
-from users.models import UserCategory, AppUser, UserComment
-from email_template.models import EmailTemplate
-from outcome.models import Outcome
-from events.models import Event, EventRole
+from .applicationModel.models import Question, Section
+from .responses.models import Response, Answer, ResponseReviewer
+from .users.models import UserCategory, AppUser, UserComment
+from .email_template.models import EmailTemplate
+from .outcome.models import Outcome
+from .events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
-from reviews.models import ReviewForm, ReviewQuestion
-from registration.models import Offer, RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
-from invitationletter.models import InvitationTemplate, InvitationLetterRequest
+from .reviews.models import ReviewForm, ReviewQuestion
+from .registration.models import Offer, RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
+from .invitationletter.models import InvitationTemplate, InvitationLetterRequest
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
     email = fields.TextField(validators=[validators.required()])

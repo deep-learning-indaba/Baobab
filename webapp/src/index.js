@@ -9,6 +9,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import i18nInit from './i18n';
 import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
+import ContextProvider from './context/ContextProvider';
 
 const App = React.lazy(() => import('./App')); // Lazy-loaded
 
@@ -54,7 +55,9 @@ class Bootstrap extends Component {
 
 ReactDOM.render(
   <ErrorBoundary FallbackComponent={ErrorPage}>
-    <Bootstrap />
+    <ContextProvider>
+      <Bootstrap />
+    </ContextProvider>
   </ErrorBoundary>
   , document.getElementById("root")
 );

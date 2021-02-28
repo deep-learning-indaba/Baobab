@@ -318,7 +318,7 @@ Applications that do not submit a complete budget in this template will not be c
 
     section_fr = session.query(SectionTranslation).filter_by(
         name='Section IV: Budget', language='fr').first()
-    section_fr.description = u"""Veuillez soumettre un budget triennal complet comprenant des notes en utilisant la feuille Excel qui est disponible sur le site Web public du CRDI, à la page suivante: [https://www.idrc.ca/fr/ressources/guides-et-formulaires](https://www.idrc.ca/en/resources/guides-and-forms)
+    section_fr.description = """Veuillez soumettre un budget triennal complet comprenant des notes en utilisant la feuille Excel qui est disponible sur le site Web public du CRDI, à la page suivante: [https://www.idrc.ca/fr/ressources/guides-et-formulaires](https://www.idrc.ca/en/resources/guides-and-forms)
 
 Cliquez sur ‘proposition de projet’, puis téléchargez la feuille Excel. Les demandes qui ne comprennent pas un budget complet préparé au moyen de ce modèle ne seront pas prises en considération.
 

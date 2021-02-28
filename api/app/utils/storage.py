@@ -17,13 +17,13 @@ def _create_dummy_storage_client():
     external_url = 'https://{}:4443'.format(fake_host)
     storage.blob._API_ACCESS_ENDPOINT = 'https://storage.gcs.{}.nip.io:4443'.format(fake_host)
     storage.blob._DOWNLOAD_URL_TEMPLATE = (
-        u"%s/download/storage/v1{path}?alt=media" % external_url
+        "%s/download/storage/v1{path}?alt=media" % external_url
     )
     storage.blob._BASE_UPLOAD_TEMPLATE = (
-        u"%s/upload/storage/v1{bucket_path}/o?uploadType=" % external_url
+        "%s/upload/storage/v1{bucket_path}/o?uploadType=" % external_url
     )
-    storage.blob._MULTIPART_URL_TEMPLATE = storage.blob._BASE_UPLOAD_TEMPLATE + u"multipart"
-    storage.blob._RESUMABLE_URL_TEMPLATE = storage.blob._BASE_UPLOAD_TEMPLATE + u"resumable"
+    storage.blob._MULTIPART_URL_TEMPLATE = storage.blob._BASE_UPLOAD_TEMPLATE + "multipart"
+    storage.blob._RESUMABLE_URL_TEMPLATE = storage.blob._BASE_UPLOAD_TEMPLATE + "resumable"
     my_http = requests.Session()
     my_http.verify = False  # disable SSL validation
     urllib3.disable_warnings(

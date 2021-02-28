@@ -264,3 +264,25 @@ class ApplicationFormAPI(restful.Resource):
         db.session.commit()
 
         return get_form_fields(app_form, 'en'), 200
+def _serialize_question(question, language):
+    translation = question.get_translation(language)
+    if not translation:
+        LOGGER.warn('Could not find {} translation for question id {}'.format(language, question.id))
+        translation = question.get_translation('en')
+    return dict(
+        question_id=question.id,
+        headline=translation.headline,
+        type=question.type
+    )
+
+class QuestionListApi(restful.Resource):
+
+    @event_admin_required
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
+        language = args['language']
+
+        questions = application_form_repository.get_questions_for_event(event_id)
+        return [_serialize_question(q, language) for q in questions]

@@ -12,6 +12,7 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
+import ResponseList from './pages/ResponseList/ResponseList'
 
 
 import ReactGA from "react-ga";
@@ -47,10 +48,10 @@ class EventNav extends Component {
     const t = this.props.t;
 
     return (
-      <nav class="navbar navbar-expand-sm bg-white navbar-light">
+      <nav className="navbar navbar-expand-sm bg-white navbar-light">
 
-        <a href={`/${this.props.eventKey}`} class="navbar-brand">{this.props.event.name}</a>
-        <div class={
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
+        <div className={
           "collapse navbar-collapse" +
           (this.state.collapsed ? " collapsed" : "")
         } id="eventNavbar">
@@ -150,6 +151,13 @@ class EventNav extends Component {
                   >
                     {t('Response List')}
                   </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/applicationform`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Form Settings')}
+                  </NavLink>
                 </div>
               </li>
             )}
@@ -169,7 +177,7 @@ class EventNav extends Component {
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     <NavLink
-                      to={`/${this.props.eventKey}/review`}
+                      to={`/${this.props.eventKey}/reviewlist`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
@@ -291,18 +299,27 @@ class AppComponent extends Component {
     super(props);
 
     this.state = {
-      user: {},
+      user: JSON.parse(localStorage.getItem("user")),
       collapsed: true,
       eventKey: null,
-      currentEvent: null
+      currentEvent: null,
+      error: null
     };
 
     this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
-    this.setState({
-      user: JSON.parse(localStorage.getItem("user"))
+    userService.authRefresh().then(user => {
+      if (!user.error) {
+        localStorage.setItem("user", JSON.stringify(user));
+        this.setState({
+          user: user
+        });
+      }
+      else {
+        localStorage.removeItem("user");
+      }
     });
   }
 
@@ -363,7 +380,7 @@ class AppComponent extends Component {
               {this.props.organisation && this.props.organisation.system_name}
             </a>
             <div
-              class={
+              className={
                 "collapse navbar-collapse" +
                 (this.state.collapsed ? " collapsed" : "")
               }
@@ -398,6 +415,7 @@ class AppComponent extends Component {
             user={this.state.user} />}
           <div className="Body">
             <div className="container-fluid">
+              {this.state.error && <div className="alert alert-danger">{this.state.error}</div>}
               <Switch>
                 <Route
                   exact
@@ -435,6 +453,13 @@ class AppComponent extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
+                   <Route
+                  exact
+                  path="/responseList"
+                  render={props => (
+                    <ResponseList {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />
                 <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />
@@ -446,7 +471,9 @@ class AppComponent extends Component {
                       setEvent={this.setEvent}
                       user={this.state.user}
                       eventKey={this.state.eventKey}
-                      event={this.state.currentEvent} />
+                      event={this.state.currentEvent}
+                      organisation={this.props.organisation}
+                      />
                   )}
                 />
               </Switch>
@@ -502,7 +529,7 @@ class AppComponent extends Component {
           >
             <h5>{t('cookieTitle')}</h5>
             <span style={{ fontSize: "0.8em" }}>
-              {t('cookieText')}
+              {t('cookieText')}{" "}
               <a
                 href={
                   "/" +
