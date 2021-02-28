@@ -54,7 +54,7 @@ class TagAPI(restful.Resource):
         name_translations = args['name']
 
         tag = Tag(event_id)
-        for language, name in name_translations.iteritems():
+        for language, name in name_translations.items():
             tag.translations.append(TagTranslation(tag.id, language, name))
         tag_repository.add_tag(tag)
 
@@ -73,7 +73,7 @@ class TagAPI(restful.Resource):
         if not tag or tag.event_id != event_id:
             return errors.TAG_NOT_FOUND
 
-        for language, name in name_translations.iteritems():
+        for language, name in name_translations.items():
             translation = tag.get_translation(language)
             if translation:
                 translation.name = name

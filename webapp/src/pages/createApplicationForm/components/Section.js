@@ -1,38 +1,41 @@
-import React, { useState, useContext } from 'react';
+import React,
+{
+  useState, forwardRef, createRef
+} from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
-import Context from '../../../context';
+import {
+  Modal, AnimateSections, handleMove,
+  drag, drop
+} from './util';
 
-const Section = ({
-  t, sectionIndex, sections, inputs, lang
-}) => {
-  const { setAppFormData } = useContext(Context);
-
-  const [input, setInput] = useState({
-    name: inputs.name,
-    description: inputs.description,
-    id: inputs.id,
-    questions: inputs.questions
-  });
+export const Section = forwardRef(({
+  t, sectionIndex, sections, inputs, lang,
+  setSection, handleDrag, handleDrop,
+  setApplytransition, setParentDropable, parentDropable
+}, ref) => {
+  const [isModelVisible, setIsModelVisible] = useState(false);
+  const [questionAnimation, setQuestionAnimation] = useState(false);
+  const [dragId, setDragId] = useState();
+  const [showingQuestions, setShowingQuestions] = useState(true);
 
   const handleChange = (prop) => (e) => {
-    const target = input[prop];
-    setInput({...input, [prop]: {...target, [lang]: e.target.value}});
-  }
-
-  const updateSections = () => { // Update sections in the application form when section loses focus
+    const target = inputs[prop];
     const updatedSections = sections.map(s => {
-      if(s.id === input.id) return input;
+      if(s.id === inputs.id) {
+        s = {...s, [prop]: {...target, [lang]: e.target.value}};
+      }
       return s;
-    })
-    setAppFormData([...updatedSections]);
+    });
+    setSection(updatedSections);
+    setApplytransition(false);
   }
 
   const addQuestion = () => {
-    const qsts = input.questions;
-    setInput({...input, questions: [...qsts, {
+    const qsts = inputs.questions;
+    const qst = {
       id: `${Math.random()}`,
-      order: qsts.length && qsts.length + 1,
+      order: qsts.length + 1,
       headline: {
         en: '',
         fr: ''
@@ -55,90 +58,214 @@ const Section = ({
         fr: ''
       },
       required: false
-    }]});
+    }
+    const updatedSections = sections.map(s => {
+      if (s.id === inputs.id) {
+        s = {...inputs, questions: [...qsts, qst]};
+      }
+      return s;
+    });
+    setSection(updatedSections);
+    setApplytransition(false);
+    setQuestionAnimation(false);
   }
 
-  const handleQuestions = (inpt) => {
-    setInput({...input, questions: inpt});
+  const handleOkDelete = () => {
+    const updatedSections = sections.filter(s => s.id !== inputs.id);
+    setSection(updatedSections);
+  }
+
+  const handleConfirm = () => {
+    setIsModelVisible(!isModelVisible);
+  }
+
+  const handleMoveSectionUp = () => {
+    handleMove({
+      elements: sections,
+      index: sectionIndex,
+      setState: setSection,
+      setAnimation: setApplytransition,
+      isUp: true
+    });
+  }
+
+  const handleMoveSectionDown = () => {
+    handleMove({
+      elements: sections,
+      index: sectionIndex,
+      setState: setSection,
+      setAnimation: setApplytransition
+    });
+  }
+
+  const handleDragQuestion = (e) => {
+    drag(e, setDragId);
+    setParentDropable(false);
+  };
+
+  const handleDropQuestion = (e) => {
+    drop({
+      event: e,
+      elements: inputs.questions,
+      dragId,
+      section: inputs,
+      setAnimation: setQuestionAnimation,
+      setSection: setSection,
+      sections
+    });
+    setParentDropable(false);
+    setApplytransition(false);
+  }
+
+  const handleMouseDown = () => {
+    setParentDropable(true);
+  };
+
+  const showQuestions = () => {
+    setShowingQuestions(!showingQuestions);
+    setQuestionAnimation(false);
   }
 
   const numSections = sections.length;
   const index = sectionIndex + 1;
-
+  const isDeleteDisabled = sections.length === 1 ? true : false;
   return (
-    <>
+    <div
+      className="section-wrapper"
+      id={inputs.id}
+      key={inputs.id}
+      ref={ref}
+      draggable={parentDropable}
+      onDragOver={e => e.preventDefault()}
+      onDragStart={handleDrag}
+      onDrop={handleDrop}
+    >
       <div
-        className="section-wrapper"
-        id={`section-${input.id}`}
-        key={input.id}
-        onBlur={updateSections}
+        className="section-number"
+        onMouseDown={handleMouseDown}
+        style={{ cursor: 'grab'}}
       >
-        <div className="section-number">
-          <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
-        </div>
-        <div className="title-description">
-          <div className="section-header">
-            <input
-              type="text"
-              value={input.name[lang]}
-              onChange={handleChange('name')}
-              className="section-inputs section-title"
-            />
-            <button
-              className="title-desc-toggle"
-              name="title-desc-toggle"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="false"
-            >
-              <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
-            </button>
-            <div className="dropdown-menu" aria-labelledby="title-desc-toggle">
-              <button className="delete-section">
-                {t("Delete Section")}
-              </button>
-              <button className="delete-section">
-                {t("Duplicate Section")}
-              </button>
-            </div>
-          </div>
+        <Trans i18nKey='sectionPlace' >Section {{index}} of {{numSections}}</Trans>
+      </div>
+      <div className="title-description">
+        <div className="section-header">
           <input
-            name="section-desc"
             type="text"
-            value={input.description[lang]}
-            placeholder={t('Description')}
-            onChange={handleChange('description')}
-            className="section-inputs section-desc"
-           /> 
+            value={inputs.name[lang]}
+            onChange={handleChange('name')}
+            className="section-inputs section-title"
+          />
+          <div
+            id="toggleTitle"
+            className="title-desc-toggle"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <i className='fa fa-ellipsis-v fa-lg fa-dropdown'></i>
+          </div>
+          <div className="dropdown-menu" aria-labelledby="toggleTitle">
+            <button
+              className="dropdown-item delete-section"
+              disabled={isDeleteDisabled}
+              onClick={handleConfirm}
+              >
+              <i className="far fa-trash-alt fa-section"></i>
+              {t("Delete Section")}
+            </button>
+            <button className="dropdown-item delete-section" >
+              <i className="far fa-copy fa-section fa-duplicate"></i>
+              {t("Duplicate Section")}
+            </button>
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleMoveSectionUp}
+              disabled={index === 1}
+            >
+              <i class="fas fa-angle-up fa-section fa-duplicate"></i>
+              {t("Move Section Up")}
+            </button>
+            <button
+              disabled={index === sections.length}
+              className="dropdown-item delete-section"
+              onClick={handleMoveSectionDown}
+            >
+              <i class="fas fa-angle-down fa-section fa-duplicate"></i>
+              {t("Move Section Down")}
+            </button>
+          </div>
+          
         </div>
-
-        {input.questions.map(question => (
+        <input
+          name="section-desc"
+          type="text"
+          value={inputs.description[lang]}
+          placeholder={t('Description')}
+          onChange={handleChange('description')}
+          className="section-inputs section-desc"
+          /> 
+      </div>
+      <div className="arrow-wrapper">
+        <button className="arrow-btn" onClick={showQuestions}>
+          <i
+            className="arrow-btns"
+            style={showingQuestions ? { transform: 'rotate(45deg) skew(120deg, 120deg)'}
+              : { transform: 'rotate(-135deg) skew(120deg, 120deg)'}}></i>
+        </button>
+      </div>
+      <AnimateSections
+        applyTransition={questionAnimation}
+        setApplytransition={setQuestionAnimation}
+      >
+        {inputs.questions.map((question, i) => (
           <Question
             inputs={question}
             key={question.id}
             t={t}
+            ref={createRef()}
             num={question.id}
-            questions={input.questions}
-            setQuestions={handleQuestions}
-            setSection={setInput}
+            questions={inputs.questions}
+            setSections={setSection}
             sections={sections}
-            sectionId={input.id}
-            section={input}
+            sectionId={inputs.id}
+            section={inputs}
             lang={lang}
+            setApplytransition={setApplytransition}
+            questionIndex={i}
+            setQuestionAnimation={setQuestionAnimation}
+            handleDrag={handleDragQuestion}
+            handleDrop={handleDropQuestion}
+            setParentDropable={setParentDropable}
+            parentDropable={parentDropable}
+            showingQuestions={showingQuestions}
             />
         ))}
-        <div className='add-question-wrapper'>
-          <button
-            className="add-question-btn"
-            data-title={t('Add Question')}
-            onMouseUp={() => addQuestion()}
-          >
-            <i class="fas fa-plus add-section-icon"></i>
-          </button>
-        </div>
+      </AnimateSections>
+      <div
+        className='add-question-wrapper'
+      >
+        <button
+          className="add-question-btn"
+          data-title={t('Add Question')}
+          onMouseUp={() => addQuestion()}
+          style={!showingQuestions ? {display: 'none'}: {}}
+        >
+          <i class="fas fa-plus add-section-icon"></i>
+        </button>
       </div>
-    </>
+      {
+        isModelVisible && (
+          <Modal
+            t={t}
+            element='section'
+            handleOkDelete={handleOkDelete}
+            handleConfirm={handleConfirm}
+          />
+        )
+      }
+    </div>
   )
-}
+})
 
 export default Section;

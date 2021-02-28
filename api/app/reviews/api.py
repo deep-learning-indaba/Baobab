@@ -15,7 +15,6 @@ from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewRe
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
-from app.reviews.view_models import ReviewResponseDetail
 from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required, event_admin_required
@@ -279,9 +278,9 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
     
     def validate_scores(self, scores):
         for score in scores:
-            if 'review_question_id' not in score.keys():
+            if 'review_question_id' not in list(score.keys()):
                 return self.get_error_message('review_question_id')
-            if 'value' not in score.keys():
+            if 'value' not in list(score.keys()):
                 return self.get_error_message('value')
     
     def get_error_message(self, key):
@@ -579,7 +578,6 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         review_repository.delete_response_reviewer(response_id, reviewer_user_id)
 
         return {}, 200
-
 
 class ReviewResponseDetailListAPI(restful.Resource):
     @staticmethod

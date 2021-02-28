@@ -21,7 +21,7 @@ INVITATION_LETTER = {
    'work_address': "Somewhere over the rainbow",
    'addressed_to': "Sir",
    'residential_address': "Way up high",
-   'passport_name': "Jane Do\u7231",
+   'passport_name': "Jane Do\\u7231",
    'passport_no': "23456565",
    'passport_issued_by': "Neverland",
    'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -190,7 +190,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == "Somewhere over the rainbow"
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -213,7 +213,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == " "
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -226,7 +226,7 @@ class InvitationLetterTests(ApiTestCase):
             'work_address': "Somewhere over the rainbow",
             'addressed_to': "Sir",
             'residential_address': "Way up high",
-            'passport_name': "Jane Do\u7231",
+            'passport_name': "Jane Do\\u7231",
             'passport_no': "23456565",
             'passport_issued_by': "Neverland",
             'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -248,7 +248,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == " "
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -263,7 +263,7 @@ class InvitationLetterTests(ApiTestCase):
             'work_address': "Somewhere over the rainbow",
             'addressed_to': "Sir",
             'residential_address': "Way up high",
-            'passport_name': "Jane Do\u7231",
+            'passport_name': "Jane Do\\u7231",
             'passport_no': "23456565",
             'passport_issued_by': "Neverland",
             'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -284,7 +284,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.event_id == 1
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 

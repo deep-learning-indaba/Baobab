@@ -1,22 +1,22 @@
 from app import rest_api
-from applicationModel import api as form_api
-from users import api as users_api
-from responses import api as responses_api
-from content import api as content_api
-from files import api as files_api
-from events import api as events_api
-from reviews import api as reviews_api
-from invitedGuest import api as invitedGuest_api
-from references import api as reference_api
-from registration import api as registration_api
-from registrationResponse import api as registration_response
-from guestRegistrations import api as guest_registration
-from invitationletter import api as invitation_letter_api
-from attendance import api as attendance_api
-from organisation import api as organisation_api
-from integration_tests import api as integration_tests_api
-from outcome import api as outcome_api
-from tags import api as tag_api
+from .applicationModel import api as form_api
+from .users import api as users_api
+from .responses import api as responses_api
+from .content import api as content_api
+from .files import api as files_api
+from .events import api as events_api
+from .reviews import api as reviews_api
+from .invitedGuest import api as invitedGuest_api
+from .references import api as reference_api
+from .registration import api as registration_api
+from .registrationResponse import api as registration_response
+from .guestRegistrations import api as guest_registration
+from .invitationletter import api as invitation_letter_api
+from .attendance import api as attendance_api
+from .organisation import api as organisation_api
+from .integration_tests import api as integration_tests_api
+from .outcome import api as outcome_api
+from .tags import api as tag_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')

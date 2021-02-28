@@ -303,7 +303,7 @@ def upgrade():
         .first())
 
     fr = (session.query(SectionTranslation)
-        .filter_by(language='fr', name=u'Appel à Propositions pour les Centres de Recherche Politique')
+        .filter_by(language='fr', name='Appel à Propositions pour les Centres de Recherche Politique')
         .first())
     
     en_desc = """The International Development Research Centre (IDRC) and the Swedish International Development Agency (Sida) invite proposals from independent policy research organizations from across the African continent that are committed to using research to inform and influence national-level artificial intelligence (AI) policies and research ecosystems. This funding opportunity will provide funding to two (2) AI policy research organizations representing distinct linguistic regions (anglophone and francophone).
@@ -322,7 +322,7 @@ For any queries, please email [ai4dafrica@idrc.ca](mailto:ai4dafrica@idrc.ca)
 
     en.description = en_desc
 
-    fr_desc = u"""Le Centre de recherches pour le développement international (CRDI) et l’Agence suédoise de coopération au développement international (ASDI) invitent les organismes indépendants de recherche sur les politiques de l’ensemble du continent africain à soumettre des propositions dans la mesure où ils s’engagent à utiliser la recherche pour éclairer et influencer les politiques et les écosystèmes de recherche en matière d’intelligence artificielle à l’échelle nationale. Cette possibilité de financement permettra de financer deux (2) organismes de recherche sur les politiques d’IA représentant des régions linguistiques distinctes (anglophone et francophone).
+    fr_desc = """Le Centre de recherches pour le développement international (CRDI) et l’Agence suédoise de coopération au développement international (ASDI) invitent les organismes indépendants de recherche sur les politiques de l’ensemble du continent africain à soumettre des propositions dans la mesure où ils s’engagent à utiliser la recherche pour éclairer et influencer les politiques et les écosystèmes de recherche en matière d’intelligence artificielle à l’échelle nationale. Cette possibilité de financement permettra de financer deux (2) organismes de recherche sur les politiques d’IA représentant des régions linguistiques distinctes (anglophone et francophone).
 
 L’objectif de cette initiative est de permettre aux think tanks africains d’éclairer et de façonner des politiques et des stratégies en matière d’intelligence artificielle afin de soutenir l’adoption d’une intelligence artificielle responsable sur le continent, et de garantir que les experts africains se feront entendre dans les forums mondiaux.
 
