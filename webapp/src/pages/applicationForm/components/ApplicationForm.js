@@ -103,7 +103,10 @@ class FieldEditor extends React.Component {
       });
     }).then(response => {
       if (response.fileId && this.props.onChange) {
-        this.props.onChange(this.props.question, response.fileId);
+        this.props.onChange(
+          this.props.question,
+          JSON.stringify({ filename: response.fileId, rename: file.name })
+        );
       }
       this.setState({
         uploaded: response.fileId !== "",

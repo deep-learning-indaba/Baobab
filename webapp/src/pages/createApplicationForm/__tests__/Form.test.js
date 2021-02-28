@@ -1,9 +1,21 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { shallow, mount, render } from 'enzyme';
 import ApplicationForm from '../components/ApplicationForm';
-import Section from '../components/Section';
+import {Section} from '../components/Section';
 import Question from '../components/Question';
 import Form from '../Form';
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => {
+        return {
+          t: (str) => str,
+          i18n: {
+            changeLanguage: () => new Promise(() => {}),
+          },
+        };
+      },
+  Trans: () => Component => props => <Component t={() => ''} {...props} />,
+}));
 
 test('Check if Application Form Page renders.', () => {
   // Render Application Form Page.
@@ -66,6 +78,10 @@ test('Check if the Section Component renders.', () => {
   };
   const addSection = jest.fn(); 
   const addQuestion = jest.fn();
+  const handleDrag = jest.fn();
+  const handleDrop = jest.fn();
+  const setApplytransition = jest.fn();
+  const handleDragOver = jest.fn();
   const props = {
     setSection,
     sections,
@@ -74,9 +90,18 @@ test('Check if the Section Component renders.', () => {
     addQuestion,
     sectionIndex,
     lang,
-    t
+    t,
+    key: 1,
+    id: 1,
+    handleDrag,
+    handleDrop,
+    setApplytransition,
+    handleDragOver
   };
-  const wrapper = shallow(<Section {...props} />);
+  const ref = React.createRef();
+  const wrapper = render(
+    <Section {...props} ref={ref} />
+  );
   expect(wrapper.length).toEqual(1);
 });
 
@@ -84,6 +109,15 @@ test('Check if the Question Component renders.', () => {
   // Render Question Component.
   const t = jest.fn();
   const sectionId = 1;
+  const setQuestions = jest.fn();
+  const setSection = jest.fn();
+  const setSections = jest.fn();
+  const setApplytransition = jest.fn();
+  const setQuestionAnimation = jest.fn();
+  const handleDrag = jest.fn();
+  const handleDrop = jest.fn();
+  const setParentDropable = jest.fn();
+
   const section = {
     id: `${Math.random()}`,
     name: {
@@ -226,9 +260,22 @@ test('Check if the Question Component renders.', () => {
     sectionId,
     sections,
     lang,
-    section
+    section,
+    key: 1,
+    setQuestions,
+    setSection,
+    setSections,
+    setApplytransition,
+    questionIndex: 1,
+    setQuestionAnimation,
+    handleDrag,
+    handleDrop,
+    setParentDropable
   };
-  const wrapper = shallow(<Question {...props} />);
+  const ref = React.createRef();
+  const wrapper = mount(
+    <Question {...props} ref={ref} />
+  );
   expect(wrapper.length).toEqual(1);
 });
 
@@ -237,6 +284,6 @@ test('Check if the Form Component renders', () => {
   const props = {
     languages
   };
-  const wrapper = shallow(<Form {...props} />);
+  const wrapper = shallow(<Form {...props} t={k => 'key'} />);
   expect(wrapper.length).toEqual(1);
 })

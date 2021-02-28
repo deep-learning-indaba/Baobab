@@ -16,13 +16,13 @@ class EmailerTest(ApiTestCase):
         self.zulu_user = self.add_user(email='zulu@person.com', post_create_fn=partial(set_language, language='zu'))
 
         self.event = self.add_event(
-            name={'en': u'English Event Name', 'fr': u'Nom de lévénement en français'},
-            description={'en': u'English Description', 'fr': u'Description en français'}
+            name={'en': 'English Event Name', 'fr': 'Nom de lévénement en français'},
+            description={'en': 'English Description', 'fr': 'Description en français'}
         )
-        self.add_email_template('template1', u'English template no event {param}', subject=u'English subject no event')
-        self.add_email_template('template1', u'Modèle français sans événement {param}', subject=u'Sujet français sans événement', language='fr')
-        self.add_email_template('template1', u'English template {event_name} {param}', subject=u'English subject {event_name}', event_id=1)
-        self.add_email_template('template1', u'Modèle français {event_name} {param}', subject=u'Sujet français {event_name}', language='fr', event_id=1)
+        self.add_email_template('template1', 'English template no event {param}', subject='English subject no event')
+        self.add_email_template('template1', 'Modèle français sans événement {param}', subject='Sujet français sans événement', language='fr')
+        self.add_email_template('template1', 'English template {event_name} {param}', subject='English subject {event_name}', event_id=1)
+        self.add_email_template('template1', 'Modèle français {event_name} {param}', subject='Sujet français {event_name}', language='fr', event_id=1)
 
     @patch('app.utils.emailer.send_mail')
     def test_email_no_event_english(self, send_mail_fn):
@@ -33,8 +33,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.english_user.email, 
-            subject=u'English subject no event', 
-            body_text=u'English template no event Blah', 
+            subject='English subject no event', 
+            body_text='English template no event Blah', 
             file_name='', 
             file_path='')
 
@@ -47,8 +47,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.french_user.email, 
-            subject=u'Sujet français sans événement', 
-            body_text=u'Modèle français sans événement bleu', 
+            subject='Sujet français sans événement', 
+            body_text='Modèle français sans événement bleu', 
             file_name='', 
             file_path='')
 
@@ -61,8 +61,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.zulu_user.email, 
-            subject=u'English subject no event', 
-            body_text=u'English template no event Blah', 
+            subject='English subject no event', 
+            body_text='English template no event Blah', 
             file_name='', 
             file_path='')
 
@@ -76,8 +76,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.english_user.email, 
-            subject=u'English subject no event', 
-            body_text=u'English template no event Blah', 
+            subject='English subject no event', 
+            body_text='English template no event Blah', 
             file_name='myfile.pdf', 
             file_path='/long/way/home')
 
@@ -91,8 +91,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.english_user.email, 
-            subject=u'English subject English Event Name', 
-            body_text=u'English template English Event Name Blah', 
+            subject='English subject English Event Name', 
+            body_text='English template English Event Name Blah', 
             file_name='', 
             file_path='')
 
@@ -105,8 +105,8 @@ class EmailerTest(ApiTestCase):
 
         send_mail_fn.assert_called_with(
             recipient=self.french_user.email, 
-            subject=u'Sujet français Nom de lévénement en français', 
-            body_text=u'Modèle français Nom de lévénement en français bleu', 
+            subject='Sujet français Nom de lévénement en français', 
+            body_text='Modèle français Nom de lévénement en français bleu', 
             file_name='', 
             file_path='')
     
