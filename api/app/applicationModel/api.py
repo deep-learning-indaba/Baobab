@@ -16,6 +16,8 @@ from app.utils.errors import APPLICATION_FORM_EXISTS, EVENT_NOT_FOUND, QUESTION_
 from app import db, bcrypt
 from app import LOGGER
 
+from typing import Sequence
+
 def get_form_fields(form, language):
     section_fields = []
     for section in form.sections:
@@ -195,6 +197,7 @@ class ApplicationFormDetailAPI(restful.Resource):
                 application_form_repository.add(question)
                 question_data_map[question] = question_data
 
+                # TODO: Explicitly use a surrogate_id field from the UI, so as not to confuse with the DB IDs (especially for PUT method!)
                 if "id" in question_data:
                     question_id_map[question_data["id"]] = question.id
 
@@ -223,123 +226,110 @@ class ApplicationFormDetailAPI(restful.Resource):
         app_form = application_form_repository.get_by_id(app_form.id)
         return app_form, 201
 
-    @auth_required
-    def put(self):
-        # TODO: Handle translations! 
+    @event_admin_required
+    def put(self, event_id):
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True,
-                                help='Invalid event_id requested. Event_id\'s should be of type int.')
         req_parser.add_argument('is_open', type=bool, required=True)
         req_parser.add_argument('nominations', type=bool, required=True)
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
 
         args = req_parser.parse_args()
-        event_id = args['event_id']
         user_id = g.current_user['id']
-        app_id = args['id']
+        application_form_id = args['id']
 
-        event = db.session.query(Event).get(event_id)
-        if not event:
-            return EVENT_NOT_FOUND
-
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
-
-        app_form = application_form_repository.get_by_id(app_id)
+        app_form = application_form_repository.get_by_id(application_form_id)
         if not app_form:
             return FORM_NOT_FOUND_BY_ID
 
-        if not event_id == app_form.event_id:
+        if event_id != app_form.event_id:
             return UPDATE_CONFLICT
 
         app_form.is_open = args['is_open']
         app_form.nominations = args['nominations']
 
         current_sections = app_form.sections
-        new_sections = args['sections']
-        for new_s in new_sections:
-            if 'id' in new_s:
-                # If ID is populated, then compare to the new section and update
-                for current_s in current_sections:
-                    if current_s.id == new_s['id']:
-                        current_s.description = new_s['description']
-                        current_s.order = new_s['order']
-                        # current_s.depends_on_question_id = new_s['depends_on_question_id']
-                        current_s.show_for_values = new_s['show_for_values']
-                        current_s.key = new_s['key']
-                        current_s.name = new_s['name']
+        incoming_sections = args['sections']
 
-                        for new_q in new_s['questions']:  # new_q - questions from new_s section
-                            if 'id' in new_q:
-                                for idx in current_s.questions:
-                                    if idx.id == new_q['id']:
-                                        idx.headline = new_q['headline']
-                                        idx.placeholder = new_q['placeholder']
-                                        idx.order = new_q['order']
-                                        idx.type = new_q['type']
-                                        idx.validation_regex = new_q['validation_regex']
-                                        idx.validation_text = new_q['validation_text']
-                                        idx.is_required = new_q['is_required']
-                                        idx.description = new_q['description']
-                                        idx.options = new_q['options']
-                            else:
-                                new_question = Question(
-                                    app_form.id,
-                                    current_s.id,
-                                    new_q['headline'],
-                                    new_q['placeholder'],
-                                    new_q['order'],
-                                    new_q['type'],
-                                    new_q['validation_regex'],
-                                    new_q['validation_text'],
-                                    new_q['is_required'],
-                                    new_q['description'],
-                                    new_q['options']
-                                )
-                                db.session.add(new_question)
-                                db.session.commit()
+        for section_data in incoming_sections:
+            if 'id' in section_data:
+                # If ID is populated, then update the existing section
+                current_section = next(s for s in current_sections if s.id == section_data['id'], None)  # type: Section
+                if not current_section:
+                    return SECTION_NOT_FOUND
+
+                current_translations = current_section.section_translations  # type: Sequence[SectionTranslation]
+                for current_translation in current_translations:
+                    current_translation.description = section_data['description'][current_translation.language]
+                    current_translation.name = section_data['name'][current_translation.language]
+                    current_translation.show_for_values = section_data['show_for_values'][current_translation.language]
+                
+                # TODO: Need to do this after doing all the updates, like the POST method
+                current_section.depends_on_question_id = section_data['depends_on_question_id']
+                current_section.key = section_data['key']
+                current_section.order = section_data['order']
+                
+                # TODO: PROCESS QUESTIONS!
+
+                        # for new_q in section_data['questions']:  # new_q - questions from section_data section
+                        #     if 'id' in new_q:
+                        #         for idx in current_s.questions:
+                        #             if idx.id == new_q['id']:
+                        #                 idx.headline = new_q['headline']
+                        #                 idx.placeholder = new_q['placeholder']
+                        #                 idx.order = new_q['order']
+                        #                 idx.type = new_q['type']
+                        #                 idx.validation_regex = new_q['validation_regex']
+                        #                 idx.validation_text = new_q['validation_text']
+                        #                 idx.is_required = new_q['is_required']
+                        #                 idx.description = new_q['description']
+                        #                 idx.options = new_q['options']
+                        #     else:
+                        #         new_question = Question(
+                        #             app_form.id,
+                        #             current_s.id,
+                        #             new_q['headline'],
+                        #             new_q['placeholder'],
+                        #             new_q['order'],
+                        #             new_q['type'],
+                        #             new_q['validation_regex'],
+                        #             new_q['validation_text'],
+                        #             new_q['is_required'],
+                        #             new_q['description'],
+                        #             new_q['options']
+                        #         )
+                        #         db.session.add(new_question)
+                        #         db.session.commit()
 
             else:
                 # if not populated, then add new section
                 section = Section(
                     app_form.id,
-                    new_s['name'],
-                    new_s['description'],
-                    new_s['order']
+                    section_data['order']
                 )
-                db.session.add(section)
-                db.session.commit()
-                for q in new_s['questions']:
-                    question = Question(
-                        app_form.id,
-                        section.id,
-                        q['headline'],
-                        q['placeholder'],
-                        q['order'],
-                        q['type'],
-                        q['validation_regex'],
-                        q['validation_text'],
-                        q['is_required'],
-                        q['description'],
-                        q['options']
-                    )
-                    db.session.add(question)
-                    db.session.commit()
+                application_form_repository.add(section)
 
-        for c in current_sections:
-            match = False
-            for new in new_sections:
-                if 'id' in new:
-                    if c.id == new['id']:
-                        match = True
-            if not match:
-                application_form_repository.delete_section_by_id(c.id)
+                languages = section_data['name'].keys()
+                for language in languages:
+                    section_translation = SectionTranslation(
+                        section.id, 
+                        language, 
+                        section_data['name'][language], 
+                        section_data['description'][language],
+                        section_data['show_for_values'][language])
+                    application_form_repository.add(section_translation)
+
+
+        # TODO: Delete questions
+        # TODO: Delete sections
 
         db.session.commit()
 
         return get_form_fields(app_form, 'en'), 200
+
+
+def _process_questions(questions):
+    pass
 
 
 def _serialize_question(question, language):

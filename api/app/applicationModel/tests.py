@@ -419,94 +419,170 @@ class ApplicationFormCreateTest(ApiTestCase):
 
 
 APPLICATION_FORM_PUT_DATA = {
-    "id": 1,
-    "event_id": 1,
-    "is_open": False,
-    "nominations": False,
-    "sections": [
-        {  
-            "id": 1,   # Existing section, just updates
-            "description": "Updated description of the section",
-            "order": 1,
-            # "depends_on_question_id": 1,
-            "show_for_values": None,
-            "key": None,
-            "questions": [
-                {
-                    "id": 1,
-                    "validation_regex": None,  # Updated
-                    "options": [
-                        {"value": "undergrad", "label": "An undergraduate student"},
-                        {"value": "masters", "label": "A masters student"},
-                        {"value": "phd", "label": "A PHD student"},  # New
-                    ],
-                    "description": "Updated Description",  # Updated
-                    "headline": "Question 1 Updated",  # Updated
-                    "placeholder": "Select an Option...",
-                    "is_required": True,  # Updated
-                    "type": "multi-choice",
-                    "validation_text": None,  # Updated
-                    "order": 1
-                }
-            ],
-            "name": "Section 1 Updated"
-        },
+  "id": 1,
+  "event_id": 1, 
+  "is_open": False,  # Updated 
+  "nominations": True,  # Updated 
+  "sections": [
+    {
+      "name": {
+         "en": "Section 1 en updated",  # Updated
+         "fr": "Section 1"  
+      },
+      "description": {
+         "en": "Description of the section",
+         "fr": "Description de la section updated"  # Updated
+      },
+      "order": 1,
+      "depends_on_question_id": 1,  # Updated
+      "show_for_values": {  # Updated
+          "en": ["value1", "value2"],
+          "fr": ["value1", "value2"],
+      },
+      "key": None,   # Updated
+      "questions": [
         {
-            "id": 2,  # Existing section with 1 new question
-            "description": "Description of the section (UPDATED)",  # Updated
-            "order": 3,  # Updated
-            # "depends_on_question_id": 1,
-            "show_for_values": None,
-            "key": None,
-            "questions": [
-                {
-                    "id": 2,
-                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,10}$",  # Updated
-                    "options": None,
-                    "description": "Question description",
-                    "headline": "Section 2, question 1",
-                    "placeholder": "Some question",
-                    "is_required": False,
-                    "type": "long-text",  # Updated
-                    "validation_text": "You must enter no more than 10 words",  # Updated
-                    "order": 2  # Updated
-                },
-                {  # New because there is no ID
-                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
-                    "options": None,
-                    "description": "New Question description",
-                    "headline": "Section 2, question 2",
-                    "placeholder": "Some new question",
-                    "is_required": True,
-                    "type": "short-text",
-                    "validation_text": "You must enter no more than 150 words",
-                    "order": 1
-                },
-            ],
-            "name": "Section 2"
+          "id": 1,    
+          "validation_regex": {
+             "en": None, 
+             "fr": None
+          },
+          "options": {  # Updated
+              "en": [
+                  {"value": "undergrad", "label": "An undergraduate student updated"},  
+                  {"value": "masters", "label": "A masters student updated"}, 
+                ],
+              "fr": [
+                  {"value": "undergrad", "label": "un étudiant de premier cycle updated"}, 
+                  {"value": "masters", "label": "un étudiant en maîtrise updated"}, 
+                ],
+          },
+          "description": {   # Updated
+              "en": "Question 1 en updated", 
+              "fr": "Question 1 fr updated"
+          },
+          "headline": {
+              "en": "Question 1 en", 
+              "fr": "Question 1 fr updated"  # Updated
+          },
+          "placeholder": {
+              "en": "Select an Option... updated",  # Updated
+              "fr": "Sélectionnez une option"
+          },
+          "is_required": False,  # Updated 
+          "type": "multi-choice", 
+          "validation_text": {
+              "en": None,
+              "fr": None
+          },
+          "order": 2,  # Updated
+          "depends_on_question_id": 3,
+          "key": "my_key",  # Updated
+          "show_for_values": {  # Updated
+              "en": ["the-matrix"],
+              "fr": ["the-matrix"]
+          }
         },
-        {   # New section
-            "description": "Description of the NEW section",
-            "order": 2,
-            # "depends_on_question_id": 1,
-            "show_for_values": None,
-            "key": None,
-            "questions": [
-                {
-                    "validation_regex": "^\\W*(\\w+(\\W+|$)){0,150}$",
-                    "options": None,
-                    "description": "Question description",
-                    "headline": "Section 3, question 1",
-                    "placeholder": "Some question",
-                    "is_required": True,
-                    "type": "long-text",
-                    "validation_text": "You must enter no more than 150 words",
-                    "order": 1
-                }
-            ],
-            "name": "Section 3"  
+        # DELETED QUESTION 2
+        {  # NEW QUESTION     
+          "validation_regex": {
+             "en": "blah", 
+             "fr": "bleh"
+          },
+          "options": {
+              "en": None,
+              "fr": None,
+          },
+          "description": {
+              "en": "Question 2 NEW en", 
+              "fr": "Question 2 NEW fr"
+          },
+          "headline": {
+              "en": "Question 2 NEW en", 
+              "fr": "Question 2 NEW fr"
+          },
+          "placeholder": {
+              "en": "Enter some text...",
+              "fr": "Entrez du texte ..."
+          },
+          "is_required": True, 
+          "type": "long-text",  
+          "validation_text": {
+              "en": "You must enter the word blah",
+              "fr": "Vous devez entrer le mot bleh"
+          },
+          "order": 3,
+          "depends_on_question_id": None,
+          "key": "my_key",
+          "show_for_values": {
+              "en": None,
+              "fr": None
+          }
         }
-    ]
+      ], 
+    },  # End section 1
+    # DELETED SECTION 2
+    {  # New Section 3
+      "name": {
+         "en": "Section 3",
+         "fr": "Section 3 fr"
+      },
+      "description": {
+         "en": "Description of the section 3",
+         "fr": "Description de la section 3"
+      },
+      "order": 3,
+      "depends_on_question_id": 1,
+      "show_for_values": {
+          "en": ["masters"],
+          "fr": ["masters"],
+      },
+      "key": "my_section",
+      "questions": [
+        {
+          "validation_regex": {
+             "en": None, 
+             "fr": None
+          },
+          "options": {
+              "en": [
+                  {"value": "the-matrix", "label": "The Matrix"}, 
+                  {"value": "terminator", "label": "Terminator"}, 
+                ],
+              "fr": [
+                  {"value": "the-matrix", "label": "La matrice"}, 
+                  {"value": "terminator", "label": "Terminator"}, 
+                ],
+          },
+          "description": {
+              "en": "Question 3 NEW en", 
+              "fr": "Question 3 NEW fr"
+          },
+          "headline": {
+              "en": "Question 3 NEW en", 
+              "fr": "Question 3 NEW fr"
+          },
+          "placeholder": {
+              "en": "Select an Option...",
+              "fr": "Sélectionnez une option"
+          },
+          "is_required": False, 
+          "type": "multi-choice", 
+          "validation_text": {
+              "en": None,
+              "fr": None
+          },
+          "order": 1,
+          "depends_on_question_id": None,
+          "key": "review-identifier",
+          "show_for_values": {
+              "en": None,
+              "fr": None
+          }
+        },
+      ], 
+    },  # End section 3
+  ]
 }
 
 class ApplicationFormUpdateTest(ApiTestCase):
@@ -522,25 +598,12 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self.event.add_event_role('admin', self.event_admin.id)
         db.session.commit()
 
-        # Set up the application form
-        application_form = self.create_application_form(event_id=1, is_open=True, nominations=False)
-        section1 = Section(application_form.id, 'Section 1', 'Old description of the section', 1)
-        section2 = Section(application_form.id, 'Section 2', 'Description of the section', 2)
-        section_deleted = Section(application_form.id, 'Section deleted', 'Description of the section', 3)
-        db.session.add_all([section1, section2, section_deleted])
-        db.session.commit()
-
-        section1_question1 = Question(application_form.id, section1.id, 'Question 1', 'Select an Option...',
-            1, 'multi-choice', 'Blah', 'Blah', False, 'Description', options=[
-                {'value': 'undergrad', 'label': 'An undergraduate student'},
-                {'value': 'masters', 'label': 'A masters student'}
-            ])
-
-        section2_question1 = Question(application_form.id, section2.id, 'Section 2, question 1', 'Some question',
-            1, 'short-text', None, None, True, 'Question description', None)
-        
-        db.session.add_all([section1_question1, section2_question1])
-        db.session.commit()
+        self.app.post(
+            '/api/v1/application-form-detail',
+            data=json.dumps(APPLICATION_FORM_POST_DATA),
+            content_type='application/json',
+            headers=self.get_auth_header_for(self.event_admin.email)
+        )
 
     def test_event_admin_permission(self):
         """
@@ -549,7 +612,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self._seed_data_update()
 
         response = self.app.put(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.event_admin.email)
@@ -564,7 +627,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self._seed_data_update()
 
         response = self.app.put(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.normal_user.email)
@@ -576,7 +639,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self._seed_data_update()
 
         response = self.app.put(
-            '/api/v1/application-form',
+            '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
             headers=self.get_auth_header_for(self.system_admin.email)
@@ -590,8 +653,8 @@ class ApplicationFormUpdateTest(ApiTestCase):
         self.assertEqual(response_data['id'], 1)
         self.assertEqual(response_data['event_id'], 1)
         self.assertFalse(response_data['is_open'])
-        self.assertFalse(response_data['nominations'])
-        self.assertEqual(len(response_data['sections']), 3)
+        self.assertTrue(response_data['nominations'])
+        self.assertEqual(len(response_data['sections']), 2)
 
         # Check section 1 (updated)
         section1_actual = response_data['sections'][0]
@@ -602,61 +665,38 @@ class ApplicationFormUpdateTest(ApiTestCase):
             self.assertEqual(section1_actual[key], section1_expected[key],
                              '{}: actual "{}" vs expected "{}"'.format(key, section1_actual[key], section1_expected[key]))
 
-        self.assertEqual(len(section1_actual['questions']), 1)
+        self.assertEqual(len(section1_actual['questions']), 2)
 
         # Check question 1 in section 1 (updated)
         section1_question1_actual = response_data['sections'][0]['questions'][0]
         section1_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][0]
         for key in section1_question1_expected.keys():
-            if key == 'options':
-                continue
-            self.assertEqual(section1_question1_actual[key], section1_question1_expected[key], key)
+            self.assertEqual(section1_question1_actual[key], section1_question1_expected[key], key) 
 
-        section1_question1_options_actual = response_data['sections'][0]['questions'][0]['options']
-        section1_question1_options_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][0]['options']
-        self.assertEqual(len(section1_question1_options_actual), len(section1_question1_options_expected))        
+        # Check question 2 in section 1 (new)
+        section1_question2_actual = response_data['sections'][0]['questions'][1]
+        section1_question2_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][1]
+        self.assertEqual(section1_question2_actual.id, 4)  # Should be 4th question inserted to DB
+        for key in section1_question2_expected.keys():
+            self.assertEqual(section1_question2_actual[key], section1_question2_expected[key], key) 
 
-        # Check section 2 (updated)
-        section2_actual = response_data['sections'][1]
-        section2_expected = APPLICATION_FORM_PUT_DATA['sections'][1]
-        for key in section2_expected.keys():
-            if key == 'questions':
-                continue
-            self.assertEqual(section2_actual[key], section2_expected[key])
-
-        self.assertEqual(len(section2_actual['questions']), len(section2_expected['questions']))
-
-        # Check question 1 in section 2 (updated)
-        section2_question1_actual = response_data['sections'][1]['questions'][0]
-        section2_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][0]
-        for key in section2_question1_expected.keys():
-            self.assertEqual(section2_question1_actual[key], section2_question1_expected[key], key)
-
-        # Check question 2 in section 2 (NEW)
-        section2_question2_actual = response_data['sections'][1]['questions'][1]
-        section2_question2_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][1]
-        self.assertIsNotNone(section2_question1_actual['id'])
-        for key in section2_question2_expected.keys():
-            self.assertEqual(section2_question2_actual[key], section2_question2_expected[key], key)
-
-        # Check section 3 (NEW)
-        section3_actual = response_data['sections'][2]
-        section3_expected = APPLICATION_FORM_PUT_DATA['sections'][2]
-        self.assertIsNotNone(section3_actual['id'])
+        # Check section 3 (new)
+        section3_actual = response_data['sections'][1]
+        section3_expected = APPLICATION_FORM_PUT_DATA['sections'][1]
+        self.assertEqual(section3_action.id, 3)  # New section
         for key in section3_expected.keys():
             if key == 'questions':
                 continue
-            self.assertEqual(section3_actual[key], section3_expected[key], key)
+            self.assertEqual(section3_actual[key], section3_expected[key])
 
         self.assertEqual(len(section3_actual['questions']), len(section3_expected['questions']))
 
-        # Check question 1 in section 3 (NEW)
-        section3_question1_actual = response_data['sections'][2]['questions'][0]
-        section3_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][2]['questions'][0]
-        self.assertIsNotNone(section3_question1_actual['id'])
-        for key in section3_question1_expected.keys():
-            self.assertEqual(section3_question1_actual[key], section3_question1_expected[key], key)
-
+        # Check question 1 in section 2 (NEW)
+        section2_question1_actual = response_data['sections'][1]['questions'][0]
+        section2_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][0]
+        self.assertEqual(section1_question1_actual.id, 5)  # 5th question inserted to db
+        for key in section2_question1_expected.keys():
+            self.assertEqual(section2_question1_actual[key], section2_question1_expected[key], key)
 
 class QuestionListApiTest(ApiTestCase):
     def _seed_static_data(self):
