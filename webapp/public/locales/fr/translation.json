@@ -375,6 +375,14 @@
     "Enter Your Regex": "Saisissez votre expression régulière",
     "Validation Text": "Texte de validation",
     "Word Limit": "Limite de mots",
-    "Advanced Mode": "Mode avancé"
+    "Advanced Mode": "Mode avancé",
+    "Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls": "Veuillez saisir une liste d'extensions de fichiers, chacune commençant par un point et séparée par des virgules. Ex: .csv,.xls",
+    "Extensions (E.g .csv,.xls)": "Extensions (Ex .csv,.xls)",
+    "Enter Maximum Number of Referrals": "Entrez le nombre maximum de références",
+    "Enter Minimum Number of Referrals": "Enter le nombre minimum de références",
+    "Maximum Number of Referrals": "Nombre Maximum de Références",
+    "Minimum Number of Referrals": "Nombre Minimum de Références",
+    "True": "Vrai",
+    "False": "Faux"
 }
 
