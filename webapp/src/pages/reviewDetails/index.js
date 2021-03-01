@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import ReactTable from "react-table";
 import { withRouter } from "react-router";
 import "react-table/react-table.css";
-
-import { reviewService } from "../../services/reviews";
 import { withTranslation } from 'react-i18next'
 
+import "./ReviewDetails.css";
+import { downloadCSV } from "../../utils/files";
+import { reviewService } from "../../services/reviews";
 class ReviewDetailsPage extends Component {
     constructor(props) {
         super(props);
@@ -102,6 +103,35 @@ class ReviewDetailsPage extends Component {
             });
     };
 
+    exportToCSV() {
+        const getResolvedState = this.ReactTable.getResolvedState();
+        const columns = getResolvedState.columns;
+        const rows = getResolvedState.resolvedData;
+        let str = `${columns.map(c => `"${c.Header}"`).join(",")}\r\n` ;
+        let key;
+        let row;
+        for (var i = 0; i < rows.length; i++) {
+            row = [];
+            for (var j = 0; j < columns.length; j++) {
+                if (rows[i].hasOwnProperty(columns[j].Header)) {
+                    // row is mapped by column header
+                    key = columns[j].Header;
+                } else if (rows[i].hasOwnProperty(columns[j].id)) {
+                    // row is mapped by column id (accessor is a function)
+                    key = columns[j].id;
+                } else {
+                    // row is directly mapped to accessor by string property
+                    key = columns[j].accessor;
+                }
+                row.push(rows[i][key]);
+            }
+            str += row.join(",") + "\r\n";
+        }
+        const filename = "Review Details " + new Date().toDateString()
+                            .split(" ").join("_") + ".csv";
+        downloadCSV(str, filename);
+    }
+
     render() {
         const {
             error,
@@ -126,17 +156,17 @@ class ReviewDetailsPage extends Component {
               Cell: this.responseIDCell
           },
           {
-                id: "reviewer",
-                Header:  this.props.t("Reviewer"),
-                accessor: r => `${r.reviewer_user_title} ${r.reviewer_user_firstname} ${r.reviewer_user_lastname}`,
-                filterable: false,
-            },
-            {
-                Header: this.props.t("Candidate"),
-                id: "candidate",
-                accessor: r => `${r.response_user_title  } ${r.response_user_firstname} ${r.response_user_lastname}`,
-                filterable: false,
-            }
+              id: "reviewer",
+              Header:  this.props.t("Reviewer"),
+              accessor: r => `${r.reviewer_user_title} ${r.reviewer_user_firstname} ${r.reviewer_user_lastname}`,
+              filterable: false,
+          },
+          {
+              Header: this.props.t("Candidate"),
+              id: "candidate",
+              accessor: r => `${r.response_user_title  } ${r.response_user_firstname} ${r.response_user_lastname}`,
+              filterable: false,
+          }
         ];
 
         if (infoColumns) {
@@ -152,13 +182,21 @@ class ReviewDetailsPage extends Component {
         return (
             <div className="review-list-container">
               <h2 className="title">{t("Review Details")}</h2>
+              <button
+                className="pull-left link-style"
+                onClick={() => this.exportToCSV()}
+              >
+                {this.props.t("Download csv")}
+              </button>
               <div className={"review-padding"}>
                 <ReactTable
+                  ref={ref => this.ReactTable = ref}
                   loading={isLoading}
                   manual
                   data={reviewDetails}
                   columns={columns}
-                  minRows={0} />
+                  minRows={0}
+                />
               </div>
             </div>
           );
