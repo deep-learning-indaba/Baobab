@@ -1,16 +1,36 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState, forwardRef, useEffect, useCallback, useMemo } from 'react';
 import { default as ReactSelect } from "react-select";
 import {
-  option, Modal, handleMove
+  option, Modal, handleMove, Dependency, dependencyChange,
+  Validation, validationText as vText, langObject
 } from './util';
 
 const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
-    lang, section, sections,
+    lang, section, sections, optionz, langs,
     setApplytransition, questionIndex, setQuestionAnimation,
     handleDrag, handleDrop, showingQuestions
-}, ref) => {
+  }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
+  const [isValidateOn, setIsvalidateOn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const opts = inputs.options[lang];
+  const {max_num_referral, min_num_referral} = inputs.options;
+
+  useEffect(() => {
+    if (!inputs.options[lang]
+      && (!max_num_referral || !min_num_referral)) {
+      setErrorMessage('Max and min Rererrals are required');
+    }
+    else if (max_num_referral < min_num_referral) {
+      setErrorMessage('Max referral value must be greater than Min');
+    }
+    else if (opts && !opts.length) {
+      setErrorMessage('At least one option is required');
+    } else {
+      setErrorMessage('');
+    }
+  }, [opts, max_num_referral, min_num_referral])
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -18,20 +38,94 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, [prop]: {...target, [lang]: e.target.value}}
+            let regex = q.validation_regex[lang];
+            if (prop === 'min' || prop === 'max') {
+              if (!q.validation_regex[lang].split('{')[1]) {
+                regex = `^\s*(\S+(\s+|$)){0,0}$`
+              }
+            }
+            const maxMin = (prop === 'min' || prop === 'max')
+              && regex
+              && regex.split('{')[1].split(',');
+
+            if (prop === 'min') {
+              const validation = q.validation_regex;
+              const validationText = q.validation_text;
+              let max = maxMin ? parseInt(maxMin[1].split('}')[0]) : '';
+              const min = e.target.value;
+
+              if (min >= max) {
+                max = '';
+              }
+              q = {
+                ...q,
+                validation_regex: {
+                  ...validation,
+                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
+                }
+              }
+              q = {
+                ...q,
+                validation_text: {
+                  ...validationText,
+                  [lang]: vText(min, max)
+                }
+              }
+            }
+            if (prop === 'max') {
+              const validation = q.validation_regex;
+              const validationText = q.validation_text;
+              const min = maxMin ? parseInt(maxMin[0]) : 0;
+              let max = e.target.value;
+
+              if (max <= min) {
+                max = '';
+              }
+              q = {
+                ...q,
+                validation_regex: {
+                  ...validation,
+                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
+                }
+              }
+              q = {
+                ...q,
+                validation_text: {
+                  ...validationText,
+                  [lang]: vText(min, max)
+                }
+              }
+            } else {
+              q = {...q, [prop]: {...target, [lang]: e.target.value}}
+            }
           }
           return q
         })}
       }
       return s
     });
+    setApplytransition(false)
+    setQuestionAnimation(false)
     setSections(updatedSections)
   }
+
   const handleTypeChange = (e) => {
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
+            if (e.value === 'reference') {
+              q = {
+                ...q,
+                options: {
+                  min_num_referral: null,
+                  max_num_referral: null
+                }
+              }
+            } else {
+
+              q = {...q, options: langObject(langs, [])}
+            }
             q = {...q, type: e}
           }
           return q
@@ -41,6 +135,7 @@ const Question = forwardRef(({
     });
     setSections(updatedSections)
   }
+
   const handleCheckChanged = (e) => {
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
@@ -73,7 +168,11 @@ const Question = forwardRef(({
       }
       return s
     });
-    setSections(updatedSections);
+    if (!inputs.value[lang] || !inputs.label[lang]) {
+      setErrorMessage('Label or Value cannot be empty');
+    } else {
+      setSections(updatedSections);
+    }
   }
 
   const resetInputs = () => {
@@ -82,8 +181,8 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, value: {...value, [lang]: '',
-              label: {...label, [lang]: ''}}}
+            q = {...q, value: {...value, [lang]: ''}};
+            q = {...q, label: {...label, [lang]: ''}}
           }
           return q
         })}
@@ -108,13 +207,32 @@ const Question = forwardRef(({
       return s
     });
     setSections(updatedSections);
+    setQuestionAnimation(false);
+    setApplytransition(false);
   }
 
   const handleOkDelete = () => {
-    const newQuestions = questions.filter(q => q.id !== inputs.id);
-    const updatedSections = sections.map(s => {
+    const questionsWithNoDependency = questions.map(q => {
+      if (q.depends_on_question_id
+        && q.depends_on_question_id === inputs.id) {
+        q = {...q, depends_on_question_id: null}
+      }
+      return q
+    });
+    const sectionsWithNoDependency = sections.map(s => {
       if (s.id === sectionId) {
-        s = {...s, questions: newQuestions}
+        if (s.depends_on_question_id && s.depends_on_question_id === inputs.id) {
+          s = {...s, depends_on_question_id: null}
+        }
+        s = {...s, questions: questionsWithNoDependency}
+      }
+      return s;
+    });
+    const newQuestions = questionsWithNoDependency.filter(q => q.id !== inputs.id);
+    const orderedQuestions = newQuestions.map((q, i) => ({...q, order: i + 1}));
+    const updatedSections = sectionsWithNoDependency.map(s => {
+      if (s.id === sectionId) {
+        s = {...s, questions: orderedQuestions}
       }
       return s;
     });
@@ -154,6 +272,84 @@ const Question = forwardRef(({
 
   const handleDropOver = (e) => {
     e.preventDefault();
+  }
+
+  const handlequestionDependency = (e) => {
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, depends_on_question_id: e.value}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const handleDependencyChange = (prop) => (e) => {
+    dependencyChange({
+      prop:prop,
+      e:e,
+      sections:sections,
+      inputs:inputs,
+      setSection:setSections,
+      question: true,
+      sectionId:sectionId
+    })
+  }
+
+  const handleValidation = () => {
+    setIsvalidateOn(!isValidateOn);
+  }
+
+  const handlereferralsChange = (prop) => (e) => {
+    let min;
+    let max;
+    if (prop === 'min') {
+      max = inputs.options
+        && inputs.options.max_num_referral;
+      min = e.target.value;
+    }
+    if (prop === 'max') {
+      min = inputs.options
+        && inputs.options.min_num_referral;
+      max = e.target.value;
+    }
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {...q, options: {
+              min_num_referral: min,
+              max_num_referral: max
+            }}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const handlereExtensionChange = (e) => {
+    const opt = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            const ext = e.target.value.split(',').map(e => e.trim())
+            q = {...q, options: {...opt, [lang]: { accept: ext }}}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
   }
 
   const options = [
@@ -219,8 +415,28 @@ const Question = forwardRef(({
     }),
   ];
 
+  const validationOptions = [
+    option({
+      value: 'friendly-mode',
+      label: 'Word Limit',
+      t
+    }),
+    option({
+      value: 'advanced-mode',
+      label: 'Advanced Mode',
+      t
+    }),
+  ]
+
   const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'markdown'];
   const withOptions = ['multi-choice', 'multi-checkbox'];
+  const withReferals = ['reference'];
+  const withExtention = ['file', 'multi-file'];
+  const dependencyOptions = optionz.filter(e => e.order < inputs.order);
+
+  const dependentQuestion = section.questions
+    .find(e => e.id === inputs.depends_on_question_id);
+
   return (
     <>
       <div
@@ -243,6 +459,7 @@ const Question = forwardRef(({
               onChange={handleChange('headline')}
               placeholder={t('Headline')}
               className="section-inputs question-title"
+              required
             />
             <ReactSelect
               options={options}
@@ -359,9 +576,85 @@ const Question = forwardRef(({
                   ))}
                 </tbody>
               </table>
+              <span className='error-label'>{t(errorMessage)}</span>
           </div>
           )}
-          
+          {withReferals.includes(inputs.type && inputs.type.value) && (
+            <div className='referals-wrapper'>
+              <div className="min-wrapper">
+                <label
+                  htmlFor="min-ref"
+                  className="validation-label referalls-label"
+                  >
+                  {t('Minimum Number of Referrals')}
+                  </label>
+                <input
+                  type='number'
+                  min={0}
+                  placeholder={t('Enter Minimum Number of Referrals')}
+                  className='referals-input'
+                  value={inputs.options.min_num_referral}
+                  onChange={handlereferralsChange('min')}
+                />
+              </div>
+              <div className="min-wrapper">
+                <label
+                  htmlFor="max-ref"
+                  className="validation-label referalls-label"
+                  >
+                    {t('Maximum Number of Referrals')}
+                </label>
+                <input
+                  type='number'
+                  min={0}
+                  placeholder={t('Enter Maximum Number of Referrals')}
+                  className='referals-input'
+                  onChange={handlereferralsChange('max')}
+                  value={inputs.options.max_num_referral}
+                />
+              </div>
+              <div className='error-label'>{t(errorMessage)}</div>
+            </div>
+          )}
+          {withExtention.includes(inputs.type && inputs.type.value) && (
+            <div className='extensions-wrapper'>
+              <label
+                htmlFor="extensions"
+                className="extension-label"
+              >
+                {t('Extensions (E.g .csv,.xls)')}
+              </label>
+              <input
+                name="extensions"
+                id="extensions"
+                type='text'
+                placeholder={
+                  t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
+                className='question-inputs question-headline'
+                value={inputs.options[lang].accept
+                  && inputs.options[lang].accept.join(',')}
+                onChange={handlereExtensionChange}
+               />
+            </div>
+          )}
+          <Dependency
+            options={dependencyOptions}
+            handlequestionDependency={handlequestionDependency}
+            handleDependencyChange={handleDependencyChange}
+            dependentQuestion={dependentQuestion}
+            inputs={inputs}
+            lang={lang}
+            t={t}
+            />
+          {isValidateOn
+            && <Validation
+                t={t}
+                options={validationOptions}
+                inputs={inputs}
+                lang={lang}
+                handleChange={handleChange}
+              />
+          }
           <div className="action-btns">
             <div className="question-footer">
               <button
@@ -375,7 +668,9 @@ const Question = forwardRef(({
                 data-title={t('Delete')}
                 onClick={handleConfirm}
               >
-                <i className="far fa-trash-alt fa-md fa-color"></i>
+                <i
+                  className="far fa-trash-alt fa-md fa-color"
+                  ></i>
               </button>
               <div className='require-chckbox'>
                 <input
@@ -389,14 +684,42 @@ const Question = forwardRef(({
               </div>
             </div>
           </div>
+          <div
+            id="toggleTitle"
+            className="title-desc-toggle toggle-questions"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <i
+              className='fa fa-ellipsis-v fa-lg fa-dropdown fa-question-toogle'
+              ></i>
+          </div>
+          <div className="dropdown-menu" aria-labelledby="toggleTitle">
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleValidation}
+              >
+              <span className="check-icon">
+                {isValidateOn
+                  && <i class="fas fa-check fa-validation"></i>
+                }
+              </span>
+                {t("Validation")}
+            </button>
+          </div>
         </div>
         {isModelVisible && (
-            <Modal
-              t={t}
-              element='question'
-              handleOkDelete={handleOkDelete}
-              handleConfirm={handleConfirm}
-            />
+          <Modal
+            t={t}
+            element='question'
+            handleOkDelete={handleOkDelete}
+            handleConfirm={handleConfirm}
+            sections={sections}
+            questions={questions}
+            inputs={inputs}
+          />
           )}
       </div>
     </>
