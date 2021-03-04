@@ -1,5 +1,5 @@
 from app import db
-from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.models import ApplicationForm, Question, QuestionTranslation, Section, SectionTranslation
 from app.events.models import Event
 
 
@@ -28,3 +28,30 @@ class ApplicationFormRepository():
                     .join(Section, Question.section_id == Section.id)
                     .order_by(Section.order, Question.order)
                     .all())
+
+    @staticmethod
+    def delete_question(question_to_delete: Question):
+        # Remove any dependencies
+        for question in question_to_delete.application_form.questions:
+            if question.depends_on_question_id == question_to_delete.id:
+                question.depends_on_question_id = None
+        for section in question_to_delete.application_form.sections:
+            if section.depends_on_question_id == question_to_delete.id:
+                section.depends_on_question_id = None
+
+        db.session.commit()
+        
+        # Delete question and translations
+        db.session.query(QuestionTranslation).filter_by(question_id=question_to_delete.id).delete()
+        db.session.query(Question).filter_by(id=question_to_delete.id).delete()
+        db.session.commit()
+
+    @staticmethod
+    def delete_section(section):
+        db.session.query(SectionTranslation).filter_by(section_id=section.id).delete()
+
+        for question in db.session.query(Question).filter_by(section_id=section.id).all():
+            ApplicationFormRepository.delete_question(question)
+
+        db.session.query(Section).filter_by(id=section.id).delete()
+        db.session.commit()

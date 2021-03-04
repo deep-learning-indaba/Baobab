@@ -85,7 +85,8 @@ section_detail_fields = {
     'order': fields.Integer,
     'depends_on_question_id': fields.Integer,
     'show_for_values': fields.Raw(attribute=lambda s: s.show_for_values_translations),
-    'questions': fields.List(fields.Nested(question_detail_fields))
+    'questions': fields.List(fields.Nested(question_detail_fields)),
+    'key': fields.String
 }
 
 application_form_detail_fields = {
@@ -170,7 +171,8 @@ class ApplicationFormDetailAPI(restful.Resource):
         for section_data in sections_data:
             section = Section(
                 app_form.id,
-                section_data['order']
+                section_data['order'],
+                key=section_data['key']
             )
             application_form_repository.add(section)
             section_data_map[section] = section_data
@@ -197,9 +199,8 @@ class ApplicationFormDetailAPI(restful.Resource):
                 application_form_repository.add(question)
                 question_data_map[question] = question_data
 
-                # TODO: Explicitly use a surrogate_id field from the UI, so as not to confuse with the DB IDs (especially for PUT method!)
-                if "id" in question_data:
-                    question_id_map[question_data["id"]] = question.id
+                if "surrogate_id" in question_data:
+                    question_id_map[question_data["surrogate_id"]] = question.id
 
                 for language in languages:
                     question_translation = QuestionTranslation(
@@ -227,6 +228,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         return app_form, 201
 
     @event_admin_required
+    @marshal_with(application_form_detail_fields)
     def put(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('is_open', type=bool, required=True)
@@ -238,7 +240,7 @@ class ApplicationFormDetailAPI(restful.Resource):
         user_id = g.current_user['id']
         application_form_id = args['id']
 
-        app_form = application_form_repository.get_by_id(application_form_id)
+        app_form = application_form_repository.get_by_id(application_form_id)  # type: ApplicationForm
         if not app_form:
             return FORM_NOT_FOUND_BY_ID
 
@@ -251,61 +253,49 @@ class ApplicationFormDetailAPI(restful.Resource):
         current_sections = app_form.sections
         incoming_sections = args['sections']
 
+        # Delete questions in the application form that no longer exist
+        all_question_ids = [q['id'] for s in incoming_sections for q in s['questions'] if 'id' in q]
+        print("all_question_ids:", all_question_ids)
+        for question in app_form.questions:
+            if question.id not in all_question_ids:
+                print("DELETING QUESTION ID ", question.id)
+                application_form_repository.delete_question(question)
+
+        all_section_ids = [s['id'] for s in incoming_sections if 'id' in s]
+        print("all_section_ids:", all_section_ids)
+        for section in app_form.sections:
+            if section.id not in all_section_ids:
+                print("DELETING SECTION ID ", section.id)
+                application_form_repository.delete_section(section)
+        
+        # Keep track of which objects match with which incoming data for populating dependencies later.
+        section_data_map = {}
+        question_data_map = {}
+        question_id_map = {}
+
         for section_data in incoming_sections:
             if 'id' in section_data:
                 # If ID is populated, then update the existing section
-                current_section = next(s for s in current_sections if s.id == section_data['id'], None)  # type: Section
-                if not current_section:
+                section = next((s for s in current_sections if s.id == section_data['id']), None)  # type: Section
+                if not section:
                     return SECTION_NOT_FOUND
 
-                current_translations = current_section.section_translations  # type: Sequence[SectionTranslation]
+                current_translations = section.section_translations  # type: Sequence[SectionTranslation]
                 for current_translation in current_translations:
                     current_translation.description = section_data['description'][current_translation.language]
                     current_translation.name = section_data['name'][current_translation.language]
                     current_translation.show_for_values = section_data['show_for_values'][current_translation.language]
-                
-                # TODO: Need to do this after doing all the updates, like the POST method
-                current_section.depends_on_question_id = section_data['depends_on_question_id']
-                current_section.key = section_data['key']
-                current_section.order = section_data['order']
-                
-                # TODO: PROCESS QUESTIONS!
 
-                        # for new_q in section_data['questions']:  # new_q - questions from section_data section
-                        #     if 'id' in new_q:
-                        #         for idx in current_s.questions:
-                        #             if idx.id == new_q['id']:
-                        #                 idx.headline = new_q['headline']
-                        #                 idx.placeholder = new_q['placeholder']
-                        #                 idx.order = new_q['order']
-                        #                 idx.type = new_q['type']
-                        #                 idx.validation_regex = new_q['validation_regex']
-                        #                 idx.validation_text = new_q['validation_text']
-                        #                 idx.is_required = new_q['is_required']
-                        #                 idx.description = new_q['description']
-                        #                 idx.options = new_q['options']
-                        #     else:
-                        #         new_question = Question(
-                        #             app_form.id,
-                        #             current_s.id,
-                        #             new_q['headline'],
-                        #             new_q['placeholder'],
-                        #             new_q['order'],
-                        #             new_q['type'],
-                        #             new_q['validation_regex'],
-                        #             new_q['validation_text'],
-                        #             new_q['is_required'],
-                        #             new_q['description'],
-                        #             new_q['options']
-                        #         )
-                        #         db.session.add(new_question)
-                        #         db.session.commit()
-
+                section.key = section_data['key']
+                section.order = section_data['order']
+                
+                db.session.commit()
             else:
                 # if not populated, then add new section
                 section = Section(
                     app_form.id,
-                    section_data['order']
+                    section_data['order'],
+                    key=section_data['key']
                 )
                 application_form_repository.add(section)
 
@@ -319,18 +309,86 @@ class ApplicationFormDetailAPI(restful.Resource):
                         section_data['show_for_values'][language])
                     application_form_repository.add(section_translation)
 
-
-        # TODO: Delete questions
-        # TODO: Delete sections
+            section_data_map[section] = section_data
+            try:
+                question_map, question_ids = _process_questions(section_data['questions'], app_form, section.id)
+                question_data_map.update(question_map)
+                question_id_map.update(question_ids)
+            except ValueError:
+                return QUESTION_NOT_FOUND
 
         db.session.commit()
 
-        return get_form_fields(app_form, 'en'), 200
+        # Now that all the questions have been created, we can populate the dependencies
+        for section, section_data in section_data_map.items():
+            if section_data['depends_on_question_id']:
+                section.depends_on_question_id = question_id_map[section_data['depends_on_question_id']]
+        
+        for question, question_data in question_data_map.items():
+            if question_data['depends_on_question_id']:
+                question.depends_on_question_id = question_id_map[question_data['depends_on_question_id']]
+
+        app_form = application_form_repository.get_by_id(app_form.id)
+
+        return app_form, 200
 
 
-def _process_questions(questions):
-    pass
+def _process_questions(questions, application_form, section_id):
+    current_questions = application_form.questions
+    question_data_map = {}
+    question_ids = {}
+    for question_data in questions:
+        if 'id' in question_data:
+            current_question = next((s for s in current_questions if s.id == question_data['id']), None)  # type: Question
+            if not current_question:
+                raise ValueError(f'Question with id {question_data["id"]} not found')
+            
+            current_question.order = question_data['order']
+            current_question.section_id = section_id
+            current_question.is_required = question_data['is_required']
+            current_question.key = question_data['key']
+            current_question.type = question_data['type']
+            
+            current_translations = current_question.question_translations  # type: Sequence[QuestionTranslation]
+            for current_translation in current_translations:
+                current_translation.description = question_data['description'][current_translation.language]
+                current_translation.headline = question_data['headline'][current_translation.language]
+                current_translation.options = question_data['options'][current_translation.language]
+                current_translation.placeholder = question_data['placeholder'][current_translation.language]
+                current_translation.show_for_values = question_data['show_for_values'][current_translation.language]
+                current_translation.validation_regex = question_data['validation_regex'][current_translation.language]
+                current_translation.validation_text = question_data['validation_text'][current_translation.language]
 
+            question_ids[question_data['id']] = question_data['id']
+            question_data_map[current_question] = question_data
+        else:
+            question = Question(
+                application_form_id=application_form.id, 
+                section_id=section_id, 
+                order=question_data['order'], 
+                questionType=question_data['type'], 
+                is_required=question_data['is_required'])
+            question.key = question_data['key']
+            application_form_repository.add(question)
+
+            for language in question_data['headline'].keys():
+                translation = QuestionTranslation(
+                    question.id,
+                    language,
+                    headline=question_data['headline'][language],
+                    description=question_data['description'][language],
+                    placeholder=question_data['placeholder'][language],
+                    validation_regex=question_data['validation_regex'][language],
+                    validation_text=question_data['validation_text'][language],
+                    options=question_data['options'][language],
+                    show_for_values=question_data['show_for_values'][language])
+                application_form_repository.add(translation)
+
+            if 'surrogate_id' in question_data:
+                question_ids[question_data['surrogate_id']] = question.id
+            question_data_map[question] = question_data
+    
+    return question_data_map, question_ids
 
 def _serialize_question(question, language):
     translation = question.get_translation(language)

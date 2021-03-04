@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timedelta
+import pprint
 
 from app import LOGGER, db
 from app.applicationModel.models import ApplicationForm, Question, Section
@@ -181,7 +182,7 @@ APPLICATION_FORM_POST_DATA = {
       "key": "candidate_information",
       "questions": [
         {
-          "id": 1,    
+          "surrogate_id": 1,    
           "validation_regex": {
              "en": None, 
              "fr": None
@@ -223,7 +224,7 @@ APPLICATION_FORM_POST_DATA = {
           }
         },
         {
-          "id": 2,    
+          "surrogate_id": 2,    
           "validation_regex": {
              "en": "^Moo$", 
              "fr": "^moo$"
@@ -278,7 +279,7 @@ APPLICATION_FORM_POST_DATA = {
       "key": None,
       "questions": [
         {
-          "id": 3,    
+          "surrogate_id": 3,    
           "validation_regex": {
              "en": None, 
              "fr": None
@@ -425,6 +426,7 @@ APPLICATION_FORM_PUT_DATA = {
   "nominations": True,  # Updated 
   "sections": [
     {
+      "id": 1,
       "name": {
          "en": "Section 1 en updated",  # Updated
          "fr": "Section 1"  
@@ -476,7 +478,7 @@ APPLICATION_FORM_PUT_DATA = {
               "fr": None
           },
           "order": 2,  # Updated
-          "depends_on_question_id": 3,
+          "depends_on_question_id": 100,
           "key": "my_key",  # Updated
           "show_for_values": {  # Updated
               "en": ["the-matrix"],
@@ -485,6 +487,7 @@ APPLICATION_FORM_PUT_DATA = {
         },
         # DELETED QUESTION 2
         {  # NEW QUESTION     
+          "surrogate_id": 100,
           "validation_regex": {
              "en": "blah", 
              "fr": "bleh"
@@ -540,6 +543,7 @@ APPLICATION_FORM_PUT_DATA = {
       "key": "my_section",
       "questions": [
         {
+          "surrogate_id": 101,
           "validation_regex": {
              "en": None, 
              "fr": None
@@ -592,18 +596,21 @@ class ApplicationFormUpdateTest(ApiTestCase):
 
     def _seed_data_update(self):
         self.event = self.add_event()
-        self.system_admin = self.add_user(is_admin=True)
+        self.system_admin = self.add_user(email='system@admin.com', is_admin=True)
         self.event_admin = self.add_user(email='user2@user.com')
         self.normal_user = self.add_user(email='user3@user.com')
         self.event.add_event_role('admin', self.event_admin.id)
         db.session.commit()
 
+        self.normal_user_headers = self.get_auth_header_for('user3@user.com')
+        self.event_admin_headers = self.get_auth_header_for('user2@user.com')
+        self.system_admin_headers = self.get_auth_header_for('system@admin.com')
+
         self.app.post(
             '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_POST_DATA),
             content_type='application/json',
-            headers=self.get_auth_header_for(self.event_admin.email)
-        )
+            headers=self.event_admin_headers)
 
     def test_event_admin_permission(self):
         """
@@ -615,8 +622,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
             '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
-            headers=self.get_auth_header_for(self.event_admin.email)
-        )
+            headers=self.event_admin_headers)
 
         self.assertEqual(response.status_code, 200)
 
@@ -630,8 +636,7 @@ class ApplicationFormUpdateTest(ApiTestCase):
             '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
-            headers=self.get_auth_header_for(self.normal_user.email)
-        )
+            headers=self.normal_user_headers)
 
         self.assertEqual(response.status_code, 403)
 
@@ -642,13 +647,14 @@ class ApplicationFormUpdateTest(ApiTestCase):
             '/api/v1/application-form-detail',
             data=json.dumps(APPLICATION_FORM_PUT_DATA),
             content_type='application/json',
-            headers=self.get_auth_header_for(self.system_admin.email)
-        )
+            headers=self.system_admin_headers)
 
         self.assertEqual(response.status_code, 200)
 
         response_data = json.loads(response.data)
-        print("Response data:", response_data)
+        print("Response data:")
+        pp = pprint.PrettyPrinter(indent=2)
+        pp.pprint(response_data)
 
         self.assertEqual(response_data['id'], 1)
         self.assertEqual(response_data['event_id'], 1)
@@ -671,19 +677,21 @@ class ApplicationFormUpdateTest(ApiTestCase):
         section1_question1_actual = response_data['sections'][0]['questions'][0]
         section1_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][0]
         for key in section1_question1_expected.keys():
+            if key == 'depends_on_question_id' or key == 'surrogate_id':
+                continue
             self.assertEqual(section1_question1_actual[key], section1_question1_expected[key], key) 
 
         # Check question 2 in section 1 (new)
         section1_question2_actual = response_data['sections'][0]['questions'][1]
         section1_question2_expected = APPLICATION_FORM_PUT_DATA['sections'][0]['questions'][1]
-        self.assertEqual(section1_question2_actual.id, 4)  # Should be 4th question inserted to DB
         for key in section1_question2_expected.keys():
+            if key == 'depends_on_question_id' or key == 'surrogate_id':
+                continue
             self.assertEqual(section1_question2_actual[key], section1_question2_expected[key], key) 
 
         # Check section 3 (new)
         section3_actual = response_data['sections'][1]
         section3_expected = APPLICATION_FORM_PUT_DATA['sections'][1]
-        self.assertEqual(section3_action.id, 3)  # New section
         for key in section3_expected.keys():
             if key == 'questions':
                 continue
@@ -694,8 +702,9 @@ class ApplicationFormUpdateTest(ApiTestCase):
         # Check question 1 in section 2 (NEW)
         section2_question1_actual = response_data['sections'][1]['questions'][0]
         section2_question1_expected = APPLICATION_FORM_PUT_DATA['sections'][1]['questions'][0]
-        self.assertEqual(section1_question1_actual.id, 5)  # 5th question inserted to db
         for key in section2_question1_expected.keys():
+            if key == 'depends_on_question_id' or key == 'surrogate_id':
+                continue
             self.assertEqual(section2_question1_actual[key], section2_question1_expected[key], key)
 
 class QuestionListApiTest(ApiTestCase):
