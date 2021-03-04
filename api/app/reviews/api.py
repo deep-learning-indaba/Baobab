@@ -138,13 +138,14 @@ def _add_reviewer_role(user_id, event_id):
 
 
 class ReviewResponseUser():
-    def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses, review_response=None):
+    def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses=None, review_response=None):
         self.review_form = _serialize_review_form(review_form, language)
 
         self.response = response
         self.user = None if response is None else response.user
         self.reviews_remaining_count = reviews_remaining_count
         self.references = reference_responses
+        self.review_response = review_response
 
 
 class ReviewResponseReference():
@@ -173,17 +174,18 @@ class ReviewAPI(ReviewMixin, restful.Resource):
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
 
-        reference_requests = reference_repository.get_all_by_response_id(response.id)
         references = []
-        for r in reference_requests:
-            reference = reference_repository.get_reference_by_reference_request_id(r.id)
-            if reference is not None:
-                references.append(
-                    ReviewResponseReference(r.title, r.firstname, r.lastname, r.relation, reference.uploaded_document)
-                )
+        if response is not None:
+            reference_requests = reference_repository.get_all_by_response_id(response.id)
+            for r in reference_requests:
+                reference = reference_repository.get_reference_by_reference_request_id(r.id)
+                if reference is not None:
+                    references.append(
+                        ReviewResponseReference(r.title, r.firstname, r.lastname, r.relation, reference.uploaded_document)
+                    )
 
         review_response = None if response is None else review_repository.get_review_response(review_form.id, response.id, g.current_user['id']) 
-
+        references = None if len(references) == 0 else references
         return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'], references, review_response)
 
     def sanitise_skip(self, skip, reviews_remaining_count):
@@ -225,7 +227,7 @@ class ResponseReviewAPI(restful.Resource):
 
         review_response = review_repository.get_review_response(review_form.id, response_id, g.current_user['id'])
 
-        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response=review_response)
 
 
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
@@ -246,7 +248,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
         response = review_repository.get_response_by_review_response(id, reviewer_user_id, review_form.application_form_id)
 
-        return ReviewResponseUser(review_form, response, 0, args['language'], review_response)
+        return ReviewResponseUser(review_form, response, 0, args['language'], review_response=review_response)
 
     @auth_required
     @marshal_with(review_response_fields)
@@ -459,7 +461,7 @@ class ReviewHistoryModel:
         self.response_id = review.Response.id
         self.review_response_id = review.id
         self.submitted_timestamp = review.submitted_timestamp
-        self.reviewed_user_id  = review.AppUser.id
+        self.reviewed_user_id = review.AppUser.id
 
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
@@ -474,7 +476,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
         limit = args['limit']
         sort_column = args['sort_column']
 
-        reviewer = review_repository.get_reviewer(event_id, user_id)
+        reviewer = user_repository.get_by_id(user_id).is_reviewer(event_id)
         if not reviewer:
             return FORBIDDEN
 

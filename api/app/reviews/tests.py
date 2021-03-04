@@ -554,7 +554,6 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         db.session.flush()
-        
 
     def test_review_response(self):
         self.seed_static_data()
@@ -1486,11 +1485,9 @@ class ReferenceReviewRequest(ApiTestCase):
 
         self.event = self.add_event()
 
-        # TODO: S: confirm this works once 400 / 200 error is resolved
         self.system_admin = self.add_user('sa@sa.com', is_admin=True)
         non_admin_users = self.add_n_users(3)
         users = non_admin_users.append(self.system_admin)
-        # TODO: confirm indices
         self.event.add_event_role('admin', 4),
         self.event.add_event_role('reviewer', 1),
 
@@ -1509,7 +1506,7 @@ class ReferenceReviewRequest(ApiTestCase):
         db.session.add_all(review_forms)
         db.session.commit()
 
-        self.test_response = self.add_response(1, self.first_user.id, language='en')
+        self.test_response = self.add_response(1, self.first_user.id, language='en', is_submitted=True)
 
         self.response_review = self.add_response_reviewer(self.test_response.id, self.first_user.id)
 
@@ -1530,13 +1527,13 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data), 8)
         self.assertEqual(len(data['references']), 1)
         self.assertDictEqual(data['references'][0], {
             u'title': u'Mr',
@@ -1572,13 +1569,13 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data), 8)
         self.assertEqual(len(data['references']), 2)
         self.assertDictEqual(data['references'][0], {
             u'title': u'Mr',
@@ -1604,14 +1601,14 @@ class ReferenceReviewRequest(ApiTestCase):
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_request_repository.create(reference_req)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
-        self.assertEqual(len(data['references']), 0)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
 
     def test_get_reference_submitted_later(self):
         """
@@ -1621,7 +1618,7 @@ class ReferenceReviewRequest(ApiTestCase):
         reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
         reference_request_repository.create(reference_req)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         REFERENCE_DETAIL = {
             'token': reference_req.token,
@@ -1634,20 +1631,20 @@ class ReferenceReviewRequest(ApiTestCase):
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
-        self.assertEqual(len(data['references']), 0)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
 
         response = self.app.post(
             '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data), 8)
         self.assertEqual(len(data['references']), 1)
         self.assertDictEqual(data['references'][0], {
             u'title': u'Mr',
@@ -1676,13 +1673,13 @@ class ReferenceReviewRequest(ApiTestCase):
             '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
         self.assertEqual(response.status_code, 201)
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
+        self.assertEqual(len(data), 8)
         self.assertEqual(len(data['references']), 1)
 
         self.assertDictEqual(data['references'][0], {
@@ -1699,10 +1696,10 @@ class ReferenceReviewRequest(ApiTestCase):
         """
         self.static_seed_data()
 
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 6)
-        self.assertEqual(len(data['references']), 0)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)

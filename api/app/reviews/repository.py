@@ -174,7 +174,6 @@ class ReviewRepository():
         db.session.commit()
         
     @staticmethod
-    # TODO S: update to include event_id
     def get_review_history(reviewer_user_id, event_id):
         reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, Response)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
@@ -199,7 +198,8 @@ class ReviewRepository():
         count = (db.session.query(ReviewResponse)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == event_id)
+                        .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
+                        .filter(ApplicationForm.event_id == event_id)
                         .count())
         return count
 
@@ -258,12 +258,6 @@ class ReviewRepository():
     def get_reference_models(response_id):
         references = db.session.query(Reference).filter(response_id=response_id).all()
         return references
-
-    # TODO: S: use get user repository rather then user.is_reviewer(event_id)
-    @staticmethod
-    def get_reviewer(event_id, user_id):
-        reviewer = db.session.query(AppUser).get(user_id).is_reviewer(event_id)
-        return reviewer
 
     @staticmethod
     def get_candidate_response_ids(event_id, reviewer_user_id, reviews_required):
