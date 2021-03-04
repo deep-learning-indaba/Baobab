@@ -133,31 +133,6 @@ class ApplicationFormApiTest(ApiTestCase):
         self.assertEqual(data['sections'][0]['questions'][0]['validation_text'], 'Entrez un maximum de 200 mots')
         self.assertEqual(data['sections'][0]['questions'][0]['show_for_values'], ['oui'])
 
-    def test_repo_get_by_event(self):
-        app = application_form_repository.get_by_event_id(self.test_event.id)
-        self.assertEqual(app, self.test_form)
-
-    def test_repo_get_sections(self):
-        sections_by_app_id = application_form_repository.get_sections_by_app_id(self.test_form.id)
-        self.assertEqual(sections_by_app_id[0], self.test_section)
-        self.assertEqual(sections_by_app_id[1], self.test_section2)
-        sections_by_app_id_and_section_name = application_form_repository. \
-            get_section_by_app_id_and_section_name(self.test_form.id, self.test_section.name)
-        self.assertEqual(sections_by_app_id_and_section_name, self.test_section)
-        sections_by_app_id_and_section_name = application_form_repository. \
-            get_section_by_app_id_and_section_name(self.test_form.id, self.test_section2.name)
-        self.assertEqual(sections_by_app_id_and_section_name, self.test_section2)
-
-        section = application_form_repository.get_section_by_id(self.test_section.id)
-        self.assertEqual(section, self.test_section)
-
-    def test_repo_get_question(self):
-        question1 = application_form_repository.get_question_by_id(self.test_question.id)
-        self.assertEqual(question1, self.test_question)
-
-        question2 = application_form_repository.get_question_by_id(self.test_question2.id)
-        self.assertEqual(question2, self.test_question2)
-
 
 APPLICATION_FORM_POST_DATA = {
   "event_id": 1, 
