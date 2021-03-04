@@ -35,16 +35,20 @@ class Question(db.Model):
     section = db.relationship('Section', foreign_keys=[section_id])
     question_translations = db.relationship('QuestionTranslation', lazy='dynamic')
 
-    def __init__(self, application_form_id, section_id, order, questionType, is_required=True):
+    def __init__(self, application_form_id, section_id, order, questionType, is_required=True, key=None):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.order = order
         self.type = questionType
         self.is_required = is_required
+        self.key = key
     
     def get_translation(self, language):
         question_translation = self.question_translations.filter_by(language=language).first()
         return question_translation
+    
+    def is_review_identifier(self):
+        return self.key == 'review-identifier'
 
 
 class Section(db.Model):
