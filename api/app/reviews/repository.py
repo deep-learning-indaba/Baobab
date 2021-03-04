@@ -15,11 +15,11 @@ class ReviewRepository():
                 (
                     select
                         app_user.id as reviewer_user_id,
-                        email, 
-                        user_title, 
-                        firstname, 
-                        lastname, 
-                        0 as reviews_allocated, 
+                        email,
+                        user_title,
+                        firstname,
+                        lastname,
+                        0 as reviews_allocated,
                         0 as reviews_completed
                     from app_user
                     join event_role on event_role.user_id = app_user.id
@@ -33,26 +33,26 @@ class ReviewRepository():
                 )
                 union
                 (
-                    select        
+                    select
                         app_user.id as reviewer_user_id,
-                        email, 
-                        user_title, 
-                        firstname, 
-                        lastname, 
-                        count(response_reviewer.id) as reviews_allocated, 
+                        email,
+                        user_title,
+                        firstname,
+                        lastname,
+                        count(response_reviewer.id) as reviews_allocated,
                         count(review_response.id) as reviews_completed
                     from response_reviewer
-                    join app_user 
+                    join app_user
                     on response_reviewer.reviewer_user_id = app_user.id
-                    join event_role 
-                        on app_user.id = event_role.user_id 
-                    join response 
+                    join event_role
+                        on app_user.id = event_role.user_id
+                    join response
                     on response.id = response_reviewer.response_id
                     join application_form on response.application_form_id = application_form.id
                     left join review_response
                     on review_response.response_id = response.id
                     and review_response.reviewer_user_id = app_user.id
-                    where 
+                    where
                         event_role.role = 'reviewer'
                         and event_role.event_id = {event_id}
                         and application_form.event_id = {event_id}
@@ -102,7 +102,7 @@ class ReviewRepository():
                     .all()[0][0]
         )
         return remaining
-    
+
     @staticmethod
     def get_response_to_review(skip, reviewer_user_id, application_form_id):
         response = (
@@ -171,7 +171,7 @@ class ReviewRepository():
     def add_model(model):
         db.session.add(model)
         db.session.commit()
-        
+
     @staticmethod
     def get_review_history(reviewer_user_id, application_form_id):
         reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, Response)
@@ -184,7 +184,7 @@ class ReviewRepository():
 
     @staticmethod
     def get_review_list(reviewer_user_id, event_id):
-        reviews = (db.session.query(Response, ReviewResponse)                        
+        reviews = (db.session.query(Response, ReviewResponse)
                         .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
                         .filter_by(reviewer_user_id=reviewer_user_id)
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
@@ -218,7 +218,7 @@ class ReviewRepository():
                         .filter(ApplicationForm.event_id == event_id)
                         .join(ReviewForm, ApplicationForm.id == ReviewForm.application_form_id)
                         .outerjoin(ReviewResponse, and_(
-                            ReviewResponse.review_form_id == ReviewForm.id, 
+                            ReviewResponse.review_form_id == ReviewForm.id,
                             ReviewResponse.reviewer_user_id == ResponseReviewer.reviewer_user_id))
                         .filter(ReviewResponse.id == None)
                         .count())
@@ -264,6 +264,7 @@ class ReviewRepository():
             .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
             .join(ApplicationForm, ApplicationForm.id == ReviewForm.application_form_id)
             .filter_by(event_id=event_id)
+            .all()
         )
 
 class ReviewConfigurationRepository():
