@@ -13,6 +13,7 @@ const Question = forwardRef(({
   }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
+  const [isKeyOn, setIsKeyOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const opts = inputs.options[lang];
   const {max_num_referral, min_num_referral} = inputs.options;
@@ -309,6 +310,10 @@ const Question = forwardRef(({
     setIsvalidateOn(!isValidateOn);
   }
 
+  const handleKey = () => {
+    setIsKeyOn(!isKeyOn);
+  }
+
   const handlereferralsChange = (prop) => (e) => {
     let min;
     let max;
@@ -514,19 +519,33 @@ const Question = forwardRef(({
               </button>
             </div>
           </div>
-          <div className="key-wrapper">
+          <div className="label-input-wrapper">
+            <label htmlFor="section-desc" className="form-label">{t('Description')}</label>
             <input
               name="section-desc"
               type="text"
-              value={inputs.key}
-              placeholder={t('Key')}
-              onChange={handleChange('key')}
+              // value={inputs.description[lang]}
+              placeholder={t('Description')}
+              onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
               />
-            <span className="tooltiptext">{t('Key')}</span>
           </div>
+          {isKeyOn && (
+            <div className="label-input-wrapper">
+              <label htmlFor="section-desc" className="form-label">{t('Key')}</label>
+              <input
+                name="section-desc"
+                type="text"
+                value={inputs.key}
+                placeholder={t('Key')}
+                onChange={handleChange('key')}
+                className="section-inputs section-desc section-key"
+                />
+            </div>
+          )}
           {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
-            <span className="key-wrapper">
+            <div className="label-input-wrapper">
+              <label htmlFor="question-headline" className="form-label">{t('Placeholder')}</label>
               <input
                 name="question-headline"
                 type="text"
@@ -535,8 +554,8 @@ const Question = forwardRef(({
                 onChange={handleChange('placeholder')}
                 className="question-inputs question-headline"
                 />
-              <span className="tooltiptext">{t('Placeholder')}</span> 
-            </span>
+              {/* <span className="tooltiptext">{t('Placeholder')}</span>  */}
+            </div>
           )}
           {withOptions.includes(inputs.type && inputs.type.value) && (
             <div className="options">
@@ -735,6 +754,17 @@ const Question = forwardRef(({
                 }
               </span>
                 {t("Validation")}
+            </button>
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleKey}
+              >
+              <span className="check-icon">
+                {isKeyOn
+                  && <i class="fas fa-check fa-validation"></i>
+                }
+              </span>
+                {t("Key")}
             </button>
           </div>
         </div>

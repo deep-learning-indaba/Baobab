@@ -102,7 +102,7 @@ def _serialize_review_form(review_form, language):
             'validation_text': translation.validation_text,
             'weight': question.weight
         })
-        
+
     form = {
         'id': review_form.id,
         'application_form_id': review_form.application_form_id,
@@ -135,7 +135,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
-        
+
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return EVENT_NOT_FOUND
@@ -145,8 +145,8 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
-        
-        review_response = None if response is None else review_repository.get_review_response(review_form.id, response.id, g.current_user['id']) 
+
+        review_response = None if response is None else review_repository.get_review_response(review_form.id, response.id, g.current_user['id'])
 
         return ReviewResponseUser(review_form, response, reviews_remaining_count, args['language'], review_response)
 
@@ -161,7 +161,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             skip = 0
         elif skip >= reviews_remaining_count:
             skip = reviews_remaining_count - 1
-        
+
         return skip
 
 class ResponseReviewAPI(restful.Resource):
@@ -245,7 +245,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         validation_result = self.validate_scores(args['scores'])
         if validation_result is not None:
             return validation_result
-        
+
         response_id = args['response_id']
         review_form_id = args['review_form_id']
         reviewer_user_id = g.current_user['id']
@@ -259,7 +259,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         review_response = review_repository.get_review_response(review_form_id, response_id, reviewer_user_id)
         if review_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
-        
+
         db.session.query(ReviewScore).filter(ReviewScore.review_response_id==review_response.id).delete()
         review_response.review_scores = self.get_review_scores(scores)
         if is_submitted:
@@ -268,21 +268,21 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
         return review_response, 200
 
-    
+
     def get_review_scores(self, scores):
         review_scores = []
         for score in scores:
             review_score = ReviewScore(score['review_question_id'], score['value'])
             review_scores.append(review_score)
         return review_scores
-    
+
     def validate_scores(self, scores):
         for score in scores:
             if 'review_question_id' not in list(score.keys()):
                 return self.get_error_message('review_question_id')
             if 'value' not in list(score.keys()):
                 return self.get_error_message('value')
-    
+
     def get_error_message(self, key):
         return ({'message': {key: 'Missing required parameter in the JSON body or the post body or the query string'}}, 400)
 
@@ -307,7 +307,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
-        
+
         config = review_configuration_repository.get_configuration_for_event(event_id)
 
         return {
@@ -316,7 +316,7 @@ class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
 
 
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
-    
+
     reviews_count_fields = {
         'reviewer_user_id': fields.Integer,
         'email': fields.String,
@@ -357,11 +357,11 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
-        
+
         reviewer_user = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
         if reviewer_user is None:
             return USER_NOT_FOUND
-        
+
         if not reviewer_user.is_reviewer(event_id):
             _add_reviewer_role(reviewer_user.id, event_id)
 
@@ -371,7 +371,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
-        
+
         if len(response_ids) > 0:
             email_user(
                 'reviews-assigned',
@@ -384,11 +384,11 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                 event=event,
                 user=reviewer_user)
         return {}, 201
-    
+
     def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
         candidate_responses = db.session.query(Response.id)\
-                        .filter(Response.user_id != reviewer_user_id, 
-                                Response.is_submitted==True, 
+                        .filter(Response.user_id != reviewer_user_id,
+                                Response.is_submitted==True,
                                 Response.is_withdrawn==False)\
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)\
                         .filter(ApplicationForm.event_id == event_id)\
@@ -430,7 +430,7 @@ class ReviewHistoryModel:
 
 
 class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
-    
+
     @auth_required
     @marshal_with(review_history_fields)
     def get(self):
@@ -451,7 +451,7 @@ class ReviewHistoryAPI(GetReviewHistoryMixin, restful.Resource):
 
         if sort_column == 'review_response_id':
             reviews = reviews.order_by(ReviewResponse.id)
-        
+
         if sort_column == 'submitted_timestamp':
             reviews = reviews.order_by(ReviewResponse.submitted_timestamp)
 
@@ -505,7 +505,7 @@ class ReviewListAPI(restful.Resource):
         event_id = args['event_id']
         user_id = g.current_user['id']
         language = args['language']
-        
+
         if not user_repository.get_by_id(user_id).is_reviewer(event_id):
             return FORBIDDEN
 
@@ -516,11 +516,11 @@ class ReviewListAPI(restful.Resource):
 
 class ResponseReviewAssignmentAPI(restful.Resource):
     @event_admin_required
-    def post(self, event_id):                   
+    def post(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('response_ids', type=int, required=True, action='append')
         parser.add_argument('reviewer_email', type=str, required=True)
-        args = parser.parse_args()                      
+        args = parser.parse_args()
 
         response_ids = args['response_ids']
         reviewer_email = args['reviewer_email']
@@ -535,14 +535,14 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         reviewer_user = user_repository.get_by_email(reviewer_email, g.organisation.id)
         if reviewer_user is None:
             return USER_NOT_FOUND
-        
+
         if not reviewer_user.is_reviewer(event_id):
             _add_reviewer_role(reviewer_user.id, event_id)
 
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
-        
+
         if len(response_ids) > 0:
             email_user(
                 'reviews-assigned',
@@ -561,7 +561,7 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('response_id', type=int, required=True)
         parser.add_argument('reviewer_user_id', type=int, required=True)
-        args = parser.parse_args()                     
+        args = parser.parse_args()
 
         response_id = args['response_id']
         reviewer_user_id = args['reviewer_user_id']
@@ -578,3 +578,73 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         review_repository.delete_response_reviewer(response_id, reviewer_user_id)
 
         return {}, 200
+
+class ReviewResponseDetailListAPI(restful.Resource):
+    @staticmethod
+    def _serialise_identifier(answer, language):
+        question_translation = answer.question.get_translation(language)
+        if question_translation is None:
+            question_translation = answer.question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for question id {}'.format(language, answer.question.id))
+
+        return {
+            'headline': question_translation.headline,
+            'value': answer.value_display
+        }
+
+    @staticmethod
+    def _serialise_score(review_score, language):
+        review_question_translation = review_score.review_question.get_translation(language)
+        if review_question_translation is None:
+            review_question_translation = review_score.review_question.get_translation('en')
+            LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_score.review_question.id))
+
+        return {
+            'headline': review_question_translation.headline,
+            'description': review_question_translation.description,
+            'type': review_score.review_question.type,
+            'score': review_score.value,
+            'weight': review_score.review_question.weight,
+        }
+
+
+    @staticmethod
+    def _serialise_review_response(review_response):
+        return {
+            'review_response_id': review_response.id,
+            'response_id': review_response.response_id,
+
+            'reviewer_user_title': review_response.reviewer_user.user_title,
+            'reviewer_user_firstname': review_response.reviewer_user.firstname,
+            'reviewer_user_lastname': review_response.reviewer_user.lastname,
+
+            'response_user_title': review_response.response.user.user_title,
+            'response_user_firstname': review_response.response.user.firstname,
+            'response_user_lastname': review_response.response.user.lastname,
+
+            'identifiers': [
+                ReviewResponseDetailListAPI._serialise_identifier(answer, review_response.language)
+                for answer in review_response.response.answers
+                if answer.question.is_review_identifier()
+            ],
+
+            'scores': [
+                ReviewResponseDetailListAPI._serialise_score(review_score, review_response.language)
+                for review_score in review_response.review_scores
+                if (review_score.review_question.type == 'multi-choice'
+                    or review_score.review_question.type == 'long-text'
+                    or review_score.review_question.type == 'short-text'
+                )
+            ],
+
+            'total': review_response.calculate_score()
+        }
+
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        review_responses = review_repository.get_all_review_responses_by_event(event_id)
+        return [
+            ReviewResponseDetailListAPI._serialise_review_response(review_response)
+            for review_response in review_responses
+        ], 200
