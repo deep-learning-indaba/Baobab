@@ -68,7 +68,6 @@ class ApiTestCase(unittest.TestCase):
         if os.path.exists("/code/api/app/utils/names.txt"):
             with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
-            names = [n.decode('utf-8', 'replace') for n in names]
         else:
             # why yes, these are names of African Hollywood actors (according to Wikipedia)
             names = ["Mehcad Brooks", "Malcolm Barrett", "Nick Cannon", "Lamorne Morris", "Neil Brown Jr.",
@@ -229,7 +228,7 @@ class ApiTestCase(unittest.TestCase):
 
         db.session.add_all([
             ReviewQuestionTranslation(review_question.id, k, headline=v)
-            for k, v in headings.iteritems()
+            for k, v in headings.items()
         ])
         db.session.commit()
 
@@ -387,7 +386,7 @@ class ApiTestCase(unittest.TestCase):
         return offer
 
     def add_invited_guest(self, user_id, event_id=1, role='Guest'):
-        print('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role))
+        print(('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role)))
         guest = InvitedGuest(event_id, user_id, role)
         db.session.add(guest)
         db.session.commit()
@@ -398,7 +397,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(tag)
         db.session.commit()
         translations = [
-            TagTranslation(tag.id, k, name) for k, name in names.iteritems()
+            TagTranslation(tag.id, k, name) for k, name in names.items()
         ]
         db.session.add_all(translations)
         db.session.commit()

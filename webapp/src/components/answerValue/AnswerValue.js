@@ -2,9 +2,9 @@ import Linkify from 'react-linkify';
 import React from "react";
 import { withTranslation } from 'react-i18next';
 
+import { getDownloadURL } from '../../utils/files';
 import MultiFileValue from './MultiFileValue'
 
-const baseUrl = process.env.REACT_APP_API_URL;
 const FILE = "file";
 const INFORMATION = 'information'
 const MULTI_CHOICE = "multi-choice";
@@ -34,7 +34,7 @@ function AnswerValue({answer, question, t}) {
         }
       case FILE:
         return <div>
-          <a target="_blank" href={baseUrl + "/api/v1/file?filename=" + answer.value}>{t("Uploaded File")}</a>
+          <a target="_blank" href={getDownloadURL(answer.value)}>{t("Uploaded File")}</a>
           <br/>
           <span className="small-text">
             *{t("Note: You may need to change the file name to open the file on certain operating systems")}

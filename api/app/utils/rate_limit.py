@@ -37,7 +37,7 @@ def rate_limit(limit=100, window=60):
 @app.after_request
 def add_rate_limit_headers(response):
     try:
-        limit, remaining, expires = map(int, g.rate_limits)
+        limit, remaining, expires = list(map(int, g.rate_limits))
     except (AttributeError, ValueError):
         return response
     else:

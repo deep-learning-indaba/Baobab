@@ -1,23 +1,30 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, createRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next'
 import { default as ReactSelect } from "react-select";
 import { eventService } from '../../../services/events';
 import icon from '../icon.svg';
 import Section from './Section';
 import Loading from '../../../components/Loading';
-import Context from '../../../context';
-import { option, langObject } from './util';
+import {
+  option, langObject, AnimateSections,
+  drop, drag
+ } from './util';
+
 
 const ApplicationForm = (props) => {
   const { languages } = props;
   const { t } = useTranslation();
   const lang = languages;
-  const { appFormData, setAppFormData } = useContext(Context);
   const [nominate, setNominate] = useState(false);
+
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
     value: lang && lang[0]? lang[0].code : 'en'
   });
+
+  const [dragId, setDragId] = useState();
+  const [applyTransition, setApplytransition] = useState(false);
+  const [parentDropable, setParentDropable] = useState(true)
 
   const [event, setEvent] = useState({
     loading: true,
@@ -25,10 +32,14 @@ const ApplicationForm = (props) => {
     error: null,
   });
 
+
   const [sections, setSections] = useState([{
     id: `${Math.random()}`,
     name: langObject(lang, t('Untitled Section')),
     description: langObject(lang, ''),
+    order: 1,
+    depends_on_question_id: null,
+    show_for_values: null,
     questions: [
       {
         id: `${Math.random()}`,
@@ -39,11 +50,14 @@ const ApplicationForm = (props) => {
         options: langObject(lang, []),
         value: langObject(lang, ''),
         label: langObject(lang, ''),
-        required: false
+        required: false,
+        depends_on_question_id: null,
+        show_for_values: null,
+        validation_regex: langObject(lang, ''),
+        validation_text: langObject(lang, '')
       }
     ]
   }]);
-
 
   useEffect(() => {
     eventService.getEvent(props.event.id).then( res => {
@@ -53,17 +67,11 @@ const ApplicationForm = (props) => {
         error: res.error
       })
     });
-    setAppFormData(sections);
   }, []);
-
-  useEffect(() => {
-    setSections(appFormData);
-  }, [appFormData]);
 
   const handleCheckChanged = (e) => {
     const val = e.target.checked;
     setTimeout(() => {
-      setSections(appFormData);
       setNominate(val);
     }, 1);
   }
@@ -73,14 +81,15 @@ const ApplicationForm = (props) => {
   }
 
   const handleSection = (input) => {
-    setSections(input)
+    setSections(input);
   }
 
   const addSection = () => {
-    setTimeout(() => setSections([...appFormData, {
+    setTimeout(() => setSections([...sections, {
       id: `${Math.random()}`,
       name: langObject(lang, t('Untitled Section')),
       description: langObject(lang, ''),
+      order: sections.length + 1,
       questions: [
         {
           id: `${Math.random()}`,
@@ -91,10 +100,36 @@ const ApplicationForm = (props) => {
           options: langObject(lang, []),
           value: langObject(lang, ''),
           label: langObject(lang, ''),
-          required: false
+          required: false,
+          depends_on_question_id: null,
+          show_for_values: null,
+          validation_regex: langObject(lang, ''),
+          validation_text: langObject(lang, '')
         }
       ]
     }]), 1);
+  }
+
+  const handleDrag = (e) => {
+    if(parentDropable) {
+      drag(e, setDragId);
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e) => {
+    if (parentDropable) {
+      drop({
+        event: e,
+        elements: sections,
+        dragId,
+        setState: setSections,
+        setAnimation: setApplytransition
+      });
+    }
   }
 
   const options = () => {
@@ -126,22 +161,23 @@ const ApplicationForm = (props) => {
       </div>
     );
   }
-  const FormSection = () => {
-    const {loading, event: evnt, error } = event;
- 
-    if (loading) {
-      return <Loading />
-    }
-    if (error) {
-      return (
-        <div className='alert alert-danger alert-container'>
-          {error}
-        </div>
-      )
-    }
 
+  const {loading, event: evnt, error } = event;
+
+  if (loading) {
+    return <Loading />
+  }
+  if (error) {
     return (
-      <>
+      <div className='alert alert-danger alert-container'>
+        {error}
+      </div>
+    )
+  }
+  return (
+    <>
+      <div className='application-form-wrap'>
+        <TopBar />
         <div style={{ textAlign: 'end', width: '61%' }}>
           <button
             className='add-section-btn'
@@ -204,29 +240,36 @@ const ApplicationForm = (props) => {
           }}
           menuPlacement="auto"
         />
-        {
-          sections.map((section, i) => (
-            <Section
-              t={t}
-              key={section.id}
-              sectionIndex={i}
-              setSection={handleSection}
-              inputs={section}
-              sections={sections}
-              addSection={addSection}
-              lang={language.value}
-            />
-          ))
-        }
+        <AnimateSections
+          applyTransition={applyTransition}
+          setApplytransition={setApplytransition}
+        >
+          {
+            sections
+            .map((section, i) => (
+              <Section
+                t={t}
+                key={section.id}
+                id={section.id}
+                sectionIndex={i}
+                setSection={handleSection}
+                inputs={section}
+                sections={sections}
+                addSection={addSection}
+                lang={language.value}
+                langs={lang}
+                ref={createRef()}
+                handleDrag={handleDrag}
+                handleDrop={handleDrop}
+                setApplytransition={setApplytransition}
+                handleDragOver={handleDragOver}
+                setParentDropable={setParentDropable}
+                parentDropable={parentDropable}
+              />
+            ))
+          }
+        </AnimateSections>
       </div>
-      </>
-    )
-  }
-  return (
-    <>
-      <div className='application-form-wrap'>
-        <TopBar />
-        <FormSection />
       </div>
     </>
   )
