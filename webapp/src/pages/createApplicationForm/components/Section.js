@@ -25,7 +25,11 @@ export const Section = forwardRef(({
     const target = inputs[prop];
     const updatedSections = sections.map(s => {
       if(s.id === inputs.id) {
-        s = {...s, [prop]: {...target, [lang]: e.target.value}};
+        if (prop === 'key') {
+          s = {...s, [prop]: e.target.value};
+        } else {
+          s = {...s, [prop]: {...target, [lang]: e.target.value}};
+        }
       }
       return s;
     });
@@ -45,6 +49,7 @@ export const Section = forwardRef(({
       value: langObject(langs, ''),
       label: langObject(langs, ''),
       required: false,
+      key: '',
       depends_on_question_id: null,
       show_for_values: null,
       validation_regex: langObject(langs, ''),
@@ -220,12 +225,15 @@ export const Section = forwardRef(({
       </div>
       <div className="title-description">
         <div className="section-header">
+        <span className="key-wrapper">
           <input
             type="text"
             value={inputs.name[lang]}
             onChange={handleChange('name')}
             className="section-inputs section-title"
           />
+          <span className="tooltiptext">{t('Title')}</span>
+        </span>
           <div
             id="toggleTitle"
             className="title-desc-toggle"
@@ -290,14 +298,28 @@ export const Section = forwardRef(({
           className='desc-dependency-div'
           style={hideOrShowDetails ? {display: 'none'} : {}}
         >
-          <input
-            name="section-desc"
-            type="text"
-            value={inputs.description[lang]}
-            placeholder={t('Description')}
-            onChange={handleChange('description')}
-            className="section-inputs section-desc"
-            />
+          <div className="key-wrapper">
+            <input
+              name="section-desc"
+              type="text"
+              value={inputs.description[lang]}
+              placeholder={t('Description')}
+              onChange={handleChange('description')}
+              className="section-inputs section-desc"
+              />
+            <span className="tooltiptext">{t('Description')}</span>
+          </div>
+          <span className="key-wrapper">
+            <input
+              name="section-desc"
+              type="text"
+              value={inputs.key}
+              placeholder={t('Key')}
+              onChange={handleChange('key')}
+              className="section-inputs section-desc section-key"
+              />
+            <span className="tooltiptext">{t('key')}</span>
+          </span>
           <Dependency
             options={sectionOptions}
             handlequestionDependency={handlequestionDependency}

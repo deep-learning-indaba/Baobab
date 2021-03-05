@@ -40,6 +40,7 @@ const ApplicationForm = (props) => {
     order: 1,
     depends_on_question_id: null,
     show_for_values: null,
+    key: '',
     questions: [
       {
         id: `${Math.random()}`,
@@ -51,6 +52,7 @@ const ApplicationForm = (props) => {
         value: langObject(lang, ''),
         label: langObject(lang, ''),
         required: false,
+        key: '',
         depends_on_question_id: null,
         show_for_values: null,
         validation_regex: langObject(lang, ''),
@@ -90,6 +92,7 @@ const ApplicationForm = (props) => {
       name: langObject(lang, t('Untitled Section')),
       description: langObject(lang, ''),
       order: sections.length + 1,
+      key: '',
       questions: [
         {
           id: `${Math.random()}`,
@@ -101,6 +104,7 @@ const ApplicationForm = (props) => {
           value: langObject(lang, ''),
           label: langObject(lang, ''),
           required: false,
+          key:'',
           depends_on_question_id: null,
           show_for_values: null,
           validation_regex: langObject(lang, ''),

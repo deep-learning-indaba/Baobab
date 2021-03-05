@@ -96,7 +96,11 @@ const Question = forwardRef(({
                 }
               }
             } else {
-              q = {...q, [prop]: {...target, [lang]: e.target.value}}
+              if (prop === 'key') {
+                q = {...q, [prop]: e.target.value}
+              } else {
+                q = {...q, [prop]: {...target, [lang]: e.target.value}}
+              }
             }
           }
           return q
@@ -428,11 +432,18 @@ const Question = forwardRef(({
     }),
   ]
 
-  const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'markdown'];
+  const withPlaceHolder = ['short-text', 'multi-choice', 'long-text'];
   const withOptions = ['multi-choice', 'multi-checkbox'];
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
+  const withRegex = ['long-text', 'short-text', 'markdown'];
   const dependencyOptions = optionz.filter(e => e.order < inputs.order);
+  let style = inputs.required
+    ? {display: 'block', boxShadow: '0px 0.3em 5px 0px #e8e6e6'}
+    : {display: 'block'};
+  if (!showingQuestions) {
+    style = {display: 'none'}
+  }
 
   const dependentQuestion = section.questions
     .find(e => e.id === inputs.depends_on_question_id);
@@ -448,19 +459,21 @@ const Question = forwardRef(({
         onDragOver={handleDropOver}
         onDragStart={handleDrag}
         onDrop={handleDrop}
-        style={showingQuestions ? {display: 'block'} : {display: 'none'}}
+        style={style}
       >
         <div className="headline-description">
           <div className="question-header">
-            <input
-              type="text"
-              name="headline"
-              value={inputs.headline[lang]}
-              onChange={handleChange('headline')}
-              placeholder={t('Headline')}
-              className="section-inputs question-title"
-              required
-            />
+            <span className="key-wrapper">
+              <input
+                type="text"
+                name="headline"
+                value={inputs.headline[lang]}
+                onChange={handleChange('headline')}
+                placeholder={t('Headline')}
+                className="section-inputs question-title"
+              />
+              <span className="tooltiptext">{t('Headline')}</span>
+            </span>
             <ReactSelect
               options={options}
               placeholder={t('Choose type')}
@@ -501,15 +514,29 @@ const Question = forwardRef(({
               </button>
             </div>
           </div>
-          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
+          <div className="key-wrapper">
             <input
-              name="question-headline"
+              name="section-desc"
               type="text"
-              value={inputs.placeholder[lang]}
-              placeholder={t('Placeholder')}
-              onChange={handleChange('placeholder')}
-              className="question-inputs question-headline"
-            />
+              value={inputs.key}
+              placeholder={t('Key')}
+              onChange={handleChange('key')}
+              className="section-inputs section-desc section-key"
+              />
+            <span className="tooltiptext">{t('Key')}</span>
+          </div>
+          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
+            <span className="key-wrapper">
+              <input
+                name="question-headline"
+                type="text"
+                value={inputs.placeholder[lang]}
+                placeholder={t('Placeholder')}
+                onChange={handleChange('placeholder')}
+                className="question-inputs question-headline"
+                />
+              <span className="tooltiptext">{t('Placeholder')}</span> 
+            </span>
           )}
           {withOptions.includes(inputs.type && inputs.type.value) && (
             <div className="options">
@@ -700,6 +727,7 @@ const Question = forwardRef(({
             <button
               className="dropdown-item delete-section"
               onClick={handleValidation}
+              disabled={!withRegex.includes(inputs.type && inputs.type.value)}
               >
               <span className="check-icon">
                 {isValidateOn
