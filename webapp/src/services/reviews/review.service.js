@@ -14,7 +14,8 @@ export const reviewService = {
   getReviewList,
   getResponseReview,
   assignResponsesToReviewer,
-  deleteResponseReviewer
+  deleteResponseReviewer,
+  getReviewDetails
 };
 
 function getReviewForm(eventId, skip) {
@@ -293,6 +294,31 @@ function deleteResponseReviewer(eventId, responseId, reviewerUserId) {
     })
     .catch(function(error) {
       return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function getReviewDetails(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewresponsedetaillist?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        reviewDetails: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewDetails: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
