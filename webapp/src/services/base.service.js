@@ -32,9 +32,16 @@ axios.interceptors.response.use(
       error.response.data &&
       error.response.data.type === "UNAUTHORIZED"
     ) {
-      // Redirect if you receive unauth, but only if you aren't on the home page
+      // Redirect if you receive unauth,
+      // but only if you aren't on the home or sign up page
       localStorage.removeItem("user");
-      if (history && history.location && history.location.pathname !== "/") {
+      if (
+        history && history.location &&
+        (
+          history.location.pathname !== "/" &&
+          history.location.pathname !== "/createAccount"
+        )
+      ) {
         history.push("/login");
       }
     } else throw error;
