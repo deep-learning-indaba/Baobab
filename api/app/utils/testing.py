@@ -216,23 +216,30 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_form
 
-    def add_review_question(self, review_form_id, headings=None, weight=0):
-        headings = headings or {
-            'en': 'Heading En',
-            'fr': 'Heading Fr'
-        }
-        
-        review_question = ReviewQuestion(review_form_id, None, type='short-text', is_required=True, order=1, weight=weight)
+    def add_review_question(self, review_form_id, weight=0, type='short-text'):
+        review_question = ReviewQuestion(review_form_id, None, type=type, is_required=True, order=1, weight=weight)
         db.session.add(review_question)
         db.session.commit()
 
-        db.session.add_all([
-            ReviewQuestionTranslation(review_question.id, k, headline=v)
-            for k, v in headings.items()
-        ])
+        return review_question
+    
+    def add_review_question_translation(
+        self,
+        review_question_id,
+        language,
+        description='Review question description',
+        headline='Review question headline'):
+        review_question_translation = ReviewQuestionTranslation(
+            review_question_id,
+            language,
+            description=description,
+            headline=headline
+        )
+
+        db.session.add(review_question_translation)
         db.session.commit()
 
-        return review_question
+        return review_question_translation
 
     def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
         email_template = EmailTemplate(template_key, event_id, subject, template, language)
@@ -298,8 +305,9 @@ class ApiTestCase(unittest.TestCase):
         application_form_id,
         section_id,
         order=1,
-        question_type='short-text'):
-        question = Question(application_form_id, section_id, order, question_type)
+        question_type='short-text',
+        key=None):
+        question = Question(application_form_id, section_id, order, question_type, key=key)
         db.session.add(question)
         db.session.commit()
         return question

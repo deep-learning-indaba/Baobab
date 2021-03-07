@@ -1,5 +1,6 @@
 from app import db, bcrypt
 import app
+from typing import Any, Callable, Mapping
 
 
 class ApplicationForm(db.Model):
@@ -35,17 +36,54 @@ class Question(db.Model):
     section = db.relationship('Section', foreign_keys=[section_id])
     question_translations = db.relationship('QuestionTranslation', lazy='dynamic')
 
-    def __init__(self, application_form_id, section_id, order, questionType, is_required=True):
+    def __init__(self, application_form_id, section_id, order, questionType, is_required=True, key=None):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.order = order
         self.type = questionType
         self.is_required = is_required
+        self.key = key
     
-    def get_translation(self, language):
+    def get_translation(self, language: str) -> 'QuestionTranslation':
         question_translation = self.question_translations.filter_by(language=language).first()
         return question_translation
+    
+    def is_review_identifier(self):
+        return self.key == 'review-identifier'
 
+    def _translations_for_field(self, accessor_fn: Callable[['QuestionTranslation'], Any]) -> Mapping[str, Any]:
+        translations = {}
+        for translation in self.question_translations:
+            translations[translation.language] = accessor_fn(translation)
+        return translations
+
+    @property
+    def headline_translations(self):
+        return self._translations_for_field(lambda q: q.headline)
+
+    @property
+    def description_translations(self):
+        return self._translations_for_field(lambda q: q.description)
+
+    @property
+    def options_translations(self):
+        return self._translations_for_field(lambda q: q.options)
+
+    @property
+    def placeholder_translations(self):
+        return self._translations_for_field(lambda q: q.placeholder)
+
+    @property
+    def validation_regex_translations(self):
+        return self._translations_for_field(lambda q: q.validation_regex)
+
+    @property
+    def validation_text_translations(self):
+        return self._translations_for_field(lambda q: q.validation_text)
+
+    @property
+    def show_for_values_translations(self):
+        return self._translations_for_field(lambda q: q.show_for_values)
 
 class Section(db.Model):
     __tablename__ = 'section'
@@ -66,10 +104,27 @@ class Section(db.Model):
         self.depends_on_question_id = depends_on_question_id
         self.key = key
 
-    def get_translation(self, language):
+    def get_translation(self, language: str) -> 'SectionTranslation':
         section_translation = self.section_translations.filter_by(language=language).first()
         return section_translation
 
+    def _translations_for_field(self, accessor_fn: Callable[['SectionTranslation'], Any]) -> Mapping[str, Any]:
+        translations = {}
+        for translation in self.section_translations:
+            translations[translation.language] = accessor_fn(translation)
+        return translations
+
+    @property
+    def name_translations(self):
+        return self._translations_for_field(lambda t: t.name)
+
+    @property
+    def description_translations(self):
+        return self._translations_for_field(lambda t: t.description)
+
+    @property
+    def show_for_values_translations(self):
+        return self._translations_for_field(lambda t: t.show_for_values)
 
 class SectionTranslation(db.Model):
     __tablename__ = 'section_translation'
@@ -90,7 +145,7 @@ class SectionTranslation(db.Model):
         self.name = name
         self.description = description
         self.show_for_values = show_for_values
-
+    
 
 class QuestionTranslation(db.Model):
     __tablename__ = 'question_translation'
@@ -101,7 +156,7 @@ class QuestionTranslation(db.Model):
     language = db.Column(db.String(2), nullable=False)
     headline = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=True)
-    placeholder = db.Column(db.String(), nullable=True)
+    placeholder = db.Column(db.String(), nullable=True                                                                                                                               )
     validation_regex = db.Column(db.String(), nullable=True)
     validation_text = db.Column(db.String(), nullable=True)
     options = db.Column(db.JSON(), nullable=True)

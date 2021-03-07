@@ -1279,8 +1279,14 @@ class ReviewListAPITest(ApiTestCase):
 
         review_form1 = self.add_review_form(application_form1.id)
         review_q1 = self.add_review_question(review_form1.id, weight=1)
+        review_q1_translation_en = self.add_review_question_translation(review_q1.id, 'en', headline='Heading En')
+        review_q1_translation_fr = self.add_review_question_translation(review_q1.id, 'fr', headline='Heading Fr')
         review_q2 = self.add_review_question(review_form1.id, weight=0)
+        review_q2_translation_en = self.add_review_question_translation(review_q2.id, 'en', headline='Heading En')
+        review_q2_translation_fr = self.add_review_question_translation(review_q2.id, 'fr', headline='Heading Fr')
         review_q3 = self.add_review_question(review_form1.id, weight=1)
+        review_q3_translation_en = self.add_review_question_translation(review_q3.id, 'en', headline='Heading En')
+        review_q3_translation_fr = self.add_review_question_translation(review_q3.id, 'fr', headline='Heading Fr')
 
         application_form2 = self.create_application_form(self.event2.id)
         review_form2 = self.add_review_form(application_form2.id)
@@ -1703,3 +1709,229 @@ class ReferenceReviewRequest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data), 8)
         self.assertEqual(data.get('references', None), None)
+
+
+class ReviewResponseDetailListApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.user1 = self.add_user('user1@mail.com', 'Jane', 'Bloggs', 'Ms')
+        self.user2 = self.add_user('user2@mail.com', 'Alex', 'Person', 'Dr')
+        self.reviewer = self.add_user('reviewer@mail.com', 'Joe', 'Soap', 'Mr')
+        self.reviewer2 = self.add_user('reviewer2@mail.com', 'Jenny', 'Sharp', 'Ms')
+        self.event_admin = self.add_user('event_admin@mail.com')
+        
+        self.event = self.add_event()
+        self.event2 = self.add_event(key='Empty')
+        self.event.add_event_role('admin', self.event_admin.id)
+        self.event2.add_event_role('admin', self.event_admin.id)
+
+        self.application_form = self.create_application_form(self.event.id)
+        self.section = self.add_section(self.application_form.id)
+        self.question1 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=1,
+            key='review-identifier')
+        self.question_translation1 = self.add_question_translation(
+            self.question1.id,
+            'en',
+            'Organisation')
+        self.question2 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=2,
+            key='review-identifier')
+        self.question_translation2 = self.add_question_translation(
+            self.question2.id,
+            'en',
+            'Country')
+        self.question3 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=3,
+        )
+        self.question_translation3 = self.add_question_translation(
+            self.question3.id,
+            'en',
+            'Non-review question'
+        )
+
+        self.response1 = self.add_response(
+            self.application_form.id,
+            self.user1.id,
+            is_submitted=True)
+        self.answer1 = self.add_answer(self.response1.id, self.question1.id, 'Pets R Us')
+        self.answer2 = self.add_answer(self.response1.id, self.question2.id, 'Nigeria')
+        self.answer3 = self.add_answer(self.response1.id, self.question3.id, 'Non-review answer')
+
+        self.response2 = self.add_response(
+            self.application_form.id,
+            self.user2.id,
+            is_submitted=True)
+        self.answer4 = self.add_answer(self.response2.id, self.question1.id, 'Nokia')
+        self.answer5 = self.add_answer(self.response2.id, self.question2.id, 'South Africa')
+        self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
+        
+        self.review_form = self.add_review_form(self.application_form.id)
+        self.review_question1 = self.add_review_question(self.review_form.id, type='short-text', weight=1)
+        self.review_question_translation1 = self.add_review_question_translation(
+            self.review_question1.id,
+            'en',
+            headline='Ethical Considerations',
+            description="How ethical is the candidate's proposal from 1 to 5?")
+        self.review_question2 = self.add_review_question(self.review_form.id, type='long-text', weight=0)
+        self.review_question_translation2 = self.add_review_question_translation(
+            self.review_question2.id,
+            'en',
+            headline=None,
+            description='Comments for the candidate'
+        )
+        self.review_question3 = self.add_review_question(self.review_form.id, type='multi-choice', weight=2)
+        self.review_question_translation3 = self.add_review_question_translation(
+            self.review_question3.id,
+            'en',
+            headline=None,
+            description='What is your overall rating?'
+        )
+        self.review_question4 = self.add_review_question(self.review_form.id, type='checkbox', weight=0)
+        self.review_question_translation4 = self.add_review_question_translation(
+            self.review_question4.id,
+            'en',
+            headline='Yes/No Question'
+        )
+
+        self.review_response1 = self.add_review_response(
+            self.reviewer.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score1 = self.add_review_score(self.review_response1.id, self.review_question1.id, '4')
+        self.review_score2 = self.add_review_score(self.review_response1.id, self.review_question2.id, 'This is a very good proposal')
+        self.review_score3 = self.add_review_score(self.review_response1.id, self.review_question3.id, '5')
+        self.review_score4 = self.add_review_score(self.review_response1.id, self.review_question4.id, 'Yes')
+
+        self.review_response2 = self.add_review_response(
+            self.reviewer2.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score5 = self.add_review_score(self.review_response2.id, self.review_question1.id, '3')
+        self.review_score6 = self.add_review_score(self.review_response2.id, self.review_question2.id, 'Not bad!')
+        self.review_score7 = self.add_review_score(self.review_response2.id, self.review_question3.id, '3')
+        self.review_score8 = self.add_review_score(self.review_response2.id, self.review_question4.id, 'No')
+
+    def test_not_authed(self):
+        response = self.app.get('/api/v1/reviewresponsedetaillist')
+        self.assertEqual(response.status_code, 401)
+
+    def test_not_event_admin(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            data={'event_id': 1}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_review_responses(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 2}
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(data, [])
+
+    def test_review_responses_for_event(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+        
+        self.assertEqual(len(data), 2)
+        
+        self.assertEqual(data[0]['review_response_id'], 1)
+        self.assertEqual(data[0]['response_id'], 1)
+
+        self.assertEqual(data[0]['reviewer_user_title'], 'Mr')
+        self.assertEqual(data[0]['reviewer_user_firstname'], 'Joe')
+        self.assertEqual(data[0]['reviewer_user_lastname'], 'Soap')
+
+        self.assertEqual(data[0]['response_user_title'], 'Ms')
+        self.assertEqual(data[0]['response_user_firstname'], 'Jane')
+        self.assertEqual(data[0]['response_user_lastname'], 'Bloggs')
+
+        self.assertEqual(len(data[0]['identifiers']), 2)
+        self.assertEqual(data[0]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[0]['identifiers'][0]['value'], 'Pets R Us')
+        self.assertEqual(data[0]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[0]['identifiers'][1]['value'], 'Nigeria')
+
+        self.assertEqual(len(data[0]['scores']), 3)
+        self.assertEqual(data[0]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[0]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[0]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[0]['scores'][0]['score'], '4')
+        self.assertEqual(data[0]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[0]['scores'][1]['headline'], None)
+        self.assertEqual(data[0]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[0]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[0]['scores'][1]['score'], 'This is a very good proposal')
+        self.assertEqual(data[0]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[0]['scores'][2]['headline'], None)
+        self.assertEqual(data[0]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[0]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[0]['scores'][2]['score'], '5')
+        self.assertEqual(data[0]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[0]['total'], 14)
+
+
+        self.assertEqual(data[1]['review_response_id'], 2)
+        self.assertEqual(data[1]['response_id'], 2)
+
+        self.assertEqual(data[1]['reviewer_user_title'], 'Ms')
+        self.assertEqual(data[1]['reviewer_user_firstname'], 'Jenny')
+        self.assertEqual(data[1]['reviewer_user_lastname'], 'Sharp')
+
+        self.assertEqual(data[1]['response_user_title'], 'Dr')
+        self.assertEqual(data[1]['response_user_firstname'], 'Alex')
+        self.assertEqual(data[1]['response_user_lastname'], 'Person')
+
+        self.assertEqual(len(data[1]['identifiers']), 2)
+        self.assertEqual(data[1]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[1]['identifiers'][0]['value'], 'Nokia')
+        self.assertEqual(data[1]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[1]['identifiers'][1]['value'], 'South Africa')
+
+        self.assertEqual(len(data[1]['scores']), 3)
+        self.assertEqual(data[1]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[1]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[1]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[1]['scores'][0]['score'], '3')
+        self.assertEqual(data[1]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[1]['scores'][1]['headline'], None)
+        self.assertEqual(data[1]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[1]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[1]['scores'][1]['score'], 'Not bad!')
+        self.assertEqual(data[1]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[1]['scores'][2]['headline'], None)
+        self.assertEqual(data[1]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[1]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[1]['scores'][2]['score'], '3')
+        self.assertEqual(data[1]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[1]['total'], 9)

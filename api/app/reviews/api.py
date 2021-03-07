@@ -352,7 +352,6 @@ class ReviewCountView():
         self.reviews_completed = count.reviews_completed
         self.reviewer_user_id = count.reviewer_user_id
 
-
 class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
     @auth_required
     def get(self):
@@ -566,7 +565,6 @@ class ReviewListAPI(restful.Resource):
         return [ReviewListAPI._serialize_response(response, review_response, language)
                 for response, review_response in responses_to_review]
 
-
 class ResponseReviewAssignmentAPI(restful.Resource):
     @event_admin_required
     def post(self, event_id):
@@ -631,7 +629,6 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         review_repository.delete_response_reviewer(response_id, reviewer_user_id)
 
         return {}, 200
-
 
 class ReviewResponseDetailListAPI(restful.Resource):
     @staticmethod

@@ -3,7 +3,6 @@ from flask_restful import reqparse, fields, marshal_with
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 
-from app.applicationModel.mixins import ApplicationFormMixin
 from app.utils.auth import auth_required
 from app import LOGGER
 from app import db, bcrypt
