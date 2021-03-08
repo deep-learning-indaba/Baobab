@@ -549,7 +549,7 @@ const Question = forwardRef(({
                 />
             </div>
           )}
-          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
+          {withPlaceHolder.includes(inputs.type) && (
             <div className="label-input-wrapper">
               <label htmlFor="question-headline" className="form-label">{t('Placeholder')}</label>
               <input
@@ -562,17 +562,6 @@ const Question = forwardRef(({
                 />
             </div>
           )}
-          <div className="key-wrapper">
-            <input
-              name="section-desc"
-              type="text"
-              value={inputs.key}
-              placeholder={t('Key')}
-              onChange={handleChange('key')}
-              className="section-inputs section-desc section-key"
-              />
-            <span className="tooltiptext">{t('Key')}</span>
-          </div>
           {withOptions.includes(inputs.type) && (
             <div className="options">
               <table
