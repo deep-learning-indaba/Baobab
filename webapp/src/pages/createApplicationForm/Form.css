@@ -233,7 +233,7 @@
 
 .application-form-wrap .section-desc,
 .application-form-wrap .question-headline {
-  margin-top: 0.5em;
+  /* margin-top: 0.5em; */
   padding-left: 0.2em;
   width: 100%;
 }
@@ -355,11 +355,47 @@
 .application-form-wrap .single-choice-check {
   margin-right: 0.5em;
 }
-.dependency-options-wrapper {
+
+.application-form-wrap .dependency-options-wrapper {
   display: inline-block;
   margin-right: 1em;
 }
 
+.application-form-wrap .tooltiptext {
+  position: absolute;
+  visibility: hidden;
+  background-color: gray;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  color: #fff;
+  left: 50%;
+  top: -1em;
+  font-size: 0.8rem;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.application-form-wrap .key-wrapper {
+  position: relative;
+  margin-top: 1em;
+}
+
+.label-input-wrapper {
+  margin-top: 0.7em;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  margin-left: 0.5em;
+  color: gray;
+}
+
+.key-wrapper:hover .tooltiptext {
+  visibility: visible;
+}
 
 /* Question */
 
@@ -473,17 +509,9 @@
   border-radius: 5px;
 }
 
-/* .application-form-wrap .option-inputs:disabled {
-  background: #fff;
-} */
-
 .application-form-wrap .options-table {
   background: '#fff';
 }
-
-/* .application-form-wrap .options-table:disabled {
-  background: '#fff';
-} */
 
 .application-form-wrap .dropdown-text {
   width: 2.5em;
@@ -595,11 +623,11 @@
   color: white;
 }
 
-.options-row {
+.application-form-wrap .options-row {
   background: white;
 }
 
-.regex-label {
+.application-form-wrap .regex-label {
   font-size: 0.8rem;
   margin-right: 1em;
 }
@@ -610,11 +638,11 @@
   padding: 0;
 }
 
-.validation-wrapper {
+.application-form-wrap .validation-wrapper {
   margin: 1em auto;
 }
 
-.validaion-input {
+.application-form-wrap .validaion-input {
   border: none;
   border-bottom: solid #e8e6e6 thin;
   box-shadow: 0px 0.3em 5px 0px #e8e6e6;
@@ -625,7 +653,7 @@
   outline: none;
 }
 
-.validaion-text {
+.application-form-wrap .validaion-text {
   box-shadow: 0px 0.3em 5px 0px #e8e6e6;
   border: solid #e8e6e6 thin;
   padding: 10px;
@@ -633,23 +661,22 @@
   width: 20em;
 }
 
-.advanced-regex {
+.application-form-wrap .advanced-regex {
   width: 10em;
 }
 
-.check-icon {
+.application-form-wrap .check-icon {
   min-width: 10px;
-  /* border: red solid thin; */
   padding: 10px;
 }
 
-.error-label {
+.application-form-wrap .error-label {
   font-size: 0.8em;
   color: rgba(219, 122, 141, 0.932);
   margin-left: 3em;
 }
 
-.referals-input {
+.application-form-wrap .referals-input {
   width: 20em;
   border: none;
   border-bottom: solid #e8e6e6 thin;
@@ -659,34 +686,34 @@
   outline: none;
 }
 
-.referals-wrapper {
+.application-form-wrap .referals-wrapper {
   margin: 1em auto;
 }
 
-.extensions-wrapper {
+.application-form-wrap .extensions-wrapper {
   margin-top: 1em;
 }
 
-.min-wrapper {
+.application-form-wrap .min-wrapper {
   margin-top: 0.5em;
   display: inline-block;
 }
 
-.validation-label {
+.application-form-wrap .validation-label {
   display: block;
   font-size: 0.8em;
   padding-left: 1em;
 }
 
-.referalls-label {
+.application-form-wrap .referalls-label {
   font-size: 1em;
   padding-left: 0.8em;
 }
 
-.extension-label {
+.application-form-wrap .extension-label {
   padding-left: 0.5em;
 }
 
-.false-radio {
+.application-form-wrap .false-radio {
   margin-left: 1em;
 }
