@@ -232,7 +232,7 @@
 
 .application-form-wrap .section-desc,
 .application-form-wrap .question-headline {
-  margin-top: 0.5em;
+  /* margin-top: 0.5em; */
   padding-left: 0.2em;
   width: 100%;
 }
@@ -370,14 +370,14 @@
 
 .application-form-wrap .tooltiptext-error {
   position: absolute;
-  background-color: red;
+  background-color: #fff;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
-  color: #fff;
+  color: rgb(139, 15, 15);
   font-size: 0.8em;
   left: 65%;
-  top: -1em;
+  top: -1.5em;
   padding-left: 0.5em;
   padding-right: 0.5em;
   border-radius: 5px;
@@ -395,6 +395,7 @@
   font-size: 0.8em;
   left: 50%;
   top: -1em;
+  font-size: 0.8rem;
   padding-left: 0.5em;
   padding-right: 0.5em;
   border-radius: 5px;
@@ -403,7 +404,19 @@
 
 .application-form-wrap .key-wrapper {
   position: relative;
+  margin-top: 1em;
 }
+
+.label-input-wrapper {
+  margin-top: 0.7em;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  margin-left: 0.5em;
+  color: gray;
+}
+
 .key-wrapper:hover .tooltiptext {
   visibility: visible;
 }
