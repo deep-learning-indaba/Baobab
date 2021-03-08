@@ -252,3 +252,25 @@ export function updateApplicationForm(id, event_id, is_open, nominations, sectio
       }
     })
   }
+
+  export function createApplicationForm(event_id, is_open, nominations, sections) {
+    let form = {
+      'event_id': event_id,
+      "is_open": is_open,
+      "nominations": nominations,
+      "sections": sections
+    }
+  
+    return axios.post(baseUrl + `/api/v1/application-form-detail`, form, {headers: authHeader()})
+      .then(resp=> {
+        return resp;
+      })
+      .catch(error => {
+        if (error.response) {
+          return error.response;
+        } else {
+          // The request was made but no response was received
+          return error;
+        }
+      })
+    }

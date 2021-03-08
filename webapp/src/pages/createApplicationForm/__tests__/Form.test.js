@@ -35,7 +35,6 @@ test('Check if the Section Component renders.', () => {
   // Render Section Component.
   const t = jest.fn();
   const setSection = jest.fn();
-  const sections = [];
   const sectionIndex = 0;
   const lang = 'en';
   const inputs = {
@@ -53,6 +52,10 @@ test('Check if the Section Component renders.', () => {
         id: `${Math.random()}`,
         order: 1,
         headline: {
+          en: '',
+          fr: ''
+        },
+        description: {
           en: '',
           fr: ''
         },
@@ -77,6 +80,7 @@ test('Check if the Section Component renders.', () => {
       }
     ]
   };
+  const sections = [inputs];
   const addSection = jest.fn(); 
   const addQuestion = jest.fn();
   const handleDrag = jest.fn();
@@ -138,6 +142,10 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
+        description: {
+          en: '',
+          fr: ''
+        },
         placeholder: {
           en: '',
           fr: ''
@@ -176,6 +184,10 @@ test('Check if the Question Component renders.', () => {
         id: `${Math.random()}`,
         order: 1,
         headline: {
+          en: '',
+          fr: ''
+        },
+        description: {
           en: '',
           fr: ''
         },
@@ -238,6 +250,10 @@ test('Check if the Question Component renders.', () => {
     id: `${Math.random()}`,
     order: 1,
     headline: {
+      en: '',
+      fr: ''
+    },
+    description: {
       en: '',
       fr: ''
     },

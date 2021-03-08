@@ -20,6 +20,7 @@ export const Section = forwardRef(({
   const [showingQuestions, setShowingQuestions] = useState(true);
   const [style, setStyle] = useState({});
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
+  const [isKeyOn, setIsKeyOn] = useState(false);
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -206,6 +207,10 @@ export const Section = forwardRef(({
     }
   });
 
+  const handleKey = () => {
+    setIsKeyOn(!isKeyOn);
+  }
+
   const numSections = sections.length;
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
@@ -284,6 +289,15 @@ export const Section = forwardRef(({
               <i class="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
             </button>
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleKey}
+            >
+              {isKeyOn
+                && <i class="fas fa-check fa-duplicate fa-section"></i>
+              }
+              {t("Add Key")}
+            </button>
           </div>
           <div
             className='toogle-section-details-wrapper'
@@ -309,28 +323,30 @@ export const Section = forwardRef(({
           className='desc-dependency-div'
           style={hideOrShowDetails ? {display: 'none'} : {}}
         >
-          <div className="key-wrapper">
+          <div className="label-input-wrapper">
+            <label htmlFor="ssection-desc-1" className="form-label">{t('Description')}</label>
             <input
-              name="section-desc"
+              name="section-desc-1"
               type="text"
               value={inputs.description[lang]}
               placeholder={t('Description')}
               onChange={handleChange('description')}
               className="section-inputs section-desc"
               />
-            <span className="tooltiptext">{t('Description')}</span>
           </div>
-          <span className="key-wrapper">
-            <input
-              name="section-desc"
-              type="text"
-              value={inputs.key}
-              placeholder={t('Key')}
-              onChange={handleChange('key')}
-              className="section-inputs section-desc section-key"
-              />
-            <span className="tooltiptext">{t('key')}</span>
-          </span>
+          {isKeyOn && (
+            <div className="label-input-wrapper">
+              <label htmlFor="section-key" className="form-label">{t('Key')}</label>
+              <input
+                name="section-key"
+                type="text"
+                value={inputs.key}
+                placeholder={t('Key')}
+                onChange={handleChange('key')}
+                className="section-inputs section-desc section-key"
+                />
+            </div>
+          )}
           <Dependency
             options={sectionOptions}
             handlequestionDependency={handlequestionDependency}

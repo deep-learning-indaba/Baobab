@@ -2,7 +2,11 @@ import React, { useState, useEffect, createRef } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'
 import { default as ReactSelect } from "react-select";
-import { applicationFormService, updateApplicationForm } from '../../../services/applicationForm/applicationForm.service';
+import {
+  applicationFormService,
+  updateApplicationForm,
+  createApplicationForm
+} from '../../../services/applicationForm/applicationForm.service';
 import { eventService } from '../../../services/events';
 import icon from '../icon.svg';
 import Section from './Section';
@@ -29,6 +33,7 @@ const ApplicationForm = (props) => {
   const [applyTransition, setApplytransition] = useState(false);
   const [parentDropable, setParentDropable] = useState(true);
   const [homeRedirect, setHomeRedirect] = useState(false);
+  const [isInCreateMode, setCreateMode] = useState(false);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -103,7 +108,11 @@ const ApplicationForm = (props) => {
               eventId: formSpec.event_id
             })
             setSections(mapedQuestions);
+          } else {
+            setCreateMode(!true);
           }
+        } else {
+          setCreateMode(!true);
         }
       }).catch(err => {
         console.log('Error occured ', err)
@@ -241,12 +250,21 @@ const ApplicationForm = (props) => {
       }
       return s
     });
-    updateApplicationForm(formDetails.id, formDetails.eventId, formDetails.isOpen, nominate, sectionsToSave)
+    if (!isInCreateMode) {
+      updateApplicationForm(formDetails.id, formDetails.eventId, formDetails.isOpen, nominate, sectionsToSave)
+        .then(res => {
+          setHomeRedirect(true);
+        }).catch(err => {
+          console.log('An error occured  ', err);
+      })
+    } else {
+      createApplicationForm(formDetails.eventId, formDetails.isOpen, nominate, sectionsToSave)
       .then(res => {
         setHomeRedirect(true);
       }).catch(err => {
         console.log('An error occured  ', err);
     })
+    }
   }
 
   const options = () => {
