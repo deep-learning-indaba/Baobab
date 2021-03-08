@@ -82,10 +82,16 @@
   font-size: 0.9em;
   margin-left: 2em;
 }
+
 .application-form-wrap .add-section-icon:hover,
 .application-form-wrap .add-section-icon:focus {
   color: #fff;
 }
+
+.add-section-btn-wrapper {
+  /* border: red solid thin; */
+}
+
 .application-form-wrap .add-section-btn {
   padding: 5px;
   margin-right: 2em;
@@ -103,7 +109,35 @@
   z-index: 1;
 }
 
-.application-form-wrap .add-section-btn:hover:after {
+.application-form-wrap .save-form-btn {
+  padding: 5px;
+  margin-right: 2em;
+  margin-top: 16em;
+  border: solid thin #333;
+  width: 3em;
+  height: 3em;
+  border-radius: 50%;
+  background-color: #fff; 
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  outline: none;
+  position: fixed;
+  z-index: 1;
+}
+
+.application-form-wrap .save-form-btn:hover {
+  cursor: pointer;
+  background-color: #333;
+  color: #fff;
+}
+
+.prompt {
+  background: red;
+  color: black;
+}
+
+.application-form-wrap .add-section-btn:hover:after{
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;

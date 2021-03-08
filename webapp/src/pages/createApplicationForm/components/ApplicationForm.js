@@ -1,7 +1,8 @@
 import React, { useState, useEffect, createRef } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, Prompt } from 'react-router-dom';
 import { useTranslation } from 'react-i18next'
 import { default as ReactSelect } from "react-select";
+import _ from 'lodash';
 import {
   applicationFormService,
   updateApplicationForm,
@@ -22,7 +23,7 @@ const ApplicationForm = (props) => {
   const { t } = useTranslation();
   const lang = languages;
   const [nominate, setNominate] = useState(false);
-  const [formDetails, setFormDetails] = useState(null);
+  const [formDetails, setFormDetails] = useState({});
 
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
@@ -34,6 +35,8 @@ const ApplicationForm = (props) => {
   const [parentDropable, setParentDropable] = useState(true);
   const [homeRedirect, setHomeRedirect] = useState(false);
   const [isInCreateMode, setCreateMode] = useState(false);
+  const [initialState, setInitialState] = useState(null);
+  const [errorResponse, setErrorResponse] = useState(null);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -54,10 +57,10 @@ const ApplicationForm = (props) => {
       {
         id: `${Math.random()}`,
         surrogate_id: 1,
-        description: langObject(lang, null),
+        description: langObject(lang, ''),
         order: 1,
-        headline: langObject(lang, null),
-        placeholder: langObject(lang, null),
+        headline: langObject(lang, ''),
+        placeholder: langObject(lang, ''),
         type: null,
         options: langObject(lang, null),
         value: langObject(lang, ''),
@@ -67,10 +70,12 @@ const ApplicationForm = (props) => {
         depends_on_question_id: 0,
         show_for_values: langObject(lang, null),
         validation_regex: langObject(lang, null),
-        validation_text: langObject(lang, null),
+        validation_text: langObject(lang, ''),
       }
     ]
   }]);
+  const [isSaved, setIsSaved] = useState(false);
+  const saved = _.isEqual(initialState, sections)
 
   useEffect(() => {
     eventService.getEvent(props.event.id).then( res => {
@@ -97,7 +102,12 @@ const ApplicationForm = (props) => {
                 }
                 return q
               });
-              s = {...s, id: `${Math.random()}`, backendId: s.id, questions: questions}
+              s = {
+                ...s,
+                id: `${Math.random()}`,
+                backendId: s.id,
+                questions: questions
+              }
               return s
             })
   
@@ -107,12 +117,13 @@ const ApplicationForm = (props) => {
               id: formSpec.id,
               eventId: formSpec.event_id
             })
+            setInitialState(mapedQuestions);
             setSections(mapedQuestions);
           } else {
-            setCreateMode(!true);
+            setCreateMode(true);
           }
         } else {
-          setCreateMode(!true);
+          setCreateMode(true);
         }
       }).catch(err => {
         console.log('Error occured ', err)
@@ -147,10 +158,10 @@ const ApplicationForm = (props) => {
         {
           id: `${Math.random()}`,
           surrogate_id: 1,
-          description: langObject(lang, null),
+          description: langObject(lang, ''),
           order: 1,
-          headline: langObject(lang, null),
-          placeholder: langObject(lang, null),
+          headline: langObject(lang, ''),
+          placeholder: langObject(lang, ''),
           type: null,
           options: langObject(lang, null),
           value: langObject(lang, ''),
@@ -160,7 +171,7 @@ const ApplicationForm = (props) => {
           depends_on_question_id: 0,
           show_for_values: langObject(lang, null),
           validation_regex: langObject(lang, null),
-          validation_text: langObject(lang, null),
+          validation_text: langObject(lang, ''),
         }
       ]
     }]), 1);
@@ -250,20 +261,33 @@ const ApplicationForm = (props) => {
       }
       return s
     });
+    const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
-      updateApplicationForm(formDetails.id, formDetails.eventId, formDetails.isOpen, nominate, sectionsToSave)
+      if (!isSaved) {
+        updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave)
+          .then(res => {
+            if(res.data) {
+              setIsSaved(true);
+              setHomeRedirect(true);
+            }
+          }).catch(err => {
+            if (err.response) {
+              setErrorResponse(err.response);
+            }
+            console.log('An error occured  ', err);
+        })
+      }
+    } else {
+        createApplicationForm(eventId, isOpen, nominate, sectionsToSave)
         .then(res => {
+          setIsSaved(true);
           setHomeRedirect(true);
         }).catch(err => {
-          console.log('An error occured  ', err);
+          if (err.response) {
+            setErrorResponse(err.response);
+          }
+          console.log('An error occured ', err);
       })
-    } else {
-      createApplicationForm(formDetails.eventId, formDetails.isOpen, nominate, sectionsToSave)
-      .then(res => {
-        setHomeRedirect(true);
-      }).catch(err => {
-        console.log('An error occured  ', err);
-    })
     }
   }
 
@@ -277,11 +301,11 @@ const ApplicationForm = (props) => {
 
   let isSaveDisabled = false;
   sections.forEach(s => {
-    if (!s.name) {
+    if (!s.name[language.value]) {
       isSaveDisabled = true;
     }
     s.questions.forEach(q => {
-      if (!q.type) {
+      if (!q.type ||!q.headline[language.value]) {
         isSaveDisabled = true;
       }
     })
@@ -305,13 +329,6 @@ const ApplicationForm = (props) => {
           <img src={icon} alt="form" className="icon" />
           <span className="title">{t("Application Form")}</span>
         </div>
-        <button
-          disabled={isSaveDisabled}
-          className="create-form-btn"
-          onClick={handleSave}
-        >
-          {t("Save")}
-        </button>
       </div>
     );
   }
@@ -330,101 +347,119 @@ const ApplicationForm = (props) => {
   }
   return (
     <>
+      <Prompt
+        when={!isSaved && !saved}
+        message="Some Changes have not been saved. Are you sure you want to leave without saving them?"
+        />
       {homeRedirect && <Redirect to="/" />}
       <div className='application-form-wrap'>
         <TopBar />
-        <div style={{ textAlign: 'end', width: '61%' }}>
+        <div
+          style={{ textAlign: 'end', width: '61%' }}
+          className='add-section-btn-wrapper'
+          >
           <button
             className='add-section-btn'
             data-title="Add Section"
             onMouseUp={() => addSection()}
-          >
+            >
             <i class="fas fa-plus fa-lg add-section-icon"></i>
           </button>
-        </div>
-      <div className="application-form-wrapper">
-        <div className="nominations-desc">
           <input
-            id="nomination-chck"
-            className="nomination-chck"
-            type="checkbox"
-            checked={nominate}
-            onChange={e => handleCheckChanged(e)}
-          />
-          <span htmlFor="nomination-chck" className="nomination-info">
-            {t('Allow candidates to nominate others using this application form'
-            + '(Users will be able to submit multiple nominations, including for themselves.'
-            + ' If this option is unchecked, a candidate can only apply for themselves)')}
-          </span>
+            type="button"
+            value="Save"
+            className='save-form-btn'
+            data-title="Save"
+            onClick={handleSave}
+            disabled={isSaveDisabled}
+            />
         </div>
-        <div className="dates-container">
-          <span className="dates">
-            {t('Application opens ') + ' :'}
-            <span className="date">
-              {`${dateFormat(evnt.application_open)}`}
+        <div className="application-form-wrapper">
+          <div className="nominations-desc">
+            <input
+              id="nomination-chck"
+              className="nomination-chck"
+              type="checkbox"
+              checked={nominate}
+              onChange={e => handleCheckChanged(e)}
+            />
+            <span htmlFor="nomination-chck" className="nomination-info">
+              {t('Allow candidates to nominate others using this application form'
+              + '(Users will be able to submit multiple nominations, including for themselves.'
+              + ' If this option is unchecked, a candidate can only apply for themselves)')}
             </span>
-          </span>
-          <span className="dates">
-            {t('Application closes ') + ' :'}
-            <span className="date">
-              {`${dateFormat(evnt.application_close)}`}
+          </div>
+          <div className="dates-container">
+            <span className="dates">
+              {t('Application opens ') + ' :'}
+              <span className="date">
+                {`${dateFormat(evnt.application_open)}`}
+              </span>
             </span>
-          </span>
-        </div>
-        <ReactSelect
-          id='select-language'
-          options={options()}
-          onChange={e => handleLanguageChange(e)}
-          value={language}
-          defaultValue={language}
-          className='select-language'
-          styles={{
-            control: (base, state) => ({
-              ...base,
-              boxShadow: "none",
-              border: state.isFocused && "none",
-              transition: state.isFocused && 'color,background-color 1.5s ease-out',
-              background: state.isFocused && 'lightgray',
-              color: '#fff'
-            }),
-            option: (base, state) => ({
+            <span className="dates">
+              {t('Application closes ') + ' :'}
+              <span className="date">
+                {`${dateFormat(evnt.application_close)}`}
+              </span>
+            </span>
+            {errorResponse && (
+              <span className='tooltiptext-error'>{t('Error : ' + errorResponse)}</span>
+            )}
+          </div>
+          <ReactSelect
+            id='select-language'
+            options={options()}
+            onChange={e => handleLanguageChange(e)}
+            value={language}
+            defaultValue={language}
+            className='select-language'
+            styles={{
+              control: (base, state) => ({
                 ...base,
-                backgroundColor: state.isFocused && "#1f2d3e",
-                color: state.isFocused && "#fff"
-            })
-          }}
-          menuPlacement="auto"
-        />
-        <AnimateSections
-          applyTransition={applyTransition}
-          setApplytransition={setApplytransition}
-        >
-          {
-            sections
-            .map((section, i) => (
-              <Section
-                t={t}
-                key={section.id}
-                id={section.id}
-                sectionIndex={i}
-                setSection={handleSection}
-                inputs={section}
-                sections={sections}
-                addSection={addSection}
-                lang={language.value}
-                langs={lang}
-                ref={createRef()}
-                handleDrag={handleDrag}
-                handleDrop={handleDrop}
-                setApplytransition={setApplytransition}
-                handleDragOver={handleDragOver}
-                setParentDropable={setParentDropable}
-                parentDropable={parentDropable}
-              />
-            ))
-          }
-        </AnimateSections>
-      </div>
+                boxShadow: "none",
+                border: state.isFocused && "none",
+                transition: state.isFocused && 'color,background-color 1.5s ease-out',
+                background: state.isFocused && 'lightgray',
+                color: '#fff'
+              }),
+              option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isFocused && "#1f2d3e",
+                  color: state.isFocused && "#fff"
+              })
+            }}
+            menuPlacement="auto"
+          />
+          <AnimateSections
+            applyTransition={applyTransition}
+            setApplytransition={setApplytransition}
+          >
+            {
+              sections
+              .map((section, i) => (
+                <Section
+                  t={t}
+                  key={section.id}
+                  id={section.id}
+                  sectionIndex={i}
+                  setSection={handleSection}
+                  inputs={section}
+                  sections={sections}
+                  addSection={addSection}
+                  lang={language.value}
+                  langs={lang}
+                  ref={createRef()}
+                  handleDrag={handleDrag}
+                  handleDrop={handleDrop}
+                  setApplytransition={setApplytransition}
+                  handleDragOver={handleDragOver}
+                  setParentDropable={setParentDropable}
+                  parentDropable={parentDropable}
+                />
+              ))
+            }
+          </AnimateSections>
+        </div>
       </div>
     </>
   )

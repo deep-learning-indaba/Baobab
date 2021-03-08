@@ -1,12 +1,13 @@
 import React,
 {
-  useState, forwardRef, createRef
+  useState, forwardRef, createRef, useEffect
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
 import {
   Modal, AnimateSections, handleMove, langObject,
-  drag, drop, option, Dependency, dependencyChange
+  drag, drop, option, Dependency, dependencyChange,
+  rows
 } from './util';
 
 export const Section = forwardRef(({
@@ -21,6 +22,13 @@ export const Section = forwardRef(({
   const [style, setStyle] = useState({});
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
+  const key = inputs.key;
+
+  useEffect(() => {
+    if (key) {
+      setIsKeyOn(true);
+    }
+  }, [key])
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -46,10 +54,10 @@ export const Section = forwardRef(({
     const qst = {
       id: `${Math.random()}`,
       surrogate_id: surrogateId,
-      description: langObject(langs, null),
+      description: langObject(langs, ''),
       order: qsts.length + 1,
-      headline: langObject(langs, null),
-      placeholder: langObject(langs, null),
+      headline: langObject(langs, ''),
+      placeholder: langObject(langs, ''),
       type: null,
       options: langObject(langs, null),
       value: langObject(langs, ''),
@@ -59,7 +67,7 @@ export const Section = forwardRef(({
       depends_on_question_id: 0,
       show_for_values: langObject(langs, null),
       validation_regex: langObject(langs, null),
-      validation_text: langObject(langs, null),
+      validation_text: langObject(langs, ''),
     }
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
@@ -248,8 +256,8 @@ export const Section = forwardRef(({
             <span className="tooltiptext">{t('Title')}</span>
           </span>
           {!inputs.name[lang] && (
-              <span className='tooltiptext-error'>{t('Name is Required')}</span>
-            )}
+            <span className='tooltiptext-error'>{t('Name is Required')}</span>
+          )}
           <div
             id="toggleTitle"
             className="title-desc-toggle"
@@ -324,19 +332,23 @@ export const Section = forwardRef(({
           style={hideOrShowDetails ? {display: 'none'} : {}}
         >
           <div className="label-input-wrapper">
-            <label htmlFor="ssection-desc-1" className="form-label">{t('Description')}</label>
-            <input
-              name="section-desc-1"
-              type="text"
-              value={inputs.description[lang]}
+            <label htmlFor="section-desc-1" className="form-label">
+              {t('Description')}
+            </label>
+            <textarea
+              name='section-desc-1'
               placeholder={t('Description')}
               onChange={handleChange('description')}
-              className="section-inputs section-desc"
+              className="section-inputs section-desc section-key"
+              rows={rows(inputs.description[lang])}
+              value={inputs.description[lang]}
               />
           </div>
           {isKeyOn && (
             <div className="label-input-wrapper">
-              <label htmlFor="section-key" className="form-label">{t('Key')}</label>
+              <label htmlFor="section-key" className="form-label">
+                {t('Key')}
+              </label>
               <input
                 name="section-key"
                 type="text"

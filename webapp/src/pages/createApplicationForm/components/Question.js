@@ -2,7 +2,7 @@ import React, { useState, forwardRef, useEffect, useCallback, useMemo } from 're
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove, Dependency, dependencyChange,
-  Validation, validationText as vText, langObject
+  Validation, validationText as vText, langObject, rows
 } from './util';
 
 const Question = forwardRef(({
@@ -18,6 +18,8 @@ const Question = forwardRef(({
   const opts = inputs.options[lang];
   const type = inputs.type;
   const {max_num_referral, min_num_referral} = inputs.options;
+  const validation_regex = inputs.validation_regex[lang];
+  const key = inputs.key;
 
   useEffect(() => {
     if (!inputs.options[lang]
@@ -32,7 +34,19 @@ const Question = forwardRef(({
     } else {
       setErrorMessage('');
     }
-  }, [opts, max_num_referral, min_num_referral])
+  }, [opts, max_num_referral, min_num_referral]);
+
+  useEffect(() => {
+    if (validation_regex) {
+      setIsvalidateOn(true)
+    }
+  }, [validation_regex]);
+
+  useEffect(() => {
+    if (key) {
+      setIsKeyOn(true)
+    }
+  }, [key])
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -472,6 +486,9 @@ const Question = forwardRef(({
         <div className="headline-description">
           <div className="question-header">
             <span className="key-wrapper">
+            {!inputs.headline[lang] && (
+              <span className='tooltiptext-error'>{t('Headline is Required')}</span>
+            )}
               <input
                 type="text"
                 name="headline"
@@ -528,13 +545,14 @@ const Question = forwardRef(({
           </div>
           <div className="label-input-wrapper">
             <label htmlFor="section-desc" className="form-label">{t('Description')}</label>
-            <input
-              type="text"
-              value={inputs.description[lang]}
+            <textarea
+              name='section-desc'
               placeholder={t('Description')}
               onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
-              />
+              rows={rows(inputs.description[lang])}
+              value={inputs.description[lang]}
+            />
           </div>
           {isKeyOn && (
             <div className="label-input-wrapper">

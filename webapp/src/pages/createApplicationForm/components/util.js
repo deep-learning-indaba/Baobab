@@ -443,7 +443,6 @@ export const Validation = ({
             </label>
             <input
               name="regex"
-              id="regex"
               type="text"
               className='validaion-input advanced-regex'
               placeholder={t('Enter Your Regex')}
@@ -461,7 +460,6 @@ export const Validation = ({
           {t('Validation Text')}
           </label>
         <input
-          id="validation"
           name="validation"
           disabled={isFriendlyMode}
           type="text"
@@ -538,4 +536,15 @@ export const dependencyChange = ({
     }
   }
   setSection(updatedSections);
+}
+
+/**
+ * Calculates the number of rows in a textarea given the text
+ * @param {string} text textarea's text
+ * @return {number} number of rows
+ */
+export const rows = (text) => {
+  const length = text && text.length;
+  const numRows = length / 102;
+  return !length ? 1 : Math.ceil(numRows);
 }
