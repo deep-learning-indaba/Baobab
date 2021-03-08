@@ -206,6 +206,10 @@ test('Check if the Question Component renders.', () => {
   const questions = [{
     id: `${Math.random()}`,
     order: 1,
+    description: {
+      en: '',
+      fr: ''
+    },
     headline: {
       en: '',
       fr: ''

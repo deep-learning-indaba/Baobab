@@ -15,6 +15,7 @@ const Question = forwardRef(({
   const [isValidateOn, setIsvalidateOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const opts = inputs.options[lang];
+  const type = inputs.type;
   const {max_num_referral, min_num_referral} = inputs.options;
 
   useEffect(() => {
@@ -79,7 +80,7 @@ const Question = forwardRef(({
               let max = e.target.value;
 
               if (max <= min) {
-                max = '';
+                // max = '';
               }
               q = {
                 ...q,
@@ -130,7 +131,7 @@ const Question = forwardRef(({
 
               q = {...q, options: langObject(langs, [])}
             }
-            q = {...q, type: e}
+            q = {...q, type: e.value}
           }
           return q
         })}
@@ -217,16 +218,17 @@ const Question = forwardRef(({
 
   const handleOkDelete = () => {
     const questionsWithNoDependency = questions.map(q => {
-      if (q.depends_on_question_id
-        && q.depends_on_question_id === inputs.id) {
-        q = {...q, depends_on_question_id: null}
+      if ((q.depends_on_question_id === inputs.backendId)
+        || (q.depends_on_question_id === inputs.surrogate_id)) {
+        q = {...q, depends_on_question_id: 0}
       }
       return q
     });
     const sectionsWithNoDependency = sections.map(s => {
       if (s.id === sectionId) {
-        if (s.depends_on_question_id && s.depends_on_question_id === inputs.id) {
-          s = {...s, depends_on_question_id: null}
+        if ((s.depends_on_question_id === inputs.backendId)
+          || (s.depends_on_question_id === inputs.surrogate_id)) {
+          s = {...s, depends_on_question_id: 0}
         }
         s = {...s, questions: questionsWithNoDependency}
       }
@@ -283,7 +285,7 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, depends_on_question_id: e.value}
+            q = {...q, depends_on_question_id: parseInt(e.value)}
           }
           return q
         })}
@@ -301,7 +303,8 @@ const Question = forwardRef(({
       inputs:inputs,
       setSection:setSections,
       question: true,
-      sectionId:sectionId
+      sectionId:sectionId,
+      lang: lang
     })
   }
 
@@ -474,11 +477,15 @@ const Question = forwardRef(({
               />
               <span className="tooltiptext">{t('Headline')}</span>
             </span>
+            {!type && (
+              <span className='tooltiptext-error'>{t('Type is Required')}</span>
+            )}
             <ReactSelect
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
               defaultValue={inputs.type || null}
+              value={options.find(o => o.value === inputs.type)}
               className='select-form'
               styles={{
                 control: (base, state) => ({
@@ -516,16 +523,16 @@ const Question = forwardRef(({
           </div>
           <div className="key-wrapper">
             <input
-              name="section-desc"
               type="text"
-              value={inputs.key}
-              placeholder={t('Key')}
-              onChange={handleChange('key')}
-              className="section-inputs section-desc section-key"
-              />
-            <span className="tooltiptext">{t('Key')}</span>
+              name="Description"
+              value={inputs.description[lang]}
+              onChange={handleChange('description')}
+              placeholder={t('Description')}
+              className="question-inputs question-headline"
+            />
+            <span className="tooltiptext">{t('Description')}</span>
           </div>
-          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
+          {withPlaceHolder.includes(inputs.type) && (
             <span className="key-wrapper">
               <input
                 name="question-headline"
@@ -538,7 +545,18 @@ const Question = forwardRef(({
               <span className="tooltiptext">{t('Placeholder')}</span> 
             </span>
           )}
-          {withOptions.includes(inputs.type && inputs.type.value) && (
+          <div className="key-wrapper">
+            <input
+              name="section-desc"
+              type="text"
+              value={inputs.key}
+              placeholder={t('Key')}
+              onChange={handleChange('key')}
+              className="section-inputs section-desc section-key"
+              />
+            <span className="tooltiptext">{t('Key')}</span>
+          </div>
+          {withOptions.includes(inputs.type) && (
             <div className="options">
               <table
                 className='options-table'
@@ -550,7 +568,7 @@ const Question = forwardRef(({
                         type='text'
                         placeholder={t('Value')}
                         onChange={handleChange('value')}
-                        value={inputs.value[lang]}
+                        value={inputs.value && inputs.value[lang]}
                         className='option-inputs'
                       />
                     </td>
@@ -558,7 +576,7 @@ const Question = forwardRef(({
                       <input
                         type='text'
                         placeholder={t('Label')}
-                        value={inputs.label[lang]}
+                        value={inputs.label && inputs.label[lang]}
                         onChange={handleChange('label')}
                         className='option-inputs'
                       />
@@ -606,7 +624,7 @@ const Question = forwardRef(({
               <span className='error-label'>{t(errorMessage)}</span>
           </div>
           )}
-          {withReferals.includes(inputs.type && inputs.type.value) && (
+          {withReferals.includes(inputs.type) && (
             <div className='referals-wrapper'>
               <div className="min-wrapper">
                 <label
@@ -643,7 +661,7 @@ const Question = forwardRef(({
               <div className='error-label'>{t(errorMessage)}</div>
             </div>
           )}
-          {withExtention.includes(inputs.type && inputs.type.value) && (
+          {withExtention.includes(inputs.type) && (
             <div className='extensions-wrapper'>
               <label
                 htmlFor="extensions"
@@ -658,7 +676,7 @@ const Question = forwardRef(({
                 placeholder={
                   t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
                 className='question-inputs question-headline'
-                value={inputs.options[lang].accept
+                value={inputs.options[lang] && inputs.options[lang].accept
                   && inputs.options[lang].accept.join(',')}
                 onChange={handlereExtensionChange}
                />
@@ -727,7 +745,7 @@ const Question = forwardRef(({
             <button
               className="dropdown-item delete-section"
               onClick={handleValidation}
-              disabled={!withRegex.includes(inputs.type && inputs.type.value)}
+              disabled={!withRegex.includes(inputs.type)}
               >
               <span className="check-icon">
                 {isValidateOn

@@ -38,22 +38,27 @@ export const Section = forwardRef(({
   }
 
   const addQuestion = () => {
+    const surrogateId = inputs.questions
+      ? inputs.questions.length + 1
+      : 1;
     const qsts = inputs.questions;
     const qst = {
       id: `${Math.random()}`,
+      surrogate_id: surrogateId,
+      description: langObject(langs, null),
       order: qsts.length + 1,
-      headline: langObject(langs, ''),
-      placeholder: langObject(langs, ''),
+      headline: langObject(langs, null),
+      placeholder: langObject(langs, null),
       type: null,
-      options: langObject(langs, []),
+      options: langObject(langs, null),
       value: langObject(langs, ''),
       label: langObject(langs, ''),
       required: false,
-      key: '',
-      depends_on_question_id: null,
-      show_for_values: null,
-      validation_regex: langObject(langs, ''),
-      validation_text: langObject(langs, '')
+      key: null,
+      depends_on_question_id: 0,
+      show_for_values: langObject(langs, null),
+      validation_regex: langObject(langs, null),
+      validation_text: langObject(langs, null),
     }
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
@@ -70,8 +75,9 @@ export const Section = forwardRef(({
     const questionsInSection = inputs.questions;
     const sectionsWithoutDependency = sections.map(s => {
         questionsInSection.forEach(q => {
-          if (s.depends_on_question_id === q.id) {
-            s = {...s, depends_on_question_id: null}
+          if ((s.depends_on_question_id === q.backendId)
+            || (s.depends_on_question_id === q.surrogate_id)) {
+            s = {...s, depends_on_question_id: 0}
           }
         })
       return s;
@@ -152,7 +158,7 @@ export const Section = forwardRef(({
   const handlequestionDependency = (e) => {
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
-        s = {...inputs, depends_on_question_id: e.value};
+        s = {...inputs, depends_on_question_id: parseInt(e.value)};
       }
       return s;
     });
@@ -165,7 +171,8 @@ export const Section = forwardRef(({
       e:e,
       sections:sections,
       inputs:inputs,
-      setSection:setSection
+      setSection:setSection,
+      lang: lang
     })
   }
 
@@ -173,7 +180,7 @@ export const Section = forwardRef(({
   const questions = inputs.questions;
   for(let i = 0; i < questions.length; i++) {
     const opt = option({
-      value: `${questions[i].id}`,
+      value: `${questions[i].backendId || questions[i].surrogate_id}`,
       label: questions[i].headline[lang]
         ? questions[i].headline[lang] : questions[i].order,
       t
@@ -187,7 +194,7 @@ export const Section = forwardRef(({
     if (e.order < inputs.order) {
       e.questions.forEach(q => {
         const opt = option({
-          value: `${q.id}`,
+          value: `${q.backendId || q.surrogate_id}`,
           label: q.headline[lang]
             ? `${e.order}. ${q.headline[lang]}`
             : `${e.order}. ${q.order}`,
@@ -203,7 +210,8 @@ export const Section = forwardRef(({
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
   const dependentQuestion = inputs.questions
-    .find(e => e.id === inputs.depends_on_question_id);
+    .find(e => (e.backendId === inputs.depends_on_question_id)
+      || (e.surrogate_id === inputs.depends_on_question_id) );
 
   return (
     <div
@@ -225,15 +233,18 @@ export const Section = forwardRef(({
       </div>
       <div className="title-description">
         <div className="section-header">
-        <span className="key-wrapper">
-          <input
-            type="text"
-            value={inputs.name[lang]}
-            onChange={handleChange('name')}
-            className="section-inputs section-title"
-          />
-          <span className="tooltiptext">{t('Title')}</span>
-        </span>
+          <span className="key-wrapper">
+            <input
+              type="text"
+              value={inputs.name[lang]}
+              onChange={handleChange('name')}
+              className="section-inputs section-title"
+            />
+            <span className="tooltiptext">{t('Title')}</span>
+          </span>
+          {!inputs.name[lang] && (
+              <span className='tooltiptext-error'>{t('Name is Required')}</span>
+            )}
           <div
             id="toggleTitle"
             className="title-desc-toggle"

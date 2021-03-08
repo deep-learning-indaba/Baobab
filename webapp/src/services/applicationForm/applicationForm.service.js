@@ -9,7 +9,9 @@ export const applicationFormService = {
     getResponse,
     updateResponse,
     withdraw,
-    getQuestionList
+    getQuestionList,
+    getForEventDetails,
+    updateApplicationForm
 };
 
 
@@ -203,3 +205,50 @@ function getQuestionList(eventId) {
         };
     });
 }
+
+function getForEventDetails(eventId) {
+  return axios
+  .get(baseUrl + "/api/v1/application-form-detail?event_id=" + eventId, { 'headers': authHeader() })
+  .then(response => {
+      let formSpec = null;
+      if (response) formSpec = response.data;
+      return {
+          formSpec: formSpec,
+          status: response.status,
+          message: response.statusText
+      }
+  })
+  .catch(function(error){
+    return{
+      formSpec:null,
+      error:
+        error.response && error.response.data
+        ? error.response.data.message
+        : error.message,
+      status: error.response && error.response.status
+    };
+  });
+}
+
+export function updateApplicationForm(id, event_id, is_open, nominations, sections) {
+  let form = {
+    "id": id,
+    'event_id': event_id,
+    "is_open": is_open,
+    "nominations": nominations,
+    "sections": sections
+  }
+
+  return axios.put(baseUrl + `/api/v1/application-form-detail`, form, {headers: authHeader()})
+    .then(resp=> {
+      return resp;
+    })
+    .catch(error => {
+      if (error.response) {
+        return error.response;
+      } else {
+        // The request was made but no response was received
+        return error;
+      }
+    })
+  }

@@ -173,14 +173,17 @@ export const Modal = ({
   handleConfirm, sections, questions
 }) => {
   const dependentSections = sections
-    && sections.filter(s => s.depends_on_question_id === inputs.id);
+    && sections.filter(s => (s.depends_on_question_id === inputs.backendId)
+      || (s.depends_on_question_id === inputs.surrogate_id));
   const dependentQestions = questions
-    && questions.filter(q => q.depends_on_question_id === inputs.id);
+    && questions.filter(q => (q.depends_on_question_id === inputs.backendId)
+      || (q.depends_on_question_id === inputs.surrogate_id));
   const questionsInSection = inputs.questions;
   const sectionDependency = questionsInSection && sections.find(s => {
     let isDependent = false;
     questionsInSection.forEach(q => {
-      if (s.depends_on_question_id === q.id) {
+      if ((s.depends_on_question_id === q.backendId)
+        || (s.depends_on_question_id === q.surrogate_id)) {
         isDependent = true;
       }
     })
@@ -251,7 +254,7 @@ export const Dependency = ({
   options, handlequestionDependency, inputs, lang,
   dependentQuestion, handleDependencyChange, t
 }) => {
-  const dependency = options.find(o => o.value === inputs.depends_on_question_id);
+  const dependency = options.find(o => parseInt(o.value) === inputs.depends_on_question_id);
   
   return (
     <div className='dependency-wrapper'>
@@ -290,7 +293,7 @@ export const Dependency = ({
               id='true-radio'
               type='radio'
               className='single-choice-check'
-              checked={inputs.show_for_values}
+              checked={inputs.show_for_values[lang]}
               onChange={handleDependencyChange('single')}
               />
             <label htmlFor='true-radio'>
@@ -302,7 +305,7 @@ export const Dependency = ({
               id="false-radio"
               type='radio'
               className='single-choice-check'
-              checked={!inputs.show_for_values}
+              checked={!inputs.show_for_values[lang]}
               onChange={handleDependencyChange('single')}
               />
             <label htmlFor='false-radio'>
@@ -320,9 +323,9 @@ export const Dependency = ({
             key={option.id}
             type='checkbox'
             className='single-choice-check'
-            checked={inputs.show_for_values
-              && inputs.show_for_values.length
-              && inputs.show_for_values.includes(option.label)}
+            checked={inputs.show_for_values[lang]
+              && inputs.show_for_values[lang].length
+              && inputs.show_for_values[lang].includes(option.label)}
             onChange={handleDependencyChange(option.label)}
           />
           <label htmlFor={option.id}>{option.label}</label>
@@ -407,6 +410,7 @@ export const Validation = ({
                 type="number"
                 className='validaion-input'
                 placeholder={t('MIN')}
+                value={min}
                 onChange={handleChange('min')}
                 min={0}
                 />
@@ -424,7 +428,8 @@ export const Validation = ({
                 onChange={handleChange('max')}
                 className='validaion-input'
                 placeholder={t('MAX')}
-                min={min && min + 1}
+                value={max}
+                min={0}
                 />
             </div>
           </>
@@ -472,7 +477,7 @@ export const Validation = ({
 
 export const dependencyChange = ({
   prop, e, sections, inputs, setSection,
-  sectionId, question
+  sectionId, question, lang
 }) => {
   let updatedSections;
   if (prop === 'single') {
@@ -481,7 +486,7 @@ export const dependencyChange = ({
         if (s.id === sectionId) {
           s = {...s, questions: s.questions.map(q => {
             if (q.id === inputs.id) {
-              q = {...q, show_for_values: !q.show_for_values}
+              q = {...q, show_for_values: !q.show_for_values[lang]}
             }
             return q
           })}
@@ -502,7 +507,7 @@ export const dependencyChange = ({
         if (s.id === sectionId) {
           s = {...s, questions: s.questions.map(q => {
             if (q.id === inputs.id) {
-              const showForValue  = q.show_for_values;
+              const showForValue  = q.show_for_values[lang];
               if(e.target.checked) {
                 q = {...q, show_for_values: showForValue && showForValue.length
                   ? !showForValue.includes(prop) && [...showForValue, prop]
@@ -519,7 +524,7 @@ export const dependencyChange = ({
     } else {
       updatedSections = sections.map(s => {
         if (s.id === inputs.id) {
-          const showForValue  = s.show_for_values;
+          const showForValue  = s.show_for_values[lang];
           if(e.target.checked) {
             s = {...s, show_for_values: showForValue && showForValue.length
               ? !showForValue.includes(prop) && [...showForValue, prop]

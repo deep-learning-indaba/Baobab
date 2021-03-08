@@ -29,8 +29,7 @@
   transition-timing-function: ease-out;
 }
 
-.application-form-wrap .create-form-btn:hover,
-.application-form-wrap .create-form-btn:focus {
+.application-form-wrap .create-form-btn:hover {
   cursor: pointer;
   background: #c9c7c7;
   color: #333;
@@ -338,6 +337,10 @@
   outline: none;
 }
 
+.application-form-wrap .section-header {
+  position: relative;
+}
+
 .application-form-wrap .fa-hide-show-details {
   display: block;
   position: relative;
@@ -361,6 +364,26 @@
   margin-right: 1em;
 }
 
+.question-header {
+  position: relative;
+}
+
+.application-form-wrap .tooltiptext-error {
+  position: absolute;
+  background-color: red;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  color: #fff;
+  font-size: 0.8em;
+  left: 65%;
+  top: -1em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 5px;
+  z-index: 1;
+}
+
 .application-form-wrap .tooltiptext {
   position: absolute;
   visibility: hidden;
@@ -369,6 +392,7 @@
   transition-duration: 1s;
   transition-timing-function: ease-out;
   color: #fff;
+  font-size: 0.8em;
   left: 50%;
   top: -1em;
   padding-left: 0.5em;
@@ -406,7 +430,6 @@
 
 .application-form-wrap .move-btns-wrapper {
   display: inline-table;
-  /* border: red thin solid; */
   margin: 0;
   padding: 0;
 }
