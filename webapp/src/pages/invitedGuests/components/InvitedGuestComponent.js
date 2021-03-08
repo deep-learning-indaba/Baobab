@@ -10,6 +10,7 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
 
+import { downloadCSV } from "../../../utils/files";
 import {
   requiredText,
   requiredDropdown,
@@ -132,18 +133,7 @@ class InvitedGuests extends Component {
   downloadCsv = () => {
     let csv = this.convertToCsv(this.state.guestList);
     var filename = "GuestList" + new Date().toDateString().split(" ").join("_") + ".csv";
-    var csvData = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    if (navigator.msSaveBlob) {
-      navigator.msSaveBlob(csvData, filename);
-    } else {
-      var link = document.createElement('a');
-
-      link.href = window.URL.createObjectURL(csvData);
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    downloadCSV(csv, filename);
   };
 
 
