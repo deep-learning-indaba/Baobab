@@ -9,7 +9,7 @@ const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
     lang, section, sections, optionz, langs,
     setApplytransition, questionIndex, setQuestionAnimation,
-    handleDrag, handleDrop, showingQuestions
+    handleDrag, handleDrop, showingQuestions, setDisableSaveBtn
   }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
@@ -17,24 +17,50 @@ const Question = forwardRef(({
   const [errorMessage, setErrorMessage] = useState('');
   const opts = inputs.options[lang];
   const type = inputs.type;
-  const {max_num_referral, min_num_referral} = inputs.options;
+  const max_num_referral = inputs.options[lang] && inputs.options[lang].max_num_referral;
+  const min_num_referral = inputs.options[lang] && inputs.options[lang].min_num_referral;
   const validation_regex = inputs.validation_regex[lang];
   const key = inputs.key;
+  let maxSurrogateId = 1;
+  sections.forEach(s => {
+    if (s.backendId > maxSurrogateId) {
+      maxSurrogateId = s.backendId;
+    }
+    s.questions.forEach(q => {
+      if (q.backendId > maxSurrogateId) {
+        maxSurrogateId = q.backendId
+      }
+      if (q.surrogate_id > maxSurrogateId) {
+        maxSurrogateId = q.surrogate_id
+      }
+    })
+  })
 
   useEffect(() => {
-    if (!inputs.options[lang]
-      && (!max_num_referral || !min_num_referral)) {
+    if ((type === 'reference') && (!max_num_referral || !min_num_referral)) {
       setErrorMessage('Max and min Rererrals are required');
+      // isSaveDisabled = true;
     }
     else if (max_num_referral < min_num_referral) {
       setErrorMessage('Max referral value must be greater than Min');
+      // isSaveDisabled = true;
     }
-    else if (opts && !opts.length) {
+    else if ((type === 'multi-choice'|| type === 'multi-checkbox')
+      && opts && !opts.length) {
       setErrorMessage('At least one option is required');
+      // isSaveDisabled = true;
     } else {
       setErrorMessage('');
     }
   }, [opts, max_num_referral, min_num_referral]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      setDisableSaveBtn(true)
+    } else {
+      setDisableSaveBtn(false)
+    }
+  }, [errorMessage])
 
   useEffect(() => {
     if (validation_regex) {
@@ -56,7 +82,7 @@ const Question = forwardRef(({
           if (q.id === inputs.id) {
             let regex = q.validation_regex[lang];
             if (prop === 'min' || prop === 'max') {
-              if (!q.validation_regex[lang].split('{')[1]) {
+              if (!regex || !regex.split('{')[1]) {
                 regex = `^\s*(\S+(\s+|$)){0,0}$`
               }
             }
@@ -84,7 +110,7 @@ const Question = forwardRef(({
                 ...q,
                 validation_text: {
                   ...validationText,
-                  [lang]: vText(min, max)
+                  [lang]: vText(min, max, t)
                 }
               }
             }
@@ -93,10 +119,6 @@ const Question = forwardRef(({
               const validationText = q.validation_text;
               const min = maxMin ? parseInt(maxMin[0]) : 0;
               let max = e.target.value;
-
-              if (max <= min) {
-                // max = '';
-              }
               q = {
                 ...q,
                 validation_regex: {
@@ -108,7 +130,7 @@ const Question = forwardRef(({
                 ...q,
                 validation_text: {
                   ...validationText,
-                  [lang]: vText(min, max)
+                  [lang]: vText(min, max, t)
                 }
               }
             } else {
@@ -335,23 +357,24 @@ const Question = forwardRef(({
     let min;
     let max;
     if (prop === 'min') {
-      max = inputs.options
-        && inputs.options.max_num_referral;
+      max = inputs.options[lang]
+        && inputs.options[lang].max_num_referral;
       min = e.target.value;
     }
     if (prop === 'max') {
-      min = inputs.options
-        && inputs.options.min_num_referral;
+      min = inputs.options[lang]
+        && inputs.options[lang].min_num_referral;
       max = e.target.value;
     }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, options: {
+            const options = q.options;
+            q = {...q, options: {...options, [lang]: {
               min_num_referral: min,
               max_num_referral: max
-            }}
+            }}}
           }
           return q
         })}
@@ -376,6 +399,41 @@ const Question = forwardRef(({
       return s
     });
     setSections(updatedSections);
+  }
+
+  const handleDuplicate = () => {
+    const duplicate = {
+      id: `${Math.random()}`,
+      surrogate_id: maxSurrogateId + 1,
+      depends_on_question_id: inputs.depends_on_question_id,
+      headline: inputs.headline,
+      description: inputs.description,
+      required: inputs.required,
+      key: inputs.key,
+      options: inputs.options,
+      order: inputs.order,
+      placeholder: inputs.placeholder,
+      show_for_values: inputs.show_for_values,
+      type: inputs.type,
+      validation_regex: inputs.validation_regex,
+      validation_text: inputs.validation_text
+    };
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        const index = inputs.order;
+        const questions = [...s.questions];
+        questions.splice(index, 0, duplicate);
+        s = {...section, questions: questions.map((q, i) => {
+          q = {...q, order: i + 1}
+          return q
+        }
+        )}
+      }
+      return s
+    });
+    setSections(updatedSections);
+    setQuestionAnimation(false);
+    setApplytransition(false);
   }
 
   const options = [
@@ -468,7 +526,8 @@ const Question = forwardRef(({
   }
 
   const dependentQuestion = section.questions
-    .find(e => e.id === inputs.depends_on_question_id);
+    .find(e => (e.backendId === inputs.depends_on_question_id)
+      || (e.surrogateId === inputs.depends_on_question_id));
 
   return (
     <>
@@ -532,14 +591,14 @@ const Question = forwardRef(({
                 data-title={t("Move up")}
                 onClick={handleMoveQuestionUp}
               >
-                <i class="fas fa-chevron-up fa-move"></i>
+                <i className="fas fa-chevron-up fa-move"></i>
               </button>
               <button
                 className="move-btn"
                 data-title={t("Move down")}
                 onClick={handleMoveQuestionDown}
               >
-                <i class="fas fa-chevron-down fa-move"></i>
+                <i className="fas fa-chevron-down fa-move"></i>
               </button>
             </div>
           </div>
@@ -551,7 +610,7 @@ const Question = forwardRef(({
               onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
               rows={rows(inputs.description[lang])}
-              value={inputs.description[lang]}
+              value={inputs.description[lang] || ''}
             />
           </div>
           {isKeyOn && (
@@ -573,7 +632,7 @@ const Question = forwardRef(({
               <input
                 name="question-headline"
                 type="text"
-                value={inputs.placeholder[lang]}
+                value={inputs.placeholder[lang] || ''}
                 placeholder={t('Placeholder')}
                 onChange={handleChange('placeholder')}
                 className="question-inputs question-headline"
@@ -662,7 +721,8 @@ const Question = forwardRef(({
                   min={0}
                   placeholder={t('Enter Minimum Number of Referrals')}
                   className='referals-input'
-                  value={inputs.options.min_num_referral}
+                  value={inputs.options[lang]
+                    && inputs.options[lang].min_num_referral}
                   onChange={handlereferralsChange('min')}
                 />
               </div>
@@ -679,7 +739,8 @@ const Question = forwardRef(({
                   placeholder={t('Enter Maximum Number of Referrals')}
                   className='referals-input'
                   onChange={handlereferralsChange('max')}
-                  value={inputs.options.max_num_referral}
+                  value={inputs.options[lang]
+                    && inputs.options[lang].max_num_referral}
                 />
               </div>
               <div className='error-label'>{t(errorMessage)}</div>
@@ -700,21 +761,12 @@ const Question = forwardRef(({
                 placeholder={
                   t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
                 className='question-inputs question-headline'
-                value={inputs.options[lang] && inputs.options[lang].accept
-                  && inputs.options[lang].accept.join(',')}
+                value={(inputs.options[lang] && inputs.options[lang].accept
+                  && inputs.options[lang].accept.join(',')) || ''}
                 onChange={handlereExtensionChange}
                />
             </div>
           )}
-          <Dependency
-            options={dependencyOptions}
-            handlequestionDependency={handlequestionDependency}
-            handleDependencyChange={handleDependencyChange}
-            dependentQuestion={dependentQuestion}
-            inputs={inputs}
-            lang={lang}
-            t={t}
-            />
           {isValidateOn
             && <Validation
                 t={t}
@@ -724,11 +776,21 @@ const Question = forwardRef(({
                 handleChange={handleChange}
               />
           }
+          <Dependency
+            options={dependencyOptions}
+            handlequestionDependency={handlequestionDependency}
+            handleDependencyChange={handleDependencyChange}
+            dependentQuestion={dependentQuestion}
+            inputs={inputs}
+            lang={lang}
+            t={t}
+            />
           <div className="action-btns">
             <div className="question-footer">
               <button
                 className="delete-qstion duplicate-qstion"
                 data-title="Duplicate"
+                onClick={handleDuplicate}
               >
                 <i className="far fa-copy fa-md fa-color"></i>
               </button>
@@ -773,7 +835,7 @@ const Question = forwardRef(({
               >
               <span className="check-icon">
                 {isValidateOn
-                  && <i class="fas fa-check fa-validation"></i>
+                  && <i className="fas fa-check fa-validation"></i>
                 }
               </span>
                 {t("Validation")}
@@ -784,7 +846,7 @@ const Question = forwardRef(({
               >
               <span className="check-icon">
                 {isKeyOn
-                  && <i class="fas fa-check fa-validation"></i>
+                  && <i className="fas fa-check fa-validation"></i>
                 }
               </span>
                 {t("Key")}

@@ -13,7 +13,8 @@ import {
 export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,langs,
-  setApplytransition, setParentDropable, parentDropable
+  setApplytransition, setParentDropable, parentDropable,
+  setDisableSaveBtn
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [questionAnimation, setQuestionAnimation] = useState(false);
@@ -23,6 +24,20 @@ export const Section = forwardRef(({
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
   const key = inputs.key;
+  let maxSurrogateId = 1;
+  sections.forEach(s => {
+    if (s.backendId > maxSurrogateId) {
+      maxSurrogateId = s.backendId;
+    }
+    s.questions.forEach(q => {
+      if (q.backendId > maxSurrogateId) {
+        maxSurrogateId = q.backendId
+      }
+      if (q.surrogate_id > maxSurrogateId) {
+        maxSurrogateId = q.surrogate_id
+      }
+    })
+  })
 
   useEffect(() => {
     if (key) {
@@ -47,9 +62,7 @@ export const Section = forwardRef(({
   }
 
   const addQuestion = () => {
-    const surrogateId = inputs.questions
-      ? inputs.questions.length + 1
-      : 1;
+    const surrogateId = maxSurrogateId + 1
     const qsts = inputs.questions;
     const qst = {
       id: `${Math.random()}`,
@@ -185,10 +198,53 @@ export const Section = forwardRef(({
     })
   }
 
+  const handleDuplicate = () => {
+    const qsts = inputs.questions.map((q,i) => {
+      q = {
+        id: `${Math.random()}`,
+        surrogate_id: maxSurrogateId + 1,
+        depends_on_question_id: q.depends_on_question_id,
+        headline: q.headline,
+        description: q.description,
+        required: q.required,
+        key: q.key,
+        options: q.options,
+        order: q.order,
+        placeholder: q.placeholder,
+        show_for_values: q.show_for_values,
+        type: q.type,
+        validation_regex: q.validation_regex,
+        validation_text: q.validation_text
+      }
+      return q
+    })
+    const duplicate = {
+      id: `${Math.random()}`,
+      depends_on_question_id: inputs.depends_on_question_id,
+      description: inputs.description,
+      key: inputs.key,
+      name: inputs.name,
+      order: inputs.order,
+      show_for_values: inputs.show_for_values,
+      questions: qsts
+    };
+    const copySections = [...sections];
+    const index = inputs.order;
+    copySections.splice(index, 0, duplicate);
+    const updatedSections = copySections.map((s, i) => {
+      s = {...s, order: i + 1}
+      return s
+    });
+    setSection(updatedSections);
+    setQuestionAnimation(false);
+    setApplytransition(false);
+  }
+
   const options = [];
   const questions = inputs.questions;
   for(let i = 0; i < questions.length; i++) {
     const opt = option({
+      headline: true,
       value: `${questions[i].backendId || questions[i].surrogate_id}`,
       label: questions[i].headline[lang]
         ? questions[i].headline[lang] : questions[i].order,
@@ -203,6 +259,7 @@ export const Section = forwardRef(({
     if (e.order < inputs.order) {
       e.questions.forEach(q => {
         const opt = option({
+          headline: true,
           value: `${q.backendId || q.surrogate_id}`,
           label: q.headline[lang]
             ? `${e.order}. ${q.headline[lang]}`
@@ -222,9 +279,14 @@ export const Section = forwardRef(({
   const numSections = sections.length;
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
-  const dependentQuestion = inputs.questions
-    .find(e => (e.backendId === inputs.depends_on_question_id)
-      || (e.surrogate_id === inputs.depends_on_question_id) );
+  let dependentQuestion;
+  sections.forEach(s => {
+    s.questions.forEach(e => {
+      if (e.backendId === inputs.depends_on_question_id) {
+        dependentQuestion = e;
+      }
+    })
+  });
 
   return (
     <div
@@ -277,7 +339,10 @@ export const Section = forwardRef(({
               <i className="far fa-trash-alt fa-section"></i>
               {t("Delete Section")}
             </button>
-            <button className="dropdown-item delete-section" >
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleDuplicate}
+              >
               <i className="far fa-copy fa-section fa-duplicate"></i>
               {t("Duplicate Section")}
             </button>
@@ -286,7 +351,7 @@ export const Section = forwardRef(({
               onClick={handleMoveSectionUp}
               disabled={index === 1}
             >
-              <i class="fas fa-angle-up fa-section fa-duplicate"></i>
+              <i className="fas fa-angle-up fa-section fa-duplicate"></i>
               {t("Move Section Up")}
             </button>
             <button
@@ -294,7 +359,7 @@ export const Section = forwardRef(({
               className="dropdown-item delete-section"
               onClick={handleMoveSectionDown}
             >
-              <i class="fas fa-angle-down fa-section fa-duplicate"></i>
+              <i className="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
             </button>
             <button
@@ -302,7 +367,7 @@ export const Section = forwardRef(({
               onClick={handleKey}
             >
               {isKeyOn
-                && <i class="fas fa-check fa-duplicate fa-section"></i>
+                && <i className="fas fa-check fa-duplicate fa-section"></i>
               }
               {t("Add Key")}
             </button>
@@ -315,13 +380,13 @@ export const Section = forwardRef(({
           >
             {!hideOrShowDetails ? (
               <div className='toogle-section-details' style={style}>
-                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
-                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
               </div>
             ): 
               <div className='toogle-section-details' style={style}>
-                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
-                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
               </div>
             }
           </div>
@@ -409,6 +474,7 @@ export const Section = forwardRef(({
             parentDropable={parentDropable}
             showingQuestions={showingQuestions}
             optionz={options}
+            setDisableSaveBtn={setDisableSaveBtn}
             />
         ))}
       </AnimateSections>
@@ -421,7 +487,7 @@ export const Section = forwardRef(({
           onMouseUp={() => addQuestion()}
           style={!showingQuestions ? {display: 'none'}: {}}
         >
-          <i class="fas fa-plus add-section-icon"></i>
+          <i className="fas fa-plus add-section-icon"></i>
         </button>
       </div>
       {

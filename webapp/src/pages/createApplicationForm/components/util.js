@@ -4,14 +4,15 @@ import React, {
 import { ConfirmModal } from "react-bootstrap4-modal";
 import { default as ReactSelect } from "react-select";
 
-export const option = ({ value, t, label: l, faClass }) => {
+export const option = ({ value, t, label: l, faClass, headline }) => {
+  const lab = headline ? l : t(l);
   const label = faClass ? <div>
     <div className='dropdown-text'>
       <i className={faClass}></i>
     </div>
-    {t(l)}
+    {lab}
   </div>
-  : t(l);
+  : lab;
   return {
     label,
     value
@@ -192,7 +193,7 @@ export const Modal = ({
   let message = `Are you sure you want to delete this ${element}?`;
   if (questionsInSection && sectionDependency) {
     message = 'One or more questions in this section is a dependency of other sections. Are you sure you still want to delete it?'
-  } else if (dependentSections.length || dependentQestions.length) {
+  } else if ((dependentSections && dependentSections.length) || (dependentQestions && dependentQestions.length)) {
     message = 'This Question is a dependency of other sections/questions. Are you sure you still want to delete it?'
   }
 
@@ -254,7 +255,8 @@ export const Dependency = ({
   options, handlequestionDependency, inputs, lang,
   dependentQuestion, handleDependencyChange, t
 }) => {
-  const dependency = options.find(o => parseInt(o.value) === inputs.depends_on_question_id);
+  const dependency = options
+    .find(o => parseInt(o.value) === inputs.depends_on_question_id);
   
   return (
     <div className='dependency-wrapper'>
@@ -285,7 +287,7 @@ export const Dependency = ({
         menuPlacement="auto"
       />
       {dependentQuestion && dependentQuestion.type
-        && dependentQuestion.type.value === 'single-choice'
+        && dependentQuestion.type === 'single-choice'
         && (
         <div className='dependency-radio-wrapper'>
           <div className="min-wrapper">
@@ -315,7 +317,7 @@ export const Dependency = ({
         </div>
       )}
       {dependentQuestion && dependentQuestion.type
-        && dependentQuestion.type.value === 'multi-choice'
+        && dependentQuestion.type === 'multi-choice'
         && dependentQuestion.options[lang].map((option, i) => (
         <div className='dependency-options-wrapper'>
           <input
@@ -335,20 +337,20 @@ export const Dependency = ({
   )
 }
 
-export const validationText = (min, max) => {
+export const validationText = (min, max, t) => {
   if (max && !min) {
-    return `You may enter no more that ${max} words`
+    return t('You may enter no more that {{max}} words', {max: max})
   } else if (!max && min){
-    return `You must enter at least ${min} words`
+    return t('You must enter at least {{min}} words', {min: min})
   } else if (max && min) {
-    return `You must enter ${min} to ${max} words`
+    return t('You must enter {{min}} to {{max}} words', {min: min, max: max})
   } else {
     return '';
   }
 }
 
 export const Validation = ({
-  t, options, inputs, lang, handleChange, sections, setSection
+  t, options, inputs, lang, handleChange
 }) => {
   const [isFriendlyMode, setIsFriendlyMode] = useState(true);
   const maxMin = isFriendlyMode
@@ -447,7 +449,7 @@ export const Validation = ({
               className='validaion-input advanced-regex'
               placeholder={t('Enter Your Regex')}
               onChange={handleChange('validation_regex')}
-              value={t(inputs.validation_regex[lang])}
+              value={inputs.validation_regex[lang]}
               />
           </div>
         )
@@ -465,7 +467,7 @@ export const Validation = ({
           type="text"
           className='validaion-text'
           placeholder={t('Validation Text')}
-          value={t(inputs.validation_text[lang])}
+          value={inputs.validation_text[lang] || ''}
           onChange={handleChange('validation_text')}
         />
       </div>
@@ -484,7 +486,8 @@ export const dependencyChange = ({
         if (s.id === sectionId) {
           s = {...s, questions: s.questions.map(q => {
             if (q.id === inputs.id) {
-              q = {...q, show_for_values: !q.show_for_values[lang]}
+              const sfv = q.show_for_values;
+              q = {...q, show_for_values: {...sfv, [lang]: !q.show_for_values[lang]}}
             }
             return q
           })}
@@ -494,7 +497,8 @@ export const dependencyChange = ({
     } else {
       updatedSections = sections.map(s => {
         if (s.id === inputs.id) {
-          s = {...s, show_for_values: !s.show_for_values}
+          const sfv = s.show_for_values;
+          s = {...s, show_for_values: {...sfv, [lang]: !sfv[lang]}}
         }
         return s
       });
@@ -505,13 +509,22 @@ export const dependencyChange = ({
         if (s.id === sectionId) {
           s = {...s, questions: s.questions.map(q => {
             if (q.id === inputs.id) {
-              const showForValue  = q.show_for_values[lang];
-              if(e.target.checked) {
-                q = {...q, show_for_values: showForValue && showForValue.length
-                  ? !showForValue.includes(prop) && [...showForValue, prop]
+              const sfv  = q.show_for_values;
+              if (e.target.checked) {
+                q = {...q, show_for_values: {
+                  ...sfv,
+                  [lang]: sfv[lang] && sfv[lang].length
+                  ? !sfv[lang].includes(prop) && [...sfv[lang], prop]
                   : [prop] }
-              }else {
-                q = {...q, show_for_values: showForValue.filter(o => o !== prop)}
+                }
+              } else {
+                q = {
+                  ...q,
+                  show_for_values: {
+                    ...sfv,
+                    [lang]: sfv[lang].filter(o => o !== prop)
+                  }
+                }
               }
             }
             return q
@@ -522,13 +535,13 @@ export const dependencyChange = ({
     } else {
       updatedSections = sections.map(s => {
         if (s.id === inputs.id) {
-          const showForValue  = s.show_for_values[lang];
-          if(e.target.checked) {
-            s = {...s, show_for_values: showForValue && showForValue.length
-              ? !showForValue.includes(prop) && [...showForValue, prop]
-              : [prop] }
+          const sfv  = s.show_for_values;
+          if (e.target.checked) {
+            s = {...s, show_for_values: {...sfv, [lang]:  sfv[lang] && sfv[lang].length
+              ? !sfv[lang].includes(prop) && [...sfv[lang], prop]
+              : [prop] }}
           } else {
-            s = {...s, show_for_values: showForValue.filter(o => o !== prop)}
+            s = {...s, show_for_values: {...sfv, [lang]: sfv[lang].filter(o => o !== prop)}}
           }
         }
         return s

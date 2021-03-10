@@ -418,6 +418,10 @@
   z-index: 1;
 }
 
+.response-error {
+  color: rgb(139, 15, 15);
+}
+
 .application-form-wrap .tooltiptext {
   position: absolute;
   visibility: hidden;

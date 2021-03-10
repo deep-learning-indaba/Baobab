@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createRef } from 'react';
 import { Redirect, Prompt } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
 import { default as ReactSelect } from "react-select";
 import _ from 'lodash';
 import {
@@ -37,6 +38,7 @@ const ApplicationForm = (props) => {
   const [isInCreateMode, setCreateMode] = useState(false);
   const [initialState, setInitialState] = useState(null);
   const [errorResponse, setErrorResponse] = useState(null);
+  const [disableSaveBtn, setDisableSaveBtn] = useState(false)
 
   const [event, setEvent] = useState({
     loading: true,
@@ -75,17 +77,32 @@ const ApplicationForm = (props) => {
     ]
   }]);
   const [isSaved, setIsSaved] = useState(false);
-  const saved = _.isEqual(initialState, sections)
+  const saved = _.isEqual(initialState, sections);
+  let maxSurrogateId = 1;
+  sections.forEach(s => {
+    if (s.backendId > maxSurrogateId) {
+      maxSurrogateId = s.backendId;
+    }
+    s.questions.forEach(q => {
+      if (q.backendId > maxSurrogateId) {
+        maxSurrogateId = q.backendId
+      }
+      if (q.surrogate_id > maxSurrogateId) {
+        maxSurrogateId = q.surrogate_id
+      }
+    })
+  })
 
   useEffect(() => {
-    eventService.getEvent(props.event.id).then( res => {
+    const eventId = props.event.id;
+    eventService.getEvent(eventId).then( res => {
       setEvent({
         loading: false,
         event: res.event,
         error: res.error
       })
     });
-    applicationFormService.getForEventDetails(props.event.id)
+    applicationFormService.getDetailsForEvent(eventId)
       .then(res => {
         if (res) {
           const formSpec = res.formSpec;
@@ -113,20 +130,28 @@ const ApplicationForm = (props) => {
   
             setNominate(formSpec.nominations);
             setFormDetails({
-              isOpen: formSpec.is_open,
+              isOpen: props.event.is_registration_open,
               id: formSpec.id,
-              eventId: formSpec.event_id
+              eventId: eventId
             })
             setInitialState(mapedQuestions);
             setSections(mapedQuestions);
           } else {
+            setFormDetails({
+              isOpen: props.event.is_registration_open,
+              eventId: eventId
+            })
             setCreateMode(true);
           }
         } else {
+          setFormDetails({
+            isOpen: props.event.is_registration_open,
+            eventId: eventId
+          })
           setCreateMode(true);
         }
       }).catch(err => {
-        console.log('Error occured ', err)
+        setErrorResponse('Error occured ' + err)
     })
   }, []);
 
@@ -157,7 +182,7 @@ const ApplicationForm = (props) => {
       questions: [
         {
           id: `${Math.random()}`,
-          surrogate_id: 1,
+          surrogate_id: maxSurrogateId + 1,
           description: langObject(lang, ''),
           order: 1,
           headline: langObject(lang, ''),
@@ -199,7 +224,7 @@ const ApplicationForm = (props) => {
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const sectionsToSave = sections.map(s => {
       const questions = s.questions.map(q => {
         if (q.backendId) {
@@ -264,30 +289,30 @@ const ApplicationForm = (props) => {
     const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
       if (!isSaved) {
-        updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave)
-          .then(res => {
-            if(res.data) {
-              setIsSaved(true);
-              setHomeRedirect(true);
-            }
-          }).catch(err => {
-            if (err.response) {
-              setErrorResponse(err.response);
-            }
-            console.log('An error occured  ', err);
-        })
-      }
-    } else {
-        createApplicationForm(eventId, isOpen, nominate, sectionsToSave)
-        .then(res => {
+        const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
+        if(res.status === 200) {
           setIsSaved(true);
           setHomeRedirect(true);
-        }).catch(err => {
-          if (err.response) {
-            setErrorResponse(err.response);
+        } else {
+          if (res.data && res.data.message) {
+            setErrorResponse(res.data.message.event_id);
+          } else {
+            setErrorResponse(res.statusText);
           }
-          console.log('An error occured ', err);
-      })
+        }
+      }
+    } else {
+        const res = createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
+        if (res.status === 201) {
+          setIsSaved(true);
+          setHomeRedirect(true);
+        } else {
+          if (res.data && res.data.message) {
+            setErrorResponse(res.data.message.event_id);
+          } else {
+            setErrorResponse(res.statusText);
+          }
+        }
     }
   }
 
@@ -352,115 +377,119 @@ const ApplicationForm = (props) => {
         message="Some Changes have not been saved. Are you sure you want to leave without saving them?"
         />
       {homeRedirect && <Redirect to="/" />}
-      <div className='application-form-wrap'>
-        <TopBar />
-        <div
-          style={{ textAlign: 'end', width: '61%' }}
-          className='add-section-btn-wrapper'
-          >
-          <button
-            className='add-section-btn'
-            data-title="Add Section"
-            onMouseUp={() => addSection()}
+      {errorResponse ? (
+        <div className='tooltiptext-error response-error'>
+          <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>
+        </div>
+      ) : (
+        <div className='application-form-wrap'>
+          <TopBar />
+          <div
+            style={{ textAlign: 'end', width: '61%' }}
+            className='add-section-btn-wrapper'
             >
-            <i class="fas fa-plus fa-lg add-section-icon"></i>
-          </button>
-          <input
-            type="button"
-            value="Save"
-            className='save-form-btn'
-            data-title="Save"
-            onClick={handleSave}
-            disabled={isSaveDisabled}
-            />
-        </div>
-        <div className="application-form-wrapper">
-          <div className="nominations-desc">
+            <button
+              className='add-section-btn'
+              data-title="Add Section"
+              onMouseUp={() => addSection()}
+              >
+              <i className="fas fa-plus fa-lg add-section-icon"></i>
+            </button>
             <input
-              id="nomination-chck"
-              className="nomination-chck"
-              type="checkbox"
-              checked={nominate}
-              onChange={e => handleCheckChanged(e)}
-            />
-            <span htmlFor="nomination-chck" className="nomination-info">
-              {t('Allow candidates to nominate others using this application form'
-              + '(Users will be able to submit multiple nominations, including for themselves.'
-              + ' If this option is unchecked, a candidate can only apply for themselves)')}
-            </span>
+              type="button"
+              value="Save"
+              className='save-form-btn'
+              data-title="Save"
+              onClick={handleSave}
+              disabled={isSaveDisabled || disableSaveBtn}
+              />
           </div>
-          <div className="dates-container">
-            <span className="dates">
-              {t('Application opens ') + ' :'}
-              <span className="date">
-                {`${dateFormat(evnt.application_open)}`}
+          <div className="application-form-wrapper">
+            <div className="nominations-desc">
+              <input
+                id="nomination-chck"
+                className="nomination-chck"
+                type="checkbox"
+                checked={nominate}
+                onChange={e => handleCheckChanged(e)}
+              />
+              <span htmlFor="nomination-chck" className="nomination-info">
+                {t('Allow candidates to nominate others using this application form'
+                + '(Users will be able to submit multiple nominations, including for themselves.'
+                + ' If this option is unchecked, a candidate can only apply for themselves)')}
               </span>
-            </span>
-            <span className="dates">
-              {t('Application closes ') + ' :'}
-              <span className="date">
-                {`${dateFormat(evnt.application_close)}`}
+            </div>
+            <div className="dates-container">
+              <span className="dates">
+                {t('Application opens ') + ' :'}
+                <span className="date">
+                  {`${dateFormat(evnt.application_open)}`}
+                </span>
               </span>
-            </span>
-            {errorResponse && (
-              <span className='tooltiptext-error'>{t('Error : ' + errorResponse)}</span>
-            )}
-          </div>
-          <ReactSelect
-            id='select-language'
-            options={options()}
-            onChange={e => handleLanguageChange(e)}
-            value={language}
-            defaultValue={language}
-            className='select-language'
-            styles={{
-              control: (base, state) => ({
-                ...base,
-                boxShadow: "none",
-                border: state.isFocused && "none",
-                transition: state.isFocused && 'color,background-color 1.5s ease-out',
-                background: state.isFocused && 'lightgray',
-                color: '#fff'
-              }),
-              option: (base, state) => ({
+              <span className="dates">
+                {t('Application closes ') + ' :'}
+                <span className="date">
+                  {`${dateFormat(evnt.application_close)}`}
+                </span>
+              </span>
+            </div>
+            <ReactSelect
+              id='select-language'
+              options={options()}
+              onChange={e => handleLanguageChange(e)}
+              value={language}
+              defaultValue={language}
+              className='select-language'
+              styles={{
+                control: (base, state) => ({
                   ...base,
-                  backgroundColor: state.isFocused && "#1f2d3e",
-                  color: state.isFocused && "#fff"
-              })
-            }}
-            menuPlacement="auto"
-          />
-          <AnimateSections
-            applyTransition={applyTransition}
-            setApplytransition={setApplytransition}
-          >
-            {
-              sections
-              .map((section, i) => (
-                <Section
-                  t={t}
-                  key={section.id}
-                  id={section.id}
-                  sectionIndex={i}
-                  setSection={handleSection}
-                  inputs={section}
-                  sections={sections}
-                  addSection={addSection}
-                  lang={language.value}
-                  langs={lang}
-                  ref={createRef()}
-                  handleDrag={handleDrag}
-                  handleDrop={handleDrop}
-                  setApplytransition={setApplytransition}
-                  handleDragOver={handleDragOver}
-                  setParentDropable={setParentDropable}
-                  parentDropable={parentDropable}
-                />
-              ))
-            }
-          </AnimateSections>
+                  boxShadow: "none",
+                  border: state.isFocused && "none",
+                  transition: state.isFocused && 'color,background-color 1.5s ease-out',
+                  background: state.isFocused && 'lightgray',
+                  color: '#fff'
+                }),
+                option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused && "#1f2d3e",
+                    color: state.isFocused && "#fff"
+                })
+              }}
+              menuPlacement="auto"
+            />
+            <AnimateSections
+              applyTransition={applyTransition}
+              setApplytransition={setApplytransition}
+            >
+              {
+                sections
+                .map((section, i) => (
+                  <Section
+                    t={t}
+                    key={section.id}
+                    id={section.id}
+                    sectionIndex={i}
+                    setSection={handleSection}
+                    inputs={section}
+                    sections={sections}
+                    addSection={addSection}
+                    lang={language.value}
+                    langs={lang}
+                    ref={createRef()}
+                    handleDrag={handleDrag}
+                    handleDrop={handleDrop}
+                    setApplytransition={setApplytransition}
+                    handleDragOver={handleDragOver}
+                    setParentDropable={setParentDropable}
+                    parentDropable={parentDropable}
+                    setDisableSaveBtn={setDisableSaveBtn}
+                  />
+                ))
+              }
+            </AnimateSections>
+          </div>
         </div>
-      </div>
+      )}
     </>
   )
 }

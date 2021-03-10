@@ -386,6 +386,21 @@
     "Maximum Number of Referrals": "Nombre Maximum de Références",
     "Minimum Number of Referrals": "Nombre Minimum de Références",
     "True": "Vrai",
-    "False": "Faux"
+    "False": "Faux",
+    "errorResponse": "Erreur: {{errorResponse}}",
+    "Type is Required": "Type est Obligatoire",
+    "Headline is Required": "Titre est Obligatoire",
+    "Headline": "Titre",
+    "Add Key": "Ajouter une clé",
+    "Application Form": "Formulaire de candidature",
+    "English": "Anglais",
+    "Allow candidates to nominate others using this application form(Users will be able to submit multiple nominations, including for themselves. If this option is unchecked, a candidate can only apply for themselves)": "Autoriser les candidats à en désigner d'autres à l'aide de ce formulaire de candidature (les utilisateurs pourront soumettre plusieurs candidatures, y compris pour eux-mêmes. Si cette option n'est pas cochée, un candidat ne peut postuler que pour lui-même)",
+    "Untitled Section": "Section sans Titre",
+    "Form Settings": "Paramètres du formulaire",
+    "Max": "Max",
+    "Min": "Min",
+    "Enter Mode": "Entrer le Mode",
+    "Label": "Étiquete",
+    "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Certaines modifications n'ont pas été enregistrées. Voulez-vous vraiment partir sans les enregistrer?"
 }
 

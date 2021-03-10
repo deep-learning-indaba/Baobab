@@ -10,7 +10,7 @@ export const applicationFormService = {
     updateResponse,
     withdraw,
     getQuestionList,
-    getForEventDetails,
+    getDetailsForEvent,
     updateApplicationForm
 };
 
@@ -206,9 +206,10 @@ function getQuestionList(eventId) {
     });
 }
 
-function getForEventDetails(eventId) {
+function getDetailsForEvent(eventId) {
   return axios
-  .get(baseUrl + "/api/v1/application-form-detail?event_id=" + eventId, { 'headers': authHeader() })
+  .get(baseUrl + "/api/v1/application-form-detail?event_id=" + eventId,
+    { 'headers': authHeader() })
   .then(response => {
       let formSpec = null;
       if (response) formSpec = response.data;
