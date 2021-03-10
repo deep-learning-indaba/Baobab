@@ -13,6 +13,7 @@ import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
 import ResponseList from './pages/ResponseList/ResponseList'
+import ReviewDetails from './pages/reviewDetails'
 
 
 import ReactGA from "react-ga";
@@ -150,6 +151,13 @@ class EventNav extends Component {
                     onClick={this.props.toggleMenu}
                   >
                     {t('Response List')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/reviewDetails`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Review Details')}
                   </NavLink>
                   <NavLink
                     to={`/${this.props.eventKey}/applicationform`}
@@ -453,11 +461,18 @@ class AppComponent extends Component {
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
-                   <Route
+                <Route
                   exact
                   path="/responseList"
                   render={props => (
                     <ResponseList {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/reviewDetails"
+                  render={props => (
+                    <ReviewDetails {...props} loggedIn={this.refreshUser} />
                   )}
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />

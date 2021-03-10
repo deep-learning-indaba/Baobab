@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import copy
 import itertools
 
 from app import db, LOGGER
@@ -8,6 +9,11 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
+
+from app.references.models import ReferenceRequest, Reference
+from app.references.repository import ReferenceRequestRepository as reference_request_repository
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
+
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
@@ -548,7 +554,6 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         db.session.flush()
-        
 
     def test_review_response(self):
         self.seed_static_data()
@@ -1210,6 +1215,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['total_pages'], 0)
     
+
     def test_review_form_language(self):
         """Test that the review form questions are returned in the correct language."""
         self.seed_static_data()
@@ -1476,6 +1482,233 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
             data=params)
 
         self.assertEqual(response.status_code, 400)
+
+
+class ReferenceReviewRequest(ApiTestCase):
+    def static_seed_data(self):
+        # User, country and organisation is set up by ApiTestCase
+        self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
+
+        self.event = self.add_event()
+
+        self.system_admin = self.add_user('sa@sa.com', is_admin=True)
+        non_admin_users = self.add_n_users(3)
+        users = non_admin_users.append(self.system_admin)
+        self.event.add_event_role('admin', 4),
+        self.event.add_event_role('reviewer', 1),
+
+        db.session.commit()
+
+        application_form = [
+            self.create_application_form(1, True, False),
+        ]
+
+        closed_review = ReviewForm(1, datetime(2018, 4, 30))
+        closed_review.close()
+        review_forms = [
+            ReviewForm(1, datetime(2019, 4, 30)),
+            closed_review
+        ]
+        db.session.add_all(review_forms)
+        db.session.commit()
+
+        self.test_response = self.add_response(1, self.first_user.id, language='en', is_submitted=True)
+
+        self.response_review = self.add_response_reviewer(self.test_response.id, self.first_user.id)
+
+        self.first_headers = self.get_auth_header_for("firstuser@mail.com")
+
+        db.session.flush()
+
+    def test_get_reference_request_by_event_id(self):
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+    def test_get_reference_request_with_two_references(self):
+        """
+        In this test, there are two references requested and submitted
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979',
+        }
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 2)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+        self.assertDictEqual(data['references'][1], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
+    def test_get_reference_not_yet_submitted(self):
+        """
+        In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
+
+    def test_get_reference_submitted_later(self):
+        """
+        In this test, a reference has been requested, but the reference is only submitted after the second check
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1, 'language': 'en'}
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'),
+                                data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+    def test_two_references_only_one_submitted(self):
+        """
+        In this test, two references have been requested, but only one submitted (two ids exists, one reference submitted)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
+    def test_get_review_no_reference(self):
+        """
+        In this test, there is no reference attached to the application at all for review (i.e. no reference request)
+        """
+        self.static_seed_data()
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
 
 
 class ReviewResponseDetailListApiTest(ApiTestCase):
