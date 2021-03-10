@@ -47,6 +47,9 @@ test('Check if the Section Component renders.', () => {
       en: '',
       fr: ''
     },
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    key: null,
     questions: [
       {
         id: `${Math.random()}`,
@@ -76,7 +79,12 @@ test('Check if the Section Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
+        key: null
       }
     ]
   };
@@ -163,7 +171,11 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
       }
     ]
   }
@@ -208,7 +220,11 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
       }
     ]
   }]
@@ -243,7 +259,11 @@ test('Check if the Question Component renders.', () => {
       en: '',
       fr: ''
     },
-    required: false
+    required: false,
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    validation_regex: {en: null},
+    validation_text: {en: ''},
   }];
 
   const inputs = {
@@ -274,7 +294,11 @@ test('Check if the Question Component renders.', () => {
       en: '',
       fr: ''
     },
-    required: false
+    required: false,
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    validation_regex: {en: null},
+    validation_text: {en: ''},
   };
 
   const optionz = [
