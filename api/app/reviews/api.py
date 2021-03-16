@@ -101,24 +101,24 @@ review_fields = {
     'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
-def _serialize_review_question(review_question):
-    translation = question.get_translation(language)
+def _serialize_review_question(review_question, language):
+    translation = review_question.get_translation(language)
     if translation is None:
-        LOGGER.warn('Missing {} translation for review question id {}'.format(language, question.id))
-        translation = question.get_translation('en')
+        LOGGER.warn('Missing {} translation for review review_question id {}'.format(language, review_question.id))
+        translation = review_question.get_translation('en')
     return {
-        'id': question.id,
-        'question_id': question.question_id,
+        'id': review_question.id,
+        'question_id': review_question.question_id,
         'description': translation.description,
         'headline': translation.headline,
-        'type': question.type,
+        'type': review_question.type,
         'placeholder': translation.placeholder,
         'options': translation.options,
-        'is_required': question.is_required,
-        'order': question.order,
+        'is_required': review_question.is_required,
+        'order': review_question.order,
         'validation_regex': translation.validation_regex,
         'validation_text': translation.validation_text,
-        'weight': question.weight
+        'weight': review_question.weight
     }
 
 def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[str, Any]:
@@ -134,7 +134,7 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
             'order': section.order,
             'headline': translation.headline,
             'description': translation.description,
-            'review_questions': [_serialize_review_question(q) for q in section.review_questions]
+            'review_questions': [_serialize_review_question(q, language) for q in section.review_questions]
         })
 
     form = {
