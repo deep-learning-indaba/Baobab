@@ -130,7 +130,7 @@ const ApplicationForm = (props) => {
   
             setNominate(formSpec.nominations);
             setFormDetails({
-              isOpen: props.event.is_registration_open,
+              isOpen: props.event.is_application_open,
               id: formSpec.id,
               eventId: eventId
             })
@@ -138,14 +138,14 @@ const ApplicationForm = (props) => {
             setSections(mapedQuestions);
           } else {
             setFormDetails({
-              isOpen: props.event.is_registration_open,
+              isOpen: props.event.is_application_open,
               eventId: eventId
             })
             setCreateMode(true);
           }
         } else {
           setFormDetails({
-            isOpen: props.event.is_registration_open,
+            isOpen: props.event.is_application_open,
             eventId: eventId
           })
           setCreateMode(true);
