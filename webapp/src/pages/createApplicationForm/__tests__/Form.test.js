@@ -130,6 +130,7 @@ test('Check if the Question Component renders.', () => {
   const handleDrag = jest.fn();
   const handleDrop = jest.fn();
   const setParentDropable = jest.fn();
+  const setDisableSaveBtn = jest.fn();
 
   const section = {
     id: `${Math.random()}`,
@@ -331,7 +332,8 @@ test('Check if the Question Component renders.', () => {
     handleDrag,
     handleDrop,
     setParentDropable,
-    optionz
+    optionz,
+    setDisableSaveBtn
   };
   const ref = React.createRef();
   const wrapper = mount(
