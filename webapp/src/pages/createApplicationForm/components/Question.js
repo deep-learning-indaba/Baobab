@@ -15,12 +15,17 @@ const Question = forwardRef(({
   const [isValidateOn, setIsvalidateOn] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [emptyOptions, setEmptyOptions] = useState(false);
   const opts = inputs.options[lang];
   const type = inputs.type;
-  const max_num_referral = inputs.options[lang] && inputs.options[lang].max_num_referral;
-  const min_num_referral = inputs.options[lang] && inputs.options[lang].min_num_referral;
+  const max_num_referral = inputs.options[lang]
+    && inputs.options[lang].max_num_referral;
+  const min_num_referral = inputs.options[lang]
+    && inputs.options[lang].min_num_referral;
   const validation_regex = inputs.validation_regex[lang];
   const key = inputs.key;
+
+  const optz = useMemo(() => inputs.options, []);
   let maxSurrogateId = 1;
   sections.forEach(s => {
     if (s.backendId > maxSurrogateId) {
@@ -39,28 +44,31 @@ const Question = forwardRef(({
   useEffect(() => {
     if ((type === 'reference') && (!max_num_referral || !min_num_referral)) {
       setErrorMessage('Max and min Rererrals are required');
-      // isSaveDisabled = true;
     }
     else if (max_num_referral < min_num_referral) {
       setErrorMessage('Max referral value must be greater than Min');
-      // isSaveDisabled = true;
     }
-    else if ((type === 'multi-choice'|| type === 'multi-checkbox')
+    else if ((type === 'multi-choice' || type === 'multi-checkbox')
       && opts && !opts.length) {
       setErrorMessage('At least one option is required');
-      // isSaveDisabled = true;
     } else {
+      for (let key of Object.keys(inputs.options)) {
+        if (!inputs.options[key]) {
+          setEmptyOptions(true);
+        }
+      }
       setErrorMessage('');
     }
-  }, [opts, max_num_referral, min_num_referral]);
+  }, [opts, max_num_referral, min_num_referral, optz]);
 
   useEffect(() => {
-    if (errorMessage) {
+    if (errorMessage || ((type === 'multi-choice'
+      || type === 'multi-checkbox') && emptyOptions)) {
       setDisableSaveBtn(true)
     } else {
       setDisableSaveBtn(false)
     }
-  }, [errorMessage])
+  }, [errorMessage, emptyOptions])
 
   useEffect(() => {
     if (validation_regex) {
@@ -91,47 +99,47 @@ const Question = forwardRef(({
               && regex.split('{')[1].split(',');
 
             if (prop === 'min') {
-              const validation = q.validation_regex;
-              const validationText = q.validation_text;
               let max = maxMin ? parseInt(maxMin[1].split('}')[0]) : '';
               const min = e.target.value;
 
               if (min >= max) {
                 max = '';
               }
-              q = {
-                ...q,
-                validation_regex: {
-                  ...validation,
-                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
-                }
+              const newRegex = {};
+              for (let key in q.validation_regex) {
+                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+              }
+              const newText = {};
+              for (let key in q.validation_text) {
+                newText[key] = vText(min, max, t)
               }
               q = {
                 ...q,
-                validation_text: {
-                  ...validationText,
-                  [lang]: vText(min, max, t)
-                }
+                validation_regex: newRegex
+              }
+              q = {
+                ...q,
+                validation_text: newText
               }
             }
             if (prop === 'max') {
-              const validation = q.validation_regex;
-              const validationText = q.validation_text;
               const min = maxMin ? parseInt(maxMin[0]) : 0;
               let max = e.target.value;
-              q = {
-                ...q,
-                validation_regex: {
-                  ...validation,
-                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
-                }
+              const newRegex = {};
+              for (let key in q.validation_regex) {
+                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+              }
+              const newText = {};
+              for (let key in q.validation_text) {
+                newText[key] = vText(min, max, t)
               }
               q = {
                 ...q,
-                validation_text: {
-                  ...validationText,
-                  [lang]: vText(min, max, t)
-                }
+                validation_regex: newRegex
+              }
+              q = {
+                ...q,
+                validation_text: newText
               }
             } else {
               if (prop === 'key') {
@@ -156,18 +164,7 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            if (e.value === 'reference') {
-              q = {
-                ...q,
-                options: {
-                  min_num_referral: null,
-                  max_num_referral: null
-                }
-              }
-            } else {
-
-              q = {...q, options: langObject(langs, [])}
-            }
+            q = {...q, options: langObject(langs, [])}
             q = {...q, type: e.value}
           }
           return q
@@ -322,7 +319,11 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, depends_on_question_id: parseInt(e.value)}
+            q = {...q, depends_on_question_id: parseInt(e.value) || 0}
+            if (e.value === '') {
+              const sfv = q.show_for_values;
+              q = {...q, show_for_values: {...sfv, [lang]: null}}
+            }
           }
           return q
         })}
@@ -517,7 +518,8 @@ const Question = forwardRef(({
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
   const withRegex = ['long-text', 'short-text', 'markdown'];
-  const dependencyOptions = optionz.filter(e => e.order < inputs.order);
+  const dependencyOptions = optionz.filter(e => e.order < inputs.order
+    || !e.order);
   let style = inputs.required
     ? {display: 'block', boxShadow: '0px 0.3em 5px 0px #e8e6e6'}
     : {display: 'block'};
@@ -527,7 +529,7 @@ const Question = forwardRef(({
 
   const dependentQuestion = section.questions
     .find(e => (e.backendId === inputs.depends_on_question_id)
-      || (e.surrogateId === inputs.depends_on_question_id));
+      || (e.surrogate_id === inputs.depends_on_question_id));
 
   return (
     <>
@@ -553,7 +555,7 @@ const Question = forwardRef(({
                 name="headline"
                 value={inputs.headline[lang]}
                 onChange={handleChange('headline')}
-                placeholder={t('Headline')}
+                placeholder={inputs.headline['en'] || t('Headline')}
                 className="section-inputs question-title"
               />
               <span className="tooltiptext">{t('Headline')}</span>
@@ -606,7 +608,7 @@ const Question = forwardRef(({
             <label htmlFor="section-desc" className="form-label">{t('Description')}</label>
             <textarea
               name='section-desc'
-              placeholder={t('Description')}
+              placeholder={inputs.description['en'] || t('Description')}
               onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
               rows={rows(inputs.description[lang])}
@@ -633,7 +635,7 @@ const Question = forwardRef(({
                 name="question-headline"
                 type="text"
                 value={inputs.placeholder[lang] || ''}
-                placeholder={t('Placeholder')}
+                placeholder={inputs.placeholder['en'] || t('Placeholder')}
                 onChange={handleChange('placeholder')}
                 className="question-inputs question-headline"
                 />
@@ -675,7 +677,7 @@ const Question = forwardRef(({
                   </tr>
                 </tbody>
                 <tbody className='options-row'>
-                  {inputs.options[lang].map((option, i) => (
+                  {inputs.options[lang] && inputs.options[lang].map((option, i) => (
                     <tr key={i} className='options-row'>
                       <td className='options-row'>
                         <input
@@ -719,7 +721,9 @@ const Question = forwardRef(({
                 <input
                   type='number'
                   min={0}
-                  placeholder={t('Enter Minimum Number of Referrals')}
+                  placeholder={inputs.options['en']
+                    && inputs.options['en'].min_num_referral
+                    || t('Enter Minimum Number of Referrals')}
                   className='referals-input'
                   value={inputs.options[lang]
                     && inputs.options[lang].min_num_referral}
@@ -736,7 +740,8 @@ const Question = forwardRef(({
                 <input
                   type='number'
                   min={0}
-                  placeholder={t('Enter Maximum Number of Referrals')}
+                  placeholder={inputs.options['en'].max_num_referral
+                    || t('Enter Maximum Number of Referrals')}
                   className='referals-input'
                   onChange={handlereferralsChange('max')}
                   value={inputs.options[lang]
@@ -758,8 +763,10 @@ const Question = forwardRef(({
                 name="extensions"
                 id="extensions"
                 type='text'
-                placeholder={
-                  t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
+                placeholder={ (inputs.options['en']
+                  && inputs.options['en'].accept
+                  && inputs.options['en'].accept.join(','))
+                  || t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
                 className='question-inputs question-headline'
                 value={(inputs.options[lang] && inputs.options[lang].accept
                   && inputs.options[lang].accept.join(',')) || ''}

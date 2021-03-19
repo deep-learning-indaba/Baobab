@@ -51,7 +51,7 @@ export const calculateBoundingBoxes = children => {
   const boundingBoxes = {};
   React.Children.forEach(children, child => {
     const domNode = child.ref.current;
-    const nodeBoundingBox = domNode.getBoundingClientRect();
+    const nodeBoundingBox = domNode && domNode.getBoundingClientRect();
 
     boundingBoxes[child.key] = nodeBoundingBox;
   });
@@ -93,9 +93,6 @@ export const AnimateSections = ({
         const f = firstBox && firstBox.y;
         const l = lastBox && lastBox.y;
         let changeInY = f - l;
-        // if (Math.abs(changeInY) > 700) {
-        //   changeInY = changeInY > 0 ? 487.421875 : -487.421875;
-        // }
 
         if (changeInY) {
           requestAnimationFrame(() => {
@@ -319,10 +316,11 @@ export const Dependency = ({
       {dependentQuestion && dependentQuestion.type
         && dependentQuestion.type === 'multi-choice'
         && dependentQuestion.options[lang].map((option, i) => (
-        <div className='dependency-options-wrapper'>
+        <div
+          className='dependency-options-wrapper'
+          key={option.id}>
           <input
             id={option.id}
-            key={option.id}
             type='checkbox'
             className='single-choice-check'
             checked={inputs.show_for_values[lang]
@@ -447,7 +445,8 @@ export const Validation = ({
               name="regex"
               type="text"
               className='validaion-input advanced-regex'
-              placeholder={t('Enter Your Regex')}
+              placeholder={inputs.validation_regex['en']
+                || t('Enter Your Regex')}
               onChange={handleChange('validation_regex')}
               value={inputs.validation_regex[lang]}
               />

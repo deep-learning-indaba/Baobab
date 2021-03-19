@@ -180,7 +180,7 @@ export const Section = forwardRef(({
   const handlequestionDependency = (e) => {
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
-        s = {...inputs, depends_on_question_id: parseInt(e.value)};
+        s = {...inputs, depends_on_question_id: parseInt(e.value) || 0};
       }
       return s;
     });
@@ -240,7 +240,7 @@ export const Section = forwardRef(({
     setApplytransition(false);
   }
 
-  const options = [];
+  const options = [{value: '', label: 'Clear'}];
   const questions = inputs.questions;
   for(let i = 0; i < questions.length; i++) {
     const opt = option({
@@ -254,7 +254,7 @@ export const Section = forwardRef(({
     options.push(opt);
   };
 
-  const sectionOptions = [];
+  const sectionOptions = [{value: '', label: 'Clear'}];
   sections.forEach(e => {
     if (e.order < inputs.order) {
       e.questions.forEach(q => {
@@ -402,7 +402,7 @@ export const Section = forwardRef(({
             </label>
             <textarea
               name='section-desc-1'
-              placeholder={t('Description')}
+              placeholder={inputs.description['en'] || t('Description')}
               onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
               rows={rows(inputs.description[lang])}

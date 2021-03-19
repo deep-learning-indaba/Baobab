@@ -94,7 +94,7 @@ const ApplicationForm = (props) => {
   })
 
   useEffect(() => {
-    const eventId = props.event.id;
+    const eventId = 14;
     eventService.getEvent(eventId).then( res => {
       setEvent({
         loading: false,
@@ -297,7 +297,7 @@ const ApplicationForm = (props) => {
           if (res.data && res.data.message) {
             setErrorResponse(res.data.message.event_id);
           } else {
-            setErrorResponse(res.statusText);
+            setErrorResponse(res);
           }
         }
       }
@@ -310,7 +310,7 @@ const ApplicationForm = (props) => {
           if (res.data && res.data.message) {
             setErrorResponse(res.data.message.event_id);
           } else {
-            setErrorResponse(res.statusText);
+            setErrorResponse(res);
           }
         }
     }
@@ -326,16 +326,22 @@ const ApplicationForm = (props) => {
 
   let isSaveDisabled = false;
   sections.forEach(s => {
-    if (!s.name[language.value]) {
-      isSaveDisabled = true;
+    for(let key of Object.keys(s.name)) {
+      if (!s.name[key]) {
+        isSaveDisabled = true;
+      }
     }
     s.questions.forEach(q => {
-      if (!q.type ||!q.headline[language.value]) {
+      for(let key of Object.keys(q.headline)) {
+        if (!q.headline[key]) {
+          isSaveDisabled = true;
+        }
+      }
+      if (!q.type) {
         isSaveDisabled = true;
       }
     })
   })
-
 
   const dateFormat = (date) => {
     return new Date(date).toLocaleDateString('en-GB', {
