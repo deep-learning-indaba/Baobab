@@ -188,6 +188,25 @@ class ReviewQuestionComponent extends Component {
 
 const ReviewQuestion = withTranslation()(ReviewQuestionComponent);
 
+class ReviewSectionComponent extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
+    render() {
+        return <div className="review-section">
+            {this.props.reviewSection && this.props.reviewSection.headline 
+                && <div className="headline">{this.props.reviewSection.headline}</div>}
+            {this.props.reviewSection && this.props.reviewSection.description 
+                && <div className="description"><ReactMarkdown source={this.props.reviewSection.description} renderers={{link: this.linkRenderer}}/></div>}
+        </div>
+    }
+}
+
+const ReviewSection = withTranslation()(ReviewSectionComponent);
+
 class ReviewForm extends Component {
     constructor(props) {
         super(props);
