@@ -519,6 +519,8 @@ class ReviewForm extends Component {
         });
     }
 
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
     render() {
         const {
             form,
@@ -574,10 +576,10 @@ class ReviewForm extends Component {
         return (
             <div class="review-form-container">
                 {questionModels && questionModels.map(section =>
-                    <div className="review-section" key={"s_" + section.id}>
-                        {section.headline && <h3 className="section-headline">{this.props.reviewSection.headline}</h3>}
-                        {section.description && <div className="section-description"><ReactMarkdown source={this.props.reviewSection.description} renderers={{link: this.linkRenderer}}/></div>}
-                        {section.questions.map(qm => 
+                    <div className="card review-section" key={"s_" + section.id}>
+                        {section.headline && <h3 className="section-headline card-title">{section.headline}</h3>}
+                        {section.description && <div className="section-description"><ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/></div>}
+                        {section.questions && section.questions.map(qm => 
                             <ReviewQuestion
                                 model={qm}
                                 key={"q_" + qm.question.id}
