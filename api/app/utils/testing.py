@@ -23,7 +23,7 @@ from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
-from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
+from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewSection, ReviewSectionTranslation, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
 from app.tags.models import Tag, TagTranslation
 
 
@@ -216,8 +216,22 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_form
 
-    def add_review_question(self, review_form_id, weight=0, type='short-text'):
-        review_question = ReviewQuestion(review_form_id, None, type=type, is_required=True, order=1, weight=weight)
+    def add_review_section(self, review_form_id):
+        review_section = ReviewSection(review_form_id, order=1)
+        db.session.add(review_section)
+        db.session.commit()
+
+        return review_section
+
+    def add_review_section_translation(self, review_section_id, language, headline='Review Section', description='Review Section Description'):
+        translation = ReviewSectionTranslation(review_section_id, language, headline, description)
+        db.session.add(translation)
+        db.session.commit()
+
+        return translation
+
+    def add_review_question(self, review_section_id, weight=0, type='short-text'):
+        review_question = ReviewQuestion(review_section_id, None, type=type, is_required=True, order=1, weight=weight)
         db.session.add(review_question)
         db.session.commit()
 

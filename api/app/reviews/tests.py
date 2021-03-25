@@ -142,11 +142,17 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_configs)
         db.session.commit()
 
+        review_section1 = self.add_review_section(review_forms[0].id)
+        self.add_review_section_translation(review_section1.id, 'en', 'Review Section 1 English', 'Review Section 1 Description English')
+        self.add_review_section_translation(review_section1.id, 'fr', 'Review Section 1 French', 'Review Section 1 Description French')
+        review_section2 = self.add_review_section(review_forms[1].id)
+        self.add_review_section_translation(review_section2.id, 'en', 'Review Section 2', 'Review Section 2 Description')
+
         review_questions = [
-            ReviewQuestion(1, 1, 'multi-choice', True, 1, 0),
-            ReviewQuestion(1, 2, 'multi-choice', True, 2, 0),
-            ReviewQuestion(2, 3, 'multi-choice', True, 1, 0),
-            ReviewQuestion(2, 4, 'information', False, 2, 0)
+            ReviewQuestion(review_section1.id, 1, 'multi-choice', True, 1, 0),
+            ReviewQuestion(review_section1.id, 2, 'multi-choice', True, 2, 0),
+            ReviewQuestion(review_section2.id, 3, 'multi-choice', True, 1, 0),
+            ReviewQuestion(review_section2.id, 4, 'information', False, 2, 0)
         ]
         db.session.add_all(review_questions)
         db.session.commit()
@@ -1225,24 +1231,36 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/review', headers=header, data=params)  
         data = json.loads(response.data)
 
-        self.assertEqual(data['review_form']['review_questions'][1]['description'], 'English Description')
-        self.assertEqual(data['review_form']['review_questions'][1]['headline'], 'English Headline')
-        self.assertEqual(data['review_form']['review_questions'][1]['placeholder'], 'English Placeholder')
-        self.assertDictEqual(data['review_form']['review_questions'][1]['options'][0], {'label': 'en1', 'value': 'en'})
-        self.assertEqual(data['review_form']['review_questions'][1]['validation_regex'], 'EN Regex')        
-        self.assertEqual(data['review_form']['review_questions'][1]['validation_text'], 'EN Validation Message')
+        print(data['review_form']['review_sections'])
+
+        self.assertEqual(data['review_form']['review_sections'][0]['headline'], 'Review Section 1 English')
+        self.assertEqual(data['review_form']['review_sections'][0]['description'], 'Review Section 1 Description English')
+
+        self.assertEqual(len(data['review_form']['review_sections'][0]['review_questions']), 2)
+
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['description'], 'English Description')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['headline'], 'English Headline')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['placeholder'], 'English Placeholder')
+        self.assertDictEqual(data['review_form']['review_sections'][0]['review_questions'][1]['options'][0], {'label': 'en1', 'value': 'en'})
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_regex'], 'EN Regex')        
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_text'], 'EN Validation Message')
         
         params ={'event_id' : 1, 'language': 'fr'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)  
         data = json.loads(response.data)
 
-        self.assertEqual(data['review_form']['review_questions'][1]['description'], 'French Description')
-        self.assertEqual(data['review_form']['review_questions'][1]['headline'], 'French Headline')
-        self.assertEqual(data['review_form']['review_questions'][1]['placeholder'], 'French Placeholder')
-        self.assertDictEqual(data['review_form']['review_questions'][1]['options'][0], {'label': 'fr1', 'value': 'fr'})
-        self.assertEqual(data['review_form']['review_questions'][1]['validation_regex'], 'FR Regex')        
-        self.assertEqual(data['review_form']['review_questions'][1]['validation_text'], 'FR Validation Message')
+        self.assertEqual(data['review_form']['review_sections'][0]['headline'], 'Review Section 1 French')
+        self.assertEqual(data['review_form']['review_sections'][0]['description'], 'Review Section 1 Description French')
+
+        self.assertEqual(len(data['review_form']['review_sections'][0]['review_questions']), 2)
+
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['description'], 'French Description')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['headline'], 'French Headline')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['placeholder'], 'French Placeholder')
+        self.assertDictEqual(data['review_form']['review_sections'][0]['review_questions'][1]['options'][0], {'label': 'fr1', 'value': 'fr'})
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_regex'], 'FR Regex')        
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_text'], 'FR Validation Message')
 
 
 class ReviewListAPITest(ApiTestCase):
@@ -1278,13 +1296,22 @@ class ReviewListAPITest(ApiTestCase):
         self.add_question_translation(question3.id, 'fr', 'Headline 3 FR')
 
         review_form1 = self.add_review_form(application_form1.id)
-        review_q1 = self.add_review_question(review_form1.id, weight=1)
+
+        review_form1_section1 = self.add_review_section(review_form1.id)
+        self.add_review_section_translation(review_form1_section1.id, 'en', 'Review Section 1 en', 'Review Section 1 en')
+        self.add_review_section_translation(review_form1_section1.id, 'fr', 'Review Section 1 fr', 'Review Section 1 fr')
+        review_form1_section2 = self.add_review_section(review_form1.id)
+        self.add_review_section_translation(review_form1_section2.id, 'en', 'Review Section 2 en', 'Review Section 2 en')
+        self.add_review_section_translation(review_form1_section2.id, 'fr', 'Review Section 2 fr', 'Review Section 2 fr')
+
+        review_form1_section2 = self.add_review_section(review_form1.id)
+        review_q1 = self.add_review_question(review_form1_section1.id, weight=1)
         review_q1_translation_en = self.add_review_question_translation(review_q1.id, 'en', headline='Heading En')
         review_q1_translation_fr = self.add_review_question_translation(review_q1.id, 'fr', headline='Heading Fr')
-        review_q2 = self.add_review_question(review_form1.id, weight=0)
+        review_q2 = self.add_review_question(review_form1_section1.id, weight=0)
         review_q2_translation_en = self.add_review_question_translation(review_q2.id, 'en', headline='Heading En')
         review_q2_translation_fr = self.add_review_question_translation(review_q2.id, 'fr', headline='Heading Fr')
-        review_q3 = self.add_review_question(review_form1.id, weight=1)
+        review_q3 = self.add_review_question(review_form1_section2.id, weight=1)
         review_q3_translation_en = self.add_review_question_translation(review_q3.id, 'en', headline='Heading En')
         review_q3_translation_fr = self.add_review_question_translation(review_q3.id, 'fr', headline='Heading Fr')
 
@@ -1772,27 +1799,37 @@ class ReviewResponseDetailListApiTest(ApiTestCase):
         self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
         
         self.review_form = self.add_review_form(self.application_form.id)
-        self.review_question1 = self.add_review_question(self.review_form.id, type='short-text', weight=1)
+        self.review_section1 = self.add_review_section(self.review_form.id)
+        self.review_section1_translation1 = self.add_review_section_translation(
+            self.review_section1.id,
+            'en')
+        self.review_section2 = self.add_review_section(self.review_form.id)
+        self.review_section2_translation1 = self.add_review_section_translation(
+            self.review_section2.id,
+            'en'
+            'Review Section 2',
+            'Review Section 2 Description')
+        self.review_question1 = self.add_review_question(self.review_section1.id, type='short-text', weight=1)
         self.review_question_translation1 = self.add_review_question_translation(
             self.review_question1.id,
             'en',
             headline='Ethical Considerations',
             description="How ethical is the candidate's proposal from 1 to 5?")
-        self.review_question2 = self.add_review_question(self.review_form.id, type='long-text', weight=0)
+        self.review_question2 = self.add_review_question(self.review_section1.id, type='long-text', weight=0)
         self.review_question_translation2 = self.add_review_question_translation(
             self.review_question2.id,
             'en',
             headline=None,
             description='Comments for the candidate'
         )
-        self.review_question3 = self.add_review_question(self.review_form.id, type='multi-choice', weight=2)
+        self.review_question3 = self.add_review_question(self.review_section2.id, type='multi-choice', weight=2)
         self.review_question_translation3 = self.add_review_question_translation(
             self.review_question3.id,
             'en',
             headline=None,
             description='What is your overall rating?'
         )
-        self.review_question4 = self.add_review_question(self.review_form.id, type='checkbox', weight=0)
+        self.review_question4 = self.add_review_question(self.review_section2.id, type='checkbox', weight=0)
         self.review_question_translation4 = self.add_review_question_translation(
             self.review_question4.id,
             'en',

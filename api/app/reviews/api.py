@@ -5,6 +5,8 @@ from math import ceil
 import random
 from sqlalchemy.sql import func, exists
 
+from typing import Any, Mapping
+
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
 from app.events.models import Event, EventRole
@@ -13,7 +15,7 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
     GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.references.repository import ReferenceRequestRepository as reference_repository
@@ -99,27 +101,40 @@ review_fields = {
     'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
+def _serialize_review_question(review_question, language):
+    translation = review_question.get_translation(language)
+    if translation is None:
+        LOGGER.warn('Missing {} translation for review review_question id {}'.format(language, review_question.id))
+        translation = review_question.get_translation('en')
+    return {
+        'id': review_question.id,
+        'question_id': review_question.question_id,
+        'description': translation.description,
+        'headline': translation.headline,
+        'type': review_question.type,
+        'placeholder': translation.placeholder,
+        'options': translation.options,
+        'is_required': review_question.is_required,
+        'order': review_question.order,
+        'validation_regex': translation.validation_regex,
+        'validation_text': translation.validation_text,
+        'weight': review_question.weight
+    }
 
-def _serialize_review_form(review_form, language):
-    review_questions = []
-    for question in review_form.review_questions:
-        translation = question.get_translation(language)
+def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[str, Any]:
+    review_sections = []
+
+    for section in review_form.review_sections:
+        translation = section.get_translation(language)
         if translation is None:
-            LOGGER.warn('Missing {} translation for review question id {}'.format(language, question.id))
-            translation = question.get_translation('en')
-        review_questions.append({
-            'id': question.id,
-            'question_id': question.question_id,
-            'description': translation.description,
+            LOGGER.warn('Missing {} translation for review section id {}'.format(language, section.id))
+            translation = section.get_translation('en')
+        review_sections.append({
+            'id': section.id,
+            'order': section.order,
             'headline': translation.headline,
-            'type': question.type,
-            'placeholder': translation.placeholder,
-            'options': translation.options,
-            'is_required': question.is_required,
-            'order': question.order,
-            'validation_regex': translation.validation_regex,
-            'validation_text': translation.validation_text,
-            'weight': question.weight
+            'description': translation.description,
+            'review_questions': [_serialize_review_question(q, language) for q in section.review_questions]
         })
 
     form = {
@@ -127,7 +142,7 @@ def _serialize_review_form(review_form, language):
         'application_form_id': review_form.application_form_id,
         'is_open': review_form.is_open,
         'deadline': review_form.deadline.isoformat(),
-        'review_questions': review_questions
+        'review_sections': review_sections
     }
 
     return form
