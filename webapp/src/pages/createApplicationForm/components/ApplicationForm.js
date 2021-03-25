@@ -94,7 +94,7 @@ const ApplicationForm = (props) => {
   })
 
   useEffect(() => {
-    const eventId = 14;
+    const eventId = props.event.id;
     eventService.getEvent(eventId).then( res => {
       setEvent({
         loading: false,
