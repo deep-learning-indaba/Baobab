@@ -714,3 +714,10 @@ class ReviewResponseDetailListAPI(restful.Resource):
                    ReviewResponseDetailListAPI._serialise_review_response(review_response)
                    for review_response in review_responses
                ], 200
+
+
+class ReviewResponseSummaryListAPI(restful.Resource):
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        return 200

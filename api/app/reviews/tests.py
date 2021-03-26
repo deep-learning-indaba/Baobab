@@ -1972,3 +1972,26 @@ class ReviewResponseDetailListApiTest(ApiTestCase):
         self.assertEqual(data[1]['scores'][2]['weight'], 2)
 
         self.assertEqual(data[1]['total'], 9)
+
+
+class ReviewResponseSummaryListApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.user1 = self.add_user('user1@mail.com', 'Jane', 'Bloggs', 'Ms')
+
+    def test_not_authed(self):
+        response = self.app.get('/api/v1/reviewresponsesummarylist')
+        self.assertEqual(response.status_code, 401)
+
+    def test_not_event_admin(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            data={'event_id': 1}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_review_response_summary_for_event(self):
+        pass
