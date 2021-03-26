@@ -711,13 +711,25 @@ class ReviewResponseDetailListAPI(restful.Resource):
     def get(self, event_id):
         review_responses = review_repository.get_all_review_responses_by_event(event_id)
         return [
-                   ReviewResponseDetailListAPI._serialise_review_response(review_response)
-                   for review_response in review_responses
-               ], 200
-
+            ReviewResponseDetailListAPI._serialise_review_response(review_response)
+            for review_response in review_responses
+        ], 200
 
 class ReviewResponseSummaryListAPI(restful.Resource):
+    @staticmethod
+    def _serialise_response(response: Response):
+        return {
+            "response_id": response.id,
+            "response_user_title": response.user.user_title,
+            "response_user_firstname": response.user.firstname,
+            "response_user_lastname": response.user.lastname
+        }
+
     @auth_required
     @event_admin_required
     def get(self, event_id):
-        return 200
+        responses = response_repository.get_all_for_event(event_id)
+        return [
+            ReviewResponseSummaryListAPI._serialise_response(response)
+            for response in responses
+        ], 200

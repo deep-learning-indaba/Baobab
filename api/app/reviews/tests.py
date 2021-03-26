@@ -1977,6 +1977,62 @@ class ReviewResponseDetailListApiTest(ApiTestCase):
 class ReviewResponseSummaryListApiTest(ApiTestCase):
     def seed_static_data(self):
         self.user1 = self.add_user('user1@mail.com', 'Jane', 'Bloggs', 'Ms')
+        self.user2 = self.add_user('user2@mail.com', 'Alex', 'Person', 'Dr')
+        self.reviewer = self.add_user('reviewer@mail.com', 'Joe', 'Soap', 'Mr')
+        self.reviewer2 = self.add_user('reviewer2@mail.com', 'Jenny', 'Sharp', 'Ms')
+        self.event_admin = self.add_user('event_admin@mail.com')
+
+        self.event = self.add_event()
+        self.event2 = self.add_event(key='Empty')
+        self.event.add_event_role('admin', self.event_admin.id)
+        self.event2.add_event_role('admin', self.event_admin.id)
+
+        self.application_form = self.create_application_form(self.event.id)
+        self.section = self.add_section(self.application_form.id)
+        self.question1 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=1,
+            key='review-identifier')
+        self.question_translation1 = self.add_question_translation(
+            self.question1.id,
+            'en',
+            'Organisation')
+        self.question2 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=2,
+            key='review-identifier')
+        self.question_translation2 = self.add_question_translation(
+            self.question2.id,
+            'en',
+            'Country')
+        self.question3 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=3,
+        )
+        self.question_translation3 = self.add_question_translation(
+            self.question3.id,
+            'en',
+            'Non-review question'
+        )
+
+        self.response1 = self.add_response(
+            self.application_form.id,
+            self.user1.id,
+            is_submitted=True)
+        self.answer1 = self.add_answer(self.response1.id, self.question1.id, 'Pets R Us')
+        self.answer2 = self.add_answer(self.response1.id, self.question2.id, 'Nigeria')
+        self.answer3 = self.add_answer(self.response1.id, self.question3.id, 'Non-review answer')
+
+        self.response2 = self.add_response(
+            self.application_form.id,
+            self.user2.id,
+            is_submitted=True)
+        self.answer4 = self.add_answer(self.response2.id, self.question1.id, 'Nokia')
+        self.answer5 = self.add_answer(self.response2.id, self.question2.id, 'South Africa')
+        self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
 
     def test_not_authed(self):
         response = self.app.get('/api/v1/reviewresponsesummarylist')
@@ -1986,7 +2042,7 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.seed_static_data()
 
         response = self.app.get(
-            '/api/v1/reviewresponsedetaillist',
+            '/api/v1/reviewresponsesummarylist',
             headers=self.get_auth_header_for('user1@mail.com'),
             data={'event_id': 1}
         )
@@ -1994,4 +2050,24 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_review_response_summary_for_event(self):
-        pass
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsesummarylist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(data[0]['response_id'], 1)
+        self.assertEqual(data[0]['response_user_title'], 'Ms')
+        self.assertEqual(data[0]['response_user_firstname'], 'Jane')
+        self.assertEqual(data[0]['response_user_lastname'], 'Bloggs')
+
+        self.assertEqual(data[1]['response_id'], 2)
+        self.assertEqual(data[1]['response_user_title'], 'Dr')
+        self.assertEqual(data[1]['response_user_firstname'], 'Alex')
+        self.assertEqual(data[1]['response_user_lastname'], 'Person')
