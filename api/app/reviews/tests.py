@@ -2067,7 +2067,20 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.assertEqual(data[0]['response_user_firstname'], 'Jane')
         self.assertEqual(data[0]['response_user_lastname'], 'Bloggs')
 
+        self.assertEqual(len(data[0]['identifiers']), 2)
+        self.assertEqual(data[0]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[0]['identifiers'][0]['value'], 'Pets R Us')
+        self.assertEqual(data[0]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[0]['identifiers'][1]['value'], 'Nigeria')
+
+
         self.assertEqual(data[1]['response_id'], 2)
         self.assertEqual(data[1]['response_user_title'], 'Dr')
         self.assertEqual(data[1]['response_user_firstname'], 'Alex')
         self.assertEqual(data[1]['response_user_lastname'], 'Person')
+
+        self.assertEqual(len(data[1]['identifiers']), 2)
+        self.assertEqual(data[1]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[1]['identifiers'][0]['value'], 'Nokia')
+        self.assertEqual(data[1]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[1]['identifiers'][1]['value'], 'South Africa')

@@ -722,7 +722,13 @@ class ReviewResponseSummaryListAPI(restful.Resource):
             "response_id": response.id,
             "response_user_title": response.user.user_title,
             "response_user_firstname": response.user.firstname,
-            "response_user_lastname": response.user.lastname
+            "response_user_lastname": response.user.lastname,
+
+            'identifiers': [
+                ReviewResponseDetailListAPI._serialise_identifier(answer, response.language)
+                for answer in response.answers
+                if answer.question.is_review_identifier()
+            ],
         }
 
     @auth_required
