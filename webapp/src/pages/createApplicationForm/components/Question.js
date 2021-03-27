@@ -42,20 +42,26 @@ const Question = forwardRef(({
   })
 
   useEffect(() => {
-    if ((type === 'reference') && (!max_num_referral || !min_num_referral)) {
+    if ((type === 'reference') && (!parseInt(max_num_referral)
+      || !parseInt(min_num_referral))) {
       setErrorMessage('Max and min Rererrals are required');
     }
-    else if (max_num_referral < min_num_referral) {
+    else if (parseInt(max_num_referral) < parseInt(min_num_referral)) {
       setErrorMessage('Max referral value must be greater than Min');
     }
     else if ((type === 'multi-choice' || type === 'multi-checkbox')
       && opts && !opts.length) {
       setErrorMessage('At least one option is required');
     } else {
+      let isNotEmpty = true;
       for (let key of Object.keys(inputs.options)) {
         if (!inputs.options[key]) {
+          isNotEmpty = false;
           setEmptyOptions(true);
         }
+      }
+      if (isNotEmpty) {
+        setEmptyOptions(false);
       }
       setErrorMessage('');
     }
@@ -154,9 +160,9 @@ const Question = forwardRef(({
       }
       return s
     });
+    setSections(updatedSections)
     setApplytransition(false)
     setQuestionAnimation(false)
-    setSections(updatedSections)
   }
 
   const handleTypeChange = (e) => {
@@ -369,13 +375,18 @@ const Question = forwardRef(({
     }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
+        
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
             const options = q.options;
-            q = {...q, options: {...options, [lang]: {
-              min_num_referral: min,
-              max_num_referral: max
-            }}}
+            const opt = {};
+            for (let key of Object.keys(options)) {
+              opt[key] = {
+                min_num_referral: min,
+                max_num_referral: max
+              }
+            }
+            q = {...q, options: opt}
           }
           return q
         })}
@@ -435,6 +446,11 @@ const Question = forwardRef(({
     setSections(updatedSections);
     setQuestionAnimation(false);
     setApplytransition(false);
+  }
+
+  const handleStopPropagation = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   const options = [
@@ -557,6 +573,8 @@ const Question = forwardRef(({
                 onChange={handleChange('headline')}
                 placeholder={inputs.headline['en'] || t('Headline')}
                 className="section-inputs question-title"
+                draggable={true}
+                onDragStart={handleStopPropagation}
               />
               <span className="tooltiptext">{t('Headline')}</span>
             </span>
@@ -613,6 +631,8 @@ const Question = forwardRef(({
               className="section-inputs section-desc section-key"
               rows={rows(inputs.description[lang])}
               value={inputs.description[lang] || ''}
+              draggable={true}
+              onDragStart={handleStopPropagation}
             />
           </div>
           {isKeyOn && (
@@ -625,6 +645,8 @@ const Question = forwardRef(({
                 placeholder={t('Key')}
                 onChange={handleChange('key')}
                 className="section-inputs section-desc section-key"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
             </div>
           )}
@@ -638,6 +660,8 @@ const Question = forwardRef(({
                 placeholder={inputs.placeholder['en'] || t('Placeholder')}
                 onChange={handleChange('placeholder')}
                 className="question-inputs question-headline"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
             </div>
           )}
@@ -655,6 +679,8 @@ const Question = forwardRef(({
                         onChange={handleChange('value')}
                         value={inputs.value && inputs.value[lang]}
                         className='option-inputs'
+                        draggable={true}
+                        onDragStart={handleStopPropagation}
                       />
                     </td>
                     <td className='options-row'>
@@ -664,6 +690,8 @@ const Question = forwardRef(({
                         value={inputs.label && inputs.label[lang]}
                         onChange={handleChange('label')}
                         className='option-inputs'
+                        draggable={true}
+                        onDragStart={handleStopPropagation}
                       />
                     </td>
                     <td className='options-row'>
@@ -728,6 +756,8 @@ const Question = forwardRef(({
                   value={inputs.options[lang]
                     && inputs.options[lang].min_num_referral}
                   onChange={handlereferralsChange('min')}
+                  draggable={true}
+                  onDragStart={handleStopPropagation}
                 />
               </div>
               <div className="min-wrapper">
@@ -746,6 +776,8 @@ const Question = forwardRef(({
                   onChange={handlereferralsChange('max')}
                   value={inputs.options[lang]
                     && inputs.options[lang].max_num_referral}
+                  draggable={true}
+                  onDragStart={handleStopPropagation}
                 />
               </div>
               <div className='error-label'>{t(errorMessage)}</div>
@@ -771,6 +803,8 @@ const Question = forwardRef(({
                 value={(inputs.options[lang] && inputs.options[lang].accept
                   && inputs.options[lang].accept.join(',')) || ''}
                 onChange={handlereExtensionChange}
+                draggable={true}
+                onDragStart={handleStopPropagation}
                />
             </div>
           )}

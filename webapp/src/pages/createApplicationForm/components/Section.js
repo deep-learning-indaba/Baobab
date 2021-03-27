@@ -276,13 +276,19 @@ export const Section = forwardRef(({
     setIsKeyOn(!isKeyOn);
   }
 
+  const handleStopPropagation = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   const numSections = sections.length;
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
   let dependentQuestion;
   sections.forEach(s => {
     s.questions.forEach(e => {
-      if (e.backendId === inputs.depends_on_question_id) {
+      if (e.backendId === inputs.depends_on_question_id
+        || e.surrogate_id === inputs.depends_on_question_id) {
         dependentQuestion = e;
       }
     })
@@ -314,6 +320,8 @@ export const Section = forwardRef(({
               value={inputs.name[lang]}
               onChange={handleChange('name')}
               className="section-inputs section-title"
+              draggable={true}
+              onDragStart={handleStopPropagation}
             />
             <span className="tooltiptext">{t('Title')}</span>
           </span>
@@ -407,6 +415,8 @@ export const Section = forwardRef(({
               className="section-inputs section-desc section-key"
               rows={rows(inputs.description[lang])}
               value={inputs.description[lang]}
+              draggable={true}
+              onDragStart={handleStopPropagation}
               />
           </div>
           {isKeyOn && (
@@ -421,6 +431,8 @@ export const Section = forwardRef(({
                 placeholder={t('Key')}
                 onChange={handleChange('key')}
                 className="section-inputs section-desc section-key"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
             </div>
           )}

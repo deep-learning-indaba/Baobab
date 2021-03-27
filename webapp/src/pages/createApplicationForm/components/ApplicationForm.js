@@ -288,6 +288,7 @@ const ApplicationForm = (props) => {
     });
     const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
+      console.log('IS update mode')
       if (!isSaved) {
         const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
         if(res.status === 200) {
@@ -302,7 +303,9 @@ const ApplicationForm = (props) => {
         }
       }
     } else {
-        const res = createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
+      console.log('IS create mode')
+        const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
+        console.log(res);
         if (res.status === 201) {
           setIsSaved(true);
           setHomeRedirect(true);

@@ -94,7 +94,7 @@ export const AnimateSections = ({
         const l = lastBox && lastBox.y;
         let changeInY = f - l;
 
-        if (changeInY) {
+        if (changeInY && domNode) {
           requestAnimationFrame(() => {
             // Before the DOM paints, invert child to old position
             domNode.style.transform = `translateY(${changeInY}px)`;
@@ -190,7 +190,8 @@ export const Modal = ({
   let message = `Are you sure you want to delete this ${element}?`;
   if (questionsInSection && sectionDependency) {
     message = 'One or more questions in this section is a dependency of other sections. Are you sure you still want to delete it?'
-  } else if ((dependentSections && dependentSections.length) || (dependentQestions && dependentQestions.length)) {
+  } else if ((dependentSections && dependentSections.length)
+    || (dependentQestions && dependentQestions.length)) {
     message = 'This Question is a dependency of other sections/questions. Are you sure you still want to delete it?'
   }
 

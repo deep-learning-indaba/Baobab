@@ -371,7 +371,7 @@
     "Depends on question": "Dépend de la question",
     "You may enter no more that {{max}} words": "Vous ne pouvez saisir que {{max}} mots",
     "You must enter at least {{min}} words": "Vous devez saisir au moins {{min}} mots",
-    "You must enter ${min} to {{max}} words": "Vous devez saisir entre {{min}} et {{max}} mots",
+    "You must enter {{min}} to {{max}} words": "Vous devez saisir entre {{min}} et {{max}} mots",
     "Regular Expressions": "Expressions régulières",
     "MIN": "MIN",
     "MAX": "MAX",
@@ -401,6 +401,8 @@
     "Min": "Min",
     "Enter Mode": "Entrer le Mode",
     "Label": "Étiquete",
+    "Clear": "Dégager",
+    "French": "Français",
     "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Certaines modifications n'ont pas été enregistrées. Voulez-vous vraiment partir sans les enregistrer?"
 }
 

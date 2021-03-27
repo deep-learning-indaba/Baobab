@@ -369,7 +369,7 @@
     "Question {{element}} is a dependency of other sections/questions. Are you sure you still want to delete it?": "Question {{element}} is a dependency of other sections/questions. Are you sure you still want to delete it?",
     "Are you sure you want to delete this {{element}}": "Are you sure you want to delete this {{element}}?",
     "Depends on question": "Depends on question",
-    "You may enter no more that {{max}} words": "You must enter no more that {{max}} words",
+    "You may enter no more that {{max}} words": "You may enter no more that {{max}} words",
     "You must enter at least {{min}} words": "You must enter at least {{min}} words",
     "You must enter {{min}} to {{max}} words": "You must enter {{min}} to {{max}} words",
     "Regular Expressions": "Regular Expressions",
@@ -403,5 +403,7 @@
     "Label": "Label",
     "": "",
     " ": " ",
+    "Clear": "Clear",
+    "French": "French",
     "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Some Changes have not been saved. Are you sure you want to leave without saving them?"
 }
