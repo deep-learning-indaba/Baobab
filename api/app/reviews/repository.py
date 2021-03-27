@@ -7,6 +7,7 @@ from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQu
 from app.users.models import AppUser
 from app.references.models import Reference
 from app.events.models import EventRole
+from app.utils import misc
 
 class ReviewRepository():
 
@@ -303,6 +304,20 @@ class ReviewRepository():
             .filter_by(event_id=event_id)
             .all()
         )
+
+    @staticmethod
+    def get_average_score_for_review_question(response_id: int, review_question_id: int):
+        review_score_values = (
+            db.session.query(ReviewScore.value)
+            .filter(ReviewScore.review_question_id == review_question_id)
+            .join(ReviewResponse, ReviewResponse.id == ReviewScore.review_response_id)
+            .join(Response, Response.id == ReviewResponse.response_id)
+            .filter_by(id=response_id)
+            .all()
+        )
+        review_score_values = [misc.try_parse_float(review_score_value[0]) for review_score_value in review_score_values]
+        average_review_score = sum(review_score_values) / len(review_score_values)
+        return average_review_score
 
 class ReviewConfigurationRepository():
 

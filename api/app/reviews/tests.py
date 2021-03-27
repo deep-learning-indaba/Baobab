@@ -2034,6 +2034,88 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.answer5 = self.add_answer(self.response2.id, self.question2.id, 'South Africa')
         self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
 
+        self.review_form = self.add_review_form(self.application_form.id)
+        self.review_section1 = self.add_review_section(self.review_form.id)
+        self.review_section1_translation1 = self.add_review_section_translation(
+            self.review_section1.id,
+            'en')
+        self.review_section2 = self.add_review_section(self.review_form.id)
+        self.review_section2_translation1 = self.add_review_section_translation(
+            self.review_section2.id,
+            'en'
+            'Review Section 2',
+            'Review Section 2 Description')
+        self.review_question1 = self.add_review_question(self.review_section1.id, type='short-text', weight=1)
+        self.review_question_translation1 = self.add_review_question_translation(
+            self.review_question1.id,
+            'en',
+            headline='Ethical Considerations',
+            description="How ethical is the candidate's proposal from 1 to 5?")
+        self.review_question2 = self.add_review_question(self.review_section1.id, type='long-text', weight=0)
+        self.review_question_translation2 = self.add_review_question_translation(
+            self.review_question2.id,
+            'en',
+            headline=None,
+            description='Comments for the candidate'
+        )
+        self.review_question3 = self.add_review_question(self.review_section2.id, type='multi-choice', weight=2)
+        self.review_question_translation3 = self.add_review_question_translation(
+            self.review_question3.id,
+            'en',
+            headline=None,
+            description='What is your overall rating?'
+        )
+        self.review_question4 = self.add_review_question(self.review_section2.id, type='checkbox', weight=0)
+        self.review_question_translation4 = self.add_review_question_translation(
+            self.review_question4.id,
+            'en',
+            headline='Yes/No Question'
+        )
+
+        # reviewer 1 for first response
+        self.review_response1 = self.add_review_response(
+            self.reviewer.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score1 = self.add_review_score(self.review_response1.id, self.review_question1.id, '4')
+        self.review_score2 = self.add_review_score(self.review_response1.id, self.review_question2.id, 'This is a very good proposal')
+        self.review_score3 = self.add_review_score(self.review_response1.id, self.review_question3.id, '5')
+        self.review_score4 = self.add_review_score(self.review_response1.id, self.review_question4.id, 'Yes')
+
+        # reviewer 2 for first response
+        self.review_response3 = self.add_review_response(
+            self.reviewer2.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score9 = self.add_review_score(self.review_response3.id, self.review_question1.id, '3')
+        self.review_score10 = self.add_review_score(self.review_response3.id, self.review_question2.id, 'This is a good proposal')
+        self.review_score11 = self.add_review_score(self.review_response3.id, self.review_question3.id, '4')
+        self.review_score12 = self.add_review_score(self.review_response3.id, self.review_question4.id, 'Yes')
+
+        # reviewer 2 for second response
+        self.review_response2 = self.add_review_response(
+            self.reviewer2.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score5 = self.add_review_score(self.review_response2.id, self.review_question1.id, '3')
+        self.review_score6 = self.add_review_score(self.review_response2.id, self.review_question2.id, 'Close to bad!')
+        self.review_score7 = self.add_review_score(self.review_response2.id, self.review_question3.id, '2')
+        self.review_score8 = self.add_review_score(self.review_response2.id, self.review_question4.id, 'No')
+
+        # reviewer 1 for second response
+        self.review_response4 = self.add_review_response(
+            self.reviewer.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score13 = self.add_review_score(self.review_response4.id, self.review_question1.id, '2')
+        self.review_score14 = self.add_review_score(self.review_response4.id, self.review_question2.id, 'Bad!')
+        self.review_score15 = self.add_review_score(self.review_response4.id, self.review_question3.id, '1')
+        self.review_score16 = self.add_review_score(self.review_response4.id, self.review_question4.id, 'No')
+
     def test_not_authed(self):
         response = self.app.get('/api/v1/reviewresponsesummarylist')
         self.assertEqual(response.status_code, 401)
@@ -2073,6 +2155,27 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.assertEqual(data[0]['identifiers'][1]['headline'], 'Country')
         self.assertEqual(data[0]['identifiers'][1]['value'], 'Nigeria')
 
+        self.assertEqual(len(data[0]['scores']), 3)
+        self.assertEqual(data[0]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[0]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[0]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[0]['scores'][0]['score'], 3.5)
+        self.assertEqual(data[0]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[0]['scores'][1]['headline'], None)
+        self.assertEqual(data[0]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[0]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[0]['scores'][1]['score'], 0)
+        self.assertEqual(data[0]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[0]['scores'][2]['headline'], None)
+        self.assertEqual(data[0]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[0]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[0]['scores'][2]['score'], 4.5)
+        self.assertEqual(data[0]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[0]['total'], 12.5)
+
 
         self.assertEqual(data[1]['response_id'], 2)
         self.assertEqual(data[1]['response_user_title'], 'Dr')
@@ -2084,3 +2187,24 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.assertEqual(data[1]['identifiers'][0]['value'], 'Nokia')
         self.assertEqual(data[1]['identifiers'][1]['headline'], 'Country')
         self.assertEqual(data[1]['identifiers'][1]['value'], 'South Africa')
+
+        self.assertEqual(len(data[1]['scores']), 3)
+        self.assertEqual(data[1]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[1]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[1]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[1]['scores'][0]['score'], 2.5)
+        self.assertEqual(data[1]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[1]['scores'][1]['headline'], None)
+        self.assertEqual(data[1]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[1]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[1]['scores'][1]['score'], 0)
+        self.assertEqual(data[1]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[1]['scores'][2]['headline'], None)
+        self.assertEqual(data[1]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[1]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[1]['scores'][2]['score'], 1.5)
+        self.assertEqual(data[1]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[1]['total'], 5.5)
