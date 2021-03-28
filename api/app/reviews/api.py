@@ -721,11 +721,7 @@ class ReviewResponseSummaryListAPI(restful.Resource):
         scores = []
         for review_section in review_form.review_sections:
             for review_question in review_section.review_questions:
-                if (
-                    review_question.type == 'multi-choice'
-                    or review_question.type == 'long-text'
-                    or review_question.type == 'short-text'
-                ):
+                if review_question.weight > 0:
                     review_question_translation = review_question.get_translation(response.language)
                     if not review_question_translation:
                         review_question_translation = review_question.get_translation('en')
