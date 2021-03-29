@@ -711,6 +711,56 @@ class ReviewResponseDetailListAPI(restful.Resource):
     def get(self, event_id):
         review_responses = review_repository.get_all_review_responses_by_event(event_id)
         return [
-                   ReviewResponseDetailListAPI._serialise_review_response(review_response)
-                   for review_response in review_responses
-               ], 200
+            ReviewResponseDetailListAPI._serialise_review_response(review_response)
+            for review_response in review_responses
+        ], 200
+
+class ReviewResponseSummaryListAPI(restful.Resource):
+    @staticmethod
+    def _serialise_response(response: Response, review_form: ReviewForm):
+        scores = []
+        for review_section in review_form.review_sections:
+            for review_question in review_section.review_questions:
+                if review_question.weight > 0:
+                    review_question_translation = review_question.get_translation(response.language)
+                    if not review_question_translation:
+                        review_question_translation = review_question.get_translation('en')
+                        LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_score.review_question.id))
+
+                    average_score = review_repository.get_average_score_for_review_question(response.id, review_question.id)
+
+                    score = {
+                        "headline": review_question_translation.headline,
+                        "description": review_question_translation.description,
+                        "type": review_question.type,
+                        "score": average_score,
+                        "weight": review_question.weight
+                    }
+                    scores.append(score)
+
+        response_summary = {
+            "response_id": response.id,
+            "response_user_title": response.user.user_title,
+            "response_user_firstname": response.user.firstname,
+            "response_user_lastname": response.user.lastname,
+
+            "identifiers": [
+                ReviewResponseDetailListAPI._serialise_identifier(answer, response.language)
+                for answer in response.answers
+                if answer.question.is_review_identifier()
+            ],
+
+            "scores": scores,
+            "total": sum(score['score'] * score['weight'] for score in scores)
+        }
+        return response_summary
+
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        responses = response_repository.get_all_for_event(event_id)
+        review_form = review_repository.get_review_form(event_id)
+        return [
+            ReviewResponseSummaryListAPI._serialise_response(response, review_form)
+            for response in responses
+        ], 200

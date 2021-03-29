@@ -7,6 +7,7 @@ from sqlalchemy.orm import column_property
 from app import db, LOGGER
 from app.applicationModel.models import Question
 from app.tags.models import Tag
+from app.users.models import AppUser
 
 
 class Response(db.Model):
@@ -24,7 +25,7 @@ class Response(db.Model):
     language = db.Column(db.String(2), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
-    user = db.relationship('AppUser', foreign_keys=[user_id])
+    user: AppUser = db.relationship('AppUser', foreign_keys=[user_id])
     answers = db.relationship('Answer', order_by='Answer.order')
     response_tags = db.relationship('ResponseTag')
     reviewers = db.relationship('ResponseReviewer')
