@@ -35,7 +35,6 @@ test('Check if the Section Component renders.', () => {
   // Render Section Component.
   const t = jest.fn();
   const setSection = jest.fn();
-  const sections = [];
   const sectionIndex = 0;
   const lang = 'en';
   const inputs = {
@@ -48,11 +47,18 @@ test('Check if the Section Component renders.', () => {
       en: '',
       fr: ''
     },
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    key: null,
     questions: [
       {
         id: `${Math.random()}`,
         order: 1,
         headline: {
+          en: '',
+          fr: ''
+        },
+        description: {
           en: '',
           fr: ''
         },
@@ -73,10 +79,16 @@ test('Check if the Section Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
+        key: null
       }
     ]
   };
+  const sections = [inputs];
   const addSection = jest.fn(); 
   const addQuestion = jest.fn();
   const handleDrag = jest.fn();
@@ -118,6 +130,7 @@ test('Check if the Question Component renders.', () => {
   const handleDrag = jest.fn();
   const handleDrop = jest.fn();
   const setParentDropable = jest.fn();
+  const setDisableSaveBtn = jest.fn();
 
   const section = {
     id: `${Math.random()}`,
@@ -138,6 +151,10 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
+        description: {
+          en: '',
+          fr: ''
+        },
         placeholder: {
           en: '',
           fr: ''
@@ -155,7 +172,11 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
       }
     ]
   }
@@ -179,6 +200,10 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
+        description: {
+          en: '',
+          fr: ''
+        },
         placeholder: {
           en: '',
           fr: ''
@@ -196,7 +221,11 @@ test('Check if the Question Component renders.', () => {
           en: '',
           fr: ''
         },
-        required: false
+        required: false,
+        depends_on_question_id: 0,
+        show_for_values: {en: null},
+        validation_regex: {en: null},
+        validation_text: {en: ''},
       }
     ]
   }]
@@ -206,6 +235,10 @@ test('Check if the Question Component renders.', () => {
   const questions = [{
     id: `${Math.random()}`,
     order: 1,
+    description: {
+      en: '',
+      fr: ''
+    },
     headline: {
       en: '',
       fr: ''
@@ -227,7 +260,11 @@ test('Check if the Question Component renders.', () => {
       en: '',
       fr: ''
     },
-    required: false
+    required: false,
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    validation_regex: {en: null},
+    validation_text: {en: ''},
   }];
 
   const inputs = {
@@ -237,6 +274,10 @@ test('Check if the Question Component renders.', () => {
       en: '',
       fr: ''
     },
+    description: {
+      en: '',
+      fr: ''
+    },
     placeholder: {
       en: '',
       fr: ''
@@ -254,7 +295,11 @@ test('Check if the Question Component renders.', () => {
       en: '',
       fr: ''
     },
-    required: false
+    required: false,
+    depends_on_question_id: 0,
+    show_for_values: {en: null},
+    validation_regex: {en: null},
+    validation_text: {en: ''},
   };
 
   const optionz = [
@@ -287,7 +332,8 @@ test('Check if the Question Component renders.', () => {
     handleDrag,
     handleDrop,
     setParentDropable,
-    optionz
+    optionz,
+    setDisableSaveBtn
   };
   const ref = React.createRef();
   const wrapper = mount(
