@@ -3,8 +3,10 @@ from app.applicationModel.models import ApplicationForm
 from app.events.models import EventRole
 from app.responses.models import Response
 from app.users.models import AppUser
+from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from sqlalchemy import func
+from sqlalchemy import or_
 
 class UserRepository():
 
@@ -61,3 +63,18 @@ class UserRepository():
                          .join(ApplicationForm, ApplicationForm.id==Response.application_form_id)\
                          .filter_by(event_id=event_id)\
                          .all()
+
+    @staticmethod
+    def get_all_with_responses_or_invited_guests_for(event_id):
+        return (
+            db.session.query(AppUser, Response, InvitedGuest)
+                .filter_by(active=True, is_deleted=False)
+                .join(Response, Response.user_id==AppUser.id, isouter=True)
+                .join(InvitedGuest, InvitedGuest.user_id==AppUser.id, isouter=True)
+                .filter(or_(InvitedGuest != None, Response != None))
+                .join(ApplicationForm, ApplicationForm.id==Response.application_form_id, isouter=True)
+
+                # Since both InvitedGuest and ApplicationForm have an event_id we need to include
+                # both in the filter.
+                .filter(or_(InvitedGuest.event_id==event_id, ApplicationForm.event_id==event_id))
+        ).all()
