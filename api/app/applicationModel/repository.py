@@ -1,10 +1,6 @@
 from app import db
-from app.applicationModel.models import ApplicationForm, Section, Question
-from app.users.models import AppUser
+from app.applicationModel.models import ApplicationForm, Question, QuestionTranslation, Section, SectionTranslation
 from app.events.models import Event
-from app.attendance.models import Attendance
-from sqlalchemy.sql import exists
-from app import LOGGER
 
 
 class ApplicationFormRepository():
@@ -19,23 +15,43 @@ class ApplicationFormRepository():
             .filter_by(event_id=event_id)\
             .first()
 
-    @staticmethod
-    def get_sections_by_app_id(app_id):
-        return db.session.query(Section)\
-            .filter_by(application_form_id=app_id)\
-            .all()
+    def add(obj):
+        db.session.add(obj)
+        db.session.commit()
+        return obj
 
     @staticmethod
-    def get_section_by_app_id_and_section_name(app_id, section_name):
-        # TODO: replace "name" with "key" to make this more robust (independent of "name" change)
-        return db.session.query(Section)\
-            .filter_by(application_form_id=app_id, name=section_name)\
-            .first()
+    def get_questions_for_event(event_id):
+        return (db.session.query(Question)
+                    .join(ApplicationForm, Question.application_form_id == ApplicationForm.id)
+                    .filter_by(event_id=event_id)
+                    .join(Section, Question.section_id == Section.id)
+                    .order_by(Section.order, Question.order)
+                    .all())
 
     @staticmethod
-    def get_section_by_id(section_id):
-        return db.session.query(Section).get(section_id)
+    def delete_question(question_to_delete: Question):
+        # Remove any dependencies
+        for question in question_to_delete.application_form.questions:
+            if question.depends_on_question_id == question_to_delete.id:
+                question.depends_on_question_id = None
+        for section in question_to_delete.application_form.sections:
+            if section.depends_on_question_id == question_to_delete.id:
+                section.depends_on_question_id = None
+
+        db.session.commit()
+        
+        # Delete question and translations
+        db.session.query(QuestionTranslation).filter_by(question_id=question_to_delete.id).delete()
+        db.session.query(Question).filter_by(id=question_to_delete.id).delete()
+        db.session.commit()
 
     @staticmethod
-    def get_question_by_id(question_id):
-        return db.session.query(Question).get(question_id)
+    def delete_section(section):
+        db.session.query(SectionTranslation).filter_by(section_id=section.id).delete()
+
+        for question in db.session.query(Question).filter_by(section_id=section.id).all():
+            ApplicationFormRepository.delete_question(question)
+
+        db.session.query(Section).filter_by(id=section.id).delete()
+        db.session.commit()

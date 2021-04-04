@@ -1,0 +1,7 @@
+.gcloudignore
+.git
+.gitignore
+assets/
+test/
+templates/
+node_modules/

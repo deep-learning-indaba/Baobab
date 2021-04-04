@@ -10,8 +10,8 @@ class OutcomeApiTest(ApiTestCase):
     def seed_static_data(self):
         db.session.expire_on_commit = False    
 
-        self.event1 = self.add_event(name='Event 1', key='event1')
-        self.event2 = self.add_event(name='Event 2', key='event2')
+        self.event1 = self.add_event(name={'en': 'Event 1'}, key='event1')
+        self.event2 = self.add_event(name={'en': 'Event 2'}, key='event2')
 
         self.test_user1 = self.add_user('something@email.com')
         self.test_user2 = self.add_user('something_else@email.com')
@@ -40,6 +40,10 @@ class OutcomeApiTest(ApiTestCase):
         ])
 
         db.session.commit()
+
+        self.add_email_template('outcome-rejected')
+        self.add_email_template('outcome-waitlist')
+
         db.session.flush()
 
         self.event1_user1_outcome1_id = self.event1_user1_outcome1.id
@@ -48,6 +52,7 @@ class OutcomeApiTest(ApiTestCase):
         self.event2_user1_outcome_id = self.event2_user1_outcome.id
 
         self.test_user1_id = self.test_user1.id
+        
 
     def test_repository_get_latest_by_user_for_event(self):
         """Test that repository method gets the correct latest outcome for a user."""
@@ -65,14 +70,14 @@ class OutcomeApiTest(ApiTestCase):
         self.seed_static_data()
         result = outcome_repository.get_all_by_user_for_event(self.test_user1.id, self.event1.id)
         self.assertEqual(len(result), 2)
-        self.assertItemsEqual([o.id for o in result], [self.event1_user1_outcome1.id, self.event1_user1_outcome2.id])
+        self.assertCountEqual([o.id for o in result], [self.event1_user1_outcome1.id, self.event1_user1_outcome2.id])
     
     def test_get_latest_for_event(self):
         """Test that repository method gets the latest outcomes for an event."""
         self.seed_static_data()
         result = outcome_repository.get_latest_for_event(self.event1.id)
         self.assertEqual(len(result), 2)
-        self.assertItemsEqual([o.id for o in result], [self.event1_user1_outcome2.id, self.event1_user2_outcome.id])
+        self.assertCountEqual([o.id for o in result], [self.event1_user1_outcome2.id, self.event1_user2_outcome.id])
 
     def test_outcome_get(self):
         """Test usual get case."""
@@ -163,7 +168,7 @@ class OutcomeApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(len(data), 2)
-        self.assertItemsEqual([o['user']['email'] for o in data], ['something@email.com', 'something_else@email.com'])
+        self.assertCountEqual([o['user']['email'] for o in data], ['something@email.com', 'something_else@email.com'])
     
 
 

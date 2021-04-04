@@ -15,7 +15,7 @@ class FormMultiCheckbox extends React.Component {
   componentDidMount() {
     let checkedValues = [];
     if (this.props.defaultValue) {
-      checkedValues = this.props.defaultValue.split('-');
+      checkedValues = this.props.defaultValue.split(' ; ');
     }
     this.setState({
       checked: checkedValues
@@ -44,16 +44,17 @@ class FormMultiCheckbox extends React.Component {
       };
     }, () => {
       if (this.props.onChange) {
-        this.props.onChange(this.state.checked.join('-'));
+        this.props.onChange(this.state.checked.join(' ; '));
       }
     });
   }
 
   renderFormCheckbox = (option) => {
+    let id = "checkbox_" + this.props.id + "_" + option.value;
     return (
       <div class="custom-control custom-checkbox" key={option.value}>
         <input
-          id={"checkbox_" + option.value}
+          id={id}
           className={
             this.shouldDisplayError()
               ? "custom-control-input is-invalid"
@@ -67,8 +68,9 @@ class FormMultiCheckbox extends React.Component {
           ref={input => {
             this.nameInput = input;
           }}
+          key={this.props.id + '_check_' + option.value}
         />
-        <label class="custom-control-label" htmlFor={"checkbox_" + option.value}>{option.label}</label>
+        <label class="custom-control-label" htmlFor={id}>{option.label}</label>
       </div>
     );
   }
@@ -90,7 +92,7 @@ class FormMultiCheckbox extends React.Component {
                 <div />
               )}
           </div>
-          <div className="form-inline">
+          <div className="form text-left multi-checkbox-list">
             {this.props.options.map((option) => this.renderFormCheckbox(option))}
           </div>
         </FormGroup>

@@ -38,7 +38,7 @@ class AttendanceApiTest(ApiTestCase):
 
         registration_admin = self.add_user('ra@ra.com')
 
-        event = self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),'JOLLOF')
+        event = self.add_event({'en': 'indaba 2019'}, {'en': 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya '}, datetime(2019, 8, 25), datetime(2019, 8, 31),'JOLLOF')
         self.event = event
         db.session.add(self.event)
 
@@ -104,6 +104,8 @@ class AttendanceApiTest(ApiTestCase):
         )
         db.session.add_all([ra])
         db.session.commit()
+
+        self.add_email_template('attendance-confirmation')
 
     def get_auth_header_for(self, email):
         body = {
@@ -252,8 +254,8 @@ class AttendanceApiTest(ApiTestCase):
                       headers=header, data=params)
       
         response = json.loads(attendance_response.data)
-        self.assertEquals(response['is_invitedguest'],True)
-        self.assertEquals(response['invitedguest_role'],role)
+        self.assertEqual(response['is_invitedguest'],True)
+        self.assertEqual(response['invitedguest_role'],role)
 
         # No Invited Guest since he/she has already been signed in.
         params = { 'event_id': 1,
@@ -284,7 +286,7 @@ class AttendanceApiTest(ApiTestCase):
         data = json.loads(result.data)
         occurences_in_attendance_list = [att for att in data if att['user_id'] == invited_guest_id]
         num_occurences_in_attendance_list = len(occurences_in_attendance_list)
-        self.assertEquals(num_occurences_in_attendance_list,1)
+        self.assertEqual(num_occurences_in_attendance_list,1)
 
 
     def test_cannot_register_attendance_twice(self):

@@ -1,5 +1,7 @@
 from datetime import datetime
 import json
+import copy
+import itertools
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
@@ -7,7 +9,12 @@ from app.events.models import Event, EventRole
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
+
+from app.references.models import ReferenceRequest, Reference
+from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
+
+from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 from nose.plugins.skip import SkipTest
 from app.organisation.models import Organisation
@@ -15,7 +22,7 @@ from app.organisation.models import Organisation
 from parameterized import parameterized
 
 class ReviewsApiTest(ApiTestCase):
-    
+
     def seed_static_data(self):
         self.add_organisation('Deep Learning Indaba 2019', 'blah.png', 'blah_big.png')
         self.add_organisation('Deep Learning Indaba 2020', 'blah.png', 'blah_big.png')
@@ -39,7 +46,7 @@ class ReviewsApiTest(ApiTestCase):
         ]
         db.session.add_all(countries)
         db.session.commit()
-        
+
         reviewer1 = AppUser('r1@r.com', 'reviewer', '1', 'Mr', password='abc', organisation_id=1,)
         reviewer2 = AppUser('r2@r.com', 'reviewer', '2', 'Ms',  password='abc', organisation_id=1,)
         reviewer3 = AppUser('r3@r.com', 'reviewer', '3', 'Mr',  password='abc', organisation_id=1,)
@@ -57,9 +64,9 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            self.add_event('indaba 2019', 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya ', datetime(2019, 8, 25), datetime(2019, 8, 31),
+            self.add_event({'en': 'indaba 2019'}, {'en': 'The Deep Learning Indaba 2019, Kenyatta University, Nairobi, Kenya '}, datetime(2019, 8, 25), datetime(2019, 8, 31),
             'KENYADABA2019'),
-            self.add_event('indaba 2020', 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa', datetime(2018, 9, 9), datetime(2018, 9, 15),
+            self.add_event({'en': 'indaba 2020'}, {'en': 'The Deep Learning Indaba 2018, Stellenbosch University, South Africa'}, datetime(2018, 9, 9), datetime(2018, 9, 15),
             'INDABA2020', 2)
         ]
         db.session.commit()
@@ -79,8 +86,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         sections = [
-            Section(1, 'Tell Us a Bit About You', '', 1),
-            Section(2, 'Tell Us a Bit About You', '', 1)
+            Section(1, 1),
+            Section(2, 1)
         ]
         db.session.add_all(sections)
         db.session.commit()
@@ -104,14 +111,20 @@ class ReviewsApiTest(ApiTestCase):
             }
         ]
         questions = [
-            Question(1, 1, 'Why is attending the Deep Learning Indaba 2019 important to you?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(1, 1, 'How will you share what you have learnt after the Indaba?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(2, 2, 'Have you worked on a project that uses machine learning?', 'Enter 50 to 150 words', 1, 'long_text', ''),
-            Question(2, 2, 'Would you like to be considered for a travel award?', 'Enter 50 to 150 words', 2, 'long_text', ''),
-            Question(1, 1, 'Did you attend the 2017 or 2018 Indaba', 'Select an option...', 3, 'multi-choice', None, None, True, None, options)
+            Question(1, 1, 1, 'long_text'),
+            Question(1, 1, 2, 'long_text'),
+            Question(2, 2, 1, 'long_text'),
+            Question(2, 2, 2, 'long_text'),
+            Question(1, 1, 3, 'multi-choice')
         ]
         db.session.add_all(questions)
         db.session.commit()
+
+        self.add_question_translation(1, 'en', 'Question 1')
+        self.add_question_translation(2, 'en', 'Question 2')
+        self.add_question_translation(3, 'en', 'Question 3')
+        self.add_question_translation(4, 'en', 'Question 4')
+        self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options=options)
 
         closed_review = ReviewForm(2, datetime(2018, 4, 30))
         closed_review.close()
@@ -129,14 +142,35 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(review_configs)
         db.session.commit()
 
+        review_section1 = self.add_review_section(review_forms[0].id)
+        self.add_review_section_translation(review_section1.id, 'en', 'Review Section 1 English', 'Review Section 1 Description English')
+        self.add_review_section_translation(review_section1.id, 'fr', 'Review Section 1 French', 'Review Section 1 Description French')
+        review_section2 = self.add_review_section(review_forms[1].id)
+        self.add_review_section_translation(review_section2.id, 'en', 'Review Section 2', 'Review Section 2 Description')
+
         review_questions = [
-            ReviewQuestion(1, 1, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(1, 2, None, None, 'multi-choice', None, None, True, 2, None, None, 0),
-            ReviewQuestion(2, 3, None, None, 'multi-choice', None, None, True, 1, None, None, 0),
-            ReviewQuestion(2, 4, None, None, 'information', None, None, False, 2, None, None, 0)
+            ReviewQuestion(review_section1.id, 1, 'multi-choice', True, 1, 0),
+            ReviewQuestion(review_section1.id, 2, 'multi-choice', True, 2, 0),
+            ReviewQuestion(review_section2.id, 3, 'multi-choice', True, 1, 0),
+            ReviewQuestion(review_section2.id, 4, 'information', False, 2, 0)
         ]
         db.session.add_all(review_questions)
         db.session.commit()
+
+        review_question_translations = [
+            ReviewQuestionTranslation(review_questions[0].id, 'en'),
+            ReviewQuestionTranslation(review_questions[0].id, 'fr'),
+            ReviewQuestionTranslation(review_questions[1].id, 'en', headline='English Headline', description='English Description', placeholder='English Placeholder', options=[{'label': 'en1', 'value': 'en'}], validation_regex='EN Regex', validation_text='EN Validation Message'),
+            ReviewQuestionTranslation(review_questions[1].id, 'fr', headline='French Headline', description='French Description', placeholder='French Placeholder', options=[{'label': 'fr1', 'value': 'fr'}], validation_regex='FR Regex', validation_text='FR Validation Message'),
+            ReviewQuestionTranslation(review_questions[2].id, 'en'),
+            ReviewQuestionTranslation(review_questions[2].id, 'fr'),
+            ReviewQuestionTranslation(review_questions[3].id, 'en'),
+            ReviewQuestionTranslation(review_questions[3].id, 'fr'),
+        ]
+        db.session.add_all(review_question_translations)
+        db.session.commit()
+
+        self.add_email_template('reviews-assigned')
 
     def get_auth_header_for(self, email):
         body = {
@@ -149,13 +183,7 @@ class ReviewsApiTest(ApiTestCase):
         return header
 
     def setup_one_reviewer_one_candidate(self, active=True):
-        response = Response(1, 5)
-        response.submit()
-        responses = [
-            response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -176,7 +204,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_one_candidate()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -187,7 +215,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_one_candidate(active=False)
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -207,16 +235,10 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
         data = json.loads(response.data)
 
-        self.assertEqual(data['reviews_unallocated'], 2)  
+        self.assertEqual(data['reviews_unallocated'], 2)
 
     def setup_responses_and_no_reviewers(self):
-        response = Response(1, 5)
-        response.submit()
-        responses = [
-            response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -229,33 +251,27 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_responses_and_no_reviewers()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(data['reviews_remaining_count'], 0)
-        
+
     def test_no_response_reviewers_reviews_unallocated(self):
         self.seed_static_data()
         self.setup_responses_and_no_reviewers()
         header = self.get_auth_header_for('ea@ea.com')
-        params = {'event_id': 1}        
+        params = {'event_id': 1}
         response = self.app.get('/api/v1/reviewassignment/summary', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(data['reviews_unallocated'], 3)
-        
+
     def setup_one_reviewer_three_candidates(self):
-        responses = [
-            Response(application_form_id=1, user_id=5),
-            Response(application_form_id=1, user_id=6),
-            Response(application_form_id=1, user_id=7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(application_form_id=1, user_id=5, is_submitted=True)
+        self.add_response(application_form_id=1, user_id=6, is_submitted=True)
+        self.add_response(application_form_id=1, user_id=7, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -282,7 +298,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -290,15 +306,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_and_one_completed_review(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -319,7 +329,8 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add_all(response_reviewers)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1)
+        review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         db.session.add(review_response)
         db.session.commit()
 
@@ -327,7 +338,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates_and_one_completed_review()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -335,17 +346,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 2)
 
     def setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response(self):
-        withdrawn_response = Response(1, 5)
-        withdrawn_response.withdraw()
-        submitted_response = Response(1, 7)
-        submitted_response.submit()
-        responses = [
-            withdrawn_response,
-            Response(1, 6),
-            submitted_response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        withdrawn_response = self.add_response(1, 5, is_withdrawn=True)
+        submitted_response = self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 6)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -370,7 +373,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates_with_one_withdrawn_response_and_one_unsubmitted_response()
         header = self.get_auth_header_for('r1@r.com')
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
@@ -378,16 +381,10 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews_remaining_count'], 1)
 
     def setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7),
-            Response(1, 8)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 8, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -423,18 +420,21 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         review_responses = [
-            ReviewResponse(1, 2, 2),
-            ReviewResponse(1, 3, 1),
-            ReviewResponse(1, 3, 2),
-            ReviewResponse(1, 4, 1)
+            ReviewResponse(1, 2, 2, 'en'),
+            ReviewResponse(1, 3, 1, 'en'),
+            ReviewResponse(1, 3, 2, 'en'),
+            ReviewResponse(1, 4, 1, 'en')
         ]
+        for rr in review_responses:
+            rr.submit()
+
         db.session.add_all(review_responses)
         db.session.commit()
-    
+
     def test_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed(self):
         self.seed_static_data()
         self.setup_multiple_reviewers_with_different_subsets_of_candidates_and_reviews_completed()
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
 
         header = self.get_auth_header_for('r1@r.com')
         response1 = self.app.get('/api/v1/review', headers=header, data=params)
@@ -457,7 +457,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_skipping(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = {'event_id': 1, 'skip': 1}
+        params = {'event_id': 1, 'skip': 1, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -469,7 +469,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_high_skip_defaults_to_last_review(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = {'event_id': 1, 'skip': 5}
+        params = {'event_id': 1, 'skip': 5, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -480,14 +480,9 @@ class ReviewsApiTest(ApiTestCase):
 
     def setup_candidate_who_has_applied_to_multiple_events(self):
         user_id = 5
-        responses = [
-            Response(application_form_id=1, user_id=user_id),
-            Response(application_form_id=2, user_id=user_id)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+
+        self.add_response(application_form_id=1, user_id=user_id, is_submitted=True)
+        self.add_response(application_form_id=2, user_id=user_id, is_submitted=True)
 
         answers = [
             Answer(1, 1, 'I will learn alot.'),
@@ -508,7 +503,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_filtering_on_event_when_candidate_has_applied_to_more_than(self):
         self.seed_static_data()
         self.setup_candidate_who_has_applied_to_multiple_events()
-        params = {'event_id': 2}
+        params = {'event_id': 2, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
@@ -519,10 +514,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes I worked on a vision task.')
 
     def setup_multi_choice_answer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         answer = Answer(1, 5, 'indaba-2017')
         db.session.add(answer)
@@ -531,21 +523,22 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
         db.session.commit()
-    
+
     def test_multi_choice_answers_use_label_instead_of_value(self):
         self.seed_static_data()
         self.setup_multi_choice_answer()
-        params = {'event_id': 1}
+        params = {'event_id': 1, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/review', headers=header, data=params)
         data = json.loads(response.data)
+        print(data)
 
         self.assertEqual(data['response']['answers'][0]['value'], 'Yes, I attended the 2017 Indaba')
 
     def test_review_response_not_found(self):
         self.seed_static_data()
-        params = {'id': 55}
+        params = {'id': 55, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
@@ -554,28 +547,24 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, REVIEW_RESPONSE_NOT_FOUND[1])
 
     def setup_review_response(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         answer = Answer(1, 1, 'To learn alot')
         db.session.add(answer)
         db.session.commit()
 
-        self.review_response = ReviewResponse(1, 1, 1)
+        self.review_response = ReviewResponse(1, 1, 1, 'en')
         self.review_response.review_scores.append(ReviewScore(1, 'answer1'))
         self.review_response.review_scores.append(ReviewScore(2, 'answer2'))
         db.session.add(self.review_response)
         db.session.commit()
 
         db.session.flush()
-        
 
     def test_review_response(self):
         self.seed_static_data()
         self.setup_review_response()
-        params = {'id': self.review_response.id}
+        params = {'id': self.review_response.id, 'language': 'en'}
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.get('/api/v1/reviewresponse', headers=header, data=params)
@@ -591,7 +580,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -601,7 +590,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_can_still_submit_inactive_response_reviewer(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -609,10 +598,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
 
     def setup_response_reviewer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
@@ -621,7 +607,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_saving_review_response(self):
         self.seed_static_data()
         self.setup_response_reviewer()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -632,16 +618,14 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(review_scores[0].value, 'test_answer')
 
     def setup_existing_review_response(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1)
+        review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response.submit()
         review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
         db.session.add(review_response)
         db.session.commit()
@@ -649,7 +633,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_updating_review_response(self):
         self.seed_static_data()
         self.setup_existing_review_response()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}]})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en', 'is_submitted': True})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -702,16 +686,10 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(event_roles[1].role, 'reviewer')
 
     def setup_responses_without_reviewers(self):
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7),
-            Response(1, 8)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
+        self.add_response(1, 8, is_submitted=True)
 
     def test_adding_first_reviewer(self):
         self.seed_static_data()
@@ -723,7 +701,7 @@ class ReviewsApiTest(ApiTestCase):
         response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response_reviewers), 4)
-    
+
     def test_limit_of_num_reviews(self):
         self.seed_static_data()
         self.setup_responses_without_reviewers()
@@ -736,14 +714,8 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(response_reviewers), 3)
 
     def setup_reviewer_with_own_response(self):
-        responses = [
-            Response(1, 3), # reviewer
-            Response(1, 5) # someone else
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 3, is_submitted=True) # reviewer
+        self.add_response(1, 5, is_submitted=True) # someone else
 
     def test_reviewer_does_not_get_assigned_to_own_response(self):
         self.seed_static_data()
@@ -758,18 +730,9 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 2)
 
     def setup_withdrawn_and_unsubmitted_responses(self):
-        unsubmitted_response = Response(1, 5)
-        withdrawn_response = Response(1, 6)
-        withdrawn_response.withdraw()
-        submitted_response = Response(1, 7)
-        submitted_response.submit()
-        responses = [
-            unsubmitted_response,
-            withdrawn_response,
-            submitted_response
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 5)
+        self.add_response(1, 6, is_withdrawn=True)
+        self.add_response(1, 7, is_submitted=True)
 
     def test_withdrawn_and_unsubmitted_responses_are_not_assigned_reviewers(self):
         self.seed_static_data()
@@ -784,10 +747,7 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(response_reviewers[0].response_id, 3)
 
     def setup_response_with_three_reviewers(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        response = self.add_response(1, 5, is_submitted=True)
 
         response_reviewers = [
             ResponseReviewer(1, 1),
@@ -806,18 +766,15 @@ class ReviewsApiTest(ApiTestCase):
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
 
         response_reviewers = db.session.query(ResponseReviewer).filter_by(reviewer_user_id=3).all()
-        self.assertEqual(len(response_reviewers), 0)   
+        self.assertEqual(len(response_reviewers), 0)
 
     def setup_responsereview_with_different_reviewer(self):
-        response = Response(1, 5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
         response_reviewer = ResponseReviewer(1, 1)
         db.session.add(response_reviewer)
         db.session.commit()
-        
+
     def test_response_will_get_multiple_reviewers_assigned(self):
         self.seed_static_data()
         self.setup_responsereview_with_different_reviewer()
@@ -830,32 +787,24 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(response_reviewers), 2)
         self.assertEqual(response_reviewers[0].reviewer_user_id, 1)
         self.assertEqual(response_reviewers[1].reviewer_user_id, 3)
-    
+
     def setup_reviewer_is_not_assigned_to_response_more_than_once(self):
-        response = Response(1,5)
-        response.submit()
-        db.session.add(response)
-        db.session.commit()
+        self.add_response(1, 5, is_submitted=True)
 
     def setup_count_reviews_allocated_and_completed(self):
-        db.session.add_all([ 
+        db.session.add_all([
             EventRole('reviewer', 1, 1),
             EventRole('reviewer', 2, 1),
             EventRole('reviewer', 3, 1),
             EventRole('reviewer', 4, 1)
         ])
-        
-        responses = [
-            Response(1, 5), #1
-            Response(1, 6), #2
-            Response(1, 7), #3
-            Response(1, 8), #4
-            Response(2, 5), #5
-            Response(2, 6)  #6
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
+
+        self.add_response(1, 5, is_submitted=True) #1
+        self.add_response(1, 6, is_submitted=True) #2
+        self.add_response(1, 7, is_submitted=True) #3
+        self.add_response(1, 8, is_submitted=True) #4
+        self.add_response(2, 5, is_submitted=True) #5
+        self.add_response(2, 6, is_submitted=True)  #6
 
         response_reviewers = [
             ResponseReviewer(1, 2),
@@ -875,15 +824,15 @@ class ReviewsApiTest(ApiTestCase):
 
 
         db.session.add_all(response_reviewers)
-        # review form, review_user_id, response_id 
+        # review form, review_user_id, response_id
         review_responses = [
-            ReviewResponse(1, 3, 2), 
-            ReviewResponse(1, 3, 4),
-            ReviewResponse(1, 2, 1),
-            ReviewResponse(1, 2, 3),
-            ReviewResponse(1, 2, 4),
-            ReviewResponse(2, 1, 5),
-            ReviewResponse(2, 2, 6)
+            ReviewResponse(1, 3, 2, 'en'),
+            ReviewResponse(1, 3, 4, 'en'),
+            ReviewResponse(1, 2, 1, 'en'),
+            ReviewResponse(1, 2, 3, 'en'),
+            ReviewResponse(1, 2, 4, 'en'),
+            ReviewResponse(2, 1, 5, 'en'),
+            ReviewResponse(2, 2, 6, 'en')
         ]
         db.session.add_all(review_responses)
 
@@ -899,12 +848,12 @@ class ReviewsApiTest(ApiTestCase):
         # reviewer 1 - 1 review assigned (1 from event 2) - 1 complete
         # reviewer 2 - 5 reviews assigned (1 from event 2)- 3 complete
         # reviewer 3 - 2 reviews assigned - 2 complete
-        # reviewer 4 - 1 review assigned - none complete 
-        
+        # reviewer 4 - 1 review assigned - none complete
+
         # total assigned reviews: 9
         # total required review = 6*3 = 18
         # total unallocated: 18 - 9 = 9
-        # total completed reviews: 6        
+        # total completed reviews: 6
 
     @SkipTest
     def test_count_reviews_allocated_and_completed(self):
@@ -914,7 +863,7 @@ class ReviewsApiTest(ApiTestCase):
         params = {'event_id': 1}
 
         response = self.app.get('/api/v1/reviewassignment', headers=header, data=params)
-        
+
         data = json.loads(response.data)
         data = sorted(data, key=lambda k: k['email'])
         LOGGER.debug(data)
@@ -947,31 +896,28 @@ class ReviewsApiTest(ApiTestCase):
         db.session.commit()
 
         users_id = [5,6,7]
-        responses = [
-            Response(application_form_id=1, user_id=users_id[0]),
-            Response(application_form_id=1, user_id=users_id[1]),
-            Response(application_form_id=1, user_id=users_id[2])
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(application_form_id=1, user_id=users_id[0], is_submitted=True)
+        self.add_response(application_form_id=1, user_id=users_id[1], is_submitted=True)
+        self.add_response(application_form_id=1, user_id=users_id[2], is_submitted=True)
 
         final_verdict_options = [
             {'label': 'Yes', 'value': 2},
             {'label': 'No', 'value': 0},
             {'label': 'Maybe', 'value': 1},
         ]
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
+        verdict_question = ReviewQuestion(1, None, 'multi-choice', True, 3, 0)
         db.session.add(verdict_question)
+        db.session.commit()
+        verdict_question_translation = ReviewQuestionTranslation(verdict_question.id, 'en', headline='Final Verdict', options=final_verdict_options)
+        db.session.add(verdict_question_translation)
         db.session.commit()
 
         review_responses = [
-            ReviewResponse(1,3,1), 
-            ReviewResponse(1,3,2),
-            ReviewResponse(1,2,1), 
-            ReviewResponse(1,2,2),
-            ReviewResponse(1,3,3)
+            ReviewResponse(1,3,1, 'en'),
+            ReviewResponse(1,3,2, 'en'),
+            ReviewResponse(1,2,1, 'en'),
+            ReviewResponse(1,2,2, 'en'),
+            ReviewResponse(1,3,3, 'en')
         ]
         review_responses[0].review_scores = [ReviewScore(1, '23'), ReviewScore(5, '1')]
         review_responses[1].review_scores = [ReviewScore(1, '55'), ReviewScore(5, '2')]
@@ -1005,7 +951,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews'][2]['review_response_id'], 5)
         self.assertEqual(data['reviews'][2]['reviewed_user_id'], str(users_id[2]))
-        
+
     def test_brings_back_only_logged_in_reviewer_reviewresponses(self):
         self.seed_static_data()
         self.setup_reviewer_responses_finalverdict_reviewquestion_reviewresponses_and_scores()
@@ -1044,11 +990,11 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 0, 'limit' : 10, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r1@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(data['num_entries'], 0)
-        self.assertEqual(data['reviews'], [])  
+        self.assertEqual(data['reviews'], [])
 
     def test_order_by_reviewresponseid(self):
         self.seed_static_data()
@@ -1059,7 +1005,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
-    
+
         self.assertEqual(data['reviews'][0]['review_response_id'], 1)
         self.assertEqual(data['reviews'][1]['review_response_id'], 2)
         self.assertEqual(data['reviews'][2]['review_response_id'], 5)
@@ -1071,28 +1017,25 @@ class ReviewsApiTest(ApiTestCase):
             {'label': 'Maybe', 'value': 1},
         ]
 
-        verdict_question = ReviewQuestion(1, None, None, 'Final Verdict', 'multi-choice', None, final_verdict_options, True, 3, None, None, 0)
+        verdict_question = ReviewQuestion(1, None, 'multi-choice', True, 3, 0)
         db.session.add(verdict_question)
         db.session.commit()
-
-        responses = [
-            Response(1, 5),
-            Response(1, 6),
-            Response(1, 7)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
+        verdict_question_translation = ReviewQuestionTranslation(verdict_question.id, 'en', headline='Final Verdict', options=final_verdict_options)
+        db.session.add(verdict_question_translation)
         db.session.commit()
 
-        review_response_1 = ReviewResponse(1,3,1)
-        review_response_2 = ReviewResponse(1,3,2)
-        review_response_3 = ReviewResponse(1,3,3)
+        self.add_response(1, 5, is_submitted=True)
+        self.add_response(1, 6, is_submitted=True)
+        self.add_response(1, 7, is_submitted=True)
+
+        review_response_1 = ReviewResponse(1,3,1, 'en')
+        review_response_2 = ReviewResponse(1,3,2, 'en')
+        review_response_3 = ReviewResponse(1,3,3, 'en')
         review_response_1.submitted_timestamp = datetime(2019, 1, 1)
         review_response_2.submitted_timestamp = datetime(2018, 1, 1)
         review_response_3.submitted_timestamp = datetime(2018, 6, 6)
         review_responses = [review_response_1, review_response_2, review_response_3]
-        review_responses[0].review_scores = [ReviewScore(1, '67'), ReviewScore(5, 'Yes')] 
+        review_responses[0].review_scores = [ReviewScore(1, '67'), ReviewScore(5, 'Yes')]
         review_responses[1].review_scores = [ReviewScore(1, '23'), ReviewScore(5, 'Yes')]
         review_responses[2].review_scores = [ReviewScore(1, '53'), ReviewScore(5, 'Yes')]
         db.session.add_all(review_responses)
@@ -1123,7 +1066,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
-    
+
         self.assertEqual(data['reviews'][0]['nationality_country'], 'Botswana')
         self.assertEqual(data['reviews'][1]['nationality_country'], 'South Africa')
         self.assertEqual(data['reviews'][2]['nationality_country'], 'Zimbabwe')
@@ -1139,7 +1082,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
-    
+
         self.assertEqual(data['reviews'][0]['residence_country'], 'Egypt')
         self.assertEqual(data['reviews'][1]['residence_country'], 'Mozambique')
         self.assertEqual(data['reviews'][2]['residence_country'], 'Namibia')
@@ -1155,7 +1098,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
-    
+
         self.assertEqual(data['reviews'][0]['affiliation'], 'RU')
         self.assertEqual(data['reviews'][1]['affiliation'], 'UFH')
         self.assertEqual(data['reviews'][2]['affiliation'], 'UWC')
@@ -1174,7 +1117,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['reviews'][0]['department'], 'CS') # ascii ordering orders capital letters before lowercase
         self.assertEqual(data['reviews'][1]['department'], 'Chem')
-        self.assertEqual(data['reviews'][2]['department'], 'Phys')       
+        self.assertEqual(data['reviews'][2]['department'], 'Phys')
 
     @SkipTest
     def test_order_by_usercategory(self):
@@ -1192,21 +1135,14 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(data['reviews'][2]['user_category'], 'Student')
 
     def setup_two_extra_responses_for_reviewer3(self):
-
-        responses = [
-            Response(1, 8),
-            Response(1, 1)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 8, is_submitted=True)
+        self.add_response(1, 1, is_submitted=True)
 
         review_responses = [
-            ReviewResponse(1,3,4),
-            ReviewResponse(1,3,5)
+            ReviewResponse(1,3,4, 'en'),
+            ReviewResponse(1,3,5, 'en')
         ]
-        review_responses[0].review_scores = [ReviewScore(1, '89'), ReviewScore(5, 'Maybe')] 
+        review_responses[0].review_scores = [ReviewScore(1, '89'), ReviewScore(5, 'Maybe')]
         review_responses[1].review_scores = [ReviewScore(1, '75'), ReviewScore(5, 'Yes')]
         db.session.add_all(review_responses)
         db.session.commit()
@@ -1219,7 +1155,7 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 0, 'limit' : 2, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r3@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(len(data['reviews']), 2)
@@ -1236,7 +1172,7 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 1, 'limit' : 2, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r3@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(len(data['reviews']), 2)
@@ -1253,7 +1189,7 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r3@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(len(data['reviews']), 1)
@@ -1268,7 +1204,7 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r3@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(data['total_pages'], 3)
@@ -1280,8 +1216,983 @@ class ReviewsApiTest(ApiTestCase):
         params ={'event_id' : 1, 'page_number' : 2, 'limit' : 2, 'sort_column' : 'review_response_id'}
         header = self.get_auth_header_for('r1@r.com')
 
-        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)  
+        response = self.app.get('/api/v1/reviewhistory', headers=header, data=params)
         data = json.loads(response.data)
 
         self.assertEqual(data['total_pages'], 0)
-    
+
+
+    def test_review_form_language(self):
+        """Test that the review form questions are returned in the correct language."""
+        self.seed_static_data()
+        params ={'event_id' : 1, 'language': 'en'}
+        header = self.get_auth_header_for('r1@r.com')
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        print(data['review_form']['review_sections'])
+
+        self.assertEqual(data['review_form']['review_sections'][0]['headline'], 'Review Section 1 English')
+        self.assertEqual(data['review_form']['review_sections'][0]['description'], 'Review Section 1 Description English')
+
+        self.assertEqual(len(data['review_form']['review_sections'][0]['review_questions']), 2)
+
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['description'], 'English Description')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['headline'], 'English Headline')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['placeholder'], 'English Placeholder')
+        self.assertDictEqual(data['review_form']['review_sections'][0]['review_questions'][1]['options'][0], {'label': 'en1', 'value': 'en'})
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_regex'], 'EN Regex')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_text'], 'EN Validation Message')
+
+        params ={'event_id' : 1, 'language': 'fr'}
+
+        response = self.app.get('/api/v1/review', headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(data['review_form']['review_sections'][0]['headline'], 'Review Section 1 French')
+        self.assertEqual(data['review_form']['review_sections'][0]['description'], 'Review Section 1 Description French')
+
+        self.assertEqual(len(data['review_form']['review_sections'][0]['review_questions']), 2)
+
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['description'], 'French Description')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['headline'], 'French Headline')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['placeholder'], 'French Placeholder')
+        self.assertDictEqual(data['review_form']['review_sections'][0]['review_questions'][1]['options'][0], {'label': 'fr1', 'value': 'fr'})
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_regex'], 'FR Regex')
+        self.assertEqual(data['review_form']['review_sections'][0]['review_questions'][1]['validation_text'], 'FR Validation Message')
+
+
+class ReviewListAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        self.event1 = self.add_event(key='event1')
+        self.event2 = self.add_event(key='event2')
+
+        self.reviewer1 = self.add_user('reviewer1@mail.com')
+        self.reviewer2 = self.add_user('reviewer2@mail.com')
+        self.event1.add_event_role('reviewer', self.reviewer1.id)
+        self.event2.add_event_role('reviewer', self.reviewer1.id)
+        self.event1.add_event_role('reviewer', self.reviewer2.id)
+        self.event2.add_event_role('reviewer', self.reviewer2.id)
+
+        self.user1 = self.add_user('user1@mail.com')
+        user2 = self.add_user('user2@mail.com')
+        user3 = self.add_user('user3@mail.com')
+        user4 = self.add_user('user4@mail.com')
+
+        application_form1 = self.create_application_form(self.event1.id)
+        section1 = self.add_section(application_form1.id)
+        question1 = self.add_question(application_form1.id, section1.id)
+        question1.key = 'review-identifier'
+        self.add_question_translation(question1.id, 'en', 'Headline 1 EN')
+        self.add_question_translation(question1.id, 'fr', 'Headline 1 FR')
+        question2 = self.add_question(application_form1.id, section1.id)
+        question2.key = 'review-identifier'
+        self.add_question_translation(question2.id, 'en', 'Headline 2 EN')
+        self.add_question_translation(question2.id, 'fr', 'Headline 2 FR')
+        question3 = self.add_question(application_form1.id, section1.id)
+        self.add_question_translation(question3.id, 'en', 'Headline 3 EN')
+        self.add_question_translation(question3.id, 'fr', 'Headline 3 FR')
+
+        review_form1 = self.add_review_form(application_form1.id)
+
+        review_form1_section1 = self.add_review_section(review_form1.id)
+        self.add_review_section_translation(review_form1_section1.id, 'en', 'Review Section 1 en', 'Review Section 1 en')
+        self.add_review_section_translation(review_form1_section1.id, 'fr', 'Review Section 1 fr', 'Review Section 1 fr')
+        review_form1_section2 = self.add_review_section(review_form1.id)
+        self.add_review_section_translation(review_form1_section2.id, 'en', 'Review Section 2 en', 'Review Section 2 en')
+        self.add_review_section_translation(review_form1_section2.id, 'fr', 'Review Section 2 fr', 'Review Section 2 fr')
+
+        review_form1_section2 = self.add_review_section(review_form1.id)
+        review_q1 = self.add_review_question(review_form1_section1.id, weight=1)
+        review_q1_translation_en = self.add_review_question_translation(review_q1.id, 'en', headline='Heading En')
+        review_q1_translation_fr = self.add_review_question_translation(review_q1.id, 'fr', headline='Heading Fr')
+        review_q2 = self.add_review_question(review_form1_section1.id, weight=0)
+        review_q2_translation_en = self.add_review_question_translation(review_q2.id, 'en', headline='Heading En')
+        review_q2_translation_fr = self.add_review_question_translation(review_q2.id, 'fr', headline='Heading Fr')
+        review_q3 = self.add_review_question(review_form1_section2.id, weight=1)
+        review_q3_translation_en = self.add_review_question_translation(review_q3.id, 'en', headline='Heading En')
+        review_q3_translation_fr = self.add_review_question_translation(review_q3.id, 'fr', headline='Heading Fr')
+
+        application_form2 = self.create_application_form(self.event2.id)
+        review_form2 = self.add_review_form(application_form2.id)
+
+        event1_response1 = self.add_response(application_form1.id, self.user1.id, is_submitted=True)
+        self.add_answer(event1_response1.id, question1.id, 'First answer')
+        self.add_answer(event1_response1.id, question2.id, 'Second answer')
+        self.add_answer(event1_response1.id, question3.id, 'Third answer')
+
+        event1_response2 = self.add_response(application_form1.id, user2.id, is_submitted=True, language='fr')
+        self.add_answer(event1_response2.id, question1.id, 'Forth answer')
+        self.add_answer(event1_response2.id, question2.id, 'Fifth answer')
+        self.add_answer(event1_response2.id, question3.id, 'Sixth answer')
+
+        event1_response3 = self.add_response(application_form1.id, user3.id, is_submitted=True)
+        self.add_answer(event1_response3.id, question1.id, 'Seventh answer')
+        self.add_answer(event1_response3.id, question2.id, 'Eigth answer')
+        self.add_answer(event1_response3.id, question3.id, 'Ninth answer')
+
+        event1_response4 = self.add_response(application_form1.id, user4.id, is_submitted=True, language='zu')
+        self.add_answer(event1_response4.id, question1.id, 'Tenth answer')
+        self.add_answer(event1_response4.id, question2.id, 'Eleventh answer')
+        self.add_answer(event1_response4.id, question3.id, 'Twelfth answer')
+
+        event2_response1 = self.add_response(application_form2.id, self.user1.id, is_submitted=True)
+        event2_response2 = self.add_response(application_form2.id, user2.id, is_submitted=True, language='fr')
+        event2_response3 = self.add_response(application_form2.id, user3.id, is_submitted=True)
+
+        # Review 1 completed review
+        self.add_response_reviewer(event1_response1.id, self.reviewer1.id)
+        review_response1 = self.add_review_response(self.reviewer1.id, event1_response1.id, review_form1.id)
+        review_response1.submit()
+        self.add_review_score(review_response1.id, review_q1.id, 10.5)
+        self.add_review_score(review_response1.id, review_q2.id, 100)
+        self.add_review_score(review_response1.id, review_q3.id, 'Hello world')
+
+        # Reviewer 1 incomplete review
+        self.review_response1_submitted = review_response1.submitted_timestamp.isoformat()
+        self.add_response_reviewer(event1_response2.id, self.reviewer1.id)
+        review_response2 = self.add_review_response(self.reviewer1.id, event1_response2.id, review_form1.id)
+        self.add_review_score(review_response2.id, review_q1.id, 13)
+
+        # Reviewer 1 not started review
+        self.add_response_reviewer(event1_response3.id, self.reviewer1.id)
+
+        # Confounders
+        self.add_response_reviewer(event1_response2.id, self.reviewer2.id)
+        self.add_response_reviewer(event1_response3.id, self.reviewer2.id)
+        self.add_response_reviewer(event2_response1.id, self.reviewer1.id)
+        self.add_response_reviewer(event2_response2.id, self.reviewer2.id)
+
+    def test_review_list(self):
+        self.seed_static_data()
+        params ={'event_id' : 1, 'language': 'en'}
+
+        response = self.app.get(
+            '/api/v1/reviewlist',
+            headers=self.get_auth_header_for('reviewer1@mail.com'),
+            data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 3)
+
+        self.assertEqual(data[0]['response_id'], 1)
+        self.assertEqual(data[0]['language'], 'en')
+        self.assertEqual(len(data[0]['information']), 2)
+        self.assertEqual(data[0]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[0]['information'][0]['value'], 'First answer')
+        self.assertEqual(data[0]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[0]['information'][1]['value'], 'Second answer')
+        self.assertTrue(data[0]['started'])
+        self.assertEqual(data[0]['submitted'], self.review_response1_submitted)
+        self.assertEqual(data[0]['total_score'], 10.5)
+
+        self.assertEqual(data[1]['response_id'], 2)
+        self.assertEqual(data[1]['language'], 'fr')
+        self.assertEqual(len(data[1]['information']), 2)
+        self.assertEqual(data[1]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[1]['information'][0]['value'], 'Forth answer')
+        self.assertEqual(data[1]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[1]['information'][1]['value'], 'Fifth answer')
+        self.assertTrue(data[1]['started'])
+        self.assertIsNone(data[1]['submitted'])
+        self.assertEqual(data[1]['total_score'], 13)
+
+        self.assertEqual(data[2]['response_id'], 3)
+        self.assertEqual(data[2]['language'], 'en')
+        self.assertEqual(len(data[2]['information']), 2)
+        self.assertEqual(data[2]['information'][0]['headline'], 'Headline 1 EN')
+        self.assertEqual(data[2]['information'][0]['value'], 'Seventh answer')
+        self.assertEqual(data[2]['information'][1]['headline'], 'Headline 2 EN')
+        self.assertEqual(data[2]['information'][1]['value'], 'Eigth answer')
+        self.assertFalse(data[2]['started'])
+        self.assertIsNone(data[2]['submitted'])
+        self.assertEqual(data[2]['total_score'], 0.0)
+
+class ResponseReviewerAssignmentApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.event = self.add_event(key='event1')
+        self.event2 = self.add_event(key='event2')
+        self.event_admin = self.add_user('eventadmin@mail.com')
+        self.reviewer = self.add_user('reviewer@mail.com')
+        self.reviewer_user_id = self.reviewer.id
+
+        self.user1 = self.add_user('user1@mail.com')
+        self.user2 = self.add_user('user2@mail.com')
+        self.user3 = self.add_user('user3@mail.com')
+
+        self.event.add_event_role('admin', self.event_admin.id)
+
+        application_form = self.create_application_form(self.event.id)
+        application_form2 = self.create_application_form(self.event2.id)
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.response2 = self.add_response(application_form.id, self.user2.id, is_submitted=True)
+        self.response3 = self.add_response(application_form.id, self.user3.id, is_submitted=True)
+
+        self.add_review_form(application_form.id)
+        self.add_review_form(application_form2.id)
+
+        self.event2_response_id = self.add_response(application_form2.id, self.user1.id, is_submitted=True).id
+
+        self.add_email_template('reviews-assigned')
+
+    def test_responses_assigned(self):
+        self.seed_static_data()
+
+        params = {'event_id' : 1, 'response_ids': [1, 2], 'reviewer_email': 'reviewer@mail.com'}
+
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer',
+            headers=self.get_auth_header_for('eventadmin@mail.com'),
+            data=params)
+
+        self.assertEqual(response.status_code, 201)
+
+        response_reviewers = (db.session.query(ResponseReviewer)
+                   .join(Response, ResponseReviewer.response_id == Response.id)
+                   .filter_by(application_form_id=1).all())
+
+        self.assertEqual(len(response_reviewers), 2)
+
+        for rr in response_reviewers:
+            self.assertEqual(rr.reviewer_user_id, self.reviewer_user_id)
+
+    def test_response_for_different_event_forbidden(self):
+        self.seed_static_data()
+
+        params = {'event_id' : 1, 'response_ids': [1, 2, self.event2_response_id], 'reviewer_email': 'reviewer@mail.com'}
+
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer',
+            headers=self.get_auth_header_for('eventadmin@mail.com'),
+            data=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_delete(self):
+        """Test that a review assignment can be deleted."""
+        self.seed_static_data()
+
+        # Assign a reviewer
+        response_id = self.response1.id
+        self.add_response_reviewer(response_id, self.reviewer_user_id)
+
+        params = {'event_id' : 1, 'response_id': self.response1.id, 'reviewer_user_id': self.reviewer_user_id}
+
+        response = self.app.delete(
+            '/api/v1/assignresponsereviewer',
+            headers=self.get_auth_header_for('eventadmin@mail.com'),
+            data=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        # Check that it was actually deleted
+        response_reviewer = db.session.query(ResponseReviewer).filter_by(response_id=response_id, reviewer_user_id=self.reviewer_user_id).first()
+        self.assertIsNone(response_reviewer)
+
+    def test_delete_not_allowed_if_completed(self):
+        """Test that a review assignment can't be deleted if the review has been completed."""
+        self.seed_static_data()
+
+        # Assign a reviewer and create a review resposne
+        response_id = self.response1.id
+        self.add_response_reviewer(response_id, self.reviewer_user_id)
+        self.add_review_response(self.reviewer_user_id, response_id)
+
+        params = {'event_id' : 1, 'response_id': self.response1.id, 'reviewer_user_id': self.reviewer_user_id}
+
+        response = self.app.delete(
+            '/api/v1/assignresponsereviewer',
+            headers=self.get_auth_header_for('eventadmin@mail.com'),
+            data=params)
+
+        self.assertEqual(response.status_code, 400)
+
+
+class ReferenceReviewRequest(ApiTestCase):
+    def static_seed_data(self):
+        # User, country and organisation is set up by ApiTestCase
+        self.first_user = self.add_user('firstuser@mail.com', 'First', 'User', 'Mx')
+
+        self.event = self.add_event()
+
+        self.system_admin = self.add_user('sa@sa.com', is_admin=True)
+        non_admin_users = self.add_n_users(3)
+        users = non_admin_users.append(self.system_admin)
+        self.event.add_event_role('admin', 4),
+        self.event.add_event_role('reviewer', 1),
+
+        db.session.commit()
+
+        application_form = [
+            self.create_application_form(1, True, False),
+        ]
+
+        closed_review = ReviewForm(1, datetime(2018, 4, 30))
+        closed_review.close()
+        review_forms = [
+            ReviewForm(1, datetime(2019, 4, 30)),
+            closed_review
+        ]
+        db.session.add_all(review_forms)
+        db.session.commit()
+
+        self.test_response = self.add_response(1, self.first_user.id, language='en', is_submitted=True)
+
+        self.response_review = self.add_response_reviewer(self.test_response.id, self.first_user.id)
+
+        self.first_headers = self.get_auth_header_for("firstuser@mail.com")
+
+        db.session.flush()
+
+    def test_get_reference_request_by_event_id(self):
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+    def test_get_reference_request_with_two_references(self):
+        """
+        In this test, there are two references requested and submitted
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979',
+        }
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 2)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+        self.assertDictEqual(data['references'][1], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
+    def test_get_reference_not_yet_submitted(self):
+        """
+        In this test, a reference has been requested, but not yet submitted by the referee (id exists, but no reference yet)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
+
+    def test_get_reference_submitted_later(self):
+        """
+        In this test, a reference has been requested, but the reference is only submitted after the second check
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_request_repository.create(reference_req)
+
+        params = {'event_id': 1, 'language': 'en'}
+
+        REFERENCE_DETAIL = {
+            'token': reference_req.token,
+            'uploaded_document': 'DOCT-UPLOAD-78999',
+        }
+
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'),
+                                data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mr',
+            u'firstname': u'John',
+            u'lastname': u'Snow',
+            u'relation': u'Supervisor',
+            u'uploaded_document': u'DOCT-UPLOAD-78999',
+        })
+
+    def test_two_references_only_one_submitted(self):
+        """
+        In this test, two references have been requested, but only one submitted (two ids exists, one reference submitted)
+        """
+        self.static_seed_data()
+        reference_req = ReferenceRequest(1, 'Mr', 'John', 'Snow', 'Supervisor', 'common@email.com')
+        reference_req2 = ReferenceRequest(1, 'Mrs', 'Jane', 'Jones', 'Manager', 'jane@email.com')
+        reference_request_repository.create(reference_req)
+        reference_request_repository.create(reference_req2)
+
+        REFERENCE_DETAIL_2 = {
+            'token': reference_req2.token,
+            'uploaded_document': 'DOCT-UPLOAD-78979',
+        }
+
+        response = self.app.post(
+            '/api/v1/reference', data=REFERENCE_DETAIL_2, headers=self.first_headers)
+        self.assertEqual(response.status_code, 201)
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(len(data['references']), 1)
+
+        self.assertDictEqual(data['references'][0], {
+            u'title': u'Mrs',
+            u'firstname': u'Jane',
+            u'lastname': u'Jones',
+            u'relation': u'Manager',
+            u'uploaded_document': u'DOCT-UPLOAD-78979',
+        })
+
+    def test_get_review_no_reference(self):
+        """
+        In this test, there is no reference attached to the application at all for review (i.e. no reference request)
+        """
+        self.static_seed_data()
+
+        params = {'event_id': 1, 'language': 'en'}
+        response = self.app.get('/api/v1/review', headers=self.get_auth_header_for('firstuser@mail.com'), data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 8)
+        self.assertEqual(data.get('references', None), None)
+
+
+class ReviewResponseDetailListApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.user1 = self.add_user('user1@mail.com', 'Jane', 'Bloggs', 'Ms')
+        self.user2 = self.add_user('user2@mail.com', 'Alex', 'Person', 'Dr')
+        self.reviewer = self.add_user('reviewer@mail.com', 'Joe', 'Soap', 'Mr')
+        self.reviewer2 = self.add_user('reviewer2@mail.com', 'Jenny', 'Sharp', 'Ms')
+        self.event_admin = self.add_user('event_admin@mail.com')
+
+        self.event = self.add_event()
+        self.event2 = self.add_event(key='Empty')
+        self.event.add_event_role('admin', self.event_admin.id)
+        self.event2.add_event_role('admin', self.event_admin.id)
+
+        self.application_form = self.create_application_form(self.event.id)
+        self.section = self.add_section(self.application_form.id)
+        self.question1 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=1,
+            key='review-identifier')
+        self.question_translation1 = self.add_question_translation(
+            self.question1.id,
+            'en',
+            'Organisation')
+        self.question2 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=2,
+            key='review-identifier')
+        self.question_translation2 = self.add_question_translation(
+            self.question2.id,
+            'en',
+            'Country')
+        self.question3 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=3,
+        )
+        self.question_translation3 = self.add_question_translation(
+            self.question3.id,
+            'en',
+            'Non-review question'
+        )
+
+        self.response1 = self.add_response(
+            self.application_form.id,
+            self.user1.id,
+            is_submitted=True)
+        self.answer1 = self.add_answer(self.response1.id, self.question1.id, 'Pets R Us')
+        self.answer2 = self.add_answer(self.response1.id, self.question2.id, 'Nigeria')
+        self.answer3 = self.add_answer(self.response1.id, self.question3.id, 'Non-review answer')
+
+        self.response2 = self.add_response(
+            self.application_form.id,
+            self.user2.id,
+            is_submitted=True)
+        self.answer4 = self.add_answer(self.response2.id, self.question1.id, 'Nokia')
+        self.answer5 = self.add_answer(self.response2.id, self.question2.id, 'South Africa')
+        self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
+
+        self.review_form = self.add_review_form(self.application_form.id)
+        self.review_section1 = self.add_review_section(self.review_form.id)
+        self.review_section1_translation1 = self.add_review_section_translation(
+            self.review_section1.id,
+            'en')
+        self.review_section2 = self.add_review_section(self.review_form.id)
+        self.review_section2_translation1 = self.add_review_section_translation(
+            self.review_section2.id,
+            'en'
+            'Review Section 2',
+            'Review Section 2 Description')
+        self.review_question1 = self.add_review_question(self.review_section1.id, type='short-text', weight=1)
+        self.review_question_translation1 = self.add_review_question_translation(
+            self.review_question1.id,
+            'en',
+            headline='Ethical Considerations',
+            description="How ethical is the candidate's proposal from 1 to 5?")
+        self.review_question2 = self.add_review_question(self.review_section1.id, type='long-text', weight=0)
+        self.review_question_translation2 = self.add_review_question_translation(
+            self.review_question2.id,
+            'en',
+            headline=None,
+            description='Comments for the candidate'
+        )
+        self.review_question3 = self.add_review_question(self.review_section2.id, type='multi-choice', weight=2)
+        self.review_question_translation3 = self.add_review_question_translation(
+            self.review_question3.id,
+            'en',
+            headline=None,
+            description='What is your overall rating?'
+        )
+        self.review_question4 = self.add_review_question(self.review_section2.id, type='checkbox', weight=0)
+        self.review_question_translation4 = self.add_review_question_translation(
+            self.review_question4.id,
+            'en',
+            headline='Yes/No Question'
+        )
+
+        self.review_response1 = self.add_review_response(
+            self.reviewer.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score1 = self.add_review_score(self.review_response1.id, self.review_question1.id, '4')
+        self.review_score2 = self.add_review_score(self.review_response1.id, self.review_question2.id, 'This is a very good proposal')
+        self.review_score3 = self.add_review_score(self.review_response1.id, self.review_question3.id, '5')
+        self.review_score4 = self.add_review_score(self.review_response1.id, self.review_question4.id, 'Yes')
+
+        self.review_response2 = self.add_review_response(
+            self.reviewer2.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score5 = self.add_review_score(self.review_response2.id, self.review_question1.id, '3')
+        self.review_score6 = self.add_review_score(self.review_response2.id, self.review_question2.id, 'Not bad!')
+        self.review_score7 = self.add_review_score(self.review_response2.id, self.review_question3.id, '3')
+        self.review_score8 = self.add_review_score(self.review_response2.id, self.review_question4.id, 'No')
+
+    def test_not_authed(self):
+        response = self.app.get('/api/v1/reviewresponsedetaillist')
+        self.assertEqual(response.status_code, 401)
+
+    def test_not_event_admin(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            data={'event_id': 1}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_no_review_responses(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 2}
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(data, [])
+
+    def test_review_responses_for_event(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsedetaillist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(data[0]['review_response_id'], 1)
+        self.assertEqual(data[0]['response_id'], 1)
+
+        self.assertEqual(data[0]['reviewer_user_title'], 'Mr')
+        self.assertEqual(data[0]['reviewer_user_firstname'], 'Joe')
+        self.assertEqual(data[0]['reviewer_user_lastname'], 'Soap')
+
+        self.assertEqual(data[0]['response_user_title'], 'Ms')
+        self.assertEqual(data[0]['response_user_firstname'], 'Jane')
+        self.assertEqual(data[0]['response_user_lastname'], 'Bloggs')
+
+        self.assertEqual(len(data[0]['identifiers']), 2)
+        self.assertEqual(data[0]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[0]['identifiers'][0]['value'], 'Pets R Us')
+        self.assertEqual(data[0]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[0]['identifiers'][1]['value'], 'Nigeria')
+
+        self.assertEqual(len(data[0]['scores']), 3)
+        self.assertEqual(data[0]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[0]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[0]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[0]['scores'][0]['score'], '4')
+        self.assertEqual(data[0]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[0]['scores'][1]['headline'], None)
+        self.assertEqual(data[0]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[0]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[0]['scores'][1]['score'], 'This is a very good proposal')
+        self.assertEqual(data[0]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[0]['scores'][2]['headline'], None)
+        self.assertEqual(data[0]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[0]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[0]['scores'][2]['score'], '5')
+        self.assertEqual(data[0]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[0]['total'], 14)
+
+
+        self.assertEqual(data[1]['review_response_id'], 2)
+        self.assertEqual(data[1]['response_id'], 2)
+
+        self.assertEqual(data[1]['reviewer_user_title'], 'Ms')
+        self.assertEqual(data[1]['reviewer_user_firstname'], 'Jenny')
+        self.assertEqual(data[1]['reviewer_user_lastname'], 'Sharp')
+
+        self.assertEqual(data[1]['response_user_title'], 'Dr')
+        self.assertEqual(data[1]['response_user_firstname'], 'Alex')
+        self.assertEqual(data[1]['response_user_lastname'], 'Person')
+
+        self.assertEqual(len(data[1]['identifiers']), 2)
+        self.assertEqual(data[1]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[1]['identifiers'][0]['value'], 'Nokia')
+        self.assertEqual(data[1]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[1]['identifiers'][1]['value'], 'South Africa')
+
+        self.assertEqual(len(data[1]['scores']), 3)
+        self.assertEqual(data[1]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[1]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[1]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[1]['scores'][0]['score'], '3')
+        self.assertEqual(data[1]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[1]['scores'][1]['headline'], None)
+        self.assertEqual(data[1]['scores'][1]['description'], 'Comments for the candidate')
+        self.assertEqual(data[1]['scores'][1]['type'], 'long-text')
+        self.assertEqual(data[1]['scores'][1]['score'], 'Not bad!')
+        self.assertEqual(data[1]['scores'][1]['weight'], 0)
+
+        self.assertEqual(data[1]['scores'][2]['headline'], None)
+        self.assertEqual(data[1]['scores'][2]['description'], 'What is your overall rating?')
+        self.assertEqual(data[1]['scores'][2]['type'], 'multi-choice')
+        self.assertEqual(data[1]['scores'][2]['score'], '3')
+        self.assertEqual(data[1]['scores'][2]['weight'], 2)
+
+        self.assertEqual(data[1]['total'], 9)
+
+
+class ReviewResponseSummaryListApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.user1 = self.add_user('user1@mail.com', 'Jane', 'Bloggs', 'Ms')
+        self.user2 = self.add_user('user2@mail.com', 'Alex', 'Person', 'Dr')
+        self.reviewer = self.add_user('reviewer@mail.com', 'Joe', 'Soap', 'Mr')
+        self.reviewer2 = self.add_user('reviewer2@mail.com', 'Jenny', 'Sharp', 'Ms')
+        self.event_admin = self.add_user('event_admin@mail.com')
+
+        self.event = self.add_event()
+        self.event2 = self.add_event(key='Empty')
+        self.event.add_event_role('admin', self.event_admin.id)
+        self.event2.add_event_role('admin', self.event_admin.id)
+
+        self.application_form = self.create_application_form(self.event.id)
+        self.section = self.add_section(self.application_form.id)
+        self.question1 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=1,
+            key='review-identifier')
+        self.question_translation1 = self.add_question_translation(
+            self.question1.id,
+            'en',
+            'Organisation')
+        self.question2 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=2,
+            key='review-identifier')
+        self.question_translation2 = self.add_question_translation(
+            self.question2.id,
+            'en',
+            'Country')
+        self.question3 = self.add_question(
+            self.application_form.id,
+            self.section.id,
+            order=3,
+        )
+        self.question_translation3 = self.add_question_translation(
+            self.question3.id,
+            'en',
+            'Non-review question'
+        )
+
+        self.response1 = self.add_response(
+            self.application_form.id,
+            self.user1.id,
+            is_submitted=True)
+        self.answer1 = self.add_answer(self.response1.id, self.question1.id, 'Pets R Us')
+        self.answer2 = self.add_answer(self.response1.id, self.question2.id, 'Nigeria')
+        self.answer3 = self.add_answer(self.response1.id, self.question3.id, 'Non-review answer')
+
+        self.response2 = self.add_response(
+            self.application_form.id,
+            self.user2.id,
+            is_submitted=True)
+        self.answer4 = self.add_answer(self.response2.id, self.question1.id, 'Nokia')
+        self.answer5 = self.add_answer(self.response2.id, self.question2.id, 'South Africa')
+        self.answer6 = self.add_answer(self.response2.id, self.question3.id, 'Non-review answer 2')
+
+        self.review_form = self.add_review_form(self.application_form.id)
+        self.review_section1 = self.add_review_section(self.review_form.id)
+        self.review_section1_translation1 = self.add_review_section_translation(
+            self.review_section1.id,
+            'en')
+        self.review_section2 = self.add_review_section(self.review_form.id)
+        self.review_section2_translation1 = self.add_review_section_translation(
+            self.review_section2.id,
+            'en'
+            'Review Section 2',
+            'Review Section 2 Description')
+        self.review_question1 = self.add_review_question(self.review_section1.id, type='short-text', weight=1)
+        self.review_question_translation1 = self.add_review_question_translation(
+            self.review_question1.id,
+            'en',
+            headline='Ethical Considerations',
+            description="How ethical is the candidate's proposal from 1 to 5?")
+        self.review_question2 = self.add_review_question(self.review_section1.id, type='long-text', weight=0)
+        self.review_question_translation2 = self.add_review_question_translation(
+            self.review_question2.id,
+            'en',
+            headline=None,
+            description='Comments for the candidate'
+        )
+        self.review_question3 = self.add_review_question(self.review_section2.id, type='multi-choice', weight=2)
+        self.review_question_translation3 = self.add_review_question_translation(
+            self.review_question3.id,
+            'en',
+            headline=None,
+            description='What is your overall rating?'
+        )
+        self.review_question4 = self.add_review_question(self.review_section2.id, type='checkbox', weight=0)
+        self.review_question_translation4 = self.add_review_question_translation(
+            self.review_question4.id,
+            'en',
+            headline='Yes/No Question'
+        )
+
+        # reviewer 1 for first response
+        self.review_response1 = self.add_review_response(
+            self.reviewer.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score1 = self.add_review_score(self.review_response1.id, self.review_question1.id, '4')
+        self.review_score2 = self.add_review_score(self.review_response1.id, self.review_question2.id, 'This is a very good proposal')
+        self.review_score3 = self.add_review_score(self.review_response1.id, self.review_question3.id, '5')
+        self.review_score4 = self.add_review_score(self.review_response1.id, self.review_question4.id, 'Yes')
+
+        # reviewer 2 for first response
+        self.review_response3 = self.add_review_response(
+            self.reviewer2.id,
+            self.response1.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score9 = self.add_review_score(self.review_response3.id, self.review_question1.id, '3')
+        self.review_score10 = self.add_review_score(self.review_response3.id, self.review_question2.id, 'This is a good proposal')
+        self.review_score11 = self.add_review_score(self.review_response3.id, self.review_question3.id, '4')
+        self.review_score12 = self.add_review_score(self.review_response3.id, self.review_question4.id, 'Yes')
+
+        # reviewer 2 for second response
+        self.review_response2 = self.add_review_response(
+            self.reviewer2.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score5 = self.add_review_score(self.review_response2.id, self.review_question1.id, '3')
+        self.review_score6 = self.add_review_score(self.review_response2.id, self.review_question2.id, 'Close to bad!')
+        self.review_score7 = self.add_review_score(self.review_response2.id, self.review_question3.id, '2')
+        self.review_score8 = self.add_review_score(self.review_response2.id, self.review_question4.id, 'No')
+
+        # reviewer 1 for second response
+        self.review_response4 = self.add_review_response(
+            self.reviewer.id,
+            self.response2.id,
+            self.review_form.id,
+            is_submitted=True)
+        self.review_score13 = self.add_review_score(self.review_response4.id, self.review_question1.id, '2')
+        self.review_score14 = self.add_review_score(self.review_response4.id, self.review_question2.id, 'Bad!')
+        self.review_score15 = self.add_review_score(self.review_response4.id, self.review_question3.id, '1')
+        self.review_score16 = self.add_review_score(self.review_response4.id, self.review_question4.id, 'No')
+
+    def test_not_authed(self):
+        response = self.app.get('/api/v1/reviewresponsesummarylist')
+        self.assertEqual(response.status_code, 401)
+
+    def test_not_event_admin(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsesummarylist',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            data={'event_id': 1}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_review_response_summary_for_event(self):
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewresponsesummarylist',
+            headers=self.get_auth_header_for('event_admin@mail.com'),
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(data[0]['response_id'], 1)
+        self.assertEqual(data[0]['response_user_title'], 'Ms')
+        self.assertEqual(data[0]['response_user_firstname'], 'Jane')
+        self.assertEqual(data[0]['response_user_lastname'], 'Bloggs')
+
+        self.assertEqual(len(data[0]['identifiers']), 2)
+        self.assertEqual(data[0]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[0]['identifiers'][0]['value'], 'Pets R Us')
+        self.assertEqual(data[0]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[0]['identifiers'][1]['value'], 'Nigeria')
+
+        self.assertEqual(len(data[0]['scores']), 2)
+        self.assertEqual(data[0]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[0]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[0]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[0]['scores'][0]['score'], 3.5)
+        self.assertEqual(data[0]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[0]['scores'][1]['headline'], None)
+        self.assertEqual(data[0]['scores'][1]['description'], 'What is your overall rating?')
+        self.assertEqual(data[0]['scores'][1]['type'], 'multi-choice')
+        self.assertEqual(data[0]['scores'][1]['score'], 4.5)
+        self.assertEqual(data[0]['scores'][1]['weight'], 2)
+
+        self.assertEqual(data[0]['total'], 12.5)
+
+
+        self.assertEqual(data[1]['response_id'], 2)
+        self.assertEqual(data[1]['response_user_title'], 'Dr')
+        self.assertEqual(data[1]['response_user_firstname'], 'Alex')
+        self.assertEqual(data[1]['response_user_lastname'], 'Person')
+
+        self.assertEqual(len(data[1]['identifiers']), 2)
+        self.assertEqual(data[1]['identifiers'][0]['headline'], 'Organisation')
+        self.assertEqual(data[1]['identifiers'][0]['value'], 'Nokia')
+        self.assertEqual(data[1]['identifiers'][1]['headline'], 'Country')
+        self.assertEqual(data[1]['identifiers'][1]['value'], 'South Africa')
+
+        self.assertEqual(len(data[1]['scores']), 2)
+        self.assertEqual(data[1]['scores'][0]['headline'], 'Ethical Considerations')
+        self.assertEqual(data[1]['scores'][0]['description'], "How ethical is the candidate's proposal from 1 to 5?")
+        self.assertEqual(data[1]['scores'][0]['type'], 'short-text')
+        self.assertEqual(data[1]['scores'][0]['score'], 2.5)
+        self.assertEqual(data[1]['scores'][0]['weight'], 1)
+
+        self.assertEqual(data[1]['scores'][1]['headline'], None)
+        self.assertEqual(data[1]['scores'][1]['description'], 'What is your overall rating?')
+        self.assertEqual(data[1]['scores'][1]['type'], 'multi-choice')
+        self.assertEqual(data[1]['scores'][1]['score'], 1.5)
+        self.assertEqual(data[1]['scores'][1]['weight'], 2)
+
+        self.assertEqual(data[1]['total'], 5.5)

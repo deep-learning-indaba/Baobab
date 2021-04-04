@@ -1,22 +1,29 @@
+// TODO: ADD TRANSLATION
+
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
+import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormDate from "../../../components/form/FormDate";
 import { registrationService } from "../../../services/registration";
 import { offerServices } from "../../../services/offer";
 import FileUploadComponent from "../../../components/FileUpload";
 import Loading from "../../../components/Loading";
+import _ from "lodash";
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const CHOICE_OTHER = "choice-with-other";
 const MULTI_CHECKBOX = "multi-checkbox";
+const MULTI_CHECKBOX_OTHER = "multi-checkbox-with-other";
 const FILE = "file";
 const DATE = "date";
 
@@ -57,12 +64,17 @@ class RegistrationComponent extends Component {
     }
   };
 
-  handleChange = event => {
-    const value =
-      event.target.type === "checkbox"
+  handleChange = (id, event) => {
+    let value = null;
+    if (event.target) {
+      value = event.target.type === "checkbox"
         ? event.target.checked | 0
         : event.target.value;
-    let id = parseInt(event.target.id);
+    }
+    else {
+      value = event;
+    }
+
     this.onChange(id, value);
   };
 
@@ -291,13 +303,13 @@ class RegistrationComponent extends Component {
         case SHORT_TEXT:
           return (
             <FormTextBox
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               type="text"
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
@@ -306,12 +318,12 @@ class RegistrationComponent extends Component {
         case SINGLE_CHOICE:
           return (
             <FormCheckbox
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               type="checkbox"
               label={question.description}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               value={answer ? parseInt(answer.value) : answer}
               key={"i_" + key}
               showError={validationError}
@@ -322,24 +334,24 @@ class RegistrationComponent extends Component {
         case LONG_TEXT[1]:
           return (
             <FormTextArea
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               label={question.description}
-              onChange={this.handleChange}
-              placeholder={answer ? answer.value : question.placeholder}
-              value={answer ? answer.value : answer}
+              onChange={e => this.handleChange(question.id, e)}
+              placeholder={question.placeholder}
+              value={(answer && answer.value) || null}
               rows={5}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError}
-              required={question.is_required && !answer} />
+              errorText={validationError} />
           );
         case MULTI_CHOICE:
           return (
             <FormSelect
               options={question.options}
-              id={question.id}
-              onChange={this.handleChangeDropdown}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              onChange={(_, d) => this.handleChangeDropdown(question.id, d)}
               defaultValue={(answer && answer.value) || ""}
               placeholder={question.placeholder}
               label={question.description}
@@ -348,13 +360,41 @@ class RegistrationComponent extends Component {
               showError={validationError}
               errorText={validationError} />
           );
+          case CHOICE_OTHER:
+            return (
+              <FormSelectOther
+                options={question.options}
+                id={`control_${question.id}`}
+                name={`control_${question.id}`}
+                onChange={e => this.onChange(question.id, e)}
+                defaultValue={(answer && answer.value) || ""}
+                placeholder={question.placeholder}
+                label={question.description}
+                required={question.is_required && !answer}
+                key={"i_" + key}
+                showError={validationError}
+                errorText={validationError} />
+            );
         case MULTI_CHECKBOX:
           return (
             <FormMultiCheckbox
-              id={this.id}
-              name={this.id}
-              options={this.options}
-              onChange={this.handleChange}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              options={question.options}
+              onChange={e => this.onChange(question.id, e)}
+              defaultValue={(answer && answer.value) || ""}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
+        case MULTI_CHECKBOX_OTHER:
+          return (
+            <FormMultiCheckboxOther
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              options={question.options}
+              onChange={e => this.onChange(question.id, e)}
+              defaultValue={(answer && answer.value) || ""}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError} />
@@ -362,22 +402,23 @@ class RegistrationComponent extends Component {
         case FILE:
           return (
             <FileUploadComponent
-              id={question.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               description={question.description}
               value={this.props.answer && this.props.answer.value}
               validationError={validationError}
-              onChange={this.onChange}
+              onChange={(_, v) => this.onChange(question.id, v)}
               key={"i_" + key} />
           );
         case DATE:
           return (
             <FormDate
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
@@ -394,7 +435,7 @@ class RegistrationComponent extends Component {
 
     if (isLoading) {
       return (
-        <Loading/>
+        <Loading />
       );
     }
 
@@ -415,8 +456,7 @@ class RegistrationComponent extends Component {
         {this.state.formSuccess ? (
           <div className="card flat-card success stretched">
             <h5>Successfully Registered</h5>
-            <p>We look forward to welcoming you at the Indaba!</p>
-            <a href="/invitationLetter"> Request an invitation letter.</a>
+            <p>We look forward to welcoming you at {this.props.event.name}!</p>
 
             <div className="col-12">
               <button
@@ -461,7 +501,7 @@ class RegistrationComponent extends Component {
                     .sort((a, b) => a.order - b.order)
                     .filter(question => {
                       if (question.depends_on_question_id) {
-                        let answer = this.state.answers.find(a => a.registration_question_id === question.depends_on_question_id);
+                        let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
                         return answer && (answer.value !== question.hide_for_dependent_value)
                       }
                       return true
@@ -469,9 +509,9 @@ class RegistrationComponent extends Component {
                     .map(question => {
                       return (
                         <div
-                          className="text-left"
+                          className="registration-question"
                           key={"question_" + question.id}>
-                          <h5>{question.headline}</h5>
+                          <h5 className="form-label">{question.headline}</h5>
                           {this.formControl(
                             question.id,
                             question,
@@ -506,7 +546,7 @@ class RegistrationComponent extends Component {
               {hasValidated && !validationStale && !isValid && (
                 <div class="alert alert-danger alert-container">
                   There are one or more validation errors, please correct before submitting.
-              </div>
+                </div>
               )}
             </div>
           ) : (
@@ -515,7 +555,7 @@ class RegistrationComponent extends Component {
                 this.state.formFailure !== true && (
                   <div className="alert alert-danger alert-container">
                     Registration not available
-                </div>
+                  </div>
                 )}
             </div>
           )}

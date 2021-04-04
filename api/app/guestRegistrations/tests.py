@@ -24,8 +24,8 @@ class GuestRegistrationApiTest(ApiTestCase):
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
             key='REGINAL'
@@ -118,6 +118,12 @@ class GuestRegistrationApiTest(ApiTestCase):
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
+
+        self.add_email_template('guest-registration-confirmation')
+        self.add_email_template('guest-invitation-with-registration')
+        self.add_email_template('guest-invitation')
+        self.add_email_template('new-guest-registration')
+        self.add_email_template('new-guest-no-registration')
 
     def get_auth_header_for(self, email):
         body = {

@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import ReactTable from "react-table";
-
+import { Link } from "react-router-dom";
 import "react-table/react-table.css";
 
 import { reviewService } from "../../../services/reviews";
-import { columns } from "./tablecolumns";
+import { withTranslation } from 'react-i18next'
 
 class ReviewHistoryComponent extends Component {
   constructor(props) {
@@ -63,13 +63,33 @@ class ReviewHistoryComponent extends Component {
       </div>;
     }
 
-    const eventKey = this.props.match ?
-      this.props.match.params.eventKey : null;
-    console.log('eventKey = ' + eventKey);
+    const t = this.props.t;
+
+    const columns = [
+      {
+        Header: " ",
+        accessor: "response_id",
+        Cell: row => {
+          return <Link to={"review/" + row.row.response_id}>
+            <i className="fa fa-edit"></i></Link>
+        },
+        filterable: false
+      }, 
+      {
+        Header: "response_id",
+        accessor: "response_id",
+        filterable: false
+      },
+      {
+        Header: t("Submitted Timestamp"),
+        accessor: "submitted_timestamp",
+        filterable: false
+      }
+    ];
 
     return (
       <div className="ReviewHistory">
-        <p className="h5 text-center mb-4">Review History</p>
+        <p className="h5 text-center mb-4">{t("Review History")}</p>
 
         <div className={"review-padding"}>
           <ReactTable
@@ -87,4 +107,4 @@ class ReviewHistoryComponent extends Component {
   }
 }
 
-export default withRouter(ReviewHistoryComponent);
+export default withRouter(withTranslation()(ReviewHistoryComponent));

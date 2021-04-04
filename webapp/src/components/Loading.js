@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { withRouter } from "react-router";
 
 class Loading extends Component {
 
@@ -10,11 +9,11 @@ class Loading extends Component {
           };
 
         return (
-            <div class="d-flex justify-content-center">
-                <div class="spinner-border"
+            <div className="d-flex justify-content-center">
+                <div className="spinner-border"
                     style={loadingStyle}
                     role="status">
-                    <span class="sr-only">Loading...</span>
+                    <span className="sr-only">Loading...</span>
                 </div>
             </div>
         );
@@ -22,4 +21,4 @@ class Loading extends Component {
 
 }
 
-export default withRouter(Loading);
+export default Loading;

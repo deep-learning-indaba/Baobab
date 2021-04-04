@@ -15,6 +15,8 @@ from app.users.models import AppUser
 from app.events.models import Event
 from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
+from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
 from app import LOGGER
 
 from app import db
@@ -128,7 +130,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(Event.id == registration_form.event_id).first().name
+            event = event_repository.get_by_id(registration_form.event_id)
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
@@ -143,10 +145,9 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers,
-                                   event_name)
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, event)
             if email_sent:
-                registration.confirmation_email_sent_at = date.today();
+                registration.confirmation_email_sent_at = date.today()
                 db.session.commit()
 
             return registration, 201  # 201 is 'CREATED' status code
@@ -161,7 +162,6 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @auth_required
     def put(self):
         # Update an existing response for the logged-in user.
-        req_parser = reqparse.RequestParser()
         args = self.req_parser.parse_args()
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
@@ -188,11 +188,30 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
                     db.session.add(answer)
             db.session.commit()
+
+            current_user = user_repository.get_by_id(user_id)
+
+            registration_answers = db.session.query(GuestRegistrationAnswer).filter(
+                GuestRegistrationAnswer.guest_registration_id == registration.id).all()
+                
+            registration_questions = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
+
+            registration_form = db.session.query(RegistrationForm).filter(
+                RegistrationForm.id == args['registration_form_id']).first()
+
+            event = event_repository.get_by_id(registration_form.event_id)
+
+            email_sent = self.send_confirmation(current_user, registration_questions, registration_answers, event)
+            if email_sent:
+                registration.confirmation_email_sent_at = date.today()
+                db.session.commit()
+
             return 200
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, event_name):
+    def send_confirmation(self, user, questions, answers, event):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -206,20 +225,24 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             for answer in answers:
                 for question in questions:
                     if answer.registration_question_id == question.id:
-                        summary += "Question heading :" + question.headline + "\nQuestion Description :" + \
-                                   question.description + "\nAnswer :" + _get_answer_value(
+                        summary += "Question:" + question.headline + "\nAnswer:" + _get_answer_value(
                             answer, question) + "\n"
 
-            subject = event_name + ' Registration'
-            greeting = strings.build_response_email_greeting(user.user_title, user.firstname, user.lastname)
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
-            body_text = greeting + '\n\n' + 'Thank you for completing your guest registration. Please find a copy of your answers below for future reference.' + '\n\n' + summary + '\n\nKind Regards, The Deep Learning Indaba Team'
+            
+            emailer.email_user(
+                'guest-registration-confirmation',
+                template_parameters=dict(
+                    summary=summary,
+                ),
+                event=event,
+                user=user,
+            )
 
-            emailer.send_mail(user.email, subject, body_text=body_text)
             return True
 
-        except Exception as e:
+        except:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
                 response_id=user.id))
             return False

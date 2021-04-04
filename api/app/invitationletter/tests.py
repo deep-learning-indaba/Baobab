@@ -21,7 +21,7 @@ INVITATION_LETTER = {
    'work_address': "Somewhere over the rainbow",
    'addressed_to': "Sir",
    'residential_address': "Way up high",
-   'passport_name': "Jane Do\u7231",
+   'passport_name': "Jane Do\\u7231",
    'passport_no': "23456565",
    'passport_issued_by': "Neverland",
    'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -43,8 +43,8 @@ class InvitationLetterTests(ApiTestCase):
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
             key='REGINAL', 
@@ -190,7 +190,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == "Somewhere over the rainbow"
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -213,7 +213,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == " "
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -226,7 +226,7 @@ class InvitationLetterTests(ApiTestCase):
             'work_address': "Somewhere over the rainbow",
             'addressed_to': "Sir",
             'residential_address': "Way up high",
-            'passport_name': "Jane Do\u7231",
+            'passport_name': "Jane Do\\u7231",
             'passport_no': "23456565",
             'passport_issued_by': "Neverland",
             'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -248,7 +248,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.work_address == " "
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -263,7 +263,7 @@ class InvitationLetterTests(ApiTestCase):
             'work_address': "Somewhere over the rainbow",
             'addressed_to': "Sir",
             'residential_address': "Way up high",
-            'passport_name': "Jane Do\u7231",
+            'passport_name': "Jane Do\\u7231",
             'passport_no': "23456565",
             'passport_issued_by': "Neverland",
             'passport_expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%d'),
@@ -284,7 +284,7 @@ class InvitationLetterTests(ApiTestCase):
         assert letter.event_id == 1
         assert letter.addressed_to == "Sir"
         assert letter.residential_address == "Way up high"
-        assert letter.passport_name == "Jane Do\u7231"
+        assert letter.passport_name == "Jane Do\\u7231"
         assert letter.passport_no == "23456565"
         assert letter.passport_issued_by == "Neverland"
 
@@ -293,15 +293,15 @@ class InvitationLetterTests(ApiTestCase):
 class PDFConverterTest(ApiTestCase):
 
     def seed_static_data(self):
-        test_user = self.add_user('something@email.com')
+        self.test_user = self.add_user('something@email.com')
         self.add_organisation('Deep Learning Indaba')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
         db.session.commit()
 
         event = self.add_event(
-            name="Tech Talk",
-            description="tech talking",
+            name={'en': "Tech Talk"},
+            description={'en': "tech talking"},
             start_date=datetime(2019, 12, 12, 10, 10, 10),
             end_date=datetime(2020, 12, 12, 10, 10, 10),
             key='REGINAL'
@@ -331,7 +331,7 @@ class PDFConverterTest(ApiTestCase):
                                   firstname='Jeff',
                                   lastname='Jeffdejeff',
                                   bringing_poster='',
-                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True)
+                                  expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True, self.test_user)
 
 
 

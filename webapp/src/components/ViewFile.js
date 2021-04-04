@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-
-const baseUrl = process.env.REACT_APP_API_URL;
+import { withTranslation } from 'react-i18next';
+import { getDownloadURL } from '../utils/files';
 
 class ViewFile extends Component {
   
@@ -15,7 +15,7 @@ class ViewFile extends Component {
     componentDidMount() {
         if (this.props.match && this.props.match.params) {
             const filename = this.props.match.params.filename;
-            const fileLocation = baseUrl + "/api/v1/file?filename=" + filename;
+            const fileLocation = getDownloadURL(filename);
             this.setState({
                 fileLocation: fileLocation
             });
@@ -24,12 +24,13 @@ class ViewFile extends Component {
     }
 
     render() {
+      const t = this.props.t;
       return (
         <div>
-            <a href={this.state.fileLocation}>Click here</a> to download your file if it does not happen automatically.
+            <a href={this.state.fileLocation}>{t("Click here")}</a> {t("to download your file if it does not happen automatically")}.
         </div>
       );
     }
   }
 
-  export default withRouter(ViewFile);
+  export default withRouter(withTranslation()(ViewFile));

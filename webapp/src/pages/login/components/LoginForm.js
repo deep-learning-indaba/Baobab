@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
-import { createColClassName } from "../../../utils/styling/styling";
+import { withTranslation } from 'react-i18next';
 
 class LoginForm extends Component {
   constructor(props) {
@@ -67,7 +67,7 @@ class LoginForm extends Component {
       this.setState({
         loading: false,
         error: resp.error,
-        resendStatus: resp.error ? "" : "We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address.",
+        resendStatus: resp.error ? "" : this.props.t("We have re-sent your verification email, please check your inbox (and spam) and click on the link to verify your email address."),
         email: "",
         password: ""
       });
@@ -75,12 +75,6 @@ class LoginForm extends Component {
   }
 
   render() {
-    const xs = 6;
-    const sm = 6;
-    const md = 6;
-    const lg = 6;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
-
     const { email,
       password,
       loading,
@@ -89,33 +83,34 @@ class LoginForm extends Component {
       resendStatus
     } = this.state;
 
+    const t = this.props.t;
+
     return (
       <div className="Login">
 
         <form
-          style={{ margin: "10px" }}
           onSubmit={this.handleSubmit}>
 
-          <div class="login-header-logo">
-            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} />
-            <h3>Sign in to your account</h3>
-            <h6>Or <Link to="/createAccount" className="sign-up">Sign Up</Link> for a new one</h6>
+          <div class="login-header-logo text-center">
+            <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} alt="Logo"/>
+            <h3>{t("Sign in to your account")}</h3>
+            <h6>{t("Or")} <Link to="/createAccount" className="sign-up">{t("Sign Up")}</Link> {t("for a new one")}</h6>
           </div>
 
           <div class="card">
             <div class="form-group">
-              <label for="email">Email address</label>
+              <label htmlFor="email">{t("Email address")}</label>
               <input
                 type="email"
                 class="form-control"
                 id="email"
                 onChange={this.handleChange}
                 value={email}
-                autoFocus="true" />
+                autoFocus={true} />
             </div>
 
             <div class="form-group">
-              <label for="password">Password</label>
+              <label htmlFor="password">{t("Password")}</label>
               <input
                 type="password"
                 class="form-control"
@@ -123,7 +118,7 @@ class LoginForm extends Component {
                 onChange={this.handleChange}
                 value={password} />
               <div class="forgot-password">
-                <Link to="/resetPassword">Forgot your password?</Link>
+                <Link to="/resetPassword">{t("Forgot your password?")}</Link>
               </div>
             </div>
 
@@ -140,12 +135,10 @@ class LoginForm extends Component {
                     role="status"
                     aria-hidden="true" />
                 )}
-                  Sign In
+                  {t("Sign In")}
                 </button>
 
             </div>
-
-
 
             {error &&
               <div id="error-login" className={"alert alert-danger alert-container"}>
@@ -153,7 +146,7 @@ class LoginForm extends Component {
                 {notVerified &&
                   <button className="link-style"
                     onClick={this.resendVerification}>
-                    Resend Verification Email
+                    {t("Resend Verification Email")}
                 </button>}
               </div>}
 
@@ -170,4 +163,4 @@ class LoginForm extends Component {
   }
 }
 
-export default withRouter(LoginForm);
+export default withRouter(withTranslation()(LoginForm));

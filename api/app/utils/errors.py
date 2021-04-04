@@ -11,6 +11,9 @@ RESET_PASSWORD_CODE_NOT_VALID = (
 TOO_MANY_REQUESTS = ({'message': 'Too many requests'}, 429)
 EVENT_NOT_FOUND = ({'message': 'No event exists with that ID'}, 404)
 EVENT_WITH_KEY_NOT_FOUND = ({'message': 'No event exists with that KEY'}, 404)
+EVENT_WITH_TRANSLATION_NOT_FOUND = ({'message': 'Translation for event not found'}, 404)
+EVENT_MUST_CONTAIN_TRANSLATION = ({'message': "Event must contain at least one translation for 'name' and 'description'"}, 400)
+EVENT_TRANSLATION_MISMATCH = ({'message': "Event must contain same translations for 'name' and 'description'"}, 400)
 REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
 DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)
@@ -19,6 +22,7 @@ QUESTION_NOT_FOUND = (
     {'message': 'No question exists with that Event ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 FORM_NOT_FOUND_BY_ID = ({'message': 'No application form exists with that Application Form ID'}, 404)
+APPLICATION_FORM_EXISTS = ({'message': 'An application form exists with that event ID'}, 403)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
 RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted'}, 400)
@@ -115,3 +119,7 @@ FAILED_DELETE_INTEGRATION_TEST_USER = (
     {'message': 'Failed to delete integration test user'}, 500)
 DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for this application form'}, 409)
 BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)
+TAG_NOT_FOUND = (
+    {'message': 'No tag found with the given id'}, 404)
+REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)
+REVIEW_ALREADY_COMPLETED = ({'message': "Can't delete reviewer, the review has already been completed"}, 400)

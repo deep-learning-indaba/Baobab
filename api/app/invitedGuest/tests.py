@@ -35,7 +35,8 @@ USER_DATA = {
     'user_title': 'Mr',
     'role': 'mentor',
     'event_id': 1,
-    'policy_agreed': True
+    'policy_agreed': True,
+    'language': 'en'
 }
 
 
@@ -54,8 +55,8 @@ class InvitedGuestTest(ApiTestCase):
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
 
-        self.event1 = self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'LBFSOLVER')
-        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan', datetime.now(), datetime.now(), 'NAGSOLVER', 2)
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'}, datetime.now(), datetime.now(), 'LBFSOLVER')
+        self.event2 = self.add_event({'en': 'IndabaX'}, {'en': 'IndabaX Sudan'}, datetime.now(), datetime.now(), 'NAGSOLVER', 2)
         db.session.commit()
 
         adminRole = EventRole('admin', event_admin.id, self.event1.id)
@@ -66,6 +67,11 @@ class InvitedGuestTest(ApiTestCase):
         self.event2_id = self.event2.id
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
+
+        self.add_email_template('guest-invitation-with-registration')
+        self.add_email_template('guest-invitation')
+        self.add_email_template('new-guest-registration')
+        self.add_email_template('new-guest-no-registration')
 
         db.session.flush()
 

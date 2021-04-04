@@ -2,8 +2,8 @@ import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-
-const baseUrl = process.env.REACT_APP_API_URL;
+import { withTranslation } from 'react-i18next';
+import { getDownloadURL } from "../../utils/files";
 
 class FormFileUpload extends React.Component {
   shouldDisplayError = () => {
@@ -26,6 +26,8 @@ class FormFileUpload extends React.Component {
     var progressStyle = {
         width: this.props.uploadPercentComplete.toString() + "%"
     };
+
+    const t = this.props.t;
 
     return (
       <div>
@@ -55,7 +57,7 @@ class FormFileUpload extends React.Component {
                 ref={input => {
                 this.nameInput = input;
                 }}
-                accept=".pdf, application/pdf"
+                accept={this.props.options && this.props.options.accept ? this.props.options.accept : ".pdf, application/pdf" }
                 tabIndex={this.props.tabIndex}
                 autoFocus={this.props.autoFocus}
                 required={this.props.required || null}
@@ -65,11 +67,11 @@ class FormFileUpload extends React.Component {
                 <div class="progress-bar" role="progressbar" style={progressStyle} aria-valuemin="0" aria-valuemax="100"></div>
             </div>}
             {(this.props.uploaded || this.props.value) && 
-              <a href={baseUrl + "/api/v1/file?filename=" + this.props.value} class="text-success uploaded-status">Uploaded file</a>}
+              <a href={getDownloadURL(this.props.value)} class="text-success uploaded-status">{t('Uploaded file')}</a>}
         </FormGroup>
       </div>
     );
   }
 }
 
-export default FormFileUpload;
+export default withTranslation()(FormFileUpload);

@@ -30,6 +30,9 @@ export default class Registration extends Component {
         })
   }
   render() {
+    if (this.props.event && !this.props.event.registration_open) {
+      return <div class="alert alert-danger">Registration is now closed</div>
+    }
     return (
       <div>
         {this.state.GuestRegistration === true ?

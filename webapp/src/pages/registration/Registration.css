@@ -8,3 +8,12 @@
 .display-none{
     display: none;
 }
+
+.form-label {
+    margin-bottom: 0;
+}
+
+.registration-question {
+    text-align: left;
+    margin-bottom: 1em;
+}

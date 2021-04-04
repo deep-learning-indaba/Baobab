@@ -19,6 +19,7 @@ USER_DATA = {
         'lastname': 'Thing',
         'user_title': 'Mr',
         'password': '123456',
+        'language': 'en',
         'policy_agreed': True
     }
 
@@ -34,16 +35,19 @@ class UserApiTest(ApiTestCase):
         self.add_organisation('Deep Learning IndabaX')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = self.add_event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'},
                             datetime.now(), datetime.now(),
                             'SOUTHAFRI2019')
-        self.event2 = self.add_event('IndabaX', 'IndabaX Sudan',
+        self.event2 = self.add_event({'en': 'IndabaX'}, {'en': 'IndabaX Sudan'},
                             datetime.now(), datetime.now(),
                             'SUDANMO', 2)
         db.session.commit()
 
         self.event1_id = self.event1.id
         self.event2_id = self.event2.id
+
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
 
         db.session.flush()
 
@@ -108,10 +112,13 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Updated',
             'lastname': 'Updated',
             'user_title': 'Mrs',
+            'language': 'zu',
             'password': ''
         })
 
         self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['primary_language'], 'zu')
 
         response = self.app.get('/api/v1/user', headers=headers)
         data = json.loads(response.data)
@@ -334,19 +341,9 @@ class UserApiTest(ApiTestCase):
         event_role = EventRole('admin', 4, 1)
         db.session.add(event_role)
 
-        submitted_response_user1 = Response(1, 1)
-        submitted_response_user1.submit()
-        withdrawn_response = Response(1, 2)
-        withdrawn_response.withdraw()
-        submitted_response_user3 = Response(2, 3)
-        submitted_response_user3.submit()
-        responses = [
-            submitted_response_user1,
-            withdrawn_response,
-            submitted_response_user3
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 1, is_submitted=True)
+        self.add_response(1, 2, is_withdrawn=True)
+        self.add_response(2, 3, is_submitted=True)
 
     def test_email_change_gets_new_token_and_is_unverified(self):
         self.seed_static_data()
@@ -360,8 +357,9 @@ class UserApiTest(ApiTestCase):
             'firstname': 'Some',
             'lastname': 'Thing',
             'user_title': 'Mr',
+            'language': 'en',
             'password':''
-            })
+        })
 
         self.assertEqual(response.status_code,  200)
 
@@ -404,7 +402,7 @@ class UserCommentAPITest(ApiTestCase):
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
         db.session.add(Country('South Africa'))
-        self.event1 = self.add_event('Indaba', 'Indaba Event',
+        self.event1 = self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'},
                             datetime.now(), datetime.now(),
                             'NAGSOLVER')
         db.session.add(self.event1)
@@ -412,6 +410,9 @@ class UserCommentAPITest(ApiTestCase):
 
         self.event1_id = self.event1.id
         
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         user_data1 = USER_DATA.copy()
         response = self.app.post('/api/v1/user', data=user_data1)
         self.user1 = json.loads(response.data)
@@ -425,6 +426,7 @@ class UserCommentAPITest(ApiTestCase):
 
         user2 = db.session.query(AppUser).filter(AppUser.email == 'person2@person.com').first()
         user2.is_admin = True
+
         db.session.flush()
 
     def seed_comments(self):
@@ -440,7 +442,7 @@ class UserCommentAPITest(ApiTestCase):
             self.seed_static_data()
 
             params = {'event_id': self.event1_id, 'user_id': self.user2['id'], 'comment': 'Comment1'}
-            print('Sending params: ', params)
+            print(('Sending params: ', params))
             response = self.app.post('/api/v1/user-comment', headers={'Authorization': self.user1['token']}, data=json.dumps(params), content_type='application/json')
             data = json.loads(response.data)
 
@@ -754,8 +756,8 @@ class UserProfileApiTest(ApiTestCase):
         db.session.commit()
 
         events = [
-            self.add_event('Indaba', 'Indaba Event', datetime.now(), datetime.now(), 'ADAMOPTIM'),
-            self.add_event('Indaba2', 'Indaba Event 2', datetime.now(), datetime.now(), 'HACFTET', 2)
+            self.add_event({'en': 'Indaba'}, {'en': 'Indaba Event'}, datetime.now(), datetime.now(), 'ADAMOPTIM'),
+            self.add_event({'en': 'Indaba2'}, {'en': 'Indaba Event 2'}, datetime.now(), datetime.now(), 'HACFTET', 2)
         ]
 
         application_forms = [
@@ -780,14 +782,8 @@ class UserProfileApiTest(ApiTestCase):
         ]
         db.session.add_all(event_roles)
         db.session.commit()
-        responses = [
-            Response(1, 1),
-            Response(2, 2)
-        ]
-        for response in responses:
-            response.submit()
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(1, 1, is_submitted=True)
+        self.add_response(2, 2, is_submitted=True)
     
     def get_auth_header_for(self, email):
         body = {
@@ -906,6 +902,9 @@ class OrganisationUserTest(ApiTestCase):
             user.verify()
         db.session.add_all(users)
 
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+
         db.session.commit()
 
     def get_auth_header_for(self, email, domain):
@@ -996,3 +995,75 @@ class PrivacyPolicyApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data['message'], POLICY_NOT_AGREED[0]['message'])
+
+
+class EventAttendeeAPITest(ApiTestCase):
+    def seed_static_data(self):
+        self.event = self.add_event()
+        self.user1 = self.add_user()
+        self.app_form = self.create_application_form()
+        self.response = self.add_response(self.app_form.id, self.user1.id, True, False)
+
+        self.add_email_template('verify-email')
+        self.add_email_template('password-reset')
+    
+    def test_auth_required(self):
+        """Check that response is 401 when no auth token provided."""
+        self.seed_static_data()
+        response = self.app.post('/api/v1/validate-user-event-attendee', data={'event_id': 1})
+        self.assertEqual(response.status_code, 401)
+
+    def test_non_attendee(self):
+        """Check that response is 401 when user is not an attendee."""
+        self.seed_static_data()
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email),
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_non_attendee_with_offer(self):
+        """Check that response is 401 when user hasn't responded or rejected their offer."""
+        self.seed_static_data()
+        offer = self.add_offer(self.user1.id)
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+        offer.candidate_response = False
+        db.session.commit()
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email),
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_attendee_offer(self):
+        """Check that response is 200 when user has accepted an offer."""
+        self.seed_static_data()
+        offer = self.add_offer(self.user1.id)
+        offer.candidate_response = True
+        db.session.commit()
+
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_invited_guest(self):
+        """Check that response is 200 when user is an invited guest."""
+        self.seed_static_data()
+        self.add_invited_guest(self.user1.id)
+        response = self.app.post(
+            '/api/v1/validate-user-event-attendee',
+            headers=self.get_auth_header_for(self.user1.email), 
+            data={'event_id': 1}
+        )
+        self.assertEqual(response.status_code, 200)

@@ -17,20 +17,11 @@ from app import LOGGER
 from app.users.repository import UserRepository as user_repository
 from app.registrationResponse.repository import RegistrationRepository
 from app.guestRegistrations.repository import GuestRegistrationRepository
+from app.events.repository import EventRepository as event_repository
 import itertools
 
 
 from app import db
-
-
-REGISTRATION_MESSAGE = 'Thank you for completing our registration form.'
-REGISTRATION_CONFIRMED_MESSAGE = """Your registration to {event_name} has been confirmed! This means that all required payment has been completed. 
-
-We look forward to seeing you at the event!
-
-Kind Regards,
-The {event_name} Organisers
-"""
 
 
 def _get_answer_value(answer, question):
@@ -144,8 +135,7 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             db.session.add(registration)
             db.session.commit()
 
-            event_name = db.session.query(Event).filter(
-                Event.id == registration_form.event_id).first().name
+            event = event_repository.get_by_id(registration_form.event_id)
 
             for answer_args in args['answers']:
                 if db.session.query(RegistrationQuestion).filter(
@@ -163,8 +153,10 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
-            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed,
-                                   event_name)
+            self.send_confirmation(current_user, registration_questions, registration_answers, registration.confirmed, event)
+
+            # 201 is 'CREATED' status code
+            return marshal(registration, self.registration_fields), 201
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -173,9 +165,8 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
-        finally:
-            # 201 is 'CREATED' status code
-            return marshal(registration, self.registration_fields), 201
+        
+            
 
     @auth_required
     def put(self):
@@ -219,11 +210,28 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
                     db.session.add(answer)
             db.session.commit()
+
+            current_user = user_repository.get_by_id(user_id)
+
+            registration_answers = db.session.query(RegistrationAnswer).filter(
+                RegistrationAnswer.registration_id == registration.id).all()
+                
+            registration_questions = db.session.query(RegistrationQuestion).filter(
+                RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
+
+            registration_form = db.session.query(RegistrationForm).filter(
+                RegistrationForm.id == args['registration_form_id']).first()
+
+            event = event_repository.get_by_id(registration_form.event_id)
+
+            self.send_confirmation(
+                current_user, registration_questions, registration_answers, registration.confirmed, event)
+
             return 200
         except Exception as e:
             return 'Could not access DB', 400
 
-    def send_confirmation(self, user, questions, answers, confirmed, event_name):
+    def send_confirmation(self, user, questions, answers, confirmed, event):
         if answers is None:
             LOGGER.warn(
                 'Found no answers associated with response with id {response_id}'.format(response_id=user.id))
@@ -237,30 +245,20 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
             for answer in answers:
                 for question in questions:
                     if answer.registration_question_id == question.id:
-                        summary += "Question heading :" + question.headline + "\nQuestion Description :" + \
-                            question.description + "\nAnswer :" + _get_answer_value(
+                        summary += "Question:" + question.headline + "\nAnswer:" + _get_answer_value(
                                 answer, question) + "\n"
 
-            subject = event_name + ' Registration'
-            greeting = strings.build_response_email_greeting(
-                user.user_title, user.firstname, user.lastname)
-            if len(summary) <= 0:
-                summary = '\nNo valid questions were answered'
-            body_text = greeting + '\n\n' + REGISTRATION_MESSAGE + \
-                self.get_confirmed_message(
-                    confirmed) + '\n\nHere is a copy of your responses:\n\n' + summary
-
-            emailer.send_mail(user.email, subject, body_text=body_text)
+            emailer.email_user(
+                'registration-with-confirmation' if confirmed else 'registration-pending-confirmation',
+                template_parameters=dict(
+                    summary=summary
+                ),
+                event=event,
+                user=user)
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id}'.format(
                 response_id=user.id))
-
-    def get_confirmed_message(self, confirmed):
-        if not confirmed:
-            return '\nPlease note that your spot is pending confirmation on receipt of payment of USD 350. You will receive correspondence with payment instructions in the next few days.\n\n'
-        else:
-            return 'Your spot is now confirmed and we look forward to welcoming you at the Indaba!'
 
 
 def map_registration_info(registration_info):
@@ -371,15 +369,13 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
         return _get_registrations(event_id, user_id, confirmed=None, exclude_already_signed_in=exclude_already_signed_in)
 
 
-def _send_registration_confirmation_mail(user, event_name):
-    subject = event_name + ' Registration Confirmation'
-    greeting = strings.build_response_email_greeting(
-        user.user_title, user.firstname, user.lastname)
-    body_text = greeting + '\n\n' + \
-        REGISTRATION_CONFIRMED_MESSAGE.format(event_name=event_name)
-
+def _send_registration_confirmation_mail(user, event):
     try:
-        emailer.send_mail(user.email, subject, body_text=body_text)
+        emailer.email_user(
+            'registration-confirmed',
+            event=event,
+            user=user)
+        
         return True
     except Exception as e:
         LOGGER.error(
@@ -405,7 +401,7 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
             registration.confirm()
             registration_user = UserRepository.get_by_id(offer.user_id)
             registration_event = EventRepository.get_by_id(offer.event_id)
-            if _send_registration_confirmation_mail(registration_user, registration_event.name):
+            if _send_registration_confirmation_mail(registration_user, registration_event):
                 registration.confirmation_email_sent_at = datetime.now()
 
             db.session.commit()

@@ -1,3 +1,5 @@
+// TODO: ADD TRANSLATION
+
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
@@ -134,8 +136,8 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <NavLink className="btn btn-primary" to={`${this.props.event.key}/registration`}>
-                Proceed to Registration >
+              <NavLink className="btn btn-primary" to={`/${this.props.event.key}/registration`}>
+                Proceed to Registration 
               </NavLink>
             </div>
           </div>
@@ -380,9 +382,6 @@ class Offer extends Component {
       width: "3rem",
       height: "3rem"
     };
-
-    console.log('applicationExist: ' + applicationExist);
-    console.log('offer: ' + offer);
 
     if (loading) {
       return (

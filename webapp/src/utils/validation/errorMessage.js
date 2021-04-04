@@ -1,3 +1,4 @@
+// TODO: HOW TO TRANSLATE THESE?
 export const isRequiredDropdown = fieldName => `${fieldName} is required`;
 export const isRequiredText = fieldName => `${fieldName} is required`;
 export const isRequiredCheckBox = fieldName => `${fieldName} is required`;
@@ -13,3 +14,4 @@ export const maxLength = length => {
 export const isNotValidUsername = fieldName =>
   `Please enter a valid email or cell phone number`;
 export const isNotValidDate = fieldName => `${fieldName} is not a valid date.`;
+export const matchingPasswords = () => `Passwords do not match.`;

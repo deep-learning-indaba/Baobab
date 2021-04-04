@@ -8,6 +8,48 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from flask import g, request
+from app.email_template.repository import EmailRepository as email_repository
+from app.users.repository import UserRepository as user_repository
+from app.events.repository import EventRepository as event_repository
+
+def email_user(
+    email_template_key, 
+    user, 
+    template_parameters=None, 
+    event=None,
+    subject_parameters=None, 
+    file_name='',
+    file_path=''
+):
+    """Send an email to a specified user using an email template. Handles resolving the correct language."""
+    if user is None:
+        raise ValueError('You must specify a user!')
+
+    language = user.user_primaryLanguage
+    email_template = email_repository.get(None if event is None else event.id, email_template_key, language)
+
+    if email_template is None:
+        raise ValueError('Could not find email template with key {}'.format(email_template_key))
+    
+    subject_parameters = subject_parameters or {}
+    if event is not None and 'event_name' not in subject_parameters:
+        subject_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+
+    subject = email_template.subject.format(**subject_parameters)
+
+    template_parameters = template_parameters or {}
+    if 'title' not in template_parameters:
+        template_parameters['title'] = user.user_title
+    if 'firstname' not in template_parameters:
+        template_parameters['firstname'] = user.firstname
+    if 'lastname' not in template_parameters:
+        template_parameters['lastname'] = user.lastname
+    if event is not None and 'event_name' not in template_parameters:
+        template_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+
+    body_text = email_template.template.format(**template_parameters)
+    send_mail(recipient=user.email, subject=subject, body_text=body_text, file_name=file_name, file_path=file_path)
+
 
 def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', mail_type='AMZ', file_name='',
               file_path='', sender_name=None, sender_email=None):
@@ -61,7 +103,7 @@ def send_mail(recipient, subject, body_text='', body_html='', charset='UTF-8', m
                 server.sendmail(sender_email, recipient, msg.as_string())
                 server.close()
             except Exception as e:
-                LOGGER.error("Exception {} while trying to send email: {}, {}".format(e, traceback.format_exc()))
+                LOGGER.error("Exception {} while trying to send email: {}".format(e, traceback.format_exc()))
                 raise e
 
     else:

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, Suspense } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -6,13 +6,17 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
+import { Link } from "react-router-dom";
+import { withTranslation } from "react-i18next";
 import {
   requiredText,
   requiredDropdown,
   validEmail,
-  validatePassword
+  validatePassword,
+  matchingPasswords
 } from "../../../utils/validation/rules.js";
-import { createColClassName } from "../../../utils/styling/styling";
+
+const PassStrengthBar = React.lazy(() => import("./PassStrength"));
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
@@ -21,6 +25,7 @@ const fieldValidations = [
   ruleRunner(validationFields.email, validEmail),
   ruleRunner(validationFields.password, requiredText),
   ruleRunner(validationFields.confirmPassword, requiredText),
+  ruleRunner(validationFields.confirmPassword, matchingPasswords),
 ];
 
 class CreateAccountForm extends Component {
@@ -60,11 +65,9 @@ class CreateAccountForm extends Component {
   }
 
   componentWillMount() {
-    Promise.all([
-      getTitleOptions,
-    ]).then(result => {
+    Promise.all([getTitleOptions]).then(result => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0]),
+        titleOptions: this.checkOptionsList(result[0])
       });
     });
   }
@@ -85,7 +88,7 @@ class CreateAccountForm extends Component {
           [name]: dropdown.value
         }
       },
-      function () {
+      function() {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
@@ -101,7 +104,7 @@ class CreateAccountForm extends Component {
             [field.name]: event.target.value
           }
         },
-        function () {
+        function() {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -116,23 +119,32 @@ class CreateAccountForm extends Component {
 
   togglePrivacyPolicy = () => {
     let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
-    this.setState({user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy}});};
-
+    this.setState({
+      user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy }
+    });
+  };
 
   handleSubmit = event => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
     if (this.state.user.password !== this.state.user.confirmPassword) {
-      this.state.errors.$set.push({ passwords: "Passwords do not match" });
+      this.state.errors.$set.push({
+        passwords: this.props.t("Passwords do not match")
+      });
     }
-    const passwordErrors = validatePassword(this.state.user.password)
-    if (passwordErrors && passwordErrors.password && passwordErrors.password.length > 0 && passwordErrors.password.foreach) {
+    const passwordErrors = validatePassword(this.state.user.password);
+    if (
+      passwordErrors &&
+      passwordErrors.password &&
+      passwordErrors.password.length > 0 &&
+      passwordErrors.password.foreach
+    ) {
       passwordErrors.password.foreach(i => {
         this.state.errors.$set.push({ passwords: i });
       });
     }
-    
+
     if (
       this.state.errors &&
       this.state.errors.$set &&
@@ -175,11 +187,7 @@ class CreateAccountForm extends Component {
     return errorMessages;
   };
   render() {
-    const xs = 12;
-    const sm = 4;
-    const md = 4;
-    const lg = 4;
-    const commonColClassName = createColClassName(xs, sm, md, lg);
+    const t = this.props.t;
 
     const {
       firstName,
@@ -191,25 +199,18 @@ class CreateAccountForm extends Component {
       agreePrivacyPolicy
     } = this.state.user;
 
-    const {
-      loading,
-      errors,
-      showErrors,
-      error,
-      created,
-      over18
-    } = this.state;
+    const { loading, errors, showErrors, error, created, over18 } = this.state;
 
     if (created) {
       return (
         <div className="CreateAccount">
-          <p className="h5 text-center mb-4">Create Account</p>
+          <p className="h3 text-center mb-4">{t("Sign Up")}</p>
           <p id="account-created">
-            Your {this.props.organisation ? this.props.organisation.name : ""} account
-            has been created, but before you can use it, we
-            need to verify your email address. Please check your email (and spam
-            folder) for a message containing a link to verify your email
-            address.
+            {this.props.t("Your")}{" "}
+            {this.props.organisation ? this.props.organisation.name : ""}{" "}
+            {this.props.t(
+              "account has been created, but before you can use it, we need to verify your email address. Please check your email (and spam folder) for a message containing a link to verify your email address."
+            )}
           </p>
         </div>
       );
@@ -220,142 +221,140 @@ class CreateAccountForm extends Component {
     return (
       <div className="CreateAccount">
         <form onSubmit={this.handleSubmit}>
-          <p className="h5 text-center mb-4">Create Account</p>
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormSelect
-                options={this.state.titleOptions}
-                id={validationFields.title.name}
-                placeholder={validationFields.title.display}
-                onChange={this.handleChangeDropdown}
-                value={titleValue}
-                label={validationFields.title.display}
-              />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.firstName.name}
-                type="text"
-                placeholder={validationFields.firstName.display}
-                onChange={this.handleChange(validationFields.firstName)}
-                value={firstName}
-                label={validationFields.firstName.display}
-              />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.lastName.name}
-                type="text"
-                placeholder={validationFields.lastName.display}
-                onChange={this.handleChange(validationFields.lastName)}
-                value={lastName}
-                label={validationFields.lastName.display}
-              />
-            </div>
+          <div class="login-header-logo text-center">
+            <img
+              src={
+                this.props.organisation &&
+                require("../../../images/" + this.props.organisation.small_logo)
+              }
+              alt="Logo"
+            />
+            <h3>{t("Sign Up")}</h3>
+            <h6>
+              <Link to="/login" className="sign-up">
+                {t("Sign In")}
+              </Link>{" "}
+              {t("if you already have an account")}
+            </h6>
           </div>
 
-          <div class="row">
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.email.name}
-                type="email"
-                placeholder={validationFields.email.display}
-                onChange={this.handleChange(validationFields.email)}
-                value={email}
-                label={validationFields.email.display}
-              />
-            </div>
+          <div class="card">
+            <FormSelect
+              options={this.state.titleOptions}
+              id={validationFields.title.name}
+              onChange={this.handleChangeDropdown}
+              value={titleValue}
+              label={t(validationFields.title.display)}
+            />
+            <FormTextBox
+              id={validationFields.firstName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.firstName)}
+              value={firstName}
+              label={t(validationFields.firstName.display)}
+            />
+            <FormTextBox
+              id={validationFields.lastName.name}
+              type="text"
+              onChange={this.handleChange(validationFields.lastName)}
+              value={lastName}
+              label={t(validationFields.lastName.display)}
+            />
+            <FormTextBox
+              id={validationFields.email.name}
+              type="email"
+              onChange={this.handleChange(validationFields.email)}
+              value={email}
+              label={t(validationFields.email.display)}
+            />
+            <div className="vertical-space"></div>
+            <FormTextBox
+              id={validationFields.password.name}
+              type="password"
+              onChange={this.handleChange(validationFields.password)}
+              value={password}
+              label={t(validationFields.password.display)}
+            />
+            <Suspense fallback={<div>Loading...</div>}>
+              <PassStrengthBar password={this.state.user.password} />
+            </Suspense>
 
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.password.name}
-                type="password"
-                placeholder={validationFields.password.display}
-                onChange={this.handleChange(validationFields.password)}
-                value={password}
-                label={validationFields.password.display}
-              />
-            </div>
-
-            <div class={commonColClassName}>
-              <FormTextBox
-                id={validationFields.confirmPassword.name}
-                type="password"
-                placeholder={validationFields.confirmPassword.display}
-                onChange={this.handleChange(validationFields.confirmPassword)}
-                value={confirmPassword}
-                label={validationFields.confirmPassword.display}
-              />
-            </div>
-          </div>
-
-          <div>
-            <br />
-            <h5>Please confirm the following in order to create an account</h5>
-
-            <div className="form-check">
+            <FormTextBox
+              id={validationFields.confirmPassword.name}
+              type="password"
+              onChange={this.handleChange(validationFields.confirmPassword)}
+              value={confirmPassword}
+              label={t(validationFields.confirmPassword.display)}
+            />
+            <div className="vertical-space"></div>
+            <div className="custom-control custom-checkbox text-left">
               <input
-                className="form-check-input"
+                className="custom-control-input"
                 id="over18"
                 name="over18"
                 type="checkbox"
                 checked={over18}
-                onChange={this.toggleAge} />
-              <label class="form-check-label" for="over18">
-                I am over 18
+                onChange={this.toggleAge}
+              />
+              <label class="custom-control-label" for="over18">
+                {t("I am over 18")}
               </label>
             </div>
-
-            <div className="form-check">
+            <div className="custom-control custom-checkbox text-left">
               <input
-                className="form-check-input"
+                className="custom-control-input"
                 name="agreePrivacyPolicy"
                 id="agreePrivacyPolicy"
                 type="checkbox"
                 checked={agreePrivacyPolicy}
                 onChange={this.togglePrivacyPolicy}
               />
-              <label class="form-check-label" for="agreePrivacyPolicy">
-                {"I have read and agree to the "}
-                <a href={"/" + (this.props.organisation ? this.props.organisation.privacy_policy : "")}
+              <label class="custom-control-label" for="agreePrivacyPolicy">
+                {t("I have read and agree to the ")}
+                <a
+                  href={
+                    "/" +
+                    (this.props.organisation
+                      ? this.props.organisation.privacy_policy
+                      : "")
+                  }
                   target="_blank"
-                  rel="noopener noreferrer">
-                  privacy policy
+                  rel="noopener noreferrer"
+                >
+                  {t("Privacy Policy")}
                 </a>
               </label>
             </div>
+            <button
+              id="btn-signup-confirm"
+              type="submit"
+              class="btn btn-primary"
+              disabled={
+                !this.validateForm() ||
+                loading ||
+                !agreePrivacyPolicy ||
+                !over18
+              }
+            >
+              {loading && (
+                <span
+                  class="spinner-grow spinner-grow-sm"
+                  role="status"
+                  aria-hidden="true"
+                />
+              )}
+              {t("Sign Up")}
+            </button>
           </div>
 
-          <br></br><br></br>
-
-          <button
-            id="btn-signup-confirm"
-            type="submit"
-            class="btn btn-primary"
-            disabled={!this.validateForm() || loading || !agreePrivacyPolicy || !over18}>
-            {loading && (
-              <span
-                class="spinner-grow spinner-grow-sm"
-                role="status"
-                aria-hidden="true"
-              />
-            )}
-            Sign Up
-          </button>
-          {errors &&
-            errors.$set &&
-            showErrors &&
-            this.getErrorMessages(errors)}
-          {error &&
-            <div class="alert alert-danger alert-container">
-              {error}
-            </div>}
+          {errors && errors.$set && showErrors && this.getErrorMessages(errors)}
+          {error && (
+            <div class="alert alert-danger alert-container">{error}</div>
+          )}
         </form>
       </div>
     );
   }
 }
 
-export default withRouter(CreateAccountForm);
+export default withRouter(withTranslation()(CreateAccountForm));

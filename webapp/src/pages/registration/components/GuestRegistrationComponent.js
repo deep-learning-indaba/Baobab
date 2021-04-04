@@ -1,78 +1,31 @@
+// TODO: ADD TRANSLATION
+
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
+import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
+import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
+import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormDate from '../../../components/form/FormDate';
-import FormFileUpload from "../../../components/form/FormFileUpload";
 import { registrationService } from "../../../services/registration";
-import { fileService } from "../../../services/file/file.service";
+import FileUploadComponent from "../../../components/FileUpload";
+import Loading from "../../../components/Loading";
+import _ from "lodash";
 
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
+const CHOICE_OTHER = "choice-with-other";
+const MULTI_CHECKBOX = "multi-checkbox";
+const MULTI_CHECKBOX_OTHER = "multi-checkbox-with-other";
 const FILE = "file";
 const DATE = "date";
 
-class FileUploadComponent extends Component {
-  //TODO: Move to central place and share with application form
-  constructor(props) {
-    super(props);
-    this.state = {
-      uploadPercentComplete: 0,
-      uploading: false,
-      uploaded: false,
-      uploadError: ""
-    };
-  }
-
-  handleUploadFile = file => {
-    this.setState({
-      uploading: true
-    }, () => {
-      fileService
-        .uploadFile(file, progressEvent => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          this.setState({
-            uploadPercentComplete: percentCompleted
-          });
-        })
-        .then(response => {
-          if (response.fileId && this.props.onChange) {
-            this.props.onChange(this.props.question.id, response.fileId);
-          }
-          this.setState({
-            uploaded: response.fileId !== "",
-            uploadError: response.error,
-            uploading: false
-          });
-        });
-    }
-    );
-  };
-
-  render() {
-    return (
-      <FormFileUpload
-        id={this.props.question.id}
-        name={this.id}
-        label={this.props.question.description}
-        key={"i_" + this.props.key}
-        value={(this.props.answer && this.props.answer.value) || ""}
-        showError={this.props.validationError || this.state.uploadError}
-        errorText={this.props.validationError || this.state.uploadError}
-        uploading={this.state.uploading}
-        uploadPercentComplete={this.state.uploadPercentComplete}
-        uploadFile={this.handleUploadFile}
-        uploaded={this.state.uploaded} />
-    );
-  }
-}
 
 class GuestRegistrationComponent extends Component {
   constructor(props) {
@@ -110,25 +63,23 @@ class GuestRegistrationComponent extends Component {
     }
   };
 
-  handleChange = event => {
-    // React datepicker component's onChange contains the value and not event.target.value
-    const value = event && event.target ? (
-      event.target.type === "checkbox"
+  handleChange = (id, event) => {
+    let value = null;
+    if (event.target) {
+      value = event.target.type === "checkbox"
         ? event.target.checked | 0
-        : event.target.value
-    ) : (
-      event
-    );
+        : event.target.value;
+    }
+    else {
+      value = event;
+    }
 
-    let id = parseInt(event.target.id);
     this.onChange(id, value);
   };
 
   onChange = (id, value) => {
     let answer = this.state.answers.find(
-      a => a.registration_question_id === id
-    );
-
+      a => a.registration_question_id === id);
     let answers = this.state.answers;
 
     if (answer) {
@@ -146,12 +97,11 @@ class GuestRegistrationComponent extends Component {
 
     this.setState({
       answers: answers
-    },
-      () => {
-        if (this.state.hasValidated) {
-          this.isValidated();
-        }
+    }, () => {
+      if (this.state.hasValidated) {
+        this.isValidated();
       }
+    }
     );
   };
 
@@ -309,11 +259,6 @@ class GuestRegistrationComponent extends Component {
       isSubmitting
     } = this.state;
 
-    const loadingStyle = {
-      width: "3rem",
-      height: "3rem"
-    };
-
     this.getDropdownDescription = (options, answer) => {
       return options.map(item => {
         if (item.value === answer.value) return item.label;
@@ -323,32 +268,32 @@ class GuestRegistrationComponent extends Component {
 
     this.formControl = (key, question, answer, validError) => {
       let validationError = validError ? validError.error : "";
+
       switch (question.type) {
         case SHORT_TEXT:
           return (
             <FormTextBox
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               type="text"
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
               required={question.is_required} />
           );
-
         case SINGLE_CHOICE:
           return (
             <FormCheckbox
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               type="checkbox"
               label={question.description}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               value={answer ? parseInt(answer.value) : answer}
               key={"i_" + key}
               showError={validationError}
@@ -359,25 +304,24 @@ class GuestRegistrationComponent extends Component {
         case LONG_TEXT[1]:
           return (
             <FormTextArea
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               label={question.description}
-              onChange={this.handleChange}
-              placeholder={answer ? answer.value : question.placeholder}
-              value={answer ? answer.value : answer}
+              onChange={e => this.handleChange(question.id, e)}
+              placeholder={question.placeholder}
+              value={(answer && answer.value) || null}
               rows={5}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError}
-              required={question.is_required && !answer} />
+              errorText={validationError} />
           );
-
         case MULTI_CHOICE:
           return (
             <FormSelect
               options={question.options}
-              id={question.id}
-              onChange={this.handleChangeDropdown}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              onChange={(_, d) => this.handleChangeDropdown(question.id, d)}
               defaultValue={(answer && answer.value) || ""}
               placeholder={question.placeholder}
               label={question.description}
@@ -386,32 +330,70 @@ class GuestRegistrationComponent extends Component {
               showError={validationError}
               errorText={validationError} />
           );
-
+          case CHOICE_OTHER:
+            return (
+              <FormSelectOther
+                options={question.options}
+                id={`control_${question.id}`}
+                name={`control_${question.id}`}
+                onChange={e => this.onChange(question.id, e)}
+                defaultValue={(answer && answer.value) || ""}
+                placeholder={question.placeholder}
+                label={question.description}
+                required={question.is_required && !answer}
+                key={"i_" + key}
+                showError={validationError}
+                errorText={validationError} />
+            );
+        case MULTI_CHECKBOX:
+          return (
+            <FormMultiCheckbox
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              options={question.options}
+              onChange={e => this.onChange(question.id, e)}
+              defaultValue={(answer && answer.value) || ""}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
+        case MULTI_CHECKBOX_OTHER:
+          return (
+            <FormMultiCheckboxOther
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              options={question.options}
+              onChange={e => this.onChange(question.id, e)}
+              defaultValue={(answer && answer.value) || ""}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
         case FILE:
           return (
             <FileUploadComponent
-              question={question}
-              answer={answer}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              description={question.description}
+              value={this.props.answer && this.props.answer.value}
               validationError={validationError}
-              onChange={this.onChange}
+              onChange={(_, v) => this.onChange(question.id, v)}
               key={"i_" + key} />
           );
-
         case DATE:
           return (
             <FormDate
-              id={question.id}
-              name={this.id}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={this.handleChange}
+              onChange={e => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
               required={question.is_required} />
           );
-
         default:
           return (
             <p className="text-danger">
@@ -423,11 +405,7 @@ class GuestRegistrationComponent extends Component {
 
     if (isLoading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
+        <Loading />
       );
     }
 
@@ -442,8 +420,7 @@ class GuestRegistrationComponent extends Component {
         {this.state.formSuccess ? (
           <div className="card flat-card success stretched">
             <h5>Successfully Registered</h5>
-            <p>We look forward to welcoming you at the Indaba!</p>
-            <a href="/invitationLetter"> Request an invitation letter.</a>
+            <p>We look forward to welcoming you at {this.props.event.name}!</p>
 
             <div className="col-12">
               <button
@@ -474,73 +451,76 @@ class GuestRegistrationComponent extends Component {
           </div>
         )}
 
-        {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
-          <div>
-            {this.state.questionSections.map(section => (
-              <div class="card stretched" key={"section_" + section.id}>
-                <h3>{section.name}</h3>
-                <div className="padding-v-15 mb-4 text-left">
-                  {section.description}
+        {this.state.questionSections.length > 0 &&
+          !this.state.formSuccess ? (
+            <div>
+              {this.state.questionSections.map(section => (
+                <div class="card stretched" key={"section_" + section.id}>
+                  <h3>{section.name}</h3>
+                  <div className="padding-v-15 mb-4 text-left">
+                    {section.description}
+                  </div>
+
+                  {section.registration_questions
+                    .sort((a, b) => a.order - b.order)
+                    .filter(question => {
+                      if (question.depends_on_question_id) {
+                        console.log('this.state.answers: ', this.state.answers);
+                        let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
+                        return answer && (answer.value !== question.hide_for_dependent_value)
+                      }
+                      return true
+                    })
+                    .map(question => {
+                      return (
+                        <div
+                          className="registration-question"
+                          key={"question_" + question.id}>
+                          <h5 className="form-label">{question.headline}</h5>
+                          {this.formControl(
+                            question.id,
+                            question,
+                            this.state.answers &&
+                            this.state.answers.find(
+                              a => a.registration_question_id === question.id
+                            ),
+                            this.state.validationErrors &&
+                            this.state.validationErrors.find(
+                              v => v.registration_question_id === question.id
+                            )
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
+              ))}
 
-                {section.registration_questions
-                  .sort((a, b) => a.order - b.order)
-                  .filter(question => {
-                    if (question.depends_on_question_id) {
-                      let answer = this.state.answers.find(a => a.registration_question_id === question.depends_on_question_id);
-                      return answer && (answer.value !== question.hide_for_dependent_value)
-                    }
-                    return true
-                  })
-                  .map(question => {
-                    return (
-                      <div
-                        className="text-left"
-                        key={"question_" + question.id}>
-                        <h5>{question.headline}</h5>
-                        {this.formControl(
-                          question.id,
-                          question,
-                          this.state.answers &&
-                          this.state.answers.find(
-                            a => a.registration_question_id === question.id),
-                          this.state.validationErrors &&
-                          this.state.validationErrors.find(
-                            v => v.registration_question_id === question.id)
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
-            ))}
-
-            <button
-              type="submit"
-              class="btn btn-primary margin-top-32"
-              onClick={this.buttonSubmit}>
-
-              {isSubmitting && (
-                <span
-                  class="spinner-grow spinner-grow-sm"
-                  role="status"
-                  aria-hidden="true" />
-              )}
-              Submit reponse
+              <button
+                type="submit"
+                class="btn btn-primary margin-top-32"
+                onClick={this.buttonSubmit}>
+                {isSubmitting && (
+                  <span
+                    class="spinner-grow spinner-grow-sm"
+                    role="status"
+                    aria-hidden="true" />
+                )}
+                Submit reponse
             </button>
 
-            {hasValidated && !validationStale && !isValid && (
-              <div class="alert alert-danger alert-container">
-                There are one or more validation errors, please correct before submitting.
-              </div>
-            )}
-          </div>
-        ) : (
+              {hasValidated && !validationStale && !isValid && (
+                <div class="alert alert-danger alert-container">
+                  There are one or more validation errors, please correct before submitting.
+                </div>
+              )}
+            </div>
+          ) : (
             <div>
               {this.state.formSuccess !== true &&
                 this.state.formFailure !== true && (
                   <div className="alert alert-danger alert-container">
-                    No registration form available
-                </div>
+                    Registration not available
+                  </div>
                 )}
             </div>
           )}
