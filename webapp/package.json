@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "array-flat-polyfill": "^1.0.1",
-    "axios": "^0.18.1",
+    "axios": "^0.21.1",
     "bootstrap": "^4.5.3",
     "country-list": "^2.1.0",
     "env-cmd": "^8.0.2",
