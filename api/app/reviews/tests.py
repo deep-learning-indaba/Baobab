@@ -126,10 +126,10 @@ class ReviewsApiTest(ApiTestCase):
         self.add_question_translation(4, 'en', 'Question 4')
         self.add_question_translation(5, 'en', 'Did you attend the 2017 or 2018 Indaba', options=options)
 
-        closed_review = ReviewForm(2, datetime(2018, 4, 30))
+        closed_review = ReviewForm(2, datetime(2018, 4, 30), 1, True)
         closed_review.close()
         review_forms = [
-            ReviewForm(1, datetime(2019, 4, 30)),
+            ReviewForm(1, datetime(2019, 4, 30), 1, True),
             closed_review
         ]
         db.session.add_all(review_forms)
@@ -1530,10 +1530,10 @@ class ReferenceReviewRequest(ApiTestCase):
             self.create_application_form(1, True, False),
         ]
 
-        closed_review = ReviewForm(1, datetime(2018, 4, 30))
+        closed_review = ReviewForm(1, datetime(2018, 4, 30), 1, True)
         closed_review.close()
         review_forms = [
-            ReviewForm(1, datetime(2019, 4, 30)),
+            ReviewForm(1, datetime(2019, 4, 30), 1, True),
             closed_review
         ]
         db.session.add_all(review_forms)

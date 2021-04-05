@@ -7,14 +7,18 @@ class ReviewForm(db.Model):
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
+    stage = db.Column(db.Integer(), nullable=False)
+    active = db.Column(db.Boolean(), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     review_sections = db.relationship('ReviewSection')
 
-    def __init__(self, application_form_id, deadline):
+    def __init__(self, application_form_id, deadline, stage, active):
         self.application_form_id = application_form_id
         self.is_open = True
         self.deadline = deadline
+        self.stage = stage
+        self.active = active
 
     def close(self):
         self.is_open = False
