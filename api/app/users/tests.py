@@ -484,16 +484,16 @@ class UserCommentAPITest(ApiTestCase):
 class UserProfileListApiTest(ApiTestCase):
     def seed_static_data(self):
         self.event1 = self.add_event(
-            'Indaba',
-            'Indaba Event',
+            {'en': 'Indaba'},
+            {'en': 'Indaba Event'},
             datetime.now(),
             datetime.now(),
             'SOUTHAFRI2019',
             self.dummy_org_id
         )
         self.event2 = self.add_event(
-            'IndabaX',
-            'IndabaX Sudan',
+            {'en': 'IndabaX'},
+            {'en': 'IndabaX Sudan'},
             datetime.now(),
             datetime.now(),
             'SUDANMO',
@@ -502,30 +502,12 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.flush()
 
         # Setup the event admins
-        self.event1_admin = AppUser(
-            email='ea1@ea.com',
-            firstname='event_admin',
-            lastname='1',
-            user_title='Ms',
-            password='abc',
-            organisation_id=self.dummy_org_id
-        )
-        self.event2_admin = AppUser(
-            email='ea2@ea.com',
-            firstname='event_admin',
-            lastname='1',
-            user_title='Ms',
-            password='abc',
-            organisation_id=self.dummy_org_id
-        )
-        self.event1_admin.verify()
-        self.event2_admin.verify()
-        db.session.add_all([self.event1_admin, self.event2_admin])
-        db.session.flush()
+        self.event1_admin = self.add_user('ea1@ea.com')
+        self.event2_admin = self.add_user('ea2@ea.com')
 
-        event1_role = EventRole('admin', self.event1_admin.id, self.event1.id)
-        event2_role = EventRole('admin', self.event2_admin.id, self.event2.id)
-        db.session.add_all([event1_role, event2_role])
+        event1_role = self.event1.add_event_role('admin', self.event1_admin.id)
+        event2_role = self.event2.add_event_role('admin', self.event2_admin.id)
+        db.session.commit()
 
         # Set up the application forms
         self.event1_application_form = self.create_application_form(self.event1.id, True, False)
@@ -568,13 +550,9 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.add_all(candidates)
         db.session.flush()
 
-        responses = [
-            Response(self.event1_application_form.id, candidates[0].id),
-            Response(self.event1_application_form.id, candidates[1].id),
-            Response(self.event1_application_form.id, candidates[2].id)
-        ]
-        db.session.add_all(responses)
-        db.session.commit()
+        self.add_response(self.event1_application_form.id, candidates[0].id),
+        self.add_response(self.event1_application_form.id, candidates[1].id),
+        self.add_response(self.event1_application_form.id, candidates[2].id)    
 
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
@@ -656,10 +634,7 @@ class UserProfileListApiTest(ApiTestCase):
         db.session.add(invitation)
         db.session.commit()
 
-        application = Response(self.event1_application_form.id, candidates[0].id)
-
-        db.session.add(application)
-        db.session.commit()
+        application = self.add_response(self.event1_application_form.id, candidates[0].id)
 
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
@@ -681,9 +656,7 @@ class UserProfileListApiTest(ApiTestCase):
         candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         db.session.add_all(candidates)
 
-        application = Response(self.event1_application_form.id, candidates[0].id)
-        db.session.add(application)
-        db.session.commit()
+        application = self.add_response(self.event1_application_form.id, candidates[0].id)
 
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
@@ -704,9 +677,7 @@ class UserProfileListApiTest(ApiTestCase):
         candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
         db.session.add_all(candidates)
 
-        application = Response(self.event2_application_form.id, candidates[0].id)
-        db.session.add(application)
-        db.session.commit()
+        application = self.add_response(self.event2_application_form.id, candidates[0].id)
 
         # Make the request
         header = self.get_auth_header_for(self.event1_admin.email)
