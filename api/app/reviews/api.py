@@ -142,6 +142,7 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
         'application_form_id': review_form.application_form_id,
         'is_open': review_form.is_open,
         'deadline': review_form.deadline.isoformat(),
+        'stage': review_form.stage,
         'review_sections': review_sections
     }
 
