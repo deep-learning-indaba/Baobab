@@ -86,6 +86,7 @@ class ReviewRepository():
     def get_review_form(event_id):
         review_form = (
             db.session.query(ReviewForm)
+                    .filter_by(active=True)
                     .join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)
                     .filter_by(event_id=event_id)
                     .first()
@@ -124,6 +125,7 @@ class ReviewRepository():
     def get_review_response_with_form(id, reviewer_user_id):
         review_form_response = (
             db.session.query(ReviewForm, ReviewResponse)
+                    .filter(ReviewForm.active == True)
                     .join(ReviewResponse)
                     .filter_by(id=id, reviewer_user_id=reviewer_user_id)
                     .first()
@@ -179,7 +181,7 @@ class ReviewRepository():
         reviews = (db.session.query(ReviewResponse.id, ReviewResponse.submitted_timestamp, AppUser, Response)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .filter(ReviewForm.application_form_id == event_id)
+                        .filter(ReviewForm.application_form_id == event_id, ReviewForm.active == True)
                         .join(Response, ReviewResponse.response_id == Response.id)
                         .join(AppUser, Response.user_id == AppUser.id))
         return reviews
@@ -199,6 +201,7 @@ class ReviewRepository():
         count = (db.session.query(ReviewResponse)
                         .filter(ReviewResponse.reviewer_user_id == reviewer_user_id)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.active == True)
                         .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
                         .count())
@@ -208,6 +211,7 @@ class ReviewRepository():
     def get_count_reviews_completed_for_event(event_id):
         count = (db.session.query(ReviewResponse)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .filter(ReviewForm.active == True)
                         .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
                         .count())
@@ -220,6 +224,7 @@ class ReviewRepository():
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
                         .join(ReviewForm, ApplicationForm.id == ReviewForm.application_form_id)
+                        .filter(ReviewForm.active == True)
                         .outerjoin(ReviewResponse, and_(
                             ReviewResponse.review_form_id == ReviewForm.id,
                             ReviewResponse.reviewer_user_id == ResponseReviewer.reviewer_user_id))
@@ -231,6 +236,7 @@ class ReviewRepository():
     def get_review_complete_timeseries_by_event(event_id):
         timeseries = (db.session.query(cast(ReviewResponse.submitted_timestamp, Date), func.count(ReviewResponse.submitted_timestamp))
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+                        .fitler(ReviewForm.active == True)
                         .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
                         .group_by(cast(ReviewResponse.submitted_timestamp, Date))
@@ -286,6 +292,7 @@ class ReviewRepository():
     def get_review_responses_for_event(event_id):
         return (db.session.query(ReviewResponse)
                   .join(ReviewForm, ReviewResponse.review_form_id == ReviewForm.id)
+                  .filter_by(active=True)
                   .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                   .filter_by(event_id=event_id)
                   .all())
@@ -300,6 +307,7 @@ class ReviewRepository():
         return (
             db.session.query(ReviewResponse)
             .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
+            .filter_by(active=True)
             .join(ApplicationForm, ApplicationForm.id == ReviewForm.application_form_id)
             .filter_by(event_id=event_id)
             .all()
@@ -332,6 +340,7 @@ class ReviewConfigurationRepository():
     def get_configuration_for_event(event_id):
         config = (db.session.query(ReviewConfiguration)
                     .join(ReviewForm, ReviewConfiguration.review_form_id == ReviewForm.id)
+                    .filter_by(active=True)
                     .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                     .filter(ApplicationForm.event_id == event_id)
                     .first())

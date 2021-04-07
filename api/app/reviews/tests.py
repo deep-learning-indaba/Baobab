@@ -128,9 +128,12 @@ class ReviewsApiTest(ApiTestCase):
 
         closed_review = ReviewForm(2, datetime(2018, 4, 30), 1, True)
         closed_review.close()
+        inactive_review = ReviewForm(2, datetime(2018, 4, 30), 2, False)
         review_forms = [
             ReviewForm(1, datetime(2019, 4, 30), 1, True),
-            closed_review
+            ReviewForm(1, datetime(2019, 4, 30), 2, False),
+            closed_review,
+            inactive_review
         ]
         db.session.add_all(review_forms)
         db.session.commit()
@@ -1531,10 +1534,13 @@ class ReferenceReviewRequest(ApiTestCase):
         ]
 
         closed_review = ReviewForm(1, datetime(2018, 4, 30), 1, True)
+        inactive_review = ReviewForm(1, datetime(2018, 4, 30), 2, False)
         closed_review.close()
         review_forms = [
             ReviewForm(1, datetime(2019, 4, 30), 1, True),
-            closed_review
+            ReviewForm(1, datetime(2019, 4, 30), 2, False),
+            closed_review,
+            inactive_review
         ]
         db.session.add_all(review_forms)
         db.session.commit()
