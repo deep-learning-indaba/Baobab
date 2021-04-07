@@ -2202,3 +2202,111 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         self.assertEqual(data[1]['scores'][1]['weight'], 2)
 
         self.assertEqual(data[1]['total'], 5.5)
+
+
+class ReviewStageAPITest(ApiTestCase):
+    def seed_static_data(self, activate_second_stage=True):
+        first_event = self.add_event()
+        self.create_application_form()
+
+        event_admin = self.add_user("event@admin.com")
+        first_event.add_event_role('admin', event_admin.id)
+
+        self.add_review_form(stage=1, active=False)
+        self.add_review_form(stage=2, active=activate_second_stage)
+        self.add_review_form(stage=3, active=False)
+
+        # An event with no review form
+        no_form_event = self.add_event(key="no_form_event")
+        self.no_form_event_id = no_form_event.id
+        no_form_event.add_event_role('admin', event_admin.id)
+
+        db.session.commit()
+        self.event_admin_headers = self.get_auth_header_for("event@admin.com")
+
+    def test_get(self):
+        """Test that the get method returns the correct current stage and number of stages."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(data['current_stage'], 2)
+        self.assertEqual(data['total_stages'], 3)
+
+    def test_get_no_active(self):
+        """Test that the get method returns a 404 when ther is no active review form."""
+        self.seed_static_data(activate_second_stage=False)
+
+        response = self.app.get(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': 1}
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_no_form(self):
+        """Test that the get method returns a 404 when there are no review forms for the event."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': self.no_form_event_id}
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        """Test that the review stage can be updated."""
+        self.seed_static_data()
+
+        response = self.app.post(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': 1, 'stage': 3}
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.get(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(data['current_stage'], 3)
+        self.assertEqual(data['total_stages'], 3)
+
+    def test_post_no_form(self):
+        """Test that the post method returns a 404 when there are no review forms for the event."""
+        self.seed_static_data()
+
+        response = self.app.post(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': self.no_form_event_id, 'stage': 1}
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_no_form(self):
+        """Test that the post method returns a 404 when trying to activate a stage that doesn't exist."""
+        self.seed_static_data()
+
+        response = self.app.post(
+            '/api/v1/reviewstage',
+            headers=self.event_admin_headers,
+            data={'event_id': 1, 'stage': 4}
+        )
+
+        self.assertEqual(response.status_code, 404)
+    

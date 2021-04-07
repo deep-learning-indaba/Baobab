@@ -327,6 +327,16 @@ class ReviewRepository():
         average_review_score = sum(review_score_values) / len(review_score_values)
         return average_review_score
 
+    @staticmethod
+    def get_all_review_forms_for_event(event_id):
+        forms = (
+            db.session.query(ReviewForm)
+            .join(ApplicationForm, ApplicationForm.id == ReviewForm.application_form_id)
+            .filter_by(event_id=event_id)
+            .all())
+
+        return forms
+
 class ReviewConfigurationRepository():
 
     @staticmethod

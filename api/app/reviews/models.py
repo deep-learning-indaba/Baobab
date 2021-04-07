@@ -23,6 +23,12 @@ class ReviewForm(db.Model):
     def close(self):
         self.is_open = False
 
+    def deactivate(self):
+        self.active = False
+
+    def activate(self):
+        self.active = True
+
 
 class ReviewSection(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
