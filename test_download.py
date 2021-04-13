@@ -10,7 +10,6 @@ from google.oauth2.credentials import Credentials
 
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
-
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
 
