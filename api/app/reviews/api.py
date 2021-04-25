@@ -100,6 +100,25 @@ review_fields = {
     'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
+review_question_detail_fields = {
+
+}
+
+review_section_detail_fields = {
+
+}
+
+review_form_detail_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'application_form_id': fields.Integer,
+    'is_open':  fields.Boolean,
+    'deadline': fields.DateTime(dt_format='iso8601'),
+    'active': fields.Boolean,
+    'stage': fields.Integer,
+    'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections')
+}
+
 def _serialize_review_question(review_question, language):
     translation = review_question.get_translation(language)
     if translation is None:
@@ -814,3 +833,17 @@ class ReviewStageAPI(restful.Resource):
         db.session.commit()
         
         return {}, 201
+class ReviewFormDetailAPI(restful.Resource):
+
+    @event_admin_required
+    @marshal_with(review_form_detail_fields)
+    def get(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('stage', type=int, required=False)
+        args = req_parser.parse_args()
+
+        stage = args['stage']
+
+        review_form = review_form_repository.get_by_event_id(event_id, stage=stage)
+        return review_form
+
