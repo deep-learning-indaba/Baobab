@@ -84,17 +84,16 @@ class ReviewRepository():
 
     @staticmethod
     def get_review_form(event_id, stage=None):
-        query = (
-            db.session.query(ReviewForm)
-                    .join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)
-                    .filter_by(event_id=event_id))
+        query = db.session.query(ReviewForm)
         
         if stage:
             query = query.filter_by(stage=stage)
         else:
             query = query.filter_by(active=True)
 
-        review_form = query.first()
+        review_form = (query.join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)
+                      .filter_by(event_id=event_id)
+                      .first())
 
         return review_form
 

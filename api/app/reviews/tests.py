@@ -2310,3 +2310,280 @@ class ReviewStageAPITest(ApiTestCase):
 
         self.assertEqual(response.status_code, 404)
     
+
+class ReviewFormDetailAPITest(ApiTestCase):
+
+    def seed_static_data(self):
+        first_event = self.add_event()
+        self.first_event_id = first_event.id
+
+        second_event = self.add_event(key="event2")
+        self.no_form_event_id = second_event.id
+
+        app_form = self.create_application_form()
+        section = self.add_section(app_form.id)
+        question = self.add_question(app_form.id, section.id)
+
+        event_admin = self.add_user("event@admin.com")
+        first_event.add_event_role('admin', event_admin.id)
+        second_event.add_event_role('admin', event_admin.id)
+
+        # First stage review form
+        form1 = self.add_review_form(stage=1, active=False, deadline=datetime(2021, 6, 1))
+        form1_section1 = self.add_review_section(form1.id)
+        self.add_review_section_translation(form1_section1.id, 'en', 'Form 1 Section 1 EN', 'Form 1 Section 1 Description EN')
+        self.add_review_section_translation(form1_section1.id, 'fr', 'Form 1 Section 1 FR', 'Form 1 Section 1 Description FR')
+
+        form1_section1_question1 = self.add_review_question(form1_section1.id, weight=1, type='numeric-text')
+        self.add_review_question_translation(
+            form1_section1_question1.id,
+            language='en',
+            headline='Review Question 1 EN',
+            description='Review Question 1 Description EN',
+            placeholder='Placeholder Question 1 EN',
+            validation_regex='(a|b|c|d)',
+            validation_text='Validation text question 1 EN')
+        self.add_review_question_translation(
+            form1_section1_question1.id,
+            language='fr',
+            headline='Review Question 1 FR',
+            description='Review Question 1 Description FR',
+            placeholder='Placeholder Question 1 FR',
+            validation_regex='(a|b|c|d)',
+            validation_text='Validation text question 1 FR')
+
+        form1_section1_question2 = self.add_review_question(form1_section1.id, type='information', order=2, question_id=question.id)
+        self.add_review_question_translation(
+            form1_section1_question2.id,
+            language='en',
+            headline='Review Question 2 EN',
+            description='Review Question 2 Description EN')
+        self.add_review_question_translation(
+            form1_section1_question2.id,
+            language='fr',
+            headline='Review Question 2 FR',
+            description='Review Question 2 Description FR')
+
+        form1_section2 = self.add_review_section(form1.id, order=2)
+        self.add_review_section_translation(form1_section2.id, 'en', 'Form 1 Section 2 EN', 'Form 1 Section 2 Description EN')
+        self.add_review_section_translation(form1_section2.id, 'fr', 'Form 1 Section 2 FR', 'Form 1 Section 2 Description FR')
+
+        form1_section2_question1 = self.add_review_question(form1_section2.id, weight=1, type='radio')
+        self.add_review_question_translation(
+            form1_section2_question1.id,
+            language='en',
+            headline='Review Question 3 EN',
+            description='Review Question 3 Description EN',
+            options=[
+                {'value': '0', 'label': 'Bad EN'},
+                {'value': '1', 'label': 'Average EN'},
+                {'value': '2', 'label': 'Good EN'}
+            ])
+        self.add_review_question_translation(
+            form1_section2_question1.id,
+            language='fr',
+            headline='Review Question 3 FR',
+            description='Review Question 3 Description FR',
+            options=[
+                {'value': '0', 'label': 'Bad FR'},
+                {'value': '1', 'label': 'Average FR'},
+                {'value': '2', 'label': 'Good FR'}
+            ])
+
+        # Second stage review form
+        form2 = self.add_review_form(stage=2, active=True, deadline=datetime(2021, 8, 1))
+
+        form2_section1 = self.add_review_section(form2.id)
+        self.add_review_section_translation(form2_section1.id, 'en', 'Form 2 Section 1 EN', 'Form 2 Section 1 Description EN')
+        self.add_review_section_translation(form2_section1.id, 'fr', 'Form 2 Section 1 FR', 'Form 2 Section 1 Description FR')
+
+        form2_section1_question1 = self.add_review_question(form2_section1.id, type='information', question_id=question.id)
+        self.add_review_question_translation(
+            form2_section1_question1.id,
+            language='en',
+            headline='Stage 2 Review Question 1 EN',
+            description='Stage 2 Review Question 1 Description EN')
+        self.add_review_question_translation(
+            form2_section1_question1.id,
+            language='fr',
+            headline='Stage 2 Review Question 1 FR',
+            description='Stage 2 Review Question 1 Description FR')
+
+        db.session.commit()
+        self.event_admin_headers = self.get_auth_header_for("event@admin.com")
+        
+    def test_get_without_stage(self):
+        """Test that the get method returns the correct stage when a stage parameter isn't provided."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.event_admin_headers,
+            data={'event_id': self.first_event_id}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(data['stage'], 2)
+
+    def test_get_first_stage(self):
+        """Check that the get method returns the form for stage 1."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.event_admin_headers,
+            data={'event_id': self.first_event_id, 'stage': 1}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], 1)
+        self.assertEqual(data['event_id'], self.first_event_id)
+        self.assertEqual(data['application_form_id'], 1)
+        self.assertEqual(data['is_open'], True)
+        self.assertEqual(data['deadline'], "2021-06-01T00:00:00")
+        self.assertEqual(data['active'], False)
+        self.assertEqual(data['stage'], 1)
+        self.assertEqual(len(data['sections']), 2)
+
+        section1 = data['sections'][0]
+        self.assertEqual(section1['order'], 1)
+        self.assertEqual(section1['headline']['en'], 'Form 1 Section 1 EN')
+        self.assertEqual(section1['headline']['fr'], 'Form 1 Section 1 FR')
+        self.assertEqual(section1['description']['en'], 'Form 1 Section 1 Description EN')
+        self.assertEqual(section1['description']['fr'], 'Form 1 Section 1 Description FR')
+        self.assertEqual(len(section1['questions']), 2)
+
+        question1 = section1['questions'][0]
+        self.assertEqual(question1['order'], 1)
+        self.assertEqual(question1['weight'], 1)
+        self.assertEqual(question1['type'], 'numeric-text')
+        self.assertEqual(question1['question_id'], 0)
+        self.assertEqual(question1['headline']['en'], 'Review Question 1 EN')
+        self.assertEqual(question1['headline']['fr'], 'Review Question 1 FR')
+        self.assertEqual(question1['description']['en'], 'Review Question 1 Description EN')
+        self.assertEqual(question1['description']['fr'], 'Review Question 1 Description FR')
+        self.assertEqual(question1['placeholder']['en'], 'Placeholder Question 1 EN')
+        self.assertEqual(question1['placeholder']['fr'], 'Placeholder Question 1 FR')
+        self.assertEqual(question1['validation_regex']['en'], '(a|b|c|d)')
+        self.assertEqual(question1['validation_regex']['fr'], '(a|b|c|d)')
+        self.assertEqual(question1['validation_text']['en'], 'Validation text question 1 EN')
+        self.assertEqual(question1['validation_text']['fr'], 'Validation text question 1 FR')
+        self.assertEqual(question1['options']['en'], None)
+        self.assertEqual(question1['options']['fr'], None)
+
+        question2 = section1['questions'][1]
+        self.assertEqual(question2['order'], 2)
+        self.assertEqual(question2['weight'], 0)
+        self.assertEqual(question2['type'], 'information')
+        self.assertEqual(question2['question_id'], 1)
+        self.assertEqual(question2['headline']['en'], 'Review Question 2 EN')
+        self.assertEqual(question2['headline']['fr'], 'Review Question 2 FR')
+        self.assertEqual(question2['description']['en'], 'Review Question 2 Description EN')
+        self.assertEqual(question2['description']['fr'], 'Review Question 2 Description FR')
+        self.assertEqual(question2['placeholder']['en'], None)
+        self.assertEqual(question2['placeholder']['fr'], None)
+        self.assertEqual(question2['validation_regex']['en'], None)
+        self.assertEqual(question2['validation_regex']['fr'], None)
+        self.assertEqual(question2['validation_text']['en'], None)
+        self.assertEqual(question2['validation_text']['fr'], None)
+        self.assertEqual(question2['options']['en'], None)
+        self.assertEqual(question2['options']['fr'], None)
+
+        section2 = data['sections'][1]
+        self.assertEqual(section2['order'], 2)
+        self.assertEqual(section2['headline']['en'], 'Form 1 Section 2 EN')
+        self.assertEqual(section2['headline']['fr'], 'Form 1 Section 2 FR')
+        self.assertEqual(section2['description']['en'], 'Form 1 Section 2 Description EN')
+        self.assertEqual(section2['description']['fr'], 'Form 1 Section 2 Description FR')
+        self.assertEqual(len(section2['questions']), 1)
+
+        question3 = section2['questions'][0]
+        self.assertEqual(question3['order'], 1)
+        self.assertEqual(question3['weight'], 1)
+        self.assertEqual(question3['type'], 'radio')
+        self.assertEqual(question3['question_id'], 0)
+        self.assertEqual(question3['headline']['en'], 'Review Question 3 EN')
+        self.assertEqual(question3['headline']['fr'], 'Review Question 3 FR')
+        self.assertEqual(question3['description']['en'], 'Review Question 3 Description EN')
+        self.assertEqual(question3['description']['fr'], 'Review Question 3 Description FR')
+        self.assertEqual(question3['placeholder']['en'], None)
+        self.assertEqual(question3['placeholder']['fr'], None)
+        self.assertEqual(question3['validation_regex']['en'], None)
+        self.assertEqual(question3['validation_regex']['fr'], None)
+        self.assertEqual(question3['validation_text']['en'], None)
+        self.assertEqual(question3['validation_text']['fr'], None)
+        self.assertEqual(len(question3['options']['en']), 3)
+        self.assertEqual(len(question3['options']['fr']), 3)
+
+    def test_get_second_stage(self):
+        """Check that the get method returns the form for stage 2."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.event_admin_headers,
+            data={'event_id': self.first_event_id, 'stage': 2}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertEqual(data['id'], 2)
+        self.assertEqual(data['event_id'], self.first_event_id)
+        self.assertEqual(data['application_form_id'], 1)
+        self.assertEqual(data['is_open'], True)
+        self.assertEqual(data['deadline'], "2021-08-01T00:00:00")
+        self.assertEqual(data['active'], True)
+        self.assertEqual(data['stage'], 2)
+        self.assertEqual(len(data['sections']), 1)
+
+        section1 = data['sections'][0]
+        self.assertEqual(section1['order'], 1)
+        self.assertEqual(section1['headline']['en'], 'Form 2 Section 1 EN')
+        self.assertEqual(section1['headline']['fr'], 'Form 2 Section 1 FR')
+        self.assertEqual(section1['description']['en'], 'Form 2 Section 1 Description EN')
+        self.assertEqual(section1['description']['fr'], 'Form 2 Section 1 Description FR')
+        self.assertEqual(len(section1['questions']), 1)
+
+        question1 = section1['questions'][0]
+        self.assertEqual(question1['order'], 1)
+        self.assertEqual(question1['weight'], 0)
+        self.assertEqual(question1['type'], 'information')
+        self.assertEqual(question1['question_id'], 1)
+        self.assertEqual(question1['headline']['en'], 'Stage 2 Review Question 1 EN')
+        self.assertEqual(question1['headline']['fr'], 'Stage 2 Review Question 1 FR')
+        self.assertEqual(question1['description']['en'], 'Stage 2 Review Question 1 Description EN')
+        self.assertEqual(question1['description']['fr'], 'Stage 2 Review Question 1 Description FR')
+        self.assertEqual(question1['placeholder']['en'], None)
+        self.assertEqual(question1['placeholder']['fr'], None)
+        self.assertEqual(question1['validation_regex']['en'], None)
+        self.assertEqual(question1['validation_regex']['fr'], None)
+        self.assertEqual(question1['validation_text']['en'], None)
+        self.assertEqual(question1['validation_text']['fr'], None)
+        self.assertEqual(question1['options']['en'], None)
+        self.assertEqual(question1['options']['fr'], None)
+
+    def test_get_new_stage(self):
+        """Check that the get method returns not found for a stage that doesn't exist."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.event_admin_headers,
+            data={'event_id': self.first_event_id, 'stage': 3}
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_no_form(self):
+        """Check that the get method returns not found for an event that has no review form."""
+        self.seed_static_data()
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.event_admin_headers,
+            data={'event_id': self.no_form_event_id, 'stage': 1}
+        )
+
+        self.assertEqual(response.status_code, 404)

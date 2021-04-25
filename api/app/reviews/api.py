@@ -861,6 +861,12 @@ class ReviewFormDetailAPI(restful.Resource):
 
         stage = args['stage']
 
-        review_form = review_form_repository.get_by_event_id(event_id, stage=stage)
+        review_form = review_repository.get_review_form(event_id, stage=stage)
+
+        if not review_form:
+            return REVIEW_FORM_FOR_STAGE_NOT_FOUND
+
+        review_form.event_id = event_id
+
         return review_form
 
