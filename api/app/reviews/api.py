@@ -101,11 +101,26 @@ review_fields = {
 }
 
 review_question_detail_fields = {
-
+    'id': fields.Integer,
+    'question_id': fields.Integer,
+    'type': fields.String,
+    'is_required': fields.Boolean,
+    'order': fields.Integer,
+    'weight': fields.Float,
+    'headline': fields.Raw(attribute=lambda s: s.headline_translations),
+    'description': fields.Raw(attribute=lambda s: s.description_translations),
+    'placeholder': fields.Raw(attribute=lambda s: s.placeholder_translations),
+    'options': fields.Raw(attribute=lambda s: s.options_translations),
+    'validation_regex': fields.Raw(attribute=lambda s: s.validation_regex_translations),
+    'validation_text': fields.Raw(attribute=lambda s: s.validation_text_translations)
 }
 
 review_section_detail_fields = {
-
+    'id': fields.Integer,
+    'order': fields.Integer,
+    'headline': fields.Raw(attribute=lambda s: s.headline_translations),
+    'description': fields.Raw(attribute=lambda s: s.description_translations),
+    'questions': fields.List(fields.Nested(review_question_detail_fields), attribute='review_questions')
 }
 
 review_form_detail_fields = {
@@ -833,6 +848,8 @@ class ReviewStageAPI(restful.Resource):
         db.session.commit()
         
         return {}, 201
+
+
 class ReviewFormDetailAPI(restful.Resource):
 
     @event_admin_required

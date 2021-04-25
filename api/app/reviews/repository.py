@@ -86,7 +86,6 @@ class ReviewRepository():
     def get_review_form(event_id, stage=None):
         query = (
             db.session.query(ReviewForm)
-                    .filter_by(active=True)
                     .join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)
                     .filter_by(event_id=event_id))
         
