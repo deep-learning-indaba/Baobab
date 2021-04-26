@@ -985,3 +985,91 @@ class ResponseDetailAPITest(ApiTestCase):
             json=params)
 
         self.assertEqual(response.status_code, 403)
+
+class ResponseExportAPITest(ApiTestCase):
+    def _data_seed_static(self):
+    
+        self.event1 = self.add_event(key='event1')
+        self.event1admin = self.add_user('event1admin@mail.com')
+        self.user1 = self.add_user('user1@mail.com', user_title='Ms', firstname='Danai', lastname='Gurira')
+
+        application_form = self.create_application_form(self.event1.id)
+        # Section 1, two questions
+        section1 = self.add_section(application_form.id)
+        question1 = self.add_question(application_form.id, section1.id)
+        self.add_question_translation(question1.id, 'en')
+        question2 = self.add_question(application_form.id, section1.id)
+        self.add_question_translation(question2.id, 'en')
+
+        # Section 2, 3 questions
+        section2 = self.add_section(application_form.id)
+        question2_1 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_1.id, 'en')
+        question2_2 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_2.id, 'en')
+        question2_3 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_3.id, 'en')
+
+        # Section 3, 1 question
+        section3 = self.add_section(application_form.id)
+        question3_1 = self.add_question(application_form.id, section3.id)
+        self.add_question_translation(question3_1.id, 'en')
+
+
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.response1_submitted = self.response1.submitted_timestamp
+        self.response1_started = self.response1.started_timestamp
+        self.add_answer(self.response1.id, question1.id, 'Section 1 Answer 1')
+        self.add_answer(self.response1.id, question2.id, 'Section 1 Answer 2')
+
+        self.add_answer(self.response1.id, question2_1.id, 'Section 2 Answer 1')
+        self.add_answer(self.response1.id, question2_2.id, 'Section 2 Answer 2')
+        self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
+
+        self.add_answer(self.response1.id, question3_3.id, 'Section 3 Answer 1')
+
+        # TODO: Confirm what 'add_tag' does and if it is necessary
+        tag1 = self.add_tag()
+        tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+
+        self.tag_response(self.response1.id, tag1.id)
+        self.tag_response(self.response1.id, tag2.id)
+
+
+    def test_get_correct_data_before_conversion():
+        """Test that all the correct data is retrieved from the api before conversion"""
+        self._data_seed_static()
+        params = {
+            'event_id': self.event1.id,
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+
+        #TODO: Confirm what line 1050 should be
+        response = self.app.get(
+            '/api/v1/responses',
+            headers=self.get_auth_header_for('user1@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(data['id'], 1)
+        self.assertEqual(data['application_form_id'], 1)
+        self.assertEqual(data['user_id'], 2)
+        self.assertEqual(data['is_submitted'], True)
+        self.assertEqual(data['submitted_timestamp'], self.response1_submitted.isoformat())
+        self.assertEqual(data['is_withdrawn'], False)
+
+        self.assertEqual(len(data['answers']), 6)
+        self.assertEqual(data['answers'][0]['value'], 'Section 1 Answer 1')
+        self.assertEqual(data['answers'][1]['value'], 'Section 1 Answer 2')
+        self.assertEqual(data['answers'][2]['value'], 'Section 2 Answer 1')
+        self.assertEqual(data['answers'][3]['value'], 'Section 2 Answer 2')
+        self.assertEqual(data['answers'][4]['value'], 'Section 2 Answer 3')
+        self.assertEqual(data['answers'][5]['value'], 'Section 3 Answer 1')
+        self.assertEqual(data['language'], 'en')
+        self.assertEqual(data['user_title'], 'Ms')
+        self.assertEqual(data['firstname'], 'Danai')
+        self.assertEqual(data['lastname'], 'Gurira')
+
+
