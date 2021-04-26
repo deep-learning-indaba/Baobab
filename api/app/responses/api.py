@@ -458,3 +458,20 @@ class ResponseDetailAPI(restful.Resource):
         num_reviewers = review_config.num_reviews_required + review_config.num_optional_reviews if review_config is not None else 1
 
         return ResponseDetailAPI._serialize_response(response, language, review_form_id, num_reviewers)
+
+class ResponseExportAPI(restful.Resource):
+
+    def get(self, response_id):
+
+        response_id = args['response_id']   
+        language = args['language']
+
+        response = response_repository.get_by_id(response_id)
+
+        return ResponsExportAPI(response)
+
+        # compile pdf, zip it and return it
+        # use Google docs api
+        
+        
+
