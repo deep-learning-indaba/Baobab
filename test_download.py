@@ -3,7 +3,7 @@ import os.path
 import io
 
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -17,21 +17,17 @@ requests = [
                 'location': {
                     'index': 1,
                 },
-                'textStyle': {
-                    'bold': True,
-                    'italic': True
-                },
-                'text': ("A" * 10) + "\n" # TODO: confirm this pairing (text - key/value insertion) works this way
+                'text': "<!DOCTYPE html> <html> <body> <h1>Hello,</h1> <p>World!</p> </body> </html>" 
             }
         },
-                 {
-            'insertText': {
-                'location': {
-                    'index': 12, # TODO: How does this reconcile with the start and end index 
-                },
-                'text': ("B" * 10) + "\n"
-            }
-        },
+        #          {
+        #     'insertText': {
+        #         'location': {
+        #             'index': 12, # TODO: How does this reconcile with the start and end index 
+        #         },
+        #         'text': ("B" * 10) + "\n"
+        #     }
+        # },
         #          {
         #     'insertText': {
         #         'location': {
@@ -74,7 +70,7 @@ def main():
     service = build('docs', 'v1', credentials=creds)
 
     
-    title = 'My Document'
+    title = 'My HTML Document'
     body = {
         'title': title
     }
@@ -107,8 +103,15 @@ def main():
 
     drive_service = build('drive', 'v3', credentials=creds)
     
-    
-    request = drive_service.files().export_media(fileId=file_id, mimeType='application/pdf')
+    file_metadata = {'name': 'test_file.html'}
+    media = MediaFileUpload('test_file.html', mimetype='text/html') # upload to Google Drive, needs to be downloaded using file ID
+    file = drive_service.files().create(body=file_metadata,
+                                        media_body=media,
+                                        fields='id').execute()
+    file_id = file.get('id')
+    print(file_id)
+
+    request = drive_service.files().get_media(fileId=file_id, mimeType='application/pdf')
     # fh = bytes array 
     fh = io.BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
