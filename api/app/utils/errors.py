@@ -123,3 +123,5 @@ TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
 REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)
 REVIEW_ALREADY_COMPLETED = ({'message': "Can't delete reviewer, the review has already been completed"}, 400)
+NO_ACTIVE_REVIEW_FORM = ({'message': "There is no active review form for the event"}, 404)
+REVIEW_FORM_FOR_STAGE_NOT_FOUND = ({'message': "There is no review form for the given stage"}, 404)

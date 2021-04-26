@@ -215,9 +215,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_config
 
-    def add_review_form(self, application_form_id=1, deadline=None):
+    def add_review_form(self, application_form_id=1, deadline=None, stage=1, active=True):
         deadline = deadline or datetime.now()
-        review_form = ReviewForm(application_form_id, deadline)
+        review_form = ReviewForm(application_form_id, deadline, stage, active)
         db.session.add(review_form)
         db.session.commit()
         return review_form

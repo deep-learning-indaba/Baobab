@@ -25,11 +25,10 @@ from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
-    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED
+    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -142,6 +141,7 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
         'application_form_id': review_form.application_form_id,
         'is_open': review_form.is_open,
         'deadline': review_form.deadline.isoformat(),
+        'stage': review_form.stage,
         'review_sections': review_sections
     }
 
@@ -764,3 +764,53 @@ class ReviewResponseSummaryListAPI(restful.Resource):
             ReviewResponseSummaryListAPI._serialise_response(response, review_form)
             for response in responses
         ], 200
+
+
+class ReviewStageAPI(restful.Resource):
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        args = parser.parse_args()
+
+        event_id = args['event_id']
+
+        review_forms = review_repository.get_all_review_forms_for_event(event_id)
+        current_form = [r for r in review_forms if r.active]
+
+        if not current_form:
+            return NO_ACTIVE_REVIEW_FORM
+        
+        current_form = current_form[0]    
+
+        return {
+            'current_stage': current_form.stage,
+            'total_stages': len(review_forms)
+        }
+
+    @auth_required
+    @event_admin_required
+    def post(self, event_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('stage', type=int, required=True)
+        args = parser.parse_args()
+
+        stage = args['stage']
+
+        review_forms = review_repository.get_all_review_forms_for_event(event_id)
+        selected_form = [r for r in review_forms if r.stage == stage]
+
+        if not selected_form:
+            return REVIEW_FORM_FOR_STAGE_NOT_FOUND
+
+        selected_form = selected_form[0]
+
+        for form in review_forms:
+            form.deactivate()
+        
+        selected_form.activate()
+
+        db.session.commit()
+        
+        return {}, 201
