@@ -990,7 +990,7 @@ class ResponseExportAPITest(ApiTestCase):
     def _data_seed_static(self):
     
         self.event1 = self.add_event(key='event1')
-        self.event1admin = self.add_user('event1admin@mail.com')
+        self.event1admin = self.add_user('event1admin@mail.com', is_admin=True)
         self.user1 = self.add_user('user1@mail.com', user_title='Ms', firstname='Danai', lastname='Gurira')
 
         application_form = self.create_application_form(self.event1.id)
@@ -1026,7 +1026,7 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(self.response1.id, question2_2.id, 'Section 2 Answer 2')
         self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
 
-        self.add_answer(self.response1.id, question3_3.id, 'Section 3 Answer 1')
+        self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
 
         # TODO: Confirm what 'add_tag' does and if it is necessary
         tag1 = self.add_tag()
@@ -1036,7 +1036,7 @@ class ResponseExportAPITest(ApiTestCase):
         self.tag_response(self.response1.id, tag2.id)
 
 
-    def test_get_correct_data_before_conversion():
+    def test_get_correct_data_before_conversion(self):
         """Test that all the correct data is retrieved from the api before conversion"""
         self._data_seed_static()
         params = {
@@ -1048,7 +1048,7 @@ class ResponseExportAPITest(ApiTestCase):
         #TODO: Confirm what line 1050 should be
         response = self.app.get(
             '/api/v1/responses',
-            headers=self.get_auth_header_for('user1@mail.com'),
+            headers=self.get_auth_header_for('event1admin@mail.com'), # Only an event admin can access the response detail
             json=params)
 
         self.assertEqual(response.status_code, 200)
