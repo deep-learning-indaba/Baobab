@@ -466,12 +466,18 @@ class ResponseExportAPI(restful.Resource):
         response_id = args['response_id']   
         language = args['language']
 
+        response = response_repository.get_answers_by_response_id(response_id)
         response = response_repository.get_by_id(response_id)
 
-        return ResponsExportAPI(response)
+        # Get response
+        # Map values to questions to sections (unpack response)
 
-        # compile pdf, zip it and return it
-        # use Google docs api
+        # Connect to Drive API
+        # Upload in HTML
+        # Copy, to have it render in Drive / in a Google Doc
+        # Download as zipped pdf
+
+        return response, 200
         
         
 
