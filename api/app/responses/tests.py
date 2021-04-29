@@ -996,24 +996,27 @@ class ResponseExportAPITest(ApiTestCase):
         application_form = self.create_application_form(self.event1.id)
         # Section 1, two questions
         section1 = self.add_section(application_form.id)
+        self.add_section_translation(section1.id, 'en', name='Section1')
         question1 = self.add_question(application_form.id, section1.id)
-        self.add_question_translation(question1.id, 'en')
+        self.add_question_translation(question1.id, 'en', headline='Question 1, S1')
         question2 = self.add_question(application_form.id, section1.id)
-        self.add_question_translation(question2.id, 'en')
+        self.add_question_translation(question2.id, 'en', headline='Question 2, S1')
 
         # Section 2, 3 questions
         section2 = self.add_section(application_form.id)
+        self.add_section_translation(section2.id, 'en', name='Section2')
         question2_1 = self.add_question(application_form.id, section2.id)
-        self.add_question_translation(question2_1.id, 'en')
+        self.add_question_translation(question2_1.id, 'en', headline='Question 1, S2')
         question2_2 = self.add_question(application_form.id, section2.id)
-        self.add_question_translation(question2_2.id, 'en')
+        self.add_question_translation(question2_2.id, 'en', headline='Question 2, S2')
         question2_3 = self.add_question(application_form.id, section2.id)
-        self.add_question_translation(question2_3.id, 'en')
+        self.add_question_translation(question2_3.id, 'en', headline='Question 3, S2')
 
         # Section 3, 1 question
         section3 = self.add_section(application_form.id)
+        self.add_section_translation(section3.id, 'en', name='Section3')
         question3_1 = self.add_question(application_form.id, section3.id)
-        self.add_question_translation(question3_1.id, 'en')
+        self.add_question_translation(question3_1.id, 'en', headline='Queston 1, S3')
 
 
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
@@ -1037,20 +1040,20 @@ class ResponseExportAPITest(ApiTestCase):
 
 
     def test_get_correct_data_before_conversion(self):
-        """Test that all the correct data is retrieved from the api before conversion"""
+        """Tests that all the correct data is retrieved from the api before conversion"""
         self._data_seed_static()
         params = {
-            'event_id': self.event1.id,
             'response_id': self.response1.id,
             'language': 'en'
         }
 
-        #TODO: Confirm what line 1050 should be
         response = self.app.get(
-            '/api/v1/responses',
+            '/api/v1/response-export',
             headers=self.get_auth_header_for('event1admin@mail.com'), # Only an event admin can access the response detail
             json=params)
-
+        
+        print(response.json)
+        
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(data['id'], 1)
