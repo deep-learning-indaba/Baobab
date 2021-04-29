@@ -461,23 +461,32 @@ class ResponseDetailAPI(restful.Resource):
 
 class ResponseExportAPI(restful.Resource):
 
-    def get(self, response_id):
+    def get(self):
+
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('response_id', type=int, required=True) 
+        req_parser.add_argument('language', type=str, required=True) 
+        args = req_parser.parse_args()
 
         response_id = args['response_id']   
         language = args['language']
 
-        response = response_repository.get_answers_by_response_id(response_id)
-        response = response_repository.get_by_id(response_id)
+        # Collection of answers
+        response = response_repository.get_by_id(response_id) # collection of answers
+        application_form = application_form_repository.get_by_id(response_id) # get questions and sections 
 
-        # Get response
-        # Map values to questions to sections (unpack response)
+        response_string = strings.build_response_email_body(response.answers, language, application_form)
 
-        # Connect to Drive API
-        # Upload in HTML
-        # Copy, to have it render in Drive / in a Google Doc
-        # Download as zipped pdf
 
-        return response, 200
-        
+        # # Get response
+        # # Map values to questions to sections (unpack response) --> application form repository --> build_response_html_body
+
+        # # Connect to Drive API
+        # # Upload in HTML
+        # # Copy, to have it render in Drive / in a Google Doc
+        # # Download as zipped pdf
+
+        return response_string
+        # return "Hello, World"
         
 
