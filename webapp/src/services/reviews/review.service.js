@@ -1,5 +1,5 @@
 import axios from "axios";
-import { authHeader } from "../base.service";
+import { authHeader, extractErrorMessage } from "../base.service";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -15,7 +15,9 @@ export const reviewService = {
   getResponseReview,
   assignResponsesToReviewer,
   deleteResponseReviewer,
-  getReviewDetails
+  getReviewDetails,
+  getReviewSummaryList,
+  getReviewStage
 };
 
 function getReviewForm(eventId, skip) {
@@ -312,17 +314,58 @@ function getReviewDetails(eventId) {
     )
     .then(function(response) {
       return {
-        reviewDetails: response.data,
+        reviewList: response.data,
         error: ""
       };
     })
     .catch(function(error) {
       return {
-        reviewDetails: null,
-        error:
-          error.response && error.response.data
-            ? error.response.data.message
-            : error.message
+        reviewList: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function getReviewSummaryList(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewresponsesummarylist?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        reviewList: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewList: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function getReviewStage(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewstage?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        data: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
       };
     });
 }

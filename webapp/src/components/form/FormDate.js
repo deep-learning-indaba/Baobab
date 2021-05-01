@@ -4,6 +4,7 @@ import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
 import * as moment from 'moment';
+import ReactMarkdown from "react-markdown";
 
 class FormDate extends React.Component {
   constructor(props) {
@@ -30,6 +31,8 @@ class FormDate extends React.Component {
     }
   }
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     return (
       <div>
@@ -38,7 +41,7 @@ class FormDate extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <label htmlFor={this.props.id}>{this.props.label}</label>
+            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (

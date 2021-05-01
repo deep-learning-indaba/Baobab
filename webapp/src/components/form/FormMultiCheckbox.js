@@ -2,6 +2,7 @@ import React from "react";
 import "./Style.css";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
+import ReactMarkdown from "react-markdown";
 
 class FormMultiCheckbox extends React.Component {
   constructor(props) {
@@ -75,6 +76,8 @@ class FormMultiCheckbox extends React.Component {
     );
   }
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     return (
       <div>
@@ -85,7 +88,7 @@ class FormMultiCheckbox extends React.Component {
           autoFocus={this.props.autoFocus}
         >
           <div className="rowC">
-            <label htmlFor={this.props.id}>{this.props.label}</label>
+            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
