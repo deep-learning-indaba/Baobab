@@ -4,6 +4,7 @@ import FormToolTip from "./FormToolTip";
 import "./Style.css";
 import { withTranslation } from 'react-i18next';
 import { getDownloadURL } from "../../utils/files";
+import ReactMarkdown from "react-markdown";
 
 class FormFileUpload extends React.Component {
   shouldDisplayError = () => {
@@ -22,6 +23,8 @@ class FormFileUpload extends React.Component {
       }
   }
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     var progressStyle = {
         width: this.props.uploadPercentComplete.toString() + "%"
@@ -36,7 +39,7 @@ class FormFileUpload extends React.Component {
           errorText={this.props.errorText}
         >
             <div className="rowC">
-                <label htmlFor={this.props.id}>{this.props.label}</label>
+              <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
                 {this.props.description ? (
                 <FormToolTip description={this.props.description} />
                 ) : (

@@ -2,6 +2,7 @@ import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
+import ReactMarkdown from "react-markdown";
 
 class FormCheckbox extends React.Component {
   shouldDisplayError = () => {
@@ -13,6 +14,9 @@ class FormCheckbox extends React.Component {
       this.nameInput.focus();
     }
   }
+
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     return (
       <div>
@@ -21,7 +25,7 @@ class FormCheckbox extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <label htmlFor={this.props.id}>{this.props.label}</label>
+          <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (

@@ -30,14 +30,15 @@ import { getDownloadURL } from '../../utils/files';
     // handleUpload
     handleUpload = event => {
         const value = event.target.files[0];
-        let fileName = this.state.name;
+        let name = this.state.name;
+        const rename = value.name;
 
         if (!this.state.name || this.state.name == "") {
-            fileName = value.name
+            name = value.name;
         }
 
         if (this.props.handleUpload) {
-            this.props.handleUpload(this.props.value.id, value, fileName).then(() => {
+            this.props.handleUpload(this.props.value.id, value, name, rename).then(() => {
                 this.setState({
                     isSubmitted: true
                 });
@@ -131,7 +132,7 @@ import { getDownloadURL } from '../../utils/files';
                         <ReactToolTip type="info" place="top" effect="solid" />
                         <a onClick={this.del} className={file ? "bin show" : "bin"} data-tip={t("Delete")}><i className="fas fa-trash"></i></a>
                         <ReactToolTip type="info" place="top" effect="solid" />
-                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={getDownloadURL(file)} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
+                        <a className="view" style={file ? { display: "block" } : { display: "none" }} href={getDownloadURL(JSON.stringify(this.props.value))} target="_blank" data-tip={t("View File")}><i className="far fa-eye"></i></a>
                         <ReactToolTip type="info" place="top" effect="solid" />
                     </div>
                     {this.state.error && <p style={{color: "red"}}>{t("Please enter a name")}</p>}
