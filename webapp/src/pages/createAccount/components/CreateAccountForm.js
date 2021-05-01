@@ -12,7 +12,8 @@ import {
   requiredText,
   requiredDropdown,
   validEmail,
-  validatePassword
+  validatePassword,
+  matchingPasswords
 } from "../../../utils/validation/rules.js";
 
 const PassStrengthBar = React.lazy(() => import("./PassStrength"));
@@ -23,7 +24,8 @@ const fieldValidations = [
   ruleRunner(validationFields.lastName, requiredText),
   ruleRunner(validationFields.email, validEmail),
   ruleRunner(validationFields.password, requiredText),
-  ruleRunner(validationFields.confirmPassword, requiredText)
+  ruleRunner(validationFields.confirmPassword, requiredText),
+  ruleRunner(validationFields.confirmPassword, matchingPasswords),
 ];
 
 class CreateAccountForm extends Component {

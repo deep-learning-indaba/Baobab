@@ -70,14 +70,14 @@ class OutcomeApiTest(ApiTestCase):
         self.seed_static_data()
         result = outcome_repository.get_all_by_user_for_event(self.test_user1.id, self.event1.id)
         self.assertEqual(len(result), 2)
-        self.assertItemsEqual([o.id for o in result], [self.event1_user1_outcome1.id, self.event1_user1_outcome2.id])
+        self.assertCountEqual([o.id for o in result], [self.event1_user1_outcome1.id, self.event1_user1_outcome2.id])
     
     def test_get_latest_for_event(self):
         """Test that repository method gets the latest outcomes for an event."""
         self.seed_static_data()
         result = outcome_repository.get_latest_for_event(self.event1.id)
         self.assertEqual(len(result), 2)
-        self.assertItemsEqual([o.id for o in result], [self.event1_user1_outcome2.id, self.event1_user2_outcome.id])
+        self.assertCountEqual([o.id for o in result], [self.event1_user1_outcome2.id, self.event1_user2_outcome.id])
 
     def test_outcome_get(self):
         """Test usual get case."""
@@ -168,7 +168,7 @@ class OutcomeApiTest(ApiTestCase):
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(len(data), 2)
-        self.assertItemsEqual([o['user']['email'] for o in data], ['something@email.com', 'something_else@email.com'])
+        self.assertCountEqual([o['user']['email'] for o in data], ['something@email.com', 'something_else@email.com'])
     
 
 

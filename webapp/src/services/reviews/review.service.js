@@ -13,7 +13,9 @@ export const reviewService = {
   getReviewHistory,
   getReviewList,
   getResponseReview,
-  assignResponsesToReviewer
+  assignResponsesToReviewer,
+  deleteResponseReviewer,
+  getReviewDetails
 };
 
 function getReviewForm(eventId, skip) {
@@ -116,6 +118,7 @@ function getReviewAssignments(eventId) {
   return axios
     .get(baseUrl + "/api/v1/reviewassignment?event_id=" + eventId, {
       headers: authHeader()
+    
     })
     .then(function(response) {
       return {
@@ -264,6 +267,58 @@ function assignResponsesToReviewer(eventId, responseIds, reviewerEmail) {
     })
     .catch(function(error) {
       return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function deleteResponseReviewer(eventId, responseId, reviewerUserId) {
+  const deleteParams = {
+    event_id: eventId,
+    response_id: responseId,
+    reviewer_user_id: reviewerUserId
+  };
+
+  return axios
+    .delete(baseUrl + "/api/v1/assignresponsereviewer", {
+      headers: authHeader(),
+      params: deleteParams
+    })
+    .then(function(response) {
+      return {
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function getReviewDetails(eventId) {
+  return axios
+    .get(
+      baseUrl + "/api/v1/reviewresponsedetaillist?event_id=" + eventId,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(response) {
+      return {
+        reviewDetails: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        reviewDetails: null,
         error:
           error.response && error.response.data
             ? error.response.data.message

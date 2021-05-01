@@ -5,6 +5,7 @@ import copy
 from app import app, db
 from app.applicationModel.models import ApplicationForm
 from app.events.models import Event, EventRole
+from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.users.models import (AppUser, Country, PasswordReset, UserCategory,
@@ -321,7 +322,6 @@ class UserApiTest(ApiTestCase):
         db.session.add(user)
         db.session.commit()
 
-
     def setup_responses(self):
         application_forms = [
             self.create_application_form(1, True, False),
@@ -395,6 +395,7 @@ class UserApiTest(ApiTestCase):
         self.assertEqual(data[1]['submitted_timestamp'], None)
         self.assertEqual(data[1]['is_withdrawn'], True)
 
+
 class UserCommentAPITest(ApiTestCase):
 
     def seed_static_data(self):
@@ -428,7 +429,6 @@ class UserCommentAPITest(ApiTestCase):
 
         db.session.flush()
 
-
     def seed_comments(self):
         self.comment1 = UserComment(self.event1_id, self.user1['id'], self.user2['id'], datetime.now(), 'Comment 1')
         self.comment2 = UserComment(self.event1_id, self.user1['id'], self.user2['id'], datetime.now(), 'Comment 2')
@@ -442,7 +442,7 @@ class UserCommentAPITest(ApiTestCase):
             self.seed_static_data()
 
             params = {'event_id': self.event1_id, 'user_id': self.user2['id'], 'comment': 'Comment1'}
-            print('Sending params: ', params)
+            print(('Sending params: ', params))
             response = self.app.post('/api/v1/user-comment', headers={'Authorization': self.user1['token']}, data=json.dumps(params), content_type='application/json')
             data = json.loads(response.data)
 
@@ -479,6 +479,244 @@ class UserCommentAPITest(ApiTestCase):
             self.assertEqual(comment_list[1]['comment_by_user_firstname'], self.user2['firstname'])
             self.assertEqual(comment_list[1]['comment_by_user_lastname'], self.user2['lastname'])
             self.assertEqual(comment_list[1]['comment'], self.comment2.comment)
+
+
+class UserProfileListApiTest(ApiTestCase):
+    def seed_static_data(self):
+        self.event1 = self.add_event(
+            {'en': 'Indaba'},
+            {'en': 'Indaba Event'},
+            datetime.now(),
+            datetime.now(),
+            'SOUTHAFRI2019',
+            self.dummy_org_id
+        )
+        self.event2 = self.add_event(
+            {'en': 'IndabaX'},
+            {'en': 'IndabaX Sudan'},
+            datetime.now(),
+            datetime.now(),
+            'SUDANMO',
+            self.dummy_org_id
+        )
+        db.session.flush()
+
+        # Setup the event admins
+        self.event1_admin = self.add_user('ea1@ea.com')
+        self.event2_admin = self.add_user('ea2@ea.com')
+
+        event1_role = self.event1.add_event_role('admin', self.event1_admin.id)
+        event2_role = self.event2.add_event_role('admin', self.event2_admin.id)
+        db.session.commit()
+
+        # Set up the application forms
+        self.event1_application_form = self.create_application_form(self.event1.id, True, False)
+        self.event2_application_form = self.create_application_form(self.event2.id, True, False)
+        db.session.add_all([self.event1_application_form, self.event2_application_form])
+
+        db.session.flush()
+
+        self.event1_id = self.event1.id
+        self.event2_id = self.event2.id #TODO: add comment about why we do this
+
+    def test_event_does_not_exist(self):
+        """
+        Test that filtering on a nonexistent event 403s. It 403s because the user does
+        not have the required auth which is checked before the event is searched for.
+        """
+        self.seed_static_data()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': 1337}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_is_not_active_or_deleted(self):
+        """
+        Test that inactive or deleted users are not returned.
+        """
+        self.seed_static_data()
+
+        # Setup the candidates
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        candidates[0].active = False
+        candidates[1].is_deleted = True
+        candidates[2].active = False
+        candidates[2].is_deleted = True
+
+        db.session.add_all(candidates)
+        db.session.flush()
+
+        self.add_response(self.event1_application_form.id, candidates[0].id),
+        self.add_response(self.event1_application_form.id, candidates[1].id),
+        self.add_response(self.event1_application_form.id, candidates[2].id)    
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert stuff
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, [])
+
+    def test_no_response_and_not_invited(self):
+        """
+        Users that are not invited and have not responded should not be returned.
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert that request succeeds and no users are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, [])
+
+    def test_no_response_and_invited(self):
+        """
+        Users that are Invited Guests that have not responded should be returned.
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        user_id = candidates[0].id
+        invitation = InvitedGuest(
+            event_id=self.event1_id,
+            user_id=user_id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        # Assert that request succeeds and no users of the correct type are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['user_id'], user_id)
+        self.assertEqual(response.json[0]['type'], 'Invited Guest')
+
+    def test_response_and_invited(self):
+        """
+        Users that are Invited Guests and that have responded should be returned.
+        (In the event they initially applied (response) and then became an invited guest)
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        invitation = InvitedGuest(
+            event_id=self.event1_id,
+            user_id=candidates[0].id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        application = self.add_response(self.event1_application_form.id, candidates[0].id)
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+        
+        # Assert that request succeeds and Invited Guests are returned.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['type'], 'Invited Guest')
+
+    def test_response_and_candidate(self):
+        """
+        Users that have applied (there is a response) and are of type 'candidate'
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        application = self.add_response(self.event1_application_form.id, candidates[0].id)
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 1)
+        self.assertEqual(response.json[0]['type'], 'Candidate')
+
+    def test_response_relevant_event(self):
+        """
+        Users that have applied to a specific event, should not be returned from another event
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        application = self.add_response(self.event2_application_form.id, candidates[0].id)
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id} # Not event2 as with the application
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+        print(response.json)
+        # Assert that request succeeds as they applied to the same event.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 0)
+
+    def test_invited_different_event(self):
+        """
+        Invited guests for one event, should not be returned from another event
+        """
+        self.seed_static_data()
+
+        candidates = self.add_n_users(3, organisation_id=self.dummy_org_id)
+        db.session.add_all(candidates)
+
+        invitation = InvitedGuest(
+            event_id=self.event2_id,
+            user_id=candidates[0].id,
+            role='EveryRole'
+        )
+
+        db.session.add(invitation)
+        db.session.commit()
+
+        # Make the request
+        header = self.get_auth_header_for(self.event1_admin.email)
+        params = {'event_id': self.event1_id}  # Not event2 as with the application
+
+        response = self.app.get('/api/v1/userprofilelist', headers=header, data=params)
+        print(response.json)
+        # Assert that request succeeds as they applied to the same event.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json), 0)
+
 
 class UserProfileApiTest(ApiTestCase):
     def setup_static_data(self):

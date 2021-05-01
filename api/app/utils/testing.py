@@ -23,7 +23,7 @@ from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
-from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
+from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewSection, ReviewSectionTranslation, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
 from app.tags.models import Tag, TagTranslation
 
 
@@ -68,7 +68,6 @@ class ApiTestCase(unittest.TestCase):
         if os.path.exists("/code/api/app/utils/names.txt"):
             with open("/code/api/app/utils/names.txt") as file_with_names:
                 names = file_with_names.readlines()
-            names = [n.decode('utf-8', 'replace') for n in names]
         else:
             # why yes, these are names of African Hollywood actors (according to Wikipedia)
             names = ["Mehcad Brooks", "Malcolm Barrett", "Nick Cannon", "Lamorne Morris", "Neil Brown Jr.",
@@ -115,6 +114,7 @@ class ApiTestCase(unittest.TestCase):
                     is_admin=False,
                     post_create_fn=lambda x: None):
         firstnames, lastnames = self._get_names()
+
         users = []
 
         for i in range(n):
@@ -125,8 +125,12 @@ class ApiTestCase(unittest.TestCase):
                                                                        lastname=lastname if lastname != "" else "x",
                                                                        num=len(self.test_users))
             email = strip_accents(email)
-            user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
-            users.append(user)
+            try:
+                user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                users.append(user)
+            except ProgrammingError as err:
+                LOGGER.debug("info not added for user: {} {} {} {}".format(email, firstname, lastname, title))
+                db.session.rollback()
 
         return users
 
@@ -147,8 +151,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(self.country)
 
         # Add a dummy organisation
-        self.add_organisation(domain='org')
+        dummy_org = self.add_organisation(domain='org')
         db.session.flush()
+        self.dummy_org_id = dummy_org.id
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
@@ -210,30 +215,51 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_config
 
-    def add_review_form(self, application_form_id=1, deadline=None):
+    def add_review_form(self, application_form_id=1, deadline=None, stage=1, active=True):
         deadline = deadline or datetime.now()
-        review_form = ReviewForm(application_form_id, deadline)
+        review_form = ReviewForm(application_form_id, deadline, stage, active)
         db.session.add(review_form)
         db.session.commit()
         return review_form
 
-    def add_review_question(self, review_form_id, headings=None, weight=0):
-        headings = headings or {
-            'en': 'Heading En',
-            'fr': 'Heading Fr'
-        }
-        
-        review_question = ReviewQuestion(review_form_id, None, type='short-text', is_required=True, order=1, weight=weight)
+    def add_review_section(self, review_form_id):
+        review_section = ReviewSection(review_form_id, order=1)
+        db.session.add(review_section)
+        db.session.commit()
+
+        return review_section
+
+    def add_review_section_translation(self, review_section_id, language, headline='Review Section', description='Review Section Description'):
+        translation = ReviewSectionTranslation(review_section_id, language, headline, description)
+        db.session.add(translation)
+        db.session.commit()
+
+        return translation
+
+    def add_review_question(self, review_section_id, weight=0, type='short-text'):
+        review_question = ReviewQuestion(review_section_id, None, type=type, is_required=True, order=1, weight=weight)
         db.session.add(review_question)
         db.session.commit()
 
-        db.session.add_all([
-            ReviewQuestionTranslation(review_question.id, k, headline=v)
-            for k, v in headings.iteritems()
-        ])
+        return review_question
+    
+    def add_review_question_translation(
+        self,
+        review_question_id,
+        language,
+        description='Review question description',
+        headline='Review question headline'):
+        review_question_translation = ReviewQuestionTranslation(
+            review_question_id,
+            language,
+            description=description,
+            headline=headline
+        )
+
+        db.session.add(review_question_translation)
         db.session.commit()
 
-        return review_question
+        return review_question_translation
 
     def add_email_template(self, template_key, template='This is an email', language='en', subject='Subject', event_id=None):
         email_template = EmailTemplate(template_key, event_id, subject, template, language)
@@ -299,8 +325,9 @@ class ApiTestCase(unittest.TestCase):
         application_form_id,
         section_id,
         order=1,
-        question_type='short-text'):
-        question = Question(application_form_id, section_id, order, question_type)
+        question_type='short-text',
+        key=None):
+        question = Question(application_form_id, section_id, order, question_type, key=key)
         db.session.add(question)
         db.session.commit()
         return question
@@ -352,10 +379,13 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return answer
 
-    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en'):
+    def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en', is_submitted=False):
         rr = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
+        if is_submitted:
+            rr.submit()
         db.session.add(rr)
         db.session.commit()
+
         return rr
 
     def add_review_score(self, review_response_id, review_question_id, value):
@@ -384,7 +414,7 @@ class ApiTestCase(unittest.TestCase):
         return offer
 
     def add_invited_guest(self, user_id, event_id=1, role='Guest'):
-        print('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role))
+        print(('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role)))
         guest = InvitedGuest(event_id, user_id, role)
         db.session.add(guest)
         db.session.commit()
@@ -395,7 +425,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(tag)
         db.session.commit()
         translations = [
-            TagTranslation(tag.id, k, name) for k, name in names.iteritems()
+            TagTranslation(tag.id, k, name) for k, name in names.items()
         ]
         db.session.add_all(translations)
         db.session.commit()

@@ -1,15 +1,11 @@
-
 /* Universal */
-.table-wrapper {
+.table-wrapper.response-page {
     width: 87vw;
     margin-top: 20px;
 }
 
-.table-wrapper p {
-    margin-bottom: 5px;
-}
 
-.table-wrapper h2 {
+.table-wrapper.response-page h2 {
     color: hsl(0, 0%, 25%);
     font-weight: 300;
     margin-top: 2px;
@@ -25,16 +21,14 @@
     text-align: left;
 }
 
-button {
+.table-wrapper.response-page button {
     margin-bottom: 10px;
 }
 
- .table-wrapper .btn-primary {
-    background:hsl(208deg 84% 59%);
-    border: none;
-    width: 100%;
-    color: white;
-    border: 1px solid lightgrey;
+.table-wrapper.response-page label {
+    font-size: 12px;
+    color: grey;
+    margin: 0 1px;
 }
 
 
@@ -59,7 +53,7 @@ button {
     justify-content: space-between;
     margin-top: 8px;
     flex-wrap: wrap;
-    padding: 10px 15px;
+    padding: 2%;
     box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
     border-radius: 4px;
 }
@@ -95,34 +89,40 @@ html .headings-lower label {
     margin: 0;
 }
 
+.tags .btn-light {
+    font-size: 13px;
+    background: hsl(0deg 0% 100%);
+    border: 1px solid hsl(0deg, 1%, 74%);
+}
+
 .badge {
     margin: 2px;
 }
 
-.badge-info.dark {
+.badge-info {
     background: hsl(188deg, 100%, 23%);
     font-size: 14px;
 }
 
 .fa-trash-alt {
-padding: 0 5px;
+    padding: 0 5px;
 }
 
 /* Tag List */
-.tag-response {  
-   opacity: 0;
-   pointer-events: none;
-   overflow: scroll;
-   transition: 300ms;
-   height: 1px;
-   margin-top: 2px;
+.tag-response {
+    opacity: 0;
+    pointer-events: none;
+    overflow: scroll;
+    transition: 300ms;
+    height: 1px;
+    margin-top: 2px;
 }
 
 .tag-response.show {
-  opacity: 1;
-  pointer-events: all;
-  transition: 300ms;
-  height: 180px;
+    opacity: 1;
+    pointer-events: all;
+    transition: 300ms;
+    height: 180px;
 }
 
 .badge.add-tags {
@@ -131,11 +131,11 @@ padding: 0 5px;
 }
 
 .badge.add-tags.active {
-    background:hsl(120, 0%, 57%);
+    background: hsl(120, 0%, 57%);
 }
 
 .tag-item {
-    display: flex; 
+    display: flex;
     margin: 5px 0;
     opacity: 1;
     pointer-events: none;
@@ -169,7 +169,7 @@ padding: 0 5px;
     color: hsl(0deg 0% 32%);
 }
 
-.tag-response .btn{
+.tag-response .btn {
     width: 100%;
     font-size: 12px;
     text-align: left;
@@ -178,10 +178,10 @@ padding: 0 5px;
 
 /* New Tag Modal */
 .new-tag-inputs {
-margin: 5px 0;
-display: flex;
-flex-direction: column;
-width: 100%;
+    margin: 5px 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .new-tag-inputs label {
@@ -189,8 +189,126 @@ width: 100%;
 }
 
 .new-tag-inputs input {
-width: 100%;
+    width: 100%;
 }
+
+/* Reviewers Section */
+.reviewers-section .list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 12px 0;
+}
+
+.reviewers-section .list .reviewer {
+    box-shadow: 1px 1px 5px hsl(0deg, 0%, 75%);
+    margin-right: 20px;
+    padding: 3px 15px;
+    border-radius: 8px;
+    margin: 10px 5px;
+    height: 3.5em;
+}
+
+.reviewers-section .list .add-reviewer .btn {
+    margin: 0 10px;
+    font-size: 13px;
+    border: 1px solid hsl(0, 0%, 91%);
+}
+
+.reviewers-section  p {
+    margin: 0 8px 0 0;
+    font-size: 13px;
+}
+
+.reviewers-section h5 {
+    margin-top: 11px;
+    color: grey;
+}
+
+.reviewer div {
+    display: flex;
+}
+
+.divider {
+    height: 1px;
+    background: lightgrey;
+    width: 100%;
+    margin: 35px auto;
+}
+
+/* Review Modal */
+
+.review-select {
+    background: none;
+    border: none;
+    outline: none;
+    text-align: left;
+    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+    cursor: pointer;
+    border-radius: 10px;
+    padding: 5px 30px 5px 15px;
+}
+
+.review-select label {
+    color: hsl(208deg, 84%, 59%)
+}
+
+
+.review-select:hover {
+    background: hsl(0, 0%, 96%);
+    color: hsl(0, 0%, 19%);
+}
+
+.review-select div {
+    display: flex;
+}
+
+html button:focus {
+    border: none;
+    outline: none;
+}
+
+
+.review-select.active {
+    background:hsl(208deg, 84%, 59%);
+    border: none;
+    outline: none;
+}
+
+.trash-review {
+    background: none;
+    border: none;
+    outline: none
+}
+
+.review-select p {
+color: hsl(0, 0%, 38%);
+font-size: 12px;
+margin-right: 8px;
+margin-bottom: 4px;
+}
+
+.review-select.active label {
+color: white;
+font-size: 15px;
+}
+
+.review-select.active p {
+    color: hsl(0, 0%, 100%);
+}
+
+.review-completed {
+    color: hsl(120, 41%, 47%);
+}
+
+.review-not-started {
+    color: hsl(0, 64%, 61%);
+}
+
+.review-started {
+    color: #e8a64a;
+}
+
 
 /* Response Details Section and Sub-Sections */
 .response-details {
@@ -212,8 +330,8 @@ width: 100%;
 
 /* Q&A Sections */
 .Q-A {
-display: flex;
-flex-wrap: wrap;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .question-answer-block {
@@ -256,4 +374,10 @@ flex-wrap: wrap;
     padding-right: 4px;
 }
 
+.question-answer-block .question-description {
+    font-size: 0.9em;
+}
 
+.question-answer-block .question-headline {
+    color: #666;
+}

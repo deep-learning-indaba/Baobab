@@ -22,6 +22,7 @@ QUESTION_NOT_FOUND = (
     {'message': 'No question exists with that Event ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 FORM_NOT_FOUND_BY_ID = ({'message': 'No application form exists with that Application Form ID'}, 404)
+APPLICATION_FORM_EXISTS = ({'message': 'An application form exists with that event ID'}, 403)
 RESPONSE_NOT_FOUND = (
     {'message': 'No response found for the given event and user'}, 404)
 RESPONSE_ALREADY_SUBMITTED = ({'message': 'A response has already been submitted'}, 400)
@@ -121,3 +122,6 @@ BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'
 TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
 REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)
+REVIEW_ALREADY_COMPLETED = ({'message': "Can't delete reviewer, the review has already been completed"}, 400)
+NO_ACTIVE_REVIEW_FORM = ({'message': "There is no active review form for the event"}, 404)
+REVIEW_FORM_FOR_STAGE_NOT_FOUND = ({'message': "There is no review form for the given stage"}, 404)

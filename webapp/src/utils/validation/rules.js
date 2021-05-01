@@ -109,3 +109,12 @@ export const validatePassword = text => {
     }
   });
 }
+
+export const matchingPasswords = (password, confirmPassword) => {
+  if(password && confirmPassword){
+    if(password !== confirmPassword){
+      return ErrorMessages.matchingPasswords;
+    }
+  }
+  return null;
+}

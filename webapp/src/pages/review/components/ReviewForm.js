@@ -1,7 +1,8 @@
 import React, { Component } from "react";
+import ReactMarkdown from "react-markdown";
 import { withRouter } from "react-router";
 
-import ReactMarkdown from "react-markdown";
+import AnswerValue from "../../../components/answerValue";
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import FormMultiCheckbox from "../../../components/form/FormMultiCheckbox";
 import FormTextArea from "../../../components/form/FormTextArea";
@@ -11,7 +12,6 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import { reviewService } from "../../../services/reviews";
 import { userService } from "../../../services/user";
 
-import Linkify from 'react-linkify';
 import { Link } from "react-router-dom";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import { Trans, withTranslation } from 'react-i18next'
@@ -46,6 +46,7 @@ class ReviewQuestionComponent extends Component {
     linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
 
     formControl = (key, question, answer, score, validationError) => {
+        // return <p className="answer">Chipangura</p>
         switch (question.type) {
             case LONG_TEXT:
                 return (
@@ -75,36 +76,13 @@ class ReviewQuestionComponent extends Component {
                     />
                   );
             case INFORMATION:
-                if (answer && answer.type === "information") {
-                    return "";
-                }
-                if (answer && answer.value && answer.value.trim()) {
-                    return (
-                        <p className="answer"><Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify></p>
-                    );
-                }
-                return <p className="answer">{this.props.t("No Answer Provided")}</p>
+                return <p className="answer"><AnswerValue answer={answer} question={question} /></p>;
             case HEADING:
                 return "";
             case FILE:
-                return <div className="answer">
-                    {answer && answer.value && answer.value.trim()
-                        ? <div><a href={baseUrl + "/api/v1/file?filename=" + answer.value} target="_blank">{this.props.t("View File")}</a><br/><span className="small-text">*{this.props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span></div>
-                        : <p>{this.props.t("NO FILE UPLOADED")}</p>}
-                </div>
+                return <div className="answer"><AnswerValue answer={answer} question={question} /></div>;
             case MULTI_FILE:
-                if (answer && answer.value) {
-                    const answerFiles = JSON.parse(answer.value);
-                    return <div className="answer">
-                        {answerFiles.map((file, i) => <div><a key={file.name + `_${i}`} target="_blank" href={baseUrl + "/api/v1/file?filename=" + file.file}>{file.name}</a></div>)}
-                        <br/>
-                        <span className="small-text">*{this.props.t("Note: You may need to change the file name to open the file on certain operating systems")}</span>
-                    </div> 
-                }
-                else {
-                    return <p className="answer">{this.props.t("NO FILE UPLOADED")}</p>;
-                }
-                
+                return <div className="answer"><AnswerValue answer={answer} question={question} /></div>;
             case CHECKBOX:
                 return (
                     <FormCheckbox
@@ -210,6 +188,7 @@ class ReviewQuestionComponent extends Component {
 
 const ReviewQuestion = withTranslation()(ReviewQuestionComponent);
 
+
 class ReviewForm extends Component {
     constructor(props) {
         super(props);
@@ -248,17 +227,26 @@ class ReviewForm extends Component {
         }
 
         if (response.form) {
-            questionModels = response.form.review_form.review_questions.map(q => {
-                let score = null;
-                if (response.form.review_response) {
-                    score = response.form.review_response.scores.find(a => a.review_question_id === q.id);
-                }
+            console.log("Response.form:", response.form);
+            questionModels = response.form.review_form.review_sections.map(s => {
                 return {
-                    question: q,
-                    answer: response.form.response.answers.find(a => a.question_id === q.question_id),
-                    score: score
-                };
-            }).sort((a, b) => a.question.order - b.question.order);
+                    headline: s.headline,
+                    description: s.description,
+                    id: s.id,
+                    order: s.order,
+                    questions: s.review_questions.map(q => {
+                        let score = null;
+                        if (response.form.review_response) {
+                            score = response.form.review_response.scores.find(a => a.review_question_id === q.id);
+                        }
+                        return {
+                            question: q,
+                            answer: response.form.response.answers.find(a => a.question_id === q.question_id),
+                            score: score
+                        };
+                    }).sort((a, b) => a.question.order - b.question.order)
+                }
+            }).sort((a, b) => a.order - b.order);
         }
 
         const totalScore = questionModels ? this.computeTotalScore(questionModels) : 0;
@@ -300,7 +288,7 @@ class ReviewForm extends Component {
     }
 
     computeTotalScore = (questionModels) => {
-        return questionModels.reduce((acc, q) =>
+        return questionModels.flatMap(s => s.questions).reduce((acc, q) =>
             acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
         , 0);
     }
@@ -311,16 +299,21 @@ class ReviewForm extends Component {
             value: value
         };
 
-        const newQuestionModels = this.state.questionModels.map(q => {
-            if (q.question.id !== model.question.id) {
-                return q;
-            }
+        const newQuestionModels = this.state.questionModels.map(s => {
             return {
-                ...q,
-                validationError: this.state.hasValidated
-                    ? this.validate(q, newScore)
-                    : "",
-                score: newScore
+                ...s,
+                questions: s.questions.map(q => {
+                    if (q.question.id !== model.question.id) {
+                        return q;
+                    }
+                    return {
+                        ...q,
+                        validationError: this.state.hasValidated
+                            ? this.validate(q, newScore)
+                            : "",
+                        score: newScore
+                    };
+                })
             };
         });
 
@@ -355,7 +348,7 @@ class ReviewForm extends Component {
     };
 
     isValidated = (checkRequired) => {
-        const validatedModels = this.state.questionModels.map(q => {
+        const validatedModels = this.state.questionModels.flatMap(s => s.questions).map(q => {
             return {
                 ...q,
                 validationError: this.validate(q, null, checkRequired)
@@ -376,7 +369,7 @@ class ReviewForm extends Component {
     };
 
     save = () => {
-        const scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
+        const scores = this.state.questionModels.flatMap(s => s.questions).filter(qm => qm.score).map(qm => qm.score);
         if (this.isValidated(false)) {
             this.setState({
                 isSubmitting: true,
@@ -420,7 +413,7 @@ class ReviewForm extends Component {
     }
 
     submit = () => {
-        let scores = this.state.questionModels.filter(qm => qm.score).map(qm => qm.score);
+        let scores = this.state.questionModels.flatMap(s => s.questions).filter(qm => qm.score).map(qm => qm.score);
         if (this.isValidated(true)) {
             this.setState({
                 isSubmitting: true
@@ -526,6 +519,8 @@ class ReviewForm extends Component {
         });
     }
 
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
     render() {
         const {
             form,
@@ -580,11 +575,18 @@ class ReviewForm extends Component {
 
         return (
             <div class="review-form-container">
-                {questionModels && questionModels.map(qm =>
-                    <ReviewQuestion
-                        model={qm}
-                        key={"q_" + qm.question.id}
-                        onChange={this.onChange} />
+                {questionModels && questionModels.map(section =>
+                    <div className="card review-section" key={"s_" + section.id}>
+                        {section.headline && <h3 className="section-headline card-title">{section.headline}</h3>}
+                        {section.description && <div className="section-description"><ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/></div>}
+                        {section.questions && section.questions.map(qm => 
+                            <ReviewQuestion
+                                model={qm}
+                                key={"q_" + qm.question.id}
+                                onChange={this.onChange} />
+                        )}
+                    </div>
+                    
                 )}
                 <br /><hr />
 

@@ -303,7 +303,7 @@ def upgrade():
         .first())
 
     fr = (session.query(SectionTranslation)
-        .filter_by(language='fr', name=u'Appel à propositions IAPD: Gestionnaire des programmes de bourses')
+        .filter_by(language='fr', name='Appel à propositions IAPD: Gestionnaire des programmes de bourses')
         .first())
 
     en.description = """The International Development Research Centre (IDRC) and the Swedish International Development Agency (Sida) invite proposals from qualified institutions to manage the African Artificial Intelligence for Development (AI4D) Scholarships program.  
@@ -320,7 +320,7 @@ For all questions, email social@ai4d.ai
 
 """
 
-    fr.description = u"""**Le présent appel a pour objectif de désigner un gestionnaire de programme et directeur financier pour le programme de bourses d’études en IAPD**. L’institution d’accueil (« gestionnaire de bourses ») concevra et administrera un programme de bourses d’études qui favorisera le développement des talents nécessaires pour répondre à une demande croissante en recherche et en innovation dans le domaine de l’intelligence artificielle (« IA ») responsable pour le développement dans les universités publiques africaines. Le programme soutiendra deux activités d’allocation de bourses : (i) les bourses de doctorat africaines en IAPD et (ii) le programme de bourses avancées africaines en IAPD. Le programme de bourses d’études africaines en IAPD apportera un soutien à la prochaine génération d’universitaires, de praticiens et d’étudiants en IA et dans les disciplines connexes (telles que l’apprentissage automatique) qui se concentrent sur l’innovation en IA responsable pour le développement durable. L’IA responsable s’efforce d’être inclusive, fondée sur les droits et durable dans son développement et sa mise en oeuvre, en veillant à ce que les applications d’IA soient exploitées au profit du public. 
+    fr.description = """**Le présent appel a pour objectif de désigner un gestionnaire de programme et directeur financier pour le programme de bourses d’études en IAPD**. L’institution d’accueil (« gestionnaire de bourses ») concevra et administrera un programme de bourses d’études qui favorisera le développement des talents nécessaires pour répondre à une demande croissante en recherche et en innovation dans le domaine de l’intelligence artificielle (« IA ») responsable pour le développement dans les universités publiques africaines. Le programme soutiendra deux activités d’allocation de bourses : (i) les bourses de doctorat africaines en IAPD et (ii) le programme de bourses avancées africaines en IAPD. Le programme de bourses d’études africaines en IAPD apportera un soutien à la prochaine génération d’universitaires, de praticiens et d’étudiants en IA et dans les disciplines connexes (telles que l’apprentissage automatique) qui se concentrent sur l’innovation en IA responsable pour le développement durable. L’IA responsable s’efforce d’être inclusive, fondée sur les droits et durable dans son développement et sa mise en oeuvre, en veillant à ce que les applications d’IA soient exploitées au profit du public. 
 
 Pour les critères d'éligibilité, veuillez consulter www.ai4d.ai/calls
 Appel de propositions pour désigner un gestionnaire de programme et directeur financier pour le programme de bourses d’études en IAPD:https://resources.ai4d.ai/files/2020/scholarships-call/AI4D_Scholarships_CFP_FR.pdf 

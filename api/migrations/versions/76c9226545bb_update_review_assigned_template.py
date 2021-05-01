@@ -55,7 +55,7 @@ Kind Regards,
 The {event_name} Organisers"""
 
     fr = db.session.query(EmailTemplate).filter_by(language='fr', key='reviews-assigned').first()
-    fr.template = u"""Madame / Monsieur {lastname},
+    fr.template = """Madame / Monsieur {lastname},
 
 {num_reviews} tâches de révision vous ont été attribuées dans {system_name}. Veuillez consulter {baobab_host}/{event_key}/reviewlist pour commencer.
 
@@ -81,7 +81,7 @@ Kind Regards,
 The {event_name} Organisers"""
 
     fr = db.session.query(EmailTemplate).filter_by(language='fr', key='reviews-assigned')
-    fr.template = u"""Madame / Monsieur {lastname},
+    fr.template = """Madame / Monsieur {lastname},
 
 {num_reviews} tâches de révision vous ont été attribuées dans {system_name}. Veuillez consulter {baobab_host}/{event_key}/review pour commencer.
 

@@ -885,6 +885,7 @@ class ResponseDetailAPITest(ApiTestCase):
 
         self.reviewer1 = self.add_user('reviewer1@mail.com', user_title='Mx', firstname='Skittles', lastname='Cat')
         self.reviewer2 = self.add_user('reviewer2@mail.com', user_title='Mr', firstname='Finn', lastname='Dog')
+        self.reviewer3 = self.add_user('reviewer3@mail.com', user_title='Mx', firstname='Bailey', lastname='Dog')
 
         self.event1.add_event_role('admin', self.event1admin.id)
         self.event1.add_event_role('reviewer', self.reviewer1.id)
@@ -914,9 +915,10 @@ class ResponseDetailAPITest(ApiTestCase):
 
         self.add_response_reviewer(self.response1.id, self.reviewer1.id)
         self.add_response_reviewer(self.response1.id, self.reviewer2.id)
+        self.add_response_reviewer(self.response1.id, self.reviewer3.id)
 
         self.add_review_response(self.reviewer1.id, self.response1.id, review_form.id)
-
+        self.add_review_response(self.reviewer2.id, self.response1.id, review_form.id, is_submitted=True)
 
     def test_response_detail(self):
         """Test typical get request."""
@@ -957,12 +959,15 @@ class ResponseDetailAPITest(ApiTestCase):
         self.assertEqual(data['reviewers'][0]['user_title'], 'Mx')
         self.assertEqual(data['reviewers'][0]['firstname'], 'Skittles')
         self.assertEqual(data['reviewers'][0]['lastname'], 'Cat')
-        self.assertTrue(data['reviewers'][0]['completed'])
+        self.assertEqual(data['reviewers'][0]['status'], 'started')
         self.assertEqual(data['reviewers'][1]['user_title'], 'Mr')
         self.assertEqual(data['reviewers'][1]['firstname'], 'Finn')
         self.assertEqual(data['reviewers'][1]['lastname'], 'Dog')
-        self.assertFalse(data['reviewers'][1]['completed'])
-        self.assertIsNone(data['reviewers'][2])
+        self.assertEqual(data['reviewers'][1]['status'], 'completed')
+        self.assertEqual(data['reviewers'][2]['user_title'], 'Mx')
+        self.assertEqual(data['reviewers'][2]['firstname'], 'Bailey')
+        self.assertEqual(data['reviewers'][2]['lastname'], 'Dog')
+        self.assertEqual(data['reviewers'][2]['status'], 'not_started')
 
 
     def test_response_detail_admin_only(self):

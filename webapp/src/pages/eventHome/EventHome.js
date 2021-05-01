@@ -3,6 +3,7 @@ import "./EventHome.css";
 import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
+import ApplicationFormSetting from '../createApplicationForm';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -22,6 +23,7 @@ import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList"
 import ResponsePage from "../ResponsePage/ResponsePage"
+import ReviewDetails from "../reviewDetails"
 
 
 class EventInfo extends Component {
@@ -89,7 +91,7 @@ class EventHome extends Component {
 
   render() {
     const { event, error, isLoading } = this.state;
-    const { match } = this.props;
+    const { match, organisation } = this.props;
 
     const loadingStyle = {
       width: "3rem",
@@ -129,10 +131,15 @@ class EventHome extends Component {
           path={`${match.path}/`}
           render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
         />
-             <Route
+        <Route
           exact
           path={`${match.path}/responseList`}
           render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviewDetails`}
+          render={(props) => <ReviewDetails {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
@@ -224,6 +231,15 @@ class EventHome extends Component {
           exact
           path={`${match.path}/responsePage/:id`}
           render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/applicationform`}
+          render={(props) => <ApplicationFormSetting
+            {...props}
+            event={event}
+            languages={organisation.languages}
+            />}
         />
         
       </div>
