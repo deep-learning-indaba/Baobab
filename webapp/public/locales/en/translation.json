@@ -358,7 +358,7 @@
     "Move up": "Move up",
     "Move Section Down": "Move Section Down",
     "Move Section Up": "Move Section Up",
-    "Review Details": "Review Details",
+    "Review Dashboard": "Review Dashboard",
     "Total": "Total",
     "Candidate": "Candidate",
     "Max and min Rererrals are required": "Max and min Rererrals are required",
@@ -405,5 +405,8 @@
     " ": " ",
     "Clear": "Clear",
     "French": "French",
-    "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Some Changes have not been saved. Are you sure you want to leave without saving them?"
+    "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Some Changes have not been saved. Are you sure you want to leave without saving them?",
+    "Details": "Details",
+    "Summary": "Summary",
+    "Stage": "Stage"
 }

@@ -76,7 +76,8 @@ export class FormMultiFile extends Component {
 
 
     //handle upload
-    handleUpload = (id, file, name) => {
+    handleUpload = (id, file, name, rename) => {
+        console.log("Uploading file with id: ", id, " file: ", file, " name: ", name, " rename: ", rename);
         const handleList = this.state.fileList;
         return new Promise((resolve, reject) => {
             // Add new value
@@ -85,7 +86,9 @@ export class FormMultiFile extends Component {
                 if (this.props.uploadFile) {
                     this.props.uploadFile(file).then(fileId => {
                         existing.name = name;
+                        existing.filename = fileId;
                         existing.file = fileId;
+                        existing.rename = rename;
                         this.setState({fileList: handleList}, () => {
                             if (this.props.onChange) {
                                 const filteredList = this.state.fileList.filter(f=>f.file);

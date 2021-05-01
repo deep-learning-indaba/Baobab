@@ -23,7 +23,7 @@ import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList"
 import ResponsePage from "../ResponsePage/ResponsePage"
-import ReviewDetails from "../reviewDetails"
+import ReviewDashboard from "../reviewDashboard"
 
 
 class EventInfo extends Component {
@@ -138,8 +138,8 @@ class EventHome extends Component {
         />
         <Route
           exact
-          path={`${match.path}/reviewDetails`}
-          render={(props) => <ReviewDetails {...props} event={event} user={this.props.user}/>}
+          path={`${match.path}/reviewDashboard`}
+          render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
         />
         <Route
           exact
