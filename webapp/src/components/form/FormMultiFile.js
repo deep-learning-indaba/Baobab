@@ -5,6 +5,7 @@ import MultiFileComponent from './MultiFileComponent';
 import "./Style.css";
 import _ from "lodash";
 import ReactMarkdown from "react-markdown";
+import FormToolTip from "./FormToolTip";
 
 
 export class FormMultiFile extends Component {
