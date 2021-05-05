@@ -62,3 +62,39 @@ def build_response_email_body(answers, language, application_form):
                 stringified_summary += '{question}\n{answer}\n\n'.format(question=question_translation.headline, answer=answer_value)
 
     return stringified_summary
+
+
+def build_response_html_body(answers, language, application_form):
+    """
+    Stringifying the dictionary summary, for output in a html file, with sections as headers(<h1>), 
+    questions as second headings (<h2>) and answers as paragraphs (<p>)
+    """
+
+    stringified_summary = ""
+
+    for section in application_form.sections:
+        if not section.questions:
+            continue
+        section_translation = section.get_translation(language)
+        if section_translation is None:
+            LOGGER.error('Missing {} translation for section {}.'.format(language, section.id))
+            section_translation = section.get_translation('en')
+        stringified_summary += '<h1>' + section_translation.name + '</h1>' 
+
+        for question in section.questions:
+            question_translation = question.get_translation(language)
+            if question_translation is None:
+                LOGGER.error('Missing {} translation for question {}.'.format(language, question.id))
+                question_translation = question.get_translation('en')
+
+            answer = _find_answer(question, answers)
+            if answer:
+                answer_value = _get_answer_value(answer, answer.question, question_translation)
+                # stringified_summary += f"<h2> {question_translation.headline} </h2> <p>{answer_value}</p>"
+                stringified_summary += '<h2> ' + '{question}' + '</h2> ' + '<p>' + '{answer}' + '<\p>'.format(question=question_translation.headline, answer=answer_value)
+                
+
+
+
+    return stringified_summary
+
