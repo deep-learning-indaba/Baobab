@@ -90,10 +90,8 @@ def build_response_html_body(answers, language, application_form):
             answer = _find_answer(question, answers)
             if answer:
                 answer_value = _get_answer_value(answer, answer.question, question_translation)
-                # stringified_summary += f"<h2> {question_translation.headline} </h2> <p>{answer_value}</p>"
-                stringified_summary += '<h2> ' + '{question}' + '</h2> ' + '<p>' + '{answer}' + '<\p>'.format(question=question_translation.headline, answer=answer_value)
-                
-
+                stringified_summary += f"<h2> {question_translation.headline} </h2> <p>{answer_value}</p>"
+                # stringified_summary += '<h2> ' + '{question}' + '</h2> ' + '<p>' + '{answer}' + '<\p>'.format(question=question_translation.headline, answer=answer_value)
 
 
     return stringified_summary
