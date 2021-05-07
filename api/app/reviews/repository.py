@@ -30,7 +30,10 @@ class ReviewRepository():
                     and not exists (
                         select 1
                         from response_reviewer
+                        inner join response on response_reviewer.response_id = response.id
+                        inner join application_form on response.application_form_id = application_form.id
                         where response_reviewer.reviewer_user_id = app_user.id
+                        and application_form.event_id = {event_id}
                     )
                 )
                 union
