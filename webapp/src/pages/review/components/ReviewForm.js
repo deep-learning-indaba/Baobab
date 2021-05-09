@@ -349,14 +349,15 @@ class ReviewForm extends Component {
     };
 
     isValidated = (checkRequired) => {
-        const validatedModels = this.state.questionModels.flatMap(s => s.questions).map(q => {
-            return {
+        const validatedModels = this.state.questionModels.map(s=>({
+            ...s,
+            questions: s.questions.map(q=>({
                 ...q,
                 validationError: this.validate(q, null, checkRequired)
-            };
-        });
+            }))
+        }));
 
-        const isValid = !validatedModels.some(v => v.validationError);
+        const isValid = !validatedModels.map(s=>s.questions).some(v => v.validationError);
 
         this.setState(
             {
@@ -402,6 +403,7 @@ class ReviewForm extends Component {
                                     review_response: response.reviewResponse
                                 }
                             });
+
                         }
                     });
             });
@@ -610,9 +612,8 @@ class ReviewForm extends Component {
                 <hr />
 
                 <div className="floating-bar">
-                    <button disabled={isSubmitting} 
+                    <button disabled={isSubmitting || !this.state.stale} 
                         className={"btn btn-info"}
-                        disabled={!this.state.stale}
                         onClick={this.save}>
                             {isSubmitting && (
                                 <span
