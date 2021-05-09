@@ -326,8 +326,14 @@ class ReviewRepository():
             .filter_by(id=response_id)
             .all()
         )
+
         review_score_values = [misc.try_parse_float(review_score_value[0]) for review_score_value in review_score_values]
-        average_review_score = sum(review_score_values) / len(review_score_values)
+
+        if len(review_score_values) == 0:
+            average_review_score = 0
+        else:
+            average_review_score = sum(review_score_values) / len(review_score_values)
+
         return average_review_score
 
     @staticmethod

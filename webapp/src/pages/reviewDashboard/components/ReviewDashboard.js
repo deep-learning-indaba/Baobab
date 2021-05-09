@@ -52,28 +52,27 @@ class ReviewListComponent extends Component {
 
         const columns = [];
 
-        reviewList.forEach(r => {
-            r.identifiers.forEach(i => {
-                if (!columns.some(c => c.Header == i.headline)) {
+        reviewList.forEach(row => {
+            row.identifiers.forEach(i => {
+                if (!columns.some(c => c.Header === i.headline)) {
                     columns.push({
                         id: i.headline,
                         Header: i.headline,
-                        accessor: r => r.response_id,
-                        Cell: this.identifierCell
+                        accessor: r => r.identifiers.find(x => x.headline === i.headline).value,
                     });
                 }
             });
         });
 
-        reviewList.forEach(r => {
-            r.scores.forEach(i => {
+        reviewList.forEach(row => {
+            row.scores.forEach(i => {
                 const headline = `${i.headline ? i.headline + '; ' : ''}${i.description ? i.description : ''}`
-                if (!columns.some(c => c.Header == headline)) {
+                const id = `review_question${i.review_question_id}`
+                if (!columns.some(c => c.id === id)) {
                     columns.push({
-                        id: headline,
+                        id: id,
                         Header: headline,
-                        accessor: r => r.response_id,
-                        Cell: this.scoreCell
+                        accessor: r => r.scores.find(s => s.review_question_id === i.review_question_id).score,
                     });
                 }
             });
@@ -87,7 +86,7 @@ class ReviewListComponent extends Component {
 
     loadReviewList = (mode) => {
         const eventId = this.props.event ? this.props.event.id : 0;
-        const promise = mode == "details" ? reviewService.getReviewDetails(eventId) : reviewService.getReviewSummaryList(eventId);
+        const promise = mode === "details" ? reviewService.getReviewDetails(eventId) : reviewService.getReviewSummaryList(eventId);
 
         this.setState({
             loading: true,
@@ -159,8 +158,7 @@ class ReviewListComponent extends Component {
             error,
             isLoading,
             infoColumns,
-            reviewDetails,
-            mode
+            reviewList
         } = this.state;
 
         if (error) {
@@ -173,6 +171,7 @@ class ReviewListComponent extends Component {
 
         const columns = [
             {
+                id: "response_id",
                 Header: this.props.t("Response ID"),
                 accessor: "response_id",
                 filterable: false,
@@ -186,7 +185,7 @@ class ReviewListComponent extends Component {
             }
         ];
 
-        if (this.state.mode == "details") {
+        if (this.state.mode === "details") {
             columns.push({
                 id: "reviewer",
                 Header: this.props.t("Reviewer"),
@@ -223,7 +222,7 @@ class ReviewListComponent extends Component {
                             ref={ref => this.ReactTable = ref}
                             loading={isLoading}
                             manual
-                            data={reviewDetails}
+                            data={reviewList}
                             columns={columns}
                             minRows={0}
                         />
