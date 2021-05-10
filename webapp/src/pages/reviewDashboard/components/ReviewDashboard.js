@@ -58,7 +58,10 @@ class ReviewListComponent extends Component {
                     columns.push({
                         id: i.headline,
                         Header: i.headline,
-                        accessor: r => r.identifiers.find(x => x.headline === i.headline).value,
+                        accessor: r => {
+                            const identifier = r.identifiers.find(x => x.headline === i.headline);
+                            return identifier ? identifier.value : "";
+                        }
                     });
                 }
             });
@@ -72,7 +75,10 @@ class ReviewListComponent extends Component {
                     columns.push({
                         id: id,
                         Header: headline,
-                        accessor: r => r.scores.find(s => s.review_question_id === i.review_question_id).score,
+                        accessor: r => {
+                            const score = r.scores.find(s => s.review_question_id === i.review_question_id);
+                            return score ? score.score : "";
+                        }
                     });
                 }
             });
