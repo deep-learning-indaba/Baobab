@@ -32,19 +32,6 @@ class ReviewListComponent extends Component {
         return <Link to={reviewLink}>{props.value}</Link>;
     }
 
-    identifierCell = props => {
-        const row = props.original.identifiers.find(i => i.headline === props.column.Header);
-        return row.value;
-    }
-
-    scoreCell = props => {
-        const row = props.original.scores.find(i => {
-            const header = `${i.headline ? i.headline + '; ' : ''}${i.description ? i.description : ''}`
-            return header === props.column.Header
-        });
-        return row.score;
-    }
-
     processReviewList = (reviewList) => {
         if (!reviewList) {
             return reviewList;
