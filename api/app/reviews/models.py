@@ -12,7 +12,7 @@ class ReviewForm(db.Model):
     active = db.Column(db.Boolean(), nullable=False)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
-    review_sections = db.relationship('ReviewSection')
+    review_sections = db.relationship('ReviewSection', order_by='ReviewSection.order')
 
     def __init__(self, application_form_id, deadline, stage, active):
         self.application_form_id = application_form_id
@@ -37,7 +37,7 @@ class ReviewSection(db.Model):
     order = db.Column(db.Integer(), nullable=False)
 
     translations = db.relationship('ReviewSectionTranslation', lazy='dynamic')
-    review_questions = db.relationship('ReviewQuestion')
+    review_questions = db.relationship('ReviewQuestion', order_by='ReviewQuestion.order')
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
 
     def __init__(self,

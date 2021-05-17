@@ -2,6 +2,7 @@ import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import { withTranslation } from 'react-i18next';
+import ReactMarkdown from "react-markdown";
 
 class FormTextArea extends React.Component {
   state = {
@@ -38,6 +39,8 @@ class FormTextArea extends React.Component {
     return words
   };
 
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
   render() {
     const t = this.props.t;
     
@@ -48,7 +51,7 @@ class FormTextArea extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <label htmlFor={this.props.id}>{this.props.label}</label>
+            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (

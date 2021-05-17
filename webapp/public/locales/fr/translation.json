@@ -358,7 +358,7 @@
     "Move Section Up": "Faire Monter Section",
     "No - Don't delete": "Non - Ne pas Suprimer",
     "Yes - Delete": "Oui - Suprimer",
-    "Review Details": "Détails de l'examen",
+    "Review Dashboard": "Examiner le tableau de bord",
     "Total": "Total",
     "Candidate": "Candidat",
     "Max and min Rererrals are required": "Les renvois maximum et minimum sont requis",
@@ -403,6 +403,9 @@
     "Label": "Étiquete",
     "Clear": "Dégager",
     "French": "Français",
-    "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Certaines modifications n'ont pas été enregistrées. Voulez-vous vraiment partir sans les enregistrer?"
+    "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Certaines modifications n'ont pas été enregistrées. Voulez-vous vraiment partir sans les enregistrer?",
+    "Details": "Des détails",
+    "Summary": "Résumé",
+    "Stage": "Étape"
 }
 

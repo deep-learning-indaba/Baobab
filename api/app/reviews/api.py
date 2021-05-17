@@ -701,6 +701,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
                                                                                          review_score.review_question.id))
 
         return {
+            'review_question_id': review_score.review_question.id,
             'headline': review_question_translation.headline,
             'description': review_question_translation.description,
             'type': review_score.review_question.type,
@@ -764,6 +765,7 @@ class ReviewResponseSummaryListAPI(restful.Resource):
                     average_score = review_repository.get_average_score_for_review_question(response.id, review_question.id)
 
                     score = {
+                        "review_question_id": review_question.id,
                         "headline": review_question_translation.headline,
                         "description": review_question_translation.description,
                         "type": review_question.type,

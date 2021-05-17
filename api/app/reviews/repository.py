@@ -30,7 +30,10 @@ class ReviewRepository():
                     and not exists (
                         select 1
                         from response_reviewer
+                        inner join response on response_reviewer.response_id = response.id
+                        inner join application_form on response.application_form_id = application_form.id
                         where response_reviewer.reviewer_user_id = app_user.id
+                        and application_form.event_id = {event_id}
                     )
                 )
                 union
@@ -240,7 +243,7 @@ class ReviewRepository():
     def get_review_complete_timeseries_by_event(event_id):
         timeseries = (db.session.query(cast(ReviewResponse.submitted_timestamp, Date), func.count(ReviewResponse.submitted_timestamp))
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
-                        .fitler(ReviewForm.active == True)
+                        .filter(ReviewForm.active == True)
                         .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
                         .group_by(cast(ReviewResponse.submitted_timestamp, Date))
@@ -327,8 +330,14 @@ class ReviewRepository():
             .filter_by(id=response_id)
             .all()
         )
+
         review_score_values = [misc.try_parse_float(review_score_value[0]) for review_score_value in review_score_values]
-        average_review_score = sum(review_score_values) / len(review_score_values)
+
+        if len(review_score_values) == 0:
+            average_review_score = 0
+        else:
+            average_review_score = sum(review_score_values) / len(review_score_values)
+
         return average_review_score
 
     @staticmethod

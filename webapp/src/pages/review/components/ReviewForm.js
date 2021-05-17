@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ReactMarkdown from "react-markdown";
 import { withRouter } from "react-router";
+import gfm from "remark-gfm";
 
 import AnswerValue from "../../../components/answerValue";
 import FormCheckbox from "../../../components/form/FormCheckbox";
@@ -172,7 +173,7 @@ class ReviewQuestionComponent extends Component {
             <div className={className}>
                 {this.renderHeader(this.props.model)}
 
-                {this.props.model.question.description && <ReactMarkdown source={this.props.model.question.description} renderers={{link: this.linkRenderer}}/>}
+                {this.props.model.question.description && <ReactMarkdown remarkPlugins={[gfm]} source={this.props.model.question.description} renderers={{link: this.linkRenderer}}/>}
 
                 {this.formControl(
                     this.props.model.question.id,
@@ -348,14 +349,15 @@ class ReviewForm extends Component {
     };
 
     isValidated = (checkRequired) => {
-        const validatedModels = this.state.questionModels.flatMap(s => s.questions).map(q => {
-            return {
+        const validatedModels = this.state.questionModels.map(s=>({
+            ...s,
+            questions: s.questions.map(q=>({
                 ...q,
                 validationError: this.validate(q, null, checkRequired)
-            };
-        });
+            }))
+        }));
 
-        const isValid = !validatedModels.some(v => v.validationError);
+        const isValid = !validatedModels.map(s=>s.questions).some(v => v.validationError);
 
         this.setState(
             {
@@ -401,6 +403,7 @@ class ReviewForm extends Component {
                                     review_response: response.reviewResponse
                                 }
                             });
+
                         }
                     });
             });
@@ -578,7 +581,7 @@ class ReviewForm extends Component {
                 {questionModels && questionModels.map(section =>
                     <div className="card review-section" key={"s_" + section.id}>
                         {section.headline && <h3 className="section-headline card-title">{section.headline}</h3>}
-                        {section.description && <div className="section-description"><ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/></div>}
+                        {section.description && <div className="section-description"><ReactMarkdown remarkPlugins={[gfm]} source={section.description} renderers={{link: this.linkRenderer}}/></div>}
                         {section.questions && section.questions.map(qm => 
                             <ReviewQuestion
                                 model={qm}
@@ -609,9 +612,8 @@ class ReviewForm extends Component {
                 <hr />
 
                 <div className="floating-bar">
-                    <button disabled={isSubmitting} 
+                    <button disabled={isSubmitting || !this.state.stale} 
                         className={"btn btn-info"}
-                        disabled={!this.state.stale}
                         onClick={this.save}>
                             {isSubmitting && (
                                 <span
