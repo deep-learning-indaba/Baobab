@@ -101,6 +101,19 @@ class ReviewRepository():
         return review_form
 
     @staticmethod
+    def get_review_forms(event_id):
+        review_forms = (db.session.query(ReviewForm)
+            .join(ApplicationForm, ApplicationForm.id==ReviewForm.application_form_id)
+            .filter_by(event_id=event_id)
+            .all())
+        
+        return review_forms
+
+    @staticmethod
+    def get_review_form_by_id(id):
+        return db.session.query(ReviewForm).get(id)
+
+    @staticmethod
     def get_remaining_reviews_count(reviewer_user_id, application_form_id):
         remaining = (
             db.session.query(func.count(ResponseReviewer.id))

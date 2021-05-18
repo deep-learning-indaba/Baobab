@@ -872,3 +872,80 @@ class ReviewFormDetailAPI(restful.Resource):
 
         return review_form
 
+    @event_admin_required
+    @marshal_with(review_form_detail_fields)
+    def post(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('application_form_id', type=int, required=True)
+        req_parser.add_argument('stage', type=int, required=True)
+        req_parser.add_argument('is_open', type=bool, required=True)
+        req_parser.add_argument('deadline', type=str, required=True)
+        req_parser.add_argument('active', type=bool, required=True)
+        req_parser.add_argument('sections', type=dict, required=True, action='append')
+        args = req_parser.parse_args()
+
+        application_form_id = args['application_form_id']
+        stage = args['stage']
+        is_open = args['is_open']
+        deadline = args['deadline']
+        active = args['active']
+        sections_data = args['sections']
+
+        review_form = review_repository.get_review_form(event_id, stage)
+        if review_form is not None:
+            return REVIEW_FORM_EXISTS
+
+        other_review_forms = review_repository.get_review_forms(event_id)
+
+        review_form = ReviewForm(
+            application_form_id, 
+            deadline, 
+            stage, 
+            # Only make this stage active if there is no other active stage.
+            active=not any(o.active for o in other_review_forms) and active)
+        
+        review_repository.add_model(review_form)
+
+        for section_data in sections_data:
+            section = ReviewSection(review_form.id, section_data['order'])
+            review_repository.add_model(section)
+
+            languages = section_data['headline'].keys()
+            for language in languages:
+                section_translation = ReviewSectionTranslation(
+                    review_section_id=section.id,
+                    language=language,
+                    headline=section_data['headline'][language],
+                    description=section_data['description'][language])
+                review_repository.add_model(section_translation)
+
+            for question_data in section_data['questions']:
+                question = ReviewQuestion(
+                    review_section_id=section.id, 
+                    quesiton_id=question_data['question_id'],
+                    type=question_data['type'],
+                    is_required=question_data['is_required'],
+                    order=question_data['order'],
+                    weight=question_data['weight'])
+                
+                review_repository.add_model(question)
+
+                languages = question_data['headline'].keys()
+                for language in languages:
+                    question_translation = ReviewQuestionTranslation(
+                        review_question_id=question.id,
+                        language=language, 
+                        description=question_data["description"][language], 
+                        headline=question_data["headline"][language], 
+                        placeholder=question_data["placeholder"][language], 
+                        options=question_data["options"][language], 
+                        validation_regex=question_data["validation_regex"][language], 
+                        validation_text=question_data["validation_text"][language])
+
+                    review_repository.add_model(question_translation)
+
+        new_review_form = review_repository.get_review_form_by_id(review_form.id)
+
+        return new_review_form
+
+    # TODO(avishkar): Add tests!
