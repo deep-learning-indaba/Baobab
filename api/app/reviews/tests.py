@@ -2311,6 +2311,150 @@ class ReviewStageAPITest(ApiTestCase):
         self.assertEqual(response.status_code, 404)
     
 
+REVIEW_FORM_POST = {
+  "id": 5,  
+  "event_id": 1,
+  "application_form_id": 1,  
+  "stage": 2,
+  "is_open": True,   
+  "deadline": "2021-06-01 00:00:00"       
+  "active": True,     
+  "sections": [
+      {
+          "id": 8,   
+          "order": 1,
+          "headline": {
+             "en": "Section 1",
+             "fr": "Section 1"
+          },
+          "description": {
+             "en": "This is the first section",
+             "fr": "Ceci est la première section"
+          },
+          "questions": [
+              {
+                 "id": 2,  
+                 "type": "short-text",
+                 "is_required": False,
+                 "order": 1,
+                 "weight": 0,
+                 "question_id": None,
+                 "headline": {
+                     "en": "Question 1",
+                     "fr": "Question 1"
+                 },
+                 "description": {
+                     "en": "This is the first question",
+                     "fr": "C'est la première question"
+                 },
+                 "placeholder": {
+                     "en": "Enter something interesting",
+                     "fr": "Entrez quelque chose d'intéressant"
+                 },
+                 "options": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_regex": {
+                     "en": "(a|b|c|d)",
+                     "fr": "(a|b|c|d)"
+                 },
+                 "validation_text": {
+                     "en": "You must enter a, b, c or d",
+                     "fr": "Vous devez entrer a, b, c ou d"
+                 }
+              },   
+              {
+                 "id": 3, 
+                 "type": "radio",
+                 "is_required": True,
+                 "order": 2,
+                 "weight": 1.5,
+                 "question_id": None,
+                 "headline": {
+                     "en": "Question 2",
+                     "fr": "Question 2"
+                 },
+                 "description": {
+                     "en": "This is the second question",
+                     "fr": "C'est la deuxième question"
+                 },
+                 "placeholder": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "options": {
+                     "en": [
+                          {"value": "0", "label": "Bad"}, 
+                          {"value": "1", "label": "Average"}, 
+                          {"value": "2", "label": "Good"}, 
+                      ],
+                     "fr": [
+                          {"value": "0", "label": "Mal"}, 
+                          {"value": "1", "label": "Moyenne"}, 
+                          {"value": "2", "label": "Bien"}, 
+                      ],
+                 },
+                 "validation_regex": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_text": {
+                     "en": None,
+                     "fr": None
+                 }
+              } 
+          ]
+      },  
+      {
+          "id": 9,   
+          "order": 2,
+          "headline": {
+             "en": "Section 2",
+             "fr": "Section 2"
+          },
+          "description": {
+             "en": "This is the first section",
+             "fr": "Ceci est la deuxième section"
+          },
+          "questions": [
+              {
+                 "id": 3,
+                 "type": "information",
+                 "is_required": False,
+                 "order": 1,
+                 "weight": 0,
+                 "question_id": 3,    
+                 "headline": {
+                     "en": "Question 1 from application form",
+                     "fr": "Question 1 from application form"
+                 },
+                 "description": {
+                     "en": "This is the first question from the application form",
+                     "fr": "C'est la première question du formulaire de candidature"
+                 },
+                 "placeholder": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "options": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_regex": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_text": {
+                     "en": None,
+                     "fr": None
+                 }
+              }
+          ]
+      } 
+  ]
+}
+
 class ReviewFormDetailAPITest(ApiTestCase):
 
     def seed_static_data(self):
