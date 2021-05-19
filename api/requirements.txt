@@ -1,4 +1,4 @@
-Flask
+Flask==1.1.2
 Flask-Admin
 Flask-Bcrypt
 Flask-Failsafe
