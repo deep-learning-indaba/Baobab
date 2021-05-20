@@ -128,7 +128,7 @@ jobs:
 
   deploy-test:
     docker:
-      - image: boiyaa/google-cloud-sdk-nodejs:latest
+      - image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
