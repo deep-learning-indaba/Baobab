@@ -150,7 +150,7 @@ jobs:
 
   deploy-prod:
     docker:
-      - image: boiyaa/google-cloud-sdk-nodejs:latest
+      - image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
