@@ -712,6 +712,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
     def get(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
 
         review_responses = review_repository.get_all_review_responses_by_event(event_id)
         return [
@@ -765,6 +766,7 @@ class ReviewResponseSummaryListAPI(restful.Resource):
     def get(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
 
         responses = response_repository.get_all_for_event(event_id)
         review_form = review_repository.get_review_form(event_id)

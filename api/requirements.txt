@@ -2,7 +2,7 @@ Flask==1.1.2
 Flask-Admin
 Flask-Bcrypt
 Flask-Failsafe
-Flask-Migrate
+Flask-Migrate==2.7.0
 Flask-RESTful
 Flask-Redis
 flask-restplus
