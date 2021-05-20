@@ -9,6 +9,7 @@ import "../ReviewDashboard.css";
 import { downloadCSV } from "../../../utils/files";
 import { reviewService } from "../../../services/reviews";
 import Loading from "../../../components/Loading";
+import * as CSV from 'csv-string';
 
 
 class ReviewListComponent extends Component {
@@ -109,28 +110,27 @@ class ReviewListComponent extends Component {
         const getResolvedState = this.ReactTable.getResolvedState();
         const columns = getResolvedState.columns;
         const rows = getResolvedState.resolvedData;
-        let str = `${columns.map(c => `"${c.Header}"`).join(",")}\r\n`;
-        let key;
-        let row;
-        for (var i = 0; i < rows.length; i++) {
-            row = [];
-            for (var j = 0; j < columns.length; j++) {
-                if (rows[i].hasOwnProperty(columns[j].Header)) {
-                    // row is mapped by column header
-                    key = columns[j].Header;
-                } else if (rows[i].hasOwnProperty(columns[j].id)) {
-                    // row is mapped by column id (accessor is a function)
-                    key = columns[j].id;
-                } else {
-                    // row is directly mapped to accessor by string property
-                    key = columns[j].accessor;
-                }
-                row.push(rows[i][key]);
-            }
-            str += row.join(",") + "\r\n";
-        }
-        const filename = `review_${this.state.mode}` + new Date().toDateString().split(" ").join("_") + ".csv";
-        downloadCSV(str, filename);
+        
+        const output = [
+            columns.map(c => c.Header)
+        ];
+
+        output.push(
+            ...rows.map(row =>
+                columns.map(col => {
+                    if (row.hasOwnProperty(col.Header)) {
+                        return row[col.Header];   // row is mapped by column header
+                    } else if (row.hasOwnProperty(col.id)) {
+                        return row[col.id];  // row is mapped by column id (accessor is a function)
+                    } else {
+                        return row[col.accessor];  // row is directly mapped to accessor by string property
+                    }
+                })
+            )
+        );
+        
+        const filename = `review_${this.state.mode}_` + new Date().toDateString().split(" ").join("_") + ".csv";
+        downloadCSV(CSV.stringify(output), filename);
     }
 
     modeChange = event => {
