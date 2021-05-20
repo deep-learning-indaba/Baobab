@@ -696,7 +696,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
             ],
 
             'scores': [
-                ReviewResponseDetailListAPI._serialise_score(review_score, review_response.language)
+                ReviewResponseDetailListAPI._serialise_score(review_score, language)
                 for review_score in review_response.review_scores
                 if (review_score.review_question.type == 'multi-choice'
                     or review_score.review_question.type == 'long-text'
