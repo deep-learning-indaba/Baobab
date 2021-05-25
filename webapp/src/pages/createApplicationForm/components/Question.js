@@ -2,28 +2,31 @@ import React, { useState, forwardRef, useEffect, useCallback, useMemo } from 're
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove, Dependency, dependencyChange,
-  Validation, validationText as vText, langObject, rows
+  Validation, validationText as vText, langObject, rows,
+  SelectQuestion
 } from './util';
 
 const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
-    lang, section, sections, optionz, langs,
+    lang, section, sections, optionz, langs, isReview,
     setApplytransition, questionIndex, setQuestionAnimation,
-    handleDrag, handleDrop, showingQuestions, setDisableSaveBtn
+    handleDrag, handleDrop, showingQuestions, setDisableSaveBtn,
+    appSections,
   }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [emptyOptions, setEmptyOptions] = useState(false);
-  const opts = inputs.options[lang];
+  const opts = inputs.options && inputs.options[lang];
   const type = inputs.type;
-  const max_num_referral = inputs.options[lang]
+  const max_num_referral = inputs.options && inputs.options[lang]
     && inputs.options[lang].max_num_referral;
-  const min_num_referral = inputs.options[lang]
+  const min_num_referral = inputs.options && inputs.options[lang]
     && inputs.options[lang].min_num_referral;
-  const validation_regex = inputs.validation_regex[lang];
+  const validation_regex = inputs.validation_regex && inputs.validation_regex[lang];
   const key = inputs.key;
+  console.log('Type ', inputs);
 
   const optz = useMemo(() => inputs.options, []);
   let maxSurrogateId = 1;
@@ -54,10 +57,12 @@ const Question = forwardRef(({
       setErrorMessage('At least one option is required');
     } else {
       let isNotEmpty = true;
-      for (let key of Object.keys(inputs.options)) {
-        if (!inputs.options[key]) {
-          isNotEmpty = false;
-          setEmptyOptions(true);
+      if(inputs.options) {
+        for (let key of Object.keys(inputs.options)) {
+          if (!inputs.options[key]) {
+            isNotEmpty = false;
+            setEmptyOptions(true);
+          }
         }
       }
       if (isNotEmpty) {
@@ -148,7 +153,7 @@ const Question = forwardRef(({
                 validation_text: newText
               }
             } else {
-              if (prop === 'key') {
+              if (['key', 'weight'].indexOf(prop) !== -1) {
                 q = {...q, [prop]: e.target.value}
               } else {
                 q = {...q, [prop]: {...target, [lang]: e.target.value}}
@@ -339,6 +344,26 @@ const Question = forwardRef(({
     setSections(updatedSections);
   }
 
+  const handleAppFormQuestionSelect = (e) => {
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            q = {
+              ...q,
+              headline: e.headline,
+              description: e.description,
+              question_id: parseInt(e.value)
+            }
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
   const handleDependencyChange = (prop) => (e) => {
     dependencyChange({
       prop:prop,
@@ -397,13 +422,63 @@ const Question = forwardRef(({
   }
 
   const handlereExtensionChange = (e) => {
-    const opt = inputs.options;
+    const options = inputs.options;
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            const ext = e.target.value.split(',').map(e => e.trim())
-            q = {...q, options: {...opt, [lang]: { accept: ext }}}
+            const ext = e.target.value.split(',').map(e => e.trim());
+            const opt = {};
+            const numUploads = inputs.options[lang].num_uploads;
+            for (let key of Object.keys(options)) {
+              if(numUploads) {
+                opt[key] = {
+                  accept: ext,
+                  num_uploads: numUploads
+                }
+              } else {
+                opt[key] = {
+                  accept: ext
+                }
+              }
+            }
+            q = {...q, options: opt}
+          }
+          return q
+        })}
+      }
+      return s
+    });
+    setSections(updatedSections);
+  }
+
+  const handleNumberOfFiles = (e) => {
+    const options = inputs.options;
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...section, questions: s.questions.map(q => {
+          if (q.id === inputs.id) {
+            // const ext = e.target.value.split(',').map(e => e.trim());
+            const accepts = inputs.options[lang].accept;
+            const uploads = e.target.value;
+            const opt = {};
+            for (let key of Object.keys(options)) {
+              if (uploads) {
+                opt[key] = {
+                  num_uploads: uploads,
+                  accept: accepts
+                }
+              } else {
+                opt[key] = {
+                  accept: accepts
+                }
+              }
+              opt[key] = {
+                num_uploads: uploads,
+                accept: accepts
+              }
+            }
+            q = {...q, options: opt}
           }
           return q
         })}
@@ -414,22 +489,36 @@ const Question = forwardRef(({
   }
 
   const handleDuplicate = () => {
-    const duplicate = {
-      id: `${Math.random()}`,
-      surrogate_id: maxSurrogateId + 1,
-      depends_on_question_id: inputs.depends_on_question_id,
-      headline: inputs.headline,
-      description: inputs.description,
-      required: inputs.required,
-      key: inputs.key,
-      options: inputs.options,
-      order: inputs.order,
-      placeholder: inputs.placeholder,
-      show_for_values: inputs.show_for_values,
-      type: inputs.type,
-      validation_regex: inputs.validation_regex,
-      validation_text: inputs.validation_text
-    };
+    let duplicate;
+    if (inputs.type === 'information') {
+      duplicate = {
+        id: `${Math.random()}`,
+        surrogate_id: maxSurrogateId + 1,
+        headline: inputs.headline,
+        description: inputs.description,
+        order: inputs.order,
+        type: inputs.type,
+        required: inputs.required,
+        question_id: inputs.question_id,
+      }
+    } else {
+      duplicate = {
+        id: `${Math.random()}`,
+        surrogate_id: maxSurrogateId + 1,
+        depends_on_question_id: inputs.depends_on_question_id,
+        headline: inputs.headline,
+        description: inputs.description,
+        required: inputs.required,
+        key: inputs.key,
+        options: inputs.options,
+        order: inputs.order,
+        placeholder: inputs.placeholder,
+        show_for_values: inputs.show_for_values,
+        type: inputs.type,
+        validation_regex: inputs.validation_regex,
+        validation_text: inputs.validation_text
+      }
+    }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
         const index = inputs.order;
@@ -453,7 +542,7 @@ const Question = forwardRef(({
     e.stopPropagation();
   }
 
-  const options = [
+  const applicationOptions = [
     option({
       value: 'short-text',
       label: 'Short Text',
@@ -514,7 +603,50 @@ const Question = forwardRef(({
       faClass: 'fas fa-cloud fa-color',
       t
     }),
+    option({
+      value: 'sub-heading',
+      label: 'Subheadind',
+      faClass: 'fas fa-heading fa-color',
+      t
+    }),
   ];
+
+  const reviewOptions = [
+    ...applicationOptions,
+    option({
+      value: 'numeric-text',
+      label: 'Numeric Input',
+      faClass: 'fas fa-weight fa-color',
+      t
+    }),
+    option({
+      value: 'radio',
+      label: 'Radio Buttons',
+      faClass: 'fas fa-check-circle fa-color',
+      t
+    }),
+  ];
+
+  const appQuestionsOptions = [];
+  appSections && appSections.forEach(s => {
+      if (s.questions.length) appQuestionsOptions.push(option({
+        value: `section_${s.id}`,
+        label: s.name[lang],
+        t,
+        disabled: 'yes'
+      }))
+      if (s.questions.length) s.questions.forEach(q => {
+        appQuestionsOptions.push(option({
+          value: `${q.id}`,
+          label: q.headline[lang],
+          t,
+          desc: q.description,
+          head: q.headline
+      }))
+    })
+  })
+
+  const options = isReview ? reviewOptions : applicationOptions;
 
   const validationOptions = [
     option({
@@ -529,10 +661,12 @@ const Question = forwardRef(({
     }),
   ]
 
-  const withPlaceHolder = ['short-text', 'multi-choice', 'long-text'];
-  const withOptions = ['multi-choice', 'multi-checkbox'];
+  const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'numeric-text', 'multi-file'];
+  const withOptions = ['multi-choice', 'multi-checkbox', 'radio'];
+  const withWeight = ['numeric-text', 'radio', 'multi-choice', 'single-choice'];
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
+  const withMultifile = ['multi-file']
   const withRegex = ['long-text', 'short-text', 'markdown'];
   const dependencyOptions = optionz.filter(e => e.order < inputs.order
     || !e.order);
@@ -564,11 +698,14 @@ const Question = forwardRef(({
           <div className="question-header">
             <span className="key-wrapper">
             {!inputs.headline[lang] && (
-              <span className='tooltiptext-error'>{t('Headline is Required')}</span>
+              <span className='tooltiptext-error'>
+                {t('Headline is Required')}
+              </span>
             )}
               <input
                 type="text"
                 name="headline"
+                style={inputs.type === 'information' ? { width: '85%'} : {}}
                 value={inputs.headline[lang]}
                 onChange={handleChange('headline')}
                 placeholder={inputs.headline['en'] || t('Headline')}
@@ -579,32 +716,36 @@ const Question = forwardRef(({
               <span className="tooltiptext">{t('Headline')}</span>
             </span>
             {!type && (
-              <span className='tooltiptext-error'>{t('Type is Required')}</span>
+              <span className='tooltiptext-error'>
+                {t('Type is Required')}
+              </span>
             )}
-            <ReactSelect
-              options={options}
-              placeholder={t('Choose type')}
-              onChange={e => handleTypeChange(e)}
-              defaultValue={inputs.type || null}
-              value={options.find(o => o.value === inputs.type)}
-              className='select-form'
-              styles={{
-                control: (base, state) => ({
-                  ...base,
-                  boxShadow: "none",
-                  border: state.isFocused && "none",
-                  transition: state.isFocused && 'color,background-color 1.5s ease-out',
-                  background: state.isFocused && 'lightgray',
-                  color: '#fff'
-                }),
-                option: (base, state) => ({
-                   ...base,
-                   backgroundColor: state.isFocused && "lightgray",
-                   color: state.isFocused && "#fff"
-                })
-              }}
-              menuPlacement="auto"
-            />
+            {inputs.type !== 'information' && (
+              <ReactSelect
+                options={options}
+                placeholder={t('Choose type')}
+                onChange={e => handleTypeChange(e)}
+                defaultValue={inputs.type || null}
+                value={options.find(o => o.value === inputs.type)}
+                className='select-form'
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    boxShadow: "none",
+                    border: state.isFocused && "none",
+                    transition: state.isFocused && 'color,background-color 1.5s ease-out',
+                    background: state.isFocused && 'lightgray',
+                    color: '#fff'
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused && "lightgray",
+                    color: state.isFocused && "#fff"
+                  })
+                }}
+                menuPlacement="auto"
+              />
+            )}
             <div className='move-btns-wrapper'>
               <button
                 className="move-btn"
@@ -623,7 +764,9 @@ const Question = forwardRef(({
             </div>
           </div>
           <div className="label-input-wrapper">
-            <label htmlFor="section-desc" className="form-label">{t('Description')}</label>
+            <label htmlFor="section-desc" className="form-label">
+              {t('Description')}
+            </label>
             <textarea
               name='section-desc'
               placeholder={inputs.description['en'] || t('Description')}
@@ -637,7 +780,9 @@ const Question = forwardRef(({
           </div>
           {isKeyOn && (
             <div className="label-input-wrapper">
-              <label htmlFor="section-desc" className="form-label">{t('Key')}</label>
+              <label htmlFor="section-desc" className="form-label">
+                {t('Key')}
+              </label>
               <input
                 name="section-desc"
                 type="text"
@@ -652,7 +797,9 @@ const Question = forwardRef(({
           )}
           {withPlaceHolder.includes(inputs.type) && (
             <div className="label-input-wrapper">
-              <label htmlFor="question-headline" className="form-label">{t('Placeholder')}</label>
+              <label htmlFor="question-headline" className="form-label">
+                {t('Placeholder')}
+              </label>
               <input
                 name="question-headline"
                 type="text"
@@ -662,6 +809,25 @@ const Question = forwardRef(({
                 className="question-inputs question-headline"
                 draggable={true}
                 onDragStart={handleStopPropagation}
+                />
+            </div>
+          )}
+          {isReview && withWeight.includes(inputs.type) && (
+            <div className="label-input-wrapper">
+              <label htmlFor="question-headline" className="form-label">
+                {t('Score Weight')}
+              </label>
+              <input
+                name="question-headline"
+                type="number"
+                min={0}
+                value={inputs.weight || 0}
+                placeholder={inputs.weight || t('Score Weight')}
+                onChange={handleChange('weight')}
+                className="question-inputs question-headline"
+                draggable={true}
+                onDragStart={handleStopPropagation}
+                step="any"
                 />
             </div>
           )}
@@ -808,24 +974,54 @@ const Question = forwardRef(({
                />
             </div>
           )}
-          {isValidateOn
-            && <Validation
-                t={t}
-                options={validationOptions}
-                inputs={inputs}
-                lang={lang}
-                handleChange={handleChange}
+          {withMultifile.includes(inputs.type) && (
+            <div className="label-input-wrapper">
+              <label htmlFor="question-headline" className="form-label">
+                {t('Number of files')}
+              </label>
+              <input
+                name="question-headline"
+                type="number"
+                min={0}
+                value={inputs.options
+                  && inputs.options[lang]
+                  && inputs.options[lang].num_uploads}
+                placeholder={t('Number of files')}
+                onChange={handleNumberOfFiles}
+                className="question-inputs question-headline"
+                draggable={true}
+                onDragStart={handleStopPropagation}
+                />
+            </div>
+          )}
+          {isValidateOn && (
+            <Validation
+              t={t}
+              options={validationOptions}
+              inputs={inputs}
+              lang={lang}
+              handleChange={handleChange}
               />
-          }
-          <Dependency
-            options={dependencyOptions}
-            handlequestionDependency={handlequestionDependency}
-            handleDependencyChange={handleDependencyChange}
-            dependentQuestion={dependentQuestion}
-            inputs={inputs}
-            lang={lang}
-            t={t}
-            />
+          )}
+          {!isReview && (
+            <Dependency
+              options={dependencyOptions}
+              handlequestionDependency={handlequestionDependency}
+              handleDependencyChange={handleDependencyChange}
+              dependentQuestion={dependentQuestion}
+              inputs={inputs}
+              lang={lang}
+              t={t}
+              />
+          )}
+          {inputs.type === 'information' && (
+            <SelectQuestion
+              options={appQuestionsOptions}
+              inputs={inputs}
+              handleAppFormQuestionSelect={handleAppFormQuestionSelect}
+              t={t}
+             />
+          )}
           <div className="action-btns">
             <div className="question-footer">
               <button
@@ -844,16 +1040,19 @@ const Question = forwardRef(({
                   className="far fa-trash-alt fa-md fa-color"
                   ></i>
               </button>
-              <div className='require-chckbox'>
-                <input
-                  type='checkbox'
-                  id={`required_${inputs.id}`}
-                  checked={inputs.required}
-                  onChange={e => handleCheckChanged(e)}
-                  className='require-check'
-                />
-                <label htmlFor={`required_${inputs.id}`}>{t('Required')}</label>
-              </div>
+              {inputs.type !== 'information' && (
+                <div className='require-chckbox'>
+                  <input
+                    type='checkbox'
+                    id={`required_${inputs.id}`}
+                    checked={inputs.required}
+                    onChange={e => handleCheckChanged(e)}
+                    className='require-check'
+                    disabled={inputs.type === 'sub-heading'}
+                  />
+                  <label htmlFor={`required_${inputs.id}`}>{t('Required')}</label>
+                </div>
+              )}
             </div>
           </div>
           <div
@@ -881,17 +1080,19 @@ const Question = forwardRef(({
               </span>
                 {t("Validation")}
             </button>
-            <button
-              className="dropdown-item delete-section"
-              onClick={handleKey}
-              >
-              <span className="check-icon">
-                {isKeyOn
-                  && <i className="fas fa-check fa-validation"></i>
-                }
-              </span>
-                {t("Key")}
-            </button>
+            {!isReview && (
+              <button
+                className="dropdown-item delete-section"
+                onClick={handleKey}
+                >
+                <span className="check-icon">
+                  {isKeyOn
+                    && <i className="fas fa-check fa-validation"></i>
+                  }
+                </span>
+                  {t("Key")}
+              </button>
+            )}
           </div>
         </div>
         {isModelVisible && (

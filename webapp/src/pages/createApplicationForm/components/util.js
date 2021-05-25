@@ -4,8 +4,12 @@ import React, {
 import { ConfirmModal } from "react-bootstrap4-modal";
 import { default as ReactSelect } from "react-select";
 
-export const option = ({ value, t, label: l, faClass, headline }) => {
-  const lab = headline ? l : t(l);
+export const option = ({
+  value, t, label: l, faClass,
+  headline, disabled, desc, head
+}) => {
+  let lab = headline ? l : t(l);
+  lab = disabled ? <b>{lab}</b> : lab;
   const label = faClass ? <div>
     <div className='dropdown-text'>
       <i className={faClass}></i>
@@ -15,7 +19,10 @@ export const option = ({ value, t, label: l, faClass, headline }) => {
   : lab;
   return {
     label,
-    value
+    value,
+    disabled,
+    description: desc,
+    headline: head
   }
 }
 
@@ -247,6 +254,45 @@ export const handleMove = ({
     }
     setAnimation && setAnimation(true);
   }
+}
+
+export const SelectQuestion = ({
+  options, t, handleAppFormQuestionSelect,
+  inputs
+}) => {
+  const selectedQuestion = options
+    .find(o => parseInt(o.value) === inputs.question_id);
+  return (
+    <div>
+      <ReactSelect
+        options={options}
+        isOptionDisabled={option => option.disabled === 'yes'}
+        placeholder={t('Select a question from Application Form')}
+        onChange={handleAppFormQuestionSelect}
+        value={selectedQuestion}
+        className='select-dependency select-question'
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            boxShadow: "none",
+            border: "none",
+            transition: state.isFocused 
+              && 'color,background-color 1.5s ease-out',
+            background: state.isFocused
+              && 'lightgray',
+            color: '#fff'
+          }),
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              && "lightgray",
+            color: state.isFocused && "#fff"
+          })
+        }}
+        menuPlacement="auto"
+       />
+    </div>
+  )
 }
 
 export const Dependency = ({
@@ -560,4 +606,40 @@ export const rows = (text) => {
   const length = text && text.length;
   const numRows = length / 102;
   return !length ? 1 : Math.ceil(numRows);
+}
+
+export const Stages = ({ t, stage }) => {
+  return (
+    <div className='review-stage-wrapper'>
+      <div className='review-stage-label'>
+        {t('Stages')}
+      </div>
+      <div className='review-stage-btns'>
+        <div className='review-stages'>
+          {Array.from(Array(30), (_, index) => index + 1).map((s, i) => {
+            return (
+              <input
+                type='button'
+                key={i}
+                value={s}
+                style={s === stage.current_stage ? { background: '#333', color: '#fff'} : {}}
+                className='stage-btn'
+                // data-title="Save"
+                // onClick={handleStage}
+                // disabled={isSaveDisabled || disableSaveBtn}
+              />)
+          })}
+          
+        </div>
+        <button
+          className="add-stage-btn"
+          data-title={t('Add New Stage')}
+          // onMouseUp={() => addQuestion(inputs.id)}
+          // style={!showingQuestions ? {display: 'none'}: {}}
+          >
+          <i className="fas fa-plus add-question-icon"></i>
+        </button>
+      </div>
+    </div>
+  )
 }

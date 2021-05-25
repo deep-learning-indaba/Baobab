@@ -1,32 +1,20 @@
-import React, { useState, useEffect, createRef } from 'react';
-import { Redirect, Prompt } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trans } from 'react-i18next';
-import { default as ReactSelect } from "react-select";
-import _ from 'lodash';
 import {
   applicationFormService,
   updateApplicationForm,
   createApplicationForm
 } from '../../../services/applicationForm/applicationForm.service';
+import { langObject } from '../../../pages/createApplicationForm/components/util';
 import { eventService } from '../../../services/events';
-import Section from './Section';
-import Loading from '../../../components/Loading';
-import {
-  option, langObject, AnimateSections,
-  drop, drag
- } from './util';
- import { dateFormat, TopBar } from '../../../utils/forms';
- import FormCreator from '../../../components/form/FormCreator';
+import { reviewService } from '../../../services/reviews';
+import FormCreator from '../../../components/form/FormCreator';
 
-
-const ApplicationForm = (props) => {
+const ReviewForm = (props) => {
   const { languages } = props;
   const { t } = useTranslation();
-  const lang = languages;
-  const [nominate, setNominate] = useState(false);
+  const lang = [...languages, {code: 'fr', description: 'French'}];
   const [formDetails, setFormDetails] = useState({});
-  console.log('********** ', props);
 
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
@@ -47,6 +35,13 @@ const ApplicationForm = (props) => {
     event: null,
     error: null,
   });
+  const [stage, setStage] = useState({
+    loading: true,
+    stage: null,
+    error: null,
+  });
+  const [appSections, setAppSections] = useState([]);
+  // console.log('$$$ ', appSections);
 
 
   const [sections, setSections] = useState([{
@@ -54,9 +49,7 @@ const ApplicationForm = (props) => {
     name: langObject(lang, t('Untitled Section')),
     description: langObject(lang, ''),
     order: 1,
-    depends_on_question_id: 0,
     show_for_values: langObject(lang, null),
-    key: null,
     questions: [
       {
         id: `${Math.random()}`,
@@ -70,11 +63,10 @@ const ApplicationForm = (props) => {
         value: langObject(lang, ''),
         label: langObject(lang, ''),
         required: false,
-        key: null,
-        depends_on_question_id: 0,
         show_for_values: langObject(lang, null),
         validation_regex: langObject(lang, null),
         validation_text: langObject(lang, ''),
+        weight: 0,
       }
     ]
   }]);
@@ -97,57 +89,22 @@ const ApplicationForm = (props) => {
 
   useEffect(() => {
     const eventId = props.event.id;
+    reviewService.getReviewStage(eventId)
+    .then(res => {
+      setStage({
+        loading: false,
+        stage: res.data,
+        error: res.error
+      })
+    });
     applicationFormService.getDetailsForEvent(eventId)
       .then(res => {
-        if (res) {
-          const formSpec = res.formSpec;
-          if (formSpec.sections) {
-            const mapedQuestions = formSpec.sections.map(s => {
-              const questions = s.questions.map(q => {
-                const type = q.type;
-                q = {
-                  ...q,
-                  id: `${Math.random()}`,
-                  backendId: q.id,
-                  required: q.is_required,
-                  type: type === 'long_text' ? 'long-text' : type
-                }
-                return q
-              });
-              s = {
-                ...s,
-                id: `${Math.random()}`,
-                backendId: s.id,
-                questions: questions
-              }
-              return s
-            })
-  
-            setNominate(formSpec.nominations);
-            setFormDetails({
-              isOpen: props.event.is_application_open,
-              id: formSpec.id,
-              eventId: eventId
-            })
-            setInitialState(mapedQuestions);
-            setSections(mapedQuestions);
-          } else {
-            setFormDetails({
-              isOpen: props.event.is_application_open,
-              eventId: eventId
-            })
-            setCreateMode(true);
-          }
-        } else {
-          setFormDetails({
-            isOpen: props.event.is_application_open,
-            eventId: eventId
-          })
-          setCreateMode(true);
+        const formSpec = res.formSpec;
+        const sections = formSpec && formSpec.sections;
+        if (sections) {
+          setAppSections(sections);
         }
-      }).catch(err => {
-        setErrorResponse('Error occured ' + err)
-    })
+      })
   }, []);
 
   const addSection = () => {
@@ -156,8 +113,6 @@ const ApplicationForm = (props) => {
       name: langObject(lang, t('Untitled Section')),
       description: langObject(lang, ''),
       order: sections.length + 1,
-      key: null,
-      depends_on_question_id: 0,
       show_for_values: langObject(lang, null),
       questions: [
         {
@@ -172,11 +127,10 @@ const ApplicationForm = (props) => {
           value: langObject(lang, ''),
           label: langObject(lang, ''),
           required: false,
-          key: null,
-          depends_on_question_id: 0,
           show_for_values: langObject(lang, null),
           validation_regex: langObject(lang, null),
           validation_text: langObject(lang, ''),
+          weight: 0,
         }
       ]
     }]), 1);
@@ -198,11 +152,10 @@ const ApplicationForm = (props) => {
       value: langObject(lang, ''),
       label: langObject(lang, ''),
       required: false,
-      key: null,
-      depends_on_question_id: 0,
       show_for_values: langObject(lang, null),
       validation_regex: langObject(lang, null),
       validation_text: langObject(lang, ''),
+      weight: 0,
     }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
@@ -213,6 +166,30 @@ const ApplicationForm = (props) => {
     setSections(updatedSections);
     setApplytransition(false);
     // setQuestionAnimation(false);
+  }
+
+  const addAnswerFromAppForm = (sectionId) => {
+    const surrogateId = maxSurrogateId + 1;
+    const sction = sections.find(s => s.id === sectionId);
+    const qsts = sction.questions;
+    const qst = {
+      id: `${Math.random()}`,
+      surrogate_id: surrogateId,
+      description: langObject(lang, ''),
+      order: qsts.length + 1,
+      headline: langObject(lang, ''),
+      type: 'information',
+      required: false,
+      question_id: null,
+    }
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        s = {...s, questions: [...qsts, qst]};
+      }
+      return s;
+    });
+    setSections(updatedSections);
+    setApplytransition(false);
   }
 
   const handleSave = async () => {
@@ -279,46 +256,43 @@ const ApplicationForm = (props) => {
     });
     const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
-      console.log('IS update mode')
-      if (!isSaved) {
-        const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
-        if(res.status === 200) {
-          setIsSaved(true);
-          setHomeRedirect(true);
-        } else {
-          if (res.data && res.data.message) {
-            setErrorResponse(res.data.message.event_id);
-          } else {
-            setErrorResponse(res);
-          }
-        }
-      }
+      // console.log('IS update mode')
+      // if (!isSaved) {
+      //   const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
+      //   if(res.status === 200) {
+      //     setIsSaved(true);
+      //     setHomeRedirect(true);
+      //   } else {
+      //     if (res.data && res.data.message) {
+      //       setErrorResponse(res.data.message.event_id);
+      //     } else {
+      //       setErrorResponse(res);
+      //     }
+      //   }
+      // }
     } else {
-      console.log('IS create mode')
-        const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
-        console.log(res);
-        if (res.status === 201) {
-          setIsSaved(true);
-          setHomeRedirect(true);
-        } else {
-          if (res.data && res.data.message) {
-            setErrorResponse(res.data.message.event_id);
-          } else {
-            setErrorResponse(res);
-          }
-        }
+        // const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
+        // console.log(res);
+        // if (res.status === 201) {
+        //   setIsSaved(true);
+        //   setHomeRedirect(true);
+        // } else {
+        //   if (res.data && res.data.message) {
+        //     setErrorResponse(res.data.message.event_id);
+        //   } else {
+        //     setErrorResponse(res);
+        //   }
+        // }
     }
   }
 
   return (
     <FormCreator
-      languages={languages}
+      languages={lang}
       event={props.event}
       t={t}
       sections={sections}
       setSections={setSections}
-      nominate={nominate}
-      setNominate={setNominate}
       language={language}
       setLanguage={setLanguage}
       dragId={dragId}
@@ -338,9 +312,13 @@ const ApplicationForm = (props) => {
       addSection={addSection}
       handleSave={handleSave}
       isSaved={isSaved}
+      isReview={true}
       addQuestion={addQuestion}
+      addAnswerFromAppForm={addAnswerFromAppForm}
+      appSections={appSections}
+      stage={stage}
      />
   )
 }
 
-export default ApplicationForm;
+export default ReviewForm;

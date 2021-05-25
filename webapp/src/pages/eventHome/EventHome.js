@@ -4,6 +4,7 @@ import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
 import ApplicationFormSetting from '../createApplicationForm';
+import ReviewForm from '../reviewForm';
 import Review from "../review";
 import ReviewList from "../reviewList"
 import ReviewAssignment from "../reviewAssignment";
@@ -236,6 +237,15 @@ class EventHome extends Component {
           exact
           path={`${match.path}/applicationform`}
           render={(props) => <ApplicationFormSetting
+            {...props}
+            event={event}
+            languages={organisation.languages}
+            />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviewForm`}
+          render={(props) => <ReviewForm
             {...props}
             event={event}
             languages={organisation.languages}
