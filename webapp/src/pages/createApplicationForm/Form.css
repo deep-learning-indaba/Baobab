@@ -351,7 +351,8 @@
 }
 
 .application-form-wrap .select-question {
-  width: 50%;
+  width: 85%;
+  display: inline-table;
 }
 
 
@@ -451,6 +452,10 @@
 
 .application-form-wrap .key-wrapper {
   position: relative;
+  margin-top: 1em;
+}
+
+.application-form-wrap  .key-headline {
   margin-top: 1em;
 }
 

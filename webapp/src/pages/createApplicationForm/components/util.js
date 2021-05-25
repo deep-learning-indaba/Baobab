@@ -263,35 +263,33 @@ export const SelectQuestion = ({
   const selectedQuestion = options
     .find(o => parseInt(o.value) === inputs.question_id);
   return (
-    <div>
-      <ReactSelect
-        options={options}
-        isOptionDisabled={option => option.disabled === 'yes'}
-        placeholder={t('Select a question from Application Form')}
-        onChange={handleAppFormQuestionSelect}
-        value={selectedQuestion}
-        className='select-dependency select-question'
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            boxShadow: "none",
-            border: "none",
-            transition: state.isFocused 
-              && 'color,background-color 1.5s ease-out',
-            background: state.isFocused
-              && 'lightgray',
-            color: '#fff'
-          }),
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              && "lightgray",
-            color: state.isFocused && "#fff"
-          })
-        }}
-        menuPlacement="auto"
-       />
-    </div>
+    <ReactSelect
+      options={options}
+      isOptionDisabled={option => option.disabled === 'yes'}
+      placeholder={t('Select a question from Application Form')}
+      onChange={handleAppFormQuestionSelect}
+      value={selectedQuestion}
+      className='select-dependency select-question'
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          boxShadow: "none",
+          border: "none",
+          transition: state.isFocused 
+            && 'color,background-color 1.5s ease-out',
+          background: state.isFocused
+            && 'lightgray',
+          color: '#fff'
+        }),
+        option: (base, state) => ({
+          ...base,
+          backgroundColor: state.isFocused
+            && "lightgray",
+          color: state.isFocused && "#fff"
+        })
+      }}
+      menuPlacement="auto"
+      />
   )
 }
 
@@ -608,7 +606,20 @@ export const rows = (text) => {
   return !length ? 1 : Math.ceil(numRows);
 }
 
-export const Stages = ({ t, stage }) => {
+export const Stages = ({ t, stage, setCurrentStage, currentStage }) => {
+  const [stages, setStages] = useState(1);
+
+  useEffect(() => {
+    setStages(stage.total_stages);
+  }, [])
+
+  const handleAddStage = () => {
+    setStages(stages + 1);
+    setCurrentStage(stages + 1)
+  }
+  const handleStageChange = (e) => {
+    setCurrentStage(e.target.value);
+  }
   return (
     <div className='review-stage-wrapper'>
       <div className='review-stage-label'>
@@ -616,17 +627,17 @@ export const Stages = ({ t, stage }) => {
       </div>
       <div className='review-stage-btns'>
         <div className='review-stages'>
-          {Array.from(Array(30), (_, index) => index + 1).map((s, i) => {
+          {Array.from(Array(stages), (_, index) => index + 1).map((s, i) => {
             return (
               <input
                 type='button'
                 key={i}
                 value={s}
-                style={s === stage.current_stage ? { background: '#333', color: '#fff'} : {}}
+                style={s === parseInt(currentStage)
+                  ? { background: '#333', color: '#fff'}
+                  : {}}
                 className='stage-btn'
-                // data-title="Save"
-                // onClick={handleStage}
-                // disabled={isSaveDisabled || disableSaveBtn}
+                onClick={handleStageChange}
               />)
           })}
           
@@ -634,8 +645,7 @@ export const Stages = ({ t, stage }) => {
         <button
           className="add-stage-btn"
           data-title={t('Add New Stage')}
-          // onMouseUp={() => addQuestion(inputs.id)}
-          // style={!showingQuestions ? {display: 'none'}: {}}
+          onClick={handleAddStage}
           >
           <i className="fas fa-plus add-question-icon"></i>
         </button>

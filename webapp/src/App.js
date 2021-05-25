@@ -364,9 +364,7 @@ class AppComponent extends Component {
 
   render() {
     const t = this.props.t;
-
-
-    console.log('&&&&& ', this.props.organisation);
+  
     return (
       <Router history={history}>
         <div>

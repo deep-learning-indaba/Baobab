@@ -26,7 +26,6 @@ const ApplicationForm = (props) => {
   const lang = languages;
   const [nominate, setNominate] = useState(false);
   const [formDetails, setFormDetails] = useState({});
-  console.log('********** ', props);
 
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
@@ -184,7 +183,7 @@ const ApplicationForm = (props) => {
 
   const addQuestion = (sectionId) => {
     const surrogateId = maxSurrogateId + 1
-    const sction = sections.filter(s => s.id === sectionId);
+    const sction = sections.find(s => s.id === sectionId);
     const qsts = sction.questions;
     const qst = {
       id: `${Math.random()}`,
@@ -279,7 +278,6 @@ const ApplicationForm = (props) => {
     });
     const { id, eventId, isOpen } = formDetails;
     if (!isInCreateMode) {
-      console.log('IS update mode')
       if (!isSaved) {
         const res = await updateApplicationForm(id, eventId, isOpen, nominate, sectionsToSave);
         if(res.status === 200) {
@@ -294,7 +292,6 @@ const ApplicationForm = (props) => {
         }
       }
     } else {
-      console.log('IS create mode')
         const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
         console.log(res);
         if (res.status === 201) {

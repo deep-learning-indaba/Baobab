@@ -99,7 +99,7 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            let regex = q.validation_regex[lang];
+            let regex = q.validation_regex && q.validation_regex[lang];
             if (prop === 'min' || prop === 'max') {
               if (!regex || !regex.split('{')[1]) {
                 regex = `^\s*(\S+(\s+|$)){0,0}$`
@@ -676,6 +676,9 @@ const Question = forwardRef(({
   if (!showingQuestions) {
     style = {display: 'none'}
   }
+  if (inputs.type === 'information') {
+    style = {display: 'block', boxShadow: '0px 0.2em 3px 3px #6d6d6d'}
+  }
 
   const dependentQuestion = section.questions
     .find(e => (e.backendId === inputs.depends_on_question_id)
@@ -684,7 +687,7 @@ const Question = forwardRef(({
   return (
     <>
       <div
-        className="section-wrapper"
+        className="section-wrapper wrap-question"
         key={inputs.id}
         id={inputs.id}
         ref={ref}
@@ -696,6 +699,14 @@ const Question = forwardRef(({
       >
         <div className="headline-description">
           <div className="question-header">
+          {inputs.type === 'information' ? (
+            <SelectQuestion
+              options={appQuestionsOptions}
+              inputs={inputs}
+              handleAppFormQuestionSelect={handleAppFormQuestionSelect}
+              t={t}
+            />
+          ) : (
             <span className="key-wrapper">
             {!inputs.headline[lang] && (
               <span className='tooltiptext-error'>
@@ -705,7 +716,6 @@ const Question = forwardRef(({
               <input
                 type="text"
                 name="headline"
-                style={inputs.type === 'information' ? { width: '85%'} : {}}
                 value={inputs.headline[lang]}
                 onChange={handleChange('headline')}
                 placeholder={inputs.headline['en'] || t('Headline')}
@@ -715,6 +725,7 @@ const Question = forwardRef(({
               />
               <span className="tooltiptext">{t('Headline')}</span>
             </span>
+          )}
             {!type && (
               <span className='tooltiptext-error'>
                 {t('Type is Required')}
@@ -763,6 +774,27 @@ const Question = forwardRef(({
               </button>
             </div>
           </div>
+          {inputs.type === 'information' && (
+            <span className="key-wrapper">
+            {!inputs.headline[lang] && (
+              <span className='tooltiptext-error'>
+                {t('Headline is Required')}
+              </span>
+            )}
+              <input
+                type="text"
+                name="headline"
+                style={{ width: '95%'}}
+                value={inputs.headline[lang]}
+                onChange={handleChange('headline')}
+                placeholder={inputs.headline['en'] || t('Headline')}
+                className="section-inputs question-title key-headline"
+                draggable={true}
+                onDragStart={handleStopPropagation}
+              />
+              <span className="tooltiptext">{t('Headline')}</span>
+            </span>
+          )}
           <div className="label-input-wrapper">
             <label htmlFor="section-desc" className="form-label">
               {t('Description')}
@@ -915,8 +947,8 @@ const Question = forwardRef(({
                 <input
                   type='number'
                   min={0}
-                  placeholder={inputs.options['en']
-                    && inputs.options['en'].min_num_referral
+                  placeholder={(inputs.options['en']
+                    && inputs.options['en'].min_num_referral)
                     || t('Enter Minimum Number of Referrals')}
                   className='referals-input'
                   value={inputs.options[lang]
@@ -961,7 +993,7 @@ const Question = forwardRef(({
                 name="extensions"
                 id="extensions"
                 type='text'
-                placeholder={ (inputs.options['en']
+                placeholder={ (inputs.options && inputs.options['en']
                   && inputs.options['en'].accept
                   && inputs.options['en'].accept.join(','))
                   || t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
@@ -1013,14 +1045,6 @@ const Question = forwardRef(({
               lang={lang}
               t={t}
               />
-          )}
-          {inputs.type === 'information' && (
-            <SelectQuestion
-              options={appQuestionsOptions}
-              inputs={inputs}
-              handleAppFormQuestionSelect={handleAppFormQuestionSelect}
-              t={t}
-             />
           )}
           <div className="action-btns">
             <div className="question-footer">

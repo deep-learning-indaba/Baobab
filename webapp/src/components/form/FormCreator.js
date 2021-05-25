@@ -23,7 +23,8 @@ const FormCreator = ({
   disableSaveBtn, setDisableSaveBtn,
   events, setEvent, eventService, addSection,
   handleSave, isSaved, isReview, addQuestion,
-  addAnswerFromAppForm, appSections, stage
+  addAnswerFromAppForm, appSections, stage,
+  setCurrentStage, currentStage
 }) => {
   const lang = languages;
 
@@ -145,7 +146,9 @@ const FormCreator = ({
         </div>
       ) : (
         <div className='application-form-wrap'>
-          <TopBar title="Application Form" t={t} />
+          <TopBar
+            title={setNominate ? "Application Form" : "Review Form"}
+            t={t} />
           <div
             style={{ textAlign: 'end', width: '61%' }}
             className='add-section-btn-wrapper'
@@ -217,6 +220,8 @@ const FormCreator = ({
                   <Stages
                     t={t}
                     stage={stage.stage}
+                    currentStage={currentStage}
+                    setCurrentStage={setCurrentStage}
                   />
                 )}
               </div>

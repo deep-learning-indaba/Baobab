@@ -17,7 +17,10 @@ export const reviewService = {
   deleteResponseReviewer,
   getReviewDetails,
   getReviewSummaryList,
-  getReviewStage
+  getReviewStage,
+  getReviewFormDetails,
+  updateReviewForm,
+  createReviewForm
 };
 
 function getReviewForm(eventId, skip) {
@@ -363,6 +366,77 @@ function getReviewStage(eventId) {
       };
     })
     .catch(function(error) {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function getReviewFormDetails(stage) {
+  return axios
+    .get(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${stage}`)
+    .then(function(res) {
+      return {
+        data: res.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function updateReviewForm({
+  id, eventId, isOpen, applicationFormId,
+  stage, deadline, active, sectionsToSave
+}) {
+  const form = {
+    "id": id,
+    'event_id': eventId,
+    "is_open": isOpen,
+    "application_form_id": applicationFormId,
+    "stage": stage,
+    "deadline": deadline,
+    "active": active,
+    "sections": sectionsToSave
+  }
+  return axios
+    .put(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${id}`, form)
+    .then(res => {
+      return res
+    })
+    .catch(error => {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function createReviewForm({
+  id, eventId, isOpen, applicationFormId,
+  stage, deadline, active, sectionsToSave
+}) {
+  const form = {
+    'event_id': eventId,
+    "is_open": isOpen,
+    "application_form_id": applicationFormId,
+    "stage": stage,
+    "deadline": deadline,
+    "active": active,
+    "sections": sectionsToSave
+  }
+  return axios
+    .post(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail`, form)
+    .then(res => {
+      console.log('**************************** ', res);
+      return res
+    })
+    .catch(error => {
       return {
         data: null,
         error: extractErrorMessage(error)
