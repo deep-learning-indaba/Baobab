@@ -9,6 +9,9 @@ flask-restplus
 Flask-SQLAlchemy
 Flask-Script
 Flask-Login
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
 Jinja2
 Mako
 MarkupSafe
