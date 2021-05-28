@@ -96,12 +96,12 @@ def build_response_html_answers(answers, language: str, application_form):
     return stringified_answers
 
 
-def build_response_html_app_info(answers, language: str):
+def build_response_html_app_info(response, language: str):
     """
     Stringifying the dictionary application information, for output in a html file, with the response_id and applicant name contact info as
      paragraphs (<p>)
     """
 
-    stringified_app_info = f"<p><b> Response ID:<b> {answers.response_id}<p> <p><b>Full name:<b>{answers['firstname']} {answers['lastname']}<p>"
+    stringified_app_info = f"<p><b> Response ID:<b> {response.response_id}<p> <p><b>Full name:<b>{response['firstname']} {response['lastname']}<p>"
 
     return "<title>Application Form<title>" + stringified_app_info
