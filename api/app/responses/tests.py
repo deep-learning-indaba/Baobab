@@ -1,4 +1,5 @@
 import json
+import zipfile
 from datetime import date, datetime
 import collections
 
@@ -14,6 +15,7 @@ from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.utils.testing import ApiTestCase
+from app.utils.strings import build_response_html_answers
 
 
 class ResponseApiTest(ApiTestCase):
@@ -1018,7 +1020,6 @@ class ResponseExportAPITest(ApiTestCase):
         question3_1 = self.add_question(application_form.id, section3.id)
         self.add_question_translation(question3_1.id, 'en', headline='Queston 1, S3')
 
-
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.response1_submitted = self.response1.submitted_timestamp
         self.response1_started = self.response1.started_timestamp
@@ -1030,13 +1031,6 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
 
         self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
-
-        # TODO: Confirm what 'add_tag' does and if it is necessary
-        tag1 = self.add_tag()
-        tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
-
-        self.tag_response(self.response1.id, tag1.id)
-        self.tag_response(self.response1.id, tag2.id)
 
 
     def test_get_correct_data_before_conversion(self):
@@ -1052,10 +1046,10 @@ class ResponseExportAPITest(ApiTestCase):
             headers=self.get_auth_header_for('event1admin@mail.com'), # Only an event admin can access the response detail
             json=params)
         
-        print(response.json)
-        
+        data = json.loads(response.data)
+        print(data)
         self.assertEqual(response.status_code, 200)
-
+        # print(data['id'])
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['application_form_id'], 1)
         self.assertEqual(data['user_id'], 2)
@@ -1076,3 +1070,26 @@ class ResponseExportAPITest(ApiTestCase):
         self.assertEqual(data['lastname'], 'Gurira')
 
 
+    def test_zipped_file_uncorrupted(self):
+        """
+        Tests that the zipped files' CRCs are okay. 
+        """
+        self._data_seed_static()
+        params = {
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+        
+        zipped_response = self.app.get(
+            '/api/v1/response-export',
+            headers=self.get_auth_header_for('event1admin@mail.com'), 
+            json=params)
+
+        # If no issues, returns None. Otherwise, returns file name of first bad file. 
+        self.assertIsNone(zipfile.testzip(zipped_response))
+
+
+    def test_data(self):
+        """
+        Tests that data is returned. 
+        """
