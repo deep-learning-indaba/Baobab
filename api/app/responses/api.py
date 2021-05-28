@@ -1,26 +1,27 @@
 import datetime
-import traceback
 import itertools
+import traceback
 
 import flask_restful as restful
-from flask import g, request
-from flask_restful import fields, marshal_with, reqparse, inputs
-from sqlalchemy.exc import SQLAlchemyError
-
 from app import LOGGER, bcrypt, db
-from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.applicationModel.models import ApplicationForm, Question
+from app.applicationModel.repository import \
+    ApplicationFormRepository as application_form_repository
 from app.events.models import Event, EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin, ResponseTagMixin
 from app.responses.models import Answer, Response, ResponseTag
 from app.responses.repository import ResponseRepository as response_repository
+from app.reviews.repository import \
+    ReviewConfigurationRepository as review_configuration_repository
+from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings
 from app.utils.auth import auth_required, event_admin_required
-from app.reviews.repository import ReviewRepository as review_repository
-from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
+from flask import g, request
+from flask_restful import fields, inputs, marshal_with, reqparse
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class ResponseAPI(ResponseMixin, restful.Resource):
@@ -475,11 +476,12 @@ class ResponseExportAPI(restful.Resource):
         response = response_repository.get_by_id(response_id) # collection of answers
         application_form = application_form_repository.get_by_id(response_id) # get questions and sections 
 
-        response_string = strings.build_response_email_body(response.answers, language, application_form)
+        response_string = strings.build_response_html_app_info(response, language) + strings.build_response_html_answers(response.answers, language, application_form)
+        print(response_string)
 
 
         # # Get response
-        # # Map values to questions to sections (unpack response) --> application form repository --> build_response_html_body
+        # # Map values to questions to sections (unpack response) --> application form repository --> build_response_html_answers
 
         # # Connect to Drive API
         # # Upload in HTML
