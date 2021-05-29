@@ -166,7 +166,7 @@ class ResponsePage extends Component {
                 const answerFiles = JSON.parse(a.value);
                 let files = [];
                 if (Array.isArray(answerFiles) && answerFiles.length > 0) {
-                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={getDownloadURL(file.file)}>{file.name}</a></div>)
+                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={getDownloadURL(JSON.stringify(file))}>{file.name}</a></div>)
                 }
                 else {
                     files = "No files uploaded";

@@ -1,18 +1,20 @@
 import React,
 {
-  useState, forwardRef, createRef
+  useState, forwardRef, createRef, useEffect
 } from 'react';
 import { Trans } from 'react-i18next';
 import Question from './Question';
 import {
   Modal, AnimateSections, handleMove, langObject,
-  drag, drop, option, Dependency, dependencyChange
+  drag, drop, option, Dependency, dependencyChange,
+  rows
 } from './util';
 
 export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,langs,
-  setApplytransition, setParentDropable, parentDropable
+  setApplytransition, setParentDropable, parentDropable,
+  setDisableSaveBtn
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [questionAnimation, setQuestionAnimation] = useState(false);
@@ -21,6 +23,27 @@ export const Section = forwardRef(({
   const [style, setStyle] = useState({});
   const [hideOrShowDetails, setHideOrShowDetails] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
+  const key = inputs.key;
+  let maxSurrogateId = 1;
+  sections.forEach(s => {
+    if (s.backendId > maxSurrogateId) {
+      maxSurrogateId = s.backendId;
+    }
+    s.questions.forEach(q => {
+      if (q.backendId > maxSurrogateId) {
+        maxSurrogateId = q.backendId
+      }
+      if (q.surrogate_id > maxSurrogateId) {
+        maxSurrogateId = q.surrogate_id
+      }
+    })
+  })
+
+  useEffect(() => {
+    if (key) {
+      setIsKeyOn(true);
+    }
+  }, [key])
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -39,23 +62,25 @@ export const Section = forwardRef(({
   }
 
   const addQuestion = () => {
+    const surrogateId = maxSurrogateId + 1
     const qsts = inputs.questions;
     const qst = {
       id: `${Math.random()}`,
+      surrogate_id: surrogateId,
+      description: langObject(langs, ''),
       order: qsts.length + 1,
       headline: langObject(langs, ''),
-      description: langObject(langs, ''),
       placeholder: langObject(langs, ''),
       type: null,
-      options: langObject(langs, []),
+      options: langObject(langs, null),
       value: langObject(langs, ''),
       label: langObject(langs, ''),
       required: false,
-      key: '',
-      depends_on_question_id: null,
-      show_for_values: null,
-      validation_regex: langObject(langs, ''),
-      validation_text: langObject(langs, '')
+      key: null,
+      depends_on_question_id: 0,
+      show_for_values: langObject(langs, null),
+      validation_regex: langObject(langs, null),
+      validation_text: langObject(langs, ''),
     }
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
@@ -72,8 +97,9 @@ export const Section = forwardRef(({
     const questionsInSection = inputs.questions;
     const sectionsWithoutDependency = sections.map(s => {
         questionsInSection.forEach(q => {
-          if (s.depends_on_question_id === q.id) {
-            s = {...s, depends_on_question_id: null}
+          if ((s.depends_on_question_id === q.backendId)
+            || (s.depends_on_question_id === q.surrogate_id)) {
+            s = {...s, depends_on_question_id: 0}
           }
         })
       return s;
@@ -154,7 +180,7 @@ export const Section = forwardRef(({
   const handlequestionDependency = (e) => {
     const updatedSections = sections.map(s => {
       if (s.id === inputs.id) {
-        s = {...inputs, depends_on_question_id: e.value};
+        s = {...inputs, depends_on_question_id: parseInt(e.value) || 0};
       }
       return s;
     });
@@ -167,15 +193,59 @@ export const Section = forwardRef(({
       e:e,
       sections:sections,
       inputs:inputs,
-      setSection:setSection
+      setSection:setSection,
+      lang: lang
     })
   }
 
-  const options = [];
+  const handleDuplicate = () => {
+    const qsts = inputs.questions.map((q,i) => {
+      q = {
+        id: `${Math.random()}`,
+        surrogate_id: maxSurrogateId + 1,
+        depends_on_question_id: q.depends_on_question_id,
+        headline: q.headline,
+        description: q.description,
+        required: q.required,
+        key: q.key,
+        options: q.options,
+        order: q.order,
+        placeholder: q.placeholder,
+        show_for_values: q.show_for_values,
+        type: q.type,
+        validation_regex: q.validation_regex,
+        validation_text: q.validation_text
+      }
+      return q
+    })
+    const duplicate = {
+      id: `${Math.random()}`,
+      depends_on_question_id: inputs.depends_on_question_id,
+      description: inputs.description,
+      key: inputs.key,
+      name: inputs.name,
+      order: inputs.order,
+      show_for_values: inputs.show_for_values,
+      questions: qsts
+    };
+    const copySections = [...sections];
+    const index = inputs.order;
+    copySections.splice(index, 0, duplicate);
+    const updatedSections = copySections.map((s, i) => {
+      s = {...s, order: i + 1}
+      return s
+    });
+    setSection(updatedSections);
+    setQuestionAnimation(false);
+    setApplytransition(false);
+  }
+
+  const options = [{value: '', label: 'Clear'}];
   const questions = inputs.questions;
   for(let i = 0; i < questions.length; i++) {
     const opt = option({
-      value: `${questions[i].id}`,
+      headline: true,
+      value: `${questions[i].backendId || questions[i].surrogate_id}`,
       label: questions[i].headline[lang]
         ? questions[i].headline[lang] : questions[i].order,
       t
@@ -184,12 +254,13 @@ export const Section = forwardRef(({
     options.push(opt);
   };
 
-  const sectionOptions = [];
+  const sectionOptions = [{value: '', label: 'Clear'}];
   sections.forEach(e => {
     if (e.order < inputs.order) {
       e.questions.forEach(q => {
         const opt = option({
-          value: `${q.id}`,
+          headline: true,
+          value: `${q.backendId || q.surrogate_id}`,
           label: q.headline[lang]
             ? `${e.order}. ${q.headline[lang]}`
             : `${e.order}. ${q.order}`,
@@ -205,11 +276,23 @@ export const Section = forwardRef(({
     setIsKeyOn(!isKeyOn);
   }
 
+  const handleStopPropagation = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   const numSections = sections.length;
   const index = sectionIndex + 1;
   const isDeleteDisabled = sections.length === 1 ? true : false;
-  const dependentQuestion = inputs.questions
-    .find(e => e.id === inputs.depends_on_question_id);
+  let dependentQuestion;
+  sections.forEach(s => {
+    s.questions.forEach(e => {
+      if (e.backendId === inputs.depends_on_question_id
+        || e.surrogate_id === inputs.depends_on_question_id) {
+        dependentQuestion = e;
+      }
+    })
+  });
 
   return (
     <div
@@ -231,15 +314,20 @@ export const Section = forwardRef(({
       </div>
       <div className="title-description">
         <div className="section-header">
-        <span className="key-wrapper">
-          <input
-            type="text"
-            value={inputs.name[lang]}
-            onChange={handleChange('name')}
-            className="section-inputs section-title"
-          />
-          <span className="tooltiptext">{t('Title')}</span>
-        </span>
+          <span className="key-wrapper">
+            <input
+              type="text"
+              value={inputs.name[lang]}
+              onChange={handleChange('name')}
+              className="section-inputs section-title"
+              draggable={true}
+              onDragStart={handleStopPropagation}
+            />
+            <span className="tooltiptext">{t('Title')}</span>
+          </span>
+          {!inputs.name[lang] && (
+            <span className='tooltiptext-error'>{t('Name is Required')}</span>
+          )}
           <div
             id="toggleTitle"
             className="title-desc-toggle"
@@ -259,7 +347,10 @@ export const Section = forwardRef(({
               <i className="far fa-trash-alt fa-section"></i>
               {t("Delete Section")}
             </button>
-            <button className="dropdown-item delete-section" >
+            <button
+              className="dropdown-item delete-section"
+              onClick={handleDuplicate}
+              >
               <i className="far fa-copy fa-section fa-duplicate"></i>
               {t("Duplicate Section")}
             </button>
@@ -268,7 +359,7 @@ export const Section = forwardRef(({
               onClick={handleMoveSectionUp}
               disabled={index === 1}
             >
-              <i class="fas fa-angle-up fa-section fa-duplicate"></i>
+              <i className="fas fa-angle-up fa-section fa-duplicate"></i>
               {t("Move Section Up")}
             </button>
             <button
@@ -276,7 +367,7 @@ export const Section = forwardRef(({
               className="dropdown-item delete-section"
               onClick={handleMoveSectionDown}
             >
-              <i class="fas fa-angle-down fa-section fa-duplicate"></i>
+              <i className="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
             </button>
             <button
@@ -284,7 +375,7 @@ export const Section = forwardRef(({
               onClick={handleKey}
             >
               {isKeyOn
-                && <i class="fas fa-check fa-duplicate fa-section"></i>
+                && <i className="fas fa-check fa-duplicate fa-section"></i>
               }
               {t("Add Key")}
             </button>
@@ -297,13 +388,13 @@ export const Section = forwardRef(({
           >
             {!hideOrShowDetails ? (
               <div className='toogle-section-details' style={style}>
-                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
-                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
               </div>
             ): 
               <div className='toogle-section-details' style={style}>
-                <i class="fas fa-chevron-up fa-move fa-hide-show-details"></i>
-                <i class="fas fa-chevron-down fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-up fa-move fa-hide-show-details"></i>
+                <i className="fas fa-chevron-down fa-move fa-hide-show-details"></i>
               </div>
             }
           </div>
@@ -314,19 +405,25 @@ export const Section = forwardRef(({
           style={hideOrShowDetails ? {display: 'none'} : {}}
         >
           <div className="label-input-wrapper">
-            <label htmlFor="ssection-desc-1" className="form-label">{t('Description')}</label>
-            <input
-              name="section-desc-1"
-              type="text"
-              value={inputs.description[lang]}
-              placeholder={t('Description')}
+            <label htmlFor="section-desc-1" className="form-label">
+              {t('Description')}
+            </label>
+            <textarea
+              name='section-desc-1'
+              placeholder={inputs.description['en'] || t('Description')}
               onChange={handleChange('description')}
-              className="section-inputs section-desc"
+              className="section-inputs section-desc section-key"
+              rows={rows(inputs.description[lang])}
+              value={inputs.description[lang]}
+              draggable={true}
+              onDragStart={handleStopPropagation}
               />
           </div>
           {isKeyOn && (
             <div className="label-input-wrapper">
-              <label htmlFor="section-key" className="form-label">{t('Key')}</label>
+              <label htmlFor="section-key" className="form-label">
+                {t('Key')}
+              </label>
               <input
                 name="section-key"
                 type="text"
@@ -334,6 +431,8 @@ export const Section = forwardRef(({
                 placeholder={t('Key')}
                 onChange={handleChange('key')}
                 className="section-inputs section-desc section-key"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
             </div>
           )}
@@ -387,6 +486,7 @@ export const Section = forwardRef(({
             parentDropable={parentDropable}
             showingQuestions={showingQuestions}
             optionz={options}
+            setDisableSaveBtn={setDisableSaveBtn}
             />
         ))}
       </AnimateSections>
@@ -399,7 +499,7 @@ export const Section = forwardRef(({
           onMouseUp={() => addQuestion()}
           style={!showingQuestions ? {display: 'none'}: {}}
         >
-          <i class="fas fa-plus add-section-icon"></i>
+          <i className="fas fa-plus add-section-icon"></i>
         </button>
       </div>
       {

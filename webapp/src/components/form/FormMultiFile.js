@@ -4,6 +4,8 @@ import FormGroup from "./FormGroup";
 import MultiFileComponent from './MultiFileComponent';
 import "./Style.css";
 import _ from "lodash";
+import ReactMarkdown from "react-markdown";
+import FormToolTip from "./FormToolTip";
 
 
 export class FormMultiFile extends Component {
@@ -76,7 +78,8 @@ export class FormMultiFile extends Component {
 
 
     //handle upload
-    handleUpload = (id, file, name) => {
+    handleUpload = (id, file, name, rename) => {
+        console.log("Uploading file with id: ", id, " file: ", file, " name: ", name, " rename: ", rename);
         const handleList = this.state.fileList;
         return new Promise((resolve, reject) => {
             // Add new value
@@ -85,7 +88,9 @@ export class FormMultiFile extends Component {
                 if (this.props.uploadFile) {
                     this.props.uploadFile(file).then(fileId => {
                         existing.name = name;
+                        existing.filename = fileId;
                         existing.file = fileId;
+                        existing.rename = rename;
                         this.setState({fileList: handleList}, () => {
                             if (this.props.onChange) {
                                 const filteredList = this.state.fileList.filter(f=>f.file);
@@ -110,6 +115,8 @@ export class FormMultiFile extends Component {
         });
     }
 
+    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+
     render() {
         const t = this.props.t
         let canAddFile = true;
@@ -119,7 +126,16 @@ export class FormMultiFile extends Component {
 
         return (
             <div>
-                <FormGroup>
+                <FormGroup id={this.props.id + "-group"}>
+                    <div className="rowC">
+                        <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+                        {this.props.description ? (
+                        <FormToolTip description={this.props.description} />
+                        ) : (
+                        <div />
+                        )}
+                    </div>
+
                     {this.state.fileList.map(val => {
                         return <MultiFileComponent className="multi-file-component"
                             handleUpload={this.handleUpload}

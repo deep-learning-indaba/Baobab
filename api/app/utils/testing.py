@@ -114,6 +114,7 @@ class ApiTestCase(unittest.TestCase):
                     is_admin=False,
                     post_create_fn=lambda x: None):
         firstnames, lastnames = self._get_names()
+
         users = []
 
         for i in range(n):
@@ -124,8 +125,12 @@ class ApiTestCase(unittest.TestCase):
                                                                        lastname=lastname if lastname != "" else "x",
                                                                        num=len(self.test_users))
             email = strip_accents(email)
-            user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
-            users.append(user)
+            try:
+                user = self.add_user(email, firstname, lastname, title, password, organisation_id, is_admin, post_create_fn)
+                users.append(user)
+            except ProgrammingError as err:
+                LOGGER.debug("info not added for user: {} {} {} {}".format(email, firstname, lastname, title))
+                db.session.rollback()
 
         return users
 
@@ -146,8 +151,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(self.country)
 
         # Add a dummy organisation
-        self.add_organisation(domain='org')
+        dummy_org = self.add_organisation(domain='org')
         db.session.flush()
+        self.dummy_org_id = dummy_org.id
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
@@ -209,9 +215,9 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_config
 
-    def add_review_form(self, application_form_id=1, deadline=None):
+    def add_review_form(self, application_form_id=1, deadline=None, stage=1, active=True):
         deadline = deadline or datetime.now()
-        review_form = ReviewForm(application_form_id, deadline)
+        review_form = ReviewForm(application_form_id, deadline, stage, active)
         db.session.add(review_form)
         db.session.commit()
         return review_form
