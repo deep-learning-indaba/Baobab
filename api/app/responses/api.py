@@ -17,7 +17,7 @@ from app.reviews.repository import \
 from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
-from app.utils import emailer, errors, strings
+from app.utils import emailer, errors, strings, pdfconvertor, zipping
 from app.utils.auth import auth_required, event_admin_required
 from flask import g, request
 from flask_restful import fields, inputs, marshal_with, reqparse
@@ -476,10 +476,11 @@ class ResponseExportAPI(restful.Resource):
         response = response_repository.get_by_id(response_id) # collection of answers
         application_form = application_form_repository.get_by_id(response_id) # get questions and sections 
 
-        response_string = strings.build_response_html_app_info(response, language) + strings.build_response_html_answers(response.answers, language, application_form)
+        response_string = strings.build_response_html_app_info(response, language) + \
+        strings.build_response_html_answers(response.answers, language, application_form)
         print(response_string)
 
-
+        response_pdf = pdfconvertor.drive_convert_to(response.id, response_string)
         # # Get response
         # # Map values to questions to sections (unpack response) --> application form repository --> build_response_html_answers
 
