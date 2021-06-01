@@ -1088,8 +1088,3 @@ class ResponseExportAPITest(ApiTestCase):
         # If no issues, returns None. Otherwise, returns file name of first bad file. 
         self.assertIsNone(zipfile.testzip(zipped_response))
 
-
-    def test_data(self):
-        """
-        Tests that data is returned. 
-        """
