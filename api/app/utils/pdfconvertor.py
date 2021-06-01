@@ -35,7 +35,7 @@ class LibreOfficeError(Exception):
         self.output = output
 
 
-def drive_covert_to(
+def drive_convert_to(
     file_name,
     html_string,
     ):
