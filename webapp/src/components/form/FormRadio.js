@@ -1,11 +1,14 @@
 import React from "react";
 import FormGroup from "./FormGroup";
 import "./Style.css";
+import ReactMarkdown from "react-markdown";
 
 class FormRadio extends React.Component {
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
+
+  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
 
   render() {
     return (
@@ -15,7 +18,7 @@ class FormRadio extends React.Component {
           errorText={this.props.errorText}
         >
             {this.props.label && <div className="rowC">
-                <p>{this.props.label}</p>
+              <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
             </div>}
             {this.props.options.map(o=>{
                 return (

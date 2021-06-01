@@ -2,36 +2,91 @@ import React, { useState, forwardRef, useEffect, useCallback, useMemo } from 're
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove, Dependency, dependencyChange,
-  Validation, validationText as vText, langObject
+  Validation, validationText as vText, langObject, rows
 } from './util';
 
 const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
     lang, section, sections, optionz, langs,
     setApplytransition, questionIndex, setQuestionAnimation,
-    handleDrag, handleDrop, showingQuestions
+    handleDrag, handleDrop, showingQuestions, setDisableSaveBtn
   }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
   const [isKeyOn, setIsKeyOn] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [emptyOptions, setEmptyOptions] = useState(false);
   const opts = inputs.options[lang];
-  const {max_num_referral, min_num_referral} = inputs.options;
+  const type = inputs.type;
+  const max_num_referral = inputs.options[lang]
+    && inputs.options[lang].max_num_referral;
+  const min_num_referral = inputs.options[lang]
+    && inputs.options[lang].min_num_referral;
+  const validation_regex = inputs.validation_regex[lang];
+  const key = inputs.key;
+
+  const optz = useMemo(() => inputs.options, []);
+  let maxSurrogateId = 1;
+  sections.forEach(s => {
+    if (s.backendId > maxSurrogateId) {
+      maxSurrogateId = s.backendId;
+    }
+    s.questions.forEach(q => {
+      if (q.backendId > maxSurrogateId) {
+        maxSurrogateId = q.backendId
+      }
+      if (q.surrogate_id > maxSurrogateId) {
+        maxSurrogateId = q.surrogate_id
+      }
+    })
+  })
 
   useEffect(() => {
-    if (!inputs.options[lang]
-      && (!max_num_referral || !min_num_referral)) {
+    if ((type === 'reference') && (!parseInt(max_num_referral)
+      || !parseInt(min_num_referral))) {
       setErrorMessage('Max and min Rererrals are required');
     }
-    else if (max_num_referral < min_num_referral) {
+    else if (parseInt(max_num_referral) < parseInt(min_num_referral)) {
       setErrorMessage('Max referral value must be greater than Min');
     }
-    else if (opts && !opts.length) {
+    else if ((type === 'multi-choice' || type === 'multi-checkbox')
+      && opts && !opts.length) {
       setErrorMessage('At least one option is required');
     } else {
+      let isNotEmpty = true;
+      for (let key of Object.keys(inputs.options)) {
+        if (!inputs.options[key]) {
+          isNotEmpty = false;
+          setEmptyOptions(true);
+        }
+      }
+      if (isNotEmpty) {
+        setEmptyOptions(false);
+      }
       setErrorMessage('');
     }
-  }, [opts, max_num_referral, min_num_referral])
+  }, [opts, max_num_referral, min_num_referral, optz]);
+
+  useEffect(() => {
+    if (errorMessage || ((type === 'multi-choice'
+      || type === 'multi-checkbox') && emptyOptions)) {
+      setDisableSaveBtn(true)
+    } else {
+      setDisableSaveBtn(false)
+    }
+  }, [errorMessage, emptyOptions])
+
+  useEffect(() => {
+    if (validation_regex) {
+      setIsvalidateOn(true)
+    }
+  }, [validation_regex]);
+
+  useEffect(() => {
+    if (key) {
+      setIsKeyOn(true)
+    }
+  }, [key])
 
   const handleChange = (prop) => (e) => {
     const target = inputs[prop];
@@ -41,7 +96,7 @@ const Question = forwardRef(({
           if (q.id === inputs.id) {
             let regex = q.validation_regex[lang];
             if (prop === 'min' || prop === 'max') {
-              if (!q.validation_regex[lang].split('{')[1]) {
+              if (!regex || !regex.split('{')[1]) {
                 regex = `^\s*(\S+(\s+|$)){0,0}$`
               }
             }
@@ -50,51 +105,47 @@ const Question = forwardRef(({
               && regex.split('{')[1].split(',');
 
             if (prop === 'min') {
-              const validation = q.validation_regex;
-              const validationText = q.validation_text;
               let max = maxMin ? parseInt(maxMin[1].split('}')[0]) : '';
               const min = e.target.value;
 
               if (min >= max) {
                 max = '';
               }
-              q = {
-                ...q,
-                validation_regex: {
-                  ...validation,
-                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
-                }
+              const newRegex = {};
+              for (let key in q.validation_regex) {
+                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+              }
+              const newText = {};
+              for (let key in q.validation_text) {
+                newText[key] = vText(min, max, t)
               }
               q = {
                 ...q,
-                validation_text: {
-                  ...validationText,
-                  [lang]: vText(min, max)
-                }
+                validation_regex: newRegex
+              }
+              q = {
+                ...q,
+                validation_text: newText
               }
             }
             if (prop === 'max') {
-              const validation = q.validation_regex;
-              const validationText = q.validation_text;
               const min = maxMin ? parseInt(maxMin[0]) : 0;
               let max = e.target.value;
-
-              if (max <= min) {
-                max = '';
+              const newRegex = {};
+              for (let key in q.validation_regex) {
+                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+              }
+              const newText = {};
+              for (let key in q.validation_text) {
+                newText[key] = vText(min, max, t)
               }
               q = {
                 ...q,
-                validation_regex: {
-                  ...validation,
-                  [lang]: `^\s*(\S+(\s+|$)){${min},${max}}$`
-                }
+                validation_regex: newRegex
               }
               q = {
                 ...q,
-                validation_text: {
-                  ...validationText,
-                  [lang]: vText(min, max)
-                }
+                validation_text: newText
               }
             } else {
               if (prop === 'key') {
@@ -109,9 +160,9 @@ const Question = forwardRef(({
       }
       return s
     });
+    setSections(updatedSections)
     setApplytransition(false)
     setQuestionAnimation(false)
-    setSections(updatedSections)
   }
 
   const handleTypeChange = (e) => {
@@ -119,19 +170,8 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            if (e.value === 'reference') {
-              q = {
-                ...q,
-                options: {
-                  min_num_referral: null,
-                  max_num_referral: null
-                }
-              }
-            } else {
-
-              q = {...q, options: langObject(langs, [])}
-            }
-            q = {...q, type: e}
+            q = {...q, options: langObject(langs, [])}
+            q = {...q, type: e.value}
           }
           return q
         })}
@@ -218,16 +258,17 @@ const Question = forwardRef(({
 
   const handleOkDelete = () => {
     const questionsWithNoDependency = questions.map(q => {
-      if (q.depends_on_question_id
-        && q.depends_on_question_id === inputs.id) {
-        q = {...q, depends_on_question_id: null}
+      if ((q.depends_on_question_id === inputs.backendId)
+        || (q.depends_on_question_id === inputs.surrogate_id)) {
+        q = {...q, depends_on_question_id: 0}
       }
       return q
     });
     const sectionsWithNoDependency = sections.map(s => {
       if (s.id === sectionId) {
-        if (s.depends_on_question_id && s.depends_on_question_id === inputs.id) {
-          s = {...s, depends_on_question_id: null}
+        if ((s.depends_on_question_id === inputs.backendId)
+          || (s.depends_on_question_id === inputs.surrogate_id)) {
+          s = {...s, depends_on_question_id: 0}
         }
         s = {...s, questions: questionsWithNoDependency}
       }
@@ -284,7 +325,11 @@ const Question = forwardRef(({
       if (s.id === sectionId) {
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, depends_on_question_id: e.value}
+            q = {...q, depends_on_question_id: parseInt(e.value) || 0}
+            if (e.value === '') {
+              const sfv = q.show_for_values;
+              q = {...q, show_for_values: {...sfv, [lang]: null}}
+            }
           }
           return q
         })}
@@ -302,7 +347,8 @@ const Question = forwardRef(({
       inputs:inputs,
       setSection:setSections,
       question: true,
-      sectionId:sectionId
+      sectionId:sectionId,
+      lang: lang
     })
   }
 
@@ -318,23 +364,29 @@ const Question = forwardRef(({
     let min;
     let max;
     if (prop === 'min') {
-      max = inputs.options
-        && inputs.options.max_num_referral;
+      max = inputs.options[lang]
+        && inputs.options[lang].max_num_referral;
       min = e.target.value;
     }
     if (prop === 'max') {
-      min = inputs.options
-        && inputs.options.min_num_referral;
+      min = inputs.options[lang]
+        && inputs.options[lang].min_num_referral;
       max = e.target.value;
     }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
+        
         s = {...section, questions: s.questions.map(q => {
           if (q.id === inputs.id) {
-            q = {...q, options: {
-              min_num_referral: min,
-              max_num_referral: max
-            }}
+            const options = q.options;
+            const opt = {};
+            for (let key of Object.keys(options)) {
+              opt[key] = {
+                min_num_referral: min,
+                max_num_referral: max
+              }
+            }
+            q = {...q, options: opt}
           }
           return q
         })}
@@ -359,6 +411,46 @@ const Question = forwardRef(({
       return s
     });
     setSections(updatedSections);
+  }
+
+  const handleDuplicate = () => {
+    const duplicate = {
+      id: `${Math.random()}`,
+      surrogate_id: maxSurrogateId + 1,
+      depends_on_question_id: inputs.depends_on_question_id,
+      headline: inputs.headline,
+      description: inputs.description,
+      required: inputs.required,
+      key: inputs.key,
+      options: inputs.options,
+      order: inputs.order,
+      placeholder: inputs.placeholder,
+      show_for_values: inputs.show_for_values,
+      type: inputs.type,
+      validation_regex: inputs.validation_regex,
+      validation_text: inputs.validation_text
+    };
+    const updatedSections = sections.map(s => {
+      if (s.id === sectionId) {
+        const index = inputs.order;
+        const questions = [...s.questions];
+        questions.splice(index, 0, duplicate);
+        s = {...section, questions: questions.map((q, i) => {
+          q = {...q, order: i + 1}
+          return q
+        }
+        )}
+      }
+      return s
+    });
+    setSections(updatedSections);
+    setQuestionAnimation(false);
+    setApplytransition(false);
+  }
+
+  const handleStopPropagation = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   const options = [
@@ -442,7 +534,8 @@ const Question = forwardRef(({
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
   const withRegex = ['long-text', 'short-text', 'markdown'];
-  const dependencyOptions = optionz.filter(e => e.order < inputs.order);
+  const dependencyOptions = optionz.filter(e => e.order < inputs.order
+    || !e.order);
   let style = inputs.required
     ? {display: 'block', boxShadow: '0px 0.3em 5px 0px #e8e6e6'}
     : {display: 'block'};
@@ -451,7 +544,8 @@ const Question = forwardRef(({
   }
 
   const dependentQuestion = section.questions
-    .find(e => e.id === inputs.depends_on_question_id);
+    .find(e => (e.backendId === inputs.depends_on_question_id)
+      || (e.surrogate_id === inputs.depends_on_question_id));
 
   return (
     <>
@@ -469,21 +563,30 @@ const Question = forwardRef(({
         <div className="headline-description">
           <div className="question-header">
             <span className="key-wrapper">
+            {!inputs.headline[lang] && (
+              <span className='tooltiptext-error'>{t('Headline is Required')}</span>
+            )}
               <input
                 type="text"
                 name="headline"
                 value={inputs.headline[lang]}
                 onChange={handleChange('headline')}
-                placeholder={t('Headline')}
+                placeholder={inputs.headline['en'] || t('Headline')}
                 className="section-inputs question-title"
+                draggable={true}
+                onDragStart={handleStopPropagation}
               />
               <span className="tooltiptext">{t('Headline')}</span>
             </span>
+            {!type && (
+              <span className='tooltiptext-error'>{t('Type is Required')}</span>
+            )}
             <ReactSelect
               options={options}
               placeholder={t('Choose type')}
               onChange={e => handleTypeChange(e)}
               defaultValue={inputs.type || null}
+              value={options.find(o => o.value === inputs.type)}
               className='select-form'
               styles={{
                 control: (base, state) => ({
@@ -508,27 +611,29 @@ const Question = forwardRef(({
                 data-title={t("Move up")}
                 onClick={handleMoveQuestionUp}
               >
-                <i class="fas fa-chevron-up fa-move"></i>
+                <i className="fas fa-chevron-up fa-move"></i>
               </button>
               <button
                 className="move-btn"
                 data-title={t("Move down")}
                 onClick={handleMoveQuestionDown}
               >
-                <i class="fas fa-chevron-down fa-move"></i>
+                <i className="fas fa-chevron-down fa-move"></i>
               </button>
             </div>
           </div>
           <div className="label-input-wrapper">
             <label htmlFor="section-desc" className="form-label">{t('Description')}</label>
-            <input
-              name="section-desc"
-              type="text"
-              // value={inputs.description[lang]}
-              placeholder={t('Description')}
+            <textarea
+              name='section-desc'
+              placeholder={inputs.description['en'] || t('Description')}
               onChange={handleChange('description')}
               className="section-inputs section-desc section-key"
-              />
+              rows={rows(inputs.description[lang])}
+              value={inputs.description[lang] || ''}
+              draggable={true}
+              onDragStart={handleStopPropagation}
+            />
           </div>
           {isKeyOn && (
             <div className="label-input-wrapper">
@@ -540,24 +645,27 @@ const Question = forwardRef(({
                 placeholder={t('Key')}
                 onChange={handleChange('key')}
                 className="section-inputs section-desc section-key"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
             </div>
           )}
-          {withPlaceHolder.includes(inputs.type && inputs.type.value) && (
+          {withPlaceHolder.includes(inputs.type) && (
             <div className="label-input-wrapper">
               <label htmlFor="question-headline" className="form-label">{t('Placeholder')}</label>
               <input
                 name="question-headline"
                 type="text"
-                value={inputs.placeholder[lang]}
-                placeholder={t('Placeholder')}
+                value={inputs.placeholder[lang] || ''}
+                placeholder={inputs.placeholder['en'] || t('Placeholder')}
                 onChange={handleChange('placeholder')}
                 className="question-inputs question-headline"
+                draggable={true}
+                onDragStart={handleStopPropagation}
                 />
-              {/* <span className="tooltiptext">{t('Placeholder')}</span>  */}
             </div>
           )}
-          {withOptions.includes(inputs.type && inputs.type.value) && (
+          {withOptions.includes(inputs.type) && (
             <div className="options">
               <table
                 className='options-table'
@@ -569,17 +677,21 @@ const Question = forwardRef(({
                         type='text'
                         placeholder={t('Value')}
                         onChange={handleChange('value')}
-                        value={inputs.value[lang]}
+                        value={inputs.value && inputs.value[lang]}
                         className='option-inputs'
+                        draggable={true}
+                        onDragStart={handleStopPropagation}
                       />
                     </td>
                     <td className='options-row'>
                       <input
                         type='text'
                         placeholder={t('Label')}
-                        value={inputs.label[lang]}
+                        value={inputs.label && inputs.label[lang]}
                         onChange={handleChange('label')}
                         className='option-inputs'
+                        draggable={true}
+                        onDragStart={handleStopPropagation}
                       />
                     </td>
                     <td className='options-row'>
@@ -593,7 +705,7 @@ const Question = forwardRef(({
                   </tr>
                 </tbody>
                 <tbody className='options-row'>
-                  {inputs.options[lang].map((option, i) => (
+                  {inputs.options[lang] && inputs.options[lang].map((option, i) => (
                     <tr key={i} className='options-row'>
                       <td className='options-row'>
                         <input
@@ -625,7 +737,7 @@ const Question = forwardRef(({
               <span className='error-label'>{t(errorMessage)}</span>
           </div>
           )}
-          {withReferals.includes(inputs.type && inputs.type.value) && (
+          {withReferals.includes(inputs.type) && (
             <div className='referals-wrapper'>
               <div className="min-wrapper">
                 <label
@@ -637,10 +749,15 @@ const Question = forwardRef(({
                 <input
                   type='number'
                   min={0}
-                  placeholder={t('Enter Minimum Number of Referrals')}
+                  placeholder={inputs.options['en']
+                    && inputs.options['en'].min_num_referral
+                    || t('Enter Minimum Number of Referrals')}
                   className='referals-input'
-                  value={inputs.options.min_num_referral}
+                  value={inputs.options[lang]
+                    && inputs.options[lang].min_num_referral}
                   onChange={handlereferralsChange('min')}
+                  draggable={true}
+                  onDragStart={handleStopPropagation}
                 />
               </div>
               <div className="min-wrapper">
@@ -653,16 +770,20 @@ const Question = forwardRef(({
                 <input
                   type='number'
                   min={0}
-                  placeholder={t('Enter Maximum Number of Referrals')}
+                  placeholder={inputs.options['en'].max_num_referral
+                    || t('Enter Maximum Number of Referrals')}
                   className='referals-input'
                   onChange={handlereferralsChange('max')}
-                  value={inputs.options.max_num_referral}
+                  value={inputs.options[lang]
+                    && inputs.options[lang].max_num_referral}
+                  draggable={true}
+                  onDragStart={handleStopPropagation}
                 />
               </div>
               <div className='error-label'>{t(errorMessage)}</div>
             </div>
           )}
-          {withExtention.includes(inputs.type && inputs.type.value) && (
+          {withExtention.includes(inputs.type) && (
             <div className='extensions-wrapper'>
               <label
                 htmlFor="extensions"
@@ -674,24 +795,19 @@ const Question = forwardRef(({
                 name="extensions"
                 id="extensions"
                 type='text'
-                placeholder={
-                  t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
+                placeholder={ (inputs.options['en']
+                  && inputs.options['en'].accept
+                  && inputs.options['en'].accept.join(','))
+                  || t('Please enter a list of file extensions, each starting with a period and separated with commas. E.g .csv,.xls')}
                 className='question-inputs question-headline'
-                value={inputs.options[lang].accept
-                  && inputs.options[lang].accept.join(',')}
+                value={(inputs.options[lang] && inputs.options[lang].accept
+                  && inputs.options[lang].accept.join(',')) || ''}
                 onChange={handlereExtensionChange}
+                draggable={true}
+                onDragStart={handleStopPropagation}
                />
             </div>
           )}
-          <Dependency
-            options={dependencyOptions}
-            handlequestionDependency={handlequestionDependency}
-            handleDependencyChange={handleDependencyChange}
-            dependentQuestion={dependentQuestion}
-            inputs={inputs}
-            lang={lang}
-            t={t}
-            />
           {isValidateOn
             && <Validation
                 t={t}
@@ -701,11 +817,21 @@ const Question = forwardRef(({
                 handleChange={handleChange}
               />
           }
+          <Dependency
+            options={dependencyOptions}
+            handlequestionDependency={handlequestionDependency}
+            handleDependencyChange={handleDependencyChange}
+            dependentQuestion={dependentQuestion}
+            inputs={inputs}
+            lang={lang}
+            t={t}
+            />
           <div className="action-btns">
             <div className="question-footer">
               <button
                 className="delete-qstion duplicate-qstion"
                 data-title="Duplicate"
+                onClick={handleDuplicate}
               >
                 <i className="far fa-copy fa-md fa-color"></i>
               </button>
@@ -746,11 +872,11 @@ const Question = forwardRef(({
             <button
               className="dropdown-item delete-section"
               onClick={handleValidation}
-              disabled={!withRegex.includes(inputs.type && inputs.type.value)}
+              disabled={!withRegex.includes(inputs.type)}
               >
               <span className="check-icon">
                 {isValidateOn
-                  && <i class="fas fa-check fa-validation"></i>
+                  && <i className="fas fa-check fa-validation"></i>
                 }
               </span>
                 {t("Validation")}
@@ -761,7 +887,7 @@ const Question = forwardRef(({
               >
               <span className="check-icon">
                 {isKeyOn
-                  && <i class="fas fa-check fa-validation"></i>
+                  && <i className="fas fa-check fa-validation"></i>
                 }
               </span>
                 {t("Key")}

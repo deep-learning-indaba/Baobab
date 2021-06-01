@@ -1,6 +1,6 @@
 import React from "react";
 import { shallow } from "enzyme";
-import ReviewDetailsPage from "../";
+import ReviewDetailsPage from "..";
 import { reviewService } from "../../../services/reviews/review.service";
 
 jest.mock('react-i18next', () => ({

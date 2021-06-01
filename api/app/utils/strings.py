@@ -62,3 +62,46 @@ def build_response_email_body(answers, language, application_form):
                 stringified_summary += '{question}\n{answer}\n\n'.format(question=question_translation.headline, answer=answer_value)
 
     return stringified_summary
+
+
+def build_response_html_answers(answers, language: str, application_form):
+    """
+    Stringifying the dictionary answers, for output in a html file, with sections as headers(<h1>), 
+    questions as second headings (<h2>) and answers as paragraphs (<p>)
+    """
+
+    stringified_answers = ""
+
+    for section in application_form.sections:
+        if not section.questions:
+            continue
+        section_translation = section.get_translation(language)
+        if section_translation is None:
+            LOGGER.error('Missing {} translation for section {}.'.format(language, section.id))
+            section_translation = section.get_translation('en')
+        stringified_answers += '<h1>' + section_translation.name + '</h1>' 
+
+        for question in section.questions:
+            question_translation = question.get_translation(language)
+            if question_translation is None:
+                LOGGER.error('Missing {} translation for question {}.'.format(language, question.id))
+                question_translation = question.get_translation('en')
+
+            answer = _find_answer(question, answers)
+            if answer:
+                answer_value = _get_answer_value(answer, answer.question, question_translation)
+                stringified_answers += f"<h2> {question_translation.headline} </h2> <p>{answer_value}</p>"
+
+
+    return stringified_answers
+
+
+def build_response_html_app_info(response, language: str):
+    """
+    Stringifying the dictionary application information, for output in a html file, with the response_id and applicant name contact info as
+     paragraphs (<p>)
+    """
+
+    stringified_app_info = f"<p><b> Response ID:<b> {response.response_id}<p> <p><b>Full name:<b>{response['firstname']} {response['lastname']}<p>"
+
+    return "<title>Application Form<title>" + stringified_app_info

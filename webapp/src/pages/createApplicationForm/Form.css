@@ -29,8 +29,7 @@
   transition-timing-function: ease-out;
 }
 
-.application-form-wrap .create-form-btn:hover,
-.application-form-wrap .create-form-btn:focus {
+.application-form-wrap .create-form-btn:hover {
   cursor: pointer;
   background: #c9c7c7;
   color: #333;
@@ -83,10 +82,16 @@
   font-size: 0.9em;
   margin-left: 2em;
 }
+
 .application-form-wrap .add-section-icon:hover,
 .application-form-wrap .add-section-icon:focus {
   color: #fff;
 }
+
+.add-section-btn-wrapper {
+  /* border: red solid thin; */
+}
+
 .application-form-wrap .add-section-btn {
   padding: 5px;
   margin-right: 2em;
@@ -104,7 +109,35 @@
   z-index: 1;
 }
 
-.application-form-wrap .add-section-btn:hover:after {
+.application-form-wrap .save-form-btn {
+  padding: 5px;
+  margin-right: 2em;
+  margin-top: 16em;
+  border: solid thin #333;
+  width: 3em;
+  height: 3em;
+  border-radius: 50%;
+  background-color: #fff; 
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  outline: none;
+  position: fixed;
+  z-index: 1;
+}
+
+.application-form-wrap .save-form-btn:hover {
+  cursor: pointer;
+  background-color: #333;
+  color: #fff;
+}
+
+.prompt {
+  background: red;
+  color: black;
+}
+
+.application-form-wrap .add-section-btn:hover:after{
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -338,6 +371,10 @@
   outline: none;
 }
 
+.application-form-wrap .section-header {
+  position: relative;
+}
+
 .application-form-wrap .fa-hide-show-details {
   display: block;
   position: relative;
@@ -361,6 +398,30 @@
   margin-right: 1em;
 }
 
+.application-form-wrap .question-header {
+  position: relative;
+}
+
+.application-form-wrap .tooltiptext-error {
+  position: absolute;
+  background-color: #fff;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  color: rgb(139, 15, 15);
+  font-size: 0.8em;
+  left: 65%;
+  top: -1.5em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  border-radius: 5px;
+  z-index: 1;
+}
+
+.response-error {
+  color: rgb(139, 15, 15);
+}
+
 .application-form-wrap .tooltiptext {
   position: absolute;
   visibility: hidden;
@@ -369,6 +430,7 @@
   transition-duration: 1s;
   transition-timing-function: ease-out;
   color: #fff;
+  font-size: 0.8em;
   left: 50%;
   top: -1em;
   font-size: 0.8rem;
@@ -383,11 +445,11 @@
   margin-top: 1em;
 }
 
-.label-input-wrapper {
+.application-form-wrap .label-input-wrapper {
   margin-top: 0.7em;
 }
 
-.form-label {
+.application-form-wrap .form-label {
   font-size: 0.8rem;
   margin-left: 0.5em;
   color: gray;
@@ -419,7 +481,6 @@
 
 .application-form-wrap .move-btns-wrapper {
   display: inline-table;
-  /* border: red thin solid; */
   margin: 0;
   padding: 0;
 }

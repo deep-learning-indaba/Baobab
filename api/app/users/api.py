@@ -1,6 +1,7 @@
 import random
 import string
 from datetime import datetime
+import copy
 
 import flask_restful as restful
 from flask import g, request
@@ -207,7 +208,7 @@ class UserAPI(SignupMixin, restful.Resource):
         return {}, 200
 
 
-class UserProfileView():
+class UserProfileView:
     def __init__(self, user_response):
         self.user_id = user_response.AppUser.id
         self.email = user_response.AppUser.email
@@ -221,7 +222,31 @@ class UserProfileView():
         self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
 
 
-user_profile_list_fields = {
+class UserProfileListView:
+    def __init__(self, user_response):
+        self.user_id = user_response.AppUser.id
+        self.email = user_response.AppUser.email
+        self.firstname = user_response.AppUser.firstname
+        self.lastname = user_response.AppUser.lastname
+        self.user_title = user_response.AppUser.user_title
+
+        if user_response.Response:
+            self.response_id = user_response.Response.id
+            self.is_submitted = user_response.Response.is_submitted
+            self.submitted_timestamp = user_response.Response.submitted_timestamp
+            self.is_withdrawn = user_response.Response.is_withdrawn
+            self.withdrawn_timestamp = user_response.Response.withdrawn_timestamp
+        else:
+            self.response_id = -1
+            self.is_submitted = None
+            self.submitted_timestamp = None
+            self.is_withdrawn = None
+            self.withdrawn_timestamp = None
+
+        self.type = 'Invited Guest' if user_response.InvitedGuest else 'Candidate'
+
+
+user_profile_fields = {
     'user_id': fields.Integer,
     'email': fields.String,
     'firstname': fields.String,
@@ -233,6 +258,8 @@ user_profile_list_fields = {
     'is_withdrawn': fields.Boolean,
     'withdrawn_timestamp': fields.DateTime('iso8601')
 }
+user_profile_list_fields = copy.deepcopy(user_profile_fields)
+user_profile_list_fields['type'] = fields.String
 
 
 class UserProfileList(UserProfileListMixin, restful.Resource):
@@ -248,10 +275,9 @@ class UserProfileList(UserProfileListMixin, restful.Resource):
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
-        user_responses = user_repository.get_all_with_responses_for(event_id)
+        user_responses = user_repository.get_all_with_responses_or_invited_guests_for(event_id)
 
-        views = [UserProfileView(user_response)
-                 for user_response in user_responses]
+        views = [UserProfileListView(user_response) for user_response in user_responses]
         return views
 
 
@@ -269,12 +295,12 @@ class UserProfile(UserProfileMixin, restful.Resource):
             user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
-            return marshal(UserProfileView(user), user_profile_list_fields)
+            return marshal(UserProfileView(user), user_profile_fields)
 
         user = user_repository.get_by_event_admin(user_id, current_user_id)
         if user is None:
             return USER_NOT_FOUND
-        return marshal(UserProfileView(user), user_profile_list_fields)
+        return marshal(UserProfileView(user), user_profile_fields)
 
 
 class AuthenticationAPI(AuthenticateMixin, restful.Resource):

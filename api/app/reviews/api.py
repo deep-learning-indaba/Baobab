@@ -25,11 +25,10 @@ from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
-from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
-    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED
+    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -142,6 +141,7 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
         'application_form_id': review_form.application_form_id,
         'is_open': review_form.is_open,
         'deadline': review_form.deadline.isoformat(),
+        'stage': review_form.stage,
         'review_sections': review_sections
     }
 
@@ -667,6 +667,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
                                                                                          review_score.review_question.id))
 
         return {
+            'review_question_id': review_score.review_question.id,
             'headline': review_question_translation.headline,
             'description': review_question_translation.description,
             'type': review_score.review_question.type,
@@ -675,7 +676,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
         }
 
     @staticmethod
-    def _serialise_review_response(review_response):
+    def _serialise_review_response(review_response, language):
         return {
             'review_response_id': review_response.id,
             'response_id': review_response.response_id,
@@ -689,13 +690,13 @@ class ReviewResponseDetailListAPI(restful.Resource):
             'response_user_lastname': review_response.response.user.lastname,
 
             'identifiers': [
-                ReviewResponseDetailListAPI._serialise_identifier(answer, review_response.language)
+                ReviewResponseDetailListAPI._serialise_identifier(answer, language)
                 for answer in review_response.response.answers
                 if answer.question.is_review_identifier()
             ],
 
             'scores': [
-                ReviewResponseDetailListAPI._serialise_score(review_score, review_response.language)
+                ReviewResponseDetailListAPI._serialise_score(review_score, language)
                 for review_score in review_response.review_scores
                 if (review_score.review_question.type == 'multi-choice'
                     or review_score.review_question.type == 'long-text'
@@ -709,8 +710,118 @@ class ReviewResponseDetailListAPI(restful.Resource):
     @auth_required
     @event_admin_required
     def get(self, event_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+
         review_responses = review_repository.get_all_review_responses_by_event(event_id)
         return [
-                   ReviewResponseDetailListAPI._serialise_review_response(review_response)
-                   for review_response in review_responses
-               ], 200
+            ReviewResponseDetailListAPI._serialise_review_response(review_response, args['language'])
+            for review_response in review_responses
+        ], 200
+
+class ReviewResponseSummaryListAPI(restful.Resource):
+    @staticmethod
+    def _serialise_response(response: Response, review_form: ReviewForm, langauge: str):
+        scores = []
+        for review_section in review_form.review_sections:
+            for review_question in review_section.review_questions:
+                if review_question.weight > 0:
+                    review_question_translation = review_question.get_translation(language)
+                    if not review_question_translation:
+                        review_question_translation = review_question.get_translation('en')
+                        LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_score.review_question.id))
+
+                    average_score = review_repository.get_average_score_for_review_question(response.id, review_question.id)
+
+                    score = {
+                        "review_question_id": review_question.id,
+                        "headline": review_question_translation.headline,
+                        "description": review_question_translation.description,
+                        "type": review_question.type,
+                        "score": average_score,
+                        "weight": review_question.weight
+                    }
+                    scores.append(score)
+
+        response_summary = {
+            "response_id": response.id,
+            "response_user_title": response.user.user_title,
+            "response_user_firstname": response.user.firstname,
+            "response_user_lastname": response.user.lastname,
+
+            "identifiers": [
+                ReviewResponseDetailListAPI._serialise_identifier(answer, response.language)
+                for answer in response.answers
+                if answer.question.is_review_identifier()
+            ],
+
+            "scores": scores,
+            "total": sum(score['score'] * score['weight'] for score in scores)
+        }
+        return response_summary
+
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('language', type=str, required=True)
+        args = parser.parse_args()
+
+        responses = response_repository.get_all_for_event(event_id)
+        review_form = review_repository.get_review_form(event_id)
+
+        return [
+            ReviewResponseSummaryListAPI._serialise_response(response, review_form, args['language'])
+            for response in responses
+        ], 200
+
+
+class ReviewStageAPI(restful.Resource):
+
+    @auth_required
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('event_id', type=int, required=True)
+        args = parser.parse_args()
+
+        event_id = args['event_id']
+
+        review_forms = review_repository.get_all_review_forms_for_event(event_id)
+        current_form = [r for r in review_forms if r.active]
+
+        if not current_form:
+            return NO_ACTIVE_REVIEW_FORM
+        
+        current_form = current_form[0]    
+
+        return {
+            'current_stage': current_form.stage,
+            'total_stages': len(review_forms)
+        }
+
+    @auth_required
+    @event_admin_required
+    def post(self, event_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument('stage', type=int, required=True)
+        args = parser.parse_args()
+
+        stage = args['stage']
+
+        review_forms = review_repository.get_all_review_forms_for_event(event_id)
+        selected_form = [r for r in review_forms if r.stage == stage]
+
+        if not selected_form:
+            return REVIEW_FORM_FOR_STAGE_NOT_FOUND
+
+        selected_form = selected_form[0]
+
+        for form in review_forms:
+            form.deactivate()
+        
+        selected_form.activate()
+
+        db.session.commit()
+        
+        return {}, 201

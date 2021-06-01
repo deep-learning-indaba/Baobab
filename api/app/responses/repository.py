@@ -1,3 +1,5 @@
+from typing import List
+
 from app import db
 from app.responses.models import Response, Answer, ResponseTag
 from app.applicationModel.models import ApplicationForm, Question, Section
@@ -119,7 +121,7 @@ class ResponseRepository():
             .all())
 
     @staticmethod
-    def get_all_for_event(event_id, submitted_only=True):
+    def get_all_for_event(event_id, submitted_only=True) -> List[Response]:
         query = db.session.query(Response)
         if submitted_only:
             query = query.filter_by(is_submitted=True)

@@ -32,6 +32,7 @@ rest_api.add_resource(users_api.EmailerAPI,
 rest_api.add_resource(form_api.ApplicationFormAPI, '/api/v1/application-form')
 rest_api.add_resource(form_api.ApplicationFormDetailAPI, '/api/v1/application-form-detail')
 rest_api.add_resource(responses_api.ResponseAPI, '/api/v1/response')
+rest_api.add_resource(responses_api.ResponseExportAPI, '/api/v1/response-export')
 rest_api.add_resource(content_api.CountryContentAPI,
                       '/api/v1/content/countries')
 rest_api.add_resource(files_api.FileUploadAPI, '/api/v1/file')
@@ -124,3 +125,5 @@ rest_api.add_resource(reviews_api.ReviewListAPI, '/api/v1/reviewlist')
 rest_api.add_resource(reviews_api.ResponseReviewAPI, '/api/v1/responsereview')
 rest_api.add_resource(reviews_api.ResponseReviewAssignmentAPI, '/api/v1/assignresponsereviewer')
 rest_api.add_resource(reviews_api.ReviewResponseDetailListAPI, '/api/v1/reviewresponsedetaillist')
+rest_api.add_resource(reviews_api.ReviewResponseSummaryListAPI, '/api/v1/reviewresponsesummarylist')
+rest_api.add_resource(reviews_api.ReviewStageAPI, '/api/v1/reviewstage')

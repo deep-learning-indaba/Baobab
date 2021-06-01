@@ -7,7 +7,7 @@ function MultiFileValue({value}) {
   return <ul>
     {files.map(v => 
       <li key={"file_" + v.id}>
-        <a target="_blank" href={getDownloadURL(v.file)}>
+        <a target="_blank" href={getDownloadURL(JSON.stringify(v))}>
           {v.name}
         </a>
       </li>)}
