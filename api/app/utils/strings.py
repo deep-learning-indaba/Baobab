@@ -64,7 +64,7 @@ def build_response_email_body(answers, language, application_form):
     return stringified_summary
 
 
-def build_response_html_answers(answers, language: str, application_form):
+def build_response_html_answers(answers, language, application_form):
     """
     Stringifying the dictionary answers, for output in a html file, with sections as headers(<h1>), 
     questions as second headings (<h2>) and answers as paragraphs (<p>)
@@ -96,12 +96,12 @@ def build_response_html_answers(answers, language: str, application_form):
     return stringified_answers
 
 
-def build_response_html_app_info(response, language: str):
+def build_response_html_app_info(response, language):
     """
     Stringifying the dictionary application information, for output in a html file, with the response_id and applicant name contact info as
      paragraphs (<p>)
     """
+    
+    stringified_app_info = f"<p><b> Response ID:<b> {response.id}<p> <p><b>Full name:<b> {response.user.firstname} {response.user.lastname}<p>"
 
-    stringified_app_info = f"<p><b> Response ID:<b> {response.response_id}<p> <p><b>Full name:<b>{response['firstname']} {response['lastname']}<p>"
-
-    return "<title>Application Form<title>" + stringified_app_info
+    return "<title>Application Responses<title>" + stringified_app_info
