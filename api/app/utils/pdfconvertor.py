@@ -1,8 +1,18 @@
 import sys
 import subprocess
-import re
-from app import LOGGER
 import os
+import io
+
+from app import LOGGER
+from config import GCP_CREDENTIALS_DICT
+
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+from google.oauth2.credentials import Credentials
+
+from apiclient.discovery import build
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 def convert_to(folder, source, output):
     LOGGER.debug('...beginning conversion to pdf...')
@@ -20,7 +30,48 @@ def libreoffice_exec():
         return '/lib/libreoffice/program/soffice'
     return 'libreoffice'
 
-
 class LibreOfficeError(Exception):
     def __init__(self, output):
         self.output = output
+
+
+def drive_covert_to(
+    file_name,
+    html_string,
+    ):
+
+    LOGGER.debug('Using Google Drive to convert PDF')
+
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(GCP_CREDENTIALS_DICT)
+
+    drive_service = build('drive', 'v3', credentials=credentials) 
+
+    media = MediaIoBaseUpload(
+        io.BytesIO(bytes(html_string, encoding='utf8')), 
+        mimetype="text/html",
+        resumable=True
+    )
+
+    file = drive_service.files().create(
+        body={
+            "name": file_name,
+            "mimeType": "application/vnd.google-apps.document",
+            },
+        media_body=media,
+        fields='id'
+    ).execute()
+
+    request = drive_service.files().export_media(
+        fileId=file.get('id'),
+        mimeType='application/pdf'
+    )
+
+    buffer = io.BytesIO()
+    downloader = MediaIoBaseDownload(buffer, request)
+    done = False
+    while done is False:
+        _, done = downloader.next_chunk()
+
+    drive_service.files().delete(fileId=file.get('id')).execute()
+
+    return buffer
