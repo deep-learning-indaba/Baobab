@@ -1,4 +1,6 @@
 # -*- coding: latin-1 -*-
+
+import json
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 
 from app.responses.repository import ResponseRepository as response_repository
@@ -10,7 +12,7 @@ from app import LOGGER, app, db
 
 
 from app.utils.emailer import email_user
-from app.utils.strings import build_response_html_answers
+from app.utils.strings import build_response_html_answers, build_response_html_app_info
 from app.utils.testing import ApiTestCase
 from mock import patch
 
@@ -171,7 +173,7 @@ class BuildResponseHTMLTest(ApiTestCase):
         
         self.assertIsNotNone(html_answer_string)
 
-    def test_build_response_html_answers__with_answers_missing(self):
+    def test_build_response_html_answers_with_answers_missing(self):
         """
         Tests that the builder doesn't break when a question is submitted without an answer
         """
@@ -188,10 +190,10 @@ class BuildResponseHTMLTest(ApiTestCase):
     def test_build_response_html_app_info(self):
         self._seed_static_data()
 
-        answers = response_repository.get_by_id(self.response_id).answers
-
-        html_info_string = build_response_html_answers(answers, 'en')
-        print(html_info_string)
+        response = response_repository.get_by_id(self.response_id)
+        
+        print("View Response:", response)
+        html_info_string = build_response_html_app_info(response, 'en')
         
         self.assertIsNotNone(html_info_string)
 
