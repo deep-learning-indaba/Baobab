@@ -1,6 +1,8 @@
 import datetime
+import io
 import itertools
 import traceback
+import json
 
 import flask_restful as restful
 from app import LOGGER, bcrypt, db
@@ -17,9 +19,10 @@ from app.reviews.repository import \
 from app.reviews.repository import ReviewRepository as review_repository
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
-from app.utils import emailer, errors, strings, pdfconvertor, zipping
+from app.utils import emailer, errors, strings, pdfconvertor, zipping, storage
+from app.utils.zipping import zip_in_memory
 from app.utils.auth import auth_required, event_admin_required
-from flask import g, request
+from flask import g, request, send_file
 from flask_restful import fields, inputs, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -464,6 +467,17 @@ class ResponseExportAPI(restful.Resource):
 
     def get(self):
 
+        def _get_files(answers):
+
+            file_names = []
+            for answer in answers:
+                if answer.file_type == 'multi-file':
+                   file_names.extend(f['name'] for f in json.loads(answer.value))
+                if answer.type == 'file':
+                    file_names.append(json.loads(answer.value)['name'])
+
+            return file_names
+
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('response_id', type=int, required=True) 
         req_parser.add_argument('language', type=str, required=True) 
@@ -478,18 +492,23 @@ class ResponseExportAPI(restful.Resource):
 
         response_string = strings.build_response_html_app_info(response, language) + \
         strings.build_response_html_answers(response.answers, language, application_form)
-        print(response_string)
 
         response_pdf = pdfconvertor.drive_convert_to(response.id, response_string)
-        # # Get response
-        # # Map values to questions to sections (unpack response) --> application form repository --> build_response_html_answers
+        files_to_get = [_get_files(a) for a in response.answers]
+        bucket = storage.get_storage_bucket()
 
-        # # Connect to Drive API
-        # # Upload in HTML
-        # # Copy, to have it render in Drive / in a Google Doc
-        # # Download as zipped pdf
+        files_to_compress = [(
+            file,
+            bucket.blob(file).download_as_bytes()
+        ) for file in files_to_get]
 
-        return response_string
-        # return "Hello, World"
-        
+        files_to_compress.append(('response.pdf', response_pdf))
+
+        zipped_files = zip_in_memory(files_to_compress)
+
+        return send_file( 
+            zipped_files,
+            as_attachment=True, 
+            attachment_filename=f"response_{response.id}.zip"
+        )        
 

@@ -2,6 +2,7 @@ import sys
 import subprocess
 import os
 import io
+import tempfile
 
 from app import LOGGER
 from config import GCP_CREDENTIALS_DICT
@@ -41,6 +42,19 @@ def drive_convert_to(
     ):
 
     LOGGER.debug('Using Google Drive to convert PDF')
+
+    if GCP_CREDENTIALS_DICT['private_key'] == '__filler__':
+        with tempfile.NamedTemporaryFile as temp_file:
+            temp_file.write(html_string)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            convert_to(temp_dir, temp_file, temp_dir)
+
+        print(f"Temp dir: {os.listdir(temp_dir)}")
+
+        with open(f"{temp_dir}/{temp_file}") as f:
+            return f.read() 
+
+    # TODO handle support for local testing like the files.
 
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(GCP_CREDENTIALS_DICT)
 
