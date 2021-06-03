@@ -125,7 +125,9 @@ class EmailerTest(ApiTestCase):
             file_path='')
 
 class BuildResponseHTMLTest(ApiTestCase):
-    """Test HTML builder functionality."""
+    """
+    Test HTML builder functionality for the answers and application information functionalities
+    """
 
     def _seed_static_data(self):
 
@@ -188,11 +190,11 @@ class BuildResponseHTMLTest(ApiTestCase):
         self.assertIsNotNone(html_string)
 
     def test_build_response_html_app_info(self):
+        
         self._seed_static_data()
 
         response = response_repository.get_by_id(self.response_id)
         
-        print("View Response:", response)
         html_info_string = build_response_html_app_info(response, 'en')
         
         self.assertIsNotNone(html_info_string)
