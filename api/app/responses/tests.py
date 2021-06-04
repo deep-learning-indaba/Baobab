@@ -11,7 +11,6 @@ from flask import g
 from app import app, db
 from app.files import FileUploadAPI as file_upload
 from app.applicationModel.models import ApplicationForm, Question, Section
-from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.email_template.models import EmailTemplate
 from app.events.models import Event
 from app.organisation.models import Organisation
@@ -1045,8 +1044,8 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
 
         # Add file type answers 1 and 2 to response
-        self.add_answer(self.response_id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
-        self.add_answer(self.response_id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
+        self.add_answer(self.response1.id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
+        self.add_answer(self.response1.id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
 
 
     # TODO clean these up and test them out.
@@ -1124,18 +1123,27 @@ def test_number_files_returned_zipped_folder(self):
 
         self._data_seed_static()
 
-        application_form = application_form_repository.get_by_id(self.application_form_id)
-        answers = response_repository.get_by_id(self.response_id2).answers
-
         params = {
             'response_id': self.response1.id,
             'language': 'en'
         }
         
-        zipped_folder = self.app.get(
+        response = self.app.get(
             '/api/v1/response-export',
             headers=self.get_auth_header_for('event1admin@mail.com'), 
             json=params)
+
+        assert response.mimetype == 'application/zip'
+        assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
+
+        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+            temp.write(response.data)
+
+            temp.flush()
+
+            with zipfile.ZipFile(temp.name) as zip:
+                assert zip.is_zipfile() is True
+                assert len(zip.namelist(response)) == 3
+
         
-        self.assertIsTrue(zipfile.is_zipfile(zipped_folder))
-        self.assertIsEqual(len(zipfile.namelist(zipped_folder), 3))
