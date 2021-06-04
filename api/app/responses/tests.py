@@ -9,7 +9,7 @@ import dateutil.parser
 from flask import g
 
 from app import app, db
-from app.files import FileUploadAPI as file_upload
+from app.files.api import FileUploadAPI as file_upload
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.email_template.models import EmailTemplate
 from app.events.models import Event
@@ -1025,10 +1025,10 @@ class ResponseExportAPITest(ApiTestCase):
 
         # Two supplementary files included in application upload (e.g. CV) - Section 1
         question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        ref_supp1 = file_upload.post()
+        ref_supp1 = file_upload.post(self)
 
         question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        ref_supp2 = file_upload.post()
+        ref_supp2 = file_upload.post(self)
 
         # Create response
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
@@ -1116,34 +1116,34 @@ class ResponseExportAPITest(ApiTestCase):
                 assert zip.testzip() is None
     
 
-def test_number_files_returned_zipped_folder(self):
-        """
-        Tests that the correct number of files are returned in the zip folder
-        """
+    def test_number_files_returned_zipped_folder(self):
+            """
+            Tests that the correct number of files are returned in the zip folder
+            """
 
-        self._data_seed_static()
+            self._data_seed_static()
 
-        params = {
-            'response_id': self.response1.id,
-            'language': 'en'
-        }
-        
-        response = self.app.get(
-            '/api/v1/response-export',
-            headers=self.get_auth_header_for('event1admin@mail.com'), 
-            json=params)
+            params = {
+                'response_id': self.response1.id,
+                'language': 'en'
+            }
+            
+            response = self.app.get(
+                '/api/v1/response-export',
+                headers=self.get_auth_header_for('event1admin@mail.com'), 
+                json=params)
 
-        assert response.mimetype == 'application/zip'
-        assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
+            assert response.mimetype == 'application/zip'
+            assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
 
-        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+            with tempfile.NamedTemporaryFile(mode='wb') as temp:
 
-            temp.write(response.data)
+                temp.write(response.data)
 
-            temp.flush()
+                temp.flush()
 
-            with zipfile.ZipFile(temp.name) as zip:
-                assert zip.is_zipfile() is True
-                assert len(zip.namelist(response)) == 3
+                with zipfile.ZipFile(temp.name) as zip:
+                    assert zip.is_zipfile() is True
+                    assert len(zip.namelist(response)) == 3
 
         
