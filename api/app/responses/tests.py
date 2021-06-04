@@ -1031,7 +1031,7 @@ class ResponseExportAPITest(ApiTestCase):
         question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
         ref_supp2 = file_upload.post()
 
-
+        # Create response
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.response1_submitted = self.response1.submitted_timestamp
         self.response1_started = self.response1.started_timestamp
@@ -1044,7 +1044,7 @@ class ResponseExportAPITest(ApiTestCase):
 
         self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
 
-        # Add file type answers 1 and 2
+        # Add file type answers 1 and 2 to response
         self.add_answer(self.response_id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
         self.add_answer(self.response_id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
 
