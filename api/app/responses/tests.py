@@ -7,7 +7,9 @@ import dateutil.parser
 from flask import g
 
 from app import app, db
+from app.files import FileUploadAPI as file_upload
 from app.applicationModel.models import ApplicationForm, Question, Section
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.email_template.models import EmailTemplate
 from app.events.models import Event
 from app.organisation.models import Organisation
@@ -1020,6 +1022,14 @@ class ResponseExportAPITest(ApiTestCase):
         question3_1 = self.add_question(application_form.id, section3.id)
         self.add_question_translation(question3_1.id, 'en', headline='Queston 1, S3')
 
+        # Two supplementary files included in application upload (e.g. CV) - Section 1
+        question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
+        ref_supp1 = file_upload.post()
+
+        question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
+        ref_supp2 = file_upload.post()
+
+
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.response1_submitted = self.response1.submitted_timestamp
         self.response1_started = self.response1.started_timestamp
@@ -1031,6 +1041,10 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
 
         self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
+
+        # Add file type answers 1 and 2
+        self.add_answer(self.response_id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
+        self.add_answer(self.response_id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
 
 
     # TODO clean these up and test them out.
@@ -1089,3 +1103,25 @@ class ResponseExportAPITest(ApiTestCase):
         # If no issues, returns None. Otherwise, returns file name of first bad file. 
         self.assertIsNone(zipfile.testzip(zipped_response))
 
+    def test_number_files_returned_zipped_folder(self):
+        """
+        Tests that the correct number of files are returned in the zip folder
+        """
+
+        self._data_seed_static()
+
+        application_form = application_form_repository.get_by_id(self.application_form_id)
+        answers = response_repository.get_by_id(self.response_id2).answers
+
+        params = {
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+        
+        zipped_folder = self.app.get(
+            '/api/v1/response-export',
+            headers=self.get_auth_header_for('event1admin@mail.com'), 
+            json=params)
+        
+        self.assertIsTrue(zipfile.is_zipfile(zipped_folder))
+        self.assertIsEqual(len(zipfile.namelist(zipped_folder), 3))
