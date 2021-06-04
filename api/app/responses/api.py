@@ -3,6 +3,7 @@ import io
 import itertools
 import traceback
 import json
+import tempfile
 
 import flask_restful as restful
 from app import LOGGER, bcrypt, db
@@ -467,13 +468,28 @@ class ResponseExportAPI(restful.Resource):
 
     def get(self):
 
-        def _get_files(answers):
+        def _get_answer(id, answers):
+            answer = [a for a in answers if a.question_id == id]
+            if answer:
+                return answer[0]
+            else:
+                return None
+
+        def _get_files(application_form, answers):
 
             file_names = []
-            for answer in answers:
-                if answer.file_type == 'multi-file':
-                   file_names.extend(f['name'] for f in json.loads(answer.value))
-                if answer.type == 'file':
+
+            for section in application_form.sections:
+                if not section.questions:
+                    continue
+
+            for question in section.questions:
+
+                answer = _get_answer(question.id, answers)
+
+                if question.type == 'multi-file':
+                    file_names.extend(f['name'] for f in json.loads(answer.value))
+                if question.type == 'file':
                     file_names.append(json.loads(answer.value)['name'])
 
             return file_names
@@ -494,7 +510,7 @@ class ResponseExportAPI(restful.Resource):
         strings.build_response_html_answers(response.answers, language, application_form)
 
         response_pdf = pdfconvertor.drive_convert_to(response.id, response_string)
-        files_to_get = [_get_files(a) for a in response.answers]
+        files_to_get = _get_files(application_form, response.answers)
         bucket = storage.get_storage_bucket()
 
         files_to_compress = [(
@@ -506,9 +522,12 @@ class ResponseExportAPI(restful.Resource):
 
         zipped_files = zip_in_memory(files_to_compress)
 
-        return send_file( 
-            zipped_files,
-            as_attachment=True, 
-            attachment_filename=f"response_{response.id}.zip"
-        )        
+        with tempfile.NamedTemporaryFile() as temp:
+            temp.write(zipped_files.getvalue())
+            return send_file(
+                temp.name, 
+                as_attachment=True, 
+                attachment_filename=f"response_{response.id}.zip"
+            )
+    
 
