@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 from os import write
 import zipfile
@@ -1007,6 +1008,11 @@ class ResponseExportAPITest(ApiTestCase):
         question2 = self.add_question(application_form.id, section1.id)
         self.add_question_translation(question2.id, 'en', headline='Question 2, S1')
 
+        # Supplementary file included in application upload (e.g. CV) - Section 1
+        question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
+        self.add_question_translation(question_supp1.id, 'en', headline='Upload CV')
+        question_supp1_id = question_supp1.id
+
         # Section 2, 3 questions
         section2 = self.add_section(application_form.id)
         self.add_section_translation(section2.id, 'en', name='Section2')
@@ -1023,17 +1029,15 @@ class ResponseExportAPITest(ApiTestCase):
         question3_1 = self.add_question(application_form.id, section3.id)
         self.add_question_translation(question3_1.id, 'en', headline='Queston 1, S3')
 
-        # Two supplementary files included in application upload (e.g. CV) - Section 1
-        question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        # ref_supp1, status_code = file_upload.post(self)
-
+        # Add a question that won't have the file attached
         question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        # ref_supp2, status_code = file_upload.post(self)
+        self.add_question_translation(question_supp2.id, 'en', headline='Upload references')
 
         # Create response
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.response1_submitted = self.response1.submitted_timestamp
         self.response1_started = self.response1.started_timestamp
+        self.response1_id = self.response1.id
         self.add_answer(self.response1.id, question1.id, 'Section 1 Answer 1')
         self.add_answer(self.response1.id, question2.id, 'Section 1 Answer 2')
 
@@ -1041,27 +1045,30 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(self.response1.id, question2_2.id, 'Section 2 Answer 2')
         self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
 
-        self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
-
         # Add file type answer
         with tempfile.NamedTemporaryFile(mode='wb') as temp:
 
-                temp.write(b'This is my CV')
+            temp.write(b'This is my CV')
 
-                temp.flush()
-            
-                response_reference = self.app.post(
-                    '/api/v1/file',
-                    data=temp.name,
-                    content_type='text/plain',
-                    headers=self.get_auth_header_for('user1@mail.com')
-                    )
-                print(response_reference)
-        # self.add_answer(self.response1.id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
-        # self.add_answer(self.response1.id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
+            temp.flush()
 
+            buf = BytesIO(open(temp.name, 'rb').read())
+        
+            response_reference = self.app.post(
+                '/api/v1/file',
+                data={'file': (buf, 'test_file')},
+                content_type='multipart/form-data',
+                headers=self.get_auth_header_for('user1@mail.com')
+            )
 
-    # TODO clean these up and test them out.   
+            file_id = json.loads(response_reference.data)['file_id']
+
+        self.add_answer(
+            self.response1_id,
+            question_supp1_id,
+            json.dumps({"filename": file_id, "rename": "supplementarrypdfONE.pdf"})
+        )
+
 
     def test_zipped_file_uncorrupted(self):
         """
@@ -1071,7 +1078,7 @@ class ResponseExportAPITest(ApiTestCase):
         self._data_seed_static()
 
         params = {
-            'response_id': self.response1.id,
+            'response_id': self.response1_id,
             'language': 'en'
         }
         
@@ -1101,27 +1108,15 @@ class ResponseExportAPITest(ApiTestCase):
             self._data_seed_static()
 
             params = {
-                'response_id': self.response1.id,
+                'response_id': self.response1_id,
                 'language': 'en'
             }
-            
-            with tempfile.NamedTemporaryFile(mode='wb') as temp:
-
-                temp.write(b'This is my CV')
-
-                temp.flush()
-            
-                response = self.app.post(
-                    '/api/v1/file',
-                    data=temp.name,
-                    content_type='text/plain',
-                    headers=self.get_auth_header_for('user1@mail.com')
-                    )
             
             response = self.app.get(
                 '/api/v1/response-export',
                 headers=self.get_auth_header_for('event1admin@mail.com'), 
-                json=params)
+                json=params
+            )
 
             assert response.mimetype == 'application/zip'
             assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
@@ -1134,7 +1129,6 @@ class ResponseExportAPITest(ApiTestCase):
 
                 with zipfile.ZipFile(temp_zip.name) as zip:
                     assert zip.testzip() is None
-                    print(zip.namelist())
                     assert len(zip.namelist()) == 2
 
         
@@ -1144,7 +1138,7 @@ class ResponseExportAPITest(ApiTestCase):
         self._data_seed_static()
 
         params = {
-            'response_id': self.response1.id,
+            'response_id': self.response1_id,
             'language': 'en'
         }
         
@@ -1152,14 +1146,17 @@ class ResponseExportAPITest(ApiTestCase):
             '/api/v1/response-export',
             headers=self.get_auth_header_for('event1admin@mail.com'), 
             json=params)
-            
 
-        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+        assert response.mimetype == 'application/zip'
+        assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
 
-            temp.write(response.data)
+        with tempfile.NamedTemporaryFile(mode='wb') as temp_zip:
 
-            temp.flush()
+            temp_zip.write(response.data)
 
-            with zipfile.ZipFile(temp.name) as zip:
-                assert zip.namelist() == [f"{self.response1.id}.pdf"]
+            temp_zip.flush()
+
+            with zipfile.ZipFile(temp_zip.name) as zip:
+                assert zip.testzip() is None
+                assert zip.namelist() == ['response.pdf', 'supplementarrypdfONE.pdf']
     

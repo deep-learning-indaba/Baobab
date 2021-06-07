@@ -469,13 +469,15 @@ class ResponseExportAPI(restful.Resource):
     def get(self):
 
         def _get_answer(id, answers):
-            answer = [a for a in answers if a.question_id == id]
-            if answer:
-                return answer[0]
-            else:
-                return None
+            # Get the answer for a question
+            for a in answers:
+                if a.question_id == id:
+                    return a
 
-        def _get_files(application_form, answers):
+            return None
+
+        def _get_files(application_form, answers): 
+            # Get the response files that should be exported in teh ZIP file
 
             file_names = []
 
@@ -483,14 +485,15 @@ class ResponseExportAPI(restful.Resource):
                 if not section.questions:
                     continue
 
-            for question in section.questions:
-
-                answer = _get_answer(question.id, answers)
-
-                if question.type == 'multi-file':
-                    file_names.extend(f['name'] for f in json.loads(answer.value))
-                if question.type == 'file':
-                    file_names.append(json.loads(answer.value)['name'])
+                for question in section.questions:
+                    answer = _get_answer(question.id, answers)                
+                    if answer is not None:
+                        # We are only interested in the files, 
+                        # the text answers will be in the main PDF file
+                        if question.type == 'multi-file':
+                            file_names.extend([f for f in json.loads(answer.value)])
+                        if question.type == 'file':
+                            file_names.append(json.loads(answer.value))
 
             return file_names
 
@@ -502,24 +505,30 @@ class ResponseExportAPI(restful.Resource):
         response_id = args['response_id']   
         language = args['language']
 
-        # Collection of answers
-        response = response_repository.get_by_id(response_id) # collection of answers
-        application_form = application_form_repository.get_by_id(response_id) # get questions and sections 
+        response = response_repository.get_by_id(response_id) 
+        application_form = application_form_repository.get_by_id(response_id) 
 
+        # Build the HTML string
         response_string = strings.build_response_html_app_info(response, language) + \
         strings.build_response_html_answers(response.answers, language, application_form)
 
-        response_pdf = pdfconvertor.drive_convert_to(response.id, response_string)
+        # Convert to PDF
+        files_to_compress = [(
+            'response.pdf', 
+            pdfconvertor.html_to_pdf(response.id, response_string)
+        )]
+
+        # The file files that were uploaded as part of the response
         files_to_get = _get_files(application_form, response.answers)
         bucket = storage.get_storage_bucket()
 
-        files_to_compress = [(
-            file,
-            bucket.blob(file).download_as_bytes()
-        ) for file in files_to_get]
+        # Download and name the files
+        files_to_compress.extend([(
+            f['rename'] or f['filename'],
+            io.BytesIO(bucket.blob(f['filename']).download_as_bytes())
+        ) for f in files_to_get])
 
-        files_to_compress.append(('response.pdf', response_pdf))
-
+        # Zip files
         zipped_files = zip_in_memory(files_to_compress)
 
         with tempfile.NamedTemporaryFile() as temp:
