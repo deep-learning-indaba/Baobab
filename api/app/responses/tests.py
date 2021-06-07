@@ -1061,43 +1061,7 @@ class ResponseExportAPITest(ApiTestCase):
         # self.add_answer(self.response1.id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
 
 
-    # TODO clean these up and test them out.
-    # def test_get_correct_data_before_conversion(self):
-    #     """Tests that all the correct data is retrieved from the api before conversion"""
-    #     self._data_seed_static()
-    #     params = {
-    #         'response_id': self.response1.id,
-    #         'language': 'en'
-    #     }
-
-    #     response = self.app.get(
-    #         '/api/v1/response-export',
-    #         headers=self.get_auth_header_for('event1admin@mail.com'), # Only an event admin can access the response detail
-    #         json=params)
-        
-    #     data = json.loads(response.data)
-    #     print(data)
-    #     self.assertEqual(response.status_code, 200)
-    #     # print(data['id'])
-    #     self.assertEqual(data['id'], 1)
-    #     self.assertEqual(data['application_form_id'], 1)
-    #     self.assertEqual(data['user_id'], 2)
-    #     self.assertEqual(data['is_submitted'], True)
-    #     self.assertEqual(data['submitted_timestamp'], self.response1_submitted.isoformat())
-    #     self.assertEqual(data['is_withdrawn'], False)
-
-    #     self.assertEqual(len(data['answers']), 6)
-    #     self.assertEqual(data['answers'][0]['value'], 'Section 1 Answer 1')
-    #     self.assertEqual(data['answers'][1]['value'], 'Section 1 Answer 2')
-    #     self.assertEqual(data['answers'][2]['value'], 'Section 2 Answer 1')
-    #     self.assertEqual(data['answers'][3]['value'], 'Section 2 Answer 2')
-    #     self.assertEqual(data['answers'][4]['value'], 'Section 2 Answer 3')
-    #     self.assertEqual(data['answers'][5]['value'], 'Section 3 Answer 1')
-    #     self.assertEqual(data['language'], 'en')
-    #     self.assertEqual(data['user_title'], 'Ms')
-    #     self.assertEqual(data['firstname'], 'Danai')
-    #     self.assertEqual(data['lastname'], 'Gurira')
-
+    # TODO clean these up and test them out.   
 
     def test_zipped_file_uncorrupted(self):
         """
