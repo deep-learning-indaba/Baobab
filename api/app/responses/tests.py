@@ -1138,3 +1138,28 @@ class ResponseExportAPITest(ApiTestCase):
                     assert len(zip.namelist()) == 2
 
         
+    def test_filename_renamed_correctly_in_zip_folder(self):
+        "Tests that the files are correctly renamed in the downloaded zip folder"
+
+        self._data_seed_static()
+
+        params = {
+            'response_id': self.response1.id,
+            'language': 'en'
+        }
+        
+        response = self.app.get(
+            '/api/v1/response-export',
+            headers=self.get_auth_header_for('event1admin@mail.com'), 
+            json=params)
+            
+
+        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+            temp.write(response.data)
+
+            temp.flush()
+
+            with zipfile.ZipFile(temp.name) as zip:
+                assert zip.namelist() == [f"{self.response1.id}.pdf"]
+    
