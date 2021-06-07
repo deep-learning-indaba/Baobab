@@ -1025,10 +1025,10 @@ class ResponseExportAPITest(ApiTestCase):
 
         # Two supplementary files included in application upload (e.g. CV) - Section 1
         question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        ref_supp1 = file_upload.post(self)
+        # ref_supp1, status_code = file_upload.post(self)
 
         question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
-        ref_supp2 = file_upload.post(self)
+        # ref_supp2, status_code = file_upload.post(self)
 
         # Create response
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
@@ -1043,9 +1043,22 @@ class ResponseExportAPITest(ApiTestCase):
 
         self.add_answer(self.response1.id, question3_1.id, 'Section 3 Answer 1')
 
-        # Add file type answers 1 and 2 to response
-        self.add_answer(self.response1.id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
-        self.add_answer(self.response1.id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
+        # Add file type answer
+        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+                temp.write(b'This is my CV')
+
+                temp.flush()
+            
+                response_reference = self.app.post(
+                    '/api/v1/file',
+                    data=temp.name,
+                    content_type='text/plain',
+                    headers=self.get_auth_header_for('user1@mail.com')
+                    )
+                print(response_reference)
+        # self.add_answer(self.response1.id, question_supp1.id, {"filename": ref_supp1, "rename": "supplementarrypdfONE.pdf" })
+        # self.add_answer(self.response1.id, question_supp2.id, {"filename": ref_supp2, "rename": "supplementarrypdfTWO.pdf" })
 
 
     # TODO clean these up and test them out.
@@ -1128,6 +1141,19 @@ class ResponseExportAPITest(ApiTestCase):
                 'language': 'en'
             }
             
+            with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+                temp.write(b'This is my CV')
+
+                temp.flush()
+            
+                response = self.app.post(
+                    '/api/v1/file',
+                    data=temp.name,
+                    content_type='text/plain',
+                    headers=self.get_auth_header_for('user1@mail.com')
+                    )
+            
             response = self.app.get(
                 '/api/v1/response-export',
                 headers=self.get_auth_header_for('event1admin@mail.com'), 
@@ -1136,14 +1162,15 @@ class ResponseExportAPITest(ApiTestCase):
             assert response.mimetype == 'application/zip'
             assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
 
-            with tempfile.NamedTemporaryFile(mode='wb') as temp:
+            with tempfile.NamedTemporaryFile(mode='wb') as temp_zip:
 
-                temp.write(response.data)
+                temp_zip.write(response.data)
 
-                temp.flush()
+                temp_zip.flush()
 
-                with zipfile.ZipFile(temp.name) as zip:
-                    assert zip.is_zipfile() is True
-                    assert len(zip.namelist(response)) == 3
+                with zipfile.ZipFile(temp_zip.name) as zip:
+                    assert zip.testzip() is None
+                    print(zip.namelist())
+                    assert len(zip.namelist()) == 2
 
         
