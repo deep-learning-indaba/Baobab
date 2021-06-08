@@ -477,7 +477,7 @@ class ResponseExportAPI(restful.Resource):
             return None
 
         def _get_files(application_form, answers): 
-            # Get the response files that should be exported in teh ZIP file
+            # Get the response files that should be exported in the ZIP file
 
             file_names = []
 
@@ -518,7 +518,7 @@ class ResponseExportAPI(restful.Resource):
             pdfconvertor.html_to_pdf(response.id, response_string)
         )]
 
-        # The file files that were uploaded as part of the response
+        # The files that were uploaded as part of the response
         files_to_get = _get_files(application_form, response.answers)
         bucket = storage.get_storage_bucket()
 

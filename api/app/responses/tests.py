@@ -1066,7 +1066,7 @@ class ResponseExportAPITest(ApiTestCase):
         self.add_answer(
             self.response1_id,
             question_supp1_id,
-            json.dumps({"filename": file_id, "rename": "supplementarrypdfONE.pdf"})
+            json.dumps({"filename": file_id, "rename": "supplementarypdfONE.pdf"})
         )
 
 
@@ -1158,5 +1158,5 @@ class ResponseExportAPITest(ApiTestCase):
 
             with zipfile.ZipFile(temp_zip.name) as zip:
                 assert zip.testzip() is None
-                assert zip.namelist() == ['response.pdf', 'supplementarrypdfONE.pdf']
+                assert zip.namelist() == ['response.pdf', 'supplementarypdfONE.pdf']
     

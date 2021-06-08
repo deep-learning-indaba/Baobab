@@ -126,7 +126,8 @@ class EmailerTest(ApiTestCase):
 
 class BuildResponseHTMLTest(ApiTestCase):
     """
-    Test HTML builder functionality for the answers and application information functionalities
+    Test HTML builder functionality for the application information as well as 
+    the question-answer mapping functionalities
     """
 
     def _seed_static_data(self):
