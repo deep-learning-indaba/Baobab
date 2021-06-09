@@ -6,6 +6,7 @@ import random
 from sqlalchemy.sql import func, exists
 
 from typing import Any, Mapping
+from datetime import datetime
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
@@ -15,7 +16,7 @@ from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
     GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.references.repository import ReferenceRequestRepository as reference_repository
@@ -884,11 +885,13 @@ class ReviewFormDetailAPI(restful.Resource):
     @event_admin_required
     @marshal_with(review_form_detail_fields)
     def post(self, event_id):
+        dt_format = lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M:%S')
+
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('application_form_id', type=int, required=True)
         req_parser.add_argument('stage', type=int, required=True)
         req_parser.add_argument('is_open', type=bool, required=True)
-        req_parser.add_argument('deadline', type=str, required=True)
+        req_parser.add_argument('deadline', type=dt_format, required=True)
         req_parser.add_argument('active', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
         args = req_parser.parse_args()
@@ -931,7 +934,7 @@ class ReviewFormDetailAPI(restful.Resource):
             for question_data in section_data['questions']:
                 question = ReviewQuestion(
                     review_section_id=section.id, 
-                    quesiton_id=question_data['question_id'],
+                    question_id=question_data['question_id'] or None,
                     type=question_data['type'],
                     is_required=question_data['is_required'],
                     order=question_data['order'],
@@ -954,7 +957,135 @@ class ReviewFormDetailAPI(restful.Resource):
                     review_repository.add_model(question_translation)
 
         new_review_form = review_repository.get_review_form_by_id(review_form.id)
+        new_review_form.event_id = event_id
 
-        return new_review_form
+        return new_review_form, 201
 
-    # TODO(avishkar): Add tests!
+    @event_admin_required
+    @marshal_with(review_form_detail_fields)
+    def put(self, event_id):
+        dt_format = lambda x: datetime.strptime(x, '%Y-%m-%dT%H:%M:%S')
+
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('id', type=int, required=True)
+        req_parser.add_argument('application_form_id', type=int, required=True)
+        req_parser.add_argument('stage', type=int, required=True)
+        req_parser.add_argument('is_open', type=bool, required=True)
+        req_parser.add_argument('deadline', type=dt_format, required=True)
+        req_parser.add_argument('sections', type=dict, required=True, action='append')
+        args = req_parser.parse_args()
+
+        id = args['id']
+        application_form_id = args['application_form_id']
+        stage = args['stage']
+        is_open = args['is_open']
+        deadline = args['deadline']
+        sections_data = args['sections']
+
+        review_form = review_repository.get_review_form_by_id(id)
+        if not review_form:
+            return REVIEW_FORM_NOT_FOUND
+        
+        if application_form_id != review_form.application_form_id:
+            return UPDATE_CONFLICT
+
+        if event_id != review_form.application_form.event_id:
+            return UPDATE_CONFLICT
+        
+        review_form.stage = stage
+        review_form.is_open = is_open
+        review_form.deadline = deadline
+        
+        # Note: we don't update the active property which is controlled by
+        # the ReviewStageAPI
+
+        # Delete questions in the review form that no longer exist
+        all_question_ids = [q["id"] for s in sections_data for q in s["questions"] if "id" in q]
+        for section in review_form.review_sections:
+            for question in section.review_questions:
+                if question.id not in all_question_ids:
+                    review_repository.delete_review_question(question)
+        
+        all_section_ids = [s["id"] for s in sections_data if "id" in s]
+        for section in review_form.review_sections:
+            if section.id not in all_section_ids:
+                review_repository.delete_review_section(section)
+
+        for section_data in sections_data:
+            if 'id' in section_data:
+                # If ID is populated, then update the existing section
+                section = next((s for s in review_form.review_sections if s.id == section_data['id']), None)  # type: ReviewSection
+                if not section:
+                    return SECTION_NOT_FOUND
+
+                current_translations = section.translations  # type: Sequence[ReviewSectionTranslation]
+                for current_translation in current_translations:
+                    current_translation.description = section_data['description'][current_translation.language]
+                    current_translation.headline = section_data['headline'][current_translation.language]
+                
+                section.order = section_data["order"]
+            else:
+                # if not populated, then add new section
+                section = ReviewSection(review_form.id, section_data["order"])
+                review_repository.add_model(section)
+
+                languages = section_data['headline'].keys()
+                for language in languages:
+                    section_translation = ReviewSectionTranslation(
+                        section.id, 
+                        language, 
+                        section_data['headline'][language], 
+                        section_data['description'][language])
+                    review_repository.add_model(section_translation)
+
+            for question_data in section_data["questions"]:
+                if "id" in question_data:
+                    current_question = next((q for q in section.review_questions if q.id == question_data['id']), None)  # type: ReviewQuestion
+                    if not current_question:
+                        return QUESTION_NOT_FOUND
+
+                    current_question.question_id = question_data["question_id"] or None
+                    current_question.type = question_data["type"]
+                    current_question.order = question_data["order"]
+                    current_question.is_required = question_data["is_required"]
+                    current_question.weight = question_data["weight"]
+
+                    current_translations = current_question.translations  # type: Sequence[ReviewQuestionTranslation]
+                    for current_translation in current_translations:
+                        current_translation.description = question_data['description'][current_translation.language]
+                        current_translation.headline = question_data['headline'][current_translation.language]
+                        current_translation.options = question_data['options'][current_translation.language]
+                        current_translation.placeholder = question_data['placeholder'][current_translation.language]
+                        current_translation.validation_regex = question_data['validation_regex'][current_translation.language]
+                        current_translation.validation_text = question_data['validation_text'][current_translation.language]
+                else:
+                    question = ReviewQuestion(
+                        review_section_id=section.id, 
+                        question_id=question_data["question_id"] or None,
+                        type=question_data["type"],
+                        is_required=question_data["is_required"],
+                        order=question_data["order"],
+                        weight=question_data["weight"])
+
+                    review_repository.add_model(question)
+
+                    for language in question_data['headline'].keys():
+                        translation = ReviewQuestionTranslation(
+                            review_question_id=question.id,
+                            language=language,
+                            description=question_data["description"][language],
+                            headline=question_data["headline"][language],
+                            placeholder=question_data["placeholder"][language],
+                            options=question_data["options"][language],
+                            validation_regex=question_data["validation_regex"][language],
+                            validation_text=question_data["validation_text"][language])
+
+                        review_repository.add_model(translation)
+
+
+            db.session.commit()
+
+        review_form = review_repository.get_review_form_by_id(id)
+        review_form.event_id = event_id
+
+        return review_form, 200

@@ -3,7 +3,7 @@ from sqlalchemy import and_, or_, func, cast, Date
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewConfiguration
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewSection, ReviewSectionTranslation, ReviewQuestion, ReviewQuestionTranslation, ReviewConfiguration
 from app.users.models import AppUser
 from app.references.models import Reference
 from app.events.models import EventRole
@@ -362,6 +362,22 @@ class ReviewRepository():
             .all())
 
         return forms
+    
+    @staticmethod
+    def delete_review_question(question_to_delete: ReviewQuestion):
+        db.session.query(ReviewQuestionTranslation).filter_by(review_question_id=question_to_delete.id).delete()
+        db.session.query(ReviewQuestion).filter_by(id=question_to_delete.id).delete()
+        db.session.commit()
+    
+    @staticmethod
+    def delete_review_section(section: ReviewSection):
+        db.session.query(ReviewSectionTranslation).filter_by(review_section_id=section.id).delete()
+
+        for question in section.review_questions:
+            ReviewRepository.delete_review_question(question)
+
+        db.session.query(ReviewSection).filter_by(id=section.id).delete()
+        db.session.commit()
 
 class ReviewConfigurationRepository():
 

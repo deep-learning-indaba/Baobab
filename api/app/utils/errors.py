@@ -17,9 +17,9 @@ EVENT_TRANSLATION_MISMATCH = ({'message': "Event must contain same translations 
 REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
 DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)
-SECTION_NOT_FOUND = ({'message': 'No section exists with that Event ID'}, 404)
+SECTION_NOT_FOUND = ({'message': 'No section exists with the given ID'}, 404)
 QUESTION_NOT_FOUND = (
-    {'message': 'No question exists with that Event ID'}, 404)
+    {'message': 'No question exists with that ID'}, 404)
 FORM_NOT_FOUND = ({'message': 'No form exists with that Event ID'}, 404)
 FORM_NOT_FOUND_BY_ID = ({'message': 'No application form exists with that Application Form ID'}, 404)
 APPLICATION_FORM_EXISTS = ({'message': 'An application form exists with that event ID'}, 403)

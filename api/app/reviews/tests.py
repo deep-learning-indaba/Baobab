@@ -2312,16 +2312,14 @@ class ReviewStageAPITest(ApiTestCase):
     
 
 REVIEW_FORM_POST = {
-  "id": 5,  
   "event_id": 1,
   "application_form_id": 1,  
   "stage": 2,
   "is_open": True,   
-  "deadline": "2021-06-01 00:00:00"       
+  "deadline": datetime(2024, 6, 1).strftime('%Y-%m-%dT%H:%M:%S'),  
   "active": True,     
   "sections": [
       {
-          "id": 8,   
           "order": 1,
           "headline": {
              "en": "Section 1",
@@ -2333,12 +2331,11 @@ REVIEW_FORM_POST = {
           },
           "questions": [
               {
-                 "id": 2,  
                  "type": "short-text",
                  "is_required": False,
                  "order": 1,
-                 "weight": 0,
-                 "question_id": None,
+                 "weight": 0.0,
+                 "question_id": 0,
                  "headline": {
                      "en": "Question 1",
                      "fr": "Question 1"
@@ -2365,12 +2362,11 @@ REVIEW_FORM_POST = {
                  }
               },   
               {
-                 "id": 3, 
                  "type": "radio",
                  "is_required": True,
                  "order": 2,
                  "weight": 1.5,
-                 "question_id": None,
+                 "question_id": 0,
                  "headline": {
                      "en": "Question 2",
                      "fr": "Question 2"
@@ -2407,7 +2403,6 @@ REVIEW_FORM_POST = {
           ]
       },  
       {
-          "id": 9,   
           "order": 2,
           "headline": {
              "en": "Section 2",
@@ -2419,12 +2414,155 @@ REVIEW_FORM_POST = {
           },
           "questions": [
               {
-                 "id": 3,
                  "type": "information",
                  "is_required": False,
                  "order": 1,
-                 "weight": 0,
-                 "question_id": 3,    
+                 "weight": 0.0,
+                 "question_id": 1,    
+                 "headline": {
+                     "en": "Question 1 from application form",
+                     "fr": "Question 1 from application form"
+                 },
+                 "description": {
+                     "en": "This is the first question from the application form",
+                     "fr": "C'est la première question du formulaire de candidature"
+                 },
+                 "placeholder": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "options": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_regex": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_text": {
+                     "en": None,
+                     "fr": None
+                 }
+              }
+          ]
+      } 
+  ]
+}
+
+
+REVIEW_FORM_PUT = {
+  "id": 1,
+  "event_id": 1,
+  "application_form_id": 1,  
+  "stage": 3,  # Updated
+  "is_open": True,   
+  "deadline": datetime(2023, 2, 2).strftime('%Y-%m-%dT%H:%M:%S'),  # Updated
+  "active": True,     
+  "sections": [
+      {  # Updated first section
+          "id": 1,  
+          "order": 2,  # Updated
+          "headline": { 
+             "en": "Section 1 Updated",
+             "fr": "Section 1 Updated"
+          },
+          "description": {
+             "en": "This is the first section updated",
+             "fr": "Ceci est la première section updated"
+          },
+          "questions": [
+              {
+                 "id": 1,  # Updated
+                 "type": "long-text",  # Updated
+                 "is_required": True,
+                 "order": 10,
+                 "weight": 1.0,
+                 "question_id": 0,
+                 "headline": {
+                     "en": "Question 1 Updated",
+                     "fr": "Question 1 Updated"
+                 },
+                 "description": {
+                     "en": "This is the first question Updated",
+                     "fr": "C'est la première question Updated"
+                 },
+                 "placeholder": {
+                     "en": "Enter something interesting updated",
+                     "fr": "Entrez quelque chose d'intéressant updated"
+                 },
+                 "options": {
+                     "en": {"blah": "blah"},
+                     "fr": {"blah": "blah"}
+                 },
+                 "validation_regex": {
+                     "en": "(a|b|c|d|e)",
+                     "fr": "(a|b|c|d|e)"
+                 },
+                 "validation_text": {
+                     "en": "You must enter a, b, c or d, or e",
+                     "fr": "Vous devez entrer a, b, c, d, ou e"
+                 }
+              },   
+              # Deleted question 2
+              {  # New question
+                 "type": "radio",
+                 "is_required": True,
+                 "order": 20,
+                 "weight": 2.5,
+                 "question_id": 0,
+                 "headline": {
+                     "en": "Question 3",
+                     "fr": "Question 3"
+                 },
+                 "description": {
+                     "en": "This is the third question",
+                     "fr": "C'est la deuxième question"
+                 },
+                 "placeholder": {
+                     "en": "hello",
+                     "fr": "world"
+                 },
+                 "options": {
+                     "en": [
+                          {"value": "0", "label": "Bad"}, 
+                          {"value": "1", "label": "Average"}, 
+                          {"value": "2", "label": "Good"}, 
+                      ],
+                     "fr": [
+                          {"value": "0", "label": "Mal"}, 
+                          {"value": "1", "label": "Moyenne"}, 
+                          {"value": "2", "label": "Bien"}, 
+                      ],
+                 },
+                 "validation_regex": {
+                     "en": None,
+                     "fr": None
+                 },
+                 "validation_text": {
+                     "en": None,
+                     "fr": None
+                 }
+              } 
+          ]
+      },  
+      # Deleted section 2
+      {  # New section
+          "order": 3,
+          "headline": {
+             "en": "Section 2 New",
+             "fr": "Section 2 New"
+          },
+          "description": {
+             "en": "This is the new second section",
+             "fr": "Ceci est la neue deuxième section"
+          },
+          "questions": [
+              {
+                 "type": "information",
+                 "is_required": False,
+                 "order": 1,
+                 "weight": 0.0,
+                 "question_id": 1,    
                  "headline": {
                      "en": "Question 1 from application form",
                      "fr": "Question 1 from application form"
@@ -2466,12 +2604,14 @@ class ReviewFormDetailAPITest(ApiTestCase):
 
         app_form = self.create_application_form()
         section = self.add_section(app_form.id)
-        question = self.add_question(app_form.id, section.id)
+        self.question = self.add_question(app_form.id, section.id)
 
         event_admin = self.add_user("event@admin.com")
         first_event.add_event_role('admin', event_admin.id)
         second_event.add_event_role('admin', event_admin.id)
+        db.session.commit()
 
+    def add_review_forms(self):
         # First stage review form
         form1 = self.add_review_form(stage=1, active=False, deadline=datetime(2021, 6, 1))
         form1_section1 = self.add_review_section(form1.id)
@@ -2496,7 +2636,7 @@ class ReviewFormDetailAPITest(ApiTestCase):
             validation_regex='(a|b|c|d)',
             validation_text='Validation text question 1 FR')
 
-        form1_section1_question2 = self.add_review_question(form1_section1.id, type='information', order=2, question_id=question.id)
+        form1_section1_question2 = self.add_review_question(form1_section1.id, type='information', order=2, question_id=self.question.id)
         self.add_review_question_translation(
             form1_section1_question2.id,
             language='en',
@@ -2541,7 +2681,7 @@ class ReviewFormDetailAPITest(ApiTestCase):
         self.add_review_section_translation(form2_section1.id, 'en', 'Form 2 Section 1 EN', 'Form 2 Section 1 Description EN')
         self.add_review_section_translation(form2_section1.id, 'fr', 'Form 2 Section 1 FR', 'Form 2 Section 1 Description FR')
 
-        form2_section1_question1 = self.add_review_question(form2_section1.id, type='information', question_id=question.id)
+        form2_section1_question1 = self.add_review_question(form2_section1.id, type='information', question_id=self.question.id)
         self.add_review_question_translation(
             form2_section1_question1.id,
             language='en',
@@ -2554,15 +2694,15 @@ class ReviewFormDetailAPITest(ApiTestCase):
             description='Stage 2 Review Question 1 Description FR')
 
         db.session.commit()
-        self.event_admin_headers = self.get_auth_header_for("event@admin.com")
         
     def test_get_without_stage(self):
         """Test that the get method returns the correct stage when a stage parameter isn't provided."""
         self.seed_static_data()
+        self.add_review_forms()
 
         response = self.app.get(
             '/api/v1/review-form-detail',
-            headers=self.event_admin_headers,
+            headers=self.get_auth_header_for("event@admin.com"),
             data={'event_id': self.first_event_id}
         )
 
@@ -2573,10 +2713,11 @@ class ReviewFormDetailAPITest(ApiTestCase):
     def test_get_first_stage(self):
         """Check that the get method returns the form for stage 1."""
         self.seed_static_data()
+        self.add_review_forms()
 
         response = self.app.get(
             '/api/v1/review-form-detail',
-            headers=self.event_admin_headers,
+            headers=self.get_auth_header_for("event@admin.com"),
             data={'event_id': self.first_event_id, 'stage': 1}
         )
 
@@ -2664,10 +2805,11 @@ class ReviewFormDetailAPITest(ApiTestCase):
     def test_get_second_stage(self):
         """Check that the get method returns the form for stage 2."""
         self.seed_static_data()
+        self.add_review_forms()
 
         response = self.app.get(
             '/api/v1/review-form-detail',
-            headers=self.event_admin_headers,
+            headers=self.get_auth_header_for("event@admin.com"),
             data={'event_id': self.first_event_id, 'stage': 2}
         )
 
@@ -2711,10 +2853,11 @@ class ReviewFormDetailAPITest(ApiTestCase):
     def test_get_new_stage(self):
         """Check that the get method returns not found for a stage that doesn't exist."""
         self.seed_static_data()
+        self.add_review_forms()
 
         response = self.app.get(
             '/api/v1/review-form-detail',
-            headers=self.event_admin_headers,
+            headers=self.get_auth_header_for("event@admin.com"),
             data={'event_id': self.first_event_id, 'stage': 3}
         )
 
@@ -2723,11 +2866,81 @@ class ReviewFormDetailAPITest(ApiTestCase):
     def test_get_no_form(self):
         """Check that the get method returns not found for an event that has no review form."""
         self.seed_static_data()
+        self.add_review_forms()
 
         response = self.app.get(
             '/api/v1/review-form-detail',
-            headers=self.event_admin_headers,
+            headers=self.get_auth_header_for("event@admin.com"),
             data={'event_id': self.no_form_event_id, 'stage': 1}
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_post(self):
+        """Check that the post method works."""
+        self.seed_static_data()
+
+        response = self.app.post(
+            '/api/v1/review-form-detail',
+            headers=self.get_auth_header_for("event@admin.com"),
+            data=json.dumps(REVIEW_FORM_POST),
+            content_type='application/json',)
+
+        self.assertEqual(response.status_code, 201)
+
+        response = self.app.get(
+            '/api/v1/review-form-detail',
+            headers=self.get_auth_header_for("event@admin.com"),
+            data={'event_id': REVIEW_FORM_POST["event_id"], 'stage': REVIEW_FORM_POST["stage"]}
+        )
+
+        data = json.loads(response.data)
+
+        self.assertTrue("id" in data and data["id"] is not None)
+        del data["id"]
+
+        self.assertTrue("id" in data["sections"][0] and data["sections"][0]["id"] is not None)
+        del data["sections"][0]["id"]
+
+        self.assertTrue("id" in data["sections"][1] and data["sections"][1]["id"] is not None)
+        del data["sections"][1]["id"]
+
+        self.assertTrue("id" in data["sections"][0]["questions"][0] and data["sections"][0]["questions"][0]["id"] is not None)
+        del data["sections"][0]["questions"][0]["id"]
+
+        self.assertTrue("id" in data["sections"][0]["questions"][1] and data["sections"][0]["questions"][1]["id"] is not None)
+        del data["sections"][0]["questions"][1]["id"]
+
+        self.assertTrue("id" in data["sections"][1]["questions"][0] and data["sections"][1]["questions"][0]["id"] is not None)
+        del data["sections"][1]["questions"][0]["id"]
+        
+        self.maxDiff = 6000
+        self.assertEqual(data, REVIEW_FORM_POST)
+
+    def test_put(self):
+        self.seed_static_data()
+
+        # First create the review form
+        response = self.app.post(
+            '/api/v1/review-form-detail',
+            headers=self.get_auth_header_for("event@admin.com"),
+            data=json.dumps(REVIEW_FORM_POST),
+            content_type='application/json',)
+
+        self.assertEqual(response.status_code, 201)
+
+        # Now update it 
+        response = self.app.put(
+            '/api/v1/review-form-detail',
+            headers=self.get_auth_header_for("event@admin.com"),
+            data=json.dumps(REVIEW_FORM_PUT),
+            content_type='application/json'   
+        )
+
+        data = json.loads(response.data)
+
+        del data["sections"][1]["id"]
+        del data["sections"][0]["questions"][1]["id"]
+        del data["sections"][1]["questions"][0]["id"]
+        self.maxDiff = None
+        self.assertEqual(data, REVIEW_FORM_PUT)
