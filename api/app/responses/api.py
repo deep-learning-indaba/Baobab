@@ -468,7 +468,7 @@ class ResponseExportAPI(restful.Resource):
 
     def get(self):
 
-        def _get_answer(id, answers):
+        def _get_answer(question_id, answers):
             # Get the answer for a question
             for a in answers:
                 if a.question_id == id:
