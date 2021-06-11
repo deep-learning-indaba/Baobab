@@ -44,7 +44,7 @@ def html_to_pdf(
     LOGGER.debug('Using Google Drive to convert PDF')
 
     # If no credentials, return a dummy string for testing.
-    if GCP_CREDENTIALS_DICT['private_key'] == '__filler__':
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
         pdf_bytes = io.BytesIO(b"Hello World, This is not a real PDF")
         return pdf_bytes
 
