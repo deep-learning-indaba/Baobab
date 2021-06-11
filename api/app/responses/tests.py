@@ -1086,9 +1086,9 @@ class ResponseExportAPITest(ApiTestCase):
             '/api/v1/response-export',
             headers=self.get_auth_header_for('event1admin@mail.com'), 
             json=params)
-            
-        assert response.mimetype == 'application/zip'
-        assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
+
+        self.assertEqual(response.mimetype, 'application/zip')
+        self.assertEqual(response.headers.get('Content-Disposition'), 'attachment; filename=response_1.zip')   
 
         with tempfile.NamedTemporaryFile(mode='wb') as temp:
 
@@ -1097,8 +1097,7 @@ class ResponseExportAPITest(ApiTestCase):
             temp.flush()
 
             with zipfile.ZipFile(temp.name) as zip:
-                assert zip.testzip() is None
-    
+                self.assertIsNone(zip.testzip())
 
     def test_number_files_returned_zipped_folder(self):
             """
@@ -1118,8 +1117,8 @@ class ResponseExportAPITest(ApiTestCase):
                 json=params
             )
 
-            assert response.mimetype == 'application/zip'
-            assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
+            self.assertEqual(response.mimetype,'application/zip')
+            self.assertEqual(response.headers.get('Content-Disposition'),'attachment; filename=response_1.zip')
 
             with tempfile.NamedTemporaryFile(mode='wb') as temp_zip:
 
@@ -1128,9 +1127,8 @@ class ResponseExportAPITest(ApiTestCase):
                 temp_zip.flush()
 
                 with zipfile.ZipFile(temp_zip.name) as zip:
-                    assert zip.testzip() is None
-                    assert len(zip.namelist()) == 2
-
+                    self.assertIsNone(zip.testzip())
+                    self.assertEqual(len(zip.namelist()), 2)
         
     def test_filename_renamed_correctly_in_zip_folder(self):
         "Tests that the files are correctly renamed in the downloaded zip folder"
@@ -1157,6 +1155,6 @@ class ResponseExportAPITest(ApiTestCase):
             temp_zip.flush()
 
             with zipfile.ZipFile(temp_zip.name) as zip:
-                assert zip.testzip() is None
-                assert zip.namelist() == ['response.pdf', 'supplementarypdfONE.pdf']
+                self.assertIsNone(zip.testzip())
+                self.assertEqual(zip.namelist(), ['response.pdf', 'supplementarypdfONE.pdf'])
     
