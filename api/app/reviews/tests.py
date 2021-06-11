@@ -2145,7 +2145,7 @@ class ReviewResponseSummaryListApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/reviewresponsesummarylist',
             headers=self.get_auth_header_for('event_admin@mail.com'),
-            data={'event_id': 1}
+            data={'event_id': 1, 'language': 'en'}
         )
 
         data = json.loads(response.data)
