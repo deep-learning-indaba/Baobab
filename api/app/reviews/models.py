@@ -1,6 +1,7 @@
 from datetime import datetime
 from app import db
 from app.utils import misc
+from typing import Any, Callable, Mapping
 
 class ReviewForm(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -48,6 +49,20 @@ class ReviewSection(db.Model):
     def get_translation(self, language):
         translation = self.translations.filter_by(language=language).first()
         return translation
+
+    def _translations_for_field(self, accessor_fn: Callable[['ReviewSectionTranslation'], Any]) -> Mapping[str, Any]:
+        translations = {}
+        for translation in self.translations:
+            translations[translation.language] = accessor_fn(translation)
+        return translations
+
+    @property
+    def headline_translations(self):
+        return self._translations_for_field(lambda t: t.headline)
+    
+    @property
+    def description_translations(self):
+        return self._translations_for_field(lambda t: t.description)
 
     
 class ReviewSectionTranslation(db.Model):
@@ -102,6 +117,36 @@ class ReviewQuestion(db.Model):
     def get_translation(self, language):
         translation = self.translations.filter_by(language=language).first()
         return translation
+
+    def _translations_for_field(self, accessor_fn: Callable[['ReviewQuestionTranslation'], Any]) -> Mapping[str, Any]:
+        translations = {}
+        for translation in self.translations:
+            translations[translation.language] = accessor_fn(translation)
+        return translations
+
+    @property
+    def headline_translations(self):
+        return self._translations_for_field(lambda t: t.headline)
+    
+    @property
+    def description_translations(self):
+        return self._translations_for_field(lambda t: t.description)
+
+    @property
+    def placeholder_translations(self):
+        return self._translations_for_field(lambda t: t.placeholder)
+
+    @property
+    def options_translations(self):
+        return self._translations_for_field(lambda t: t.options)
+
+    @property
+    def validation_regex_translations(self):
+        return self._translations_for_field(lambda t: t.validation_regex)
+
+    @property
+    def validation_text_translations(self):
+        return self._translations_for_field(lambda t: t.validation_text)
 
 
 class ReviewQuestionTranslation(db.Model):

@@ -127,3 +127,4 @@ rest_api.add_resource(reviews_api.ResponseReviewAssignmentAPI, '/api/v1/assignre
 rest_api.add_resource(reviews_api.ReviewResponseDetailListAPI, '/api/v1/reviewresponsedetaillist')
 rest_api.add_resource(reviews_api.ReviewResponseSummaryListAPI, '/api/v1/reviewresponsesummarylist')
 rest_api.add_resource(reviews_api.ReviewStageAPI, '/api/v1/reviewstage')
+rest_api.add_resource(reviews_api.ReviewFormDetailAPI, '/api/v1/review-form-detail')
