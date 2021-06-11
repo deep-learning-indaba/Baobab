@@ -1883,9 +1883,11 @@ class ReviewResponseDetailListApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/reviewresponsedetaillist',
             headers=self.get_auth_header_for('event_admin@mail.com'),
-            data={'event_id': 2}
+            data={'event_id': 2, 'language': 'en'}
         )
         data = json.loads(response.data)
+
+        print(data)
 
         self.assertEqual(data, [])
 
@@ -1895,7 +1897,7 @@ class ReviewResponseDetailListApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/reviewresponsedetaillist',
             headers=self.get_auth_header_for('event_admin@mail.com'),
-            data={'event_id': 1}
+            data={'event_id': 1, 'language': 'en'}
         )
 
         data = json.loads(response.data)
