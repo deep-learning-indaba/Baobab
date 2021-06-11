@@ -471,7 +471,7 @@ class ResponseExportAPI(restful.Resource):
         def _get_answer(question_id, answers):
             # Get the answer for a question
             for a in answers:
-                if a.question_id == id:
+                if a.question_id == question_id:
                     return a
 
             return None
@@ -482,16 +482,13 @@ class ResponseExportAPI(restful.Resource):
             file_names = []
 
             for section in application_form.sections:
-                if not section.questions:
-                    continue
-
                 for question in section.questions:
                     answer = _get_answer(question.id, answers)                
                     if answer is not None:
                         # We are only interested in the files, 
                         # the text answers will be in the main PDF file
                         if question.type == 'multi-file':
-                            file_names.extend([f for f in json.loads(answer.value)])
+                            file_names.extend(json.loads(answer.value))
                         if question.type == 'file':
                             file_names.append(json.loads(answer.value))
 

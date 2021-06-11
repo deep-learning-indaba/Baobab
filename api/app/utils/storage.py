@@ -56,7 +56,7 @@ def _create_real_storage_client():
 
 
 def _get_bucket_name():
-    return 'LocalBucket' if GCP_BUCKET_NAME == '__filler__' else GCP_BUCKET_NAME
+    return 'LocalBucket' if GCP_CREDENTIALS_DICT['private_key'] == 'dummy' else GCP_BUCKET_NAME
 
 def _get_storage_bucket(storage_client):
     return storage_client.get_bucket(_get_bucket_name())
