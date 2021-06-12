@@ -222,8 +222,8 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return review_form
 
-    def add_review_section(self, review_form_id):
-        review_section = ReviewSection(review_form_id, order=1)
+    def add_review_section(self, review_form_id, order=1):
+        review_section = ReviewSection(review_form_id, order=order)
         db.session.add(review_section)
         db.session.commit()
 
@@ -236,8 +236,8 @@ class ApiTestCase(unittest.TestCase):
 
         return translation
 
-    def add_review_question(self, review_section_id, weight=0, type='short-text'):
-        review_question = ReviewQuestion(review_section_id, None, type=type, is_required=True, order=1, weight=weight)
+    def add_review_question(self, review_section_id, weight=0, type='short-text', question_id=None, order=1):
+        review_question = ReviewQuestion(review_section_id, question_id, type=type, is_required=True, order=order, weight=weight)
         db.session.add(review_question)
         db.session.commit()
 
@@ -248,12 +248,20 @@ class ApiTestCase(unittest.TestCase):
         review_question_id,
         language,
         description='Review question description',
-        headline='Review question headline'):
+        headline='Review question headline',
+        placeholder=None,
+        options=None,
+        validation_regex=None,
+        validation_text=None):
         review_question_translation = ReviewQuestionTranslation(
             review_question_id,
             language,
             description=description,
-            headline=headline
+            headline=headline,
+            placeholder=placeholder,
+            options=options,
+            validation_regex=validation_regex,
+            validation_text=validation_text
         )
 
         db.session.add(review_question_translation)
