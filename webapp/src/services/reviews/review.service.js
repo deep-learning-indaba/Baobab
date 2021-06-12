@@ -373,9 +373,34 @@ function getReviewStage(eventId) {
     });
 }
 
-function getReviewFormDetails(stage) {
+// function getReviewFormDetails(stage) {
+//   return axios
+//     .get(stage ? `https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${stage}`)
+//     .then(function(res) {
+//       return {
+//         data: res.data,
+//         error: ""
+//       };
+//     })
+//     .catch(function(error) {
+//       return {
+//         data: null,
+//         error: extractErrorMessage(error)
+//       };
+//     });
+// }
+
+function getReviewFormDetails(eventId,stage) {
+  const url = stage
+      ? `/api/v1/review-form-detail?event_id=${eventId}&stage=${stage}`
+      : `/api/v1/review-form-detail?event_id=${eventId}`
   return axios
-    .get(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${stage}`)
+    .get(
+      baseUrl + url,
+      {
+        headers: authHeader()
+      }
+    )
     .then(function(res) {
       return {
         data: res.data,
@@ -405,9 +430,18 @@ function updateReviewForm({
     "sections": sectionsToSave
   }
   return axios
-    .put(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${id}`, form)
+    .put(
+      baseUrl + `/api/v1/review-form-detail`,
+      form,
+      {
+        headers: authHeader()
+      },
+    )
     .then(res => {
-      return res
+      return {
+        data: res.data,
+        error: ""
+      };
     })
     .catch(error => {
       return {
@@ -418,7 +452,7 @@ function updateReviewForm({
 }
 
 function createReviewForm({
-  id, eventId, isOpen, applicationFormId,
+  eventId, isOpen, applicationFormId,
   stage, deadline, active, sectionsToSave
 }) {
   const form = {
@@ -431,10 +465,19 @@ function createReviewForm({
     "sections": sectionsToSave
   }
   return axios
-    .post(`https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail`, form)
+  .post(
+    baseUrl + '/api/v1/review-form-detail',
+    form,
+    {
+      headers: authHeader()
+    },
+  )
     .then(res => {
-      console.log('**************************** ', res);
-      return res
+      return {
+        data: res.data,
+        error: "",
+        status: res.status
+      };
     })
     .catch(error => {
       return {

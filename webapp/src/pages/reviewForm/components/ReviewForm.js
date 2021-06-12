@@ -33,12 +33,16 @@ const ReviewForm = (props) => {
   const [errorResponse, setErrorResponse] = useState(null);
   const [disableSaveBtn, setDisableSaveBtn] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [leaveStage, setLeaveStage] = useState(false);
+  const [showingModal, setShowingModal] = useState(false);
+  const [isNewStage, setIsNewStage] = useState(false);
 
   const [event, setEvent] = useState({
     loading: true,
     event: null,
     error: null,
   });
+  console.log('***** ', event);
   const [stage, setStage] = useState({
     loading: true,
     stage: null,
@@ -67,6 +71,7 @@ const ReviewForm = (props) => {
         required: false,
         validation_regex: langObject(lang, null),
         validation_text: langObject(lang, ''),
+        question_id: null,
         weight: 0,
       }
     ]
@@ -103,22 +108,29 @@ const ReviewForm = (props) => {
         const sections = formSpec && formSpec.sections;
         if (sections) {
           setAppSections(sections);
+          setFormDetails({
+            ...formDetails,
+            applicationFormId: formSpec.id
+          })
         }
     })
   }, []);
 
   useEffect(() => {
     if (!stage.loading) {
-      setCurrentStage(stage.stage.current_stage);
+      if(stage.stage) {
+        setCurrentStage(stage.stage.current_stage);
+      } else {
+        setCurrentStage(1);
+      }
     }
   }, [stage]);
 
   useEffect(() => {
     const eventId = props.event.id;
-    if (currentStage) {
-      reviewService.getReviewFormDetails(currentStage)
+    if (currentStage && !event.loading) {
+      reviewService.getReviewFormDetails(eventId, currentStage)
       .then(res => {
-        console.log('!!!!!!!!!!!------ !!!!!!', event, props.event);
         if (res.data) {
           const mapedQuestions = res.data.sections.map(s => {
             const questions = s.questions.map(q => {
@@ -134,6 +146,7 @@ const ReviewForm = (props) => {
             });
             s = {
               ...s,
+              name: s.name ? s.name : s.headline,
               id: `${Math.random()}`,
               backendId: s.id,
               questions: questions
@@ -150,7 +163,9 @@ const ReviewForm = (props) => {
             active: res.data.active
           })
           setCreateMode(false);
+          setInitialState(mapedQuestions);
           setSections(mapedQuestions);
+          setLeaveStage(false)
         } else {
           setSections([{
             id: `${Math.random()}`,
@@ -171,18 +186,18 @@ const ReviewForm = (props) => {
                 label: langObject(lang, ''),
                 required: false,
                 validation_regex: langObject(lang, null),
+                question_id: null,
                 validation_text: langObject(lang, ''),
                 weight: 0,
               }
             ]
           }])
           setFormDetails({
+            ...formDetails,
             isOpen: props.event.is_review_open,
-            eventId: event.id,
-            id: event.id,
-            applicationFormId: 1,
+            eventId: event.event.id,
             stage: currentStage,
-            deadline: event.review_close,
+            deadline: event.event.review_close,
             active: currentStage !== 1 ? true : false
           })
           setCreateMode(true);
@@ -212,6 +227,7 @@ const ReviewForm = (props) => {
           required: false,
           validation_regex: langObject(lang, null),
           validation_text: langObject(lang, ''),
+          question_id: null,
           weight: 0,
         }
       ]
@@ -236,6 +252,7 @@ const ReviewForm = (props) => {
       required: false,
       validation_regex: langObject(lang, null),
       validation_text: langObject(lang, ''),
+      question_id: null,
       weight: 0,
     }
     const updatedSections = sections.map(s => {
@@ -262,6 +279,10 @@ const ReviewForm = (props) => {
       type: 'information',
       required: false,
       question_id: null,
+      placeholder: langObject(lang, null),
+      options: langObject(lang, null),
+      validation_regex: langObject(lang, null),
+      validation_text: langObject(lang, null),
     }
     const updatedSections = sections.map(s => {
       if (s.id === sectionId) {
@@ -284,9 +305,13 @@ const ReviewForm = (props) => {
               order: q.order,
               headline: q.headline,
               type: q.type,
-              required: q.required,
+              is_required: q.required,
               question_id: q.question_id,
-              weight: q.weight
+              weight: q.weight,
+              options: langObject(lang, null),
+              placeholder: langObject(lang, null),
+              validation_regex: langObject(lang, null),
+              validation_text: langObject(lang, null),
             }
           } else {
             q = {
@@ -301,7 +326,8 @@ const ReviewForm = (props) => {
               type: q.type,
               validation_regex: q.validation_regex,
               validation_text: q.validation_text,
-              weight: q.weight
+              question_id: q.question_id,
+              weight: q.weight,
             }
           }
         } else {
@@ -312,9 +338,13 @@ const ReviewForm = (props) => {
               order: q.order,
               headline: q.headline,
               type: q.type,
-              required: q.required,
+              is_required: q.required,
               question_id: q.question_id,
-              weight: q.weight
+              weight: q.weight,
+              options: langObject(lang, null),
+              placeholder: langObject(lang, null),
+              validation_regex: langObject(lang, null),
+              validation_text: langObject(lang, null),
             }
           } else {
             q = {
@@ -329,6 +359,7 @@ const ReviewForm = (props) => {
               type: q.type,
               validation_regex: q.validation_regex,
               validation_text: q.validation_text,
+              question_id: q.question_id,
               weight: q.weight
             }
           }
@@ -340,14 +371,14 @@ const ReviewForm = (props) => {
           id: s.backendId,
           depends_on_question_id: s.depends_on_question_id,
           description: s.description,
-          name: s.name,
+          headline: s.name,
           order: s.order,
           questions: questions
         }
       } else {
         s = {
           description: s.description,
-          name: s.name,
+          headline: s.name,
           order: s.order,
           questions: questions
         }
@@ -377,10 +408,9 @@ const ReviewForm = (props) => {
       }
     } else {
         const res = await reviewService.createReviewForm({
-          id, eventId, isOpen, applicationFormId,
+          eventId, isOpen, applicationFormId,
           stage, deadline, active, sectionsToSave
         });
-        console.log(res);
         if (res.status === 201) {
           setIsSaved(true);
           setHomeRedirect(true);
@@ -427,6 +457,12 @@ const ReviewForm = (props) => {
       stage={stage}
       currentStage={currentStage}
       setCurrentStage={setCurrentStage}
+      leaveStage={leaveStage}
+      setLeaveStage={setLeaveStage}
+      showingModal={showingModal}
+      setShowingModal={setShowingModal}
+      isNewStage={isNewStage}
+      setIsNewStage={setIsNewStage}
      />
   )
 }

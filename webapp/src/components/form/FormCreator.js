@@ -7,7 +7,7 @@ import Section from '../../pages/createApplicationForm/components/Section';
 import Loading from '../Loading';
 import {
   option, AnimateSections,
-  drop, drag, Stages
+  drop, drag, Stages, StageModal
  } from '../../pages/createApplicationForm/components/util';
  import { dateFormat, TopBar } from '../../utils/forms';
  
@@ -24,7 +24,9 @@ const FormCreator = ({
   events, setEvent, eventService, addSection,
   handleSave, isSaved, isReview, addQuestion,
   addAnswerFromAppForm, appSections, stage,
-  setCurrentStage, currentStage
+  setCurrentStage, currentStage, leaveStage,
+  setLeaveStage, showingModal, setShowingModal,
+  isNewStage, setIsNewStage
 }) => {
   const lang = languages;
 
@@ -222,6 +224,12 @@ const FormCreator = ({
                     stage={stage.stage}
                     currentStage={currentStage}
                     setCurrentStage={setCurrentStage}
+                    setShowingModal={setShowingModal}
+                    saved={saved}
+                    leaveStage={leaveStage}
+                    showingModal={showingModal}
+                    isNewStage={isNewStage}
+                    setIsNewStage={setIsNewStage}
                   />
                 )}
               </div>
@@ -250,6 +258,14 @@ const FormCreator = ({
               }}
               menuPlacement="auto"
             />
+            {!saved && !leaveStage && showingModal && (
+              <StageModal
+                t={t}
+                setLeaveStage={setLeaveStage}
+                setShowingModal={setShowingModal}
+                setIsNewStage={setIsNewStage}
+              />
+            )}
             <AnimateSections
               applyTransition={applyTransition}
               setApplytransition={setApplytransition}

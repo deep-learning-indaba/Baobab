@@ -218,6 +218,39 @@ export const Modal = ({
   )
 }
 
+export const StageModal = ({
+  t, setLeaveStage, setShowingModal,
+  setIsNewStage
+}) => {
+  
+  const handleCancel = () => {
+    setLeaveStage(false);
+    setShowingModal(false);
+  }
+
+  const handleLeave = () => {
+    setLeaveStage(true);
+    setShowingModal(false);
+    // setIsNewStage(false);
+  }
+  const message = 'Some Changes have not been saved. Are you sure you want to leave without saving them?'
+
+  return(
+    <ConfirmModal
+      className='confirm-modal'
+      visible={true}
+      centered
+      onOK={handleLeave}
+      onCancel={() => handleCancel()}
+      okText={t("Leave anyway")}
+      cancelText={t("Stay on the stage")}>
+      <p>
+        {t(message)}
+      </p>
+    </ConfirmModal>
+  )
+}
+
 /**
  * Handles move up or down of an element
  * @param {Object} - elements, index,setState, ... 
@@ -606,20 +639,51 @@ export const rows = (text) => {
   return !length ? 1 : Math.ceil(numRows);
 }
 
-export const Stages = ({ t, stage, setCurrentStage, currentStage }) => {
+export const Stages = ({
+  t, stage, setCurrentStage, currentStage,
+  leaveStage, setShowingModal, saved,
+  isNewStage, setIsNewStage
+}) => {
   const [stages, setStages] = useState(1);
+  const [stg, setStg] = useState(null);
 
   useEffect(() => {
-    setStages(stage.total_stages);
+    if(stage) {
+      setStages(stage.total_stages);
+    } else {
+      setStages(1);
+    }
+    
   }, [])
 
+  useEffect(() => {
+    if (leaveStage && isNewStage) {
+      setStages(stages + 1);
+      setCurrentStage(stages + 1)
+    } else {
+      setCurrentStage(stg)
+    }
+  }, [leaveStage])
+
   const handleAddStage = () => {
-    setStages(stages + 1);
-    setCurrentStage(stages + 1)
+    setIsNewStage(true);
+    if (!saved && !leaveStage) {
+      setShowingModal(true);
+    } else {
+      setStages(stages + 1);
+      setCurrentStage(stages + 1);
+    }
   }
   const handleStageChange = (e) => {
-    setCurrentStage(e.target.value);
+    setStg(e.target.value)
+    setIsNewStage(false)
+    if (!saved && !leaveStage) {
+      setShowingModal(true);
+    }else {
+      setCurrentStage(e.target.value);
+    }
   }
+
   return (
     <div className='review-stage-wrapper'>
       <div className='review-stage-label'>
@@ -646,6 +710,7 @@ export const Stages = ({ t, stage, setCurrentStage, currentStage }) => {
           className="add-stage-btn"
           data-title={t('Add New Stage')}
           onClick={handleAddStage}
+          // onMouseUp={handleLeaveStage}
           >
           <i className="fas fa-plus add-question-icon"></i>
         </button>
