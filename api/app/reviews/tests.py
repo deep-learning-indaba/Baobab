@@ -2323,7 +2323,7 @@ REVIEW_FORM_POST = {
   "sections": [
       {
           "order": 1,
-          "headline": {
+          "name": {
              "en": "Section 1",
              "fr": "Section 1"
           },
@@ -2406,7 +2406,7 @@ REVIEW_FORM_POST = {
       },  
       {
           "order": 2,
-          "headline": {
+          "name": {
              "en": "Section 2",
              "fr": "Section 2"
           },
@@ -2464,7 +2464,7 @@ REVIEW_FORM_PUT = {
       {  # Updated first section
           "id": 1,  
           "order": 2,  # Updated
-          "headline": { 
+          "name": { 
              "en": "Section 1 Updated",
              "fr": "Section 1 Updated"
           },
@@ -2550,7 +2550,7 @@ REVIEW_FORM_PUT = {
       # Deleted section 2
       {  # New section
           "order": 3,
-          "headline": {
+          "name": {
              "en": "Section 2 New",
              "fr": "Section 2 New"
           },
@@ -2736,8 +2736,8 @@ class ReviewFormDetailAPITest(ApiTestCase):
 
         section1 = data['sections'][0]
         self.assertEqual(section1['order'], 1)
-        self.assertEqual(section1['headline']['en'], 'Form 1 Section 1 EN')
-        self.assertEqual(section1['headline']['fr'], 'Form 1 Section 1 FR')
+        self.assertEqual(section1['name']['en'], 'Form 1 Section 1 EN')
+        self.assertEqual(section1['name']['fr'], 'Form 1 Section 1 FR')
         self.assertEqual(section1['description']['en'], 'Form 1 Section 1 Description EN')
         self.assertEqual(section1['description']['fr'], 'Form 1 Section 1 Description FR')
         self.assertEqual(len(section1['questions']), 2)
@@ -2780,8 +2780,8 @@ class ReviewFormDetailAPITest(ApiTestCase):
 
         section2 = data['sections'][1]
         self.assertEqual(section2['order'], 2)
-        self.assertEqual(section2['headline']['en'], 'Form 1 Section 2 EN')
-        self.assertEqual(section2['headline']['fr'], 'Form 1 Section 2 FR')
+        self.assertEqual(section2['name']['en'], 'Form 1 Section 2 EN')
+        self.assertEqual(section2['name']['fr'], 'Form 1 Section 2 FR')
         self.assertEqual(section2['description']['en'], 'Form 1 Section 2 Description EN')
         self.assertEqual(section2['description']['fr'], 'Form 1 Section 2 Description FR')
         self.assertEqual(len(section2['questions']), 1)
@@ -2828,8 +2828,8 @@ class ReviewFormDetailAPITest(ApiTestCase):
 
         section1 = data['sections'][0]
         self.assertEqual(section1['order'], 1)
-        self.assertEqual(section1['headline']['en'], 'Form 2 Section 1 EN')
-        self.assertEqual(section1['headline']['fr'], 'Form 2 Section 1 FR')
+        self.assertEqual(section1['name']['en'], 'Form 2 Section 1 EN')
+        self.assertEqual(section1['name']['fr'], 'Form 2 Section 1 FR')
         self.assertEqual(section1['description']['en'], 'Form 2 Section 1 Description EN')
         self.assertEqual(section1['description']['fr'], 'Form 2 Section 1 Description FR')
         self.assertEqual(len(section1['questions']), 1)
