@@ -26,7 +26,8 @@ const FormCreator = ({
   addAnswerFromAppForm, appSections, stage,
   setCurrentStage, currentStage, leaveStage,
   setLeaveStage, showingModal, setShowingModal,
-  isNewStage, setIsNewStage
+  isNewStage, setIsNewStage, title, EventMeta,
+  hasKey, hasDependancy, hasSpecialQuestion
 }) => {
   const lang = languages;
 
@@ -135,13 +136,15 @@ const FormCreator = ({
       </div>
     )
   }
+  const eventId = evt.id;
+
   return (
     <>
       <Prompt
         when={!isSaved && !saved}
         message="Some Changes have not been saved. Are you sure you want to leave without saving them?"
         />
-      {homeRedirect && <Redirect to="/" />}
+      {homeRedirect && <Redirect to={`/${eventId}`} />}
       {errorResponse ? (
         <div className='tooltiptext-error response-error'>
           <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>
@@ -149,7 +152,7 @@ const FormCreator = ({
       ) : (
         <div className='application-form-wrap'>
           <TopBar
-            title={setNominate ? "Application Form" : "Review Form"}
+            title={title}
             t={t} />
           <div
             style={{ textAlign: 'end', width: '61%' }}
@@ -173,67 +176,12 @@ const FormCreator = ({
               />
           </div>
           <div className="application-form-wrapper">
-            {setNominate && (
-              <div className="nominations-desc">
-                <input
-                  id="nomination-chck"
-                  className="nomination-chck"
-                  type="checkbox"
-                  checked={nominate}
-                  onChange={e => handleCheckChanged(e)}
-                />
-                <span htmlFor="nomination-chck" className="nomination-info">
-                  {t('Allow candidates to nominate others using this application form'
-                  + '(Users will be able to submit multiple nominations, including for themselves.'
-                  + ' If this option is unchecked, a candidate can only apply for themselves)')}
-                </span>
-              </div>
-            )}
-            {setNominate ? (
-              <div className="dates-container">
-                <span className="dates">
-                  {t('Application opens ') + ' :'}
-                  <span className="date">
-                    {`${dateFormat(evnt.application_open)}`}
-                  </span>
-                </span>
-                <span className="dates">
-                  {t('Application closes ') + ' :'}
-                  <span className="date">
-                    {`${dateFormat(evnt.application_close)}`}
-                  </span>
-                </span>
-              </div>
-            ) : (
-              <div className="dates-container">
-                <span className="dates">
-                  {t('Review opens ') + ' :'}
-                  <span className="date">
-                    {`${dateFormat(evnt.review_open)}`}
-                  </span>
-                </span>
-                <span className="dates">
-                  {t('Review closes ') + ' :'}
-                  <span className="date">
-                    {`${dateFormat(evnt.review_close)}`}
-                  </span>
-                </span>
-                {!stage.loading && (
-                  <Stages
-                    t={t}
-                    stage={stage.stage}
-                    currentStage={currentStage}
-                    setCurrentStage={setCurrentStage}
-                    setShowingModal={setShowingModal}
-                    saved={saved}
-                    leaveStage={leaveStage}
-                    showingModal={showingModal}
-                    isNewStage={isNewStage}
-                    setIsNewStage={setIsNewStage}
-                  />
-                )}
-              </div>
-            )}
+            <EventMeta
+              dateFormat={dateFormat}
+              handleCheckChanged={handleCheckChanged}
+              saved={saved}
+              evnt={evnt}
+              />
             <ReactSelect
               id='select-language'
               options={options()}
@@ -296,6 +244,9 @@ const FormCreator = ({
                     addQuestion={addQuestion}
                     addAnswerFromAppForm={addAnswerFromAppForm}
                     appSections={appSections}
+                    hasKey={hasKey}
+                    hasDependancy={hasDependancy}
+                    hasSpecialQuestion={hasSpecialQuestion}
                   />
                 ))
               }

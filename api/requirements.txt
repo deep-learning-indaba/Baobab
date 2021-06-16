@@ -9,6 +9,11 @@ flask-restplus
 Flask-SQLAlchemy
 Flask-Script
 Flask-Login
+google-api-core
+google-api-python-client
+google-auth 
+google-auth-httplib2 
+google-auth-oauthlib
 Jinja2
 Mako
 MarkupSafe
@@ -29,6 +34,7 @@ python-dateutil
 gunicorn
 google-cloud-storage
 oauth2client
+oauthlib
 enum34
 psycopg2-binary
 docx-mailmerge

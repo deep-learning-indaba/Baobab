@@ -8,10 +8,10 @@ import {
 
 const Question = forwardRef(({
     inputs, t, questions, sectionId, setSections,
-    lang, section, sections, optionz, langs, isReview,
-    setApplytransition, questionIndex, setQuestionAnimation,
-    handleDrag, handleDrop, showingQuestions, setDisableSaveBtn,
-    appSections,
+    lang, section, sections, optionz, langs, setApplytransition,
+    questionIndex, setQuestionAnimation, handleDrag, handleDrop,
+    showingQuestions, setDisableSaveBtn, appSections,
+    hasSpecialQuestion, hasDependancy, hasKey
   }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [isValidateOn, setIsvalidateOn] = useState(false);
@@ -645,7 +645,7 @@ const Question = forwardRef(({
     })
   })
 
-  const options = isReview ? reviewOptions : applicationOptions;
+  const options = hasSpecialQuestion ? reviewOptions : applicationOptions;
 
   const validationOptions = [
     option({
@@ -843,7 +843,7 @@ const Question = forwardRef(({
                 />
             </div>
           )}
-          {isReview && withWeight.includes(inputs.type) && (
+          {hasSpecialQuestion && withWeight.includes(inputs.type) && (
             <div className="label-input-wrapper">
               <label htmlFor="question-headline" className="form-label">
                 {t('Score Weight')}
@@ -1034,7 +1034,7 @@ const Question = forwardRef(({
               handleChange={handleChange}
               />
           )}
-          {!isReview && (
+          {hasDependancy && (
             <Dependency
               options={dependencyOptions}
               handlequestionDependency={handlequestionDependency}
@@ -1103,7 +1103,7 @@ const Question = forwardRef(({
               </span>
                 {t("Validation")}
             </button>
-            {!isReview && (
+            {hasKey && (
               <button
                 className="dropdown-item delete-section"
                 onClick={handleKey}

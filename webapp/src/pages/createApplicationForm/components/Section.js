@@ -14,9 +14,9 @@ export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,langs,
   setApplytransition, setParentDropable,
-  parentDropable, setDisableSaveBtn, isReview,
-  addQuestion, addAnswerFromAppForm,
-  appSections,
+  parentDropable, setDisableSaveBtn, addQuestion,
+  addAnswerFromAppForm, appSections, hasKey,
+  hasDependancy, hasSpecialQuestion
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [questionAnimation, setQuestionAnimation] = useState(false);
@@ -340,7 +340,7 @@ export const Section = forwardRef(({
               <i className="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
             </button>
-            {!isReview && (
+            {hasKey && (
               <button
                 className="dropdown-item delete-section"
                 onClick={handleKey}>
@@ -407,7 +407,7 @@ export const Section = forwardRef(({
                 />
             </div>
           )}
-          {!isReview && (
+          {hasDependancy && (
             <Dependency
               options={sectionOptions}
               handlequestionDependency={handlequestionDependency}
@@ -460,15 +460,17 @@ export const Section = forwardRef(({
             showingQuestions={showingQuestions}
             optionz={options}
             setDisableSaveBtn={setDisableSaveBtn}
-            isReview={isReview}
             appSections={appSections}
+            hasSpecialQuestion={hasSpecialQuestion}
+            hasKey={hasKey}
+            hasDependancy={hasDependancy}
             />
         ))}
       </AnimateSections>
       <div
         className='add-question-wrapper'
         >
-        {isReview && (
+        {hasSpecialQuestion && (
           <button
             className="add-question-btn answer-section-btn"
             data-title={t('Add answer from application form')}

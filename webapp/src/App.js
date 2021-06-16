@@ -364,7 +364,6 @@ class AppComponent extends Component {
 
   render() {
     const t = this.props.t;
-  
     return (
       <Router history={history}>
         <div>

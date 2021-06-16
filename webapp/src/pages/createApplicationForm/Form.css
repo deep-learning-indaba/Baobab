@@ -224,7 +224,7 @@
   outline: none;
 }
 
-.confirm-modal {
+.application-form-wrap .confirm-modal {
   top: 30%;
 }
 
@@ -341,7 +341,6 @@
 
 .application-form-wrap .dependency-wrapper {
   margin-top: 0.5em;
-  /* display: table; */
 }
 
 .application-form-wrap .select-dependency {
@@ -799,7 +798,6 @@
 
 .application-form-wrap .review-stage-btns {
   margin-top: 0.5em;
-  /* display: table; */
 }
 
 .application-form-wrap .review-stage-wrapper {
@@ -814,7 +812,6 @@
   height: 2em;
   margin-right: 1em;
   margin-bottom: 1em;
-  /* display: inline-flex; */
 }
 .application-form-wrap .add-stage-btn {
   float: right;
@@ -847,5 +844,4 @@
 .application-form-wrap .review-stages {
   width: 780px;
   display: inline-table;
-  /* max-width: 100px; */
 }

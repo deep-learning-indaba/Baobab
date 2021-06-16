@@ -219,8 +219,7 @@ export const Modal = ({
 }
 
 export const StageModal = ({
-  t, setLeaveStage, setShowingModal,
-  setIsNewStage
+  t, setLeaveStage, setShowingModal
 }) => {
   
   const handleCancel = () => {
@@ -231,7 +230,6 @@ export const StageModal = ({
   const handleLeave = () => {
     setLeaveStage(true);
     setShowingModal(false);
-    // setIsNewStage(false);
   }
   const message = 'Some Changes have not been saved. Are you sure you want to leave without saving them?'
 
@@ -645,7 +643,7 @@ export const Stages = ({
   isNewStage, setIsNewStage
 }) => {
   const [stages, setStages] = useState(1);
-  const [stg, setStg] = useState(null);
+  const [stg, setStg] = useState(currentStage);
 
   useEffect(() => {
     if(stage) {
@@ -710,7 +708,6 @@ export const Stages = ({
           className="add-stage-btn"
           data-title={t('Add New Stage')}
           onClick={handleAddStage}
-          // onMouseUp={handleLeaveStage}
           >
           <i className="fas fa-plus add-question-icon"></i>
         </button>

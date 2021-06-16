@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   applicationFormService,
 } from '../../../services/applicationForm/applicationForm.service';
-import { langObject } from '../../../pages/createApplicationForm/components/util';
+import { langObject,Stages } from '../../../pages/createApplicationForm/components/util';
 import { eventService } from '../../../services/events';
 import { reviewService } from '../../../services/reviews';
 import FormCreator from '../../../components/form/FormCreator';
@@ -417,6 +417,41 @@ const ReviewForm = (props) => {
     }
   }
 
+  const EventMeta = ({
+    dateFormat, saved, evnt
+  }) => {
+    return (
+      <div className="dates-container">
+        <span className="dates">
+          {t('Review opens ') + ' :'}
+          <span className="date">
+            {`${dateFormat(evnt.review_open)}`}
+          </span>
+        </span>
+        <span className="dates">
+          {t('Review closes ') + ' :'}
+          <span className="date">
+            {`${dateFormat(evnt.review_close)}`}
+          </span>
+        </span>
+        {!stage.loading && (
+          <Stages
+            t={t}
+            stage={stage.stage}
+            currentStage={currentStage}
+            setCurrentStage={setCurrentStage}
+            setShowingModal={setShowingModal}
+            saved={saved}
+            leaveStage={leaveStage}
+            showingModal={showingModal}
+            isNewStage={isNewStage}
+            setIsNewStage={setIsNewStage}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <FormCreator
       languages={lang}
@@ -443,7 +478,6 @@ const ReviewForm = (props) => {
       addSection={addSection}
       handleSave={handleSave}
       isSaved={isSaved}
-      isReview={true}
       addQuestion={addQuestion}
       addAnswerFromAppForm={addAnswerFromAppForm}
       appSections={appSections}
@@ -456,6 +490,9 @@ const ReviewForm = (props) => {
       setShowingModal={setShowingModal}
       isNewStage={isNewStage}
       setIsNewStage={setIsNewStage}
+      title='Review Form'
+      EventMeta={EventMeta}
+      hasSpecialQuestion={true}
      />
   )
 }

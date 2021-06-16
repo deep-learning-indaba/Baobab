@@ -296,6 +296,43 @@ const ApplicationForm = (props) => {
     }
   }
 
+  const EventMeta = ({
+    handleCheckChanged, dateFormat, evnt
+  }) => {
+    return (
+      <>
+        <div className="nominations-desc">
+          <input
+            id="nomination-chck"
+            className="nomination-chck"
+            type="checkbox"
+            checked={nominate}
+            onChange={e => handleCheckChanged(e)}
+          />
+          <span htmlFor="nomination-chck" className="nomination-info">
+            {t('Allow candidates to nominate others using this application form'
+            + '(Users will be able to submit multiple nominations, including for themselves.'
+            + ' If this option is unchecked, a candidate can only apply for themselves)')}
+          </span>
+        </div>
+        <div className="dates-container">
+          <span className="dates">
+            {t('Application opens ') + ' :'}
+            <span className="date">
+              {`${dateFormat(evnt.application_open)}`}
+            </span>
+          </span>
+          <span className="dates">
+            {t('Application closes ') + ' :'}
+            <span className="date">
+              {`${dateFormat(evnt.application_close)}`}
+            </span>
+          </span>
+        </div>
+      </>
+    )
+  }
+
   return (
     <FormCreator
       languages={languages}
@@ -325,6 +362,10 @@ const ApplicationForm = (props) => {
       handleSave={handleSave}
       isSaved={isSaved}
       addQuestion={addQuestion}
+      title='Application Form'
+      EventMeta={EventMeta}
+      hasKey={true}
+      hasDependancy={true}
      />
   )
 }
