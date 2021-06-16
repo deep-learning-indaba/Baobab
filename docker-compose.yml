@@ -33,7 +33,7 @@ web:
     GCP_CLIENT_ID: __filler__
     GCP_CLIENT_EMAIL: __filler__
     GCP_PRIVATE_KEY_ID: __filler__
-    GCP_PRIVATE_KEY: __filler__
+    GCP_PRIVATE_KEY: dummy
     GCP_PROJECT_NAME: __filler__
     GCP_BUCKET_NAME: __filler__
     FILE_SIZE_LIMIT: 10485760

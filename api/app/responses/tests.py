@@ -1,4 +1,8 @@
+from io import BytesIO
 import json
+from os import write
+import zipfile
+import tempfile
 from datetime import date, datetime
 import collections
 
@@ -6,6 +10,7 @@ import dateutil.parser
 from flask import g
 
 from app import app, db
+from app.files.api import FileUploadAPI as file_upload
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.email_template.models import EmailTemplate
 from app.events.models import Event
@@ -14,6 +19,7 @@ from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
 from app.users.models import AppUser, Country, UserCategory
 from app.utils.testing import ApiTestCase
+from app.utils.strings import build_response_html_answers
 
 
 class ResponseApiTest(ApiTestCase):
@@ -985,3 +991,170 @@ class ResponseDetailAPITest(ApiTestCase):
             json=params)
 
         self.assertEqual(response.status_code, 403)
+
+class ResponseExportAPITest(ApiTestCase):
+    def _data_seed_static(self):
+    
+        self.event1 = self.add_event(key='event1')
+        self.event1admin = self.add_user('event1admin@mail.com', is_admin=True)
+        self.user1 = self.add_user('user1@mail.com', user_title='Ms', firstname='Danai', lastname='Gurira')
+
+        application_form = self.create_application_form(self.event1.id)
+        # Section 1, two questions
+        section1 = self.add_section(application_form.id)
+        self.add_section_translation(section1.id, 'en', name='Section1')
+        question1 = self.add_question(application_form.id, section1.id)
+        self.add_question_translation(question1.id, 'en', headline='Question 1, S1')
+        question2 = self.add_question(application_form.id, section1.id)
+        self.add_question_translation(question2.id, 'en', headline='Question 2, S1')
+
+        # Supplementary file included in application upload (e.g. CV) - Section 1
+        question_supp1 = self.add_question(application_form.id, section1.id, question_type = 'file')
+        self.add_question_translation(question_supp1.id, 'en', headline='Upload CV')
+        question_supp1_id = question_supp1.id
+
+        # Section 2, 3 questions
+        section2 = self.add_section(application_form.id)
+        self.add_section_translation(section2.id, 'en', name='Section2')
+        question2_1 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_1.id, 'en', headline='Question 1, S2')
+        question2_2 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_2.id, 'en', headline='Question 2, S2')
+        question2_3 = self.add_question(application_form.id, section2.id)
+        self.add_question_translation(question2_3.id, 'en', headline='Question 3, S2')
+
+        # Section 3, 1 question
+        section3 = self.add_section(application_form.id)
+        self.add_section_translation(section3.id, 'en', name='Section3')
+        question3_1 = self.add_question(application_form.id, section3.id)
+        self.add_question_translation(question3_1.id, 'en', headline='Queston 1, S3')
+
+        # Add a question that won't have the file attached
+        question_supp2 = self.add_question(application_form.id, section1.id, question_type = 'file')
+        self.add_question_translation(question_supp2.id, 'en', headline='Upload references')
+
+        # Create response
+        self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
+        self.response1_submitted = self.response1.submitted_timestamp
+        self.response1_started = self.response1.started_timestamp
+        self.response1_id = self.response1.id
+        self.add_answer(self.response1.id, question1.id, 'Section 1 Answer 1')
+        self.add_answer(self.response1.id, question2.id, 'Section 1 Answer 2')
+
+        self.add_answer(self.response1.id, question2_1.id, 'Section 2 Answer 1')
+        self.add_answer(self.response1.id, question2_2.id, 'Section 2 Answer 2')
+        self.add_answer(self.response1.id, question2_3.id, 'Section 2 Answer 3')
+
+        # Add file type answer
+        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+            temp.write(b'This is my CV')
+
+            temp.flush()
+
+            buf = BytesIO(open(temp.name, 'rb').read())
+        
+            response_reference = self.app.post(
+                '/api/v1/file',
+                data={'file': (buf, 'test_file')},
+                content_type='multipart/form-data',
+                headers=self.get_auth_header_for('user1@mail.com')
+            )
+
+            file_id = json.loads(response_reference.data)['file_id']
+
+        self.add_answer(
+            self.response1_id,
+            question_supp1_id,
+            json.dumps({"filename": file_id, "rename": "supplementarypdfONE.pdf"})
+        )
+
+
+    def test_zipped_file_uncorrupted(self):
+        """
+        Tests that the zipped files' CRCs are okay. 
+        """
+
+        self._data_seed_static()
+
+        params = {
+            'response_id': self.response1_id,
+            'language': 'en'
+        }
+        
+        response = self.app.get(
+            '/api/v1/response-export',
+            headers=self.get_auth_header_for('event1admin@mail.com'), 
+            json=params)
+
+        self.assertEqual(response.mimetype, 'application/zip')
+        self.assertEqual(response.headers.get('Content-Disposition'), 'attachment; filename=response_1.zip')   
+
+        with tempfile.NamedTemporaryFile(mode='wb') as temp:
+
+            temp.write(response.data)
+
+            temp.flush()
+
+            with zipfile.ZipFile(temp.name) as zip:
+                self.assertIsNone(zip.testzip())
+
+    def test_number_files_returned_zipped_folder(self):
+            """
+            Tests that the correct number of files are returned in the zip folder
+            """
+
+            self._data_seed_static()
+
+            params = {
+                'response_id': self.response1_id,
+                'language': 'en'
+            }
+            
+            response = self.app.get(
+                '/api/v1/response-export',
+                headers=self.get_auth_header_for('event1admin@mail.com'), 
+                json=params
+            )
+
+            self.assertEqual(response.mimetype,'application/zip')
+            self.assertEqual(response.headers.get('Content-Disposition'),'attachment; filename=response_1.zip')
+
+            with tempfile.NamedTemporaryFile(mode='wb') as temp_zip:
+
+                temp_zip.write(response.data)
+
+                temp_zip.flush()
+
+                with zipfile.ZipFile(temp_zip.name) as zip:
+                    self.assertIsNone(zip.testzip())
+                    self.assertEqual(len(zip.namelist()), 2)
+        
+    def test_filename_renamed_correctly_in_zip_folder(self):
+        "Tests that the files are correctly renamed in the downloaded zip folder"
+
+        self._data_seed_static()
+
+        params = {
+            'response_id': self.response1_id,
+            'language': 'en'
+        }
+        
+        response = self.app.get(
+            '/api/v1/response-export',
+            headers=self.get_auth_header_for('event1admin@mail.com'), 
+            json=params)
+
+        assert response.mimetype == 'application/zip'
+        assert response.headers.get('Content-Disposition') == 'attachment; filename=response_1.zip'
+
+        with tempfile.NamedTemporaryFile(mode='wb') as temp_zip:
+
+            temp_zip.write(response.data)
+
+            temp_zip.flush()
+
+            with zipfile.ZipFile(temp_zip.name) as zip:
+                self.assertIsNone(zip.testzip())
+                self.assertEqual(zip.namelist(), ['response.pdf', 'supplementarypdfONE.pdf'])
+    
