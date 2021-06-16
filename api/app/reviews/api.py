@@ -119,7 +119,7 @@ review_question_detail_fields = {
 review_section_detail_fields = {
     'id': fields.Integer,
     'order': fields.Integer,
-    'headline': fields.Raw(attribute=lambda s: s.headline_translations),
+    'name': fields.Raw(attribute=lambda s: s.headline_translations),
     'description': fields.Raw(attribute=lambda s: s.description_translations),
     'questions': fields.List(fields.Nested(review_question_detail_fields), attribute='review_questions')
 }
@@ -757,7 +757,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
 
 class ReviewResponseSummaryListAPI(restful.Resource):
     @staticmethod
-    def _serialise_response(response: Response, review_form: ReviewForm, langauge: str):
+    def _serialise_response(response: Response, review_form: ReviewForm, language: str):
         scores = []
         for review_section in review_form.review_sections:
             for review_question in review_section.review_questions:
@@ -922,12 +922,12 @@ class ReviewFormDetailAPI(restful.Resource):
             section = ReviewSection(review_form.id, section_data['order'])
             review_repository.add_model(section)
 
-            languages = section_data['headline'].keys()
+            languages = section_data['name'].keys()
             for language in languages:
                 section_translation = ReviewSectionTranslation(
                     review_section_id=section.id,
                     language=language,
-                    headline=section_data['headline'][language],
+                    headline=section_data['name'][language],
                     description=section_data['description'][language])
                 review_repository.add_model(section_translation)
 
@@ -1021,7 +1021,7 @@ class ReviewFormDetailAPI(restful.Resource):
                 current_translations = section.translations  # type: Sequence[ReviewSectionTranslation]
                 for current_translation in current_translations:
                     current_translation.description = section_data['description'][current_translation.language]
-                    current_translation.headline = section_data['headline'][current_translation.language]
+                    current_translation.headline = section_data['name'][current_translation.language]
                 
                 section.order = section_data["order"]
             else:
@@ -1029,12 +1029,12 @@ class ReviewFormDetailAPI(restful.Resource):
                 section = ReviewSection(review_form.id, section_data["order"])
                 review_repository.add_model(section)
 
-                languages = section_data['headline'].keys()
+                languages = section_data['name'].keys()
                 for language in languages:
                     section_translation = ReviewSectionTranslation(
                         section.id, 
                         language, 
-                        section_data['headline'][language], 
+                        section_data['name'][language], 
                         section_data['description'][language])
                     review_repository.add_model(section_translation)
 

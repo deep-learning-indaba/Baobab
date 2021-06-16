@@ -8,6 +8,7 @@ from app.utils.errors import FILE_SIZE_EXCEEDED
 from app.files.mixins import FileUploadMixin
 from app.utils.auth import auth_required
 
+
 import tempfile
 
 from app import LOGGER
