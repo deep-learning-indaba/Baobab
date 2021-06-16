@@ -408,5 +408,16 @@
     "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Some Changes have not been saved. Are you sure you want to leave without saving them?",
     "Details": "Details",
     "Summary": "Summary",
-    "Stage": "Stage"
+    "Stage": "Stage",
+    "Score Weight": "Score Weight",
+    "Review opens ": "Review opens ",
+    "Review closes ": "Review closes ",
+    "Review Form": "Review Form",
+    "Stages": "Stages",
+    "Add answer from application form": "Add answer from application form",
+    "Add New Stage": "Add New Stage",
+    "Select a question from Application Form": "Select a question from Application Form",
+    "Subheading": "Subheading",
+    "Numeric Input": "Numeric Input",
+    "Radio Buttons": "Radio Buttons"
 }

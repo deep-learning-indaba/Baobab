@@ -239,7 +239,7 @@ class EventHome extends Component {
           render={(props) => <ApplicationFormSetting
             {...props}
             event={event}
-            languages={organisation.languages}
+            languages={organisation && organisation.languages}
             />}
         />
         <Route
@@ -248,7 +248,7 @@ class EventHome extends Component {
           render={(props) => <ReviewForm
             {...props}
             event={event}
-            languages={organisation.languages}
+            languages={organisation && organisation.languages}
             />}
         />
         

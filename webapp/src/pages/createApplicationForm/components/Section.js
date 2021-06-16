@@ -5,8 +5,8 @@ import React,
 import { Trans } from 'react-i18next';
 import Question from './Question';
 import {
-  Modal, AnimateSections, handleMove, langObject,
-  drag, drop, option, Dependency, dependencyChange,
+  Modal, AnimateSections, handleMove, drag,
+  drop, option, Dependency, dependencyChange,
   rows
 } from './util';
 

@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, forwardRef, useEffect, useMemo } from 'react';
 import { default as ReactSelect } from "react-select";
 import {
   option, Modal, handleMove, Dependency, dependencyChange,
@@ -26,7 +26,6 @@ const Question = forwardRef(({
     && inputs.options[lang].min_num_referral;
   const validation_regex = inputs.validation_regex && inputs.validation_regex[lang];
   const key = inputs.key;
-  console.log('Type ', inputs);
 
   const optz = useMemo(() => inputs.options, []);
   let maxSurrogateId = 1;
@@ -605,7 +604,7 @@ const Question = forwardRef(({
     }),
     option({
       value: 'sub-heading',
-      label: 'Subheadind',
+      label: 'Subheading',
       faClass: 'fas fa-heading fa-color',
       t
     }),

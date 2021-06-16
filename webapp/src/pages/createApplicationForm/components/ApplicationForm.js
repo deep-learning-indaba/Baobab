@@ -1,22 +1,12 @@
-import React, { useState, useEffect, createRef } from 'react';
-import { Redirect, Prompt } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trans } from 'react-i18next';
-import { default as ReactSelect } from "react-select";
-import _ from 'lodash';
 import {
   applicationFormService,
   updateApplicationForm,
   createApplicationForm
 } from '../../../services/applicationForm/applicationForm.service';
 import { eventService } from '../../../services/events';
-import Section from './Section';
-import Loading from '../../../components/Loading';
-import {
-  option, langObject, AnimateSections,
-  drop, drag
- } from './util';
- import { dateFormat, TopBar } from '../../../utils/forms';
+import { langObject } from './util';
  import FormCreator from '../../../components/form/FormCreator';
 
 
@@ -78,7 +68,6 @@ const ApplicationForm = (props) => {
     ]
   }]);
   const [isSaved, setIsSaved] = useState(false);
-  // const saved = _.isEqual(initialState, sections);
   let maxSurrogateId = 1;
   sections.forEach(s => {
     if (s.backendId > maxSurrogateId) {

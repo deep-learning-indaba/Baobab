@@ -8,7 +8,7 @@ export const option = ({
   value, t, label: l, faClass,
   headline, disabled, desc, head
 }) => {
-  let lab = headline ? l : t(l);
+  let lab = headline || head || disabled ? l : t(l);
   lab = disabled ? <b>{lab}</b> : lab;
   const label = faClass ? <div>
     <div className='dropdown-text'>

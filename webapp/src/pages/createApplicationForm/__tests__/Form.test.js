@@ -4,6 +4,7 @@ import ApplicationForm from '../components/ApplicationForm';
 import {Section} from '../components/Section';
 import Question from '../components/Question';
 import Form from '../Form';
+import ReviewForm from '../../reviewForm/components/ReviewForm'
 import { option } from '../components/util';
 
 jest.mock('react-i18next', () => ({
@@ -348,5 +349,18 @@ test('Check if the Form Component renders', () => {
     languages
   };
   const wrapper = shallow(<Form {...props} t={k => 'key'} />);
+  expect(wrapper.length).toEqual(1);
+})
+
+test('Check if the Review Form Component renders', () => {
+  const languages = [{ code: 'en', description: 'English' }];
+  const props = {
+    event: {
+      id: '2021',
+      is_review_open: true
+    },
+    languages
+  }
+  const wrapper = shallow(<ReviewForm {...props} />);
   expect(wrapper.length).toEqual(1);
 })

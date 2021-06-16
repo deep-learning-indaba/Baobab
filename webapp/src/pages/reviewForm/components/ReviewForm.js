@@ -1,10 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { isEqual } from 'lodash';
 import {
   applicationFormService,
-  updateApplicatForm,
-  createApplicationForm
 } from '../../../services/applicationForm/applicationForm.service';
 import { langObject } from '../../../pages/createApplicationForm/components/util';
 import { eventService } from '../../../services/events';
@@ -16,8 +13,6 @@ const ReviewForm = (props) => {
   const { t } = useTranslation();
   const lang = [...languages];
   const [formDetails, setFormDetails] = useState({});
-  const [reviewFormDetails, setReviewFormDetails] = useState({});
-  const [isCreateMode, setIsCreateMode] = useState(true);
 
   const [language, setLanguage] = useState({
     label: lang && lang[0]? lang[0].description : 'English',
@@ -42,7 +37,6 @@ const ReviewForm = (props) => {
     event: null,
     error: null,
   });
-  console.log('***** ', event);
   const [stage, setStage] = useState({
     loading: true,
     stage: null,
@@ -76,7 +70,7 @@ const ReviewForm = (props) => {
       }
     ]
   }]);
-  // const saved = _.isEqual(initialState, sections);
+
   let maxSurrogateId = 1;
   sections.forEach(s => {
     if (s.backendId > maxSurrogateId) {
@@ -263,7 +257,6 @@ const ReviewForm = (props) => {
     });
     setSections(updatedSections);
     setApplytransition(false);
-    // setQuestionAnimation(false);
   }
 
   const addAnswerFromAppForm = (sectionId) => {

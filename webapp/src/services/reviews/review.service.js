@@ -373,23 +373,6 @@ function getReviewStage(eventId) {
     });
 }
 
-// function getReviewFormDetails(stage) {
-//   return axios
-//     .get(stage ? `https://60b8ab1bb54b0a0017c042c3.mockapi.io/api/v1/review-form-detail/${stage}`)
-//     .then(function(res) {
-//       return {
-//         data: res.data,
-//         error: ""
-//       };
-//     })
-//     .catch(function(error) {
-//       return {
-//         data: null,
-//         error: extractErrorMessage(error)
-//       };
-//     });
-// }
-
 function getReviewFormDetails(eventId,stage) {
   const url = stage
       ? `/api/v1/review-form-detail?event_id=${eventId}&stage=${stage}`
@@ -472,17 +455,17 @@ function createReviewForm({
       headers: authHeader()
     },
   )
-    .then(res => {
-      return {
-        data: res.data,
-        error: "",
-        status: res.status
-      };
-    })
-    .catch(error => {
-      return {
-        data: null,
-        error: extractErrorMessage(error)
-      };
-    });
+  .then(res => {
+    return {
+      data: res.data,
+      error: "",
+      status: res.status
+    };
+  })
+  .catch(error => {
+    return {
+      data: null,
+      error: extractErrorMessage(error)
+    };
+  });
 }
