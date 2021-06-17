@@ -136,15 +136,15 @@ const FormCreator = ({
       </div>
     )
   }
-  const eventId = evt.id;
+  const eventKey = evt.key;
 
   return (
     <>
       <Prompt
         when={!isSaved && !saved}
-        message="Some Changes have not been saved. Are you sure you want to leave without saving them?"
+        message={t("Some Changes have not been saved. Are you sure you want to leave without saving them?")}
         />
-      {homeRedirect && <Redirect to={`/${eventId}`} />}
+      {homeRedirect && <Redirect to={`/${eventKey}`} />}
       {errorResponse ? (
         <div className='tooltiptext-error response-error'>
           <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>

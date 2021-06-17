@@ -31,6 +31,8 @@ const ReviewForm = (props) => {
   const [leaveStage, setLeaveStage] = useState(false);
   const [showingModal, setShowingModal] = useState(false);
   const [isNewStage, setIsNewStage] = useState(false);
+  const [currentStage, setCurrentStage] = useState(0);
+  const [appSections, setAppSections] = useState([]);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -42,9 +44,6 @@ const ReviewForm = (props) => {
     stage: null,
     error: null,
   });
-  const [currentStage, setCurrentStage] = useState(0);
-  const [appSections, setAppSections] = useState([]);
-
   const [sections, setSections] = useState([{
     id: `${Math.random()}`,
     name: langObject(lang, t('Untitled Section')),
@@ -364,14 +363,14 @@ const ReviewForm = (props) => {
           id: s.backendId,
           depends_on_question_id: s.depends_on_question_id,
           description: s.description,
-          headline: s.name,
+          name: s.name,
           order: s.order,
           questions: questions
         }
       } else {
         s = {
           description: s.description,
-          headline: s.name,
+          name: s.name,
           order: s.order,
           questions: questions
         }
