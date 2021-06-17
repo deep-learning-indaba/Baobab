@@ -39,7 +39,8 @@ axios.interceptors.response.use(
         history && history.location &&
         (
           history.location.pathname !== "/" &&
-          history.location.pathname !== "/createAccount"
+          history.location.pathname !== "/createAccount" &&
+          history.location.pathname !== "/resetPassword"
         )
       ) {
         history.push("/login");
