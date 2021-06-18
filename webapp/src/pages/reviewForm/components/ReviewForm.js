@@ -33,6 +33,7 @@ const ReviewForm = (props) => {
   const [isNewStage, setIsNewStage] = useState(false);
   const [currentStage, setCurrentStage] = useState(0);
   const [appSections, setAppSections] = useState([]);
+  const [appFormId, setAppFormId] = useState(null);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -101,10 +102,7 @@ const ReviewForm = (props) => {
         const sections = formSpec && formSpec.sections;
         if (sections) {
           setAppSections(sections);
-          setFormDetails({
-            ...formDetails,
-            applicationFormId: formSpec.id
-          })
+          setAppFormId(formSpec.id)
         }
     })
   }, []);
@@ -399,18 +397,25 @@ const ReviewForm = (props) => {
         }
       }
     } else {
-        const res = await reviewService.createReviewForm({
-          eventId, isOpen, applicationFormId,
-          stage, deadline, active, sectionsToSave
-        });
-        if (res.status === 201) {
-          setIsSaved(true);
-          setHomeRedirect(true);
+        if (!appFormId) {
+          setErrorResponse('An application form is required to save a review');
         } else {
-          if (res.data && res.data.message) {
-            setErrorResponse(res.data.message.event_id);
+          const res = await reviewService.createReviewForm({
+            eventId, isOpen, applicationFormId: appFormId,
+            stage, deadline, active, sectionsToSave
+          });
+          if (res.status === 201) {
+            setIsSaved(true);
+            setHomeRedirect(true);
           } else {
-            setErrorResponse(res.error);
+            if (res.data && res.data.message) {
+              setErrorResponse(res.data.message.event_id);
+            } else {
+              const obj = res.error;
+              for (let key of Object.keys(obj)) {
+                setErrorResponse(`${obj[key]} - ${key}`);
+              }
+            }
           }
         }
     }

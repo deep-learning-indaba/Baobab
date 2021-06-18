@@ -145,6 +145,7 @@ const FormCreator = ({
         message={t("Some Changes have not been saved. Are you sure you want to leave without saving them?")}
         />
       {homeRedirect && <Redirect to={`/${eventKey}`} />}
+      {console.log('UYYUUUU ', errorResponse)}
       {errorResponse ? (
         <div className='tooltiptext-error response-error'>
           <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>
