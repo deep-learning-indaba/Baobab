@@ -178,17 +178,24 @@ export const Modal = ({
   handleConfirm, sections, questions
 }) => {
   const dependentSections = sections
-    && sections.filter(s => (s.depends_on_question_id === inputs.backendId)
-      || (s.depends_on_question_id === inputs.surrogate_id));
+    && sections.filter(s => ((s.depends_on_question_id && inputs.backendId)
+    && s.depends_on_question_id === inputs.backendId)
+      || ((s.depends_on_question_id && inputs.surrogate_id)
+      && s.depends_on_question_id === inputs.surrogate_id));
   const dependentQestions = questions
-    && questions.filter(q => (q.depends_on_question_id === inputs.backendId)
-      || (q.depends_on_question_id === inputs.surrogate_id));
+    && questions.filter(q => ((q.depends_on_question_id
+        && inputs.backendId) && q.depends_on_question_id === inputs.backendId)
+        || ((q.depends_on_question_id && inputs.surrogate_id)
+        && q.depends_on_question_id === inputs.surrogate_id));
+  
   const questionsInSection = inputs.questions;
   const sectionDependency = questionsInSection && sections.find(s => {
     let isDependent = false;
     questionsInSection.forEach(q => {
-      if ((s.depends_on_question_id === q.backendId)
-        || (s.depends_on_question_id === q.surrogate_id)) {
+      if (((s.depends_on_question_id && q.backendId)
+        && s.depends_on_question_id === q.backendId)
+        || ((s.depends_on_question_id && q.surrogate_id)
+        && s.depends_on_question_id === q.surrogate_id)) {
         isDependent = true;
       }
     })

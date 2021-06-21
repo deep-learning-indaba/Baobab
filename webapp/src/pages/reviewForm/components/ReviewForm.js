@@ -297,7 +297,7 @@ const ReviewForm = (props) => {
               type: q.type,
               is_required: q.required,
               question_id: q.question_id,
-              weight: q.weight,
+              weight: q.weight || 0,
               options: langObject(lang, null),
               placeholder: langObject(lang, null),
               validation_regex: langObject(lang, null),
@@ -317,7 +317,7 @@ const ReviewForm = (props) => {
               validation_regex: q.validation_regex,
               validation_text: q.validation_text,
               question_id: q.question_id,
-              weight: q.weight,
+              weight: q.weight || 0,
             }
           }
         } else {
@@ -330,7 +330,7 @@ const ReviewForm = (props) => {
               type: q.type,
               is_required: q.required,
               question_id: q.question_id,
-              weight: q.weight,
+              weight: q.weight || 0,
               options: langObject(lang, null),
               placeholder: langObject(lang, null),
               validation_regex: langObject(lang, null),
@@ -350,7 +350,7 @@ const ReviewForm = (props) => {
               validation_regex: q.validation_regex,
               validation_text: q.validation_text,
               question_id: q.question_id,
-              weight: q.weight
+              weight: q.weight || 0
             }
           }
         }
@@ -398,7 +398,7 @@ const ReviewForm = (props) => {
       }
     } else {
         if (!appFormId) {
-          setErrorResponse('An application form is required to save a review');
+          setErrorResponse('An application form is required to save the review form');
         } else {
           const res = await reviewService.createReviewForm({
             eventId, isOpen, applicationFormId: appFormId,

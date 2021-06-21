@@ -282,7 +282,6 @@ const ApplicationForm = (props) => {
       }
     } else {
         const res = await createApplicationForm(eventId, isOpen, nominate, sectionsToSave);
-        console.log(res);
         if (res.status === 201) {
           setIsSaved(true);
           setHomeRedirect(true);

@@ -153,7 +153,13 @@ const Question = forwardRef(({
               }
             } else {
               if (['key', 'weight'].indexOf(prop) !== -1) {
-                q = {...q, [prop]: e.target.value}
+                if (prop === 'weight' && e.target.value >= 0) {
+                  q = {...q, [prop]: e.target.value}
+                } else if (prop === 'weight') {
+
+                } else {
+                  q = {...q, [prop]: e.target.value}
+                }
               } else {
                 q = {...q, [prop]: {...target, [lang]: e.target.value}}
               }
@@ -852,7 +858,7 @@ const Question = forwardRef(({
                 name="question-headline"
                 type="number"
                 min={0}
-                value={inputs.weight || 0}
+                value={inputs.weight}
                 placeholder={inputs.weight || t('Score Weight')}
                 onChange={handleChange('weight')}
                 className="question-inputs question-headline"

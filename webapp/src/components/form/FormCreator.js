@@ -15,18 +15,17 @@ import {
 
 const FormCreator = ({
   languages, event: evt, t, sections,
-  setSections, nominate, setNominate,
-  language, setLanguage, dragId, setDragId,
+  setSections, setNominate, language,
+  setLanguage, dragId, setDragId,
   applyTransition, setApplytransition,
   parentDropable, setParentDropable,
   homeRedirect, initialState, errorResponse,
   disableSaveBtn, setDisableSaveBtn,
   events, setEvent, eventService, addSection,
   handleSave, isSaved, isReview, addQuestion,
-  addAnswerFromAppForm, appSections, stage,
-  setCurrentStage, currentStage, leaveStage,
+  addAnswerFromAppForm, appSections, leaveStage,
   setLeaveStage, showingModal, setShowingModal,
-  isNewStage, setIsNewStage, title, EventMeta,
+  setIsNewStage, title, EventMeta,
   hasKey, hasDependancy, hasSpecialQuestion
 }) => {
   const lang = languages;
@@ -145,7 +144,6 @@ const FormCreator = ({
         message={t("Some Changes have not been saved. Are you sure you want to leave without saving them?")}
         />
       {homeRedirect && <Redirect to={`/${eventKey}`} />}
-      {console.log('UYYUUUU ', errorResponse)}
       {errorResponse ? (
         <div className='tooltiptext-error response-error'>
           <Trans i18nKey='errorResponse' className='response-error'>{{errorResponse}}</Trans>
