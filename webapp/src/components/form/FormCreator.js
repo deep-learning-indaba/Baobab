@@ -7,7 +7,7 @@ import Section from '../../pages/createApplicationForm/components/Section';
 import Loading from '../Loading';
 import {
   option, AnimateSections,
-  drop, drag, Stages, StageModal
+  drop, drag, StageModal
  } from '../../pages/createApplicationForm/components/util';
  import { dateFormat, TopBar } from '../../utils/forms';
  
@@ -25,8 +25,10 @@ const FormCreator = ({
   handleSave, isSaved, isReview, addQuestion,
   addAnswerFromAppForm, appSections, leaveStage,
   setLeaveStage, showingModal, setShowingModal,
-  setIsNewStage, title, EventMeta,
-  hasKey, hasDependancy, hasSpecialQuestion
+  title, EventMeta,hasKey, hasDependancy,
+  hasSpecialQuestion, setTotalStages,
+  memoizedStage, setStg, memoizedTotalStages,
+  isNewStage, isReviewLoading
 }) => {
   const lang = languages;
 
@@ -125,7 +127,7 @@ const FormCreator = ({
 
   const {loading, event: evnt, error } = events;
 
-  if (loading) {
+  if (loading || isReviewLoading) {
     return <Loading />
   }
   if (error) {
@@ -210,7 +212,11 @@ const FormCreator = ({
                 t={t}
                 setLeaveStage={setLeaveStage}
                 setShowingModal={setShowingModal}
-                setIsNewStage={setIsNewStage}
+                setTotalStages={setTotalStages}
+                memoizedStage={memoizedStage}
+                setStg={setStg}
+                memoizedTotalStages={memoizedTotalStages}
+                isNewStage={isNewStage}
               />
             )}
             <AnimateSections

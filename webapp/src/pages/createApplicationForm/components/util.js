@@ -225,8 +225,10 @@ export const Modal = ({
   )
 }
 
-export const StageModal = ({
-  t, setLeaveStage, setShowingModal
+export const StageModal = React.memo(({
+  t, setLeaveStage, setShowingModal,
+  memoizedStage, setStg, isNewStage,
+  memoizedTotalStages, setTotalStages
 }) => {
   
   const handleCancel = () => {
@@ -236,7 +238,9 @@ export const StageModal = ({
 
   const handleLeave = () => {
     setLeaveStage(true);
+    setStg(memoizedStage)
     setShowingModal(false);
+    isNewStage && setTotalStages(memoizedTotalStages);
   }
   const message = 'Some Changes have not been saved. Are you sure you want to leave without saving them?'
 
@@ -246,7 +250,7 @@ export const StageModal = ({
       visible={true}
       centered
       onOK={handleLeave}
-      onCancel={() => handleCancel()}
+      onCancel={handleCancel}
       okText={t("Leave anyway")}
       cancelText={t("Stay on the stage")}>
       <p>
@@ -254,7 +258,7 @@ export const StageModal = ({
       </p>
     </ConfirmModal>
   )
-}
+})
 
 /**
  * Handles move up or down of an element
@@ -645,47 +649,40 @@ export const rows = (text) => {
 }
 
 export const Stages = ({
-  t, stage, setCurrentStage, currentStage,
+  t, setCurrentStage, currentStage,
   leaveStage, setShowingModal, saved,
-  isNewStage, setIsNewStage
+  isNewStage, setIsNewStage, totalStages,
+  setTotalStages, handleSaveTotalStages,
+  stg, setStg, handleSaveStageValue
 }) => {
-  const [stages, setStages] = useState(1);
-  const [stg, setStg] = useState(currentStage);
-
-  useEffect(() => {
-    if(stage) {
-      setStages(stage.total_stages);
-    } else {
-      setStages(1);
-    }
-    
-  }, [])
-
   useEffect(() => {
     if (leaveStage && isNewStage) {
-      setStages(stages + 1);
-      setCurrentStage(stages + 1)
+      setStg(totalStages)
+      setCurrentStage(totalStages)
     } else {
       setCurrentStage(stg)
     }
   }, [leaveStage])
 
   const handleAddStage = () => {
+    handleSaveTotalStages(totalStages + 1)
     setIsNewStage(true);
     if (!saved && !leaveStage) {
       setShowingModal(true);
     } else {
-      setStages(stages + 1);
-      setCurrentStage(stages + 1);
+      setStg(totalStages + 1)
+      setTotalStages(totalStages + 1);
+      setCurrentStage(totalStages + 1);
     }
   }
+
   const handleStageChange = (e) => {
-    setStg(e.target.value)
+    handleSaveStageValue(e.target.value)
     setIsNewStage(false)
     if (!saved && !leaveStage) {
       setShowingModal(true);
-    }else {
-      setCurrentStage(e.target.value);
+    } else {
+      setStg(e.target.value)
     }
   }
 
@@ -696,7 +693,7 @@ export const Stages = ({
       </div>
       <div className='review-stage-btns'>
         <div className='review-stages'>
-          {Array.from(Array(stages), (_, index) => index + 1).map((s, i) => {
+          {Array.from(Array(totalStages), (_, index) => index + 1).map((s, i) => {
             return (
               <input
                 type='button'
@@ -709,7 +706,6 @@ export const Stages = ({
                 onClick={handleStageChange}
               />)
           })}
-          
         </div>
         <button
           className="add-stage-btn"
@@ -722,3 +718,5 @@ export const Stages = ({
     </div>
   )
 }
+
+export default React.memo(Stages);

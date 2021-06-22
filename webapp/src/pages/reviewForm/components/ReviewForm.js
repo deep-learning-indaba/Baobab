@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   applicationFormService,
 } from '../../../services/applicationForm/applicationForm.service';
-import { langObject,Stages } from '../../../pages/createApplicationForm/components/util';
+import Stages, { langObject,  } from '../../../pages/createApplicationForm/components/util';
 import { eventService } from '../../../services/events';
 import { reviewService } from '../../../services/reviews';
 import FormCreator from '../../../components/form/FormCreator';
@@ -34,6 +34,11 @@ const ReviewForm = (props) => {
   const [currentStage, setCurrentStage] = useState(0);
   const [appSections, setAppSections] = useState([]);
   const [appFormId, setAppFormId] = useState(null);
+  const [totalStages, setTotalStages] = useState(1);
+  const [stg, setStg] = useState(currentStage);
+  const [memoizedStage, setMemoizedStage] = useState(null);
+  const [memoizedTotalStages, setMemoizedTotalStages] = useState(null);
+  const [isReviewLoading, setIsReviewLoading] = useState(true);
 
   const [event, setEvent] = useState({
     loading: true,
@@ -45,6 +50,7 @@ const ReviewForm = (props) => {
     stage: null,
     error: null,
   });
+  const memoStage = useMemo(() => stage, [stage]);
   const [sections, setSections] = useState([{
     id: `${Math.random()}`,
     name: langObject(lang, t('Untitled Section')),
@@ -111,11 +117,15 @@ const ReviewForm = (props) => {
     if (!stage.loading) {
       if(stage.stage) {
         setCurrentStage(stage.stage.current_stage);
+        setStg(stage.stage.current_stage)
+        setTotalStages(stage.stage.total_stages)
       } else {
         setCurrentStage(1);
+        setStg(1)
+        setTotalStages(1)
       }
     }
-  }, [stage]);
+  }, [memoStage]);
 
   useEffect(() => {
     const eventId = props.event.id;
@@ -123,6 +133,7 @@ const ReviewForm = (props) => {
       reviewService.getReviewFormDetails(eventId, currentStage)
       .then(res => {
         if (res.data) {
+          setIsReviewLoading(false)
           const mapedQuestions = res.data.sections.map(s => {
             const questions = s.questions.map(q => {
               const type = q.type;
@@ -158,6 +169,7 @@ const ReviewForm = (props) => {
           setSections(mapedQuestions);
           setLeaveStage(false)
         } else {
+          setIsReviewLoading(false)
           setSections([{
             id: `${Math.random()}`,
             name: langObject(lang, t('Untitled Section')),
@@ -421,6 +433,14 @@ const ReviewForm = (props) => {
     }
   }
 
+  const handleSaveStageValue = useCallback((value) => {
+    setMemoizedStage(value)
+  }, []);
+
+  const handleSaveTotalStages = useCallback((value) => {
+    setMemoizedTotalStages(value)
+  }, [])
+
   const EventMeta = ({
     dateFormat, saved, evnt
   }) => {
@@ -441,15 +461,19 @@ const ReviewForm = (props) => {
         {!stage.loading && (
           <Stages
             t={t}
-            stage={stage.stage}
             currentStage={currentStage}
             setCurrentStage={setCurrentStage}
             setShowingModal={setShowingModal}
             saved={saved}
             leaveStage={leaveStage}
-            showingModal={showingModal}
             isNewStage={isNewStage}
             setIsNewStage={setIsNewStage}
+            totalStages={totalStages}
+            setTotalStages={setTotalStages}
+            stg={stg}
+            setStg={setStg}
+            handleSaveStageValue={handleSaveStageValue}
+            handleSaveTotalStages={handleSaveTotalStages}
           />
         )}
       </div>
@@ -485,18 +509,19 @@ const ReviewForm = (props) => {
       addQuestion={addQuestion}
       addAnswerFromAppForm={addAnswerFromAppForm}
       appSections={appSections}
-      stage={stage}
-      currentStage={currentStage}
-      setCurrentStage={setCurrentStage}
       leaveStage={leaveStage}
       setLeaveStage={setLeaveStage}
       showingModal={showingModal}
       setShowingModal={setShowingModal}
       isNewStage={isNewStage}
-      setIsNewStage={setIsNewStage}
       title='Review Form'
       EventMeta={EventMeta}
       hasSpecialQuestion={true}
+      setTotalStages={setTotalStages}
+      memoizedStage={memoizedStage}
+      setStg={setStg}
+      memoizedTotalStages={memoizedTotalStages}
+      isReviewLoading={isReviewLoading}
      />
   )
 }
