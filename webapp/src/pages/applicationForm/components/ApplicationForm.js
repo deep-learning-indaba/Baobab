@@ -31,7 +31,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
-const INFORMATION = 'information'
+const INFORMATION = ['information', 'sub-heading']
 const MULTI_FILE = 'multi-file';
 
 
@@ -258,7 +258,8 @@ class FieldEditor extends React.Component {
             options={question.options}
             responseId={responseId} />
         )
-      case INFORMATION:
+      case INFORMATION[0]:
+      case INFORMATION[1]:
         return question.description && <div className="application-form-information">{question.description}</div>
       default:
         return (
@@ -272,7 +273,7 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p className={this.props.question.type == INFORMATION ? "h3" : "h4"}>{this.props.question.headline}</p>
+        <p className={INFORMATION.includes(this.props.question.type) ? "h3" : "h4"}>{this.props.question.headline}</p>
         {this.formControl(
           this.props.key,
           this.props.question,
