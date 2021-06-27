@@ -914,7 +914,7 @@ class ReviewFormDetailAPI(restful.Resource):
             deadline, 
             stage, 
             # Only make this stage active if there is no other active stage.
-            active=not any(o.active for o in other_review_forms) and active)
+            active=not any(o.active for o in other_review_forms))
         
         review_repository.add_model(review_form)
 

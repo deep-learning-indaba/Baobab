@@ -4,8 +4,12 @@
   border: none;
   border-bottom: thin #e6e6e6 solid;
   margin: 0;
-  padding: 10px;
+  padding: 15px;
   height: 4em;
+}
+
+.application-form-wrap .top-bar .icon-title .title {
+  font-size: 1.2rem;
 }
 
 .application-form-wrap .icon-title {
@@ -88,10 +92,6 @@
   color: #fff;
 }
 
-.add-section-btn-wrapper {
-  /* border: red solid thin; */
-}
-
 .application-form-wrap .add-section-btn {
   padding: 5px;
   margin-right: 2em;
@@ -107,6 +107,10 @@
   outline: none;
   position: fixed;
   z-index: 1;
+}
+
+.application-form-wrap .answer-section-btn {
+  margin-right: 1em;
 }
 
 .application-form-wrap .save-form-btn {
@@ -220,7 +224,7 @@
   outline: none;
 }
 
-.confirm-modal {
+.application-form-wrap .confirm-modal {
   top: 30%;
 }
 
@@ -337,7 +341,6 @@
 
 .application-form-wrap .dependency-wrapper {
   margin-top: 0.5em;
-  /* display: table; */
 }
 
 .application-form-wrap .select-dependency {
@@ -345,6 +348,12 @@
   margin-right: 2em;
   display: inline-block;
 }
+
+.application-form-wrap .select-question {
+  width: 85%;
+  display: inline-table;
+}
+
 
 .application-form-wrap .toogle-section-details {
   width: 1em;
@@ -445,6 +454,10 @@
   margin-top: 1em;
 }
 
+.application-form-wrap  .key-headline {
+  margin-top: 1em;
+}
+
 .application-form-wrap .label-input-wrapper {
   margin-top: 0.7em;
 }
@@ -473,7 +486,7 @@
 .application-form-wrap .question-title {
   font-size: 1em;
   font-weight: bolder;
-  max-width: 57%;
+  width: 57%;
   background: #ecebeb;
   padding: 0.5em;
   border-radius: 5px;
@@ -482,7 +495,9 @@
 .application-form-wrap .move-btns-wrapper {
   display: inline-table;
   margin: 0;
+  margin-top: 0.2em;
   padding: 0;
+  float: right;
 }
 
 .move-btns-wrapper .move-btn {
@@ -497,8 +512,6 @@
   transition-timing-function: ease-out;
   position: relative;
 }
-
-
 
 .move-btns-wrapper .move-btn:hover {
   background:  rgb(168, 167, 167);
@@ -777,4 +790,58 @@
 
 .application-form-wrap .false-radio {
   margin-left: 1em;
+}
+
+.application-form-wrap .review-stage-label {
+  font-weight: bold;
+}
+
+.application-form-wrap .review-stage-btns {
+  margin-top: 0.5em;
+}
+
+.application-form-wrap .review-stage-wrapper {
+  margin-top: 1em;
+  margin-bottom: 2em;
+}
+
+.application-form-wrap .stage-btn {
+  border: thin solid #333;
+  border-radius: 50%;
+  width: 2em;
+  height: 2em;
+  margin-right: 1em;
+  margin-bottom: 1em;
+}
+.application-form-wrap .add-stage-btn {
+  float: right;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  display: inline;
+  position: absolute;
+}
+
+.application-form-wrap .add-stage-btn:hover:after { 
+  content: attr(data-title);
+  font-size: 0.7rem;
+  font-family: Arial;
+  position: absolute;
+  padding: 0.2em 0.7em;
+  border-radius: 5px;
+  background-color: #333;
+  left: -3em;
+  bottom: 3.5em;
+  width: 9em;
+  transition-property: color, background-color;
+  transition-duration: 1s;
+  transition-timing-function: ease-out;
+  color: white;
+}
+
+.application-form-wrap .review-stages {
+  width: 780px;
+  display: inline-table;
 }

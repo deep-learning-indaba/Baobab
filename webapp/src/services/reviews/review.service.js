@@ -17,7 +17,10 @@ export const reviewService = {
   deleteResponseReviewer,
   getReviewDetails,
   getReviewSummaryList,
-  getReviewStage
+  getReviewStage,
+  getReviewFormDetails,
+  updateReviewForm,
+  createReviewForm
 };
 
 function getReviewForm(eventId, skip) {
@@ -368,4 +371,101 @@ function getReviewStage(eventId) {
         error: extractErrorMessage(error)
       };
     });
+}
+
+function getReviewFormDetails(eventId,stage) {
+  const url = stage
+      ? `/api/v1/review-form-detail?event_id=${eventId}&stage=${stage}`
+      : `/api/v1/review-form-detail?event_id=${eventId}`
+  return axios
+    .get(
+      baseUrl + url,
+      {
+        headers: authHeader()
+      }
+    )
+    .then(function(res) {
+      return {
+        data: res.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function updateReviewForm({
+  id, eventId, isOpen, applicationFormId,
+  stage, deadline, active, sectionsToSave
+}) {
+  const form = {
+    "id": id,
+    'event_id': eventId,
+    "is_open": isOpen,
+    "application_form_id": applicationFormId,
+    "stage": stage,
+    "deadline": deadline,
+    "active": active,
+    "sections": sectionsToSave
+  }
+  return axios
+    .put(
+      baseUrl + `/api/v1/review-form-detail`,
+      form,
+      {
+        headers: authHeader()
+      },
+    )
+    .then(res => {
+      return {
+        data: res.data,
+        error: ""
+      };
+    })
+    .catch(error => {
+      return {
+        data: null,
+        error: extractErrorMessage(error)
+      };
+    });
+}
+
+function createReviewForm({
+  eventId, isOpen, applicationFormId,
+  stage, deadline, active, sectionsToSave
+}) {
+  const form = {
+    'event_id': eventId,
+    "is_open": isOpen,
+    "application_form_id": applicationFormId,
+    "stage": stage,
+    "deadline": deadline,
+    "active": active,
+    "sections": sectionsToSave
+  }
+  return axios
+  .post(
+    baseUrl + '/api/v1/review-form-detail',
+    form,
+    {
+      headers: authHeader()
+    },
+  )
+  .then(res => {
+    return {
+      data: res.data,
+      error: "",
+      status: res.status
+    };
+  })
+  .catch(error => {
+    return {
+      data: null,
+      error: extractErrorMessage(error)
+    };
+  });
 }

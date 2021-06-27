@@ -4,8 +4,12 @@ import React, {
 import { ConfirmModal } from "react-bootstrap4-modal";
 import { default as ReactSelect } from "react-select";
 
-export const option = ({ value, t, label: l, faClass, headline }) => {
-  const lab = headline ? l : t(l);
+export const option = ({
+  value, t, label: l, faClass,
+  headline, disabled, desc, head
+}) => {
+  let lab = headline || head || disabled ? l : t(l);
+  lab = disabled ? <b>{lab}</b> : lab;
   const label = faClass ? <div>
     <div className='dropdown-text'>
       <i className={faClass}></i>
@@ -15,7 +19,10 @@ export const option = ({ value, t, label: l, faClass, headline }) => {
   : lab;
   return {
     label,
-    value
+    value,
+    disabled,
+    description: desc,
+    headline: head
   }
 }
 
@@ -171,17 +178,24 @@ export const Modal = ({
   handleConfirm, sections, questions
 }) => {
   const dependentSections = sections
-    && sections.filter(s => (s.depends_on_question_id === inputs.backendId)
-      || (s.depends_on_question_id === inputs.surrogate_id));
+    && sections.filter(s => ((s.depends_on_question_id && inputs.backendId)
+    && s.depends_on_question_id === inputs.backendId)
+      || ((s.depends_on_question_id && inputs.surrogate_id)
+      && s.depends_on_question_id === inputs.surrogate_id));
   const dependentQestions = questions
-    && questions.filter(q => (q.depends_on_question_id === inputs.backendId)
-      || (q.depends_on_question_id === inputs.surrogate_id));
+    && questions.filter(q => ((q.depends_on_question_id
+        && inputs.backendId) && q.depends_on_question_id === inputs.backendId)
+        || ((q.depends_on_question_id && inputs.surrogate_id)
+        && q.depends_on_question_id === inputs.surrogate_id));
+  
   const questionsInSection = inputs.questions;
   const sectionDependency = questionsInSection && sections.find(s => {
     let isDependent = false;
     questionsInSection.forEach(q => {
-      if ((s.depends_on_question_id === q.backendId)
-        || (s.depends_on_question_id === q.surrogate_id)) {
+      if (((s.depends_on_question_id && q.backendId)
+        && s.depends_on_question_id === q.backendId)
+        || ((s.depends_on_question_id && q.surrogate_id)
+        && s.depends_on_question_id === q.surrogate_id)) {
         isDependent = true;
       }
     })
@@ -210,6 +224,41 @@ export const Modal = ({
     </ConfirmModal>
   )
 }
+
+export const StageModal = React.memo(({
+  t, setLeaveStage, setShowingModal,
+  memoizedStage, setStg, isNewStage,
+  memoizedTotalStages, setTotalStages
+}) => {
+  
+  const handleCancel = () => {
+    setLeaveStage(false);
+    setShowingModal(false);
+  }
+
+  const handleLeave = () => {
+    setLeaveStage(true);
+    setStg(memoizedStage)
+    setShowingModal(false);
+    isNewStage && setTotalStages(memoizedTotalStages);
+  }
+  const message = 'Some Changes have not been saved. Are you sure you want to leave without saving them?'
+
+  return(
+    <ConfirmModal
+      className='confirm-modal'
+      visible={true}
+      centered
+      onOK={handleLeave}
+      onCancel={handleCancel}
+      okText={t("Leave anyway")}
+      cancelText={t("Stay on the stage")}>
+      <p>
+        {t(message)}
+      </p>
+    </ConfirmModal>
+  )
+})
 
 /**
  * Handles move up or down of an element
@@ -247,6 +296,43 @@ export const handleMove = ({
     }
     setAnimation && setAnimation(true);
   }
+}
+
+export const SelectQuestion = ({
+  options, t, handleAppFormQuestionSelect,
+  inputs
+}) => {
+  const selectedQuestion = options
+    .find(o => parseInt(o.value) === inputs.question_id);
+  return (
+    <ReactSelect
+      options={options}
+      isOptionDisabled={option => option.disabled === 'yes'}
+      placeholder={t('Select a question from Application Form')}
+      onChange={handleAppFormQuestionSelect}
+      value={selectedQuestion}
+      className='select-dependency select-question'
+      styles={{
+        control: (base, state) => ({
+          ...base,
+          boxShadow: "none",
+          border: "none",
+          transition: state.isFocused 
+            && 'color,background-color 1.5s ease-out',
+          background: state.isFocused
+            && 'lightgray',
+          color: '#fff'
+        }),
+        option: (base, state) => ({
+          ...base,
+          backgroundColor: state.isFocused
+            && "lightgray",
+          color: state.isFocused && "#fff"
+        })
+      }}
+      menuPlacement="auto"
+      />
+  )
 }
 
 export const Dependency = ({
@@ -561,3 +647,76 @@ export const rows = (text) => {
   const numRows = length / 102;
   return !length ? 1 : Math.ceil(numRows);
 }
+
+export const Stages = ({
+  t, setCurrentStage, currentStage,
+  leaveStage, setShowingModal, saved,
+  isNewStage, setIsNewStage, totalStages,
+  setTotalStages, handleSaveTotalStages,
+  stg, setStg, handleSaveStageValue
+}) => {
+  useEffect(() => {
+    if (leaveStage && isNewStage) {
+      setStg(totalStages)
+      setCurrentStage(totalStages)
+    } else {
+      setCurrentStage(stg)
+    }
+  }, [leaveStage])
+
+  const handleAddStage = () => {
+    handleSaveTotalStages(totalStages + 1)
+    setIsNewStage(true);
+    if (!saved && !leaveStage) {
+      setShowingModal(true);
+    } else {
+      setStg(totalStages + 1)
+      setTotalStages(totalStages + 1);
+      setCurrentStage(totalStages + 1);
+    }
+  }
+
+  const handleStageChange = (e) => {
+    handleSaveStageValue(e.target.value)
+    setIsNewStage(false)
+    if (!saved && !leaveStage) {
+      setShowingModal(true);
+    } else {
+      setStg(e.target.value)
+    }
+  }
+
+  return (
+    <div className='review-stage-wrapper'>
+      <div className='review-stage-label'>
+        {t('Stages')}
+      </div>
+      <div className='review-stage-btns'>
+        <div className='review-stages'>
+          {Array.from(Array(totalStages), (_, index) => index + 1).map((s, i) => {
+            return (
+              <input
+                type='button'
+                key={i}
+                value={s}
+                style={s === parseInt(currentStage)
+                  ? { background: '#333', color: '#fff'}
+                  : {}}
+                className='stage-btn'
+                onClick={handleStageChange}
+              />)
+          })}
+        </div>
+        <button
+          className="add-stage-btn"
+          data-title={t('Add New Stage')}
+          onClick={handleAddStage}
+          >
+          <i className="fas fa-plus add-question-icon"></i>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default React.memo(Stages);
