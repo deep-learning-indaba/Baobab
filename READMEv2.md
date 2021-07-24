@@ -32,3 +32,7 @@ docker-compose up
 ```
 
 The front-end will be available at [localhost:8080](http://localhost:8080) and the backend REST API at [localhost:5000](http://localhost:5000).
+
+## License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
