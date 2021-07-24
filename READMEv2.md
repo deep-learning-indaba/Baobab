@@ -31,8 +31,19 @@ Then start up the application
 docker-compose up
 ```
 
-The front-end will be available at [localhost:8080](http://localhost:8080) and the backend REST API at [localhost:5000](http://localhost:5000).
+The frontend should be available at [localhost:8080](http://localhost:8080) and the backend API at [localhost:5000](http://localhost:5000).
+
+## Project Structure and Tech Stack
+
+- `api/` contains the [Python 3.7](https://www.python.org/) [Flask](https://flask.palletsprojects.com/en/2.0.x/) Web API. See it's [README](./api/README.md) for more details.
+- `webapp/` contains the [ReactJS](https://reactjs.org/) frontend. See it's [README](./webapp/README.md) for more details.
+
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for more details.
+
+Please adhere to this project's [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [Apache License 2.0](LICENSE).
