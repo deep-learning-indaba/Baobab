@@ -41,9 +41,9 @@ docker-compose up
 
 The frontend should now be available at [http://localhost:8080](http://localhost:8080) and the backend API at [http://localhost:5000](http://localhost:5000).
 
-If you had any problems, you may want to have a look at our more [detailed getting started](./docs/getting_started_detailed.md) guide and/or our [troubleshooting](./docs/troubleshooting.md) guide. Other questions you may have may possibly be found in our [FAQs](./docs/faq.md).
+If you had any problems, have a look at our more [detailed getting started](./docs/getting_started_detailed.md) guide and/or our [troubleshooting](./docs/troubleshooting.md) guide. Answers to other questions may possibly be found in our [FAQs](./docs/faq.md).
 
-Now that you've setup, you may want to dig deeper into the Python 3.7 Flask API backend in `api/` or the ReactJS frontend in `webapp/` which each have their own READMEs [here](./api/README.md) and [here](./webapp/README.md) respectively.
+Now that you've setup, dig deeper into the Python 3.7 Flask API backend in `api/` or the ReactJS frontend in `webapp/` which each have their own READMEs [here](./api/README.md) and [here](./webapp/README.md) respectively.
 
 ## Contributing
 
