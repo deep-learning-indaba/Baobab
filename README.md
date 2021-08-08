@@ -2,7 +2,7 @@
 
 <p align="center">
     <a href="http://makeapullrequest.com" target="_blank" rel="noopener noreferrer" alt="PRs Welcome">
-        <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" /></a>
+        <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" /></a>
     <a href="https://github.com/deep-learning-indaba/Baobab/issues/" alt="open issues">
         <img src="https://img.shields.io/github/issues/deep-learning-indaba/Baobab" /></a>
     <a href="https://github.com/deep-learning-indaba/Baobab/graphs/contributors" alt="Contributors">
