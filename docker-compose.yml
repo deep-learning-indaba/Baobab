@@ -21,6 +21,7 @@ web:
   links:
     - db
     - storage
+    - redis
   environment:
     DEBUG: "True"
     SECRET_KEY: __filler__
@@ -50,6 +51,8 @@ webapp:
   environment:
     - NODE_ENV=development
     - CHOKIDAR_USEPOLLING=true
+  links:
+    - web
 
 test-ci:
   build: ./webapp
