@@ -16,3 +16,9 @@ dispatch:
 
   - url: "baobab.ai4d.ai/*"
     service: prod-frontend
+
+  - url: "test-baobab.imbizo.africa/*"
+    service: staging-frontend
+
+  - url: "baobab.imbizo.africa/*"
+    service: prod-frontend
