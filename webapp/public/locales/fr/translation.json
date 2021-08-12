@@ -345,7 +345,7 @@
     "File": "Fichier",
     "Date": "Date",
     "Multi File": "Multi Fichier",
-    "Choose type": "Choisissez la Category",
+    "Choose type": "Choisissez la Catégorie",
     "Placeholder": "Text Substituant",
     "Value": "Valuer",
     "Required": "Obligatoire",
@@ -406,6 +406,20 @@
     "Some Changes have not been saved. Are you sure you want to leave without saving them?": "Certaines modifications n'ont pas été enregistrées. Voulez-vous vraiment partir sans les enregistrer?",
     "Details": "Des détails",
     "Summary": "Résumé",
-    "Stage": "Étape"
+    "Stage": "Étape",
+    "Score Weight": "Le Poids",
+    "Review opens ": "Ouverture de l’examen ",
+    "Review closes ": "Fermeture de l’examen ",
+    "Review Form": "Review Form",
+    "Stages": "Étapes",
+    "Add answer from application form": "Ajouter une réponse à partir du formulaire de demande",
+    "Add New Stage": "Ajouter une nouvelle étape",
+    "Select a question from Application Form": "Sélectionnez une question dans le formulaire de candidature",
+    "   ": "   ",
+    "Subheading": "Sous-titre",
+    "Numeric Input": "Saisie numérique",
+    "Radio Buttons": "Boutons radio",
+    "An application form is required to save the review form": "Un formulaire de demande est requis pour enregistrer le formulaire d'examen"
+
 }
 

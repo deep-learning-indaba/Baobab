@@ -12,7 +12,8 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
-import ResponseList from './pages/ResponseList/ResponseList'
+import ResponseList from './pages/ResponseList/ResponseList';
+import { AdminMenu } from './utils/adminMenu';
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -117,19 +118,8 @@ class EventNav extends Component {
                 </li>
               )}
             {isEventAdmin(this.props.user, this.props.event) && (
-              <li className="nav-item dropdown">
-                <div
-                  className="nav-link dropdown-toggle"
-                  id="navbarDropdown"
-                  role="button"
-                  data-toggle="dropdown"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  {t('Event Admin')}
-                </div>
-                <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                  <NavLink
+              <AdminMenu t={t} label="Event Admin">
+                <NavLink
                     to={`/${this.props.eventKey}/reviewAssignment`}
                     className="dropdown-item"
                     onClick={this.props.toggleMenu}
@@ -157,15 +147,22 @@ class EventNav extends Component {
                   >
                     {t('Review Dashboard')}
                   </NavLink>
+                  <h6 className='dropdown-submenu-header'>Form Settings</h6>
                   <NavLink
                     to={`/${this.props.eventKey}/applicationform`}
-                    className="dropdown-item"
+                    className="dropdown-item dropdown-submenu-item"
                     onClick={this.props.toggleMenu}
                   >
-                    {t('Form Settings')}
+                    {t('Application Form')}
                   </NavLink>
-                </div>
-              </li>
+                  <NavLink
+                    to={`/${this.props.eventKey}/reviewForm`}
+                    className="dropdown-item dropdown-submenu-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Review Form')}
+                  </NavLink>
+                </AdminMenu>
             )}
             {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
@@ -367,7 +364,6 @@ class AppComponent extends Component {
 
   render() {
     const t = this.props.t;
-
     return (
       <Router history={history}>
         <div>

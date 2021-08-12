@@ -16,21 +16,17 @@ describe('MultiFileValue Tests', () => {
   });
 
   it('Renders list of files.', () => {
-    const value = `[{"id":1,"file":"1.tst","name":"lorem.tst"},{"id":2,"file":"2.tst","name":"ipsum.tst"}]`
+    const value = `[{"id":1,"filename":"1.tst","rename":"lorem.tst"},{"id":2,"filename":"2.tst","rename":"ipsum.tst"}]`
     const wrapper = shallow(
       <MultiFileValue value={value} />
     );
     expect(wrapper.contains(
       <ul>
-        <li key="1">
-          <a target="_blank" href={`${prefix}1.tst`}>
-            lorem.tst
-          </a>
+        <li>
+          <a target="_blank" href={`${prefix}1.tst&rename=lorem.tst`} />
         </li>
-        <li key="2">
-          <a target="_blank" href={`${prefix}2.tst`}>
-            ipsum.tst
-          </a>
+        <li>
+          <a target="_blank" href={`${prefix}2.tst&rename=ipsum.tst`} />
         </li>
       </ul>
     )).toEqual(true);

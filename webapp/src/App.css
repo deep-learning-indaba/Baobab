@@ -177,3 +177,13 @@ div.vertical-space {
 div.card-container {
   margin: 0 auto;
 }
+
+.dropdown-submenu-header {
+  color: gray;
+  padding-left: 1.5em;
+  padding-top: 0.5em;
+}
+
+.dropdown-submenu-item {
+  padding-left: 3em;
+}

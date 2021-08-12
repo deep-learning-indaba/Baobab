@@ -18,7 +18,7 @@ from six import string_types
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
 
-    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+    if GCP_CREDENTIALS_DICT['private_key'] == "dummy":
         LOGGER.debug('Setting dummy storage client')
         storage_client = storage.Client(project=GCP_PROJECT_NAME)
     else:

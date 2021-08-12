@@ -5,16 +5,18 @@ import React,
 import { Trans } from 'react-i18next';
 import Question from './Question';
 import {
-  Modal, AnimateSections, handleMove, langObject,
-  drag, drop, option, Dependency, dependencyChange,
+  Modal, AnimateSections, handleMove, drag,
+  drop, option, Dependency, dependencyChange,
   rows
 } from './util';
 
 export const Section = forwardRef(({
   t, sectionIndex, sections, inputs, lang,
   setSection, handleDrag, handleDrop,langs,
-  setApplytransition, setParentDropable, parentDropable,
-  setDisableSaveBtn
+  setApplytransition, setParentDropable,
+  parentDropable, setDisableSaveBtn, addQuestion,
+  addAnswerFromAppForm, appSections, hasKey,
+  hasDependancy, hasSpecialQuestion
 }, ref) => {
   const [isModelVisible, setIsModelVisible] = useState(false);
   const [questionAnimation, setQuestionAnimation] = useState(false);
@@ -59,38 +61,6 @@ export const Section = forwardRef(({
     });
     setSection(updatedSections);
     setApplytransition(false);
-  }
-
-  const addQuestion = () => {
-    const surrogateId = maxSurrogateId + 1
-    const qsts = inputs.questions;
-    const qst = {
-      id: `${Math.random()}`,
-      surrogate_id: surrogateId,
-      description: langObject(langs, ''),
-      order: qsts.length + 1,
-      headline: langObject(langs, ''),
-      placeholder: langObject(langs, ''),
-      type: null,
-      options: langObject(langs, null),
-      value: langObject(langs, ''),
-      label: langObject(langs, ''),
-      required: false,
-      key: null,
-      depends_on_question_id: 0,
-      show_for_values: langObject(langs, null),
-      validation_regex: langObject(langs, null),
-      validation_text: langObject(langs, ''),
-    }
-    const updatedSections = sections.map(s => {
-      if (s.id === inputs.id) {
-        s = {...inputs, questions: [...qsts, qst]};
-      }
-      return s;
-    });
-    setSection(updatedSections);
-    setApplytransition(false);
-    setQuestionAnimation(false);
   }
 
   const handleOkDelete = () => {
@@ -370,15 +340,16 @@ export const Section = forwardRef(({
               <i className="fas fa-angle-down fa-section fa-duplicate"></i>
               {t("Move Section Down")}
             </button>
-            <button
-              className="dropdown-item delete-section"
-              onClick={handleKey}
-            >
-              {isKeyOn
-                && <i className="fas fa-check fa-duplicate fa-section"></i>
-              }
-              {t("Add Key")}
-            </button>
+            {hasKey && (
+              <button
+                className="dropdown-item delete-section"
+                onClick={handleKey}>
+                {isKeyOn
+                  && <i className="fas fa-check fa-duplicate fa-section"></i>
+                }
+                {t("Add Key")}
+              </button>
+            )}
           </div>
           <div
             className='toogle-section-details-wrapper'
@@ -436,15 +407,17 @@ export const Section = forwardRef(({
                 />
             </div>
           )}
-          <Dependency
-            options={sectionOptions}
-            handlequestionDependency={handlequestionDependency}
-            inputs={inputs}
-            dependentQuestion={dependentQuestion}
-            handleDependencyChange={handleDependencyChange}
-            lang={lang}
-            t={t}
-            />
+          {hasDependancy && (
+            <Dependency
+              options={sectionOptions}
+              handlequestionDependency={handlequestionDependency}
+              inputs={inputs}
+              dependentQuestion={dependentQuestion}
+              handleDependencyChange={handleDependencyChange}
+              lang={lang}
+              t={t}
+              />
+          )}
         </div>
       </div>
       <div className="arrow-wrapper">
@@ -487,33 +460,45 @@ export const Section = forwardRef(({
             showingQuestions={showingQuestions}
             optionz={options}
             setDisableSaveBtn={setDisableSaveBtn}
+            appSections={appSections}
+            hasSpecialQuestion={hasSpecialQuestion}
+            hasKey={hasKey}
+            hasDependancy={hasDependancy}
             />
         ))}
       </AnimateSections>
       <div
         className='add-question-wrapper'
-      >
+        >
+        {hasSpecialQuestion && (
+          <button
+            className="add-question-btn answer-section-btn"
+            data-title={t('Add answer from application form')}
+            onMouseUp={() => addAnswerFromAppForm(inputs.id)}
+            style={!showingQuestions ? {display: 'none'}: {}}
+          >
+            <i className="fas fa-reply add-section-icon"></i>
+          </button>
+        )}
         <button
           className="add-question-btn"
           data-title={t('Add Question')}
-          onMouseUp={() => addQuestion()}
+          onMouseUp={() => addQuestion(inputs.id)}
           style={!showingQuestions ? {display: 'none'}: {}}
-        >
+          >
           <i className="fas fa-plus add-section-icon"></i>
         </button>
       </div>
-      {
-        isModelVisible && (
-          <Modal
-            t={t}
-            element='section'
-            handleOkDelete={handleOkDelete}
-            handleConfirm={handleConfirm}
-            inputs={inputs}
-            sections={sections}
-          />
-        )
-      }
+      {isModelVisible && (
+        <Modal
+          t={t}
+          element='section'
+          handleOkDelete={handleOkDelete}
+          handleConfirm={handleConfirm}
+          inputs={inputs}
+          sections={sections}
+        />
+      )}
     </div>
   )
 })
