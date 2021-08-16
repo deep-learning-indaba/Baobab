@@ -107,6 +107,9 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
+            pip3 show Flask-Migrate
+            pip3 install --upgrade Flask-Migrate==2.4.0
+            pip3 show Flask-Migrate
             mv Dockerfile.deploy Dockerfile # It doesn't like deploying to flex:python with Dockerfile
             gcloud app deploy --version=v1
 
