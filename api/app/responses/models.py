@@ -1,4 +1,3 @@
-
 from datetime import date, datetime
 
 from sqlalchemy import select
@@ -11,11 +10,10 @@ from app.users.models import AppUser
 
 
 class Response(db.Model):
-
     __tablename__ = "response"
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(),db.ForeignKey("application_form.id"), nullable=False)
+    application_form_id = db.Column(db.Integer(), db.ForeignKey("application_form.id"), nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
     is_submitted = db.Column(db.Boolean(), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=True)
@@ -26,7 +24,8 @@ class Response(db.Model):
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user: AppUser = db.relationship('AppUser', foreign_keys=[user_id])
-    answers = db.relationship('Answer', order_by='Answer.order')
+    answers = db.relationship('Answer', order_by='Answer.order', primaryjoin="and_(Response.id==Answer.response_id, "
+                                                                             "Answer.is_active==True)")
     response_tags = db.relationship('ResponseTag')
     reviewers = db.relationship('ResponseReviewer')
 
@@ -54,26 +53,27 @@ class Response(db.Model):
 
 
 class Answer(db.Model):
-
     __tablename__ = "answer"
 
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
+    is_active = db.Column(db.Boolean(), default=False, nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
-    order = column_property(select([Question.order]).where(Question.id==question_id).correlate_except(Question))
+    order = column_property(select([Question.order]).where(Question.id == question_id).correlate_except(Question))
 
-    def __init__(self, response_id, question_id, value):
+    def __init__(self, response_id, question_id, value, is_active=True):
         self.response_id = response_id
         self.question_id = question_id
         self.value = value
+        self.is_active = is_active
 
-    def update(self, value):
-        self.value = value
-    
+    def update(self, is_active):
+        self.is_active = is_active
+
     @property
     def value_display(self):
         question_translation = self.question.get_translation(self.response.language)
