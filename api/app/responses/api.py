@@ -137,6 +137,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         for answer_args in args['answers']:
             answer = response_repository.get_answer_by_question_id_and_response_id(answer_args['question_id'], response.id)
             if answer:
+                if answer.value == answer_args['value']:
+                    # Value not changed, ignore
+                    continue
                 answer.update(is_active=False)
                 response_repository.merge_answer(answer)
             active_answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
