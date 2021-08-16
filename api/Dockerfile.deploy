@@ -37,7 +37,7 @@ ADD . /app
 
 # Temp debug
 RUN pip3 show Flask-Migrate
-RUN pip3 install --upgrade Flask-Migrate==2.5.3
+RUN pip3 install --upgrade Flask-Migrate==2.7.0
 RUN pip3 show Flask-Migrate
 
 # Run a WSGI server to serve the application. gunicorn must be declared as
