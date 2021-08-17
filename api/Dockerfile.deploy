@@ -36,9 +36,9 @@ RUN pip3 install -r /app/requirements.txt
 ADD . /app
 
 # Temp debug
-RUN pip3 show Flask-Migrate
-RUN pip3 install --upgrade Flask-Migrate==2.7.0
-RUN pip3 show Flask-Migrate
+RUN pip3 show Flask-RESTful
+RUN pip3 install --upgrade Flask-RESTful==0.3.8
+RUN pip3 show Flask-RESTful
 
 # Run a WSGI server to serve the application. gunicorn must be declared as
 # a dependency in requirements.txt.
