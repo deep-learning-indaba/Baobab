@@ -59,20 +59,20 @@ class Answer(db.Model):
     response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
-    is_active = db.Column(db.Boolean(), default=False, nullable=False)
+    is_active = db.Column(db.Boolean(), nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
     order = column_property(select([Question.order]).where(Question.id == question_id).correlate_except(Question))
 
-    def __init__(self, response_id, question_id, value, is_active=True):
+    def __init__(self, response_id, question_id, value):
         self.response_id = response_id
         self.question_id = question_id
         self.value = value
-        self.is_active = is_active
+        self.is_active = True
 
-    def update(self, is_active):
-        self.is_active = is_active
+    def deactivate(self):
+        self.is_active = False
 
     @property
     def value_display(self):

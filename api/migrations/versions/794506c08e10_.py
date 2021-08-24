@@ -20,13 +20,24 @@ def upgrade():
     op.add_column('guest_registration_answer', sa.Column('is_active', sa.Boolean(), nullable=True))
     op.add_column('answer', sa.Column('is_active', sa.Boolean(), nullable=True))
 
-    op.execute("UPDATE review_score SET is_active = true")
-    op.execute("UPDATE guest_registration_answer SET is_active = true")
-    op.execute("UPDATE answer SET is_active = true")
+    op.add_column('review_score', sa.Column('updated_on', sa.TIMESTAMP, nullable=True,
+                                            server_default=sa.func.now(), onupdate=sa.func.now()))
+    op.add_column('guest_registration_answer', sa.Column('updated_on', sa.TIMESTAMP, nullable=True,
+                                                         server_default=sa.func.now(), onupdate=sa.func.now()))
+    op.add_column('answer', sa.Column('updated_on', sa.TIMESTAMP, nullable=True,
+                                      server_default=sa.func.now(), onupdate=sa.func.now()))
+
+    op.execute("UPDATE review_score SET is_active = true, updated_on=NOW()")
+    op.execute("UPDATE guest_registration_answer SET is_active = true, updated_on=NOW()")
+    op.execute("UPDATE answer SET is_active = true, updated_on=NOW()")
 
     op.alter_column('review_score', 'is_active', nullable=False)
     op.alter_column('guest_registration_answer', 'is_active', nullable=False)
     op.alter_column('answer', 'is_active', nullable=False)
+
+    op.alter_column('review_score', 'updated_on', nullable=False)
+    op.alter_column('guest_registration_answer', 'updated_on', nullable=False)
+    op.alter_column('answer', 'updated_on', nullable=False)
     # ### end Alembic commands ###
 
 
@@ -35,4 +46,8 @@ def downgrade():
     op.drop_column('answer', 'is_active')
     op.drop_column('guest_registration_answer', 'is_active')
     op.drop_column('review_score', 'is_active')
+
+    op.drop_column('answer', 'updated_on')
+    op.drop_column('guest_registration_answer', 'updated_on')
+    op.drop_column('review_score', 'updated_on')
     # ### end Alembic commands ###

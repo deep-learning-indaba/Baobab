@@ -140,7 +140,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 if answer.value == answer_args['value']:
                     # Value not changed, ignore
                     continue
-                answer.update(is_active=False)
+                answer.deactivate()
                 response_repository.merge_answer(answer)
             active_answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
             answers.append(active_answer)
