@@ -49,7 +49,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         'confirmed': fields.Boolean,
         'created_at': fields.DateTime,
         'confirmation_email_sent_at': fields.DateTime,
-        'user_id':fields.Integer
+        'user_id': fields.Integer
 
     }
     update_registration_fields = {
@@ -85,7 +85,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 return errors.REGISTRATION_FORM_NOT_FOUND
             db_answers = db.session.query(GuestRegistrationAnswer).filter(
                 GuestRegistrationAnswer.guest_registration_id ==
-                registration.id).all()
+                registration.id, GuestRegistrationAnswer.is_active == True).all()
 
             response = {
                 'guest_registration_id': registration.id,
@@ -124,7 +124,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                 user_id=user_id,
                 confirmed=True,
                 created_at=date.today(),
-                confirmation_email_sent_at=date.today() #None
+                confirmation_email_sent_at=date.today()  # None
             )
 
             db.session.add(registration)
@@ -136,12 +136,13 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                      registration_question_id=answer_args['registration_question_id'],
-                                                     value=answer_args['value'])
+                                                     value=answer_args['value'], is_active=True)
                     db.session.add(answer)
             db.session.commit()
 
             registration_answers = db.session.query(GuestRegistrationAnswer).filter(
-                GuestRegistrationAnswer.guest_registration_id == registration.id).all()
+                GuestRegistrationAnswer.guest_registration_id == registration.id,
+                GuestRegistrationAnswer.is_active == True).all()
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
@@ -157,7 +158,6 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
         except Exception as e:
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
-
 
     @auth_required
     def put(self):
@@ -175,16 +175,24 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             for answer_args in args['answers']:
                 answer = db.session.query(GuestRegistrationAnswer).filter(
                     GuestRegistrationAnswer.registration_question_id == answer_args['registration_question_id'],
-                    GuestRegistrationAnswer.guest_registration_id == args['guest_registration_id']).one_or_none()
+                    GuestRegistrationAnswer.guest_registration_id == args['guest_registration_id'],
+                    GuestRegistrationAnswer.is_active == True).one_or_none()
                 if answer is not None:
-                    answer.value = answer_args['value']
+                    answer.is_active = False
+                    db.session.merge(answer)
+                    new_answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
+                                                         registration_question_id=answer_args['registration_question_id'],
+                                                         value=answer_args['value'],
+                                                         is_active=True)
+                    db.session.add(new_answer)
 
                 elif db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).one():
 
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
-                                                     registration_question_id=answer_args['registration_question_id'],
-                                                     value=answer_args['value'])
+                                                         registration_question_id=answer_args['registration_question_id'],
+                                                         value=answer_args['value'],
+                                                         is_active=True)
 
                     db.session.add(answer)
             db.session.commit()
@@ -192,8 +200,9 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
             current_user = user_repository.get_by_id(user_id)
 
             registration_answers = db.session.query(GuestRegistrationAnswer).filter(
-                GuestRegistrationAnswer.guest_registration_id == registration.id).all()
-                
+                GuestRegistrationAnswer.guest_registration_id == registration.id,
+                GuestRegistrationAnswer.is_active == True).all()
+
             registration_questions = db.session.query(RegistrationQuestion).filter(
                 RegistrationQuestion.registration_form_id == args['registration_form_id']).all()
 
@@ -230,7 +239,7 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
             if len(summary) <= 0:
                 summary = '\nNo valid questions were answered'
-            
+
             emailer.email_user(
                 'guest-registration-confirmation',
                 template_parameters=dict(
