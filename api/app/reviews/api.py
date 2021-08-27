@@ -365,7 +365,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         if review_response is None:
             return REVIEW_RESPONSE_NOT_FOUND
 
-        review_repository.delete_review(review_response)
+        review_repository.deactivate_review(review_response)
         review_response.review_scores = self.get_review_scores(scores)
         if is_submitted:
             review_response.submit()

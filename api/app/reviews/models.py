@@ -3,6 +3,7 @@ from app import db
 from app.utils import misc
 from typing import Any, Callable, Mapping
 
+
 class ReviewForm(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
@@ -59,12 +60,12 @@ class ReviewSection(db.Model):
     @property
     def headline_translations(self):
         return self._translations_for_field(lambda t: t.headline)
-    
+
     @property
     def description_translations(self):
         return self._translations_for_field(lambda t: t.description)
 
-    
+
 class ReviewSectionTranslation(db.Model):
     __tablename__ = 'review_section_translation'
     __table_args__ = tuple([db.UniqueConstraint('review_section_id', 'language', name='uq_review_section_id_language')])
@@ -89,9 +90,9 @@ class ReviewQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     review_section_id = db.Column(db.Integer(), db.ForeignKey('review_section.id'), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
-    
+
     type = db.Column(db.String(), nullable=False)
-    
+
     is_required = db.Column(db.Boolean(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
     weight = db.Column(db.Float(), nullable=False)
@@ -127,7 +128,7 @@ class ReviewQuestion(db.Model):
     @property
     def headline_translations(self):
         return self._translations_for_field(lambda t: t.headline)
-    
+
     @property
     def description_translations(self):
         return self._translations_for_field(lambda t: t.description)
@@ -151,7 +152,8 @@ class ReviewQuestion(db.Model):
 
 class ReviewQuestionTranslation(db.Model):
     __tablename__ = 'review_question_translation'
-    __table_args__ = tuple([db.UniqueConstraint('review_question_id', 'language', name='uq_review_question_id_language')])
+    __table_args__ = tuple(
+        [db.UniqueConstraint('review_question_id', 'language', name='uq_review_question_id_language')])
 
     id = db.Column(db.Integer(), primary_key=True)
     review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
@@ -164,14 +166,14 @@ class ReviewQuestionTranslation(db.Model):
     validation_regex = db.Column(db.String(), nullable=True)
     validation_text = db.Column(db.String(), nullable=True)
 
-    def __init__(self, 
+    def __init__(self,
                  review_question_id,
-                 language, 
-                 description=None, 
-                 headline=None, 
-                 placeholder=None, 
-                 options=None, 
-                 validation_regex=None, 
+                 language,
+                 description=None,
+                 headline=None,
+                 placeholder=None,
+                 options=None,
+                 validation_regex=None,
                  validation_text=None):
         self.review_question_id = review_question_id
         self.language = language
@@ -196,7 +198,9 @@ class ReviewResponse(db.Model):
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
     response = db.relationship('Response', foreign_keys=[response_id])
-    review_scores = db.relationship('ReviewScore')
+    review_scores = db.relationship('ReviewScore',
+                                    primaryjoin="and_(ReviewResponse.id==ReviewScore.review_response_id,"
+                                                "ReviewScore.is_active==True)")
 
     def __init__(self,
                  review_form_id,
@@ -225,6 +229,7 @@ class ReviewScore(db.Model):
     review_response_id = db.Column(db.Integer(), db.ForeignKey('review_response.id'), nullable=False)
     review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
+    is_active = db.Column(db.Boolean(), nullable=False)
 
     review_response = db.relationship('ReviewResponse', foreign_keys=[review_response_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[review_question_id])
@@ -234,6 +239,7 @@ class ReviewScore(db.Model):
                  value):
         self.review_question_id = review_question_id
         self.value = value
+        self.is_active = True
 
 
 class ReviewConfiguration(db.Model):
