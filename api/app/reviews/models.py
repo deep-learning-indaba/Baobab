@@ -230,6 +230,7 @@ class ReviewScore(db.Model):
     review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
+    updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
 
     review_response = db.relationship('ReviewResponse', foreign_keys=[review_response_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[review_question_id])
