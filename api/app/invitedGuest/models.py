@@ -45,4 +45,4 @@ class GuestRegistrationAnswer(db.Model):
         'registration_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
-    updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
+    created_on = db.Column(db.DateTime, nullable=False, server_default=db.func.now())

@@ -2,6 +2,7 @@ from datetime import datetime
 from app import db
 from app.utils import misc
 from typing import Any, Callable, Mapping
+from datetime import datetime
 
 
 class ReviewForm(db.Model):
@@ -230,7 +231,7 @@ class ReviewScore(db.Model):
     review_question_id = db.Column(db.Integer(), db.ForeignKey('review_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
-    updated_on = db.Column(db.DateTime, server_default=db.func.now(), server_onupdate=db.func.now())
+    created_on = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
 
     review_response = db.relationship('ReviewResponse', foreign_keys=[review_response_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[review_question_id])
@@ -241,6 +242,7 @@ class ReviewScore(db.Model):
         self.review_question_id = review_question_id
         self.value = value
         self.is_active = True
+        created_on = datetime.now()
 
 
 class ReviewConfiguration(db.Model):
