@@ -615,7 +615,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
 
-        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).all()
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1, is_active=True).all()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(review_scores), 1)
         self.assertEqual(review_scores[0].value, 'test_answer')
@@ -641,7 +641,7 @@ class ReviewsApiTest(ApiTestCase):
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
 
-        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1).order_by(ReviewScore.review_question_id).all()
+        review_scores = db.session.query(ReviewScore).filter_by(review_response_id=1, is_active=True).order_by(ReviewScore.review_question_id).all()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(review_scores), 2)
         self.assertEqual(review_scores[0].value, 'test_answer3')
