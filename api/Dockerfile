@@ -9,13 +9,14 @@ ENV PATH /env/bin:$PATH
 
 RUN apt-get update -qq
 RUN apt-get install -y software-properties-common
-RUN apt-get install -y libreoffice 
+RUN apt-get install -y libreoffice
 
-# Add the application source code.
 RUN mkdir /code
+ADD requirements.txt /code/requirements.txt
+RUN pip3 install -r /code/requirements.txt
+
 ADD . /code/
 WORKDIR /code
 
-RUN pip3 install -r requirements.txt
 RUN locale -a
 EXPOSE 5000
