@@ -1,83 +1,88 @@
-redis:
-  image: redis
-  ports:
-    - 6379:6379
-db:
-  image: orchardup/postgresql
-  ports:
-    - 5432:5432
-storage:
-  image: fsouza/fake-gcs-server
-  ports:
-    - 4443:4443
-web:
-  build: ./api
-  command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
-  volumes:
-    - .:/code
-    - ~/.config/gcloud:/root/.config/gcloud
-  ports:
-    - 5000:5000
-  links:
-    - db
-    - storage
-  environment:
-    DEBUG: "True"
-    SECRET_KEY: __filler__
-    SMTP_USERNAME: __filler__
-    SMTP_PASSWORD: __filler__
-    SMTP_SENDER_NAME: __filler__
-    SMTP_SENDER_EMAIL: __filler__
-    SMTP_HOST: __filler__
-    SMTP_PORT: 587
-    GCP_CLIENT_ID: __filler__
-    GCP_CLIENT_EMAIL: __filler__
-    GCP_PRIVATE_KEY_ID: __filler__
-    GCP_PRIVATE_KEY: dummy
-    GCP_PROJECT_NAME: __filler__
-    GCP_BUCKET_NAME: __filler__
-    FILE_SIZE_LIMIT: 10485760
-    BOABAB_HOST: http://localhost:8080
+services:
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+  db:
+    image: orchardup/postgresql
+    ports:
+      - 5432:5432
+  storage:
+    image: fsouza/fake-gcs-server
+    ports:
+      - 4443:4443
+  web:
+    build: ./api
+    command: python ./api/run.py runserver -h 0.0.0.0 -p 5000
+    volumes:
+      - .:/code
+      - ~/.config/gcloud:/root/.config/gcloud
+    ports:
+      - 5000:5000
+    links:
+      - db
+      - storage
+      - redis
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: __filler__
+      SMTP_USERNAME: __filler__
+      SMTP_PASSWORD: __filler__
+      SMTP_SENDER_NAME: __filler__
+      SMTP_SENDER_EMAIL: __filler__
+      SMTP_HOST: __filler__
+      SMTP_PORT: 587
+      GCP_CLIENT_ID: __filler__
+      GCP_CLIENT_EMAIL: __filler__
+      GCP_PRIVATE_KEY_ID: __filler__
+      GCP_PRIVATE_KEY: dummy
+      GCP_PROJECT_NAME: __filler__
+      GCP_BUCKET_NAME: __filler__
+      FILE_SIZE_LIMIT: 10485760
+      BOABAB_HOST: http://localhost:8080
 
-webapp:
-  build: ./webapp
-  command: yarn start
-  volumes:
-    - ./webapp:/usr/src/app
-    - ./webapp:/webapp
-  ports:
-    - "8080:3000"
-  environment:
-    - NODE_ENV=development
-    - CHOKIDAR_USEPOLLING=true
+  webapp:
+    build: ./webapp
+    command: yarn start
+    volumes:
+      - ./webapp:/usr/src/app
+      - ./webapp:/webapp
+    ports:
+      - "8080:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    links:
+      - web
 
-test-ci:
-  build: ./webapp
-  command: yarn test-ci
-  dockerfile: Dockerfile-test
+  test-ci:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile-test
+    command: yarn test-ci
 
-webappintegration:
-  build: ./webapp
-  command: yarn start-integration
-  volumes:
-    - ./webapp:/usr/src/app
-    - ./webapp:/webapp
-  ports:
-    - "8081:3000"
-  environment:
-    - NODE_ENV=development
-    - CHOKIDAR_USEPOLLING=true
+  webappintegration:
+    build: ./webapp
+    command: yarn start-integration
+    volumes:
+      - ./webapp:/usr/src/app
+      - ./webapp:/webapp
+    ports:
+      - "8081:3000"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
 
-cypress:
-  ipc: host
-  image: "cypress/included:4.2.0"
-  links:
-    - webappintegration
-    - web
-  environment:
-    # pass base url to test pointing at the web application
-    - CYPRESS_baseUrl=http://webappintegration:3000
-  # share the current folder as volume to avoid copying
-  working_dir: /integration-tests
-  volumes:
-    - ./integration-tests/:/integration-tests
+  cypress:
+    ipc: host
+    image: "cypress/included:4.2.0"
+    links:
+      - webappintegration
+      - web
+    environment:
+      # pass base url to test pointing at the web application
+      - CYPRESS_baseUrl=http://webappintegration:3000
+    # share the current folder as volume to avoid copying
+    working_dir: /integration-tests
+    volumes:
+      - ./integration-tests/:/integration-tests
