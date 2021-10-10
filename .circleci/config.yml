@@ -1,15 +1,14 @@
 version: 2.1
 jobs:
   build:
-    machine: true
+    machine:
+      image: ubuntu-2004:202107-02
     steps:
       - checkout
       - run:
           name: Start container
           command: |
-            pyenv install 3.8.11
-            pyenv global 3.8.11
-            pyenv versions
+            python --version
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
