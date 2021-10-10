@@ -7,7 +7,8 @@ jobs:
       - run:
           name: Start container
           command: |
-            python --version
+            python3 --version
+            export CLOUDSDK_PYTHON=python3
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
@@ -21,8 +22,8 @@ jobs:
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
       - run:
           name: Run unit tests
-          command: docker-compose run  web nosetests -v 
-            
+          command: docker-compose run  web nosetests -v
+
   integration-tests:
     machine: true
     steps:
@@ -41,8 +42,8 @@ jobs:
       - run:
           name: Front-end install and tests.
           command: |
-            docker-compose build test-ci 
-            docker-compose run test-ci  
+            docker-compose build test-ci
+            docker-compose run test-ci
 
   migrate-test:
     docker:
@@ -62,7 +63,7 @@ jobs:
             # Run the migrations
             cd api
             echo "Current setuptools v- $(pip3 --setuptools)"
-            pip3 install --upgrade setuptools==44.0.0 
+            pip3 install --upgrade setuptools==44.0.0
             echo "Updated setuptools v - $(pip3 --setuptools)"
             pip3 install -r requirements.txt
             DATABASE_URL=$STAGING_DB_PROXY python3 run.py db upgrade # Temporarily update the database url to the proxy and run migrations
@@ -89,7 +90,7 @@ jobs:
             pip3 install --upgrade pip==20.0.1
             echo "Updated pip v - $(pip3 --version)"
             echo "Current setuptools v- $(pip3 --setuptools)"
-            pip3 install --upgrade setuptools==44.0.0 
+            pip3 install --upgrade setuptools==44.0.0
             echo "Updated setuptools v - $(pip3 --setuptools)"
             pip3 install -r requirements.txt
             DATABASE_URL=$PROD_DB_PROXY python3 run.py db upgrade # Temporarily update the database url to the proxy and run migrations
@@ -110,7 +111,6 @@ jobs:
             mv Dockerfile.deploy Dockerfile # It doesn't like deploying to flex:python with Dockerfile
             gcloud app deploy --version=v1
 
-
   deploy-backend-prod:
     machine: true
     steps:
@@ -123,7 +123,7 @@ jobs:
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
             cd api
-            mv Dockerfile.deploy Dockerfile 
+            mv Dockerfile.deploy Dockerfile
             gcloud app deploy prod.yaml --version=v1
 
   deploy-test:
