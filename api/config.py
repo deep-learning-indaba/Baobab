@@ -9,8 +9,7 @@ DEBUG = os.getenv('DEBUG', False)
 
 PORT = os.getenv('PORT', 5000)
 
-SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
-                                    'postgres://docker:docker@{0}/docker'.format(os.getenv('DB_PORT_5432_TCP_ADDR')))
+SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'postgres://docker:docker@db/docker')
 
 SECRET_KEY = os.getenv('SECRET_KEY', None)
 assert SECRET_KEY
