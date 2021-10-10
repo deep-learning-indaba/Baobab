@@ -7,14 +7,7 @@ jobs:
       - run:
           name: Start container
           command: |
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-get update
-            sudo apt-get install python3.7
-            python3.7 --version
-            which python
-            which python3
-            which python3.7
-            export CLOUDSDK_PYTHON=python3.7
+            pyenv install --list
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
