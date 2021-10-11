@@ -64,11 +64,11 @@ def _get_storage_bucket(storage_client):
 
 def get_storage_bucket():
 
-    # if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
-    #     LOGGER.debug('Setting dummy storage client')
-    #     storage_client = _create_dummy_storage_client()
-    # else:
-    LOGGER.debug('Setting GCP storage client')
-    storage_client = _create_real_storage_client()
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        LOGGER.debug('Setting dummy storage client')
+        storage_client = _create_dummy_storage_client()
+    else:
+        LOGGER.debug('Setting GCP storage client')
+        storage_client = _create_real_storage_client()
 
     return _get_storage_bucket(storage_client)
