@@ -12,8 +12,8 @@ RUN apt-get update -qq \
     && apt-get install -y libreoffice
 
 # Add the application source code.
-ADD requirements.txt /code/requirements.txt
-RUN pip3 install -r /code/requirements.txt
+COPY requirements.txt requirements-dev.txt /code/
+RUN pip3 install -r /code/requirements.txt /code/requirements-dev.txt
 
 ADD . /code/
 WORKDIR /code

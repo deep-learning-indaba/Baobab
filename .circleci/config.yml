@@ -22,7 +22,13 @@ jobs:
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
       - run:
           name: Run unit tests
-          command: docker-compose run  web nosetests -v
+          command: docker-compose run web nosetests -v
+      - run:
+          name: Format with black
+          command: docker-compose run web black --check api
+      - run:
+          name: Format with isort
+          command: docker-compose run web isort --check --settings-path=api/setup.cfg
 
   integration-tests:
     machine: true
