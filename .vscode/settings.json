@@ -1,0 +1,10 @@
+{
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true
+    },
+    "python.sortImports.args": [
+        "--settings-path=${workspaceFolder}/api/setup.cfg"
+    ]
+}
