@@ -7,25 +7,25 @@ Create Date: 2020-08-09 16:06:36.372783
 """
 
 # revision identifiers, used by Alembic.
-revision = '4b881c1c6dc2'
-down_revision = 'fc82c8e54fd7'
+revision = "4b881c1c6dc2"
+down_revision = "fc82c8e54fd7"
 
-from alembic import op
+import datetime
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import orm
+
 from app import db
-import datetime
 
 Base = declarative_base()
 
 
-
 class EmailTemplate(Base):
 
-    __tablename__ = 'email_template'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "email_template"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     key = db.Column(db.String(50), nullable=False)
@@ -46,7 +46,9 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    op.execute("""SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));""")
+    op.execute(
+        """SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));"""
+    )
 
     template = """Dear {title} {firstname} {lastname},
     
@@ -55,7 +57,15 @@ Please try again next year!
     
 Best wishes,
 {event_name} Organisers"""
-    session.add(EmailTemplate('outcome-rejected', None, '{event_name} Application Status Update', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "outcome-rejected",
+            None,
+            "{event_name} Application Status Update",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
     
@@ -64,7 +74,15 @@ We will contact you should a place become available.
     
 Kind Regards,
 {event_name} Organisers"""
-    session.add(EmailTemplate('outcome-waitlist', None, '{event_name} Application Status Update', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "outcome-waitlist",
+            None,
+            "{event_name} Application Status Update",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -76,7 +94,11 @@ Kind Regards,
 The {event_name} Team
 """
 
-    session.add(EmailTemplate('attendance-confirmation', None, 'Welcome to {event_name}!', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "attendance-confirmation", None, "Welcome to {event_name}!", template, "en"
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -89,7 +111,15 @@ Kind Regards,
 The {event_name} Team
 """
 
-    session.add(EmailTemplate('guest-registration-confirmation', None, '{event_name} Registration Confirmation', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "guest-registration-confirmation",
+            None,
+            "{event_name} Registration Confirmation",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -99,7 +129,15 @@ Kind Regards,
 The {event_name} Team
 """
 
-    session.add(EmailTemplate('invitation-letter', None, 'Invitation Letter to {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "invitation-letter",
+            None,
+            "Invitation Letter to {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -109,7 +147,11 @@ Please reply to this email should you have any questions or concerns.
 
 Kind Regards,
 The {event_name} Organisers"""
-    session.add(EmailTemplate('guest-invitation', None, 'Your invitation to {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "guest-invitation", None, "Your invitation to {event_name}", template, "en"
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -120,7 +162,15 @@ Please reply to this email should you have any questions or concerns.
 
 Kind Regards,
 The {event_name} Organisers"""
-    session.add(EmailTemplate('guest-invitation-with-registration', None, 'Your invitation to {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "guest-invitation-with-registration",
+            None,
+            "Your invitation to {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -136,7 +186,15 @@ Please reply to this email should you have any questions or concerns.
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('new-guest-no-registration', None, 'Your invitation to {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "new-guest-no-registration",
+            None,
+            "Your invitation to {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -153,7 +211,15 @@ Please reply to this email should you have any questions or concerns.
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('new-guest-registration', None, 'Your invitation to {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "new-guest-registration",
+            None,
+            "Your invitation to {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -168,7 +234,15 @@ Please visit {link} to upload your reference by {application_close_date}
 Kind regards,
 The {event_name} team.
 """
-    session.add(EmailTemplate('reference-request-self-nomination', None, 'Reference Request for {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "reference-request-self-nomination",
+            None,
+            "Reference Request for {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -183,7 +257,15 @@ Please visit {link} to upload your reference by {application_close_date}
 Kind regards,
 The {event_name} team.
 """
-    session.add(EmailTemplate('reference-request', None, 'Reference Request for {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "reference-request",
+            None,
+            "Reference Request for {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -200,7 +282,11 @@ If you have any queries, please contact us at {event_email_from}
 Kind Regards,
 The {event_name} organisers
 """
-    session.add(EmailTemplate('offer', None, '{event_name} Application Status Update', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "offer", None, "{event_name} Application Status Update", template, "en"
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -213,7 +299,15 @@ Here is a copy of your responses:
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('registration-pending-confirmation', None, '{event_name} Registration', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "registration-pending-confirmation",
+            None,
+            "{event_name} Registration",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -226,7 +320,15 @@ Here is a copy of your responses:
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('registration-with-confirmation', None, '{event_name} Registration', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "registration-with-confirmation",
+            None,
+            "{event_name} Registration",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
     
@@ -237,7 +339,15 @@ We look forward to seeing you at the event!
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('registration-confirmed', None, '{event_name} Registration Confirmation', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "registration-confirmed",
+            None,
+            "{event_name} Registration Confirmation",
+            template,
+            "en",
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -249,7 +359,15 @@ Thank you for assisting us review applications for {event_name}!
 Kind Regards,
 The {event_name} Organisers
 """
-    session.add(EmailTemplate('reviews-assigned', None, 'You have been assigned reviews for {event_name}', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "reviews-assigned",
+            None,
+            "You have been assigned reviews for {event_name}",
+            template,
+            "en",
+        )
+    )
 
     template = """
 Dear {title} {firstname} {lastname},
@@ -261,7 +379,11 @@ Thank you for creating a new {system} account. Please use the following link to 
 Kind Regards,
 {organisation}
 """
-    session.add(EmailTemplate('verify-email', None, '{system} Email Verficiation', template, 'en'))
+    session.add(
+        EmailTemplate(
+            "verify-email", None, "{system} Email Verficiation", template, "en"
+        )
+    )
 
     template = """Dear {title} {firstname} {lastname},
 
@@ -273,18 +395,39 @@ If you did not request a password reset, please ignore this email and contact {o
 Kind Regards,
 {organisation}
 """
-    session.add(EmailTemplate('password-reset', None, '{system} Password Reset', template, 'en'))
+    session.add(
+        EmailTemplate("password-reset", None, "{system} Password Reset", template, "en")
+    )
 
     session.commit()
 
 
-
 def downgrade():
-    added_keys = ['outcome-rejected', 'outcome-waitlist', 'attendance-confirmation', 'guest-registration-confirmation',
-            'invitation-letter', 'guest-invitation', 'guest-invitation-with-registration', 'new-guest-no-registration',
-            'new-guest-registration', 'reference-request-self-nomination', 'reference-request', 'offer',
-            'registration-pending-confirmation', 'registration-with-confirmation', 'registration-confirmed', 
-            'reviews-assigned', 'verify-email', 'password-reset']
-    op.execute("""DELETE FROM email_template WHERE key in ({})""".format(', '.join(["'" + k + "'" for k in added_keys])))
-    op.execute("""SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));""")
-
+    added_keys = [
+        "outcome-rejected",
+        "outcome-waitlist",
+        "attendance-confirmation",
+        "guest-registration-confirmation",
+        "invitation-letter",
+        "guest-invitation",
+        "guest-invitation-with-registration",
+        "new-guest-no-registration",
+        "new-guest-registration",
+        "reference-request-self-nomination",
+        "reference-request",
+        "offer",
+        "registration-pending-confirmation",
+        "registration-with-confirmation",
+        "registration-confirmed",
+        "reviews-assigned",
+        "verify-email",
+        "password-reset",
+    ]
+    op.execute(
+        """DELETE FROM email_template WHERE key in ({})""".format(
+            ", ".join(["'" + k + "'" for k in added_keys])
+        )
+    )
+    op.execute(
+        """SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));"""
+    )
