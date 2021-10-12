@@ -9,11 +9,12 @@ ENV PATH /env/bin:$PATH
 
 RUN apt-get update -qq \
     && apt-get install -y software-properties-common \
-    && apt-get install -y libreoffice
+    && apt-get install -y libreoffice \
+    && python -m pip3 install --upgrade pip3
 
 # Add the application source code.
 COPY requirements.txt requirements-dev.txt /code/
-RUN pip3 install -r /code/requirements.txt /code/requirements-dev.txt
+RUN pip3 install -r /code/requirements.txt -r /code/requirements-dev.txt
 
 ADD . /code/
 WORKDIR /code
