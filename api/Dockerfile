@@ -10,7 +10,7 @@ ENV PATH /env/bin:$PATH
 RUN apt-get update -qq \
     && apt-get install -y software-properties-common \
     && apt-get install -y libreoffice \
-    && python -m pip3 install --upgrade pip3
+    && python3 -m pip install --upgrade pip
 
 # Add the application source code.
 COPY requirements.txt requirements-dev.txt /code/
