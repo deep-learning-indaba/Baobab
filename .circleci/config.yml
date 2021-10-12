@@ -28,7 +28,7 @@ jobs:
           command: docker-compose run web black --check api
       - run:
           name: Format with isort
-          command: docker-compose run web isort --check --settings-path=api/setup.cfg
+          command: docker-compose run web isort --check --settings-path=api/setup.cfg api
 
   integration-tests:
     machine: true
