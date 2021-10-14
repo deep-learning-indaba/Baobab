@@ -5,56 +5,56 @@ const baseUrl = process.env.REACT_APP_API_URL;
 
 export const registrationAdminService = {
   getUnconfirmed,
-  confirm
+  confirm,
 };
 
 function getUnconfirmed(eventId) {
   return axios
     .get(baseUrl + "/api/v1/registration/unconfirmed?event_id=" + eventId, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         data: response.data,
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         data: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
 
 function confirm(registrationId) {
   const data = {
-    registration_id: registrationId
+    registration_id: registrationId,
   };
 
   return axios
     .post(baseUrl + "/api/v1/registration/confirm", data, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         data: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         data: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }

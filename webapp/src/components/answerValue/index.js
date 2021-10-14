@@ -1,3 +1,3 @@
-import AnswerValue from './AnswerValue';
+import AnswerValue from "./AnswerValue";
 
 export default AnswerValue;

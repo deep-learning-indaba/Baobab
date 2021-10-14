@@ -15,7 +15,11 @@ class FormTextBox extends React.Component {
     }
   }
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+  linkRenderer = (props) => (
+    <a href={props.href} target="_blank">
+      {props.children}
+    </a>
+  );
 
   render() {
     return (
@@ -25,30 +29,29 @@ class FormTextBox extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <ReactMarkdown
+              source={this.props.label}
+              renderers={{ link: this.linkRenderer }}
+            />
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-                <div />
-              )}
+              <div />
+            )}
           </div>
           <input
             id={this.props.id}
             className={
-              "form-control"
-              + (this.shouldDisplayError()
-                ? " is-invalid"
-                : "")
-              + (this.props.isDisabled
-                ? " disabled-form-control"
-                : "")
+              "form-control" +
+              (this.shouldDisplayError() ? " is-invalid" : "") +
+              (this.props.isDisabled ? " disabled-form-control" : "")
             }
             type={this.props.type || "text"}
             placeholder={this.props.placeholder}
             value={this.props.value}
             onChange={this.props.onChange}
             min={this.props.min || null}
-            ref={input => {
+            ref={(input) => {
               this.nameInput = input;
             }}
             tabIndex={this.props.tabIndex}

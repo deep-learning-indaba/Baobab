@@ -1,17 +1,16 @@
-.btn-group-toggle>.btn-primary {
-    background: none;
-    color: #007bff;
+.btn-group-toggle > .btn-primary {
+  background: none;
+  color: #007bff;
 }
 
 .btn-primary:not(:disabled):not(.disabled).active {
-    background-color: #007bff;
-    border-color: #007bff;
+  background-color: #007bff;
+  border-color: #007bff;
 }
 
 .review-list-container .stage-info {
-
 }
 
 .review-list-container .card .card-body .card-title {
-    color: hsl(213deg 16% 49%);
+  color: hsl(213deg 16% 49%);
 }

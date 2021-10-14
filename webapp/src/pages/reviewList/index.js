@@ -1,3 +1,3 @@
-import ReviewList from './ReviewList.js';
+import ReviewList from "./ReviewList.js";
 
 export default ReviewList;

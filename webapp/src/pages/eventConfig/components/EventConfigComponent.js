@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { eventService } from "../../../services/events";
 import { withRouter } from "react-router";
 import DateTimePicker from "react-datetime-picker";
-import { withTranslation } from 'react-i18next';
+import { withTranslation } from "react-i18next";
 
 class EventConfigComponent extends Component {
   constructor(props) {
@@ -13,19 +13,19 @@ class EventConfigComponent extends Component {
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
       loading: true,
-      error: ""
+      error: "",
     };
   }
 
   componentDidMount() {
     if (this.props.event) {
-      eventService.getEvent(this.props.event.id).then(result => {
+      eventService.getEvent(this.props.event.id).then((result) => {
         this.setState({
           loading: false,
           preEvent: result.event,
           updatedEvent: result.event,
           hasBeenUpdated: false,
-          error: result.error
+          error: result.error,
         });
       });
     }
@@ -34,18 +34,18 @@ class EventConfigComponent extends Component {
   onClickCancel = () => {
     this.setState({
       updatedEvent: this.state.preEvent,
-      hasBeenUpdated: false
+      hasBeenUpdated: false,
     });
   };
 
   onClickSubmit = () => {
     // PUT
-    eventService.update(this.state.updatedEvent).then(result => {
+    eventService.update(this.state.updatedEvent).then((result) => {
       this.setState({
         preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
-        error: result.error
+        error: result.error,
       });
     });
   };
@@ -58,19 +58,20 @@ class EventConfigComponent extends Component {
       }
     }
     this.setState({
-      hasBeenUpdated: isEdited
+      hasBeenUpdated: isEdited,
     });
   };
 
   updateEventDetails = (fieldName, e) => {
     let u = {
       ...this.state.updatedEvent,
-      [fieldName]: e.target.value
+      [fieldName]: e.target.value,
     };
 
-    this.setState({
-      updatedEvent: u
-    },
+    this.setState(
+      {
+        updatedEvent: u,
+      },
       () => this.hasBeenEdited()
     );
   };
@@ -78,35 +79,29 @@ class EventConfigComponent extends Component {
   updateDateTimeEventDetails = (fieldName, value) => {
     let u = {
       ...this.state.updatedEvent,
-      [fieldName]: value
+      [fieldName]: value,
     };
 
-    this.setState({
-      updatedEvent: u
-    },
+    this.setState(
+      {
+        updatedEvent: u,
+      },
       () => this.hasBeenEdited()
     );
   };
 
   render() {
-    const {
-      loading,
-      error,
-      updatedEvent,
-      hasBeenUpdated
-    } = this.state;
+    const { loading, error, updatedEvent, hasBeenUpdated } = this.state;
 
     const loadingStyle = {
       width: "3rem",
-      height: "3rem"
+      height: "3rem",
     };
 
     if (loading) {
       return (
         <div className="d-flex justify-content-center">
-          <div className="spinner-border"
-            style={loadingStyle}
-            role="status">
+          <div className="spinner-border" style={loadingStyle} role="status">
             <span className="sr-only">Loading...</span>
           </div>
         </div>
@@ -114,9 +109,7 @@ class EventConfigComponent extends Component {
     }
 
     if (error) {
-      return <div className="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return <div className="alert alert-danger alert-container">{error}</div>;
     }
 
     const t = this.props.t;
@@ -128,7 +121,8 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="organisation_id">
+                htmlFor="organisation_id"
+              >
                 {t("Organisation")}
               </label>
 
@@ -150,7 +144,7 @@ class EventConfigComponent extends Component {
 
               <div className="col-sm-10">
                 <input
-                  onChange={e => this.updateEventDetails("name", e)}
+                  onChange={(e) => this.updateEventDetails("name", e)}
                   type="text"
                   className="form-control"
                   id="name"
@@ -162,13 +156,14 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="description">
+                htmlFor="description"
+              >
                 {t("Description")}
               </label>
 
               <div className="col-sm-10">
                 <textarea
-                  onChange={e => this.updateEventDetails("description", e)}
+                  onChange={(e) => this.updateEventDetails("description", e)}
                   className="form-control"
                   id="description"
                   value={updatedEvent.description}
@@ -177,8 +172,7 @@ class EventConfigComponent extends Component {
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="key">
+              <label className={"col-sm-2 col-form-label"} htmlFor="key">
                 {t("Key")}
               </label>
 
@@ -187,7 +181,8 @@ class EventConfigComponent extends Component {
                   readOnly
                   className={"form-control-plaintext readonly"}
                   id="key"
-                  value={updatedEvent.key} />
+                  value={updatedEvent.key}
+                />
               </div>
             </div>
 
@@ -198,26 +193,27 @@ class EventConfigComponent extends Component {
 
               <div className="col-sm-10">
                 <input
-                  onChange={e => this.updateEventDetails("email_from", e)}
+                  onChange={(e) => this.updateEventDetails("email_from", e)}
                   type="email"
                   className="form-control"
                   id="email_from"
-                  value={updatedEvent.email_from} />
+                  value={updatedEvent.email_from}
+                />
               </div>
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
+              <label className={"col-sm-2 col-form-label"} htmlFor="url">
                 {t("URL")}
               </label>
               <div className="col-sm-10">
                 <input
-                  onChange={e => this.updateEventDetails("url", e)}
+                  onChange={(e) => this.updateEventDetails("url", e)}
                   type="text"
                   className="form-control"
                   id="url"
-                  value={updatedEvent.url} />
+                  value={updatedEvent.url}
+                />
               </div>
             </div>
 
@@ -230,9 +226,11 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("start_date", e)}
-                  value={new Date(updatedEvent.start_date)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("start_date", e)
+                  }
+                  value={new Date(updatedEvent.start_date)}
+                />
               </div>
 
               <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
@@ -243,15 +241,19 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e)}
-                  value={new Date(updatedEvent.end_date)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("end_date", e)
+                  }
+                  value={new Date(updatedEvent.end_date)}
+                />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="application_open">
+                htmlFor="application_open"
+              >
                 {t("Application Open")}
               </label>
 
@@ -259,9 +261,11 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("application_open", e)}
-                  value={new Date(updatedEvent.application_open)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("application_open", e)
+                  }
+                  value={new Date(updatedEvent.application_open)}
+                />
               </div>
 
               <label
@@ -275,17 +279,18 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
+                  onChange={(e) =>
                     this.updateDateTimeEventDetails("application_close", e)
                   }
-                  value={new Date(updatedEvent.application_close)} />
+                  value={new Date(updatedEvent.application_close)}
+                />
               </div>
-
             </div>
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="review_open">
+                htmlFor="review_open"
+              >
                 {t("Review Open")}
               </label>
 
@@ -293,14 +298,17 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_open", e)}
-                  value={new Date(updatedEvent.review_open)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("review_open", e)
+                  }
+                  value={new Date(updatedEvent.review_open)}
+                />
               </div>
 
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="review_close">
+                htmlFor="review_close"
+              >
                 {t("Review Close")}
               </label>
 
@@ -308,16 +316,19 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_close", e)}
-                  value={new Date(updatedEvent.review_close)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("review_close", e)
+                  }
+                  value={new Date(updatedEvent.review_close)}
+                />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="selection_open">
+                htmlFor="selection_open"
+              >
                 {t("Selection Open")}
               </label>
 
@@ -325,14 +336,17 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_open", e)}
-                  value={new Date(updatedEvent.selection_open)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("selection_open", e)
+                  }
+                  value={new Date(updatedEvent.selection_open)}
+                />
               </div>
 
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="selection_close">
+                htmlFor="selection_close"
+              >
                 {t("Selection Close")}
               </label>
 
@@ -340,9 +354,11 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_close", e)}
-                  value={new Date(updatedEvent.selection_close)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("selection_close", e)
+                  }
+                  value={new Date(updatedEvent.selection_close)}
+                />
               </div>
             </div>
 
@@ -355,14 +371,17 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_open", e)}
-                  value={new Date(updatedEvent.offer_open)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("offer_open", e)
+                  }
+                  value={new Date(updatedEvent.offer_open)}
+                />
               </div>
 
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="offer_close">
+                htmlFor="offer_close"
+              >
                 {t("Offer Close")}
               </label>
 
@@ -370,16 +389,19 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_close", e)}
-                  value={new Date(updatedEvent.offer_close)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("offer_close", e)
+                  }
+                  value={new Date(updatedEvent.offer_close)}
+                />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="registration_open">
+                htmlFor="registration_open"
+              >
                 {t("Registration Open")}
               </label>
 
@@ -387,14 +409,17 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_open", e)}
-                  value={new Date(updatedEvent.registration_open)} />
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("registration_open", e)
+                  }
+                  value={new Date(updatedEvent.registration_open)}
+                />
               </div>
 
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="registration_close">
+                htmlFor="registration_close"
+              >
                 {t("Registration Close")}
               </label>
 
@@ -402,8 +427,9 @@ class EventConfigComponent extends Component {
                 <DateTimePicker
                   clearIcon={null}
                   disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_close", e)}
+                  onChange={(e) =>
+                    this.updateDateTimeEventDetails("registration_close", e)
+                  }
                   value={new Date(updatedEvent.registration_close)}
                 />
               </div>
@@ -416,7 +442,8 @@ class EventConfigComponent extends Component {
             <div className={"col-sm-4 ml-md-auto"}>
               <button
                 className="btn btn-danger btn-lg btn-block"
-                onClick={() => this.onClickCancel()} >
+                onClick={() => this.onClickCancel()}
+              >
                 {t("Cancel")}
               </button>
             </div>
@@ -425,11 +452,11 @@ class EventConfigComponent extends Component {
               <button
                 onClick={() => this.onClickSubmit()}
                 className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenUpdated}>
+                disabled={!hasBeenUpdated}
+              >
                 {t("Update Event")}
               </button>
             </div>
-
           </div>
         </div>
       </div>

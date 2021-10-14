@@ -1,6 +1,6 @@
 import axios from "axios";
 import history from "../History";
-import i18n from 'i18next';
+import i18n from "i18next";
 
 export function authHeader() {
   // return authorization header with basic auth credentials
@@ -36,12 +36,11 @@ axios.interceptors.response.use(
       // but only if you aren't on the home or sign up page
       localStorage.removeItem("user");
       if (
-        history && history.location &&
-        (
-          history.location.pathname !== "/" &&
-          history.location.pathname !== "/createAccount" &&
-          history.location.pathname !== "/resetPassword"
-        )
+        history &&
+        history.location &&
+        history.location.pathname !== "/" &&
+        history.location.pathname !== "/createAccount" &&
+        history.location.pathname !== "/resetPassword"
       ) {
         history.push("/login");
       }
@@ -49,10 +48,8 @@ axios.interceptors.response.use(
   }
 );
 
-axios.interceptors.request.use(
-  request => {
-    request.params = request.params || {};
-    request.params['language'] = i18n.language;
-    return request;
-  }
-)
+axios.interceptors.request.use((request) => {
+  request.params = request.params || {};
+  request.params["language"] = i18n.language;
+  return request;
+});

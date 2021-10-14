@@ -16,13 +16,17 @@ class FormSelect extends React.Component {
     }
   }
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+  linkRenderer = (props) => (
+    <a href={props.href} target="_blank">
+      {props.children}
+    </a>
+  );
 
   render() {
     const { id, options, placeholder, onChange, defaultValue } = this.props;
     let value = this.props.value;
     if (defaultValue) {
-      value = options.filter(option => option.value === defaultValue);
+      value = options.filter((option) => option.value === defaultValue);
     }
     return (
       <div>
@@ -31,7 +35,10 @@ class FormSelect extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <ReactMarkdown
+              source={this.props.label}
+              renderers={{ link: this.linkRenderer }}
+            />
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
@@ -43,7 +50,7 @@ class FormSelect extends React.Component {
             options={options}
             placeholder={placeholder}
             value={value}
-            onChange={e => onChange(id, e)}
+            onChange={(e) => onChange(id, e)}
             defaultValue={value || null}
             className={
               this.shouldDisplayError()

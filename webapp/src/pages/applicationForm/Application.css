@@ -25,7 +25,7 @@
 
 .loading-indicator {
   width: 32px;
-  margin-top:50px;
+  margin-top: 50px;
 }
 
 .section .question {
@@ -58,10 +58,10 @@
   background-repeat: no-repeat;
   background-position: center right calc(2.25rem / 4);
   background-size: calc(2.25rem / 2) calc(2.25rem / 2);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='%23dc3545' viewBox='-2 -2 7 7'%3e%3cpath stroke='%23d9534f' d='M0 0l3 3m0-3L0 3'/%3e%3ccircle r='.5'/%3e%3ccircle cx='3' r='.5'/%3e%3ccircle cy='3' r='.5'/%3e%3ccircle cx='3' cy='3' r='.5'/%3e%3c/svg%3E")
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='%23dc3545' viewBox='-2 -2 7 7'%3e%3cpath stroke='%23d9534f' d='M0 0l3 3m0-3L0 3'/%3e%3ccircle r='.5'/%3e%3ccircle cx='3' r='.5'/%3e%3ccircle cy='3' r='.5'/%3e%3ccircle cx='3' cy='3' r='.5'/%3e%3c/svg%3E");
 }
 
-.select-control.is-invalid~.invalid-feedback {
+.select-control.is-invalid ~ .invalid-feedback {
   display: block;
 }
 
@@ -105,7 +105,7 @@ ol.progtrckr li.progtrckr-todo {
 
 ol.progtrckr li.progtrckr-doing {
   color: black;
-  border-bottom: 4px solid #CCCCCC;
+  border-bottom: 4px solid #cccccc;
 }
 
 ol.progtrckr li.progtrckr-done {
@@ -139,7 +139,7 @@ ol.progtrckr li.progtrckr-todo:hover:before {
 ol.progtrckr li.progtrckr-doing:before {
   content: "\2022";
   color: white;
-  background-color: #CCCCCC;
+  background-color: #cccccc;
   width: 1.2em;
   line-height: 1.2em;
   border-radius: 1.2em;
@@ -164,7 +164,7 @@ ol.progtrckr li.progtrckr-done:hover:before {
 
 .question__word-count {
   font-size: 80%;
-  margin-top: .25em;
+  margin-top: 0.25em;
 }
 
 .custom-checkbox {
@@ -174,7 +174,6 @@ ol.progtrckr li.progtrckr-done:hover:before {
 .reference-row {
   margin-bottom: 0.5em;
 }
-
 
 .reference-status {
   margin-left: 0.5em;

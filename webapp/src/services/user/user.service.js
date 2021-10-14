@@ -14,16 +14,16 @@ export const userService = {
   verifyEmail,
   resendVerification,
   addComment,
-  authRefresh
+  authRefresh,
 };
 
 function login(email, password) {
   return axios
     .post(baseUrl + `/api/v1/authenticate`, {
       email: email,
-      password: password
+      password: password,
     })
-    .then(response => {
+    .then((response) => {
       let user = null;
       if (response) user = response.data;
 
@@ -45,9 +45,9 @@ function create(user) {
       lastname: user.lastName,
       user_title: user.title,
       password: user.password,
-      policy_agreed: user.agreePrivacyPolicy
+      policy_agreed: user.agreePrivacyPolicy,
     })
-    .then(response => {
+    .then((response) => {
       let user = null;
       if (response) user = response.data;
       return user;
@@ -63,11 +63,11 @@ function update(user) {
         firstname: user.firstName,
         lastname: user.lastName,
         user_title: user.title,
-        password: ""
+        password: "",
       },
       { headers: authHeader() }
     )
-    .then(response => {
+    .then((response) => {
       let user = null;
       if (response) user = response.data;
       localStorage.setItem("user", JSON.stringify(user));
@@ -78,27 +78,27 @@ function update(user) {
 function deleteAccount() {
   return axios
     .delete(baseUrl + `/api/v1/user`, { headers: authHeader() })
-    .then(response => {
+    .then((response) => {
       localStorage.removeItem("user");
 
       return {
         status: response.status,
-        message: response.statusText
+        message: response.statusText,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       if (error.response) {
         return {
           status: error.response.status,
           message: error.response.data
             ? error.response.data.message
-            : error.response.statusText
+            : error.response.statusText,
         };
       } else {
         // The request was made but no response was received
         return {
           status: null,
-          message: error.message
+          message: error.message,
         };
       }
     });
@@ -112,12 +112,12 @@ function logout() {
 function get() {
   return axios
     .get(baseUrl + `/api/v1/user`, { headers: authHeader() })
-    .then(function(response) {
+    .then(function (response) {
       // handle success
       const user = response.data;
       return user;
     })
-    .catch(function(error) {
+    .catch(function (error) {
       // handle error
       return { error: error };
     });
@@ -125,12 +125,12 @@ function get() {
 
 function authRefresh() {
   return axios
-    .get(baseUrl + '/api/v1/authenticationrefresh', { headers: authHeader() })
-    .then(function(response) {
+    .get(baseUrl + "/api/v1/authenticationrefresh", { headers: authHeader() })
+    .then(function (response) {
       const user = response.data;
       return user;
     })
-    .catch(function(error) {
+    .catch(function (error) {
       // handle error
       return { error: error };
     });
@@ -139,27 +139,27 @@ function authRefresh() {
 function requestPasswordReset(email) {
   return axios
     .post(baseUrl + `/api/v1/password-reset/request`, {
-      email: email
+      email: email,
     })
-    .then(response => {
+    .then((response) => {
       return {
         status: response.status,
-        message: response.statusText
+        message: response.statusText,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       if (error.response) {
         return {
           status: error.response.status,
           message: error.response.data
             ? error.response.data.message
-            : error.response.statusText
+            : error.response.statusText,
         };
       } else {
         // The request was made but no response was received
         return {
           status: null,
-          message: error.message
+          message: error.message,
         };
       }
     });
@@ -169,27 +169,27 @@ function confirmPasswordReset(password, code) {
   return axios
     .post(baseUrl + `/api/v1/password-reset/confirm`, {
       password: password,
-      code: code
+      code: code,
     })
-    .then(response => {
+    .then((response) => {
       return {
         status: response.status,
-        message: response.statusText
+        message: response.statusText,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       if (error.response) {
         return {
           status: error.response.status,
           message: error.response.data
             ? error.response.data.message
-            : error.response.statusText
+            : error.response.statusText,
         };
       } else {
         // The request was made but no response was received
         return {
           status: null,
-          message: error.message
+          message: error.message,
         };
       }
     });
@@ -199,17 +199,17 @@ function verifyEmail(token) {
   console.log("Verifying email with token: " + token);
   return axios
     .get(baseUrl + "/api/v1/verify-email?token=" + token)
-    .then(response => {
+    .then((response) => {
       return {
-        error: ""
+        error: "",
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -217,41 +217,41 @@ function verifyEmail(token) {
 function resendVerification(email) {
   return axios
     .get(baseUrl + "/api/v1/resend-verification-email?email=" + email)
-    .then(response => {
+    .then((response) => {
       return {
-        error: ""
+        error: "",
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
 
 function addComment(event_id, user_id, comment) {
   let data = {
-    event_id: event_id, 
+    event_id: event_id,
     user_id: user_id,
-    comment: comment
+    comment: comment,
   };
-  
+
   return axios
     .post(baseUrl + "/api/v1/user-comment", data, { headers: authHeader() })
-    .then(response => {
+    .then((response) => {
       return {
-        error: ""
+        error: "",
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }

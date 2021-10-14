@@ -4,7 +4,7 @@ import { profileService } from "../../../services/profilelist";
 import { createColClassName } from "../../../utils/styling/styling";
 import validationFields from "../../../utils/validation/validationFields";
 import FormTextBox from "../../../components/form/FormTextBox";
-import { withTranslation } from 'react-i18next'
+import { withTranslation } from "react-i18next";
 
 class ViewProfileComponent extends Component {
   constructor(props) {
@@ -13,15 +13,14 @@ class ViewProfileComponent extends Component {
       user: {},
       loading: true,
       error: "",
-      isNull: true
+      isNull: true,
     };
   }
 
   componentDidMount() {
     const { id } = this.props.match.params;
     let user_id = parseInt(id.toString().split(":")[1], 10);
-    profileService.getUserProfile(user_id).then(result => {
-
+    profileService.getUserProfile(user_id).then((result) => {
       var date = result.user_dateOfBirth;
       if (date) date = date.split("T")[0];
 
@@ -42,11 +41,11 @@ class ViewProfileComponent extends Component {
           Response_id: result.response_id,
           Date_Submitted: date_submitted,
           Date_Withdrawn: date_withdrawn,
-          ID: result.user_id
+          ID: result.user_id,
         },
         loading: false,
         error: result.error,
-        isNull: result.data === null
+        isNull: result.data === null,
       });
     });
   }
@@ -66,14 +65,11 @@ class ViewProfileComponent extends Component {
       Date_Withdrawn,
     } = this.state.user;
 
-    const { loading,
-      error,
-      isNull
-    } = this.state;
+    const { loading, error, isNull } = this.state;
 
     const loadingStyle = {
       width: "3rem",
-      height: "3rem"
+      height: "3rem",
     };
 
     const t = this.props.t;
@@ -89,9 +85,7 @@ class ViewProfileComponent extends Component {
     }
 
     if (error) {
-      return <div class="alert alert-danger alert-container">
-        {error}
-      </div>;
+      return <div class="alert alert-danger alert-container">{error}</div>;
     }
     return (
       <div className="user-profile-container justify-content-center">
@@ -102,100 +96,102 @@ class ViewProfileComponent extends Component {
             </div>
           </div>
         ) : (
-            <div className="profile-view-padding">
-              {" "}
-              <span className="profile-view-padding">
-                <div className="alert alert-primary user-profile-header">
-                  {t("Profile For")}: {title + " " + firstName + " " + lastName}
-                </div>
-              </span>
+          <div className="profile-view-padding">
+            {" "}
+            <span className="profile-view-padding">
+              <div className="alert alert-primary user-profile-header">
+                {t("Profile For")}: {title + " " + firstName + " " + lastName}
+              </div>
+            </span>
+            <form>
+              <div class="row">
+                <fieldset class="fieldset">
+                  <legend class="legend">{t("Personal Information")}</legend>
 
-              <form>
-                <div class="row">
-                  <fieldset class="fieldset">
-                    <legend class="legend">{t("Personal Information")}</legend>
-
-                    <div class="row">
-                      <div class={commonColClassName}>
-                        <FormTextBox
-                          id={validationFields.title.name}
-                          placeholder={t(validationFields.title.display)}
-                          value={title}
-                          label={t(validationFields.title.display)} />
-                      </div>
-
-                      <div class={commonColClassName}>
-                        <FormTextBox
-                          id={validationFields.firstName.name}
-                          type="text"
-                          placeholder={t(validationFields.firstName.display)}
-                          value={firstName}
-                          label={t(validationFields.firstName.display)} />
-                      </div>
-
-                      <div class={commonColClassName}>
-                        <FormTextBox
-                          id={validationFields.lastName.name}
-                          type="text"
-                          placeholder={t(validationFields.lastName.display)}
-                          value={lastName}
-                          label={t(validationFields.lastName.display)}
-                          editable={false} />
-                      </div>
+                  <div class="row">
+                    <div class={commonColClassName}>
+                      <FormTextBox
+                        id={validationFields.title.name}
+                        placeholder={t(validationFields.title.display)}
+                        value={title}
+                        label={t(validationFields.title.display)}
+                      />
                     </div>
 
-                    <div class="row">
-                      <div class={commonColClassName}>
-                        <FormTextBox
-                          id={validationFields.email.name}
-                          type="email"
-                          placeholder={t(validationFields.email.display)}
-                          value={email}
-                          label={t(validationFields.email.display)} />
-                      </div>
+                    <div class={commonColClassName}>
+                      <FormTextBox
+                        id={validationFields.firstName.name}
+                        type="text"
+                        placeholder={t(validationFields.firstName.display)}
+                        value={firstName}
+                        label={t(validationFields.firstName.display)}
+                      />
                     </div>
-                  </fieldset>
-                </div>
 
-                <div class="row">
-                  <fieldset class="fieldset">
-                    <legend class="legend">
-                      {t("User Application Info")}
-                    </legend>
+                    <div class={commonColClassName}>
+                      <FormTextBox
+                        id={validationFields.lastName.name}
+                        type="text"
+                        placeholder={t(validationFields.lastName.display)}
+                        value={lastName}
+                        label={t(validationFields.lastName.display)}
+                        editable={false}
+                      />
+                    </div>
+                  </div>
 
-                    <div className="row" class={colClassNameUserApplicationInfo}>
-                      {is_Submitted && (
-                        <div >
-                          <div class="form-group">
-                            <div
-                              class="alert alert-success yes-submitted-alert"
-                              role="alert">
-                              {t("Submitted on")}
-                              {Date_Submitted}
-                            </div>
+                  <div class="row">
+                    <div class={commonColClassName}>
+                      <FormTextBox
+                        id={validationFields.email.name}
+                        type="email"
+                        placeholder={t(validationFields.email.display)}
+                        value={email}
+                        label={t(validationFields.email.display)}
+                      />
+                    </div>
+                  </div>
+                </fieldset>
+              </div>
+
+              <div class="row">
+                <fieldset class="fieldset">
+                  <legend class="legend">{t("User Application Info")}</legend>
+
+                  <div className="row" class={colClassNameUserApplicationInfo}>
+                    {is_Submitted && (
+                      <div>
+                        <div class="form-group">
+                          <div
+                            class="alert alert-success yes-submitted-alert"
+                            role="alert"
+                          >
+                            {t("Submitted on")}
+                            {Date_Submitted}
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {is_Withdrawn && (
-                        <div class={colClassNameUserApplicationInfo}>
-                          <div class="form-group">
-                            <div
-                              class="alert alert-danger no-submitted-alert"
-                              role="alert">
-                              {t("Withdrawn on")}
-                              {Date_Withdrawn}
-                            </div>
+                    {is_Withdrawn && (
+                      <div class={colClassNameUserApplicationInfo}>
+                        <div class="form-group">
+                          <div
+                            class="alert alert-danger no-submitted-alert"
+                            role="alert"
+                          >
+                            {t("Withdrawn on")}
+                            {Date_Withdrawn}
                           </div>
                         </div>
-                      )}
-
-                    </div>
-                  </fieldset>
-                </div>
-              </form>
-            </div>
-          )}
+                      </div>
+                    )}
+                  </div>
+                </fieldset>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     );
   }

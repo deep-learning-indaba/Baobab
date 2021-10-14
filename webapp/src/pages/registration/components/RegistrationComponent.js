@@ -47,18 +47,18 @@ class RegistrationComponent extends Component {
       registrationFormId: false,
       formSuccess: false,
       formFailure: false,
-      registrationNotAvailable: false
+      registrationNotAvailable: false,
     };
   }
 
   resetPage() {
     this.componentDidMount();
     this.setState({
-      formSuccess: false
+      formSuccess: false,
     });
   }
 
-  getDescription = question => {
+  getDescription = (question) => {
     if (question.description) {
       return question.description;
     }
@@ -67,11 +67,11 @@ class RegistrationComponent extends Component {
   handleChange = (id, event) => {
     let value = null;
     if (event.target) {
-      value = event.target.type === "checkbox"
-        ? event.target.checked | 0
-        : event.target.value;
-    }
-    else {
+      value =
+        event.target.type === "checkbox"
+          ? event.target.checked | 0
+          : event.target.value;
+    } else {
       value = event;
     }
 
@@ -80,7 +80,8 @@ class RegistrationComponent extends Component {
 
   onChange = (id, value) => {
     let answer = this.state.answers.find(
-      a => a.registration_question_id === id);
+      (a) => a.registration_question_id === id
+    );
     let answers = this.state.answers;
 
     if (answer) {
@@ -91,18 +92,20 @@ class RegistrationComponent extends Component {
     } else {
       answer = {
         registration_question_id: parseInt(id),
-        value: value.toString()
+        value: value.toString(),
       };
       answers.push(answer);
     }
 
-    this.setState({
-      answers: answers
-    }, () => {
-      if (this.state.hasValidated) {
-        this.isValidated();
+    this.setState(
+      {
+        answers: answers,
+      },
+      () => {
+        if (this.state.hasValidated) {
+          this.isValidated();
+        }
       }
-    }
     );
   };
 
@@ -114,76 +117,90 @@ class RegistrationComponent extends Component {
   componentDidMount() {
     this.setState({ isLoading: true });
 
-    offerServices.getOffer(this.props.event ? this.props.event.id : 0).then(result => {
-      if (result.error === "" && result.offer !== null) {
-        this.setState({
-          offer: result.offer,
-          error: result.error
-        }, () => {
-          registrationService
-            .getRegistrationForm(this.props.event ?
-              this.props.event.id : 0,
-              this.state.offer.id)
-            .then(result => {
-              if (
-                result.error === "" &&
-                result.form.registration_sections.length > 0
-              ) {
-                let questionSections = [];
-                for (var i = 0; i < result.form.registration_sections.length; i++) {
-                  if (result.form.registration_sections[i].registration_questions.length > 0) {
-                    questionSections.push(
-                      result.form.registration_sections[i]);
-                  }
-                }
+    offerServices
+      .getOffer(this.props.event ? this.props.event.id : 0)
+      .then((result) => {
+        if (result.error === "" && result.offer !== null) {
+          this.setState(
+            {
+              offer: result.offer,
+              error: result.error,
+            },
+            () => {
+              registrationService
+                .getRegistrationForm(
+                  this.props.event ? this.props.event.id : 0,
+                  this.state.offer.id
+                )
+                .then((result) => {
+                  if (
+                    result.error === "" &&
+                    result.form.registration_sections.length > 0
+                  ) {
+                    let questionSections = [];
+                    for (
+                      var i = 0;
+                      i < result.form.registration_sections.length;
+                      i++
+                    ) {
+                      if (
+                        result.form.registration_sections[i]
+                          .registration_questions.length > 0
+                      ) {
+                        questionSections.push(
+                          result.form.registration_sections[i]
+                        );
+                      }
+                    }
 
-                registrationService.getRegistrationResponse()
-                  .then(result => {
-                    if (result.error === "") {
+                    registrationService
+                      .getRegistrationResponse()
+                      .then((result) => {
+                        if (result.error === "") {
+                          this.setState({
+                            isLoading: false,
+                            answers: result.form.answers,
+                            registrationId: result.form.registration_id,
+                          });
+                        } else {
+                          this.setState({
+                            isLoading: false,
+                          });
+                        }
+                      })
+                      .catch((error) => {});
+                    this.setState({
+                      questionSections: questionSections.sort(
+                        (a, b) => a.order - b.order
+                      ),
+                      registrationFormId: result.form.id,
+                    });
+                  } else {
+                    if (result.statusCode === 409) {
+                      this.props.history.push("/offer");
+                    }
+                    if (result.statusCode === 404) {
                       this.setState({
+                        registrationNotAvailable: true,
                         isLoading: false,
-                        answers: result.form.answers,
-                        registrationId: result.form.registration_id
                       });
                     } else {
-                      this.setState({
-                        isLoading: false
+                      this.setStats({
+                        error: result.error,
+                        isLoading: false,
                       });
                     }
-                  })
-                  .catch(error => { });
-                this.setState({
-                  questionSections: questionSections.sort(
-                    (a, b) => a.order - b.order),
-                  registrationFormId: result.form.id,
+                  }
                 });
-              } else {
-                if (result.statusCode === 409) {
-                  this.props.history.push("/offer");
-                }
-                if (result.statusCode === 404) {
-                  this.setState({
-                    registrationNotAvailable: true,
-                    isLoading: false
-                  });
-                }
-                else {
-                  this.setStats({
-                    error: result.error,
-                    isLoading: false
-                  });
-                }
-              }
-            });
+            }
+          );
+        } else {
+          this.setState({
+            isLoading: false,
+            error: result.error,
+          });
         }
-        );
-      } else {
-        this.setState({
-          isLoading: false,
-          error: result.error
-        });
-      }
-    });
+      });
   }
 
   validate = (question, answer) => {
@@ -193,7 +210,8 @@ class RegistrationComponent extends Component {
       errors.push(question.validation_text || "An answer is required.");
     }
 
-    if (answer &&
+    if (
+      answer &&
       question.validation_regex &&
       !answer.value.match(question.validation_regex)
     ) {
@@ -202,78 +220,80 @@ class RegistrationComponent extends Component {
 
     return {
       registration_question_id: question.id,
-      error: errors.join("; ")
+      error: errors.join("; "),
     };
   };
 
   isValidated = () => {
-    const validationErrors = this.state.questionSections.flatMap(section =>
-      section.registration_questions.map(question => {
+    const validationErrors = this.state.questionSections.flatMap((section) =>
+      section.registration_questions.map((question) => {
         let answer = this.state.answers.find(
-          a => a.registration_question_id === question.id
+          (a) => a.registration_question_id === question.id
         );
         return this.validate(question, answer);
       })
     );
 
-    const isValid = !validationErrors.some(v => v.error);
+    const isValid = !validationErrors.some((v) => v.error);
 
     this.setState({
       validationErrors: validationErrors,
       validationStale: false,
-      isValid: isValid
+      isValid: isValid,
     });
 
     return isValid;
   };
 
-  buttonSubmit = e => {
+  buttonSubmit = (e) => {
     e.preventDefault();
 
     let data = {
       registration_id: this.state.registrationId,
       offer_id: this.state.offer.id,
       registration_form_id: this.state.registrationFormId,
-      answers: this.state.answers
+      answers: this.state.answers,
     };
 
     this.setState({
-      hasValidated: true
+      hasValidated: true,
     });
 
     if (this.isValidated()) {
-      this.setState({
-        isSubmitting: true
-      }, () => {
-        registrationService.submitResponse(
-          data,
-          this.state.registrationId ? true : false)
-          .then(response => {
-            if (response.error === "" &&
-              (response.form.status === 201 || response.form.status === 200)
-            ) {
-              this.setState({
-                formFailure: false,
-                formSuccess: true,
-                isSubmitting: false
-              });
-            } else {
+      this.setState(
+        {
+          isSubmitting: true,
+        },
+        () => {
+          registrationService
+            .submitResponse(data, this.state.registrationId ? true : false)
+            .then((response) => {
+              if (
+                response.error === "" &&
+                (response.form.status === 201 || response.form.status === 200)
+              ) {
+                this.setState({
+                  formFailure: false,
+                  formSuccess: true,
+                  isSubmitting: false,
+                });
+              } else {
+                this.setState({
+                  formFailure: true,
+                  formSuccess: false,
+                  isSubmitting: false,
+                  error: response.error,
+                });
+              }
+            })
+            .catch((error) => {
               this.setState({
                 formFailure: true,
                 formSuccess: false,
                 isSubmitting: false,
-                error: response.error
               });
-            }
-          })
-          .catch(error => {
-            this.setState({
-              formFailure: true,
-              formSuccess: false,
-              isSubmitting: false
             });
-          });
-      }
+        }
       );
     }
   };
@@ -286,11 +306,11 @@ class RegistrationComponent extends Component {
       validationStale,
       isValid,
       isSubmitting,
-      registrationNotAvailable
+      registrationNotAvailable,
     } = this.state;
 
     this.getDropdownDescription = (options, answer) => {
-      return options.map(item => {
+      return options.map((item) => {
         if (item.value === answer.value) return item.label;
         return null;
       });
@@ -309,11 +329,12 @@ class RegistrationComponent extends Component {
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={e => this.handleChange(question.id, e)}
+              onChange={(e) => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required} />
+              required={question.is_required}
+            />
           );
         case SINGLE_CHOICE:
           return (
@@ -323,12 +344,13 @@ class RegistrationComponent extends Component {
               type="checkbox"
               label={question.description}
               placeholder={question.placeholder}
-              onChange={e => this.handleChange(question.id, e)}
+              onChange={(e) => this.handleChange(question.id, e)}
               value={answer ? parseInt(answer.value) : answer}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required} />
+              required={question.is_required}
+            />
           );
         case LONG_TEXT[0]:
         case LONG_TEXT[1]:
@@ -337,13 +359,14 @@ class RegistrationComponent extends Component {
               id={`control_${question.id}`}
               name={`control_${question.id}`}
               label={question.description}
-              onChange={e => this.handleChange(question.id, e)}
+              onChange={(e) => this.handleChange(question.id, e)}
               placeholder={question.placeholder}
               value={(answer && answer.value) || null}
               rows={5}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError} />
+              errorText={validationError}
+            />
           );
         case MULTI_CHOICE:
           return (
@@ -358,47 +381,51 @@ class RegistrationComponent extends Component {
               required={question.is_required && !answer}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError} />
+              errorText={validationError}
+            />
           );
-          case CHOICE_OTHER:
-            return (
-              <FormSelectOther
-                options={question.options}
-                id={`control_${question.id}`}
-                name={`control_${question.id}`}
-                onChange={e => this.onChange(question.id, e)}
-                defaultValue={(answer && answer.value) || ""}
-                placeholder={question.placeholder}
-                label={question.description}
-                required={question.is_required && !answer}
-                key={"i_" + key}
-                showError={validationError}
-                errorText={validationError} />
-            );
+        case CHOICE_OTHER:
+          return (
+            <FormSelectOther
+              options={question.options}
+              id={`control_${question.id}`}
+              name={`control_${question.id}`}
+              onChange={(e) => this.onChange(question.id, e)}
+              defaultValue={(answer && answer.value) || ""}
+              placeholder={question.placeholder}
+              label={question.description}
+              required={question.is_required && !answer}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError}
+            />
+          );
         case MULTI_CHECKBOX:
           return (
             <FormMultiCheckbox
               id={`control_${question.id}`}
               name={`control_${question.id}`}
               options={question.options}
-              onChange={e => this.onChange(question.id, e)}
+              onChange={(e) => this.onChange(question.id, e)}
               defaultValue={(answer && answer.value) || ""}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError} />
-          )
+              errorText={validationError}
+            />
+          );
         case MULTI_CHECKBOX_OTHER:
           return (
             <FormMultiCheckboxOther
               id={`control_${question.id}`}
               name={`control_${question.id}`}
               options={question.options}
-              onChange={e => this.onChange(question.id, e)}
+              onChange={(e) => this.onChange(question.id, e)}
               defaultValue={(answer && answer.value) || ""}
               key={"i_" + key}
               showError={validationError}
-              errorText={validationError} />
-          )
+              errorText={validationError}
+            />
+          );
         case FILE:
           return (
             <FileUploadComponent
@@ -408,7 +435,8 @@ class RegistrationComponent extends Component {
               value={this.props.answer && this.props.answer.value}
               validationError={validationError}
               onChange={(_, v) => this.onChange(question.id, v)}
-              key={"i_" + key} />
+              key={"i_" + key}
+            />
           );
         case DATE:
           return (
@@ -418,11 +446,12 @@ class RegistrationComponent extends Component {
               label={question.description}
               value={answer ? answer.value : answer}
               placeholder={question.placeholder}
-              onChange={e => this.handleChange(question.id, e)}
+              onChange={(e) => this.handleChange(question.id, e)}
               key={"i_" + key}
               showError={validationError}
               errorText={validationError}
-              required={question.is_required} />
+              required={question.is_required}
+            />
           );
         default:
           return (
@@ -434,21 +463,23 @@ class RegistrationComponent extends Component {
     };
 
     if (isLoading) {
-      return (
-        <Loading />
-      );
+      return <Loading />;
     }
 
     if (error) {
-      return <div className={"alert alert-danger alert-container"}>
-        {error}
-      </div>;
+      return (
+        <div className={"alert alert-danger alert-container"}>{error}</div>
+      );
     }
 
     if (registrationNotAvailable) {
-      return <div className={"alert alert-warning alert-container"}>
-        Thank you! Your confirmation has been recorded and your place is confirmed. We will contact you by email when the event registration form is available.
-      </div>;
+      return (
+        <div className={"alert alert-warning alert-container"}>
+          Thank you! Your confirmation has been recorded and your place is
+          confirmed. We will contact you by email when the event registration
+          form is available.
+        </div>
+      );
     }
 
     return (
@@ -462,17 +493,19 @@ class RegistrationComponent extends Component {
               <button
                 type="button"
                 class="btn btn-primary pull-right"
-                onClick={() => this.resetPage()}>
+                onClick={() => this.resetPage()}
+              >
                 Change your answers
               </button>
             </div>
           </div>
         ) : (
-            <div
-              className={this.state.formSuccess ? "display-none" : "stretched"}>
-              <h2>Registration</h2>
-            </div>
-          )}
+          <div
+            className={this.state.formSuccess ? "display-none" : "stretched"}
+          >
+            <h2>Registration</h2>
+          </div>
+        )}
 
         {this.state.formFailure && (
           <div className="alert alert-danger stretched alert-container">
@@ -487,78 +520,89 @@ class RegistrationComponent extends Component {
           </div>
         )}
 
-        {this.state.questionSections.length > 0 &&
-          !this.state.formSuccess ? (
-            <div>
-              {this.state.questionSections.map(section => (
-                <div class="card stretched" key={"section_" + section.id}>
-                  <h3>{section.name}</h3>
-                  <div className="padding-v-15 mb-4 text-left">
-                    {section.description}
-                  </div>
-
-                  {section.registration_questions
-                    .sort((a, b) => a.order - b.order)
-                    .filter(question => {
-                      if (question.depends_on_question_id) {
-                        let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
-                        return answer && (answer.value !== question.hide_for_dependent_value)
-                      }
-                      return true
-                    })
-                    .map(question => {
-                      return (
-                        <div
-                          className="registration-question"
-                          key={"question_" + question.id}>
-                          <h5 className="form-label">{question.headline}</h5>
-                          {this.formControl(
-                            question.id,
-                            question,
-                            this.state.answers &&
-                            this.state.answers.find(
-                              a => a.registration_question_id === question.id
-                            ),
-                            this.state.validationErrors &&
-                            this.state.validationErrors.find(
-                              v => v.registration_question_id === question.id
-                            )
-                          )}
-                        </div>
-                      );
-                    })}
+        {this.state.questionSections.length > 0 && !this.state.formSuccess ? (
+          <div>
+            {this.state.questionSections.map((section) => (
+              <div class="card stretched" key={"section_" + section.id}>
+                <h3>{section.name}</h3>
+                <div className="padding-v-15 mb-4 text-left">
+                  {section.description}
                 </div>
-              ))}
 
-              <button
-                type="submit"
-                class="btn btn-primary margin-top-32"
-                onClick={this.buttonSubmit}>
-                {isSubmitting && (
-                  <span
-                    class="spinner-grow spinner-grow-sm"
-                    role="status"
-                    aria-hidden="true" />
-                )}
-                Submit reponse
+                {section.registration_questions
+                  .sort((a, b) => a.order - b.order)
+                  .filter((question) => {
+                    if (question.depends_on_question_id) {
+                      let answer = _.find(
+                        this.state.answers,
+                        (a) =>
+                          a.registration_question_id.toString() ===
+                          question.depends_on_question_id.toString()
+                      );
+                      return (
+                        answer &&
+                        answer.value !== question.hide_for_dependent_value
+                      );
+                    }
+                    return true;
+                  })
+                  .map((question) => {
+                    return (
+                      <div
+                        className="registration-question"
+                        key={"question_" + question.id}
+                      >
+                        <h5 className="form-label">{question.headline}</h5>
+                        {this.formControl(
+                          question.id,
+                          question,
+                          this.state.answers &&
+                            this.state.answers.find(
+                              (a) => a.registration_question_id === question.id
+                            ),
+                          this.state.validationErrors &&
+                            this.state.validationErrors.find(
+                              (v) => v.registration_question_id === question.id
+                            )
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            ))}
+
+            <button
+              type="submit"
+              class="btn btn-primary margin-top-32"
+              onClick={this.buttonSubmit}
+            >
+              {isSubmitting && (
+                <span
+                  class="spinner-grow spinner-grow-sm"
+                  role="status"
+                  aria-hidden="true"
+                />
+              )}
+              Submit reponse
             </button>
 
-              {hasValidated && !validationStale && !isValid && (
-                <div class="alert alert-danger alert-container">
-                  There are one or more validation errors, please correct before submitting.
+            {hasValidated && !validationStale && !isValid && (
+              <div class="alert alert-danger alert-container">
+                There are one or more validation errors, please correct before
+                submitting.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            {this.state.formSuccess !== true &&
+              this.state.formFailure !== true && (
+                <div className="alert alert-danger alert-container">
+                  Registration not available
                 </div>
               )}
-            </div>
-          ) : (
-            <div>
-              {this.state.formSuccess !== true &&
-                this.state.formFailure !== true && (
-                  <div className="alert alert-danger alert-container">
-                    Registration not available
-                  </div>
-                )}
-            </div>
-          )}
+          </div>
+        )}
       </div>
     );
   }

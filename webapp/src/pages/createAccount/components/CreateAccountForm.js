@@ -13,7 +13,7 @@ import {
   requiredDropdown,
   validEmail,
   validatePassword,
-  matchingPasswords
+  matchingPasswords,
 } from "../../../utils/validation/rules.js";
 
 const PassStrengthBar = React.lazy(() => import("./PassStrength"));
@@ -37,7 +37,7 @@ class CreateAccountForm extends Component {
         email: "",
         password: "",
         confirmPassword: "",
-        agreePrivacyPolicy: false
+        agreePrivacyPolicy: false,
       },
       showErrors: false,
       submitted: false,
@@ -46,13 +46,13 @@ class CreateAccountForm extends Component {
       titleOptions: [],
       error: "",
       created: false,
-      over18: false
+      over18: false,
     };
   }
 
   getContentValue(options, value) {
     if (options && options.filter) {
-      return options.filter(option => {
+      return options.filter((option) => {
         return option.value === value;
       });
     } else return null;
@@ -65,9 +65,9 @@ class CreateAccountForm extends Component {
   }
 
   componentWillMount() {
-    Promise.all([getTitleOptions]).then(result => {
+    Promise.all([getTitleOptions]).then((result) => {
       this.setState({
-        titleOptions: this.checkOptionsList(result[0])
+        titleOptions: this.checkOptionsList(result[0]),
       });
     });
   }
@@ -85,26 +85,26 @@ class CreateAccountForm extends Component {
       {
         user: {
           ...this.state.user,
-          [name]: dropdown.value
-        }
+          [name]: dropdown.value,
+        },
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
     );
   };
 
-  handleChange = field => {
-    return event => {
+  handleChange = (field) => {
+    return (event) => {
       this.setState(
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
-          }
+            [field.name]: event.target.value,
+          },
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -120,17 +120,17 @@ class CreateAccountForm extends Component {
   togglePrivacyPolicy = () => {
     let currentPrivacyPolicy = this.state.user.agreePrivacyPolicy;
     this.setState({
-      user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy }
+      user: { ...this.state.user, agreePrivacyPolicy: !currentPrivacyPolicy },
     });
   };
 
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
     if (this.state.user.password !== this.state.user.confirmPassword) {
       this.state.errors.$set.push({
-        passwords: this.props.t("Passwords do not match")
+        passwords: this.props.t("Passwords do not match"),
       });
     }
     const passwordErrors = validatePassword(this.state.user.password);
@@ -140,7 +140,7 @@ class CreateAccountForm extends Component {
       passwordErrors.password.length > 0 &&
       passwordErrors.password.foreach
     ) {
-      passwordErrors.password.foreach(i => {
+      passwordErrors.password.foreach((i) => {
         this.state.errors.$set.push({ passwords: i });
       });
     }
@@ -155,24 +155,24 @@ class CreateAccountForm extends Component {
     this.setState({ loading: true });
 
     userService.create(this.state.user).then(
-      user => {
+      (user) => {
         this.setState({
           loading: false,
-          created: true
+          created: true,
         });
       },
-      error =>
+      (error) =>
         this.setState({
           error:
             error.response && error.response.data
               ? error.response.data.message
               : error.message,
-          loading: false
+          loading: false,
         })
     );
   };
 
-  getErrorMessages = errors => {
+  getErrorMessages = (errors) => {
     let errorMessages = [];
     if (errors.$set === null) return;
 
@@ -196,7 +196,7 @@ class CreateAccountForm extends Component {
       title,
       password,
       confirmPassword,
-      agreePrivacyPolicy
+      agreePrivacyPolicy,
     } = this.state.user;
 
     const { loading, errors, showErrors, error, created, over18 } = this.state;
