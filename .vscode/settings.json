@@ -1,10 +1,14 @@
 {
-    "python.formatting.provider": "black",
-    "editor.formatOnSave": true,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": true
-    },
-    "python.sortImports.args": [
-        "--settings-path=${workspaceFolder}/api/setup.cfg"
-    ]
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "python.sortImports.args": [
+    "--settings-path=${workspaceFolder}/api/setup.cfg"
+  ],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.configPath": "./webapp/.prettierrc.json",
+  "prettier.ignorePath": "./webapp/.prettierignore",
+  "prettier.prettierPath": "./webapp/node_modules/prettier"
 }

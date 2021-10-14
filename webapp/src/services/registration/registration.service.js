@@ -10,7 +10,7 @@ export const registrationService = {
   getGuestRegistration,
   submitGuestResponse,
   getGuestRegistrationResponse,
-  requestInvitationLetter
+  requestInvitationLetter,
 };
 
 function getRegistrationForm(eventId, offerId) {
@@ -22,23 +22,23 @@ function getRegistrationForm(eventId, offerId) {
         "&offer_id=" +
         offerId,
       {
-        headers: authHeader()
+        headers: authHeader(),
       }
     )
-    .then(function(response) {
+    .then(function (response) {
       return {
         form: response.data,
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         form: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -46,21 +46,21 @@ function getRegistrationForm(eventId, offerId) {
 function getRegistrationResponse(id) {
   return axios
     .get(baseUrl + "/api/v1/registration-response", {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         form: response.data,
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         form: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -68,24 +68,24 @@ function getRegistrationResponse(id) {
 function submitResponse(data, shouldUpdate) {
   const promise = shouldUpdate
     ? axios.put(baseUrl + "/api/v1/registration-response", data, {
-        headers: authHeader()
+        headers: authHeader(),
       })
     : axios.post(baseUrl + "/api/v1/registration-response", data, {
-        headers: authHeader()
+        headers: authHeader(),
       });
   return promise
-    .then(function(response) {
+    .then(function (response) {
       return {
         error: "",
-        form: response
+        form: response,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         error:
           error.response && error.response.data && error.response.data.message
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -93,17 +93,17 @@ function submitResponse(data, shouldUpdate) {
 function getGuestRegistration(event_id) {
   return axios
     .get(baseUrl + "/api/v1/guest-registration-form?event_id=" + event_id, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         msg: "succeeded",
         form: response.data,
 
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       if (error.response && error.response.status === 404) {
         return { msg: "404" };
       } else {
@@ -112,7 +112,7 @@ function getGuestRegistration(event_id) {
           error:
             error.response && error.response.data
               ? error.response.data.message
-              : error.message
+              : error.message,
         };
       }
     });
@@ -121,21 +121,21 @@ function getGuestRegistration(event_id) {
 function getGuestRegistrationResponse() {
   return axios
     .get(baseUrl + "/api/v1/guest-registration", {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         form: response.data,
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         form: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -143,24 +143,24 @@ function getGuestRegistrationResponse() {
 function submitGuestResponse(data, shouldUpdate) {
   const promise = shouldUpdate
     ? axios.put(baseUrl + "/api/v1/guest-registration", data, {
-        headers: authHeader()
+        headers: authHeader(),
       })
     : axios.post(baseUrl + "/api/v1/guest-registration", data, {
-        headers: authHeader()
+        headers: authHeader(),
       });
   return promise
-    .then(function(response) {
+    .then(function (response) {
       return {
         error: "",
-        form: response
+        form: response,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         error:
           error.response && error.response.data && error.response.data.message
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -174,22 +174,23 @@ function requestInvitationLetter(user, event_id) {
     passport_name: user.fullNameOnPassport,
     passport_no: user.passportNumber,
     passport_issued_by: user.passportIssuedByAuthority,
-    passport_expiry_date: user.passportExpiryDate
+    passport_expiry_date: user.passportExpiryDate,
   };
   return axios
     .post(baseUrl + `/api/v1/invitation-letter`, invitationLetterReq, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(response => {
+    .then((response) => {
       return response;
     })
-    .catch(error => {
-        return {
-          invitationLetterId: null,
-          status: error.response ? error.response.status : null,
-          error: error.response && error.response.data
-          ? error.response.data.message
-          : error.message
-        };
+    .catch((error) => {
+      return {
+        invitationLetterId: null,
+        status: error.response ? error.response.status : null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message,
+      };
     });
 }

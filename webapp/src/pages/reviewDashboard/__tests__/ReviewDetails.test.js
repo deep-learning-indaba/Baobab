@@ -3,9 +3,9 @@ import { shallow } from "enzyme";
 import ReviewDetailsPage from "..";
 import { reviewService } from "../../../services/reviews/review.service";
 
-jest.mock('react-i18next', () => ({
+jest.mock("react-i18next", () => ({
   // this mock makes sure any components using the translate HoC receive the t function as a prop
-  withTranslation: () => Component => {
+  withTranslation: () => (Component) => {
     Component.defaultProps = { ...Component.defaultProps, t: () => "" };
     return Component;
   },
@@ -14,15 +14,15 @@ jest.mock('react-i18next', () => ({
 // Mock Props
 const props = {
   event: {
-    id: 3
+    id: 3,
   },
   match: {
     params: {
       id: 1,
-      eventKey: "1234"
-    }
-  }
-}
+      eventKey: "1234",
+    },
+  },
+};
 
 test("Check if Review Details Page renders.", () => {
   const wrapper = shallow(<ReviewDetailsPage {...props} />);

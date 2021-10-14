@@ -1,15 +1,15 @@
 import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
-import { withTranslation } from 'react-i18next';
+import { withTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 
 class FormTextArea extends React.Component {
   state = {
     words: 0,
     characters: 0,
-  }
-  
+  };
+
   shouldDisplayError = () => {
     return this.props.showError && this.props.errorText !== "";
   };
@@ -34,16 +34,20 @@ class FormTextArea extends React.Component {
     }
 
     this.setState({
-      words
-    })
-    return words
+      words,
+    });
+    return words;
   };
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+  linkRenderer = (props) => (
+    <a href={props.href} target="_blank">
+      {props.children}
+    </a>
+  );
 
   render() {
     const t = this.props.t;
-    
+
     return (
       <div>
         <FormGroup
@@ -51,7 +55,10 @@ class FormTextArea extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <ReactMarkdown
+              source={this.props.label}
+              renderers={{ link: this.linkRenderer }}
+            />
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
@@ -73,16 +80,17 @@ class FormTextArea extends React.Component {
             onKeyUp={this.getWordCount}
             onMouseUp={this.getWordCount}
             onMouseDown={this.getWordCount}
-            ref={input => {
+            ref={(input) => {
               this.nameInput = input;
             }}
-            key={"text_"+this.props.key}
+            key={"text_" + this.props.key}
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
           />
-          <span class="question__word-count float-right">{t('Word Count') + ': ' + this.state.words}</span>
+          <span class="question__word-count float-right">
+            {t("Word Count") + ": " + this.state.words}
+          </span>
         </FormGroup>
-        
       </div>
     );
   }

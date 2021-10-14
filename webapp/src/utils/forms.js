@@ -1,15 +1,15 @@
-import React from 'react';
-import icon from '../pages/createApplicationForm/icon.svg';
+import React from "react";
+import icon from "../pages/createApplicationForm/icon.svg";
 
 export const dateFormat = (date) => {
-  return new Date(date).toLocaleDateString('en-GB', {
-    weekday: 'short',
-    month: 'long',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit'
-  })
-}
+  return new Date(date).toLocaleDateString("en-GB", {
+    weekday: "short",
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+  });
+};
 
 export const TopBar = ({ title, t }) => {
   return (
@@ -20,4 +20,4 @@ export const TopBar = ({ title, t }) => {
       </div>
     </div>
   );
-}
+};

@@ -9,17 +9,17 @@ class FormMultiCheckbox extends React.Component {
     super(props);
     this.state = {
       options: [],
-      checked: []
+      checked: [],
     };
   }
 
   componentDidMount() {
     let checkedValues = [];
     if (this.props.defaultValue) {
-      checkedValues = this.props.defaultValue.split(' ; ');
+      checkedValues = this.props.defaultValue.split(" ; ");
     }
     this.setState({
-      checked: checkedValues
+      checked: checkedValues,
     });
   }
 
@@ -34,21 +34,24 @@ class FormMultiCheckbox extends React.Component {
   }
 
   onCheckChanged = (option, checked) => {
-    this.setState(prevState => {
-      var newChecked = prevState.checked.filter(c => c !== option.value);
-      if (checked) {
-        newChecked.push(option.value);
+    this.setState(
+      (prevState) => {
+        var newChecked = prevState.checked.filter((c) => c !== option.value);
+        if (checked) {
+          newChecked.push(option.value);
+        }
+        newChecked = newChecked.sort();
+        return {
+          checked: newChecked,
+        };
+      },
+      () => {
+        if (this.props.onChange) {
+          this.props.onChange(this.state.checked.join(" ; "));
+        }
       }
-      newChecked = newChecked.sort();
-      return {
-        checked: newChecked
-      };
-    }, () => {
-      if (this.props.onChange) {
-        this.props.onChange(this.state.checked.join(' ; '));
-      }
-    });
-  }
+    );
+  };
 
   renderFormCheckbox = (option) => {
     let id = "checkbox_" + this.props.id + "_" + option.value;
@@ -63,20 +66,26 @@ class FormMultiCheckbox extends React.Component {
           }
           type="checkbox"
           checked={this.state.checked.includes(option.value)}
-          onChange={e => {
+          onChange={(e) => {
             this.onCheckChanged(option, e.target.checked);
           }}
-          ref={input => {
+          ref={(input) => {
             this.nameInput = input;
           }}
-          key={this.props.id + '_check_' + option.value}
+          key={this.props.id + "_check_" + option.value}
         />
-        <label class="custom-control-label" htmlFor={id}>{option.label}</label>
+        <label class="custom-control-label" htmlFor={id}>
+          {option.label}
+        </label>
       </div>
     );
-  }
+  };
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+  linkRenderer = (props) => (
+    <a href={props.href} target="_blank">
+      {props.children}
+    </a>
+  );
 
   render() {
     return (
@@ -88,15 +97,20 @@ class FormMultiCheckbox extends React.Component {
           autoFocus={this.props.autoFocus}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <ReactMarkdown
+              source={this.props.label}
+              renderers={{ link: this.linkRenderer }}
+            />
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (
-                <div />
-              )}
+              <div />
+            )}
           </div>
           <div className="form text-left multi-checkbox-list">
-            {this.props.options.map((option) => this.renderFormCheckbox(option))}
+            {this.props.options.map((option) =>
+              this.renderFormCheckbox(option)
+            )}
           </div>
         </FormGroup>
       </div>

@@ -2,7 +2,7 @@ import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-import { withTranslation } from 'react-i18next';
+import { withTranslation } from "react-i18next";
 import { getDownloadURL } from "../../utils/files";
 import ReactMarkdown from "react-markdown";
 
@@ -17,17 +17,21 @@ class FormFileUpload extends React.Component {
     }
   }
 
-  onChange = event => {
-      if (this.props.uploadFile) {
-        this.props.uploadFile(event.target.files[0]);
-      }
-  }
+  onChange = (event) => {
+    if (this.props.uploadFile) {
+      this.props.uploadFile(event.target.files[0]);
+    }
+  };
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
+  linkRenderer = (props) => (
+    <a href={props.href} target="_blank">
+      {props.children}
+    </a>
+  );
 
   render() {
     var progressStyle = {
-        width: this.props.uploadPercentComplete.toString() + "%"
+      width: this.props.uploadPercentComplete.toString() + "%",
     };
 
     const t = this.props.t;
@@ -38,39 +42,60 @@ class FormFileUpload extends React.Component {
           id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
-            <div className="rowC">
-              <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
-                {this.props.description ? (
-                <FormToolTip description={this.props.description} />
-                ) : (
-                <div />
-                )}
-            </div>
-            <input
-                id={this.props.id}
-                className={
-                this.shouldDisplayError()
-                    ? "form-control is-invalid"
-                    : "form-control"
-                }
-                type="file"
-                placeholder={this.props.placeholder}
-                onChange={this.onChange}
-                min={this.props.min || null}
-                ref={input => {
-                this.nameInput = input;
-                }}
-                accept={this.props.options && this.props.options.accept ? this.props.options.accept : ".pdf, application/pdf" }
-                tabIndex={this.props.tabIndex}
-                autoFocus={this.props.autoFocus}
-                required={this.props.required || null}
-                disabled={this.props.uploading}
+          <div className="rowC">
+            <ReactMarkdown
+              source={this.props.label}
+              renderers={{ link: this.linkRenderer }}
             />
-            {this.props.uploading && <div class="progress">
-                <div class="progress-bar" role="progressbar" style={progressStyle} aria-valuemin="0" aria-valuemax="100"></div>
-            </div>}
-            {(this.props.uploaded || this.props.value) && 
-              <a href={getDownloadURL(this.props.value)} class="text-success uploaded-status">{t('Uploaded file')}</a>}
+            {this.props.description ? (
+              <FormToolTip description={this.props.description} />
+            ) : (
+              <div />
+            )}
+          </div>
+          <input
+            id={this.props.id}
+            className={
+              this.shouldDisplayError()
+                ? "form-control is-invalid"
+                : "form-control"
+            }
+            type="file"
+            placeholder={this.props.placeholder}
+            onChange={this.onChange}
+            min={this.props.min || null}
+            ref={(input) => {
+              this.nameInput = input;
+            }}
+            accept={
+              this.props.options && this.props.options.accept
+                ? this.props.options.accept
+                : ".pdf, application/pdf"
+            }
+            tabIndex={this.props.tabIndex}
+            autoFocus={this.props.autoFocus}
+            required={this.props.required || null}
+            disabled={this.props.uploading}
+          />
+          {this.props.uploading && (
+            <div class="progress">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                style={progressStyle}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          )}
+          {(this.props.uploaded || this.props.value) && (
+            <a
+              href={getDownloadURL(this.props.value)}
+              class="text-success uploaded-status"
+            >
+              {t("Uploaded file")}
+            </a>
+          )}
         </FormGroup>
       </div>
     );

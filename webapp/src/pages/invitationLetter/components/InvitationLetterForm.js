@@ -7,7 +7,7 @@ import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import {
   requiredText,
   isValidDate,
-  requiredDropdown
+  requiredDropdown,
 } from "../../../utils/validation/rules.js";
 import FormSelect from "../../../components/form/FormSelect";
 import { getCountries } from "../../../utils/validation/contentHelpers";
@@ -23,7 +23,7 @@ const fieldValidations = [
   ruleRunner(validationFields.residentialCity, requiredText),
   ruleRunner(validationFields.residentialPostalCode, requiredText),
   ruleRunner(validationFields.residentialCountry, requiredDropdown),
-  ruleRunner(validationFields.letterAddressedTo, requiredText)
+  ruleRunner(validationFields.letterAddressedTo, requiredText),
 ];
 
 class InvitationLetterForm extends Component {
@@ -38,11 +38,11 @@ class InvitationLetterForm extends Component {
         passportNumber: "",
         fullNameOnPassport: "",
         passportIssuedByAuthority: "",
-        bringingAPoster: false
+        bringingAPoster: false,
       },
       loading: false,
       showWorkAddress: false,
-      errors: []
+      errors: [],
     };
   }
 
@@ -54,16 +54,16 @@ class InvitationLetterForm extends Component {
 
   getContentValue(options, value) {
     if (options && options.filter) {
-      return options.filter(option => {
+      return options.filter((option) => {
         return option.value === value;
       });
     } else return null;
   }
 
   componentWillMount() {
-    getCountries.then(result => {
+    getCountries.then((result) => {
       this.setState({
-        countryOptions: this.checkOptionsList(result)
+        countryOptions: this.checkOptionsList(result),
       });
     });
   }
@@ -72,26 +72,26 @@ class InvitationLetterForm extends Component {
       {
         user: {
           ...this.state.user,
-          [name]: dropdown.value
-        }
+          [name]: dropdown.value,
+        },
       },
-      function() {
+      function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
       }
     );
   };
-  handleChange = field => {
-    return event => {
+  handleChange = (field) => {
+    return (event) => {
       this.setState(
         {
           user: {
             ...this.state.user,
             // React datepicker component's onChange contains the value and not event.target.value
-            [field.name]: event && event.target ? event.target.value : event
-          }
+            [field.name]: event && event.target ? event.target.value : event,
+          },
         },
-        function() {
+        function () {
           let errorsForm = run(this.state.user, fieldValidations);
           this.setState({ errors: { $set: errorsForm } });
         }
@@ -143,7 +143,7 @@ class InvitationLetterForm extends Component {
 
     return fullAddress;
   };
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     if (
       this.state.errors &&
       this.state.errors.$set &&
@@ -162,7 +162,7 @@ class InvitationLetterForm extends Component {
       residentialStreet2,
       residentialCity,
       residentialPostalCode,
-      residentialCountry
+      residentialCountry,
     } = this.state.user;
     let workFullAddress = null;
     const residentialCountryValue = this.getContentValue(
@@ -196,8 +196,8 @@ class InvitationLetterForm extends Component {
         user: {
           ...this.state.user,
           workFullAddress: workFullAddress,
-          residentialFullAddress: residentialFullAddress
-        }
+          residentialFullAddress: residentialFullAddress,
+        },
       },
       () => {
         this.setState({ loading: true });
@@ -207,23 +207,23 @@ class InvitationLetterForm extends Component {
             this.props.event ? this.props.event.id : 0
           )
           .then(
-            response => {
+            (response) => {
               this.setState({
                 loading: false,
                 invitationLetterId:
                   response && response.data
                     ? response.data.invitation_letter_request_id
                     : null,
-                error: response.error
+                error: response.error,
               });
             },
-            error =>
+            (error) =>
               this.setState({
                 error:
                   error.response && error.response.data
                     ? error.response.data.message
                     : error.message,
-                loading: false
+                loading: false,
               })
           );
         this.setState({ showErrors: true });
@@ -241,12 +241,12 @@ class InvitationLetterForm extends Component {
     this.setState({
       user: {
         ...this.state.user,
-        bringingAPoster: !currentBringingAPoster
-      }
+        bringingAPoster: !currentBringingAPoster,
+      },
     });
   };
 
-  getErrorMessages = errors => {
+  getErrorMessages = (errors) => {
     let errorMessages = [];
     if (errors.$set === null) return;
 
@@ -281,7 +281,7 @@ class InvitationLetterForm extends Component {
       residentialCity,
       residentialPostalCode,
       residentialCountry,
-      letterAddressedTo
+      letterAddressedTo,
     } = this.state.user;
 
     const {
@@ -290,7 +290,7 @@ class InvitationLetterForm extends Component {
       showErrors,
       error,
       showWorkAddress,
-      countryOptions
+      countryOptions,
     } = this.state;
 
     const nationalityValue = this.getContentValue(
