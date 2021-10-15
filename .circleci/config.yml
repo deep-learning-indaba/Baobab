@@ -15,6 +15,15 @@ jobs:
             openssl aes256 -md md5 -d -in docker-compose.circleci.yaml.enc -out docker-compose.yml -pass pass:$CONFIG_PASSWORD
             docker-compose up -d
       - run:
+          name: Format with black
+          command: docker-compose run web black --check api
+      - run:
+          name: Format with isort
+          command: docker-compose run web isort --check --settings-path=api/setup.cfg api
+      - run:
+          name: Format with prettier
+          command: docker-compose run webapp yarn prettier --check .
+      - run:
           name: Run migrations
           command: |
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
@@ -23,15 +32,6 @@ jobs:
       - run:
           name: Run unit tests
           command: docker-compose run web nosetests -v
-      - run:
-          name: Format with black
-          command: docker-compose run web black --check api
-      - run:
-          name: Format with isort
-          command: docker-compose run web isort --check --settings-path=api/setup.cfg api
-      - run:
-          name: Format with prettier
-          command: docker-compose run webapp bash -c 'yarn list --pattern "prettier" && echo $NODE_ENV'
 
   integration-tests:
     machine: true
