@@ -22,7 +22,7 @@ jobs:
           command: docker-compose run web isort --check --settings-path=api/setup.cfg api
       - run:
           name: Format with prettier
-          command: docker-compose run webapp yarn prettier --check .
+          command: docker-compose run webapp bash -c "yarn prettier --check ."
       - run:
           name: Run migrations
           command: |
