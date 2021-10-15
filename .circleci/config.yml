@@ -21,9 +21,6 @@ jobs:
           name: Format with isort
           command: docker-compose run web isort --check --settings-path=api/setup.cfg api
       - run:
-          name: Debug prettier installation
-          command: docker-compose run webapp yarn list --pattern "prettier"
-      - run:
           name: Format with prettier
           command: docker-compose run webapp yarn prettier-ci
       - run:
