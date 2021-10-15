@@ -31,7 +31,7 @@ jobs:
           command: docker-compose run web isort --check --settings-path=api/setup.cfg api
       - run:
           name: Format with prettier
-          command: docker-compose run webapp yarn prettier --check .
+          command: docker-compose run webapp bash -c 'yarn list --pattern "prettier" && echo $NODE_ENV'
 
   integration-tests:
     machine: true
