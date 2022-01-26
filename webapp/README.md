@@ -36,6 +36,10 @@ yarn
 ```
 yarn start
 ```
+- Run `prettier` formatting (note once the dependencies are installed and if you're using VS Code, formatting changes should be applied automatically upon every save. See the `.vscode/settings.json` at the root of the project).
+```
+yarn prettier-ci
+```
 
 ## Running the tests
 

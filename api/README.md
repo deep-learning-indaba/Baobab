@@ -7,8 +7,23 @@ Built using Flask and SQLAlchemy
 
 The development environment uses [Docker](http://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/). This makes it super easy to get up and running with a configuration that would closely mirror production. 
 
-### Running locally
-- TBC
+### Setting up local development environment
+To easily conform to this projects formatting requirements, make sure to install a Python 3.7.5 virtual environment and activate it.
+```bash
+# macOS / Linux
+python3 -m venv venv
+
+# Windows
+py -3.7 -m venv venv
+.\venv\Scripts\activate
+```
+Then install the development dependencies
+```
+python -m pip install --upgrade pip setuptools wheel 
+pip install -r .\api\requirements.txt -r .\api\requirements-dev.txt   
+```
+To select this environment in VS Code (so that it can automatically hook into it and improve the intellisense and included automated formatting), use the `Python: Select Interpreter` command from the `Command Palette` (`Ctrl+Shift+P` on Windows or `Cmd+Shift+P` on macOS).
+
 
 ## Installation
 
