@@ -1,32 +1,30 @@
 import React, { Component } from "react";
-import { Router, Route, NavLink, Switch } from "react-router-dom";
-import Home from "./pages/home";
-import EventHome from "./pages/eventHome";
-import Login from "./pages/login";
-import ResetPassword from "./pages/resetPassword";
-import CreateAccount from "./pages/createAccount";
-import VerifyEmail from "./pages/verifyEmail";
-import Profile from "./pages/profile";
+import CookieConsent from "react-cookie-consent";
+import ReactGA from "react-ga";
+import { withTranslation } from "react-i18next";
+import { NavLink, Route, Router, Switch } from "react-router-dom";
+import "./App.css";
 import { PrivateRoute } from "./components";
 import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
-import Reference from "./pages/references";
-import CookieConsent from "react-cookie-consent";
-import ResponseList from "./pages/ResponseList/ResponseList";
-import { AdminMenu } from "./utils/adminMenu";
-
-import ReactGA from "react-ga";
-import "./App.css";
 import history from "./History";
-
+import CreateAccount from "./pages/createAccount";
+import EventHome from "./pages/eventHome";
+import Home from "./pages/home";
+import Login from "./pages/login";
+import Profile from "./pages/profile";
+import Reference from "./pages/references";
+import ResetPassword from "./pages/resetPassword";
+import ResponseList from "./pages/ResponseList/ResponseList";
+import VerifyEmail from "./pages/verifyEmail";
+import { userService } from "./services/user";
+import { AdminMenu } from "./utils/adminMenu";
 import {
   isEventAdmin,
+  isEventReviewer,
   isRegistrationAdmin,
   isRegistrationVolunteer,
-  isEventReviewer,
 } from "./utils/user";
-import { withTranslation } from "react-i18next";
-import { userService } from "./services/user";
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
