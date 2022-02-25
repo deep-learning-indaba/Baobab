@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: ubuntu-2004:202107-02
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
@@ -25,7 +25,8 @@ jobs:
           command: docker-compose run  web nosetests -v
 
   integration-tests:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
@@ -36,7 +37,8 @@ jobs:
             docker-compose run cypress
 
   front-end-tests:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
@@ -97,7 +99,8 @@ jobs:
           no_output_timeout: 1h
 
   deploy-backend-test:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
@@ -112,7 +115,8 @@ jobs:
             gcloud app deploy --version=v1
 
   deploy-backend-prod:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - run:
