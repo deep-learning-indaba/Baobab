@@ -46,3 +46,4 @@ parameterized
 mock
 pyrsistent
 rsa
+WTForms==2.3.3

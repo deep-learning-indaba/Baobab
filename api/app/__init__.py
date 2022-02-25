@@ -74,7 +74,7 @@ from .registration.models import Offer, RegistrationForm, RegistrationSection, R
 from .invitationletter.models import InvitationTemplate, InvitationLetterRequest
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):
-    email = fields.StringField(validators=[validators.required()])
+    email = fields.TextField(validators=[validators.required()])
     password = fields.PasswordField(validators=[validators.required()])
 
     def validate(self):
