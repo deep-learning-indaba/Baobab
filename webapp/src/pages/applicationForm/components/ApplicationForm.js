@@ -18,7 +18,8 @@ import Loading from "../../../components/Loading";
 import _ from "lodash";
 import { withTranslation } from 'react-i18next';
 import AnswerValue from '../../../components/answerValue'
-
+import FormSelectOther from "../../../components/form/FormSelectOther";
+import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
@@ -28,6 +29,8 @@ const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
 const MULTI_CHOICE = "multi-choice";
 const MULTI_CHECKBOX = "multi-checkbox";
+const MULTI_CHOICE_OTHER = "multi-choice-other";
+const MULTI_CHECKBOX_OTHER = "multi-checkbox-other";
 const FILE = "file";
 const DATE = "date";
 const REFERENCE_REQUEST = "reference";
@@ -182,6 +185,20 @@ class FieldEditor extends React.Component {
             errorText={validationError}
           />
         );
+      case MULTI_CHOICE_OTHER:
+        return (
+          <FormSelectOther
+            options={question.options}
+            id={this.id}
+            name={this.id}
+            label={question.description}
+            placeholder={question.placeholder}
+            onChange={this.handleChange}
+            defaultValue={answer || null}
+            key={"i_" + key}
+            showError={validationError}
+            errorText={validationError}/>
+        )
       case MULTI_CHECKBOX:
         return (
           <FormMultiCheckbox
@@ -196,6 +213,20 @@ class FieldEditor extends React.Component {
             showError={validationError}
             errorText={validationError} />
         )
+        case MULTI_CHECKBOX_OTHER:
+          return (
+            <FormMultiCheckboxOther
+              id={this.id}
+              name={this.id}
+              label={question.description}
+              placeholder={question.placeholder}
+              options={question.options}
+              defaultValue={answer || null}
+              onChange={this.handleChange}
+              key={"i_" + key}
+              showError={validationError}
+              errorText={validationError} />
+          )
       case FILE:
         return (
           <FormFileUpload
