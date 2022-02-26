@@ -2,7 +2,7 @@ Flask==1.1.2
 Flask-Admin
 Flask-Bcrypt
 Flask-Failsafe
-Flask-Migrate==2.5.3
+Flask-Migrate==2.5.2
 Flask-RESTful
 Flask-Redis
 flask-restplus
@@ -16,13 +16,13 @@ google-auth-httplib2
 google-auth-oauthlib
 Jinja2
 Mako
-MarkupSafe
+MarkupSafe==1.1.1
 SQLAlchemy==1.3.23
 Werkzeug==0.16.1
 alembic
 aniso8601
 blinker
-itsdangerous
+itsdangerous==1.1.0
 nose
 passlib
 py-bcrypt
@@ -46,3 +46,4 @@ parameterized
 mock
 pyrsistent
 rsa
+WTForms==2.3.3

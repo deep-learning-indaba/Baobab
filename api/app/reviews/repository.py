@@ -278,8 +278,13 @@ class ReviewRepository():
         return form_id
 
     @staticmethod
-    def delete_review(review_response):
-        db.session.query(ReviewScore).filter(ReviewScore.review_response_id == review_response.id).delete()
+    def deactivate_review(review_response):
+        scores = db.session.query(ReviewScore).filter(ReviewScore.review_response_id == review_response.id,
+                                                      ReviewScore.is_active == True).all()
+        for score in scores:
+            score.is_active = False
+            db.session.merge(score)
+        db.session.commit()
 
     @staticmethod
     def get_reference_models(response_id):
@@ -337,7 +342,7 @@ class ReviewRepository():
     def get_average_score_for_review_question(response_id: int, review_question_id: int):
         review_score_values = (
             db.session.query(ReviewScore.value)
-            .filter(ReviewScore.review_question_id == review_question_id)
+            .filter(ReviewScore.review_question_id == review_question_id, ReviewScore.is_active == True)
             .join(ReviewResponse, ReviewResponse.id == ReviewScore.review_response_id)
             .join(Response, Response.id == ReviewResponse.response_id)
             .filter_by(id=response_id)

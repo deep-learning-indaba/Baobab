@@ -44,3 +44,5 @@ class GuestRegistrationAnswer(db.Model):
     registration_question_id = db.Column(db.Integer(), db.ForeignKey(
         'registration_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
+    is_active = db.Column(db.Boolean(), nullable=False)
+    created_on = db.Column(db.DateTime, nullable=False, server_default=db.func.now())

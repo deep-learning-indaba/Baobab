@@ -35,6 +35,11 @@ RUN pip3 install -r /app/requirements.txt
 # Add the application source code.
 ADD . /app
 
+# Temp debug
+RUN pip3 install --upgrade google-api-core==1.26.3
+RUN pip3 install --upgrade google-auth==1.30.0
+RUN pip3 install --upgrade google-cloud-core==1.6.0
+
 # Run a WSGI server to serve the application. gunicorn must be declared as
 # a dependency in requirements.txt.
 CMD gunicorn -b :$PORT main:app

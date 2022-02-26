@@ -89,7 +89,7 @@ class FormSelectOther extends React.Component {
             />
             {this.state.showOther &&
                 <div class="form-group row">
-                    <label for="inputPassword" class="col-sm-2 col-form-label">{t("Other - Please Specify")}:</label>
+                    <label for={this.props.id + '_other'} class="col-sm-2 col-form-label">{t("Other - Please Specify")}:</label>
                     <div class="col-sm-10">
                         <input 
                             type="text" 

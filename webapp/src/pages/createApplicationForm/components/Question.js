@@ -51,7 +51,7 @@ const Question = forwardRef(({
     else if (parseInt(max_num_referral) < parseInt(min_num_referral)) {
       setErrorMessage('Max referral value must be greater than Min');
     }
-    else if ((type === 'multi-choice' || type === 'multi-checkbox')
+    else if ((type === 'multi-choice' || type === 'multi-checkbox' || type === 'multi-choice-other' || type === 'multi-checkbox-other')
       && opts && !opts.length) {
       setErrorMessage('At least one option is required');
     } else {
@@ -73,7 +73,7 @@ const Question = forwardRef(({
 
   useEffect(() => {
     if (errorMessage || ((type === 'multi-choice'
-      || type === 'multi-checkbox') && emptyOptions)) {
+      || type === 'multi-checkbox' || type === 'multi-choice-other' || type === 'multi-checkbox-other') && emptyOptions)) {
       setDisableSaveBtn(true)
     } else {
       setDisableSaveBtn(false)
@@ -101,7 +101,7 @@ const Question = forwardRef(({
             let regex = q.validation_regex && q.validation_regex[lang];
             if (prop === 'min' || prop === 'max') {
               if (!regex || !regex.split('{')[1]) {
-                regex = `^\s*(\S+(\s+|$)){0,0}$`
+                regex = `^\\s*(\\S+(\\s+|$)){0,0}$`
               }
             }
             const maxMin = (prop === 'min' || prop === 'max')
@@ -117,7 +117,7 @@ const Question = forwardRef(({
               }
               const newRegex = {};
               for (let key in q.validation_regex) {
-                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+                newRegex[key] = `^\\s*(\\S+(\\s+|$)){${min},${max}}$`
               }
               const newText = {};
               for (let key in q.validation_text) {
@@ -137,7 +137,7 @@ const Question = forwardRef(({
               let max = e.target.value;
               const newRegex = {};
               for (let key in q.validation_regex) {
-                newRegex[key] = `^\s*(\S+(\s+|$)){${min},${max}}$`
+                newRegex[key] = `^\\s*(\\S+(\\s+|$)){${min},${max}}$`
               }
               const newText = {};
               for (let key in q.validation_text) {
@@ -579,8 +579,20 @@ const Question = forwardRef(({
       t
     }),
     option({
+      value: 'multi-choice-other',
+      label: 'Multi Choice with Other',
+      faClass: 'far fa-caret-square-down fa-color',
+      t
+    }),
+    option({
       value: 'multi-checkbox',
       label: 'Multi Checkbox',
+      faClass: 'fas fa-check-square fa-color',
+      t
+    }),
+    option({
+      value: 'multi-checkbox-other',
+      label: 'Multi Checkbox with Other',
       faClass: 'fas fa-check-square fa-color',
       t
     }),
@@ -666,9 +678,9 @@ const Question = forwardRef(({
     }),
   ]
 
-  const withPlaceHolder = ['short-text', 'multi-choice', 'long-text', 'numeric-text', 'multi-file'];
-  const withOptions = ['multi-choice', 'multi-checkbox', 'radio'];
-  const withWeight = ['numeric-text', 'radio', 'multi-choice', 'single-choice'];
+  const withPlaceHolder = ['short-text', 'multi-choice', 'multi-choice-other', 'long-text', 'numeric-text', 'multi-file'];
+  const withOptions = ['multi-choice', 'multi-checkbox', 'multi-checkbox-other', 'multi-choice-other', 'radio'];
+  const withWeight = ['numeric-text', 'radio', 'multi-choice', 'multi-choice-other', 'single-choice'];
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
   const withMultifile = ['multi-file']
