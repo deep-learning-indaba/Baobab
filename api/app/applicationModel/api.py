@@ -10,6 +10,7 @@ from flask import g
 from app.applicationModel.models import ApplicationForm, Question, Section, SectionTranslation, QuestionTranslation
 from app.events.repository import EventRepository as event_repository
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
+from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import APPLICATION_FORM_EXISTS, EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
@@ -110,10 +111,12 @@ class ApplicationFormAPI(restful.Resource):
 
         try:
             form = application_form_repository.get_by_event_id(args['event_id'])
+            event = event_repository.get_by_id(args['event_id'])
+
             if not form:
                 return FORM_NOT_FOUND
 
-            if not form.is_open:
+            if not event.is_application_open and not user_repository.get_by_id(g.current_user['id']).is_event_admin(args['event_id']):
                 return APPLICATIONS_CLOSED
             
             if not form.sections:
