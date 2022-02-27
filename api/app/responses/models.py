@@ -60,7 +60,7 @@ class Answer(db.Model):
     question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
-    created_on = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    created_on = db.Column(db.DateTime, nullable=False)
 
     response = db.relationship('Response', foreign_keys=[response_id])
     question = db.relationship('Question', foreign_keys=[question_id])
@@ -71,7 +71,7 @@ class Answer(db.Model):
         self.question_id = question_id
         self.value = value
         self.is_active = True
-        created_on = datetime.now()
+        self.created_on = datetime.now()
 
     def deactivate(self):
         self.is_active = False
