@@ -221,7 +221,7 @@ class FieldEditor extends React.Component {
               label={question.description}
               placeholder={question.placeholder}
               options={question.options}
-              defaultValue={answer || null}
+              defaultValue={answer || ""}
               onChange={this.handleChange}
               key={"i_" + key}
               showError={validationError}
