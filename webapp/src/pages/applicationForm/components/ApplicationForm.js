@@ -459,7 +459,9 @@ class Section extends React.Component {
       <div className={"section"}>
         <div className={"headline"}>
           <h1>{section.name}</h1>
-          <ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/>
+          <div className="description">
+            <ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/>
+          </div>
         </div>
         {questionModels &&
           questionModels
