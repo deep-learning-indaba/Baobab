@@ -38,6 +38,10 @@
   margin-top: 4em;
 }
 
+.section .description {
+  text-align: left;
+}
+
 .section .headline p {
   text-align: left;
   white-space: pre-wrap;
