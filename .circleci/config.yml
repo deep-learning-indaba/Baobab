@@ -100,13 +100,13 @@ jobs:
 
   deploy-backend-test:
     machine:
-      image: ubuntu-2004:202201-02
+      image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
           name: Deploy backend to test
           command: |
-            export CLOUDSDK_PYTHON=/usr/bin/python2.7
+            # export CLOUDSDK_PYTHON=/usr/bin/python2.7
             openssl aes256 -md md5 -d -in api/app.yaml.enc -out api/app.yaml -pass pass:$CONFIG_PASSWORD
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
@@ -117,13 +117,13 @@ jobs:
 
   deploy-backend-prod:
     machine:
-      image: ubuntu-2004:202201-02
+      image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
           name: Deploy backend to test
           command: |
-            export CLOUDSDK_PYTHON=/usr/bin/python2.7
+            # export CLOUDSDK_PYTHON=/usr/bin/python2.7
             openssl aes256 -md md5 -d -in api/prod.yaml.enc -out api/prod.yaml -pass pass:$CONFIG_PASSWORD
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
