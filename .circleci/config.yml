@@ -1,8 +1,8 @@
 version: 2.1
 jobs:
   build:
-    machine:
-      image: ubuntu-2004:202201-02
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
@@ -25,8 +25,8 @@ jobs:
           command: docker-compose run  web nosetests -v
 
   integration-tests:
-    machine:
-      image: ubuntu-2004:202201-02
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
@@ -37,8 +37,8 @@ jobs:
             docker-compose run cypress
 
   front-end-tests:
-    machine:
-      image: ubuntu-2004:202201-02
+    docker:
+      - image: gcr.io/google-appengine/python
     steps:
       - checkout
       - run:
