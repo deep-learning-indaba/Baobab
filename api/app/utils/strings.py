@@ -32,15 +32,27 @@ def _get_answer_value(answer, question, question_translation):
     return answer.value
 
 def _find_answer(question, answers):
+    if question == None:
+        return None
+
     answer = [a for a in answers if a.question_id == question.id]
     if answer:
         return answer[0]
     else:
         return None
 
+def _find_question(question_id, questions):
+    question = [q for q in questions if q.id == question_id]
+    if question:
+        return question[0]
+    else:
+        return None
+
 def build_response_email_body(answers, language, application_form):
     #stringifying the dictionary summary, with linebreaks between question/answer pairs
     stringified_summary = ""
+
+    allQuestions = [q for section in application_form.sections for q in section.questions]
 
     for section in application_form.sections:
         if not section.questions:
@@ -56,7 +68,14 @@ def build_response_email_body(answers, language, application_form):
                 LOGGER.error('Missing {} translation for question {}.'.format(language, question.id))
                 question_translation = question.get_translation('en')
 
+            if question.depends_on_question_id and question_translation.show_for_values:
+                dependency_question = _find_question(question.depends_on_question_id, allQuestions)
+                dependency_answer = _find_answer(dependency_question, answers)
+                if dependency_answer and dependency_answer not in question_translation.show_for_values:
+                    continue
+
             answer = _find_answer(question, answers)
+
             if answer:
                 answer_value = _get_answer_value(answer, answer.question, question_translation)
                 stringified_summary += '{question}\n{answer}\n\n'.format(question=question_translation.headline, answer=answer_value)

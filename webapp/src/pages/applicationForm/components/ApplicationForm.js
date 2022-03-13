@@ -496,8 +496,20 @@ class Section extends React.Component {
 
 class ConfirmationComponent extends React.Component {
 
+  dependentQuestionFilter = (question, allAnswers) => {
+    if (isEntityDependentOnAnswer(question)) {
+      const answer = findDependentQuestionAnswer(question, allAnswers);
+      return answer ? doesAnswerMatch(question, answer) : false;
+    } else {
+      return true;
+    }
+  }
+
   render() {
     const t = this.props.t;
+
+    const allAnswers = this.props.sectionModels && this.props.sectionModels.flatMap(s=>s.questionModels.map(q=>q.answer));
+
     return (
       <div>
         <div class="row">
@@ -529,7 +541,7 @@ class ConfirmationComponent extends React.Component {
             return <div key={"section_" + sm.section.id}>
               <h2>{sm.section.name}</h2>
               {sm.questionModels &&
-                sm.questionModels.map(qm => {
+                sm.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(qm => {
                   return (
                     qm.question && (
                       <div className={"confirmation answer"}>
