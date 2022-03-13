@@ -99,8 +99,8 @@ jobs:
           no_output_timeout: 1h
 
   deploy-backend-test:
-    machine:
-      image: jobilla/google-cloud-sdk:latest
+    docker:
+    - image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
@@ -116,8 +116,8 @@ jobs:
             gcloud app deploy --version=v1
 
   deploy-backend-prod:
-    machine:
-      image: jobilla/google-cloud-sdk:latest
+    docker:
+    - image: jobilla/google-cloud-sdk:latest
     steps:
       - checkout
       - run:
