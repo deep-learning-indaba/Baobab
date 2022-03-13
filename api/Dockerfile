@@ -11,6 +11,9 @@ RUN apt-get update -qq \
     && apt-get install -y software-properties-common \
     && apt-get install -y libreoffice
 
+# Upgrade pip
+RUN python -m pip install --upgrade pip
+
 # Add the application source code.
 ADD requirements.txt /code/requirements.txt
 RUN pip3 install -r /code/requirements.txt
