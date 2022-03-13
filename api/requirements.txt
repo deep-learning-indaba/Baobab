@@ -25,7 +25,6 @@ blinker
 itsdangerous==1.1.0
 nose
 passlib
-py-bcrypt
 pytz
 redis
 six
