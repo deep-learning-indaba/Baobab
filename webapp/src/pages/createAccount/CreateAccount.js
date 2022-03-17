@@ -7,8 +7,8 @@ export default class CreateAccount extends Component {
     return (
       <CreateAccountForm
         loggedIn={this.props.loggedIn}
-        organisation={this.props.organisation}>
-      </CreateAccountForm>
+        organisation={this.props.organisation}
+      ></CreateAccountForm>
     );
   }
 }

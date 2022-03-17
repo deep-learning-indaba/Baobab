@@ -6,11 +6,11 @@ import FormSelect from "../../../components/form/FormSelect";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import { withTranslation } from 'react-i18next';
+import { withTranslation } from "react-i18next";
 import {
   requiredText,
   requiredDropdown,
-  validEmail
+  validEmail,
 } from "../../../utils/validation/rules.js";
 import { createColClassName } from "../../../utils/styling/styling";
 
@@ -28,20 +28,20 @@ class CreateInvitedGuestComponent extends Component {
     this.state = {
       user: {
         email: props.email || null,
-        role: props.role || null
+        role: props.role || null,
       },
       submitted: false,
       errors: [],
       titleOptions: [],
       error: "",
       created: false,
-      conflict: false
+      conflict: false,
     };
   }
 
   getContentValue(options, value) {
     if (options && options.filter) {
-      return options.filter(option => {
+      return options.filter((option) => {
         return option.value === value;
       });
     } else return null;
@@ -54,9 +54,7 @@ class CreateInvitedGuestComponent extends Component {
   }
 
   componentWillMount() {
-    Promise.all([
-      getTitleOptions,
-    ]).then(result => {
+    Promise.all([getTitleOptions]).then((result) => {
       this.setState({
         titleOptions: this.checkOptionsList(result[0]),
       });
@@ -64,7 +62,11 @@ class CreateInvitedGuestComponent extends Component {
   }
 
   validateForm() {
-    return (this.state.user && this.state.user.email && this.state.user.email.length > 0);
+    return (
+      this.state.user &&
+      this.state.user.email &&
+      this.state.user.email.length > 0
+    );
   }
 
   handleChangeDropdown = (name, dropdown) => {
@@ -72,8 +74,8 @@ class CreateInvitedGuestComponent extends Component {
       {
         user: {
           ...this.state.user,
-          [name]: dropdown.value
-        }
+          [name]: dropdown.value,
+        },
       },
       function () {
         let errorsForm = run(this.state.user, fieldValidations);
@@ -82,14 +84,14 @@ class CreateInvitedGuestComponent extends Component {
     );
   };
 
-  handleChange = field => {
-    return event => {
+  handleChange = (field) => {
+    return (event) => {
       this.setState(
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
-          }
+            [field.name]: event.target.value,
+          },
         },
         function () {
           let errorsForm = run(this.state.user, fieldValidations);
@@ -99,7 +101,7 @@ class CreateInvitedGuestComponent extends Component {
     };
   };
 
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     event.preventDefault();
     this.setState({ submitted: true });
 
@@ -110,25 +112,25 @@ class CreateInvitedGuestComponent extends Component {
     )
       return;
 
-    //TODO review this workflow, it seems dodgy. 
+    //TODO review this workflow, it seems dodgy.
     //createInvitedGuest always returns 400 (no role). Then addInvitedGuest creates the invitedguest.
-    invitedGuestServices.createInvitedGuest(
-      this.state.user,
-      this.props.event ?
-        this.props.event.id : 0)
-      .then(user => {
+    invitedGuestServices
+      .createInvitedGuest(
+        this.state.user,
+        this.props.event ? this.props.event.id : 0
+      )
+      .then((user) => {
         this.setState({
-          created: true
+          created: true,
         });
         if (user.msg === "409") {
           this.setState({
-            conflict: true
+            conflict: true,
           });
         } else if (this.state.created === true) {
           invitedGuestServices.addInvitedGuest(
             this.state.user.email,
-            this.props.event ?
-              this.props.event.id : 0,
+            this.props.event ? this.props.event.id : 0,
             this.state.user.role
           );
           this.props.history.push("/invitedGuests");
@@ -142,12 +144,7 @@ class CreateInvitedGuestComponent extends Component {
     const md = 4;
     const lg = 4;
     const commonColClassName = createColClassName(xs, sm, md, lg);
-    const {
-      firstName,
-      lastName,
-      email,
-      title,
-    } = this.state.user;
+    const { firstName, lastName, email, title } = this.state.user;
 
     const roleOptions = invitedGuestServices.getRoles();
 
@@ -159,7 +156,6 @@ class CreateInvitedGuestComponent extends Component {
         <form onSubmit={this.handleSubmit}>
           <p className="h5 text-center mb-4">{t("Create Guest")}</p>
           <div class="row">
-
             <div class={commonColClassName}>
               <FormSelect
                 options={this.state.titleOptions}

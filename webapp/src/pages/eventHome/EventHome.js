@@ -3,10 +3,10 @@ import "./EventHome.css";
 import { Route } from "react-router-dom";
 import { eventService } from "../../services/events/events.service";
 import Application from "../applicationForm";
-import ApplicationFormSetting from '../createApplicationForm';
-import ReviewForm from '../reviewForm';
+import ApplicationFormSetting from "../createApplicationForm";
+import ReviewForm from "../reviewForm";
 import Review from "../review";
-import ReviewList from "../reviewList"
+import ReviewList from "../reviewList";
 import ReviewAssignment from "../reviewAssignment";
 import ReviewHistory from "../reviewHistory";
 import EventStats from "../eventStats";
@@ -22,10 +22,9 @@ import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
-import ResponseList from "../ResponseList/ResponseList"
-import ResponsePage from "../ResponsePage/ResponsePage"
-import ReviewDashboard from "../reviewDashboard"
-
+import ResponseList from "../ResponseList/ResponseList";
+import ResponsePage from "../ResponsePage/ResponsePage";
+import ReviewDashboard from "../reviewDashboard";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -46,8 +45,9 @@ class EventInfo extends Component {
       <div className="event-home">
         <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
-        {isEventAdmin(this.props.user, this.props.event) 
-        && <EventStats event={this.props.event}/>}
+        {isEventAdmin(this.props.user, this.props.event) && (
+          <EventStats event={this.props.event} />
+        )}
       </div>
     );
   }
@@ -130,17 +130,23 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/`}
-          render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
+          render={(props) => (
+            <EventInfo {...props} event={event} user={this.props.user} />
+          )}
         />
         <Route
           exact
           path={`${match.path}/responseList`}
-          render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
+          render={(props) => (
+            <ResponseList {...props} event={event} user={this.props.user} />
+          )}
         />
         <Route
           exact
           path={`${match.path}/reviewDashboard`}
-          render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
+          render={(props) => (
+            <ReviewDashboard {...props} event={event} user={this.props.user} />
+          )}
         />
         <Route
           exact
@@ -228,7 +234,7 @@ class EventHome extends Component {
           path={`${match.path}/registrationAdmin`}
           render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
-          <Route
+        <Route
           exact
           path={`${match.path}/responsePage/:id`}
           render={(props) => <ResponsePage {...props} event={event} />}
@@ -236,22 +242,25 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/applicationform`}
-          render={(props) => <ApplicationFormSetting
-            {...props}
-            event={event}
-            languages={organisation && organisation.languages}
-            />}
+          render={(props) => (
+            <ApplicationFormSetting
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+            />
+          )}
         />
         <Route
           exact
           path={`${match.path}/reviewForm`}
-          render={(props) => <ReviewForm
-            {...props}
-            event={event}
-            languages={organisation && organisation.languages}
-            />}
+          render={(props) => (
+            <ReviewForm
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+            />
+          )}
         />
-        
       </div>
     );
   }

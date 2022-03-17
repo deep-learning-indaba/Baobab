@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { userService } from "../../../services/user";
 import { withRouter } from "react-router";
 import { createColClassName } from "../../../utils/styling/styling";
-import { withTranslation } from 'react-i18next'
+import { withTranslation } from "react-i18next";
 
 class RequestPasswordResetForm extends Component {
   constructor(props) {
@@ -13,7 +13,7 @@ class RequestPasswordResetForm extends Component {
       submitted: false,
       loading: false,
       error: "",
-      resetRequested: false
+      resetRequested: false,
     };
   }
 
@@ -21,34 +21,31 @@ class RequestPasswordResetForm extends Component {
     return this.state.email.length > 0;
   }
 
-  handleChange = event => {
+  handleChange = (event) => {
     this.setState({
-      [event.target.id]: event.target.value
+      [event.target.id]: event.target.value,
     });
   };
 
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     event.preventDefault();
     this.setState({
       submitted: true,
-      loading: true
+      loading: true,
     });
 
-    userService.requestPasswordReset(this.state.email)
-      .then(response => {
-        if (response.status === 201) {
-          this.setState({
-            resetRequested: true
-          });
-        } else {
-
-          this.setState({
-            error: response.message, 
-            loading: false
-          });
-        }
-
-      });
+    userService.requestPasswordReset(this.state.email).then((response) => {
+      if (response.status === 201) {
+        this.setState({
+          resetRequested: true,
+        });
+      } else {
+        this.setState({
+          error: response.message,
+          loading: false,
+        });
+      }
+    });
   };
 
   render() {
@@ -58,10 +55,7 @@ class RequestPasswordResetForm extends Component {
     const lg = 8;
     const commonColClassName = createColClassName(xs, sm, md, lg);
 
-    const { loading,
-      error,
-      resetRequested
-    } = this.state;
+    const { loading, error, resetRequested } = this.state;
 
     const t = this.props.t;
 
@@ -70,10 +64,12 @@ class RequestPasswordResetForm extends Component {
         <div className={"reset-status text-center"}>
           <p className="h5 text-center mb-4">{t("Reset Password")}</p>
           <div class="col">
-            {t("Your password reset request has been processed. Please check your email for a link that will allow you to change your password.")}
+            {t(
+              "Your password reset request has been processed. Please check your email for a link that will allow you to change your password."
+            )}
           </div>
         </div>
-      )
+      );
     }
 
     return (
@@ -90,7 +86,8 @@ class RequestPasswordResetForm extends Component {
               id="email"
               onChange={this.handleChange}
               value={this.state.email}
-              autoFocus={true} />
+              autoFocus={true}
+            />
           </div>
 
           <div class="row, center">
@@ -98,16 +95,24 @@ class RequestPasswordResetForm extends Component {
               <button
                 type="submit"
                 class="btn btn-primary"
-                disabled={!this.validateForm() || loading}>
-                {loading && <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>}
+                disabled={!this.validateForm() || loading}
+              >
+                {loading && (
+                  <span
+                    class="spinner-grow spinner-grow-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                )}
                 {t("Reset Password")}
               </button>
             </div>
 
-            {error &&
+            {error && (
               <div className={"alert alert-danger alert-container"}>
                 {error}
-              </div>}
+              </div>
+            )}
           </div>
           <div />
         </form>

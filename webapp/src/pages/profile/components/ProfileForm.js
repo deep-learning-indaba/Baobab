@@ -7,8 +7,11 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import validationFields from "../../../utils/validation/validationFields";
 import { getTitleOptions } from "../../../utils/validation/contentHelpers";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
-import { requiredText, requiredDropdown } from "../../../utils/validation/rules.js";
-import { withTranslation } from 'react-i18next';
+import {
+  requiredText,
+  requiredDropdown,
+} from "../../../utils/validation/rules.js";
+import { withTranslation } from "react-i18next";
 
 const fieldValidations = [
   ruleRunner(validationFields.title, requiredDropdown),
@@ -26,20 +29,18 @@ class ProfileForm extends Component {
       submitted: false,
       loading: false,
       errors: [],
-      confirmResetVisible: false
+      confirmResetVisible: false,
     };
   }
 
   componentWillMount() {
-    Promise.all([
-      getTitleOptions,
-    ]).then(result => {
+    Promise.all([getTitleOptions]).then((result) => {
       this.setState({
         titleOptions: this.checkOptionsList(result[0]),
       });
     });
 
-    userService.get().then(result => {
+    userService.get().then((result) => {
       var date = result.user_dateOfBirth;
       if (date) date = date.split("T")[0];
       this.setState({
@@ -47,15 +48,15 @@ class ProfileForm extends Component {
           title: result.user_title,
           firstName: result.firstname,
           lastName: result.lastname,
-          email: result.email
-        }
+          email: result.email,
+        },
       });
     });
   }
 
   getContentValue(options, value) {
     if (options && options.filter) {
-      return options.filter(option => {
+      return options.filter((option) => {
         return option.value === value;
       });
     } else return null;
@@ -68,12 +69,13 @@ class ProfileForm extends Component {
   }
 
   handleChangeDropdown = (name, dropdown) => {
-    this.setState({
-      user: {
-        ...this.state.user,
-        [name]: dropdown.value
-      }
-    },
+    this.setState(
+      {
+        user: {
+          ...this.state.user,
+          [name]: dropdown.value,
+        },
+      },
       function () {
         let errorsForm = run(this.state.user, fieldValidations);
         this.setState({ errors: { $set: errorsForm } });
@@ -82,45 +84,43 @@ class ProfileForm extends Component {
   };
 
   deleteAccount = () => {
-    userService.deleteAccount()
-      .then(
-        response => {
-          const { from } = this.props.location.state || {
-            from: { pathname: "/" }
-          };
-          this.props.history.push(from);
-        },
-        error => this.setState({ error, loading: false })
-      );
+    userService.deleteAccount().then(
+      (response) => {
+        const { from } = this.props.location.state || {
+          from: { pathname: "/" },
+        };
+        this.props.history.push(from);
+      },
+      (error) => this.setState({ error, loading: false })
+    );
     if (this.props.logout) {
       this.props.logout();
     }
   };
 
   resetPassword = () => {
-    userService.requestPasswordReset(this.state.user.email)
-      .then(response => {
-        if (response.status === 201) {
-          const { from } = { from: { pathname: "/" } };
-          this.props.history.push(from);
-        } else {
-          this.setState({
-            error: response.messsage,
-            loading: false,
-            confirmResetVisible: false
-          });
-        }
-      });
+    userService.requestPasswordReset(this.state.user.email).then((response) => {
+      if (response.status === 201) {
+        const { from } = { from: { pathname: "/" } };
+        this.props.history.push(from);
+      } else {
+        this.setState({
+          error: response.messsage,
+          loading: false,
+          confirmResetVisible: false,
+        });
+      }
+    });
   };
 
-  handleChange = field => {
-    return event => {
+  handleChange = (field) => {
+    return (event) => {
       this.setState(
         {
           user: {
             ...this.state.user,
-            [field.name]: event.target.value
-          }
+            [field.name]: event.target.value,
+          },
         },
         function () {
           let errorsForm = run(this.state.user, fieldValidations);
@@ -130,7 +130,7 @@ class ProfileForm extends Component {
     };
   };
 
-  handleSubmit = event => {
+  handleSubmit = (event) => {
     event.preventDefault();
     this.setState({ submitted: true, showErrors: true });
 
@@ -143,20 +143,20 @@ class ProfileForm extends Component {
     this.setState({ loading: true });
 
     userService.update(this.state.user).then(
-      user => {
+      (user) => {
         if (this.props.loggedIn) {
           this.props.loggedIn(user);
         }
         const { from } = this.props.location.state || {
-          from: { pathname: "/" }
+          from: { pathname: "/" },
         };
         this.props.history.push(from);
       },
-      error => this.setState({ error, loading: false })
+      (error) => this.setState({ error, loading: false })
     );
   };
 
-  getErrorMessages = errors => {
+  getErrorMessages = (errors) => {
     let errorMessages = [];
     if (errors.$set === null) return;
 
@@ -172,80 +172,78 @@ class ProfileForm extends Component {
   };
 
   render() {
-    const {
-      firstName,
-      lastName,
-      title,
-      email
-    } = this.state.user;
+    const { firstName, lastName, title, email } = this.state.user;
 
     const t = this.props.t;
 
     const titleValue = this.getContentValue(this.state.titleOptions, title);
 
-    const { loading,
-      errors,
-      showErrors
-    } = this.state;
+    const { loading, errors, showErrors } = this.state;
 
     return (
       <div className="Profile">
         <form onSubmit={this.handleSubmit}>
-
           <div class="Profile-Header">
             <h3>{t("Your Profile")}</h3>
           </div>
 
           <div class="card">
-
             <FormSelect
               options={this.state.titleOptions}
               id={validationFields.title.name}
               onChange={this.handleChangeDropdown}
               value={titleValue}
-              label={t(validationFields.title.display)} />
+              label={t(validationFields.title.display)}
+            />
             <FormTextBox
               id={validationFields.firstName.name}
               type="text"
               onChange={this.handleChange(validationFields.firstName)}
               value={firstName}
-              label={t(validationFields.firstName.display)} />
+              label={t(validationFields.firstName.display)}
+            />
             <FormTextBox
               id={validationFields.lastName.name}
               type="text"
               onChange={this.handleChange(validationFields.lastName)}
               value={lastName}
               label={t(validationFields.lastName.display)}
-              editable={false} />
+              editable={false}
+            />
             <FormTextBox
               isDisabled={true}
               id={validationFields.email.name}
               type="email"
               value={email}
               label={t(validationFields.email.display)}
-              description={t("Read-only")} />
+              description={t("Read-only")}
+            />
 
-            <br /><br />
+            <br />
+            <br />
 
             <button
               type="submit"
               class="btn btn-primary Button"
-              disabled={loading}>
+              disabled={loading}
+            >
               {loading && (
                 <span
                   class="spinner-grow spinner-grow-sm"
                   role="status"
-                  aria-hidden="true" />
+                  aria-hidden="true"
+                />
               )}
-                {t("Save profile")}
-              </button>
+              {t("Save profile")}
+            </button>
           </div>
-          <br/>
+          <br />
           <button
             type="button"
             class="link-style App-link"
             disabled={loading}
-            onClick={() => this.setState({ confirmResetVisible: true })}>
+            onClick={() => this.setState({ confirmResetVisible: true })}
+          >
             {t("Reset Your Password")}
           </button>
 
@@ -257,9 +255,12 @@ class ProfileForm extends Component {
           onOK={this.resetPassword}
           onCancel={() => this.setState({ confirmResetVisible: false })}
           okText={t("Reset Password")}
-          cancelText={"Cancel"}>
+          cancelText={"Cancel"}
+        >
           <p>
-            {t("Are you sure? Click 'Reset Password' to receive an email with a link to reset your password.")}
+            {t(
+              "Are you sure? Click 'Reset Password' to receive an email with a link to reset your password."
+            )}
           </p>
         </ConfirmModal>
       </div>

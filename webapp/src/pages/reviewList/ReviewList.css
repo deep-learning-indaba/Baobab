@@ -1,32 +1,32 @@
 .review-list-container .title {
-    color: #5f6075;
-    font-weight: 300;
-    text-align: left;
+  color: #5f6075;
+  font-weight: 300;
+  text-align: left;
 }
 
 .review-list-container {
-    margin-left: 2em;
-    margin-right: 2em;
+  margin-left: 2em;
+  margin-right: 2em;
 }
 
 .review-list-container .summary {
-    text-align: left;
-    color: #5f6075;
+  text-align: left;
+  color: #5f6075;
 }
 
 .review-list-container .action-button {
-    margin-left: 1em;
-    margin-top: 0.2em;
+  margin-left: 1em;
+  margin-top: 0.2em;
 }
 
 .review-list-container .ReactTable {
-    font-size: 1em;
+  font-size: 1em;
 }
 
 .review-list-container .checkbox-top {
-    text-align: left;
+  text-align: left;
 }
 
 .review-list-container .submitted-date {
-    font-size: 0.9em;
+  font-size: 0.9em;
 }

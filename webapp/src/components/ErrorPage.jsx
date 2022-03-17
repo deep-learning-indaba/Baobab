@@ -10,13 +10,13 @@ Error Message:
 
 // Consider logging componentStack and error
 export const ErrorPage = ({ componentStack, error }) => {
-  if (errorHandler){
-    var errorMessage= new Object();
+  if (errorHandler) {
+    var errorMessage = new Object();
     errorMessage.componentStack = componentStack;
-    errorMessage.error  = error;
-    var jsonString= JSON.stringify(errorMessage);
+    errorMessage.error = error;
+    var jsonString = JSON.stringify(errorMessage);
     errorHandler.report(jsonString);
-  } 
+  }
 
   const bug_mailto =
     "mailto:baobab@deeplearningindaba.com?subject=" +
@@ -37,9 +37,11 @@ export const ErrorPage = ({ componentStack, error }) => {
           <strong>Error:</strong> {error.toString()}
         </p>
         <p>
-        Please try again and if this issue persists, please{" "}
-          <a href={bug_mailto}>get in touch</a> with us.<br/>
-          The bug report will go to the Baobab team at the Deep Learning Indaba who maintain the application.
+          Please try again and if this issue persists, please{" "}
+          <a href={bug_mailto}>get in touch</a> with us.
+          <br />
+          The bug report will go to the Baobab team at the Deep Learning Indaba
+          who maintain the application.
         </p>
       </div>
     </div>

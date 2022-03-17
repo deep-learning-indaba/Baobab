@@ -5,17 +5,17 @@
  * @returns {String}
  */
 export function getDownloadURL(value) {
-    const baseUrl = process.env.REACT_APP_API_URL;
-    let url = baseUrl + "/api/v1/file?filename=";
-    if (value) {
-      try {
-        const { filename, rename } = JSON.parse(value);
-        url += filename + "&rename=" + encodeURIComponent(rename);
-      } catch (e) {
-        url += value;
-      }
+  const baseUrl = process.env.REACT_APP_API_URL;
+  let url = baseUrl + "/api/v1/file?filename=";
+  if (value) {
+    try {
+      const { filename, rename } = JSON.parse(value);
+      url += filename + "&rename=" + encodeURIComponent(rename);
+    } catch (e) {
+      url += value;
     }
-    return url;
+  }
+  return url;
 }
 
 /**
@@ -24,15 +24,15 @@ export function getDownloadURL(value) {
  * @param {String} filename  Exported file's name
  */
 export function downloadCSV(csv, filename) {
-  const csvData = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const csvData = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   if (navigator.msSaveBlob) {
     navigator.msSaveBlob(csvData, filename);
   } else {
-    var link = document.createElement('a');
+    var link = document.createElement("a");
     link.href = window.URL.createObjectURL(csvData);
-    link.setAttribute('download', filename);
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
-};
+}

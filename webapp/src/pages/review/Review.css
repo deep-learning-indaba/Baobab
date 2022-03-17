@@ -1,96 +1,96 @@
 .review-form-container .question {
-    margin-top: 2em;
+  margin-top: 2em;
 }
 
 .review-form-container {
-    padding-left: 3em;
-    padding-right: 3em;
-    text-align: left;
+  padding-left: 3em;
+  padding-right: 3em;
+  text-align: left;
 }
 
 .review-form-container p {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
 }
 
 .review-form-container .form-group {
-    text-align: left;
+  text-align: left;
 }
 
 .review-form-container .form-group .rowC p {
-    text-align: left;
+  text-align: left;
 }
 
 .review-form-container .form-control {
-    border: 2px solid #8ea7bf;
+  border: 2px solid #8ea7bf;
 }
 
 .buttons {
-    margin-top: 3em;
+  margin-top: 3em;
 }
 
-.form-check.is-invalid~.invalid-feedback {
-    display: block;
+.form-check.is-invalid ~ .invalid-feedback {
+  display: block;
 }
 
 .complete-title {
-    font-weight: bold;   
+  font-weight: bold;
 }
 
 .hidden {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 .flag-category {
-    display: inline-block;
-    color: darkred;
-    margin-top: -5px;
+  display: inline-block;
+  color: darkred;
+  margin-top: -5px;
 }
 
 .review-total-score {
-    margin-left: 12px;
-    font-weight: bold;
+  margin-left: 12px;
+  font-weight: bold;
 }
 
 .question .answer {
-    border: 1px solid #ccc;
-    padding: 1em;
+  border: 1px solid #ccc;
+  padding: 1em;
 }
 
 .question.review {
-    padding-left: 2em;
+  padding-left: 2em;
 }
 
 .question.review:before {
-    content: '?';
-    position: absolute;
-    margin-left: -1em;
-    font-size: 30px;
-    color: #ddd;
-    margin-top: -5px;
+  content: "?";
+  position: absolute;
+  margin-left: -1em;
+  font-size: 30px;
+  color: #ddd;
+  margin-top: -5px;
 }
 
 .review-form-container .floating-bar {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    background-color: white;
-    border: 1px solid #ccc;
-    left: 0;
-    padding-top: 0.5em;
-    text-align: center;
-    margin-bottom: -0.2em;
-    box-shadow: 0px 1px 10px 0px rgba(0,0,0,0.15);
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  left: 0;
+  padding-top: 0.5em;
+  text-align: center;
+  margin-bottom: -0.2em;
+  box-shadow: 0px 1px 10px 0px rgba(0, 0, 0, 0.15);
 }
 
 .review-form-container .save-validation-failed {
-    position: absolute;
-    margin-left: 2em;
-    margin-top: 7px;
+  position: absolute;
+  margin-left: 2em;
+  margin-top: 7px;
 }
 
 .review-form-container .return-to-list {
-    position: absolute;
-    left: 10;
-    margin-left: 100px;
-    margin-top: 7px;
+  position: absolute;
+  left: 10;
+  margin-left: 100px;
+  margin-top: 7px;
 }

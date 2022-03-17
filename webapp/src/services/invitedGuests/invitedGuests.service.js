@@ -1,5 +1,5 @@
 import axios from "axios";
-import { authHeader } from '../base.service';
+import { authHeader } from "../base.service";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 // const UNKNOWN_COUNTRY = 260;
@@ -9,8 +9,8 @@ export const invitedGuestServices = {
   addInvitedGuest,
   createInvitedGuest,
   getRoles,
-  determineIfInvitedGuest
-}
+  determineIfInvitedGuest,
+};
 
 const roleOptions = [
   { value: "Speaker", label: "Speaker" },
@@ -21,7 +21,7 @@ const roleOptions = [
   { value: "Dignitary", label: "Dignitary" },
   { value: "Indaba X", label: "Indaba X" },
   { value: "Sponsor", label: "Sponsor" },
-  { value: "Press", label: "Press" }
+  { value: "Press", label: "Press" },
 ];
 
 function getRoles() {
@@ -31,12 +31,12 @@ function getRoles() {
 function getInvitedGuestList(eventId) {
   return axios
     .get(baseUrl + "/api/v1/invitedGuestList?event_id=" + eventId, {
-      headers: authHeader()
-    })  
+      headers: authHeader(),
+    })
     .then(function (response) {
       return {
         form: response.data,
-        error: ""
+        error: "",
       };
     })
     .catch(function (error) {
@@ -45,7 +45,7 @@ function getInvitedGuestList(eventId) {
         error:
           error.response && error.response.data
             ? error.response.data.message
-            : error.message
+            : error.message,
       };
     });
 }
@@ -62,41 +62,42 @@ function addInvitedGuest(email_address, event_Id, role) {
     .then(function (response) {
       return {
         msg: "succeeded",
-        response: response
-      }
+        response: response,
+      };
     })
     .catch(function (error) {
       if (error.response && error.response.status === 404) {
-        return { msg: "404" }
-      }
-      else if (error.response && error.response.status === 409) {
-        return { msg: "409" }
-      }
-      else {
+        return { msg: "404" };
+      } else if (error.response && error.response.status === 409) {
+        return { msg: "409" };
+      } else {
         return {
           msg: "Failed",
-          error: (error.response && error.response.data) ? error.response.data.message : error.message,
-        }
+          error:
+            error.response && error.response.data
+              ? error.response.data.message
+              : error.message,
+        };
       }
-    })
+    });
 }
 
 function determineIfInvitedGuest(event_id) {
   return axios
     .get(baseUrl + "/api/v1/checkIfInvitedGuest?event_id=" + event_id, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         msg: "Guest Found",
-        statusCode: "200"
+        statusCode: "200",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       if (error.response && error.response.status === 404) {
         return {
           msg: "Guest Not Found",
-          statusCode: "404"
+          statusCode: "404",
         };
       } else {
         return {
@@ -104,12 +105,11 @@ function determineIfInvitedGuest(event_id) {
           error:
             error.response && error.response.data
               ? error.response.data.message
-              : error.message
+              : error.message,
         };
       }
     });
 }
-
 
 function createInvitedGuest(user, event_Id, role) {
   let data = {
@@ -119,26 +119,30 @@ function createInvitedGuest(user, event_Id, role) {
     lastname: user.lastName,
     user_title: user.title,
     role: role,
-    policy_agreed: true
+    policy_agreed: true,
   };
-  
-  return axios
-    .post(baseUrl + "/api/v1/invitedGuest/create", data, { headers: authHeader() })
-    .then(function (response) {
 
+  return axios
+    .post(baseUrl + "/api/v1/invitedGuest/create", data, {
+      headers: authHeader(),
+    })
+    .then(function (response) {
       return {
         msg: "succeeded",
-        response: response
-      }
+        response: response,
+      };
     })
     .catch(function (error) {
       if (error.response && error.response.status === 409) {
-        return { msg: "409" }
+        return { msg: "409" };
       } else {
         return {
           msg: "Failed",
-          error: (error.response && error.response.data) ? error.response.data.message : error.message,
-        }
+          error:
+            error.response && error.response.data
+              ? error.response.data.message
+              : error.message,
+        };
       }
-    })
+    });
 }

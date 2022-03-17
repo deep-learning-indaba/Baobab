@@ -1,3 +1,3 @@
-import Application from './Application.js';
+import Application from "./Application.js";
 
 export default Application;

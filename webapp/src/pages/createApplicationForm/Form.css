@@ -78,7 +78,6 @@
 .application-form-wrap .dates-container {
   text-align: left;
   padding-left: 1em;
-  
 }
 
 .application-form-wrap .date {
@@ -100,7 +99,7 @@
   width: 3em;
   height: 3em;
   border-radius: 50%;
-  background-color: #fff; 
+  background-color: #fff;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
@@ -121,7 +120,7 @@
   width: 3em;
   height: 3em;
   border-radius: 50%;
-  background-color: #fff; 
+  background-color: #fff;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
@@ -141,7 +140,7 @@
   color: black;
 }
 
-.application-form-wrap .add-section-btn:hover:after{
+.application-form-wrap .add-section-btn:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -230,7 +229,7 @@
 
 .application-form-wrap .title-desc-toggle:hover,
 .application-form-wrap .title-desc-toggle:focus,
-.application-form-wrap .add-section-btn:hover{
+.application-form-wrap .add-section-btn:hover {
   background-color: #333;
   cursor: pointer;
 }
@@ -280,7 +279,7 @@
   width: 2em;
   height: 2em;
   border-radius: 50%;
-  background-color: #fff; 
+  background-color: #fff;
   transition-property: color, background-color;
   transition-duration: 1s;
   transition-timing-function: ease-out;
@@ -288,7 +287,7 @@
   position: relative;
 }
 
-.application-form-wrap .add-question-btn:hover:after { 
+.application-form-wrap .add-question-btn:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -304,7 +303,6 @@
   transition-timing-function: ease-out;
   color: white;
 }
-
 
 .application-form-wrap .add-question-btn:hover {
   background-color: #333;
@@ -353,7 +351,6 @@
   width: 85%;
   display: inline-table;
 }
-
 
 .application-form-wrap .toogle-section-details {
   width: 1em;
@@ -454,7 +451,7 @@
   margin-top: 1em;
 }
 
-.application-form-wrap  .key-headline {
+.application-form-wrap .key-headline {
   margin-top: 1em;
 }
 
@@ -514,11 +511,11 @@
 }
 
 .move-btns-wrapper .move-btn:hover {
-  background:  rgb(168, 167, 167);
+  background: rgb(168, 167, 167);
   cursor: pointer;
 }
 
-.move-btns-wrapper .move-btn:hover:after { 
+.move-btns-wrapper .move-btn:hover:after {
   content: attr(data-title);
   font-size: 0.6rem;
   font-family: Arial;
@@ -548,7 +545,7 @@
   color: gray;
 }
 
-.application-form-wrap .fa-validation{
+.application-form-wrap .fa-validation {
   color: gray;
   margin-right: 1em;
 }
@@ -584,14 +581,15 @@
 }
 
 .application-form-wrap .options-table {
-  background: '#fff';
+  background: "#fff";
 }
 
 .application-form-wrap .dropdown-text {
   width: 2.5em;
-  display: inline-table 
+  display: inline-table;
 }
-.application-form-wrap .fa-color, .fa-move {
+.application-form-wrap .fa-color,
+.fa-move {
   color: grey;
 }
 
@@ -606,7 +604,6 @@
   transition-duration: 1s;
   transition-timing-function: ease-out;
   position: relative;
-
 }
 
 .application-form-wrap .delete-qstion:hover,
@@ -621,7 +618,7 @@
   margin-right: 5px;
 }
 
-.application-form-wrap .delete-qstion:hover:after { 
+.application-form-wrap .delete-qstion:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -654,7 +651,7 @@
   margin-left: 0.5em;
 }
 
-.application-form-wrap .delete-row:hover:after { 
+.application-form-wrap .delete-row:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -680,7 +677,7 @@
   margin-left: 0.5em;
 }
 
-.application-form-wrap .fa-table-btns:hover:after { 
+.application-form-wrap .fa-table-btns:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;
@@ -824,7 +821,7 @@
   position: absolute;
 }
 
-.application-form-wrap .add-stage-btn:hover:after { 
+.application-form-wrap .add-stage-btn:hover:after {
   content: attr(data-title);
   font-size: 0.7rem;
   font-family: Arial;

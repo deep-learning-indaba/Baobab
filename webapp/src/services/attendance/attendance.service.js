@@ -6,7 +6,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const attendanceService = {
   getAttendanceList,
   confirm,
-  undoConfirmation
+  undoConfirmation,
 };
 
 function getAttendanceList(eventId, exclude_already_signed_in) {
@@ -18,23 +18,23 @@ function getAttendanceList(eventId, exclude_already_signed_in) {
         "&exclude_already_signed_in=" +
         exclude_already_signed_in,
       {
-        headers: authHeader()
+        headers: authHeader(),
       }
     )
-    .then(function(response) {
+    .then(function (response) {
       return {
         data: response.data,
-        error: ""
+        error: "",
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         data: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -42,28 +42,28 @@ function getAttendanceList(eventId, exclude_already_signed_in) {
 function confirm(eventId, userId) {
   const data = {
     user_id: userId,
-    event_id: eventId
+    event_id: eventId,
   };
 
   return axios
     .post(baseUrl + "/api/v1/attendance", data, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         data: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         data: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -71,25 +71,25 @@ function confirm(eventId, userId) {
 function undoConfirmation(eventId, userId) {
   const data = {
     user_id: userId,
-    event_id: eventId
+    event_id: eventId,
   };
   return axios
     .delete(baseUrl + `/api/v1/attendance`, { headers: authHeader(), data })
-    .then(function(response) {
+    .then(function (response) {
       return {
         data: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         data: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }

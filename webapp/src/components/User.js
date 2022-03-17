@@ -3,18 +3,18 @@ import { NavLink } from "react-router-dom";
 import { withRouter } from "react-router";
 import { userService } from "../services/user";
 import isEqual from "lodash.isequal";
-import { withTranslation } from 'react-i18next';
+import { withTranslation } from "react-i18next";
 
 class UserDropdown extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      user: props.user
+      user: props.user,
     };
   }
 
-  componentWillReceiveProps = props => {
+  componentWillReceiveProps = (props) => {
     let userFromStorage = JSON.parse(localStorage.getItem("user"));
     if (!isEqual(userFromStorage, props.user)) {
       this.setState({ user: userFromStorage });
@@ -54,7 +54,10 @@ class UserDropdown extends Component {
               >
                 {t("Profile")}
               </a>
-              <button className="dropdown-item cursor-pointer" onClick={this.handleLogout}>
+              <button
+                className="dropdown-item cursor-pointer"
+                onClick={this.handleLogout}
+              >
                 {t("Sign Out")}
               </button>
             </div>

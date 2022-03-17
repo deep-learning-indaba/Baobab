@@ -1,17 +1,20 @@
 import React from "react";
 
-import { getDownloadURL } from '../../utils/files';
+import { getDownloadURL } from "../../utils/files";
 
-function MultiFileValue({value}) {
+function MultiFileValue({ value }) {
   const files = JSON.parse(value);
-  return <ul>
-    {files.map(v => 
-      <li key={"file_" + v.id}>
-        <a target="_blank" href={getDownloadURL(JSON.stringify(v))}>
-          {v.name}
-        </a>
-      </li>)}
-  </ul>;
+  return (
+    <ul>
+      {files.map((v) => (
+        <li key={"file_" + v.id}>
+          <a target="_blank" href={getDownloadURL(JSON.stringify(v))}>
+            {v.name}
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 export default MultiFileValue;

@@ -23,7 +23,6 @@
   border-radius: 5px;
 }
 
-
 /* MultiFileComponent */
 
 .upload-item-wrapper {
@@ -46,7 +45,7 @@
 
 .file-name.enter .input-field {
   border: 1px solid hsl(169deg 37% 57%);
-  }
+}
 
 .input-field {
   width: 40%;
@@ -56,7 +55,6 @@
   border-radius: 5px;
   margin-bottom: 0;
 }
-
 
 .upload-item-container input#file-upload-button {
   background: hsl(211deg 100% 50%);
@@ -71,8 +69,6 @@
 .input-field.alert {
   border: 1px solid red;
 }
-
-
 
 .file-name {
   display: flex;
@@ -125,8 +121,8 @@
   display: none;
 }
 
-.bin.show{
-display: block;
+.bin.show {
+  display: block;
 }
 
 .file-input {
@@ -139,18 +135,18 @@ display: block;
 }
 
 .file-uploaded {
-display: flex;
+  display: flex;
 }
 
 .file-uploaded img {
   width: 20px;
   height: 20px;
   margin: 0 5px;
-  }
+}
 
-  .view {
-    margin: 0 10px;
-  }
+.view {
+  margin: 0 10px;
+}
 
 .multi-checkbox-list {
   margin-top: 1em;

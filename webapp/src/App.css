@@ -11,7 +11,7 @@
 }
 
 .App-header {
-  background-color: #1F2232;
+  background-color: #1f2232;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22,12 +22,12 @@
 }
 
 .App-link {
-  color: #40798C;
+  color: #40798c;
 }
 
 body {
-  background: #F9fafb;
-  font-family: 'Open Sans', sans-serif;
+  background: #f9fafb;
+  font-family: "Open Sans", sans-serif;
 }
 
 html button:active {
@@ -35,18 +35,29 @@ html button:active {
   outline: none;
 }
 
-.Body{
-  background: #F9fafb;;
+.Body {
+  background: #f9fafb;
   min-height: 80vh;
   padding-bottom: 1em;
   padding-top: 2em;
 }
 
-h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: 'Roboto', sans-serif;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  font-family: "Roboto", sans-serif;
 }
 
-.HomeNavBar{
+.HomeNavBar {
   margin-bottom: 0px;
 }
 
@@ -76,7 +87,7 @@ footer .btn {
   padding-left: 30px;
 }
 
-.link-style{
+.link-style {
   background: none;
   border: none;
   cursor: pointer;
@@ -93,10 +104,10 @@ footer .btn {
 
 .navbar-light .navbar-nav .nav-link.active {
   font-weight: bold;
-  border-bottom: 3px solid #27A844;
+  border-bottom: 3px solid #27a844;
 }
 
-.navbar-light .navbar-nav .nav-item .nav-link{
+.navbar-light .navbar-nav .nav-item .nav-link {
   padding-bottom: 0.75em;
   padding-top: 0.75em;
 }
@@ -118,7 +129,7 @@ footer .btn {
 }
 
 .navbar-light .navbar-nav .nav-link {
-  color: rgba(0,0,0,.75);
+  color: rgba(0, 0, 0, 0.75);
 }
 
 .navbar-brand-main {
@@ -130,7 +141,7 @@ footer .btn {
   margin-right: 10px;
 }
 
-.alert-container{
+.alert-container {
   margin-top: 16px;
 }
 
@@ -139,13 +150,13 @@ footer .btn {
 }
 
 .card {
-  box-shadow: 0px 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
   padding-top: 30px;
   padding-bottom: 30px;
 }
 
 label {
-  margin-bottom: .2rem;
+  margin-bottom: 0.2rem;
 }
 
 .powered-by a {
@@ -161,13 +172,13 @@ label {
 }
 
 .language-navbar {
-  padding-right: .5em;
-  border-right: 1px solid rgba(255,255,255,.25);
-  margin-right: .5em;
+  padding-right: 0.5em;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+  margin-right: 0.5em;
 }
 
 .menu-icon {
-  margin-right: .1em;
+  margin-right: 0.1em;
 }
 
 div.vertical-space {

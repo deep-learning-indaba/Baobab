@@ -8,27 +8,29 @@ export const eventService = {
   create,
   update,
   getEvents,
-  getByKey
+  getByKey,
 };
 
 export function getEvent(event_id) {
   return axios
-    .get(baseUrl + `/api/v1/event?id=` + event_id + "&cache_bust=1", { headers: authHeader() })
-    .then(response => {
+    .get(baseUrl + `/api/v1/event?id=` + event_id + "&cache_bust=1", {
+      headers: authHeader(),
+    })
+    .then((response) => {
       return {
         event: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         event: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -55,25 +57,25 @@ export function create(event) {
         offer_open: event.offer_open,
         offer_close: event.offer_close,
         registration_open: event.registration_open,
-        registration_close: event.registration_close
+        registration_close: event.registration_close,
       },
       { headers: authHeader() }
     )
-    .then(response => {
+    .then((response) => {
       return {
         event: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         event: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -101,25 +103,25 @@ export function update(event) {
         offer_open: event.offer_open,
         offer_close: event.offer_close,
         registration_open: event.registration_open,
-        registration_close: event.registration_close
+        registration_close: event.registration_close,
       },
       { headers: authHeader() }
     )
-    .then(response => {
+    .then((response) => {
       return {
         event: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(error => {
+    .catch((error) => {
       return {
         event: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -127,21 +129,21 @@ export function update(event) {
 function getEvents() {
   return axios
     .get(baseUrl + `/api/v1/events?cache_bust=1`, { headers: authHeader() })
-    .then(function(response) {
+    .then(function (response) {
       return {
         events: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         events: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }
@@ -149,23 +151,23 @@ function getEvents() {
 function getByKey(event_key) {
   return axios
     .get(baseUrl + `/api/v1/event-by-key?event_key=${event_key}&cache_bust=1`, {
-      headers: authHeader()
+      headers: authHeader(),
     })
-    .then(function(response) {
+    .then(function (response) {
       return {
         event: response.data,
         error: "",
-        statusCode: response.status
+        statusCode: response.status,
       };
     })
-    .catch(function(error) {
+    .catch(function (error) {
       return {
         event: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
             : error.message,
-        statusCode: error.response && error.response.status
+        statusCode: error.response && error.response.status,
       };
     });
 }

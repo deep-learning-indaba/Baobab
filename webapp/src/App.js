@@ -12,35 +12,38 @@ import UserDropdown from "./components/User";
 import ViewFile from "./components/ViewFile";
 import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
-import ResponseList from './pages/ResponseList/ResponseList';
-import { AdminMenu } from './utils/adminMenu';
+import ResponseList from "./pages/ResponseList/ResponseList";
+import { AdminMenu } from "./utils/adminMenu";
 
 import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
 
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
-import { withTranslation } from 'react-i18next';
+import {
+  isEventAdmin,
+  isRegistrationAdmin,
+  isRegistrationVolunteer,
+  isEventReviewer,
+} from "./utils/user";
+import { withTranslation } from "react-i18next";
 import { userService } from "./services/user";
-
 
 ReactGA.initialize("UA-136093201-1", {
   debug: false,
-  testMode: process.env.NODE_ENV === "test"
+  testMode: process.env.NODE_ENV === "test",
 });
 
 ReactGA.pageview(window.location.pathname + window.location.search);
-history.listen(location => {
+history.listen((location) => {
   ReactGA.pageview(location.pathname + location.search);
 });
-
 
 class EventNav extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      collapsed: true
+      collapsed: true,
     };
   }
 
@@ -49,13 +52,16 @@ class EventNav extends Component {
 
     return (
       <nav className="navbar navbar-expand-sm bg-white navbar-light">
-
-        <a href={`/${this.props.eventKey}`} className="navbar-brand">{this.props.event.name}</a>
-        <div className={
-          "collapse navbar-collapse" +
-          (this.state.collapsed ? " collapsed" : "")
-        } id="eventNavbar">
-
+        <a href={`/${this.props.eventKey}`} className="navbar-brand">
+          {this.props.event.name}
+        </a>
+        <div
+          className={
+            "collapse navbar-collapse" +
+            (this.state.collapsed ? " collapsed" : "")
+          }
+          id="eventNavbar"
+        >
           <ul className="navbar-nav">
             {this.props.user &&
               this.props.event &&
@@ -67,22 +73,24 @@ class EventNav extends Component {
                     className="nav-link"
                     onClick={this.props.toggleMenu}
                   >
-                    {t('Apply')}
+                    {t("Apply")}
                   </NavLink>
                 </li>
               )}
-            {this.props.user && this.props.event && this.props.event.is_offer_open && (
-              <li className="nav-item">
-                <NavLink
-                  to={`/${this.props.eventKey}/offer`}
-                  activeClassName="nav-link active"
-                  className="nav-link"
-                  onClick={this.props.toggleMenu}
-                >
-                  {t('Offer')}
-                </NavLink>
-              </li>
-            )}
+            {this.props.user &&
+              this.props.event &&
+              this.props.event.is_offer_open && (
+                <li className="nav-item">
+                  <NavLink
+                    to={`/${this.props.eventKey}/offer`}
+                    activeClassName="nav-link active"
+                    className="nav-link"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t("Offer")}
+                  </NavLink>
+                </li>
+              )}
             {this.props.user &&
               this.props.event &&
               this.props.event.is_registration_open && (
@@ -95,15 +103,18 @@ class EventNav extends Component {
                     aria-haspopup="true"
                     aria-expanded="false"
                   >
-                    {t('Registration')}
+                    {t("Registration")}
                   </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <div
+                    className="dropdown-menu"
+                    aria-labelledby="navbarDropdown"
+                  >
                     <NavLink
                       to={`/${this.props.eventKey}/registration`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
-                      {t('Registration Form')}
+                      {t("Registration Form")}
                     </NavLink>
                     {isRegistrationVolunteer(this.state.user) && (
                       <NavLink
@@ -111,7 +122,7 @@ class EventNav extends Component {
                         className="dropdown-item"
                         onClick={this.props.toggleMenu}
                       >
-                        {t('Event Attendance')}
+                        {t("Event Attendance")}
                       </NavLink>
                     )}
                   </div>
@@ -120,49 +131,49 @@ class EventNav extends Component {
             {isEventAdmin(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
                 <NavLink
-                    to={`/${this.props.eventKey}/reviewAssignment`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Assignment')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/invitedGuests`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Invited Guests')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/responseList`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Response List')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewDashboard`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Dashboard')}
-                  </NavLink>
-                  <h6 className='dropdown-submenu-header'>Form Settings</h6>
-                  <NavLink
-                    to={`/${this.props.eventKey}/applicationform`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Application Form')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewForm`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Form')}
-                  </NavLink>
-                </AdminMenu>
+                  to={`/${this.props.eventKey}/reviewAssignment`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Review Assignment")}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/invitedGuests`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Invited Guests")}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/responseList`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Response List")}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/reviewDashboard`}
+                  className="dropdown-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Review Dashboard")}
+                </NavLink>
+                <h6 className="dropdown-submenu-header">Form Settings</h6>
+                <NavLink
+                  to={`/${this.props.eventKey}/applicationform`}
+                  className="dropdown-item dropdown-submenu-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Application Form")}
+                </NavLink>
+                <NavLink
+                  to={`/${this.props.eventKey}/reviewForm`}
+                  className="dropdown-item dropdown-submenu-item"
+                  onClick={this.props.toggleMenu}
+                >
+                  {t("Review Form")}
+                </NavLink>
+              </AdminMenu>
             )}
             {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
@@ -176,22 +187,25 @@ class EventNav extends Component {
                     aria-haspopup="true"
                     aria-expanded="false"
                   >
-                    {t('Reviews')}
+                    {t("Reviews")}
                   </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <div
+                    className="dropdown-menu"
+                    aria-labelledby="navbarDropdown"
+                  >
                     <NavLink
                       to={`/${this.props.eventKey}/reviewlist`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
-                      {t('Review')}
+                      {t("Review")}
                     </NavLink>
                     <NavLink
                       to={`/${this.props.eventKey}/reviewHistory`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
-                      {t('Review History')}
+                      {t("Review History")}
                     </NavLink>
                   </div>
                 </li>
@@ -208,15 +222,18 @@ class EventNav extends Component {
                     aria-haspopup="true"
                     aria-expanded="false"
                   >
-                    {t('Registration Admin')}
+                    {t("Registration Admin")}
                   </div>
-                  <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <div
+                    className="dropdown-menu"
+                    aria-labelledby="navbarDropdown"
+                  >
                     <NavLink
                       to={`/${this.props.eventKey}/registrationAdmin`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
-                      {t('Unconfirmed Registrations')}
+                      {t("Unconfirmed Registrations")}
                     </NavLink>
                   </div>
                 </li>
@@ -235,40 +252,40 @@ class EventNav extends Component {
           <span className="navbar-toggler-icon" />
         </button>
       </nav>
-
     );
   }
 }
 
-
 const EventNavTranslation = withTranslation()(EventNav);
-
 
 class LanguageSelectorComponent extends Component {
   changeLanguage = (lang) => {
     // Change the language using i18next
     if (this.props.i18n) {
-      this.props.i18n.changeLanguage(lang).then(()=>{    
-        const currentUser = JSON.parse(localStorage.getItem("user"))   
+      this.props.i18n.changeLanguage(lang).then(() => {
+        const currentUser = JSON.parse(localStorage.getItem("user"));
         if (currentUser) {
-          // We send a put request to the user service to update the language on the back-end. 
+          // We send a put request to the user service to update the language on the back-end.
           // Note the language is automatically sent with every request through axios
-          userService.get().then(result => {
+          userService.get().then((result) => {
             userService.update({
               email: result.email,
               firstName: result.firstname,
               lastName: result.lastname,
-              title: result.user_title
+              title: result.user_title,
             });
           });
         }
         window.location.reload(true);
       });
     }
-  }
+  };
 
   render() {
-    if (this.props.organisation && this.props.organisation.languages.length > 1) {
+    if (
+      this.props.organisation &&
+      this.props.organisation.languages.length > 1
+    ) {
       return (
         <ul className="navbar-nav language-navbar">
           <li className="nav-item dropdown">
@@ -283,15 +300,22 @@ class LanguageSelectorComponent extends Component {
               {this.props.i18n.language}
             </button>
             <div className="dropdown-menu" aria-labelledby="userDropdown">
-              {this.props.organisation.languages.map(lang => (
-                <button className="dropdown-item cursor-pointer" onClick={() => this.changeLanguage(lang.code)} key={lang.code}>{lang.description}</button>
+              {this.props.organisation.languages.map((lang) => (
+                <button
+                  className="dropdown-item cursor-pointer"
+                  onClick={() => this.changeLanguage(lang.code)}
+                  key={lang.code}
+                >
+                  {lang.description}
+                </button>
               ))}
             </div>
           </li>
-        </ul>)
+        </ul>
+      );
     }
 
-    return <div></div>
+    return <div></div>;
   }
 }
 
@@ -306,21 +330,20 @@ class AppComponent extends Component {
       collapsed: true,
       eventKey: null,
       currentEvent: null,
-      error: null
+      error: null,
     };
 
     this.refreshUser = this.refreshUser.bind(this);
   }
 
   componentDidMount() {
-    userService.authRefresh().then(user => {
+    userService.authRefresh().then((user) => {
       if (!user.error) {
         localStorage.setItem("user", JSON.stringify(user));
         this.setState({
-          user: user
+          user: user,
         });
-      }
-      else {
+      } else {
         localStorage.removeItem("user");
       }
     });
@@ -328,27 +351,26 @@ class AppComponent extends Component {
 
   handleLogout = () => {
     this.refreshUser();
-    window.location = '/';
-  }
+    window.location = "/";
+  };
 
   refreshUser() {
     const currentUser = JSON.parse(localStorage.getItem("user"));
     this.setState({
-      user: currentUser
+      user: currentUser,
     });
 
     if (currentUser) {
       // Send a user profile update to record the currently selected language
-      userService.get().then(result => {
+      userService.get().then((result) => {
         userService.update({
           email: result.email,
           firstName: result.firstname,
           lastName: result.lastname,
-          title: result.user_title
+          title: result.user_title,
         });
       });
     }
-    
   }
 
   toggleMenu = () => {
@@ -358,7 +380,7 @@ class AppComponent extends Component {
   setEvent = (eventKey, event) => {
     this.setState({
       eventKey: eventKey,
-      currentEvent: event
+      currentEvent: event,
     });
   };
 
@@ -411,18 +433,23 @@ class AppComponent extends Component {
               <span className="navbar-toggler-icon" />
             </button>
           </nav>
-          {this.state.currentEvent && <EventNavTranslation
-            eventKey={this.state.eventKey}
-            event={this.state.currentEvent}
-            user={this.state.user} />}
+          {this.state.currentEvent && (
+            <EventNavTranslation
+              eventKey={this.state.eventKey}
+              event={this.state.currentEvent}
+              user={this.state.user}
+            />
+          )}
           <div className="Body">
             <div className="container-fluid">
-              {this.state.error && <div className="alert alert-danger">{this.state.error}</div>}
+              {this.state.error && (
+                <div className="alert alert-danger">{this.state.error}</div>
+              )}
               <Switch>
                 <Route
                   exact
                   path="/"
-                  render={props => (
+                  render={(props) => (
                     <Home
                       {...props}
                       user={this.state.user}
@@ -433,14 +460,18 @@ class AppComponent extends Component {
                 <Route
                   exact
                   path="/login"
-                  render={props => (
-                    <Login {...props} loggedIn={this.refreshUser} organisation={this.props.organisation} />
+                  render={(props) => (
+                    <Login
+                      {...props}
+                      loggedIn={this.refreshUser}
+                      organisation={this.props.organisation}
+                    />
                   )}
                 />
                 <Route
                   exact
                   path="/createAccount"
-                  render={props => (
+                  render={(props) => (
                     <CreateAccount
                       {...props}
                       loggedIn={this.refreshUser}
@@ -451,14 +482,14 @@ class AppComponent extends Component {
                 <Route
                   exact
                   path="/resetPassword"
-                  render={props => (
+                  render={(props) => (
                     <ResetPassword {...props} loggedIn={this.refreshUser} />
                   )}
                 />
                 <Route
                   exact
                   path="/responseList"
-                  render={props => (
+                  render={(props) => (
                     <ResponseList {...props} loggedIn={this.refreshUser} />
                   )}
                 />
@@ -468,14 +499,15 @@ class AppComponent extends Component {
                 <Route exact path="/reference/:token" component={Reference} />
                 <Route
                   path="/:eventKey"
-                  render={props => (
-                    <EventHome {...props}
+                  render={(props) => (
+                    <EventHome
+                      {...props}
                       setEvent={this.setEvent}
                       user={this.state.user}
                       eventKey={this.state.eventKey}
                       event={this.state.currentEvent}
                       organisation={this.props.organisation}
-                      />
+                    />
                   )}
                 />
               </Switch>
@@ -502,12 +534,12 @@ class AppComponent extends Component {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {t('Privacy Policy')}
+                  {t("Privacy Policy")}
                 </a>
                 {this.props.organisation &&
                   this.props.organisation.system_name !== "Baobab" && (
                     <div className="float-right powered-by">
-                      {t('Powered by')}{" "}
+                      {t("Powered by")}{" "}
                       <a
                         href="http://www.deeplearningindaba.com"
                         target="_blank"
@@ -529,9 +561,9 @@ class AppComponent extends Component {
             buttonId="btn-cookieConsent"
             containerClasses="alert alert-warning col-lg-12"
           >
-            <h5>{t('cookieTitle')}</h5>
+            <h5>{t("cookieTitle")}</h5>
             <span style={{ fontSize: "0.8em" }}>
-              {t('cookieText')}{" "}
+              {t("cookieText")}{" "}
               <a
                 href={
                   "/" +
@@ -540,7 +572,7 @@ class AppComponent extends Component {
                     : "")
                 }
               >
-                {t('Privacy Policy')}
+                {t("Privacy Policy")}
               </a>
             </span>
           </CookieConsent>
