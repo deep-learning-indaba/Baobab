@@ -21,6 +21,9 @@ jobs:
           name: Format with isort
           command: docker-compose run web isort --check --settings-path=api/setup.cfg api
       - run:
+          name: Format with prettier
+          command: docker-compose run webapp yarn prettier-ci
+      - run:
           name: Run migrations
           command: |
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
@@ -28,7 +31,7 @@ jobs:
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
       - run:
           name: Run unit tests
-          command: docker-compose run  web nosetests -v
+          command: docker-compose run web nosetests -v
 
   integration-tests:
     machine:
