@@ -1,7 +1,7 @@
 from functools import wraps
-
-from flask import request, g
 from time import time
+
+from flask import g, request
 
 from app import app, redis
 from app.utils.errors import TOO_MANY_REQUESTS
@@ -24,13 +24,15 @@ def rate_limit(limit=100, window=60):
                 redis.expire(key, window)
                 expires_in = window
 
-            g.rate_limits = (limit, remaining-1, time()+expires_in)
+            g.rate_limits = (limit, remaining - 1, time() + expires_in)
 
             if remaining > 0:
                 redis.incr(key, 1)
                 return func(*args, **kwargs)
             return TOO_MANY_REQUESTS
+
         return wrapper
+
     return decorator
 
 
@@ -41,7 +43,7 @@ def add_rate_limit_headers(response):
     except (AttributeError, ValueError):
         return response
     else:
-        response.headers.add('X-RateLimit-Remaining', remaining)
-        response.headers.add('X-RateLimit-Limit', limit)
-        response.headers.add('X-RateLimit-Reset', expires)
+        response.headers.add("X-RateLimit-Remaining", remaining)
+        response.headers.add("X-RateLimit-Limit", limit)
+        response.headers.add("X-RateLimit-Reset", expires)
         return response

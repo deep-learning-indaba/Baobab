@@ -1,5 +1,6 @@
 from app import db
 
+
 class Organisation(db.Model):
 
     __tablename__ = "organisation"
@@ -16,9 +17,22 @@ class Organisation(db.Model):
     system_url = db.Column(db.String(100), nullable=False)
     privacy_policy = db.Column(db.String(100), nullable=False)
     languages = db.Column(db.JSON(), nullable=False)
-    events = db.relationship('Event')
+    events = db.relationship("Event")
 
-    def __init__(self, name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages):
+    def __init__(
+        self,
+        name,
+        system_name,
+        small_logo,
+        large_logo,
+        icon_logo,
+        domain,
+        url,
+        email_from,
+        system_url,
+        privacy_policy,
+        languages,
+    ):
         self.name = name
         self.small_logo = small_logo
         self.large_logo = large_logo

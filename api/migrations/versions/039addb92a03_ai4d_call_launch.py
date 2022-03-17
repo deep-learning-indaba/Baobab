@@ -9,26 +9,27 @@ Create Date: 2020-09-28 22:10:55.071894
 """
 
 # revision identifiers, used by Alembic.
-revision = '039addb92a03'
-down_revision = '8339a70d7345'
+revision = "039addb92a03"
+down_revision = "8339a70d7345"
 
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import orm
-from sqlalchemy import select
-from sqlalchemy.orm import column_property
-from app import db
 import datetime
 from enum import Enum
 
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy import orm, select
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import column_property
+
+from app import db
+
 Base = declarative_base()
+
 
 class Organisation(Base):
 
     __tablename__ = "organisation"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -40,7 +41,17 @@ class Organisation(Base):
     email_from = db.Column(db.String(100), nullable=True)
     system_url = db.Column(db.String(100), nullable=False)
 
-    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url):
+    def __init__(
+        self,
+        name,
+        system_name,
+        small_logo,
+        large_logo,
+        domain,
+        url,
+        email_from,
+        system_url,
+    ):
         self.name = name
         self.small_logo = small_logo
         self.large_logo = large_logo
@@ -50,9 +61,10 @@ class Organisation(Base):
         self.email_from = email_from
         self.system_url = system_url
 
+
 class Country(Base):
     __tablename__ = "country"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -60,22 +72,25 @@ class Country(Base):
     def __init__(self, name):
         self.name = name
 
+
 class EventType(Enum):
-    EVENT = 'event'
-    AWARD = 'award'
-    CALL = 'call'
+    EVENT = "event"
+    AWARD = "award"
+    CALL = "call"
 
 
 class Event(Base):
 
     __tablename__ = "event"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
+    organisation_id = db.Column(
+        db.Integer(), db.ForeignKey("organisation.id"), nullable=False
+    )
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     application_open = db.Column(db.DateTime(), nullable=False)
@@ -92,7 +107,7 @@ class Event(Base):
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
 
-    event_translations = db.relationship('EventTranslation', lazy='dynamic')
+    event_translations = db.relationship("EventTranslation", lazy="dynamic")
 
     def __init__(
         self,
@@ -116,7 +131,7 @@ class Event(Base):
         registration_close,
         event_type,
         travel_grant,
-        miniconf_url=None
+        miniconf_url=None,
     ):
         self.start_date = start_date
         self.end_date = end_date
@@ -148,10 +163,11 @@ class Event(Base):
             event_translation = EventTranslation(name, description, language)
             self.event_translations.append(event_translation)
 
+
 class EventTranslation(Base):
 
     __tablename__ = "event_translation"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
@@ -159,19 +175,20 @@ class EventTranslation(Base):
     description = db.Column(db.String(255), nullable=False)
     language = db.Column(db.String(2))
 
-    event = db.relationship('Event', foreign_keys=[event_id])
+    event = db.relationship("Event", foreign_keys=[event_id])
 
     def __init__(self, name, description, language):
         self.name = name
         self.description = description
         self.language = language
 
+
 class ApplicationForm(Base):
-    __tablename__ = 'application_form'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "application_form"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     nominations = db.Column(db.Boolean(), nullable=False)
 
@@ -180,22 +197,29 @@ class ApplicationForm(Base):
         self.is_open = is_open
         self.nominations = nominations
 
+
 class Question(Base):
-    __tablename__ = 'question'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "question"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
-    section_id = db.Column(db.Integer(), db.ForeignKey('section.id'), nullable=False)
+    application_form_id = db.Column(
+        db.Integer(), db.ForeignKey("application_form.id"), nullable=False
+    )
+    section_id = db.Column(db.Integer(), db.ForeignKey("section.id"), nullable=False)
     type = db.Column(db.String(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
     is_required = db.Column(db.Boolean(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
+    depends_on_question_id = db.Column(
+        db.Integer(), db.ForeignKey("question.id"), nullable=True
+    )
     key = db.Column(db.String(255), nullable=True)
 
-    question_translations = db.relationship('QuestionTranslation', lazy='dynamic')
+    question_translations = db.relationship("QuestionTranslation", lazy="dynamic")
 
-    def __init__(self, application_form_id, section_id, order, questionType, is_required=True):
+    def __init__(
+        self, application_form_id, section_id, order, questionType, is_required=True
+    ):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.order = order
@@ -203,45 +227,55 @@ class Question(Base):
         self.is_required = is_required
 
     def get_translation(self, language):
-        question_translation = self.question_translations.filter_by(language=language).first()
+        question_translation = self.question_translations.filter_by(
+            language=language
+        ).first()
         return question_translation
 
 
 class Section(Base):
-    __tablename__ = 'section'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "section"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
+    application_form_id = db.Column(
+        db.Integer(), db.ForeignKey("application_form.id"), nullable=False
+    )
     order = db.Column(db.Integer(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
+    depends_on_question_id = db.Column(
+        db.Integer(), db.ForeignKey("question.id", use_alter=True), nullable=True
+    )
     key = db.Column(db.String(255), nullable=True)
 
-    section_translations = db.relationship('SectionTranslation', lazy='dynamic')
+    section_translations = db.relationship("SectionTranslation", lazy="dynamic")
 
-    def __init__(self, application_form_id, order, depends_on_question_id=None, key=None):
+    def __init__(
+        self, application_form_id, order, depends_on_question_id=None, key=None
+    ):
         self.application_form_id = application_form_id
         self.order = order
         self.depends_on_question_id = depends_on_question_id
         self.key = key
 
     def get_translation(self, language):
-        section_translation = self.section_translations.filter_by(language=language).first()
+        section_translation = self.section_translations.filter_by(
+            language=language
+        ).first()
         return section_translation
 
 
 class SectionTranslation(Base):
-    __tablename__ = 'section_translation'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "section_translation"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    section_id = db.Column(db.Integer(), db.ForeignKey('section.id'), nullable=False)
+    section_id = db.Column(db.Integer(), db.ForeignKey("section.id"), nullable=False)
     language = db.Column(db.String(2), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(), nullable=False)
     show_for_values = db.Column(db.JSON(), nullable=True)
 
-    section = db.relationship('Section', foreign_keys=[section_id])
+    section = db.relationship("Section", foreign_keys=[section_id])
 
     def __init__(self, section_id, language, name, description, show_for_values=None):
         self.section_id = section_id
@@ -252,11 +286,11 @@ class SectionTranslation(Base):
 
 
 class QuestionTranslation(Base):
-    __tablename__ = 'question_translation'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "question_translation"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=False)
+    question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     language = db.Column(db.String(2), nullable=False)
     headline = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=True)
@@ -266,7 +300,7 @@ class QuestionTranslation(Base):
     options = db.Column(db.JSON(), nullable=True)
     show_for_values = db.Column(db.JSON(), nullable=True)
 
-    question = db.relationship('Question', foreign_keys=[question_id])
+    question = db.relationship("Question", foreign_keys=[question_id])
 
     def __init__(
         self,
@@ -278,7 +312,7 @@ class QuestionTranslation(Base):
         validation_regex=None,
         validation_text=None,
         options=None,
-        show_for_values=None
+        show_for_values=None,
     ):
         self.question_id = question_id
         self.language = language
@@ -295,17 +329,24 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    event = session.query(Event).filter_by(key='prc').first()
+    event = session.query(Event).filter_by(key="prc").first()
     form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
 
-    en = (session.query(SectionTranslation)
-        .filter_by(language='en', name='Call for Proposals for Policy Research Centres')
-        .first())
+    en = (
+        session.query(SectionTranslation)
+        .filter_by(language="en", name="Call for Proposals for Policy Research Centres")
+        .first()
+    )
 
-    fr = (session.query(SectionTranslation)
-        .filter_by(language='fr', name='Appel à Propositions pour les Centres de Recherche Politique')
-        .first())
-    
+    fr = (
+        session.query(SectionTranslation)
+        .filter_by(
+            language="fr",
+            name="Appel à Propositions pour les Centres de Recherche Politique",
+        )
+        .first()
+    )
+
     en_desc = """The International Development Research Centre (IDRC) and the Swedish International Development Agency (Sida) invite proposals from independent policy research organizations from across the African continent that are committed to using research to inform and influence national-level artificial intelligence (AI) policies and research ecosystems. This funding opportunity will provide funding to two (2) AI policy research organizations representing distinct linguistic regions (anglophone and francophone).
 
 The goal of this initiative is to enable African think tanks to inform and shape policies and strategies on Artificial Intelligence to support the adoption of responsible AI on the continent, and to ensure African experts have a voice in global fora.

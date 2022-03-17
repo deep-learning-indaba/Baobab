@@ -18,8 +18,12 @@ class InvitationLetterRequest(db.Model):
     __tablename__ = "invitation_letter_request"
 
     id = db.Column(db.Integer(), primary_key=True)
-    registration_id = db.Column(db.Integer(), db.ForeignKey("registration.id"), nullable=True)
-    guest_registration_id = db.Column(db.Integer(), db.ForeignKey("guest_registration.id"), nullable=True)
+    registration_id = db.Column(
+        db.Integer(), db.ForeignKey("registration.id"), nullable=True
+    )
+    guest_registration_id = db.Column(
+        db.Integer(), db.ForeignKey("guest_registration.id"), nullable=True
+    )
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     work_address = db.Column(db.String(), nullable=True)
     addressed_to = db.Column(db.String(), nullable=False)

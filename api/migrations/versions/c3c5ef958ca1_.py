@@ -7,23 +7,25 @@ Create Date: 2020-03-13 06:58:35.231601
 """
 
 # revision identifiers, used by Alembic.
-revision = 'c3c5ef958ca1'
-down_revision = 'c795c179c2b2'
+revision = "c3c5ef958ca1"
+down_revision = "c795c179c2b2"
 
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
-from app import db
 import datetime
 from enum import Enum
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy import orm
+from sqlalchemy.ext.declarative import declarative_base
+
+from app import db
 
 Base = declarative_base()
 
 
 class Organisation(Base):
     __tablename__ = "organisation"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -36,7 +38,18 @@ class Organisation(Base):
     system_url = db.Column(db.String(100), nullable=False)
     privacy_policy = db.Column(db.String(100), nullable=False)
 
-    def __init__(self, name, system_name, small_logo, large_logo, domain, url, email_from, system_url, privacy_policy):
+    def __init__(
+        self,
+        name,
+        system_name,
+        small_logo,
+        large_logo,
+        domain,
+        url,
+        email_from,
+        system_url,
+        privacy_policy,
+    ):
         self.name = name
         self.small_logo = small_logo
         self.large_logo = large_logo
@@ -50,7 +63,7 @@ class Organisation(Base):
 
 class Country(Base):
     __tablename__ = "country"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -60,13 +73,13 @@ class Country(Base):
 
 
 class EventType(Enum):
-    EVENT = 'event'
-    AWARD = 'award'
+    EVENT = "event"
+    AWARD = "award"
 
 
 class Event(Base):
     __tablename__ = "event"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -74,8 +87,9 @@ class Event(Base):
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey(
-        'organisation.id'), nullable=False)
+    organisation_id = db.Column(
+        db.Integer(), db.ForeignKey("organisation.id"), nullable=False
+    )
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
 
@@ -91,27 +105,28 @@ class Event(Base):
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
 
-    def __init__(self,
-                 name,
-                 description,
-                 start_date,
-                 end_date,
-                 key,
-                 organisation_id,
-                 email_from,
-                 url,
-                 application_open,
-                 application_close,
-                 review_open,
-                 review_close,
-                 selection_open,
-                 selection_close,
-                 offer_open,
-                 offer_close,
-                 registration_open,
-                 registration_close,
-                 event_type
-                 ):
+    def __init__(
+        self,
+        name,
+        description,
+        start_date,
+        end_date,
+        key,
+        organisation_id,
+        email_from,
+        url,
+        application_open,
+        application_close,
+        review_open,
+        review_close,
+        selection_open,
+        selection_close,
+        offer_open,
+        offer_close,
+        registration_open,
+        registration_close,
+        event_type,
+    ):
         self.name = name
         self.description = description
         self.start_date = start_date
@@ -135,14 +150,14 @@ class Event(Base):
 
 
 class ApplicationForm(Base):
-    __tablename__ = 'application_form'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "application_form"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
 
-    event = db.relationship('Event', foreign_keys=[event_id])
+    event = db.relationship("Event", foreign_keys=[event_id])
     nominations = db.Column(db.Boolean(), nullable=False)
 
     def __init__(self, event_id, is_open, nominations):
@@ -152,12 +167,14 @@ class ApplicationForm(Base):
 
 
 class Question(Base):
-    __tablename__ = 'question'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "question"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
-    section_id = db.Column(db.Integer(), db.ForeignKey('section.id'), nullable=False)
+    application_form_id = db.Column(
+        db.Integer(), db.ForeignKey("application_form.id"), nullable=False
+    )
+    section_id = db.Column(db.Integer(), db.ForeignKey("section.id"), nullable=False)
     type = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=True)
     headline = db.Column(db.String(), nullable=False)
@@ -167,11 +184,25 @@ class Question(Base):
     order = db.Column(db.Integer(), nullable=False)
     options = db.Column(db.JSON(), nullable=True)
     is_required = db.Column(db.Boolean(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
+    depends_on_question_id = db.Column(
+        db.Integer(), db.ForeignKey("question.id"), nullable=True
+    )
     show_for_values = db.Column(db.JSON(), nullable=True)
 
-    def __init__(self, application_form_id, section_id, headline, placeholder, order, questionType, validation_regex,
-                 validation_text=None, is_required=True, description=None, options=None):
+    def __init__(
+        self,
+        application_form_id,
+        section_id,
+        headline,
+        placeholder,
+        order,
+        questionType,
+        validation_regex,
+        validation_text=None,
+        is_required=True,
+        description=None,
+        options=None,
+    ):
         self.application_form_id = application_form_id
         self.section_id = section_id
         self.headline = headline
@@ -186,15 +217,19 @@ class Question(Base):
 
 
 class Section(Base):
-    __tablename__ = 'section'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "section"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
+    application_form_id = db.Column(
+        db.Integer(), db.ForeignKey("application_form.id"), nullable=False
+    )
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True), nullable=True)
+    depends_on_question_id = db.Column(
+        db.Integer(), db.ForeignKey("question.id", use_alter=True), nullable=True
+    )
     show_for_values = db.Column(db.JSON(), nullable=True)
 
     def __init__(self, application_form_id, name, description, order):
@@ -208,10 +243,7 @@ def get_country_list(session):
     countries = session.query(Country).all()
     country_list = []
     for country in countries:
-        country_list.append({
-            'label': country.name,
-            'value': country.name
-        })
+        country_list.append({"label": country.name, "value": country.name})
     return country_list
 
 
@@ -220,14 +252,27 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    kambulemasters2020 = Event('Thamsanqa Kambule Masters Dissertation Award 2020',
-                                'Thamsanqa Kambule Masters Dissertation Award 2020',
-                                datetime.date(2020, 8, 23), datetime.date(2020, 8, 28), 'kambulemasters2020',
-                                1, 'baobab@deeplearningindaba.com', 'http://www.deeplearningindaba.com',
-                                datetime.date(2020, 3, 1), datetime.date(2020, 4, 17), datetime.date(2020, 4, 25),
-                                datetime.date(2020, 5, 15), datetime.date(2020, 1, 1), datetime.date(2020, 1, 1),
-                                datetime.date(2020, 1, 1), datetime.date(2020, 1, 1), datetime.date(2020, 1, 1),
-                                datetime.date(2020, 1, 1), EventType.AWARD)
+    kambulemasters2020 = Event(
+        "Thamsanqa Kambule Masters Dissertation Award 2020",
+        "Thamsanqa Kambule Masters Dissertation Award 2020",
+        datetime.date(2020, 8, 23),
+        datetime.date(2020, 8, 28),
+        "kambulemasters2020",
+        1,
+        "baobab@deeplearningindaba.com",
+        "http://www.deeplearningindaba.com",
+        datetime.date(2020, 3, 1),
+        datetime.date(2020, 4, 17),
+        datetime.date(2020, 4, 25),
+        datetime.date(2020, 5, 15),
+        datetime.date(2020, 1, 1),
+        datetime.date(2020, 1, 1),
+        datetime.date(2020, 1, 1),
+        datetime.date(2020, 1, 1),
+        datetime.date(2020, 1, 1),
+        datetime.date(2020, 1, 1),
+        EventType.AWARD,
+    )
 
     session.add(kambulemasters2020)
     session.commit()
@@ -240,7 +285,10 @@ def upgrade():
 
     app_form_id = application_form.id
 
-    main_section = Section(app_form_id, 'Thamsanqa Kambule Masters Dissertation Award 2020', """
+    main_section = Section(
+        app_form_id,
+        "Thamsanqa Kambule Masters Dissertation Award 2020",
+        """
 This is the official application form for the Thamsanqa Kambule Masters Dissertation Award 2020, an award to encourage and recognise excellence in research and writing by Masters candidates at African universities, in any area of computational and statistical science. This award will be made at the Deep Learning Indaba at Tunis, Tunisia, in August 2020. 
 
 This application will require:
@@ -251,7 +299,9 @@ This application will require:
 For eligibility criteria for the Kambule Masters Award, please see www.deeplearningindaba.com/awards
 
 For any queries, please email awards@deeplearningindaba.com.
-    """, 1)
+    """,
+        1,
+    )
 
     session.add(main_section)
     session.commit()
@@ -259,252 +309,283 @@ For any queries, please email awards@deeplearningindaba.com.
     q1_nomination_capacity = Question(
         application_form_id=app_form_id,
         section_id=main_section.id,
-        headline='Nomination Capacity',
-        placeholder='',
+        headline="Nomination Capacity",
+        placeholder="",
         order=1,
-        questionType='multi-choice',
+        questionType="multi-choice",
         validation_regex=None,
         is_required=True,
         options=[
-            {'label': 'Self-nomination', 'value': 'self'},
-            {'label': 'Nomination on behalf of a candidate', 'value': 'other'}
-        ]
+            {"label": "Self-nomination", "value": "self"},
+            {"label": "Nomination on behalf of a candidate", "value": "other"},
+        ],
     )
     session.add(q1_nomination_capacity)
     session.commit()
 
-    nominator_information = Section(app_form_id, 'Nominator Information', """
+    nominator_information = Section(
+        app_form_id,
+        "Nominator Information",
+        """
 Details of the person nominating the masters candidate.
-        """, 2)
+        """,
+        2,
+    )
     nominator_information.depends_on_question_id = q1_nomination_capacity.id
-    nominator_information.show_for_values = ['other']
+    nominator_information.show_for_values = ["other"]
     session.add(nominator_information)
     session.commit()
 
     nominator_q1 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
-        headline='University',
-        placeholder='University',
+        headline="University",
+        placeholder="University",
         order=1,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
         is_required=True,
-        description='The university that you (the nominator) are based at.'
+        description="The university that you (the nominator) are based at.",
     )
     nominator_q2 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
-        headline='Department',
-        placeholder='Department',
+        headline="Department",
+        placeholder="Department",
         order=2,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
         is_required=True,
-        description='The department that you (the nominator) are based at.'
+        description="The department that you (the nominator) are based at.",
     )
     nominator_q3 = Question(
         application_form_id=app_form_id,
         section_id=nominator_information.id,
-        headline='Describe your relationship to the masters candidate',
-        placeholder='',
+        headline="Describe your relationship to the masters candidate",
+        placeholder="",
         order=3,
-        questionType='long-text',
+        questionType="long-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     session.add_all([nominator_q1, nominator_q2, nominator_q3])
     session.commit()
 
-    candidate_information = Section(app_form_id, 'Masters Candidate Information',
-                                    'Details of the nominated masters candidate to be considered for the award.', 3)
+    candidate_information = Section(
+        app_form_id,
+        "Masters Candidate Information",
+        "Details of the nominated masters candidate to be considered for the award.",
+        3,
+    )
     session.add(candidate_information)
     session.commit()
 
     candidate_q1 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Title',
-        placeholder='Title',
+        headline="Title",
+        placeholder="Title",
         order=1,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     candidate_q1.depends_on_question_id = q1_nomination_capacity.id
-    candidate_q1.show_for_values = ['other']
+    candidate_q1.show_for_values = ["other"]
 
     candidate_q2 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Firstname',
-        placeholder='Firstname',
+        headline="Firstname",
+        placeholder="Firstname",
         order=2,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     candidate_q2.depends_on_question_id = q1_nomination_capacity.id
-    candidate_q2.show_for_values = ['other']
+    candidate_q2.show_for_values = ["other"]
 
     candidate_q3 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Lastname',
-        placeholder='Lastname',
+        headline="Lastname",
+        placeholder="Lastname",
         order=3,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     candidate_q3.depends_on_question_id = q1_nomination_capacity.id
-    candidate_q3.show_for_values = ['other']
+    candidate_q3.show_for_values = ["other"]
 
     candidate_q4 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Email Address',
-        placeholder='Email Address',
+        headline="Email Address",
+        placeholder="Email Address",
         order=4,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     candidate_q4.depends_on_question_id = q1_nomination_capacity.id
-    candidate_q4.show_for_values = ['other']
+    candidate_q4.show_for_values = ["other"]
 
     candidate_q5 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='University',
-        placeholder='University',
+        headline="University",
+        placeholder="University",
         order=5,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     candidate_q6 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Country of Residence',
-        placeholder='Choose an option',
+        headline="Country of Residence",
+        placeholder="Choose an option",
         order=6,
-        questionType='multi-choice',
+        questionType="multi-choice",
         validation_regex=None,
         is_required=True,
-        options=get_country_list(session)
+        options=get_country_list(session),
     )
     candidate_q7 = Question(
         application_form_id=app_form_id,
         section_id=candidate_information.id,
-        headline='Nationality',
-        placeholder='Choose an option',
+        headline="Nationality",
+        placeholder="Choose an option",
         order=7,
-        questionType='multi-choice',
+        questionType="multi-choice",
         validation_regex=None,
         is_required=True,
-        options=get_country_list(session)
+        options=get_country_list(session),
     )
-    session.add_all([candidate_q1, candidate_q2, candidate_q3, candidate_q4, candidate_q5, candidate_q6, candidate_q7])
+    session.add_all(
+        [
+            candidate_q1,
+            candidate_q2,
+            candidate_q3,
+            candidate_q4,
+            candidate_q5,
+            candidate_q6,
+            candidate_q7,
+        ]
+    )
     session.commit()
 
-    dissertation_information = Section(app_form_id, 'Masters dissertation information',
-                                       'Details of the Masters dissertation of the nominated candidate.', 4)
+    dissertation_information = Section(
+        app_form_id,
+        "Masters dissertation information",
+        "Details of the Masters dissertation of the nominated candidate.",
+        4,
+    )
     session.add(dissertation_information)
     session.commit()
 
     dissertation_q1 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='Title',
-        placeholder='Title',
+        headline="Title",
+        placeholder="Title",
         order=1,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     dissertation_q2 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='Abstract',
-        placeholder='Enter up to 800 words',
+        headline="Abstract",
+        placeholder="Enter up to 800 words",
         order=2,
-        questionType='long-text',
-        validation_regex=r'^\s*(\S+(\s+|$)){0,800}$',
+        questionType="long-text",
+        validation_regex=r"^\s*(\S+(\s+|$)){0,800}$",
         is_required=True,
-        description='Abstract of dissertation (<= 800 words)'
+        description="Abstract of dissertation (<= 800 words)",
     )
     dissertation_q3 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
         headline="What are the dissertation's primary contributions to its field of research?",
-        placeholder='Enter 400-500 words',
+        placeholder="Enter 400-500 words",
         order=3,
-        questionType='long-text',
-        validation_regex=r'^\s*(\S+(\s+|$)){400,500}$',
+        questionType="long-text",
+        validation_regex=r"^\s*(\S+(\s+|$)){400,500}$",
         is_required=True,
-        description='Succinctly describe the novel contributions of this work (400-500 words)'
+        description="Succinctly describe the novel contributions of this work (400-500 words)",
     )
     dissertation_q4 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='Name of Masters academic supervisor',
-        placeholder='Name of Supervisor',
+        headline="Name of Masters academic supervisor",
+        placeholder="Name of Supervisor",
         order=4,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     dissertation_q5 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='E-mail address of Masters academic supervisor',
-        placeholder='Supervisor Email Address',
+        headline="E-mail address of Masters academic supervisor",
+        placeholder="Supervisor Email Address",
         order=5,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     dissertation_q6 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='Date of submission/defence of dissertation',
-        placeholder='Date of submission',
+        headline="Date of submission/defence of dissertation",
+        placeholder="Date of submission",
         order=6,
-        questionType='date',
+        questionType="date",
         validation_regex=None,
-        is_required=True
+        is_required=True,
     )
     dissertation_q7 = Question(
         application_form_id=app_form_id,
         section_id=dissertation_information.id,
-        headline='Name(s) of examiner/s',
-        placeholder='Name(s) of examiner/s',
+        headline="Name(s) of examiner/s",
+        placeholder="Name(s) of examiner/s",
         order=7,
-        questionType='short-text',
+        questionType="short-text",
         validation_regex=None,
-        is_required=False
+        is_required=False,
     )
 
     session.add_all(
-        [dissertation_q1, dissertation_q2, dissertation_q3, dissertation_q4, dissertation_q5, dissertation_q6,
-         dissertation_q7])
+        [
+            dissertation_q1,
+            dissertation_q2,
+            dissertation_q3,
+            dissertation_q4,
+            dissertation_q5,
+            dissertation_q6,
+            dissertation_q7,
+        ]
+    )
     session.commit()
 
-    supporting_information = Section(app_form_id, 'Supporting Documentation', '', 5)
+    supporting_information = Section(app_form_id, "Supporting Documentation", "", 5)
     session.add(supporting_information)
     session.commit()
 
     supporting_q1 = Question(
         application_form_id=app_form_id,
         section_id=supporting_information.id,
-        headline='Dissertation',
-        placeholder='Dissertation',
+        headline="Dissertation",
+        placeholder="Dissertation",
         order=1,
-        questionType='file',
+        questionType="file",
         validation_regex=None,
         is_required=True,
-        description='We require the electronic submission of the dissertation. We recommended that dissertations be written in English (the Awards Committee may require an English translation for full consideration of theses written in other languages).'
+        description="We require the electronic submission of the dissertation. We recommended that dissertations be written in English (the Awards Committee may require an English translation for full consideration of theses written in other languages).",
     )
     supporting_q2 = Question(
         application_form_id=app_form_id,
@@ -512,18 +593,18 @@ Details of the person nominating the masters candidate.
         headline="Examiners' reports",
         placeholder="Examiners' reports",
         order=2,
-        questionType='file',
+        questionType="file",
         validation_regex=None,
         is_required=True,
-        description="We require the examiners' report to be submitted. If this is not available, please contact awards@deeplearningindaba.com."
+        description="We require the examiners' report to be submitted. If this is not available, please contact awards@deeplearningindaba.com.",
     )
     supporting_q3 = Question(
         application_form_id=app_form_id,
         section_id=supporting_information.id,
-        headline='Supporting Letter',
-        placeholder='',
+        headline="Supporting Letter",
+        placeholder="",
         order=3,
-        questionType='reference',
+        questionType="reference",
         validation_regex=None,
         is_required=True,
         description="""
@@ -531,18 +612,18 @@ Details of the person nominating the masters candidate.
 
         Supporting letters should be 600 words at most, written in English, and submitted electronically in PDF format by the closing date, using Baobab.
         """,
-        options={"min_num_referrals": 1, "max_num_referrals": 1}
+        options={"min_num_referrals": 1, "max_num_referrals": 1},
     )
     supporting_q4 = Question(
         application_form_id=app_form_id,
         section_id=supporting_information.id,
-        headline='Additional Comments',
-        placeholder='',
+        headline="Additional Comments",
+        placeholder="",
         order=4,
-        questionType='long-text',
+        questionType="long-text",
         validation_regex=None,
         is_required=False,
-        description='Use this space to provide any additional details which you feel are relevant to this nomination and have not been captured by this form.'
+        description="Use this space to provide any additional details which you feel are relevant to this nomination and have not been captured by this form.",
     )
 
     session.add_all([supporting_q1, supporting_q2, supporting_q3, supporting_q4])
@@ -554,16 +635,20 @@ def downgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    event = session.query(Event).filter_by(key='kambulemasters2020').first()
+    event = session.query(Event).filter_by(key="kambulemasters2020").first()
     app_form = session.query(ApplicationForm).filter_by(event_id=event.id).first()
 
-    nominator = session.query(Section).filter(Section.application_form_id == app_form.id, Section.order == 2).first()
+    nominator = (
+        session.query(Section)
+        .filter(Section.application_form_id == app_form.id, Section.order == 2)
+        .first()
+    )
     nominator.depends_on_question_id = None
 
     session.query(Question).filter_by(application_form_id=app_form.id).delete()
     session.query(Section).filter_by(application_form_id=app_form.id).delete()
 
     session.query(ApplicationForm).filter_by(event_id=event.id).delete()
-    session.query(Event).filter_by(key='kambulemasters2020').delete()
+    session.query(Event).filter_by(key="kambulemasters2020").delete()
 
     session.commit()

@@ -6,29 +6,31 @@ Create Date: 2020-02-27 21:43:16.303799
 """
 
 # revision identifiers, used by Alembic.
-revision = '02242641e122'
-down_revision = '85d13062a5e7'
+revision = "02242641e122"
+down_revision = "85d13062a5e7"
 
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import orm
-from app import db
 import datetime
 from enum import Enum
 
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy import orm
+from sqlalchemy.ext.declarative import declarative_base
+
+from app import db
+
 Base = declarative_base()
 
+
 class EventType(Enum):
-    EVENT = 'event'
-    AWARD = 'award'
+    EVENT = "event"
+    AWARD = "award"
 
 
 class Event(Base):
 
     __tablename__ = "event"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -52,27 +54,28 @@ class Event(Base):
     registration_close = db.Column(db.DateTime(), nullable=False)
     event_type = db.Column(db.Enum(EventType), nullable=False)
 
-    def __init__(self,
-                 name,
-                 description,
-                 start_date,
-                 end_date,
-                 key,
-                 organisation_id,
-                 email_from,
-                 url,
-                 application_open,
-                 application_close,
-                 review_open,
-                 review_close,
-                 selection_open,
-                 selection_close,
-                 offer_open,
-                 offer_close,
-                 registration_open,
-                 registration_close,
-                 event_type
-                 ):
+    def __init__(
+        self,
+        name,
+        description,
+        start_date,
+        end_date,
+        key,
+        organisation_id,
+        email_from,
+        url,
+        application_open,
+        application_close,
+        review_open,
+        review_close,
+        selection_open,
+        selection_close,
+        offer_open,
+        offer_close,
+        registration_open,
+        registration_close,
+        event_type,
+    ):
 
         self.name = name
         self.description = description
@@ -94,15 +97,16 @@ class Event(Base):
         self.registration_close = registration_close
         self.event_type = event_type
 
+
 class ApplicationForm(Base):
-    __tablename__ = 'application_form'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "application_form"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
 
-    event = db.relationship('Event', foreign_keys=[event_id])
+    event = db.relationship("Event", foreign_keys=[event_id])
     nominations = db.Column(db.Boolean(), nullable=False)
 
     def __init__(self, event_id, is_open, nominations):
@@ -110,12 +114,15 @@ class ApplicationForm(Base):
         self.is_open = is_open
         self.nominations = nominations
 
+
 class ReviewForm(Base):
-    __tablename__ = 'review_form'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "review_form"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
+    application_form_id = db.Column(
+        db.Integer(), db.ForeignKey("application_form.id"), nullable=False
+    )
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
 
@@ -124,24 +131,41 @@ class ReviewForm(Base):
         self.is_open = True
         self.deadline = deadline
 
+
 class RegistrationForm(Base):
-    
+
     __tablename__ = "registration_form"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey(
-        "event.id"), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
 
     def __init__(self, event_id):
         self.event_id = event_id
 
+
 def upgrade():
-    local_event = Event('Test Event', 'Amazing Machine Learning Summer School 2020, 6-11 July 2021, Cape Town, South Africa',
-        datetime.date(2021, 7, 6), datetime.date(2021, 7, 11), 'test2021', 3, 'contact@testevent.com',
-        'http://www.deeplearningindaba.com', datetime.date(2020, 2, 2), datetime.date(2021, 3, 20), datetime.date(2020, 2, 2), 
-        datetime.date(2021, 4, 20), datetime.date(2020, 2, 2), datetime.date(2021, 5, 20), datetime.date(2020, 2, 2),
-        datetime.date(2021, 6, 20), datetime.date(2020, 2, 2), datetime.date(2021, 6, 30), EventType.EVENT)
+    local_event = Event(
+        "Test Event",
+        "Amazing Machine Learning Summer School 2020, 6-11 July 2021, Cape Town, South Africa",
+        datetime.date(2021, 7, 6),
+        datetime.date(2021, 7, 11),
+        "test2021",
+        3,
+        "contact@testevent.com",
+        "http://www.deeplearningindaba.com",
+        datetime.date(2020, 2, 2),
+        datetime.date(2021, 3, 20),
+        datetime.date(2020, 2, 2),
+        datetime.date(2021, 4, 20),
+        datetime.date(2020, 2, 2),
+        datetime.date(2021, 5, 20),
+        datetime.date(2020, 2, 2),
+        datetime.date(2021, 6, 20),
+        datetime.date(2020, 2, 2),
+        datetime.date(2021, 6, 30),
+        EventType.EVENT,
+    )
 
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
@@ -162,7 +186,9 @@ def upgrade():
     SELECT {}, section.name, section.description, section."order"
     FROM section
     WHERE application_form_id = 1
-    """.format(application_form_id)
+    """.format(
+        application_form_id
+    )
     op.get_bind().execute(query)
 
     # Copy application form questions from Indaba 2019
@@ -183,19 +209,29 @@ def upgrade():
     FROM question q
     INNER JOIN section s on q.section_id = s.id
     WHERE q.application_form_id = 1
-    """.format(application_form_id=application_form_id)
+    """.format(
+        application_form_id=application_form_id
+    )
     op.get_bind().execute(query)
 
     # Make file types optional because file uploads don't work locally (yet)
-    op.get_bind().execute("""UPDATE question SET is_required=False WHERE application_form_id={} AND type='file'""".format(application_form_id))
+    op.get_bind().execute(
+        """UPDATE question SET is_required=False WHERE application_form_id={} AND type='file'""".format(
+            application_form_id
+        )
+    )
 
-    op.get_bind().execute("""SELECT setval('review_form_id_seq', (SELECT max(id) FROM review_form));""")
+    op.get_bind().execute(
+        """SELECT setval('review_form_id_seq', (SELECT max(id) FROM review_form));"""
+    )
     review_form = ReviewForm(application_form_id, datetime.date(2021, 6, 30))
     session.add(review_form)
     session.commit()
     review_form_id = review_form.id
 
-    op.get_bind().execute("""SELECT setval('review_question_id_seq', (SELECT max(id) FROM review_question));""")
+    op.get_bind().execute(
+        """SELECT setval('review_question_id_seq', (SELECT max(id) FROM review_question));"""
+    )
     query = """
     INSERT INTO review_question(review_form_id, question_id, description, headline, type, placeholder, options, is_required, "order", validation_regex, validation_text, weight)
     SELECT 
@@ -214,26 +250,36 @@ def upgrade():
     FROM review_question q
     LEFT JOIN question qq ON q.question_id = qq.id
     WHERE q.review_form_id = 1
-    """.format(review_form_id=review_form_id, application_form_id=application_form_id)
+    """.format(
+        review_form_id=review_form_id, application_form_id=application_form_id
+    )
     op.get_bind().execute(query)
 
-    op.get_bind().execute("""SELECT setval('registration_form_id_seq', (SELECT max(id) FROM registration_form));""")
+    op.get_bind().execute(
+        """SELECT setval('registration_form_id_seq', (SELECT max(id) FROM registration_form));"""
+    )
     registration_form = RegistrationForm(event_id)
     session.add(registration_form)
     session.commit()
     registration_form_id = registration_form.id
 
-    op.get_bind().execute("""SELECT setval('registration_section_id_seq', (SELECT max(id) FROM registration_section));""")
+    op.get_bind().execute(
+        """SELECT setval('registration_section_id_seq', (SELECT max(id) FROM registration_section));"""
+    )
 
     query = """
     INSERT INTO registration_section(registration_form_id, name, description, "order", show_for_travel_award, show_for_accommodation_award, show_for_payment_required)
     SELECT {}, name, description, "order", show_for_travel_award, show_for_accommodation_award, show_for_payment_required
     FROM registration_section
     WHERE registration_form_id = 1
-    """.format(registration_form_id)
+    """.format(
+        registration_form_id
+    )
     op.get_bind().execute(query)
 
-    op.get_bind().execute("""SELECT setval('registration_question_id_seq', (SELECT max(id) FROM registration_question));""")
+    op.get_bind().execute(
+        """SELECT setval('registration_question_id_seq', (SELECT max(id) FROM registration_question));"""
+    )
 
     query = """
     INSERT INTO registration_question(registration_form_id, section_id, type, description, headline, placeholder, validation_regex, validation_text, "order", options, is_required, depends_on_question_id, hide_for_dependent_value, required_value)
@@ -260,10 +306,15 @@ def upgrade():
     FROM registration_question q
     INNER JOIN registration_section s on q.section_id = s.id
     WHERE q.registration_form_id = 1
-    """.format(registration_form_id=registration_form_id)
+    """.format(
+        registration_form_id=registration_form_id
+    )
     op.get_bind().execute(query)
 
-    op.get_bind().execute("""UPDATE organisation set system_url='http://localhost:8080' where id=3""")
+    op.get_bind().execute(
+        """UPDATE organisation set system_url='http://localhost:8080' where id=3"""
+    )
+
 
 def downgrade():
     Base.metadata.bind = op.get_bind()
@@ -349,4 +400,6 @@ def downgrade():
     """
     op.get_bind().execute(query)
 
-    op.get_bind().execute("""UPDATE organisation set system_url='http://localhost' where id=3""")
+    op.get_bind().execute(
+        """UPDATE organisation set system_url='http://localhost' where id=3"""
+    )

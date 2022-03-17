@@ -7,13 +7,14 @@ Create Date: 2019-07-02 19:34:33.725020
 """
 
 # revision identifiers, used by Alembic.
-revision = 'cb391b878586'
-down_revision = 'f349debf9e15'
+revision = "cb391b878586"
+down_revision = "f349debf9e15"
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.ext.declarative import declarative_base
+from alembic import op
 from sqlalchemy import orm
+from sqlalchemy.ext.declarative import declarative_base
+
 from app import db
 
 Base = declarative_base()
@@ -21,7 +22,7 @@ Base = declarative_base()
 
 class InvitationTemplate(Base):
     __tablename__ = "invitation_template"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
@@ -30,17 +31,18 @@ class InvitationTemplate(Base):
     send_for_accommodation_award_only = db.Column(db.Boolean(), nullable=False)
     send_for_both_travel_accommodation = db.Column(db.Boolean(), nullable=False)
 
+
 class Event(Base):
 
     __tablename__ = "event"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(255), nullable=False)
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
 
-    application_forms = db.relationship('ApplicationForm')
+    application_forms = db.relationship("ApplicationForm")
 
     def __init__(self, name, description, start_date, end_date):
         self.name = name
@@ -63,11 +65,12 @@ class Event(Base):
     def get_application_form(self):
         return self.application_forms[0]
 
+
 class ApplicationForm(Base):
-    __tablename__ = 'application_form'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "application_form"
+    __table_args__ = {"extend_existing": True}
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
     is_open = db.Column(db.Boolean(), nullable=False)
     deadline = db.Column(db.DateTime(), nullable=False)
 
@@ -87,7 +90,8 @@ def upgrade():
         template_path="Indaba 2019  - Invitation Letter - General.docx",
         send_for_travel_award_only=False,
         send_for_accommodation_award_only=False,
-        send_for_both_travel_accommodation=False)
+        send_for_both_travel_accommodation=False,
+    )
 
     session.add(general_template)
     session.commit()
@@ -97,7 +101,8 @@ def upgrade():
         template_path="Indaba 2019 - Invitation Letter - Travel & Accomodation.docx",
         send_for_travel_award_only=False,
         send_for_accommodation_award_only=False,
-        send_for_both_travel_accommodation=True)
+        send_for_both_travel_accommodation=True,
+    )
 
     session.add(both_template)
     session.commit()
@@ -107,7 +112,8 @@ def upgrade():
         template_path="Indaba 2019 - Invitation Letter - Travel Only.docx",
         send_for_travel_award_only=True,
         send_for_accommodation_award_only=False,
-        send_for_both_travel_accommodation=False)
+        send_for_both_travel_accommodation=False,
+    )
 
     session.add(travel_only_template)
     session.commit()
@@ -117,7 +123,8 @@ def upgrade():
         template_path="Indaba 2019 - Invitation Letter - Accomodation Only.docx",
         send_for_travel_award_only=False,
         send_for_accommodation_award_only=True,
-        send_for_both_travel_accommodation=False)
+        send_for_both_travel_accommodation=False,
+    )
 
     session.add(accommodation_only_template)
     session.commit()
