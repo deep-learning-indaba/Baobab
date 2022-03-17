@@ -50,7 +50,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "test-ci": "react-scripts test --env=jsdom --ci --coverage -u",
-    "cypress": "cypress open"
+    "cypress": "cypress open",
+    "prettier-ci": "prettier --check ."
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -64,6 +65,7 @@
   "devDependencies": {
     "@babel/runtime": "^7.12.5",
     "cypress": "^4.0.2",
+    "prettier": "2.6.0",
     "react-test-renderer": "^16.14.0"
   }
 }
