@@ -21,41 +21,35 @@ class Address extends Component {
         streetAddress2Value: props.streetAddress2Value,
         cityValue: props.cityValue,
         postalCodeValue: props.postalCodeValue,
-        countryValue: props.countryValue
-      }
+        countryValue: props.countryValue,
+      },
     };
   }
 
   checkOptionsList(optionsList) {
     if (Array.isArray(optionsList)) {
       return optionsList;
-    } else
-      return [];
+    } else return [];
   }
 
   componentWillMount() {
-    getCountries.then(result => {
+    getCountries.then((result) => {
       this.setState({
-        countryOptions: this.checkOptionsList(result)
+        countryOptions: this.checkOptionsList(result),
       });
     });
   }
 
   render() {
-    const {
-      streetAddress1,
-      streetAddress2,
-      city,
-      postalCode,
-      country
-    } = this.state;
+    const { streetAddress1, streetAddress2, city, postalCode, country } =
+      this.state;
 
     const {
       streetAddress1Value,
       streetAddress2Value,
       cityValue,
       postalCodeValue,
-      countryValue
+      countryValue,
     } = this.state.addressText;
 
     const addressStyle = createColClassName(12, 4, 6, 6);
@@ -69,7 +63,8 @@ class Address extends Component {
             placeholder={streetAddress1.display}
             onChange={this.props.onChange(streetAddress1)}
             value={streetAddress1Value}
-            label={streetAddress1.display} />
+            label={streetAddress1.display}
+          />
         </div>
 
         <div>
@@ -79,7 +74,8 @@ class Address extends Component {
             placeholder={streetAddress2.display}
             onChange={this.props.onChange(streetAddress2)}
             value={streetAddress2Value}
-            label={streetAddress2.display} />
+            label={streetAddress2.display}
+          />
         </div>
 
         <div>
@@ -89,7 +85,8 @@ class Address extends Component {
             placeholder={city.display}
             onChange={this.props.onChange(city)}
             value={cityValue}
-            label={city.display} />
+            label={city.display}
+          />
         </div>
 
         <div>
@@ -99,7 +96,8 @@ class Address extends Component {
             placeholder={postalCode.display}
             onChange={this.props.onChange(postalCode)}
             value={postalCodeValue}
-            label={postalCode.display} />
+            label={postalCode.display}
+          />
         </div>
 
         <FormSelect
@@ -108,7 +106,8 @@ class Address extends Component {
           placeholder={country.display}
           onChange={this.props.handleChangeDropdown}
           value={countryValue}
-          label={country.display} />
+          label={country.display}
+        />
       </div>
     );
   }

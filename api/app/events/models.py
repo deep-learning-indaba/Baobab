@@ -1,13 +1,13 @@
-
 from datetime import datetime
-
-from app import db
 from enum import Enum
 
+from app import db
+
+
 class EventType(Enum):
-    EVENT = 'event'
-    AWARD = 'award'
-    CALL = 'call'
+    EVENT = "event"
+    AWARD = "award"
+    CALL = "call"
 
 
 class Event(db.Model):
@@ -18,7 +18,9 @@ class Event(db.Model):
     start_date = db.Column(db.DateTime(), nullable=False)
     end_date = db.Column(db.DateTime(), nullable=False)
     key = db.Column(db.String(255), nullable=False, unique=True)
-    organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
+    organisation_id = db.Column(
+        db.Integer(), db.ForeignKey("organisation.id"), nullable=False
+    )
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
     application_open = db.Column(db.DateTime(), nullable=False)
@@ -35,11 +37,11 @@ class Event(db.Model):
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
 
-    organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
-    application_forms = db.relationship('ApplicationForm')
-    email_templates = db.relationship('EmailTemplate')
-    event_roles = db.relationship('EventRole')
-    event_translations = db.relationship('EventTranslation', lazy='dynamic')
+    organisation = db.relationship("Organisation", foreign_keys=[organisation_id])
+    application_forms = db.relationship("ApplicationForm")
+    email_templates = db.relationship("EmailTemplate")
+    event_roles = db.relationship("EventRole")
+    event_translations = db.relationship("EventTranslation", lazy="dynamic")
 
     def __init__(
         self,
@@ -63,7 +65,7 @@ class Event(db.Model):
         registration_close,
         event_type,
         travel_grant,
-        miniconf_url=None
+        miniconf_url=None,
     ):
         self.start_date = start_date
         self.end_date = end_date
@@ -148,7 +150,7 @@ class Event(db.Model):
         if event_translation is not None:
             return event_translation.description
         return None
-    
+
     def get_all_name_translations(self):
         name_translation_map = {}
         for event_translation in self.event_translations.all():
@@ -158,7 +160,9 @@ class Event(db.Model):
     def get_all_description_translations(self):
         description_translation_map = {}
         for event_translation in self.event_translations.all():
-            description_translation_map[event_translation.language] = event_translation.description
+            description_translation_map[
+                event_translation.language
+            ] = event_translation.description
         return description_translation_map
 
     def add_event_translations(self, names, descriptions):
@@ -171,27 +175,29 @@ class Event(db.Model):
     def has_specific_translation(self, language):
         return self.event_translations.filter_by(language=language).count() == 1
 
-    def update(self,
-               names,
-               descriptions,
-               start_date,
-               end_date,
-               key,
-               organisation_id,
-               email_from,
-               url,
-               application_open,
-               application_close,
-               review_open,
-               review_close,
-               selection_open,
-               selection_close,
-               offer_open,
-               offer_close,
-               registration_open,
-               registration_close,
-               travel_grant,
-               miniconf_url=None):
+    def update(
+        self,
+        names,
+        descriptions,
+        start_date,
+        end_date,
+        key,
+        organisation_id,
+        email_from,
+        url,
+        application_open,
+        application_close,
+        review_open,
+        review_close,
+        selection_open,
+        selection_close,
+        offer_open,
+        offer_close,
+        registration_open,
+        registration_close,
+        travel_grant,
+        miniconf_url=None,
+    ):
         self.start_date = start_date
         self.end_date = end_date
         self.key = key
@@ -278,7 +284,9 @@ class Event(db.Model):
 class EventTranslation(db.Model):
 
     __tablename__ = "event_translation"
-    __table_args__ = tuple([db.UniqueConstraint('event_id', 'language', name='uq_event_id_language')])
+    __table_args__ = tuple(
+        [db.UniqueConstraint("event_id", "language", name="uq_event_id_language")]
+    )
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
@@ -286,26 +294,25 @@ class EventTranslation(db.Model):
     description = db.Column(db.String(500), nullable=False)
     language = db.Column(db.String(2))
 
-    event = db.relationship('Event', foreign_keys=[event_id])
+    event = db.relationship("Event", foreign_keys=[event_id])
 
     def __init__(self, name, description, language):
         self.name = name
         self.description = description
         self.language = language
 
+
 class EventRole(db.Model):
 
     __tablename__ = "event_role"
 
     id = db.Column(db.Integer(), primary_key=True)
-    event_id = db.Column(db.Integer(), db.ForeignKey(
-        "event.id"), nullable=False)
-    user_id = db.Column(db.Integer(), db.ForeignKey(
-        "app_user.id"), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey("event.id"), nullable=False)
+    user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
 
-    user = db.relationship('AppUser', foreign_keys=[user_id])
-    event = db.relationship('Event', foreign_keys=[event_id])
+    user = db.relationship("AppUser", foreign_keys=[user_id])
+    event = db.relationship("Event", foreign_keys=[event_id])
 
     def __init__(self, role, user_id, event_id):
         self.role = role

@@ -3,7 +3,6 @@ import CreateInvitedGuestsComponent from "./components/createInvitedGuestCompone
 import queryString from "query-string";
 
 export default class CreateInvitedGuests extends Component {
-
   render() {
     let url = this.props.location.search;
     let params = queryString.parse(url);
@@ -12,7 +11,8 @@ export default class CreateInvitedGuests extends Component {
       <CreateInvitedGuestsComponent
         email={params.email}
         role={params.role}
-        {...this.props} />
+        {...this.props}
+      />
     );
   }
 }

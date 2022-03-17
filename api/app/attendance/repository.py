@@ -1,19 +1,24 @@
 from app import db
 from app.attendance.models import Attendance
 
-class AttendanceRepository():
 
+class AttendanceRepository:
     @staticmethod
     def exists(event_id, user_id):
-        return db.session.query(Attendance.id)\
-                         .filter_by(event_id=event_id, user_id=user_id)\
-                         .first() is not None
+        return (
+            db.session.query(Attendance.id)
+            .filter_by(event_id=event_id, user_id=user_id)
+            .first()
+            is not None
+        )
 
     @staticmethod
     def get(event_id, user_id):
-        return db.session.query(Attendance)\
-                         .filter_by(event_id=event_id, user_id=user_id)\
-                         .first()
+        return (
+            db.session.query(Attendance)
+            .filter_by(event_id=event_id, user_id=user_id)
+            .first()
+        )
 
     @staticmethod
     def create(attendance):

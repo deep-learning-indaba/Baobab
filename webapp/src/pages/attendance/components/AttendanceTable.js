@@ -22,7 +22,7 @@ class AttendanceTable extends React.Component {
       exclude_already_signed_in: null,
       location: props.location,
       userAlreadyExists: null,
-      showAllColumns: null
+      showAllColumns: null,
     };
   }
   componentDidMount() {
@@ -54,24 +54,24 @@ class AttendanceTable extends React.Component {
     const { exclude_already_signed_in } = this.state;
     attendanceService
       .getAttendanceList(this.state.eventId, exclude_already_signed_in)
-      .then(result => {
+      .then((result) => {
         this.setState({
           loading: false,
           originalAttendanceList: result.data,
           error: result.error,
-          filteredList: result.data
+          filteredList: result.data,
         });
       });
   }
-  onConfirm = user => {
+  onConfirm = (user) => {
     const { eventId } = this.state;
     this.setState({ selectedUser: user, confirming: true }, () => {
-      attendanceService.confirm(eventId, user.user_id).then(result => {
+      attendanceService.confirm(eventId, user.user_id).then((result) => {
         if (
           result.statusCode === 400 &&
           result.error &&
           result.error.toLowerCase() ===
-          "Attendance has already been confirmed for this user and event.".toLowerCase()
+            "Attendance has already been confirmed for this user and event.".toLowerCase()
         ) {
           // Still Allow Undo if user exists
           this.setState({
@@ -82,8 +82,8 @@ class AttendanceTable extends React.Component {
               confirmed: result.data,
               confirmError: result.error,
               statusCode: result.statusCode,
-              success: false
-            }
+              success: false,
+            },
           });
         } else {
           let success =
@@ -96,8 +96,8 @@ class AttendanceTable extends React.Component {
               confirmed: result.data,
               confirmError: result.error,
               statusCode: result.statusCode,
-              success: success
-            }
+              success: success,
+            },
           });
         }
       });
@@ -108,8 +108,8 @@ class AttendanceTable extends React.Component {
       return {
         style: {
           background: rowInfo.original.confirmed === true ? "white" : "#dc3545",
-          color: "black"
-        }
+          color: "black",
+        },
       };
     }
     return {};
@@ -120,13 +120,13 @@ class AttendanceTable extends React.Component {
     this.setState({ undoing: true }, () => {
       attendanceService
         .undoConfirmation(eventId, selectedUser.user_id)
-        .then(response => {
+        .then((response) => {
           this.setState({
             undoResult: {
               undo: response.data,
               undoError: response.error,
-              undoing: false
-            }
+              undoing: false,
+            },
           });
         });
     });
@@ -138,17 +138,17 @@ class AttendanceTable extends React.Component {
         showDetailsModal: false,
         loading: true,
         confirmResult: null,
-        undoResult: null
+        undoResult: null,
       },
       () => this.getAttendanceList()
     );
   };
 
-  onSearchChange = field => {
+  onSearchChange = (field) => {
     let value = field.target.value.toLowerCase();
     this.setState(
       {
-        searchTerm: value
+        searchTerm: value,
       },
       () => this.filterList()
     );
@@ -157,7 +157,7 @@ class AttendanceTable extends React.Component {
   filterList = () => {
     let value = this.state.searchTerm;
     let filteredList = this.state.originalAttendanceList.filter(
-      u =>
+      (u) =>
         u.firstname.toLowerCase().indexOf(value) > -1 ||
         u.lastname.toLowerCase().indexOf(value) > -1 ||
         u.email.toLowerCase().indexOf(value) > -1
@@ -176,12 +176,12 @@ class AttendanceTable extends React.Component {
       searchTerm,
       selectedUser,
       originalAttendanceList,
-      userAlreadyExists
+      userAlreadyExists,
     } = this.state;
 
     const loadingStyle = {
       width: "3rem",
-      height: "3rem"
+      height: "3rem",
     };
 
     let confirmResultDiv = null;
@@ -299,32 +299,32 @@ class AttendanceTable extends React.Component {
         {
           id: "user",
           Header: <div>Full-Name</div>,
-          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
+          accessor: (u) => <div>{u.firstname + " " + u.lastname}</div>,
           minWidth: 150,
-          sort: "asc"
+          sort: "asc",
         },
         {
           id: "email",
           Header: <div>Email</div>,
-          accessor: u => u.email
+          accessor: (u) => u.email,
         },
         {
           id: "affiliation",
           Header: <div>Affiliation</div>,
-          accessor: u => u.affiliation
+          accessor: (u) => u.affiliation,
         },
         {
           id: "role",
           Header: <div>Category</div>,
-          accessor: u => u.user_category
+          accessor: (u) => u.user_category,
         },
         {
           id: "confirm",
           Header: (
             <div className="registration-admin-confirm">Mark attendance</div>
           ),
-          accessor: u => u.user_id,
-          Cell: props => (
+          accessor: (u) => u.user_id,
+          Cell: (props) => (
             <div>
               {props.original.confirmed ? (
                 <button
@@ -337,33 +337,33 @@ class AttendanceTable extends React.Component {
                   Confirm
                 </button>
               ) : (
-                  <div>Payment Required</div>
-                )}
+                <div>Payment Required</div>
+              )}
             </div>
-          )
-        }
+          ),
+        },
       ];
     } else {
       columns = [
         {
           id: "user",
           Header: <div>Full-Name</div>,
-          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
+          accessor: (u) => <div>{u.firstname + " " + u.lastname}</div>,
           minWidth: 150,
-          sort: "asc"
+          sort: "asc",
         },
         {
           id: "email",
           Header: <div>Email</div>,
-          accessor: u => u.email
+          accessor: (u) => u.email,
         },
         {
           id: "confirm",
           Header: (
             <div className="registration-admin-confirm">Mark attendance</div>
           ),
-          accessor: u => u.user_id,
-          Cell: props => (
+          accessor: (u) => u.user_id,
+          Cell: (props) => (
             <div>
               {props.original.confirmed ? (
                 <button
@@ -376,11 +376,11 @@ class AttendanceTable extends React.Component {
                   Confirm
                 </button>
               ) : (
-                  <div>Payment Required</div>
-                )}
+                <div>Payment Required</div>
+              )}
             </div>
-          )
-        }
+          ),
+        },
       ];
     }
 
@@ -445,10 +445,10 @@ class AttendanceTable extends React.Component {
 
               {(!originalAttendanceList ||
                 originalAttendanceList.length === 0) && (
-                  <div class="alert alert-success alert-container">
-                    All attendances are confirmed.
+                <div class="alert alert-success alert-container">
+                  All attendances are confirmed.
                 </div>
-                )}
+              )}
             </div>
           </div>
         </div>

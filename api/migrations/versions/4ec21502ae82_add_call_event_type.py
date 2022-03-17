@@ -7,11 +7,11 @@ Create Date: 2020-08-23 16:14:12.709215
 """
 
 # revision identifiers, used by Alembic.
-revision = '4ec21502ae82'
-down_revision = '9b181cdd3fa1'
+revision = "4ec21502ae82"
+down_revision = "9b181cdd3fa1"
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 
 def upgrade():
@@ -20,8 +20,10 @@ def upgrade():
 
 
 def downgrade():
-    op.execute("""DELETE FROM pg_enum
+    op.execute(
+        """DELETE FROM pg_enum
 WHERE enumlabel = 'CALL'
 AND enumtypid = (
   SELECT oid FROM pg_type WHERE typname = 'event_type'
-)""")
+)"""
+    )

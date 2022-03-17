@@ -8,25 +8,25 @@ Create Date: 2020-12-09 11:15:20.840913
 """
 
 # revision identifiers, used by Alembic.
-revision = '76c9226545bb'
-down_revision = '303140b3cefb'
+revision = "76c9226545bb"
+down_revision = "303140b3cefb"
 
-from alembic import op
+import datetime
+
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import orm
+
 from app import db
-import datetime
 
 Base = declarative_base()
 
 
-
 class EmailTemplate(Base):
 
-    __tablename__ = 'email_template'
-    __table_args__ = {'extend_existing': True}
+    __tablename__ = "email_template"
+    __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer(), primary_key=True)
     key = db.Column(db.String(50), nullable=False)
@@ -44,7 +44,11 @@ class EmailTemplate(Base):
 
 
 def upgrade():
-    en = db.session.query(EmailTemplate).filter_by(language='en', key='reviews-assigned').first()
+    en = (
+        db.session.query(EmailTemplate)
+        .filter_by(language="en", key="reviews-assigned")
+        .first()
+    )
     en.template = """Dear {title} {firstname} {lastname},
 
 You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/reviewlist to begin.
@@ -54,7 +58,11 @@ Thank you for assisting us review applications for {event_name}!
 Kind Regards,
 The {event_name} Organisers"""
 
-    fr = db.session.query(EmailTemplate).filter_by(language='fr', key='reviews-assigned').first()
+    fr = (
+        db.session.query(EmailTemplate)
+        .filter_by(language="fr", key="reviews-assigned")
+        .first()
+    )
     fr.template = """Madame / Monsieur {lastname},
 
 {num_reviews} tâches de révision vous ont été attribuées dans {system_name}. Veuillez consulter {baobab_host}/{event_key}/reviewlist pour commencer.
@@ -69,7 +77,9 @@ Les organisateurs de {event_name}
 
 
 def downgrade():
-    en = db.session.query(EmailTemplate).filter_by(language='en', key='reviews-assigned')
+    en = db.session.query(EmailTemplate).filter_by(
+        language="en", key="reviews-assigned"
+    )
     en.template = """Dear {title} {firstname} {lastname},
 
 You have been assigned {num_reviews} reviews on {system_name}. Please visit {baobab_host}/{event_key}/review to begin.
@@ -80,7 +90,9 @@ Thank you for assisting us review applications for {event_name}!
 Kind Regards,
 The {event_name} Organisers"""
 
-    fr = db.session.query(EmailTemplate).filter_by(language='fr', key='reviews-assigned')
+    fr = db.session.query(EmailTemplate).filter_by(
+        language="fr", key="reviews-assigned"
+    )
     fr.template = """Madame / Monsieur {lastname},
 
 {num_reviews} tâches de révision vous ont été attribuées dans {system_name}. Veuillez consulter {baobab_host}/{event_key}/review pour commencer.

@@ -6,12 +6,12 @@ import "./index.css";
 import * as serviceWorker from "./serviceWorker";
 import { ErrorPage } from "./components/ErrorPage";
 import { ErrorBoundary } from "react-error-boundary";
-import i18nInit from './i18n';
+import i18nInit from "./i18n";
 import Loading from "./components/Loading";
 import { organisationService } from "./services/organisation/organisation.service";
-import ContextProvider from './context/ContextProvider';
+import ContextProvider from "./context/ContextProvider";
 
-const App = React.lazy(() => import('./App')); // Lazy-loaded
+const App = React.lazy(() => import("./App")); // Lazy-loaded
 
 require("dotenv").config();
 
@@ -21,16 +21,16 @@ class Bootstrap extends Component {
 
     this.state = {
       organisation: null,
-      loading: true
+      loading: true,
     };
   }
 
   componentDidMount() {
-    organisationService.getOrganisation().then(response => {
+    organisationService.getOrganisation().then((response) => {
       this.setState({
         organisation: response.organisation,
         error: response.error,
-        loading: false
+        loading: false,
       });
       if (response.organisation) {
         document.title =
@@ -44,12 +44,14 @@ class Bootstrap extends Component {
 
   render() {
     if (this.state.loading) {
-      return <Loading/>
+      return <Loading />;
     }
 
-    return <Suspense fallback={<Loading />}>
-      <App organisation={this.state.organisation}/>
-    </Suspense>
+    return (
+      <Suspense fallback={<Loading />}>
+        <App organisation={this.state.organisation} />
+      </Suspense>
+    );
   }
 }
 
@@ -58,8 +60,8 @@ ReactDOM.render(
     <ContextProvider>
       <Bootstrap />
     </ContextProvider>
-  </ErrorBoundary>
-  , document.getElementById("root")
+  </ErrorBoundary>,
+  document.getElementById("root")
 );
 
 // If you want your app to work offline and load faster, you can change

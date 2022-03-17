@@ -1,383 +1,374 @@
 /* Universal */
 .table-wrapper.response-page {
-    width: 87vw;
-    margin-top: 20px;
+  width: 87vw;
+  margin-top: 20px;
 }
 
-
 .table-wrapper.response-page h2 {
-    color: hsl(0, 0%, 25%);
-    font-weight: 300;
-    margin-top: 2px;
-    text-align: left;
-    margin-bottom: 5px;
+  color: hsl(0, 0%, 25%);
+  font-weight: 300;
+  margin-top: 2px;
+  text-align: left;
+  margin-bottom: 5px;
 }
 
 .response-details h4 {
-    color: hsl(213deg 16% 49%);;
-    font-weight: 300;
-    padding-left: 7px;
-    margin-top: 5px;
-    text-align: left;
+  color: hsl(213deg 16% 49%);
+  font-weight: 300;
+  padding-left: 7px;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .table-wrapper.response-page button {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .table-wrapper.response-page label {
-    font-size: 12px;
-    color: grey;
-    margin: 0 1px;
+  font-size: 12px;
+  color: grey;
+  margin: 0 1px;
 }
-
 
 /* Flex Box Classes */
 .flex {
-    display: flex;
+  display: flex;
 }
 
 .baseline {
-    align-items: baseline;
+  align-items: baseline;
 }
 
 .center {
-    justify-content: center;
+  justify-content: center;
 }
-
 
 /* General and  User Details Heading */
 .headings-lower {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    margin-top: 8px;
-    flex-wrap: wrap;
-    padding: 2%;
-    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
-    border-radius: 4px;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  padding: 2%;
+  box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+  border-radius: 4px;
 }
 
 .user-details {
-    padding: 0 2px
+  padding: 0 2px;
 }
 
 .user-details.right {
-    padding: 0 10px
+  padding: 0 10px;
 }
 
 html .headings-lower label {
-    color: hsl(0deg 0% 55%);
+  color: hsl(0deg 0% 55%);
 }
 
 .user-details {
-    display: flex;
-    text-align: left;
-    flex-direction: column;
-    justify-content: center;
+  display: flex;
+  text-align: left;
+  flex-direction: column;
+  justify-content: center;
 }
 
-
 .user-details.right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .user-details h4 {
-    color: hsl(0, 0%, 44%);
-    margin: 0;
+  color: hsl(0, 0%, 44%);
+  margin: 0;
 }
 
 .tags .btn-light {
-    font-size: 13px;
-    background: hsl(0deg 0% 100%);
-    border: 1px solid hsl(0deg, 1%, 74%);
+  font-size: 13px;
+  background: hsl(0deg 0% 100%);
+  border: 1px solid hsl(0deg, 1%, 74%);
 }
 
 .badge {
-    margin: 2px;
+  margin: 2px;
 }
 
 .badge-info {
-    background: hsl(188deg, 100%, 23%);
-    font-size: 14px;
+  background: hsl(188deg, 100%, 23%);
+  font-size: 14px;
 }
 
 .fa-trash-alt {
-    padding: 0 5px;
+  padding: 0 5px;
 }
 
 /* Tag List */
 .tag-response {
-    opacity: 0;
-    pointer-events: none;
-    overflow: scroll;
-    transition: 300ms;
-    height: 1px;
-    margin-top: 2px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: scroll;
+  transition: 300ms;
+  height: 1px;
+  margin-top: 2px;
 }
 
 .tag-response.show {
-    opacity: 1;
-    pointer-events: all;
-    transition: 300ms;
-    height: 180px;
+  opacity: 1;
+  pointer-events: all;
+  transition: 300ms;
+  height: 180px;
 }
 
 .badge.add-tags {
-    background: hsl(208, 74%, 57%);
-    color: white;
+  background: hsl(208, 74%, 57%);
+  color: white;
 }
 
 .badge.add-tags.active {
-    background: hsl(120, 0%, 57%);
+  background: hsl(120, 0%, 57%);
 }
 
 .tag-item {
-    display: flex;
-    margin: 5px 0;
-    opacity: 1;
-    pointer-events: none;
+  display: flex;
+  margin: 5px 0;
+  opacity: 1;
+  pointer-events: none;
 }
 
 .btn.tag {
-    background: none;
-    border: 1px solid hsl(0, 0%, 75%);
-    pointer-events: all;
-    opacity: 1;
+  background: none;
+  border: 1px solid hsl(0, 0%, 75%);
+  pointer-events: all;
+  opacity: 1;
 }
 
 .badge-light {
-    border: 1px solid grey;
+  border: 1px solid grey;
 }
 
 .tags {
-    display: flex;
-    flex-wrap: wrap;
-    min-width: 1px;
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 1px;
 }
 
 .tags .btn.badge-info {
-    background: hsl(28deg, 79%, 54%);
+  background: hsl(28deg, 79%, 54%);
 }
 
 .tag-response .btn.tag {
-    background: hsl(0deg, 0%, 90%);
-    padding: 2px 4px;
-    border: none;
-    color: hsl(0deg 0% 32%);
+  background: hsl(0deg, 0%, 90%);
+  padding: 2px 4px;
+  border: none;
+  color: hsl(0deg 0% 32%);
 }
 
 .tag-response .btn {
-    width: 100%;
-    font-size: 12px;
-    text-align: left;
-    margin: 0;
+  width: 100%;
+  font-size: 12px;
+  text-align: left;
+  margin: 0;
 }
 
 /* New Tag Modal */
 .new-tag-inputs {
-    margin: 5px 0;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+  margin: 5px 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .new-tag-inputs label {
-    text-align: left;
+  text-align: left;
 }
 
 .new-tag-inputs input {
-    width: 100%;
+  width: 100%;
 }
 
 /* Reviewers Section */
 .reviewers-section .list {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin: 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 12px 0;
 }
 
 .reviewers-section .list .reviewer {
-    box-shadow: 1px 1px 5px hsl(0deg, 0%, 75%);
-    margin-right: 20px;
-    padding: 3px 15px;
-    border-radius: 8px;
-    margin: 10px 5px;
-    height: 3.5em;
+  box-shadow: 1px 1px 5px hsl(0deg, 0%, 75%);
+  margin-right: 20px;
+  padding: 3px 15px;
+  border-radius: 8px;
+  margin: 10px 5px;
+  height: 3.5em;
 }
 
 .reviewers-section .list .add-reviewer .btn {
-    margin: 0 10px;
-    font-size: 13px;
-    border: 1px solid hsl(0, 0%, 91%);
+  margin: 0 10px;
+  font-size: 13px;
+  border: 1px solid hsl(0, 0%, 91%);
 }
 
-.reviewers-section  p {
-    margin: 0 8px 0 0;
-    font-size: 13px;
+.reviewers-section p {
+  margin: 0 8px 0 0;
+  font-size: 13px;
 }
 
 .reviewers-section h5 {
-    margin-top: 11px;
-    color: grey;
+  margin-top: 11px;
+  color: grey;
 }
 
 .reviewer div {
-    display: flex;
+  display: flex;
 }
 
 .divider {
-    height: 1px;
-    background: lightgrey;
-    width: 100%;
-    margin: 35px auto;
+  height: 1px;
+  background: lightgrey;
+  width: 100%;
+  margin: 35px auto;
 }
 
 /* Review Modal */
 
 .review-select {
-    background: none;
-    border: none;
-    outline: none;
-    text-align: left;
-    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
-    cursor: pointer;
-    border-radius: 10px;
-    padding: 5px 30px 5px 15px;
+  background: none;
+  border: none;
+  outline: none;
+  text-align: left;
+  box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 5px 30px 5px 15px;
 }
 
 .review-select label {
-    color: hsl(208deg, 84%, 59%)
+  color: hsl(208deg, 84%, 59%);
 }
 
-
 .review-select:hover {
-    background: hsl(0, 0%, 96%);
-    color: hsl(0, 0%, 19%);
+  background: hsl(0, 0%, 96%);
+  color: hsl(0, 0%, 19%);
 }
 
 .review-select div {
-    display: flex;
+  display: flex;
 }
 
 html button:focus {
-    border: none;
-    outline: none;
+  border: none;
+  outline: none;
 }
 
-
 .review-select.active {
-    background:hsl(208deg, 84%, 59%);
-    border: none;
-    outline: none;
+  background: hsl(208deg, 84%, 59%);
+  border: none;
+  outline: none;
 }
 
 .trash-review {
-    background: none;
-    border: none;
-    outline: none
+  background: none;
+  border: none;
+  outline: none;
 }
 
 .review-select p {
-color: hsl(0, 0%, 38%);
-font-size: 12px;
-margin-right: 8px;
-margin-bottom: 4px;
+  color: hsl(0, 0%, 38%);
+  font-size: 12px;
+  margin-right: 8px;
+  margin-bottom: 4px;
 }
 
 .review-select.active label {
-color: white;
-font-size: 15px;
+  color: white;
+  font-size: 15px;
 }
 
 .review-select.active p {
-    color: hsl(0, 0%, 100%);
+  color: hsl(0, 0%, 100%);
 }
 
 .review-completed {
-    color: hsl(120, 41%, 47%);
+  color: hsl(120, 41%, 47%);
 }
 
 .review-not-started {
-    color: hsl(0, 64%, 61%);
+  color: hsl(0, 64%, 61%);
 }
 
 .review-started {
-    color: #e8a64a;
+  color: #e8a64a;
 }
-
 
 /* Response Details Section and Sub-Sections */
 .response-details {
-    margin-top: 20px;
-    width: 100%;
-    padding: 2%;
-    background: white;
-    box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
-    min-height: 40px;
-    padding-bottom: 40px;
-    text-align: left;
-    border-radius: 4px;
+  margin-top: 20px;
+  width: 100%;
+  padding: 2%;
+  background: white;
+  box-shadow: 1px 2px 6px hsl(0, 0%, 53%);
+  min-height: 40px;
+  padding-bottom: 40px;
+  text-align: left;
+  border-radius: 4px;
 }
 
 .section {
-    padding: 10px 0;
+  padding: 10px 0;
 }
-
 
 /* Q&A Sections */
 .Q-A {
-    display: flex;
-    flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .question-answer-block {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #e8e8e8;
-    margin: 5px;
-    background: hsl(0deg 0% 98%);
-    border-radius: 2px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e8e8e8;
+  margin: 5px;
+  background: hsl(0deg 0% 98%);
+  border-radius: 2px;
 }
 
 .question-answer-block p {
-    color: grey;
-    font-size: 17px;
+  color: grey;
+  font-size: 17px;
 }
 
 .question-answer-block p.answer {
-    color: #212529;
-    font-size: 17px;
-    white-space: pre-wrap;
+  color: #212529;
+  font-size: 17px;
+  white-space: pre-wrap;
 }
 
- html .answerer {
-    font-weight: bold;
-    font-size: 13px;
+html .answerer {
+  font-weight: bold;
+  font-size: 13px;
 }
 
 .answer.file {
-    color: skyblue;
-    text-decoration: underline;
+  color: skyblue;
+  text-decoration: underline;
 }
-
 
 /* Response Details Type Face */
 .response-details h3 {
-    color: hsl(213deg 16% 49%);
-    margin: 0;
-    padding-left: 7px;
-    padding-bottom: 4px;
-    padding-right: 4px;
+  color: hsl(213deg 16% 49%);
+  margin: 0;
+  padding-left: 7px;
+  padding-bottom: 4px;
+  padding-right: 4px;
 }
 
 .question-answer-block .question-description {
-    font-size: 0.9em;
+  font-size: 0.9em;
 }
 
 .question-answer-block .question-headline {
-    color: #666;
+  color: #666;
 }

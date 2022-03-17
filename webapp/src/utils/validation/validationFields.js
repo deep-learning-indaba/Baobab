@@ -13,15 +13,15 @@ const validationFields = {
   fullNameOnPassport: {
     name: "fullNameOnPassport",
     display: "Full Name",
-    description: "Full Name as it appears on Passport."
+    description: "Full Name as it appears on Passport.",
   },
   passportExpiryDate: {
     name: "passportExpiryDate",
-    display: "Passport Date of Expiry."
+    display: "Passport Date of Expiry.",
   },
   passportIssuedByAuthority: {
     name: "passportIssuedByAuthority",
-    display: "Authority that issued Passport"
+    display: "Authority that issued Passport",
   },
   workStreet1: { name: "workStreet1", display: "Work Street Address 1" },
   workStreet2: { name: "workStreet2", display: "Work Street Address 2" },
@@ -30,27 +30,27 @@ const validationFields = {
   workCountry: { name: "workCountry", display: "Work Country" },
   residentialStreet1: {
     name: "residentialStreet1",
-    display: "Residential Street Address 1"
+    display: "Residential Street Address 1",
   },
   residentialStreet2: {
     name: "residentialStreet2",
-    display: "Residential Street Address 2"
+    display: "Residential Street Address 2",
   },
   residentialCity: { name: "residentialCity", display: "Residential City" },
   residentialPostalCode: {
     name: "residentialPostalCode",
-    display: "Residential Postal Code"
+    display: "Residential Postal Code",
   },
   residentialCountry: {
     name: "residentialCountry",
-    display: "Residential Country"
+    display: "Residential Country",
   },
   letterAddressedTo: {
     name: "letterAddressedTo",
     display: "Addressed to ",
     description:
-      "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy"
-  }
+      "Who the visa letter should be addressed to, e.g. Immigration Officer of X Embassy",
+  },
 };
 
 export default validationFields;

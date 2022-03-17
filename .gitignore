@@ -103,10 +103,6 @@ venv.bak/
 .spyderproject
 .spyproject
 
-# VSCode project settings
-.vscode
-
-
 # IntelliJ/Pycharm/Webstorm/etc. project settings
 .iml
 

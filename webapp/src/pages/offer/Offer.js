@@ -3,11 +3,7 @@ import "./Offer.css";
 import OfferComponent from "./components/OfferComponent.js";
 
 export default class Offer extends Component {
-    render() {
-        return (
-            <OfferComponent
-                {...this.props}>
-            </OfferComponent>
-        );
-    }
+  render() {
+    return <OfferComponent {...this.props}></OfferComponent>;
+  }
 }

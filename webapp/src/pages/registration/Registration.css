@@ -1,19 +1,19 @@
-.pull-right{
-    float:right;
+.pull-right {
+  float: right;
 }
-.padding-v-15{
-    padding-top: 15px;
-    padding-bottom: 15px;
+.padding-v-15 {
+  padding-top: 15px;
+  padding-bottom: 15px;
 }
-.display-none{
-    display: none;
+.display-none {
+  display: none;
 }
 
 .form-label {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .registration-question {
-    text-align: left;
-    margin-bottom: 1em;
+  text-align: left;
+  margin-bottom: 1em;
 }

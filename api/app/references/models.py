@@ -1,14 +1,14 @@
-
 from datetime import datetime
 
 from app import db
+
 
 class ReferenceRequest(db.Model):
 
     __tablename__ = "reference_request"
 
     id = db.Column(db.Integer(), primary_key=True)
-    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
+    response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
     title = db.Column(db.String(50), nullable=False)
     firstname = db.Column(db.String(50), nullable=False)
     lastname = db.Column(db.String(50), nullable=False)
@@ -17,17 +17,10 @@ class ReferenceRequest(db.Model):
     email = db.Column(db.String(50), nullable=True)
     email_sent = db.Column(db.DateTime(), nullable=True)
 
-    references = db.relationship('Reference')
-    response = db.relationship('Response', foreign_keys=[response_id])
+    references = db.relationship("Reference")
+    response = db.relationship("Response", foreign_keys=[response_id])
 
-    def __init__(self, 
-                response_id, 
-                title,
-                firstname,
-                lastname, 
-                relation,
-                email
-                 ):
+    def __init__(self, response_id, title, firstname, lastname, relation, email):
         self.response_id = response_id
         self.title = title
         self.firstname = firstname
@@ -46,16 +39,19 @@ class ReferenceRequest(db.Model):
         return len(self.references) > 0
 
 
-
 class Reference(db.Model):
 
     __tablename__ = "reference"
 
     id = db.Column(db.Integer(), primary_key=True)
-    reference_request_id = db.Column(db.Integer(), db.ForeignKey('reference_request.id'), nullable=False)
+    reference_request_id = db.Column(
+        db.Integer(), db.ForeignKey("reference_request.id"), nullable=False
+    )
     uploaded_document = db.Column(db.String(128), nullable=False)
     timestamp = db.Column(db.DateTime(), nullable=False)
-    reference_request = db.relationship('ReferenceRequest', foreign_keys=[reference_request_id])
+    reference_request = db.relationship(
+        "ReferenceRequest", foreign_keys=[reference_request_id]
+    )
 
     def __init__(self, reference_request_id, uploaded_document):
         self.reference_request_id = reference_request_id

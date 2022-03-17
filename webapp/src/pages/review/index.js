@@ -1,3 +1,3 @@
-import Review from './Review.js';
+import Review from "./Review.js";
 
 export default Review;
