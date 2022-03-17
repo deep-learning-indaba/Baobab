@@ -15,6 +15,12 @@ jobs:
             openssl aes256 -md md5 -d -in docker-compose.circleci.yaml.enc -out docker-compose.yml -pass pass:$CONFIG_PASSWORD
             docker-compose up -d
       - run:
+          name: Format with black
+          command: docker-compose run web black --check api
+      - run:
+          name: Format with isort
+          command: docker-compose run web isort --check --settings-path=api/setup.cfg api
+      - run:
           name: Run migrations
           command: |
             docker-compose run web python3 api/run.py db upgrade --directory api/migrations
