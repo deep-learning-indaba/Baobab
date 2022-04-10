@@ -19,7 +19,7 @@ import { Trans, withTranslation } from 'react-i18next'
 
 const LONG_TEXT = "long-text";
 const SHORT_TEXT = "short-text";
-const RADIO = "multi-choice";  // TODO: Change backend to return "radio"
+const RADIO = ["multi-choice", "radio"];  // TODO: Change backend to return "radio"
 const INFORMATION = "information";
 const CHECKBOX = "checkbox";
 const MULTI_CHECKBOX = "multi-checkbox";
@@ -107,7 +107,8 @@ class ReviewQuestionComponent extends Component {
                         showError={validationError}
                         errorText={validationError} />
                 )
-            case RADIO:
+            case RADIO[0]:
+            case RADIO[1]:
                 return (
                     <FormRadio
                         id={this.id}
@@ -161,6 +162,10 @@ class ReviewQuestionComponent extends Component {
     }
 
     render() {
+        if (this.props.model.question.type === INFORMATION && !this.props.model.answer) {
+            return <div></div>
+        }
+
         let className = "question";
         if (this.props.model.question.type === INFORMATION || this.props.model.question.type === FILE || this.props.model.question.type === MULTI_FILE || this.props.model.question.type === HEADING) {
             className = className + " information";
