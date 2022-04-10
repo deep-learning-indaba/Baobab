@@ -242,7 +242,7 @@ class ReviewScore(db.Model):
         self.review_question_id = review_question_id
         self.value = value
         self.is_active = True
-        created_on = datetime.now()
+        self.created_on = datetime.now()
 
 
 class ReviewConfiguration(db.Model):
