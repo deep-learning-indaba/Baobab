@@ -1,7 +1,7 @@
 Jinja2==3.0.3
 Flask==1.1.2
 Flask-Admin
-Flask-Bcrypt
+Flask-Bcrypt==0.7.1
 Flask-Failsafe
 Flask-Migrate==2.5.2
 Flask-RESTful
