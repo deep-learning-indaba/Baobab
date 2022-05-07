@@ -230,6 +230,7 @@ class ReviewRepository():
     @staticmethod
     def get_count_reviews_completed_for_event(event_id):
         count = (db.session.query(ReviewResponse)
+                        .filter(ReviewResponse.is_submitted == True)
                         .join(ReviewForm, ReviewForm.id == ReviewResponse.review_form_id)
                         .filter(ReviewForm.active == True)
                         .join(ApplicationForm, ReviewForm.application_form_id == ApplicationForm.id)
@@ -243,13 +244,14 @@ class ReviewRepository():
                         .join(Response, ResponseReviewer.response_id == Response.id)
                         .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                         .filter(ApplicationForm.event_id == event_id)
-                        .join(ReviewForm, ApplicationForm.id == ReviewForm.application_form_id)
+                        .join(ReviewForm, ReviewForm.application_form_id == ApplicationForm.id)
                         .filter(ReviewForm.active == True)
                         .outerjoin(ReviewResponse, and_(
-                            ReviewResponse.review_form_id == ReviewForm.id,
+                            ReviewResponse.response_id == ResponseReviewer.response_id,
                             ReviewResponse.reviewer_user_id == ResponseReviewer.reviewer_user_id))
-                        .filter(ReviewResponse.id == None)
+                        .filter(or_(ReviewResponse.id == None, ReviewResponse.is_submitted == False))
                         .count())
+
         return count
 
     @staticmethod
