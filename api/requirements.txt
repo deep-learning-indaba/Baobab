@@ -3,12 +3,12 @@ Flask==1.1.2
 Flask-Admin
 Flask-Bcrypt==0.7.1
 Flask-Failsafe
-Flask-Migrate==2.5.2
-Flask-RESTful
+Flask-Migrate==2.7.0
+Flask-RESTful==0.3.8
 Flask-Redis
 flask-restplus
 Flask-SQLAlchemy
-Flask-Script
+Flask-Script==2.0.6
 Flask-Login
 google-api-core
 google-api-python-client
@@ -25,7 +25,6 @@ blinker
 itsdangerous==1.1.0
 nose
 passlib
-py-bcrypt
 pytz
 redis
 six
