@@ -1,15 +1,16 @@
 import json
+import warnings
 
 from datetime import datetime, date, timedelta
 from app import app, db, LOGGER
-from app.events.models import Event
+from app.events.models import Event, EventFee
 from app.utils.testing import ApiTestCase
 from app.responses.models import Response, Answer
 from app.email_template.models import EmailTemplate
 from app.events.models import Event, EventRole
 from app.users.models import AppUser, Country, UserCategory
 from app.applicationModel.models import ApplicationForm, Section, Question
-from app.utils.errors import FORBIDDEN
+from app.utils.errors import FORBIDDEN, EVENT_NOT_FOUND, EVENT_FEE_NOT_FOUND
 from app.organisation.models import Organisation
 from app.events.models import EventType
 from app.outcome.models import Outcome
@@ -869,3 +870,185 @@ class EventStatusTest(ApiTestCase):
 
         status = event_status.get_event_status(self.event.id, self.user1.id)
         self.assertEqual(status.registration_status, 'Confirmed')
+
+class EventFeeAPITest(ApiTestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.url = "/api/v1/eventfee"
+        
+        # we don't mind this since this warning is specific to sqlite
+        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
+
+    def seed_static_data(self):
+        self.event = self.add_event()
+
+        self.treasurer_email = "treasurer@user.com"
+        self.treasurer = self.add_user(self.treasurer_email)
+        self.add_event_role("treasurer", self.treasurer.id, self.event.id)
+
+    def add_event_fee(
+        self,
+        event_id,
+        created_by_user_id,
+        name='Registration fee',
+        iso_currency_code='usd',
+        amount=200.00,
+        description=None
+    ):
+        event_fee = EventFee(event_id, name, iso_currency_code, amount, created_by_user_id, description)
+        db.session.add(event_fee)
+        db.session.commit()
+        return event_fee
+     
+    def test_get_event_fee_not_found(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.treasurer.email)
+
+        params = {'event_id': 2}
+        response = self.app.get(self.url, headers=header, data=params)
+        
+        self.assertEqual(response.status_code, EVENT_NOT_FOUND[1])
+
+    def test_get_event_fee_without_being_treasurer(self):
+        self.seed_static_data()
+        applicant = self.add_user("applicant@user.com")
+        header = self.get_auth_header_for(applicant.email)
+
+        params = {'event_id': 1}
+        response = self.app.get(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_get_event_fee_success(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.treasurer_email)
+        self.add_event_fee(1, 1, "Registration", amount=250.00, description="Fee to attend")
+        self.add_event_fee(1, 1, "Accommodation", amount=100.00, description="Fee for 1 bed")
+        self.add_event(key="EEML")
+        self.add_event_fee(2, 1, "Flights")
+
+        params = {'event_id': 1}
+        response = self.app.get(self.url, headers=header, data=params)
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 2)
+        
+        self.assertEqual(data[0]['name'], "Registration")
+        self.assertEqual(data[0]['description'], "Fee to attend")
+        self.assertEqual(data[0]['iso_currency_code'], 'usd')
+        self.assertEqual(data[0]['amount'], 250.00)
+        self.assertEqual(data[0]['is_active'], True)
+        self.assertEqual(data[0]['created_by_user_id'], 1)
+        self.assertEqual(data[0]['created_by'], 'User Lastname')
+        self.assertIsNotNone(data[0]['created_at'])
+        self.assertIsNone(data[0]['updated_by_user_id'])
+        self.assertIsNone(data[0]['updated_by'])
+        self.assertIsNone(data[0]['updated_at'])
+
+        self.assertEqual(data[1]['name'], "Accommodation")
+        self.assertEqual(data[1]['description'], "Fee for 1 bed")
+        self.assertEqual(data[1]['iso_currency_code'], 'usd')
+        self.assertEqual(data[1]['amount'], 100.00)
+        self.assertEqual(data[1]['is_active'], True)
+        self.assertEqual(data[1]['created_by_user_id'], 1)
+        self.assertEqual(data[1]['created_by'], 'User Lastname')
+        self.assertIsNotNone(data[1]['created_at'])
+        self.assertIsNone(data[1]['updated_by_user_id'])
+        self.assertIsNone(data[1]['updated_by'])
+        self.assertIsNone(data[1]['updated_at'])
+
+    def test_post_event_fee_not_found(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.treasurer.email)
+
+        params = {
+            'event_id': 42,
+            'name': 'Registration',
+            'iso_currency_code': 'usd',
+            'amount': 199.99,
+            'description': 'Fee to attend'
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+        
+        self.assertEqual(response.status_code, EVENT_NOT_FOUND[1])
+
+    def test_post_event_fee_without_being_treasurer(self):
+        self.seed_static_data()
+        applicant = self.add_user("applicant@user.com")
+        header = self.get_auth_header_for(applicant.email)
+
+        params = {
+            'event_id': 1,
+            'name': 'Registration',
+            'iso_currency_code': 'usd',
+            'amount': 199.99,
+            'description': 'Fee to attend'
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_post_event_fee_success(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.treasurer_email)
+
+        params = {
+            'event_id': 1,
+            'name': 'Registration',
+            'iso_currency_code': 'usd',
+            'amount': 199.99,
+            'description': 'Fee to attend'
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+        
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(data['name'], "Registration")
+        self.assertEqual(data['description'], "Fee to attend")
+        self.assertEqual(data['iso_currency_code'], 'usd')
+        self.assertEqual(data['amount'], 199.99)
+        self.assertEqual(data['is_active'], True)
+        self.assertEqual(data['created_by_user_id'], 1)
+        self.assertEqual(data['created_by'], 'User Lastname')
+        self.assertIsNotNone(data['created_at'])
+        self.assertIsNone(data['updated_by_user_id'])
+        self.assertIsNone(data['updated_by'])
+        self.assertIsNone(data['updated_at'])
+
+    def test_delete_event_fee_not_found(self):
+        self.seed_static_data()
+        self.add_event_fee(1, 1)
+        self.add_event(key="EEML")
+        self.add_event_fee(2, 1)
+        header = self.get_auth_header_for(self.treasurer_email)
+
+        params={'event_id': 1, 'event_fee_id': 2}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, EVENT_FEE_NOT_FOUND[1])
+
+    def test_delete_event_fee_without_being_treasurer(self):
+        self.seed_static_data()
+        applicant = self.add_user("applicant@user.com")
+        self.add_event_fee(1, 1)
+        header = self.get_auth_header_for(applicant.email)
+
+        params = {'event_id': 1, 'event_fee_id': 1}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_delete_fee_success(self):
+        self.seed_static_data()
+        self.add_event_fee(1, 1)
+        header = self.get_auth_header_for(self.treasurer_email)
+
+        params = {'event_id': 1, 'event_fee_id': 1}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(data['is_active'], False)
+        self.assertEqual(data['updated_by_user_id'], 1)
+        self.assertEqual(data['updated_by'], 'User Lastname')
+        self.assertIsNotNone(data['updated_at'])

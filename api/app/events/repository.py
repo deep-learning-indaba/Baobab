@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.events.models import Event
+from app.events.models import Event, EventFee
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
@@ -52,9 +52,17 @@ class EventRepository():
                          .outerjoin(InvitedGuest, and_(Event.id == InvitedGuest.event_id, InvitedGuest.user_id == user_id))\
                          .filter(or_(Offer.id != None, InvitedGuest.id != None))\
                          .all()
+    
+    @staticmethod
+    def get_event_fee(event_id, event_fee_id):
+        return (
+            db.session.query(EventFee)
+            .filter(EventFee.event_id==event_id, EventFee.id==event_fee_id)
+            .first()
+        )
 
     @staticmethod
-    def add(event):
-        db.session.add(event)
+    def add(model):
+        db.session.add(model)
         db.session.commit()
-        return event
+        return model

@@ -16,7 +16,7 @@ from sqlalchemy.exc import ProgrammingError
 from app import LOGGER, app, db
 from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
                                          SectionTranslation)
-from app.events.models import Event, EventType
+from app.events.models import Event, EventType, EventRole
 from app.invitedGuest.models import InvitedGuest
 from app.organisation.models import Organisation
 from app.registration.models import Offer, RegistrationForm
@@ -205,6 +205,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(event)
         db.session.commit()
         return event
+
+    def add_event_role(self, role, user_id, event_id):
+        event_role = EventRole(role, user_id, event_id)
+        db.session.add(event_role)
+        db.session.commit()
+        return event_role
 
     def add_review_config(self, review_form_id=1, num_reviews_required=1, num_optional_reviews=1):
         review_config = ReviewConfiguration(
