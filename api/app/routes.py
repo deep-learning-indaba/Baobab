@@ -17,6 +17,7 @@ from .organisation import api as organisation_api
 from .integration_tests import api as integration_tests_api
 from .outcome import api as outcome_api
 from .tags import api as tag_api
+from .invoice import api as invoice_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -129,3 +130,5 @@ rest_api.add_resource(reviews_api.ReviewResponseDetailListAPI, '/api/v1/reviewre
 rest_api.add_resource(reviews_api.ReviewResponseSummaryListAPI, '/api/v1/reviewresponsesummarylist')
 rest_api.add_resource(reviews_api.ReviewStageAPI, '/api/v1/reviewstage')
 rest_api.add_resource(reviews_api.ReviewFormDetailAPI, '/api/v1/review-form-detail')
+rest_api.add_resource(invoice_api.InvoiceAPI, '/api/v1/invoice')
+rest_api.add_resource(invoice_api.InvoiceAdminAPI, '/api/v1/invoice-admin')
