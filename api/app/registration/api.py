@@ -40,8 +40,8 @@ def offer_info(offer_entity, requested_travel=None):
         'accommodation_award': offer_entity.accommodation_award,
         'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
         'accepted_travel_award': offer_entity.accepted_travel_award,
-        'requested_travel': requested_travel and (requested_travel.value == 'transport' or requested_travel.value == 'transport-accommodation'),
-        'requested_accommodation': requested_travel and (requested_travel.value == 'accommodation' or requested_travel.value == 'transport-accommodation'),
+        'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
+        'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
         'rejected_reason': offer_entity.rejected_reason
     }
 
