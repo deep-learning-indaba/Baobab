@@ -45,7 +45,7 @@ class Invoice(db.Model):
 
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice_line_items = db.relationship('InvoiceLineItem')
-    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by="InvoicePaymentStatus.created_at")
+    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by="InvoicePaymentStatus.created_at", lazy='dynamic')
 
     def __init__(
         self,
@@ -70,7 +70,7 @@ class Invoice(db.Model):
     
     @property
     def current_payment_status(self):
-        pass
+        return self.invoice_payment_statuses.first()
 
     def cancel(self, user_id):
         if self.current_payment_status == "canceled":
