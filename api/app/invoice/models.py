@@ -10,7 +10,7 @@ class InvoicePaymentStatus(db.Model):
     invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
     payment_status = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-    created_by_user_id = db.Column(db.DateTime(), db.ForeignKey('app_user.id'), nullable=False)
+    created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
@@ -37,7 +37,7 @@ class InvoiceLineItem(db.Model):
 
 class Invoice(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    customer_email = db.Column(db.String(255), nullable=False) # TODO: add index
+    customer_email = db.Column(db.String(255), nullable=False, index=True)
     client_reference_id = db.Column(db.String(255), nullable=True)
     iso_currency_code = db.Column(db.String(3), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
@@ -92,4 +92,4 @@ class OfferInvoice(db.Model):
     invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
 
     offer = db.relationship('Offer', foreign_keys=[offer_id])
-    invoice = db.relationship('Event', foreign_keys=[invoice_id])
+    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])

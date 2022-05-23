@@ -1,4 +1,4 @@
-from api.app.registration.models import Offer
+from app.registration.models import Offer
 from app import db
 from app.invoice.models import Invoice, OfferInvoice
 
