@@ -45,7 +45,7 @@ class Invoice(db.Model):
 
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice_line_items = db.relationship('InvoiceLineItem')
-    invoice_payment_statuses = db.relationship('InvoicePaymentStatus')
+    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by="InvoicePaymentStatus.created_at")
 
     def __init__(
         self,
