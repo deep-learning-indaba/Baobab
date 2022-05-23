@@ -1,9 +1,18 @@
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
 
+class PaymentStatus(Enum):
+    UNPAID = "unpaid"
+    PAID = "paid"
+    FAILED = "failed"
+    CANCELED = "canceled"
+
+    def __repr__(self):
+        return f"{self.value}"
 
 class InvoicePaymentStatus(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -62,7 +71,7 @@ class Invoice(db.Model):
         self.created_at = datetime.now()
         
         self.invoice_line_items = line_items
-        self.invoice_payment_statuses = [InvoicePaymentStatus("unpaid", user_id)]
+        self.invoice_payment_statuses = [InvoicePaymentStatus(PaymentStatus.UNPAID, user_id)]
     
     @hybrid_property
     def total_amount(self):
@@ -73,15 +82,15 @@ class Invoice(db.Model):
         return self.invoice_payment_statuses.first()
 
     def cancel(self, user_id):
-        if self.current_payment_status == "canceled":
+        if self.current_payment_status.payment_status == PaymentStatus.CANCELED:
             # raise error
             return
         
-        if self.current_payment_status == "paid":
+        if self.current_payment_status.payment_status == PaymentStatus.PAID:
             # raise error
             return
 
-        canceled_status = InvoicePaymentStatus("canceled", user_id)
+        canceled_status = InvoicePaymentStatus(PaymentStatus.CANCELED, user_id)
         self.invoice_payment_statuses.append(canceled_status)
 
 class OfferInvoice(db.Model):
