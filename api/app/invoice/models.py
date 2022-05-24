@@ -1,9 +1,11 @@
 from datetime import datetime
 from enum import Enum
+from webbrowser import BaseBrowser
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from app import db
+from app.utils.exceptions import BaobabError
 
 class PaymentStatus(Enum):
     UNPAID = "unpaid"
@@ -54,7 +56,7 @@ class Invoice(db.Model):
 
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice_line_items = db.relationship('InvoiceLineItem')
-    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by="InvoicePaymentStatus.created_at", lazy='dynamic')
+    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by="InvoicePaymentStatus.created_at desc", lazy='dynamic')
 
     def __init__(
         self,
@@ -83,12 +85,10 @@ class Invoice(db.Model):
 
     def cancel(self, user_id):
         if self.current_payment_status.payment_status == PaymentStatus.CANCELED:
-            # raise error
-            return
+            raise BaobabError("Invoice has already been canceled.")
         
         if self.current_payment_status.payment_status == PaymentStatus.PAID:
-            # raise error
-            return
+            raise BaobabError("Cannot cancel and invoice that's already been paid.")
 
         canceled_status = InvoicePaymentStatus(PaymentStatus.CANCELED, user_id)
         self.invoice_payment_statuses.append(canceled_status)

@@ -1,10 +1,12 @@
 import flask_restful as restful
+from flask import g
 
 from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin
 from app.utils.auth import auth_required
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.errors import FORBIDDEN
+from app.utils.exceptions import BaobabError
 
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
@@ -24,10 +26,13 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
-
         invoice = invoice_repository.get_one_for_customer(args['invoice_id'], current_user.email)
-        invoice.cancel(user_id)
-        invoice_repository.save(invoice)
+
+        try:
+            invoice.cancel(user_id)
+            invoice_repository.save(invoice)
+        except BaobabError as be:
+            return {'message': be.message}, 403
 
         return 200
 
