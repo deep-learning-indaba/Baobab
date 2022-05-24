@@ -18,6 +18,7 @@ from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.registration.repository import RegistrationRepository as registration_repository
 from app import LOGGER
 
 from app import db
@@ -74,16 +75,17 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
 
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
+            args = self.req_parser.parse_args()
+            event_id = args['event_id']
+            registration_form = registration_repository.get_form_for_event(event_id)
+            if registration_form is None:
+                return errors.REGISTRATION_FORM_NOT_FOUND
 
-            registration = db.session.query(GuestRegistration).filter(GuestRegistration.user_id == user_id).first()
+            registration = db.session.query(GuestRegistration).filter_by(user_id=user_id, registration_form_id=registration_form.id).first()
 
             if registration is None:
                 return 'no Registration', 404
-            registration_form = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.
-                                                                          registration_form_id).first()
 
-            if registration_form is None:
-                return errors.REGISTRATION_FORM_NOT_FOUND
             db_answers = db.session.query(GuestRegistrationAnswer).filter(
                 GuestRegistrationAnswer.guest_registration_id ==
                 registration.id, GuestRegistrationAnswer.is_active == True).all()

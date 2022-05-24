@@ -67,9 +67,11 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
+            args = self.req_parser.parse_args()
+            event_id = args['event_id']
 
-            db_offer = db.session.query(Offer).filter(
-                Offer.user_id == user_id).first()
+            db_offer = db.session.query(Offer).filter_by(
+                user_id=user_id, event_id=event_id).first()
 
             if db_offer is None:
                 return errors.OFFER_NOT_FOUND

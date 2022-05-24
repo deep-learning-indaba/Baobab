@@ -118,9 +118,9 @@ function getGuestRegistration(event_id) {
     });
 }
 
-function getGuestRegistrationResponse() {
+function getGuestRegistrationResponse(event_id) {
   return axios
-    .get(baseUrl + "/api/v1/guest-registration", {
+    .get(baseUrl + "/api/v1/guest-registration?event_id=" + event_id, {
       headers: authHeader()
     })
     .then(function(response) {

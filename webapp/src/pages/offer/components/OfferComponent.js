@@ -112,7 +112,7 @@ class Offer extends Component {
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? "Payment of 350 USD Required to confirm your place" : "Fee Waived")}
+          {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
 
           {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Tunis will be arranged by the Indaba" : "You are responsible for your own travel to and from Tunis.")}
           {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis.")}
@@ -250,7 +250,7 @@ class Offer extends Component {
                 <div class="row mb-3">
                   <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
                   <div class="col-md-6" align="left">
-                    {offer && offer.payment_required && "In order to confirm your place, you will be liable for a 350 USD registration fee."}
+                    {offer && offer.payment_required && `In order to confirm your place, you will be liable for a ${offer.payment_amount} registration fee.`}
                     {offer && !offer.payment_required && "Your registration fee has been waived."}
                   </div>
                 </div>

@@ -42,7 +42,8 @@ def offer_info(offer_entity, requested_travel=None):
         'accepted_travel_award': offer_entity.accepted_travel_award,
         'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
-        'rejected_reason': offer_entity.rejected_reason
+        'rejected_reason': offer_entity.rejected_reason,
+        'payment_amount': offer_entity.payment_amount
     }
 
 
@@ -60,7 +61,8 @@ def offer_update_info(offer_entity):
         'accepted_travel_award': offer_entity.accepted_travel_award,
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
-        'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d')
+        'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
+        'payment_amount': offer_entity.payment_amount
     }
 
 
@@ -78,7 +80,8 @@ class OfferAPI(OfferMixin, restful.Resource):
         'accepted_travel_award': fields.Boolean,
         'rejected_reason': fields.String,
         'candidate_response': fields.Boolean,
-        'responded_at': fields.DateTime('iso8601')
+        'responded_at': fields.DateTime('iso8601'),
+        'payment_amount': fields.String
     }
 
     @auth_required
@@ -123,15 +126,14 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
         event_id = args['event_id']
-        email_template = args['email_template']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
         travel_award = args['travel_award']
         accommodation_award = args['accommodation_award']
+        payment_amount = args['payment_amount']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
-        event_name = event.get_name('en')
         event_email_from = event.email_from
 
         existing_offer = db.session.query(Offer).filter(Offer.user_id == user_id, Offer.event_id == event_id).first()
@@ -159,14 +161,23 @@ class OfferAPI(OfferMixin, restful.Resource):
             expiry_date=expiry_date,
             payment_required=payment_required,
             travel_award=travel_award,
-            accommodation_award=accommodation_award
+            accommodation_award=accommodation_award,
+            payment_amount=payment_amount
         )
 
         db.session.add(offer_entity)
         db.session.commit()
 
+        email_template = 'offer'
+        if travel_award and accommodation_award:
+            email_template = 'offer-travel-accommodation'
+        elif travel_award:
+            email_template = 'offer-travel'
+        elif accommodation_award:
+            email_template = 'offer-accommodation'
+
         email_user(
-            'offer',
+            email_template,
             template_parameters=dict(
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
