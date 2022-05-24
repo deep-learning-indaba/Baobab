@@ -57,3 +57,7 @@ class RegistrationRepository():
                         .order_by(cast(Registration.created_at, Date))
                         .all())
         return timeseries
+
+    @staticmethod
+    def get_form_for_event(event_id):
+        return (db.session.query(RegistrationForm).filter_by(event_id=event_id)).first()

@@ -22,6 +22,7 @@ class Offer(db.Model):
     rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
+    payment_amount = db.Column(db.String(), nullable=True)
 
     def is_expired(self):
         end_of_today = datetime.combine(date.today(), time())
