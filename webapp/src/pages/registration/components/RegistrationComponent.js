@@ -493,7 +493,7 @@ class RegistrationComponent extends Component {
               {this.state.questionSections.map(section => (
                 <div class="card stretched" key={"section_" + section.id}>
                   <h3>{section.name}</h3>
-                  <div className="padding-v-15 mb-4 text-left">
+                  <div className="padding-v-15 mb-4 text-left registration-section-description">
                     {section.description}
                   </div>
 
