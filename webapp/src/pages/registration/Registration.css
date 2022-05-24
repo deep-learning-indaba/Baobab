@@ -17,3 +17,7 @@
     text-align: left;
     margin-bottom: 1em;
 }
+
+.registration-section-description {
+    white-space: pre-wrap;
+}
