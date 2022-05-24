@@ -4,6 +4,7 @@ from flask_restful import reqparse
 import flask_restful as restful
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_
 from app.utils.auth import verify_token
 from app.guestRegistrations.mixins import GuestRegistrationMixin, GuestRegistrationFormMixin
 from app.invitedGuest.models import GuestRegistration, GuestRegistrationAnswer
@@ -308,7 +309,7 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
                         .filter(RegistrationSection.show_for_travel_award == None)
                         .filter(RegistrationSection.show_for_accommodation_award == None)
                         .filter(RegistrationSection.show_for_payment_required == None)
-                        .filter(RegistrationSection.show_for_invited_guest == True or RegistrationSection.show_for_invited_guest == None)
+                        .filter(or_(RegistrationSection.show_for_invited_guest == True, RegistrationSection.show_for_invited_guest == None))
                         .all())
 
             if not sections:
