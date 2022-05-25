@@ -64,7 +64,7 @@ class AppUser(db.Model, UserMixin):
         self.agree_to_policy()
 
     def set_password(self, password):
-        self.password = bcrypt.generate_password_hash(password)
+        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def deactivate(self):
         self.active = False
