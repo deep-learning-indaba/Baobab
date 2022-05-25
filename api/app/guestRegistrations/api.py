@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import traceback
 from flask_restful import reqparse
 import flask_restful as restful
@@ -106,7 +106,6 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @marshal_with(registration_fields)
     def post(self):
         # Save a new response for the logged-in user.
-        req_parser = reqparse.RequestParser()
         args = self.req_parser.parse_args()
 
         try:
@@ -139,7 +138,8 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                      registration_question_id=answer_args['registration_question_id'],
-                                                     value=answer_args['value'], is_active=True)
+                                                     value=answer_args['value'], is_active=True,
+                                                     created_on=datetime.now())
                     db.session.add(answer)
             db.session.commit()
 
@@ -186,16 +186,18 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                     new_answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                          registration_question_id=answer_args['registration_question_id'],
                                                          value=answer_args['value'],
-                                                         is_active=True)
+                                                         is_active=True,
+                                                         created_on=datetime.now())
                     db.session.add(new_answer)
 
                 elif db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).one():
 
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
-                                                         registration_question_id=answer_args['registration_question_id'],
-                                                         value=answer_args['value'],
-                                                         is_active=True)
+                                                     registration_question_id=answer_args['registration_question_id'],
+                                                     value=answer_args['value'],
+                                                     is_active=True,
+                                                     created_on=datetime.now())
 
                     db.session.add(answer)
             db.session.commit()
