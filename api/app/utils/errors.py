@@ -15,6 +15,7 @@ EVENT_WITH_TRANSLATION_NOT_FOUND = ({'message': 'Translation for event not found
 EVENT_MUST_CONTAIN_TRANSLATION = ({'message': "Event must contain at least one translation for 'name' and 'description'"}, 400)
 EVENT_TRANSLATION_MISMATCH = ({'message': "Event must contain same translations for 'name' and 'description'"}, 400)
 EVENT_FEE_NOT_FOUND = ({'message': 'Event and/or event fee not found'}, 404)
+EVENT_FEES_MUST_HAVE_SAME_CURRENCY = ({'message': 'Event fees must have same ISO currency code'}, 400)
 REFRERENCE_REQUEST_WITH_TOKEN_NOT_FOUND = ({'message': 'No Reference Request exists with that Token'}, 404)
 DUPLICATE_REFERENCE_SUBMISSION = ({'message': 'Reference Already submitted for this Request '}, 409)
 EVENT_KEY_IN_USE = ({'message': 'Event with that KEY already exists'}, 409)

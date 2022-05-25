@@ -7,3 +7,8 @@ class InvoiceMixin(object):
 class InvoiceAdminMixin(object):
     get_parser = reqparse.RequestParser()
     get_parser.add_argument('event_id', type=int, required=True)
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('event_id', type=int, required=True)
+    post_parser.add_argument('user_id', type=int, required=True)
+    post_parser.add_argument('event_fee_ids', type=int, required=True, action='append')
