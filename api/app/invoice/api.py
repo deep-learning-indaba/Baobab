@@ -1,16 +1,23 @@
 import flask_restful as restful
 from flask import g
+import stripe
 
 from app.events.repository import EventRepository as event_repository
-from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin
+from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.registration.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils.errors import FORBIDDEN, OFFER_NOT_FOUND, EVENT_FEE_NOT_FOUND, EVENT_FEES_MUST_HAVE_SAME_CURRENCY
+from app.utils.errors import (
+    FORBIDDEN,
+    OFFER_NOT_FOUND,
+    EVENT_FEE_NOT_FOUND,
+    EVENT_FEES_MUST_HAVE_SAME_CURRENCY,
+    INVOICE_PAID,
+    INVOICE_CANCELED)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
-
+from config import STRIPE_API_KEY, BOABAB_HOST
 
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
@@ -159,3 +166,46 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     def put(self):
         # update success/fail from webhook
         return 200
+
+class PaymentsAPI(PaymentsMixin, restful.Resource):
+    @auth_required
+    def post(self):
+        args = self.post_parser.parse_args()
+        invoice_id = args['invoice_id']
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+        invoice = invoice_repository.get_one_for_customer(invoice_id, current_user.email)
+
+        if invoice.is_paid:
+            return INVOICE_PAID
+
+        if invoice.is_canceled:
+            return INVOICE_CANCELED
+
+        stripe.api_key = STRIPE_API_KEY
+
+        stripe_line_items = []
+        for invoice_line_item in invoice.invoice_line_items:
+            stripe_line_item = {
+                'price_data': {
+                    'currency': invoice_line_item.iso_currency_code,
+                    'product_data': {
+                        'name': invoice_line_item.name,
+                        'description': invoice_line_item.description
+                    },
+                    'unit_amount': invoice_line_item.amount
+                }
+            }
+            stripe_line_items.append(stripe_line_item)
+        
+        session = stripe.checkout.Session.create(
+            line_items=stripe_line_items,
+            mode='payment',
+            client_reference_id=invoice.client_reference_id,
+            customer_email=invoice.customer_email,
+            success_url=f'{BOABAB_HOST}/payment-sucess',
+            cancel_url=f'{BOABAB_HOST}/payment-cancel',
+        )
+
+        return session.url, 200

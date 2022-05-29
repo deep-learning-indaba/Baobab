@@ -19,3 +19,7 @@ class InvoiceAdminMixin(object):
     post_parser.add_argument('event_id', type=int, required=True)
     post_parser.add_argument('user_id', type=int, required=True)
     post_parser.add_argument('event_fee_ids', type=int, required=True, action='append')
+
+class PaymentsMixin(object):
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('invoice_id', type=int, required=True)

@@ -133,3 +133,4 @@ rest_api.add_resource(reviews_api.ReviewFormDetailAPI, '/api/v1/review-form-deta
 rest_api.add_resource(invoice_api.InvoiceAPI, '/api/v1/invoice')
 rest_api.add_resource(invoice_api.InvoiceAdminAPI, '/api/v1/invoice-admin')
 rest_api.add_resource(invoice_api.InvoiceListAPI, '/api/v1/invoice-list')
+rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')

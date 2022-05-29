@@ -81,6 +81,14 @@ class Invoice(db.Model):
     @property
     def current_payment_status(self):
         return self.invoice_payment_statuses.first()
+    
+    @property
+    def is_paid(self):
+        return self.current_payment_status == PaymentStatus.PAID
+    
+    @property
+    def is_canceled(self):
+        return self.current_payment_status == PaymentStatus.CANCELED
 
     def cancel(self, user_id):
         if self.current_payment_status.payment_status == PaymentStatus.CANCELED:
