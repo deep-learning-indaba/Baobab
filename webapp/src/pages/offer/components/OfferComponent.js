@@ -203,7 +203,7 @@ class Offer extends Component {
           <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba!</span>}
         {offer && offer.requested_accommodation && !offer.accommodation_award &&
           <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/2022/accommodation">here</a> for more details</span>}
+                    Please see <a href="http://www.deeplearningindaba.com">our website</a> where we will soon list options and deals on accommodation that you can book yourself.</span>}
         {offer && !offer.requested_accommodation && !offer.accommodation_award &&
           "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
       </div>
