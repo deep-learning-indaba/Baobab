@@ -1,4 +1,5 @@
 from app import db
+from app.invoice.models import PaymentStatus
 from datetime import datetime, date, time
 from sqlalchemy import func
 
@@ -23,10 +24,23 @@ class Offer(db.Model):
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
 
+    user = db.relationship('AppUser', foreign_keys=[user_id])
+    offer_invoices = db.relationship('OfferInvoice')
+
     def is_expired(self):
         end_of_today = datetime.combine(date.today(), time())
         return (self.candidate_response is None) and (self.expiry_date < end_of_today)
-
+    
+    def has_valid_invoice(self):
+        valid_payment_statuses = [
+            PaymentStatus.UNPAID.value,
+            PaymentStatus.PAID.value,
+            PaymentStatus.FAILED.value
+        ]
+        for offer_invoice in self.offer_invoices:
+            if offer_invoice.invoice.payment_status in valid_payment_statuses:
+                return True
+        return False
 
 class RegistrationForm(db.Model):
 

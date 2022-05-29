@@ -50,12 +50,58 @@ class InvoiceListAPI(restful.Resource):
 
     @auth_required
     def post(self):
+        args = self.get_parser.parse_args()
+        event_id = args['event_id']
+
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
 
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
 
+        offer_ids = args['offer_ids']
+        offers = offer_repository.get_offers_for_event(event_id, offer_ids)
+        if not offers or (len(offer_ids) > len(offers)):
+            return OFFER_NOT_FOUND
+
+        event_fee_ids = args['event_fee_ids']
+        event_fees = event_repository.get_event_fees(event_id, event_fee_ids)
+        if event_fees or (len(event_fee_ids) > len(event_fees)):
+            return EVENT_FEE_NOT_FOUND
+
+        iso_currency_codes = set([event_fee.iso_currency_code for event_fee in event_fees])
+        if len(iso_currency_codes) > 1:
+            return EVENT_FEES_MUST_HAVE_SAME_CURRENCY
+        iso_currency_code = list(iso_currency_codes)[0]
+
+        line_items = []
+        for event_fee in event_fees:
+            line_item = InvoiceLineItem(event_fee.name, event_fee.description, event_fee.amount)
+            line_items.append(line_item)
+
+        invoices = []
+        invalid_offer_ids = []
+        for offer in offers:
+            if offer.has_valid_invoice():
+                invalid_offer_ids.append(offer.id)
+
+            invoice = Invoice(
+                offer.user.email,
+                iso_currency_code,
+                line_items,
+                user_id,
+                offer.user_id
+            )
+            invoices.append(invoice)
+        
+        if invalid_offer_ids:
+            error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice."
+            return error_message, 400
+
+        for invoice in invoices:
+            invoice_repository.save(invoice)
+
+        return 201
 
 class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required

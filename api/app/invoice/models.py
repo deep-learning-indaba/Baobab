@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from webbrowser import BaseBrowser
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
