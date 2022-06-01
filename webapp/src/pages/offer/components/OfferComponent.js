@@ -115,7 +115,7 @@ class Offer extends Component {
           {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
 
           {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Tunis will be arranged by the Indaba" : "You are responsible for your own travel to and from Tunis.")}
-          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis.")}
+          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.")}
         </div>}
 
         {offer.candidate_response &&
@@ -200,12 +200,12 @@ class Offer extends Component {
         {offer && offer.accommodation_award && accepted_accommodation_award &&
           "We are pleased to offer you an accommodation award which will cover your stay between the 21st and 26th of August. Note that this will be in a shared hostel room (with someone of the same gender) at the university."}
         {offer && offer.accommodation_award && !accepted_accommodation_award &&
-          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba!</span>}
+          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba! We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
         {offer && offer.requested_accommodation && !offer.accommodation_award &&
           <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    Please see <a href="http://www.deeplearningindaba.com">our website</a> where we will soon list options and deals on accommodation that you can book yourself.</span>}
+                    We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
         {offer && !offer.requested_accommodation && !offer.accommodation_award &&
-          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
+          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon."}
       </div>
 
       <div class="col-md-3">
