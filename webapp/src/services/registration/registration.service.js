@@ -43,9 +43,9 @@ function getRegistrationForm(eventId, offerId) {
     });
 }
 
-function getRegistrationResponse(id) {
+function getRegistrationResponse(event_id) {
   return axios
-    .get(baseUrl + "/api/v1/registration-response", {
+    .get(baseUrl + `/api/v1/registration-response?event_id=${event_id}`, {
       headers: authHeader()
     })
     .then(function(response) {
