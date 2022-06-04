@@ -37,4 +37,3 @@ GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
 FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))
 
 BOABAB_HOST = os.getenv('BOABAB_HOST', None)
-STRIPE_API_KEY = os.getenv('STRIPE_API_KEY', None)

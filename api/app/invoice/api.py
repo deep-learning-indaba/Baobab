@@ -1,9 +1,9 @@
 import flask_restful as restful
-from flask import g
+from flask import g, request
 import stripe
 
 from app.events.repository import EventRepository as event_repository
-from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin
+from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin, PaymentsWebhookMixin
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.registration.repository import OfferRepository as offer_repository
@@ -17,7 +17,7 @@ from app.utils.errors import (
     INVOICE_CANCELED)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
-from config import STRIPE_API_KEY, BOABAB_HOST
+from config import BOABAB_HOST
 
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
@@ -183,7 +183,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         if invoice.is_canceled:
             return INVOICE_CANCELED
 
-        stripe.api_key = STRIPE_API_KEY
+        stripe.api_key = g.organisation.stripe_api_secret_key
 
         stripe_line_items = []
         for invoice_line_item in invoice.invoice_line_items:
@@ -209,3 +209,24 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         )
 
         return session.url, 200
+
+class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
+    def post(self):
+        args = self.post_parser.parse_args()
+
+        event = None
+        payload = request.data
+        sig_header = args['Stripe-Signature']
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload,
+                sig_header,
+                g.organisation.stripe_webhook_secret_key
+            )
+        except ValueError as e:
+            raise e
+        except stripe.error.SignatureVerificationError as e:
+            raise e
+
+        return 200

@@ -23,3 +23,7 @@ class InvoiceAdminMixin(object):
 class PaymentsMixin(object):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('invoice_id', type=int, required=True)
+
+class PaymentsWebhookMixin(object):
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('Stripe-Signature', type=str, location='headers')
