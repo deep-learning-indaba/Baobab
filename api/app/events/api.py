@@ -332,48 +332,55 @@ class EventStatsAPI(EventsMixin, restful.Resource):
         if not event:
             return EVENT_NOT_FOUND
 
-        num_responses = response_repository.get_total_count_by_event(event_id)
-        num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
-        num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
-        submitted_response_timeseries = _process_timeseries(response_repository.get_submitted_timeseries_by_event(event_id))
+        try:
+            num_responses = response_repository.get_total_count_by_event(event_id)
+            num_submitted_respones = response_repository.get_submitted_count_by_event(event_id)
+            num_withdrawn_responses = response_repository.get_withdrawn_count_by_event(event_id)
+            submitted_response_timeseries = _process_timeseries(response_repository.get_submitted_timeseries_by_event(event_id))
 
-        review_config = review_config_repository.get_configuration_for_event(event_id)
-        required_reviews = 1 if review_config is None else review_config.num_reviews_required
-        reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
-        reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
-        reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
-        reviews_timeseries = _process_timeseries(review_repository.get_review_complete_timeseries_by_event(event_id))
+            review_config = review_config_repository.get_configuration_for_event(event_id)
+            required_reviews = 1 if review_config is None else review_config.num_reviews_required
+            reviews_completed = review_repository.get_count_reviews_completed_for_event(event_id)
+            reviews_incomplete = review_repository.get_count_reviews_incomplete_for_event(event_id)
+            reviews_unallocated = review_repository.count_unassigned_reviews(event_id, required_reviews)
+            reviews_timeseries = _process_timeseries(review_repository.get_review_complete_timeseries_by_event(event_id))
 
-        offers_allocated = offer_repository.count_offers_allocated(event_id)
-        offers_accepted = offer_repository.count_offers_accepted(event_id)
-        offers_rejected = offer_repository.count_offers_rejected(event_id)
-        offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
+            offers_allocated = offer_repository.count_offers_allocated(event_id)
+            offers_accepted = offer_repository.count_offers_accepted(event_id)
+            offers_rejected = offer_repository.count_offers_rejected(event_id)
+            offers_timeseries = _process_timeseries(offer_repository.timeseries_offers_accepted(event_id))
 
-        num_registrations = registration_repository.count_registrations(event_id)
-        num_guests = guest_registration_repository.count_guests(event_id)
-        num_registered_guests = guest_registration_repository.count_registered_guests(event_id)
-        registration_timeseries = _process_timeseries(registration_repository.timeseries_registrations(event_id))
-        guest_registration_timeseries = _process_timeseries(guest_registration_repository.timeseries_guest_registrations(event_id))
-        registration_timeseries = _combine_timeseries(registration_timeseries, guest_registration_timeseries)
+            num_registrations = registration_repository.count_registrations(event_id)
+            num_guests = guest_registration_repository.count_guests(event_id)
+            num_registered_guests = guest_registration_repository.count_registered_guests(event_id)
+            # registration_timeseries = _process_timeseries(registration_repository.timeseries_registrations(event_id))
+            # guest_registration_timeseries = _process_timeseries(guest_registration_repository.timeseries_guest_registrations(event_id))
+            # registration_timeseries = _combine_timeseries(registration_timeseries, guest_registration_timeseries)
 
-        return {
-            'num_responses': num_responses,
-            'num_submitted_responses': num_submitted_respones,
-            'num_withdrawn_responses': num_withdrawn_responses,
-            'submitted_timeseries': submitted_response_timeseries,
-            'reviews_completed': reviews_completed,
-            'review_incomplete': reviews_incomplete,
-            'reviews_unallocated': reviews_unallocated,
-            'reviews_complete_timeseries': reviews_timeseries,
-            'offers_allocated': offers_allocated,
-            'offers_accepted': offers_accepted,
-            'offers_rejected': offers_rejected,
-            'offers_accepted_timeseries': offers_timeseries,
-            'num_registrations': num_registrations,
-            'num_guests': num_guests,
-            'num_registered_guests': num_registered_guests,
-            'registration_timeseries': registration_timeseries
-        }, 200
+            return {
+                'num_responses': num_responses,
+                'num_submitted_responses': num_submitted_respones,
+                'num_withdrawn_responses': num_withdrawn_responses,
+                'submitted_timeseries': submitted_response_timeseries,
+                'reviews_completed': reviews_completed,
+                'review_incomplete': reviews_incomplete,
+                'reviews_unallocated': reviews_unallocated,
+                'reviews_complete_timeseries': reviews_timeseries,
+                'offers_allocated': offers_allocated,
+                'offers_accepted': offers_accepted,
+                'offers_rejected': offers_rejected,
+                'offers_accepted_timeseries': offers_timeseries,
+                'num_registrations': num_registrations,
+                'num_guests': num_guests,
+                'num_registered_guests': num_registered_guests,
+                # 'registration_timeseries': registration_timeseries
+            }, 200
+
+        except SQLAlchemyError as e:
+            LOGGER.error("Database error encountered: {}".format(e))
+        except:
+            LOGGER.error("Encountered unknown error: {}".format(
+                traceback.format_exc()))
 
 
 class EventsByKeyAPI(EventsKeyMixin, restful.Resource):
