@@ -16,6 +16,10 @@ class Organisation(db.Model):
     system_url = db.Column(db.String(100), nullable=False)
     privacy_policy = db.Column(db.String(100), nullable=False)
     languages = db.Column(db.JSON(), nullable=False)
+    stripe_api_publishable_key = db.Column(db.String(200), nullable=True)
+    stripe_api_secret_key = db.Column(db.String(200), nullable=True)
+    stripe_webhook_secret_key = db.Column(db.String(200), nullable=True)
+
     events = db.relationship('Event')
 
     def __init__(self, name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages):
