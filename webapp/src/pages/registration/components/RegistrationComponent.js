@@ -137,7 +137,7 @@ class RegistrationComponent extends Component {
                   }
                 }
 
-                registrationService.getRegistrationResponse()
+                registrationService.getRegistrationResponse(this.props.event ? this.props.event.id : 0)
                   .then(result => {
                     if (result.error === "") {
                       this.setState({
@@ -454,16 +454,18 @@ class RegistrationComponent extends Component {
     return (
       <div className="registration container-fluid pad-top-30-md">
         {this.state.formSuccess ? (
-          <div className="card flat-card success stretched">
-            <h5>Successfully Registered</h5>
-            <p>We look forward to welcoming you at {this.props.event.name}!</p>
-
+          <div>
+            <div className="card flat-card success stretched">
+              <h5>Successfully Registered</h5>
+              <p>We look forward to welcoming you at {this.props.event.name}!</p>
+            </div>
+            <br/><br/>
             <div className="col-12">
               <button
                 type="button"
-                class="btn btn-primary pull-right"
+                class="btn btn-primary"
                 onClick={() => this.resetPage()}>
-                Change your answers
+                Edit Answers
               </button>
             </div>
           </div>
