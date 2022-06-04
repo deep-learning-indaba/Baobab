@@ -25,19 +25,25 @@ class GuestRegistrationRepository():
     @staticmethod
     def get_all_guests(event_id):
         """Get all guests."""
+        registration_form_id = db.session.query(RegistrationForm).filter_by(event_id=event_id).first().id
+
         return db.session.query(InvitedGuest, AppUser,GuestRegistration).join(
             AppUser, InvitedGuest.user_id == AppUser.id
         ).filter(
             InvitedGuest.event_id == event_id
         ).outerjoin(
-            GuestRegistration, InvitedGuest.user_id == GuestRegistration.user_id
+            GuestRegistration, and_(InvitedGuest.user_id == GuestRegistration.user_id, GuestRegistration.registration_form_id == registration_form_id)
         ).all()
 
     @staticmethod
     def get_confirmed_guest_for_event(event_id, confirmed):
         """Get confirmed guests."""
+        registration_form_id = db.session.query(RegistrationForm).filter_by(event_id=event_id).first().id
+
         return db.session.query(GuestRegistration, InvitedGuest, AppUser).filter(
             GuestRegistration.confirmed == confirmed
+        ).filter(
+            GuestRegistration.registration_form_id == registration_form_id
         ).join(
             InvitedGuest, InvitedGuest.user_id == GuestRegistration.user_id
         ).filter(
@@ -50,8 +56,12 @@ class GuestRegistrationRepository():
     def get_unsigned_in_comfirmed_guest_attendees(event_id, confirmed):
         """Get guests who have confirmed they will attend and have not already signed in."""
         stmt = ~ exists().where(Attendance.user_id == AppUser.user_id)
+        registration_form_id = db.session.query(RegistrationForm).filter_by(event_id=event_id).first().id
+
         return db.session.query(GuestRegistration, InvitedGuest, AppUser).filter(
             GuestRegistration.confirmed == confirmed
+        ).filter(
+            GuestRegistration.registration_form_id == registration_form_id
         ).join(
             InvitedGuest, InvitedGuest.user_id == GuestRegistration.user_id
         ).filter(
