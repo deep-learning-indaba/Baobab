@@ -6,7 +6,7 @@ from flask import request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
 from app.utils.auth import verify_token
-from app.guestRegistrations.mixins import GuestRegistrationMixin, GuestRegistrationFormMixin
+from app.guestRegistrations.mixins import GuestRegistrationFormMixin
 from app.invitedGuest.models import GuestRegistration, GuestRegistrationAnswer
 from flask_restful import fields, marshal_with, marshal
 from app.registration.models import RegistrationSection
@@ -37,7 +37,7 @@ def _get_answer_value(answer, question):
     return answer.value
 
 
-class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
+class GuestRegistrationApi(restful.Resource):
     answer_fields = {
         'id': fields.Integer,
         'guest_registration_id': fields.Integer,
@@ -72,10 +72,12 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @marshal_with(response_fields)
     @auth_required
     def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
 
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
-            args = self.req_parser.parse_args()
             event_id = args['event_id']
             registration_form = registration_repository.get_form_for_event(event_id)
             if registration_form is None:
@@ -106,7 +108,11 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @marshal_with(registration_fields)
     def post(self):
         # Save a new response for the logged-in user.
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('guest_registration_id', type=int, required=False)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list, required=True, location='json')
+        args = req_parser.parse_args()
 
         try:
 
@@ -165,7 +171,12 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @auth_required
     def put(self):
         # Update an existing response for the logged-in user.
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('guest_registration_id', type=int, required=False)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list, required=True, location='json')
+        args = req_parser.parse_args()
+        
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
             registration = db.session.query(GuestRegistration).filter(
