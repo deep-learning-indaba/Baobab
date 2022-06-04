@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+
 from app.organisation.repository import OrganisationRepository
 from app import LOGGER
 from flask import request
@@ -29,3 +32,22 @@ class OrganisationResolver():
                 raise BadRequest('Could not resolve organisation')
         
         return cls._cache[domain]
+    
+    @classmethod
+    def resolve_from_stripe_signature(cls, signed_payload: str, expected_signature: str):
+        if not cls._cache:
+            cls._populate_cache()
+        
+        for org in cls._cache.values():
+            secret = org.stripe_webhook_secret_key
+            if secret:
+                signature = hmac.new(
+                    key=secret.encode('utf-8'),
+                    msg=signed_payload.encode('utf-8'),
+                    digestmod=hashlib.sha256
+                ).hexdigest()
+                
+                if signature == expected_signature:
+                    return org
+        
+        raise BadRequest('Could not resolve organisation from stripe signature')
