@@ -1,11 +1,12 @@
-from datetime import date
+from datetime import date, datetime
 import traceback
 from flask_restful import reqparse
 import flask_restful as restful
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_
 from app.utils.auth import verify_token
-from app.guestRegistrations.mixins import GuestRegistrationMixin, GuestRegistrationFormMixin
+from app.guestRegistrations.mixins import GuestRegistrationFormMixin
 from app.invitedGuest.models import GuestRegistration, GuestRegistrationAnswer
 from flask_restful import fields, marshal_with, marshal
 from app.registration.models import RegistrationSection
@@ -17,6 +18,7 @@ from app.utils.auth import auth_required
 from app.utils import errors, emailer, strings
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.registration.repository import RegistrationRepository as registration_repository
 from app import LOGGER
 
 from app import db
@@ -35,7 +37,7 @@ def _get_answer_value(answer, question):
     return answer.value
 
 
-class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
+class GuestRegistrationApi(restful.Resource):
     answer_fields = {
         'id': fields.Integer,
         'guest_registration_id': fields.Integer,
@@ -70,19 +72,22 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @marshal_with(response_fields)
     @auth_required
     def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
 
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
+            event_id = args['event_id']
+            registration_form = registration_repository.get_form_for_event(event_id)
+            if registration_form is None:
+                return errors.REGISTRATION_FORM_NOT_FOUND
 
-            registration = db.session.query(GuestRegistration).filter(GuestRegistration.user_id == user_id).first()
+            registration = db.session.query(GuestRegistration).filter_by(user_id=user_id, registration_form_id=registration_form.id).first()
 
             if registration is None:
                 return 'no Registration', 404
-            registration_form = db.session.query(RegistrationForm).filter(RegistrationForm.id == registration.
-                                                                          registration_form_id).first()
 
-            if registration_form is None:
-                return errors.REGISTRATION_FORM_NOT_FOUND
             db_answers = db.session.query(GuestRegistrationAnswer).filter(
                 GuestRegistrationAnswer.guest_registration_id ==
                 registration.id, GuestRegistrationAnswer.is_active == True).all()
@@ -104,7 +109,10 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     def post(self):
         # Save a new response for the logged-in user.
         req_parser = reqparse.RequestParser()
-        args = self.req_parser.parse_args()
+        req_parser.add_argument('guest_registration_id', type=int, required=False)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list, required=True, location='json')
+        args = req_parser.parse_args()
 
         try:
 
@@ -136,7 +144,8 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                         RegistrationQuestion.id == answer_args['registration_question_id']).first():
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                      registration_question_id=answer_args['registration_question_id'],
-                                                     value=answer_args['value'], is_active=True)
+                                                     value=answer_args['value'], is_active=True,
+                                                     created_on=datetime.now())
                     db.session.add(answer)
             db.session.commit()
 
@@ -162,7 +171,12 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
     @auth_required
     def put(self):
         # Update an existing response for the logged-in user.
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('guest_registration_id', type=int, required=False)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list, required=True, location='json')
+        args = req_parser.parse_args()
+        
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
             registration = db.session.query(GuestRegistration).filter(
@@ -183,16 +197,18 @@ class GuestRegistrationApi(GuestRegistrationMixin, restful.Resource):
                     new_answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
                                                          registration_question_id=answer_args['registration_question_id'],
                                                          value=answer_args['value'],
-                                                         is_active=True)
+                                                         is_active=True,
+                                                         created_on=datetime.now())
                     db.session.add(new_answer)
 
                 elif db.session.query(RegistrationQuestion).filter(
                         RegistrationQuestion.id == answer_args['registration_question_id']).one():
 
                     answer = GuestRegistrationAnswer(guest_registration_id=registration.id,
-                                                         registration_question_id=answer_args['registration_question_id'],
-                                                         value=answer_args['value'],
-                                                         is_active=True)
+                                                     registration_question_id=answer_args['registration_question_id'],
+                                                     value=answer_args['value'],
+                                                     is_active=True,
+                                                     created_on=datetime.now())
 
                     db.session.add(answer)
             db.session.commit()
@@ -308,6 +324,7 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
                         .filter(RegistrationSection.show_for_travel_award == None)
                         .filter(RegistrationSection.show_for_accommodation_award == None)
                         .filter(RegistrationSection.show_for_payment_required == None)
+                        .filter(or_(RegistrationSection.show_for_invited_guest == True, RegistrationSection.show_for_invited_guest == None))
                         .all())
 
             if not sections:

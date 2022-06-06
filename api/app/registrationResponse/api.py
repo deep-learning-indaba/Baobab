@@ -5,7 +5,7 @@ import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
-from app.registrationResponse.mixins import RegistrationResponseMixin, RegistrationAdminMixin, RegistrationConfirmMixin
+from app.registrationResponse.mixins import RegistrationAdminMixin, RegistrationConfirmMixin
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
 from app.users.models import AppUser
 from app.events.models import Event
@@ -37,7 +37,7 @@ def _get_answer_value(answer, question):
     return answer.value
 
 
-class RegistrationApi(RegistrationResponseMixin, restful.Resource):
+class RegistrationApi(restful.Resource):
     answer_fields = {
         'id': fields.Integer,
         'registration_id': fields.Integer,
@@ -67,9 +67,15 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
 
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
+            
+            req_parser = reqparse.RequestParser()
+            req_parser.add_argument('event_id', type=int, required=True)
+            args = req_parser.parse_args()
 
-            db_offer = db.session.query(Offer).filter(
-                Offer.user_id == user_id).first()
+            event_id = args['event_id']
+
+            db_offer = db.session.query(Offer).filter_by(
+                user_id=user_id, event_id=event_id).first()
 
             if db_offer is None:
                 return errors.OFFER_NOT_FOUND
@@ -103,7 +109,12 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
     def post(self):
         # Save a new response for the logged-in user.
         req_parser = reqparse.RequestParser()
-        args = self.req_parser.parse_args()
+        req_parser.add_argument('registration_id', type=int, required=False)
+        req_parser.add_argument('offer_id', type=int, required=True)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list,
+                                required=True, location='json')
+        args = req_parser.parse_args()
         offer_id = args['offer_id']
 
         try:
@@ -172,7 +183,12 @@ class RegistrationApi(RegistrationResponseMixin, restful.Resource):
     def put(self):
         # Update an existing response for the logged-in user.
         req_parser = reqparse.RequestParser()
-        args = self.req_parser.parse_args()
+        req_parser.add_argument('registration_id', type=int, required=False)
+        req_parser.add_argument('offer_id', type=int, required=True)
+        req_parser.add_argument('registration_form_id', type=int, required=True)
+        req_parser.add_argument('answers', type=list,
+                                required=True, location='json')
+        args = req_parser.parse_args()
         try:
             user_id = verify_token(request.headers.get('Authorization'))['id']
 

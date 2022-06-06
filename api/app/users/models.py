@@ -68,7 +68,7 @@ class AppUser(db.Model, UserMixin):
         return f"{self.firstname} {self.lastname}"
 
     def set_password(self, password):
-        self.password = bcrypt.generate_password_hash(password)
+        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     def deactivate(self):
         self.active = False

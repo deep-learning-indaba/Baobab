@@ -112,10 +112,10 @@ class Offer extends Component {
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? "Payment of 350 USD Required to confirm your place" : "Fee Waived")}
+          {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
 
-          {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Nairobi will be arranged by the Indaba" : "You are responsible for your own travel to and from Nairobi.")}
-          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 25th to 31st August" : "You are responsible for your own accommodation in Nairobi.")}
+          {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Tunis will be arranged by the Indaba" : "You are responsible for your own travel to and from Tunis.")}
+          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.")}
         </div>}
 
         {offer.candidate_response &&
@@ -172,13 +172,13 @@ class Offer extends Component {
       <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
       <div class="col-md-6" align="left">
         {offer && offer.travel_award && accepted_travel_award &&
-          "We are pleased to offer you a travel award which will cover your flights to and from Nairobi."}
+          "We are pleased to offer you a travel award which will cover your flights to and from Tunis."}
         {offer && offer.travel_award && !accepted_travel_award &&
-          <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Nairobi!</span>}
+          <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Tunis!</span>}
         {offer && offer.requested_travel && !offer.travel_award &&
           "Unfortunately we are unable to grant you the travel award you requested in your application."}
         {offer && !offer.requested_travel && !offer.travel_award &&
-          "You did not request a travel award. You will be responsible for your own travel to and from Nairobi"}
+          "You did not request a travel award. You will be responsible for your own travel to and from Tunis"}
       </div>
 
       <div class="col-md-3">
@@ -198,14 +198,14 @@ class Offer extends Component {
 
       <div class="col-md-6" align="left">
         {offer && offer.accommodation_award && accepted_accommodation_award &&
-          "We are pleased to offer you an accommodation award which will cover your stay between the 25th and 31st of August. Note that this will be in a shared hostel room (with someone of the same gender) at Kenyatta university."}
+          "We are pleased to offer you an accommodation award which will cover your stay between the 21st and 26th of August. Note that this will be in a shared hostel room (with someone of the same gender) at the university."}
         {offer && offer.accommodation_award && !accepted_accommodation_award &&
-          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Nairobi during the Indaba!</span>}
+          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba! We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
         {offer && offer.requested_accommodation && !offer.accommodation_award &&
           <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    We do however have reasonably priced accommodation available in shared hostel rooms on campus, available on a first come first serve basis. Please see <a href="www.deeplearningindaba.com/accommodation-2019">here</a> for more details</span>}
+                    We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
         {offer && !offer.requested_accommodation && !offer.accommodation_award &&
-          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba."}
+          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon."}
       </div>
 
       <div class="col-md-3">
@@ -250,7 +250,7 @@ class Offer extends Component {
                 <div class="row mb-3">
                   <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
                   <div class="col-md-6" align="left">
-                    {offer && offer.payment_required && "In order to confirm your place, you will be liable for a 350 USD registration fee."}
+                    {offer && offer.payment_required && `In order to confirm your place, you will be liable for a ${offer.payment_amount} registration fee.`}
                     {offer && !offer.payment_required && "Your registration fee has been waived."}
                   </div>
                 </div>

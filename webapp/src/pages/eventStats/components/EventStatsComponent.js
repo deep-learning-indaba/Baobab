@@ -178,7 +178,7 @@ class EventStatsComponent extends Component {
                   <div className="stats-description">{t("Registered Guests")}</div>
                 </div>
               </div>
-              {this.plotTimeSeries(t("Accepted"), stats.registration_timeseries)}
+              {/* {this.plotTimeSeries(t("Accepted"), stats.registration_timeseries)} */}
             </div>
           </div>
         </div>

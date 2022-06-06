@@ -23,6 +23,7 @@ class Offer(db.Model):
     rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
+    payment_amount = db.Column(db.String(), nullable=True)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
     offer_invoices = db.relationship('OfferInvoice')
@@ -69,8 +70,9 @@ class RegistrationSection(db.Model):
     show_for_travel_award = db.Column(db.Boolean(), nullable=True)
     show_for_accommodation_award = db.Column(db.Boolean(), nullable=True)
     show_for_payment_required = db.Column(db.Boolean(), nullable=True)
+    show_for_invited_guest = db.Column(db.Boolean(), nullable=True)
 
-    def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award, show_for_payment_required):
+    def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award, show_for_payment_required, show_for_invited_guest=None):
         self.registration_form_id = registration_form_id
         self.name = name
         self.description = description
@@ -78,6 +80,7 @@ class RegistrationSection(db.Model):
         self.show_for_payment_required = show_for_payment_required
         self.show_for_accommodation_award = show_for_accommodation_award
         self.show_for_travel_award = show_for_travel_award
+        self.show_for_invited_guest = show_for_invited_guest
 
 
 def get_registration_answer_based_headline(user_id, headline):
