@@ -195,7 +195,8 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
                         'description': invoice_line_item.description
                     },
                     'unit_amount': invoice_line_item.amount
-                }
+                },
+                'quantity': 1
             }
             stripe_line_items.append(stripe_line_item)
         
