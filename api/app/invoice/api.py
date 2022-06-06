@@ -197,7 +197,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
                     },
                     'unit_amount': invoice_line_item.amount
                 },
-                'quantity': 1
+                'quantity': 1,
             }
             stripe_line_items.append(stripe_line_item)
         
@@ -206,6 +206,10 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
             mode='payment',
             client_reference_id=invoice.client_reference_id,
             customer_email=invoice.customer_email,
+            metadata={
+                "invoice_id": invoice.id,
+                "user_id": user_id
+            },
             success_url=f'{BOABAB_HOST}/payment-sucess',
             cancel_url=f'{BOABAB_HOST}/payment-cancel',
         )
