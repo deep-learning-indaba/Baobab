@@ -2,9 +2,10 @@ import flask_restful as restful
 from flask import g, request
 import stripe
 
+from app import LOGGER
 from app.events.repository import EventRepository as event_repository
 from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin, PaymentsWebhookMixin
-from app.invoice.models import Invoice, InvoiceLineItem
+from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentIntent, InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.registration.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
@@ -209,6 +210,10 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
             cancel_url=f'{BOABAB_HOST}/payment-cancel',
         )
 
+        invoice_payment_intent = InvoicePaymentIntent(payment_intent=session.payment_intent)
+        invoice.invoice_payment_intents.append(invoice_payment_intent)
+        invoice_repository.save(invoice)
+
         return session.url, 200
 
 class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
@@ -229,5 +234,39 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             raise e
         except stripe.error.SignatureVerificationError as e:
             raise e
+        
+        idempotency_key = event['request']['idempotency_key']
+        if invoice_repository.has_processed_stripe_webhook_event(idempotency_key):
+            return 200
+
+        accepted_events = [
+            'payment_intent.succeeded',
+            'payment_intent.payment_failed',
+        ]
+
+        if event['type'] in accepted_events:
+            created_at_unix = event['type']['created']
+            invoice_payment_status = None
+            if event['type'] == 'payment_intent.succeeded':
+                invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(
+                    PaymentStatus.PAID,
+                    created_at_unix
+                )
+            
+            if event['type'] == 'payment_intent.payment_failed':
+                invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(
+                    PaymentStatus.FAILED,
+                    created_at_unix
+                )
+            
+            payment_intent = event['data']['object']['id']
+            invoice = invoice_repository.get_from_payment_intent(payment_intent)
+            invoice.invoice_payment_statuses.append(invoice_payment_status)
+            invoice_repository.save(invoice)
+
+            stripe_webhook_event = StripeWebhookEvent(event)
+            invoice_repository.save(stripe_webhook_event)
+        else:
+            LOGGER.warn(f"Receiving an unexpected event: {event['type']}")
 
         return 200

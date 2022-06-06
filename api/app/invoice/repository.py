@@ -1,6 +1,6 @@
 from app.registration.models import Offer
 from app import db
-from app.invoice.models import Invoice, OfferInvoice
+from app.invoice.models import Invoice, OfferInvoice, StripeWebhookEvent, InvoicePaymentIntent
 
 class InvoiceRepository():
     @staticmethod
@@ -32,3 +32,18 @@ class InvoiceRepository():
     
     def save(invoice):
         db.session.merge(invoice)
+    
+    def has_processed_stripe_webhook_event(idempotency_key):
+        return (
+            db.session.query(StripeWebhookEvent.id)
+            .filter_by(idempotency_key=idempotency_key)
+            .first()
+        ) is not None
+    
+    def get_from_payment_intent(payment_intent):
+        return (
+            db.session.query(Invoice)
+            .join(InvoicePaymentIntent, InvoicePaymentIntent.invoice_id == Invoice.id)
+            .filter_by(payment_intent=payment_intent)
+            .first()
+        )

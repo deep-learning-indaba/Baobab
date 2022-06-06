@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+import time
 
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -20,15 +21,30 @@ class InvoicePaymentStatus(db.Model):
     invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
     payment_status = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-    created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    created_at_unix = db.Column(db.Integer, nullable=False)
+    created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=True)
     
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
 
-    def __init__(self, payment_status, user_id):
-        self.payment_status = payment_status
-        self.created_at = datetime.now()
-        self.created_by_user_id = user_id        
+    @classmethod
+    def from_baobab(cls, payment_status, user_id):
+        return cls(
+            payment_status=payment_status.value,
+            created_at=datetime.now(),
+            created_at_unix=round(time.time()),
+            created_by_user_id=user_id
+        )
+
+    @classmethod
+    def from_stripe_webhook(cls, payment_status, created_at_unix):
+        return cls(
+            payment_status=payment_status.value,
+            created_at=datetime.now(),
+            created_at_unix=created_at_unix,
+            created_by_user_id=None 
+        )
+
 
 class InvoiceLineItem(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -44,6 +60,20 @@ class InvoiceLineItem(db.Model):
         self.description = description
         self.amount = amount
 
+class InvoicePaymentIntent(db.Model):
+    __table_args__ = tuple([db.UniqueConstraint('payment_intent', name='uq_invoice_payment_intent_payment_intent')])    
+
+    id = db.Column(db.Integer(), primary_key=True)
+    invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
+    payment_intent = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False)
+
+    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
+
+    @property
+    def has_session_expired(self):
+        hours_since_creation = (datetime.now() - self.created_at).total_seconds() / 3600
+        return hours_since_creation > 24
 
 class Invoice(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -55,7 +85,8 @@ class Invoice(db.Model):
 
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice_line_items = db.relationship('InvoiceLineItem')
-    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at)', lazy='dynamic')
+    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at_unix)', lazy='dynamic')
+    invoice_payment_intents = db.relationship('InvoicePaymentIntent')
 
     def __init__(
         self,
@@ -72,7 +103,8 @@ class Invoice(db.Model):
         self.created_at = datetime.now()
         
         self.invoice_line_items = line_items
-        self.invoice_payment_statuses = [InvoicePaymentStatus(PaymentStatus.UNPAID, user_id)]
+        self.invoice_payment_statuses = [InvoicePaymentStatus.from_baobab(PaymentStatus.UNPAID, user_id)]
+        self.invoice_payment_intents = []
     
     @hybrid_property
     def total_amount(self):
@@ -84,20 +116,20 @@ class Invoice(db.Model):
     
     @property
     def is_paid(self):
-        return self.current_payment_status == PaymentStatus.PAID
+        return self.current_payment_status == PaymentStatus.PAID.value
     
     @property
     def is_canceled(self):
-        return self.current_payment_status == PaymentStatus.CANCELED
+        return self.current_payment_status == PaymentStatus.CANCELED.value
 
     def cancel(self, user_id):
-        if self.current_payment_status.payment_status == PaymentStatus.CANCELED:
+        if self.current_payment_status.payment_status == PaymentStatus.CANCELED.value:
             raise BaobabError("Invoice has already been canceled.")
         
-        if self.current_payment_status.payment_status == PaymentStatus.PAID:
+        if self.current_payment_status.payment_status == PaymentStatus.PAID.value:
             raise BaobabError("Cannot cancel and invoice that's already been paid.")
 
-        canceled_status = InvoicePaymentStatus(PaymentStatus.CANCELED, user_id)
+        canceled_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, user_id)
         self.invoice_payment_statuses.append(canceled_status)
 
 class OfferInvoice(db.Model):
@@ -109,3 +141,18 @@ class OfferInvoice(db.Model):
 
     offer = db.relationship('Offer', foreign_keys=[offer_id])
     invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
+
+class StripeWebhookEvent(db.Model):
+    __table_args__ = tuple([db.UniqueConstraint('idempotency_key', name='uq_stripe_webhook_events_idempotency_key')])
+
+    id = db.Column(db.Integer(), primary_key=True)
+    idempotency_key = db.Column(db.String(50), nullable=False)
+    payment_intent = db.Column(db.String(50), nullable=False)
+    event = db.Column(db.JSON(), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False)
+
+    def __init__(self, event):
+        self.idempotency_key = event['request']['idempotency_key']
+        self.payment_intent = event['data']['object']['id']
+        self.event = event
+        self.created_at = datetime.now()
