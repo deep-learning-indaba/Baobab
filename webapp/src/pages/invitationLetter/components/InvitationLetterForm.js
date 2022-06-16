@@ -48,7 +48,10 @@ class InvitationLetterForm extends Component {
 
   checkOptionsList(optionsList) {
     if (Array.isArray(optionsList)) {
-      return optionsList;
+      return optionsList.map(c => ({
+        value: c.label, 
+        label: c.label
+      }));
     } else return [];
   }
 
@@ -111,7 +114,8 @@ class InvitationLetterForm extends Component {
       this.state.user.residentialPostalCode.length > 0 &&
       this.state.user.residentialCountry &&
       this.state.user.letterAddressedTo.length > 0 &&
-      this.state.user.residence > 0 &&
+      this.state.user.residence &&
+      this.state.user.nationality &&
       this.state.user.dateOfBirth != null
     );
   }

@@ -174,7 +174,10 @@ function requestInvitationLetter(user, event_id) {
     passport_name: user.fullNameOnPassport,
     passport_no: user.passportNumber,
     passport_issued_by: user.passportIssuedByAuthority,
-    passport_expiry_date: user.passportExpiryDate
+    passport_expiry_date: user.passportExpiryDate,
+    date_of_birth: user.dateOfBirth,
+    country_of_residence: user.residence,
+    country_of_nationality: user.nationality
   };
   return axios
     .post(baseUrl + `/api/v1/invitation-letter`, invitationLetterReq, {
