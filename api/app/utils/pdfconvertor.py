@@ -28,7 +28,7 @@ def convert_to(folder, source, output):
 
 def libreoffice_exec():
     if sys.platform == 'linux':
-        return '/lib/libreoffice/program/soffice'
+        return '/usr/lib/libreoffice/program/soffice'
     return 'libreoffice'
 
 class LibreOfficeError(Exception):
