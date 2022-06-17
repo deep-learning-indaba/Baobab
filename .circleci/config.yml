@@ -24,18 +24,6 @@ jobs:
           name: Run unit tests
           command: docker-compose run  web nosetests -v
 
-  integration-tests:
-    machine:
-      image: ubuntu-2004:202201-02
-    steps:
-      - checkout
-      - run:
-          name: Run integration tests
-          command: |
-            docker-compose build cypress
-            docker-compose run web python3 ./api/run.py db upgrade --directory api/migrations
-            docker-compose run cypress
-
   front-end-tests:
     machine:
       image: ubuntu-2004:202201-02
@@ -180,10 +168,6 @@ workflows:
     jobs:
       - build
       - front-end-tests
-      - integration-tests:
-          filters:
-            branches:
-              ignore: master
       - migrate-test:
           filters:
             branches:
