@@ -4,7 +4,7 @@ Flask-Admin
 Flask-Bcrypt==0.7.1
 Flask-Failsafe
 Flask-Migrate==2.7.0
-Flask-RESTful==0.3.9
+Flask-RESTful==0.3.8
 Flask-Redis
 flask-restplus
 Flask-SQLAlchemy
