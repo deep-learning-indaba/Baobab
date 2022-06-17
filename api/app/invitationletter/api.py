@@ -126,6 +126,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         invitation_template = (
             db.session.query(InvitationTemplate)
             .filter_by(
+                event_id=event_id,
                 send_for_both_travel_accommodation=travel and accommodation,
                 send_for_travel_award_only=travel and not accommodation,
                 send_for_accommodation_award_only=accommodation and not travel)
@@ -137,13 +138,17 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
         # Poster registration
         bringing_poster = ""
-        poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
+        poster_registration_question = (db.session.query(RegistrationQuestion)
+                .filter_by(
+                    headline="Will you be bringing a poster?",
+                    registration_form_id=registration_form.id
+                ).first())
         if poster_registration_question is not None:
             poster_answer = (
                 db.session.query(RegistrationAnswer)
                 .join(Registration, RegistrationAnswer.registration_id == Registration.id)
                 .join(Offer, Offer.id == Registration.offer_id)
-                .filter(Offer.user_id == user_id)
+                .filter_by(user_id=user_id, event_id=event_id)
                 .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
                 .first()
             )
