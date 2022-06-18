@@ -1,4 +1,5 @@
 from datetime import datetime
+from re import template
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 from app.utils.auth import verify_token
@@ -114,14 +115,17 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             return errors.ADD_INVITATION_REQUEST_FAILED
 
         if (is_guest_registration and invited_guest is not None and invited_guest.role == "Indaba X"):
+            LOGGER.info("Generating invitation letter for IndabaX Guest")
             accommodation = True
             travel = True
         elif is_guest_registration:
+            LOGGER.info("Generating invitation letter for Invited Guest")
             accommodation = False
             travel = False
         elif offer is not None:
             accommodation = offer.accepted_accommodation_award
             travel = offer.accepted_travel_award
+            LOGGER.info(f"Generating invitation letter for General attendee with accommodation: {accommodation}, Travel: {travel}")
         
         invitation_template = (
             db.session.query(InvitationTemplate)
@@ -133,6 +137,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             .first())
         
         template_url = invitation_template.template_path
+        LOGGER.info(f"Using template_url: {template_url}")
 
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
 
@@ -154,10 +159,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             )
             if poster_answer is not None and poster_answer.value == 'yes':
                 bringing_poster = "The participant will be presenting a poster of their research."
-
+        
+        LOGGER.info(f"Bringing poster: {bringing_poster}")
         # Handling fields
-        print("Country of residence", country_of_residence)
-        print("Country of nationality", country_of_nationality)
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
         is_sent = generate(template_path=template_url,
                             event_id=event_id,
