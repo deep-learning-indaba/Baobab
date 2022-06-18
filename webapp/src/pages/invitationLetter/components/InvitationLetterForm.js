@@ -220,6 +220,19 @@ class InvitationLetterForm extends Component {
                     : null,
                 error: response.error
               });
+              if (response && response.data && response.data.invitation_letter_request_id) {
+                this.setState({
+                  user: {
+                    residence: null,
+                    nationality: null,
+                    dateOfBirth: null,
+                    passportNumber: "",
+                    fullNameOnPassport: "",
+                    passportIssuedByAuthority: "",
+                    bringingAPoster: false
+                  }
+                });
+              }
             },
             error =>
               this.setState({
@@ -496,9 +509,7 @@ class InvitationLetterForm extends Component {
               class="alert alert-success alert-container"
               id="alert-invitation-letter-success"
             >
-              Invitation Letter request has been received. Invitation Letter
-              Request ID : {this.state.invitationLetterId}, for future
-              enquiries.
+              Thank you, your invitation letter will be sent to your email address.
             </div>
           )}
         </form>
