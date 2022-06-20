@@ -87,6 +87,7 @@ class Invoice(db.Model):
     invoice_line_items = db.relationship('InvoiceLineItem')
     invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at_unix)', lazy='dynamic')
     invoice_payment_intents = db.relationship('InvoicePaymentIntent')
+    invoice_offers = db.relationship('OfferInvoice')
 
     def __init__(
         self,
@@ -121,6 +122,10 @@ class Invoice(db.Model):
     @property
     def is_canceled(self):
         return self.current_payment_status == PaymentStatus.CANCELED.value
+    
+    @property
+    def offer_id(self):
+        return self.invoice_offers.first().offer_id if self.invoice_offers else None
 
     def cancel(self, user_id):
         if self.current_payment_status.payment_status == PaymentStatus.CANCELED.value:

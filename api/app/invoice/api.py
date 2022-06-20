@@ -1,4 +1,5 @@
 import flask_restful as restful
+from flask_restful import fields, marshal_with
 from flask import g, request
 import stripe
 
@@ -20,8 +21,38 @@ from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
 from config import BOABAB_HOST
 
+invoice_payment_status_fields = {
+    'id': fields.Integer,
+    'payment_status': fields.String,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'created_by_user_id': fields.Integer(default=None),
+    'created_by': fields.String(attribute='created_by.full_name', default=None)
+}
+
+invoice_line_item_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String(default=None),
+    'amount': fields.Float
+}
+
+invoice_fields = {
+    'id': fields.Integer,
+    'customer_email': fields.String,
+    'client_reference_id': fields.String,
+    'iso_currency_code': fields.String,
+    'created_by_user_id': fields.Integer,
+    'created_by_user': fields.String(attribute='created_by.full_name'),
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'total_amount': fields.Float,
+    'offer_id': fields.Integer(default=None),
+    'invoice_payment_status': fields.List(fields.Nested(invoice_payment_status_fields)),
+    'invoice_line_items': fields.List(fields.Nested(invoice_line_item_fields))
+}
+
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
+    @marshal_with(invoice_fields)
     def get(self):
         args = self.req_parser.parse_args()
         invoice_id = args['invoice_id']
@@ -51,12 +82,14 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
 class InvoiceListAPI(restful.Resource):
     @auth_required
+    @marshal_with(invoice_fields)
     def get(self):
         current_user = user_repository.get_by_id(g.current_user["id"])
         invoices = invoice_repository.get_all_for_customer(current_user.email)
         return invoices, 200
 
     @auth_required
+    @marshal_with(invoice_fields)
     def post(self):
         args = self.get_parser.parse_args()
         event_id = args['event_id']
@@ -109,10 +142,11 @@ class InvoiceListAPI(restful.Resource):
         for invoice in invoices:
             invoice_repository.save(invoice)
 
-        return 201
+        return invoices, 201
 
 class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
+    @marshal_with(invoice_fields)
     def get(self):
         args = self.get_parser.parse_args()
         event_id = args['event_id']
@@ -127,6 +161,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         return invoices, 200
 
     @auth_required
+    @marshal_with(invoice_fields)
     def post(self):
         args = self.get_parser.parse_args()
         event_id = args['event_id']
@@ -162,11 +197,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         invoice = Invoice(user.email, iso_currency_code, line_items, current_user_id, user_id)
         invoice_repository.save(invoice)
         return invoice, 201
-    
-    @auth_required
-    def put(self):
-        # update success/fail from webhook
-        return 200
+
 
 class PaymentsAPI(PaymentsMixin, restful.Resource):
     @auth_required
@@ -190,7 +221,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         for invoice_line_item in invoice.invoice_line_items:
             stripe_line_item = {
                 'price_data': {
-                    'currency': invoice_line_item.iso_currency_code,
+                    'currency': invoice.iso_currency_code,
                     'product_data': {
                         'name': invoice_line_item.name,
                         'description': invoice_line_item.description
