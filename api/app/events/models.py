@@ -86,6 +86,7 @@ class Event(db.Model):
         self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
+        self.event_fees = []
 
         self.add_event_translations(names, descriptions)
 
@@ -168,6 +169,16 @@ class Event(db.Model):
             description = descriptions[language]
             event_translation = EventTranslation(name, description, language)
             self.event_translations.append(event_translation)
+    
+    def add_event_fee(self, name, amount, user_id, description=None):
+        event_fee = EventFee(
+            name,
+            self.organisation.iso_currency_code,
+            amount,
+            user_id,
+            description)
+        self.event_fees.append(event_fee)
+        return event_fee
 
     def has_specific_translation(self, language):
         return self.event_translations.filter_by(language=language).count() == 1
@@ -341,14 +352,12 @@ class EventFee(db.Model):
 
     def __init__(
         self,
-        event_id,
         name,
         iso_currency_code,
         amount,
         created_by,
         description=None
     ):
-        self.event_id = event_id
         self.name = name
         self.description = description
         self.iso_currency_code = iso_currency_code

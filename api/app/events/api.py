@@ -27,7 +27,8 @@ from app.utils.errors import (
     EVENT_KEY_IN_USE,
     EVENT_WITH_TRANSLATION_NOT_FOUND,
     EVENT_MUST_CONTAIN_TRANSLATION,
-    EVENT_TRANSLATION_MISMATCH
+    EVENT_TRANSLATION_MISMATCH,
+    STRIPE_SETUP_INCOMPLETE
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -530,16 +531,17 @@ class EventFeeAPI(EventFeeMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
+
+        if not event.organisation.can_accept_payments():
+            return STRIPE_SETUP_INCOMPLETE
         
-        event_fee = EventFee(
-            event_id,
+        event_fee = event.add_event_fee(
             args['name'],
-            args['iso_currency_code'],
             args['amount'],
             user_id,
-            args['description'])
-        
-        event_fee = event_repository.add(event_fee)
+            args['description']
+        )
+        event_repository.save()
         return event_fee, 201
     
     @auth_required
@@ -550,16 +552,15 @@ class EventFeeAPI(EventFeeMixin, restful.Resource):
         event_fee_id = args['event_fee_id']
         user_id = g.current_user['id']
 
-        event_fee = event_repository.get_event_fee(event_id, event_fee_id)
-        if not event_fee:
-            return EVENT_FEE_NOT_FOUND
-
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
+
+        event_fee = event_repository.get_event_fee(event_id, event_fee_id)
+        if not event_fee:
+            return EVENT_FEE_NOT_FOUND
         
         event_fee.deactivate(user_id)
-
-        db.session.commit()
+        event_repository.save()
 
         return event_fee, 200

@@ -160,6 +160,8 @@ class ApiTestCase(unittest.TestCase):
                                     email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
                                     privacy_policy='PrivacyPolicy.pdf', languages=[{"code": "en", "description": "English"}]):
         org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages)
+        org.set_currency('usd')
+        org.set_stripe_keys("not_secret", "secret_key", "webhook_secret_key")
         db.session.add(org)
         db.session.commit()
         return org

@@ -895,7 +895,8 @@ class EventFeeAPITest(ApiTestCase):
         amount=200.00,
         description=None
     ):
-        event_fee = EventFee(event_id, name, iso_currency_code, amount, created_by_user_id, description)
+        event_fee = EventFee(name, iso_currency_code, amount, created_by_user_id, description)
+        event_fee.event_id = event_id
         db.session.add(event_fee)
         db.session.commit()
         return event_fee
@@ -965,7 +966,6 @@ class EventFeeAPITest(ApiTestCase):
         params = {
             'event_id': 42,
             'name': 'Registration',
-            'iso_currency_code': 'usd',
             'amount': 199.99,
             'description': 'Fee to attend'
         }
@@ -981,13 +981,30 @@ class EventFeeAPITest(ApiTestCase):
         params = {
             'event_id': 1,
             'name': 'Registration',
-            'iso_currency_code': 'usd',
             'amount': 199.99,
             'description': 'Fee to attend'
         }
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_post_event_fee_without_stripe_setup(self):
+        self.seed_static_data()
+        organisaton = db.session.query(Organisation).get(self.dummy_org_id)
+        organisaton.iso_currency_code = None
+        db.session.merge(organisaton)
+        db.session.commit()
+        header = self.get_auth_header_for(self.treasurer_email)
+
+        params = {
+            'event_id': 1,
+            'name': 'Registration',
+            'amount': 199.99,
+            'description': 'Fee to attend'
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, 400)
 
     def test_post_event_fee_success(self):
         self.seed_static_data()
@@ -996,7 +1013,6 @@ class EventFeeAPITest(ApiTestCase):
         params = {
             'event_id': 1,
             'name': 'Registration',
-            'iso_currency_code': 'usd',
             'amount': 199.99,
             'description': 'Fee to attend'
         }

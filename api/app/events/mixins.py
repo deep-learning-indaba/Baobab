@@ -49,7 +49,6 @@ class EventFeeMixin(object):
     post_parser.add_argument('event_id', type=int, required=True)
     post_parser.add_argument('name', type=str, required=True)
     post_parser.add_argument('description', type=str, required=False)
-    post_parser.add_argument('iso_currency_code', type=str, required=True)
     post_parser.add_argument('amount', type=float, required=True, )
 
     delete_parser = reqparse.RequestParser()
