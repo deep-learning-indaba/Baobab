@@ -294,14 +294,10 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             included_sections = []
 
             for section in sections:
-
-                if (section.show_for_travel_award is None) and (section.show_for_accommodation_award is None) and  \
-                        (section.show_for_payment_required is None) and ((section.show_for_invited_guest is None) or (not section.show_for_invited_guest)):
-                    included_sections.append(section)
-
-                elif (section.show_for_travel_award and offer.travel_award and offer.accepted_travel_award) or \
-                        (section.show_for_accommodation_award and offer.accommodation_award and offer.accepted_accommodation_award) or \
-                        (section.show_for_payment_required and offer.payment_required):
+                if ((section.show_for_travel_award is None or section.show_for_travel_award == offer.accepted_travel_award) 
+                    and (section.show_for_accommodation_award is None or section.show_for_accommodation_award == offer.accepted_accommodation_award) 
+                    and (section.show_for_payment_required is None or section.show_for_payment_required == offer.payment_required) 
+                    and ((section.show_for_invited_guest is None) or (not section.show_for_invited_guest))):
                     included_sections.append(section)
 
             registration_form.registration_sections = included_sections
