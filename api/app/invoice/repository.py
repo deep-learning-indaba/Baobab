@@ -1,8 +1,9 @@
 from app.registration.models import Offer
 from app import db
 from app.invoice.models import Invoice, OfferInvoice, StripeWebhookEvent, InvoicePaymentIntent
+from app.utils.repository import BaseRepository
 
-class InvoiceRepository():
+class InvoiceRepository(BaseRepository):
     @staticmethod
     def get_by_id(invoice_id):
         return db.session.query(Invoice).get(invoice_id)
@@ -17,7 +18,7 @@ class InvoiceRepository():
     def get_one_for_customer(invoice_id, customer_email):
         return (
             db.session.query(Invoice)
-            .filter_by(invoice_id=invoice_id, customer_email=customer_email)
+            .filter_by(id=invoice_id, customer_email=customer_email)
             .first()
         )
     
@@ -29,9 +30,6 @@ class InvoiceRepository():
             .filter_by(event_id=event_id)
             .all()
         )
-    
-    def save(invoice):
-        db.session.merge(invoice)
     
     def has_processed_stripe_webhook_event(idempotency_key):
         return (

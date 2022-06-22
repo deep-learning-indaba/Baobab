@@ -18,6 +18,7 @@ from app.applicationModel.models import (ApplicationForm, Question, QuestionTran
                                          SectionTranslation)
 from app.events.models import Event, EventType, EventRole
 from app.invitedGuest.models import InvitedGuest
+from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
 from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
@@ -452,3 +453,29 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rt)
         db.session.commit()
         return rt
+
+    def add_invoice(
+        self,
+        created_by_user_id,
+        user_id,
+        email='user@user.com',
+        iso_currency_code='usd',
+        line_items=[
+            InvoiceLineItem('registration', 'registration desc', 99.99),
+            InvoiceLineItem('accommodation', 'accommodation desc', 199.99)
+        ],
+    ):
+        invoice = Invoice(email, iso_currency_code, line_items, created_by_user_id, str(user_id))
+        db.session.add(invoice)
+        db.session.commit()
+        return invoice
+    
+    def add_offer_invoice(self, invoice_id, offer_id):
+        invoice = db.session.query(Invoice).get(invoice_id)
+        invoice.link_offer(offer_id)
+        db.session.commit()
+    
+    def add_invoice_payment_intent(self, invoice_id, payment_intent="pi_3L7GhOEpDzoopUbL0jGJhE2i"):
+        invoice = db.session.query(Invoice).get(invoice_id)
+        invoice.add_payment_intent(payment_intent)
+        db.session.commit()

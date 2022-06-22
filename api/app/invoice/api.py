@@ -6,7 +6,7 @@ import stripe
 from app import LOGGER
 from app.events.repository import EventRepository as event_repository
 from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin, PaymentsWebhookMixin
-from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentIntent, InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent
+from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentIntent, InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent, OfferInvoice
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.registration.repository import OfferRepository as offer_repository
 from app.users.repository import UserRepository as user_repository
@@ -16,10 +16,18 @@ from app.utils.errors import (
     EVENT_FEE_NOT_FOUND,
     EVENT_FEES_MUST_HAVE_SAME_CURRENCY,
     INVOICE_PAID,
-    INVOICE_CANCELED)
+    INVOICE_CANCELED,
+    INVOICE_NOT_FOUND)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
 from config import BOABAB_HOST
+
+invoice_payment_intent_fields = {
+    'id': fields.Integer,
+    'payment_intent': fields.String,
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'has_session_expired': fields.Boolean
+}
 
 invoice_payment_status_fields = {
     'id': fields.Integer,
@@ -46,8 +54,9 @@ invoice_fields = {
     'created_at': fields.DateTime(dt_format='iso8601'),
     'total_amount': fields.Float,
     'offer_id': fields.Integer(default=None),
-    'invoice_payment_status': fields.List(fields.Nested(invoice_payment_status_fields)),
-    'invoice_line_items': fields.List(fields.Nested(invoice_line_item_fields))
+    'invoice_payment_statuses': fields.List(fields.Nested(invoice_payment_status_fields)),
+    'invoice_line_items': fields.List(fields.Nested(invoice_line_item_fields)),
+    'invoice_payment_intents': fields.List(fields.Nested(invoice_payment_intent_fields))
 }
 
 class InvoiceAPI(InvoiceMixin, restful.Resource):
@@ -61,6 +70,9 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
 
         invoice = invoice_repository.get_one_for_customer(invoice_id, current_user.email)
+        if invoice is None:
+            return INVOICE_NOT_FOUND
+
         return invoice, 200
 
     @auth_required
@@ -73,7 +85,7 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
         try:
             invoice.cancel(user_id)
-            invoice_repository.save(invoice)
+            invoice_repository.save()
         except BaobabError as be:
             return {'message': be.message}, 403
 
@@ -131,16 +143,16 @@ class InvoiceListAPI(restful.Resource):
                 iso_currency_code,
                 line_items,
                 user_id,
-                offer.user_id
+                str(offer.user_id)
             )
+            invoice.link_offer(offer.id)
             invoices.append(invoice)
         
         if invalid_offer_ids:
             error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice."
             return error_message, 400
 
-        for invoice in invoices:
-            invoice_repository.save(invoice)
+        invoice_repository.add_all(invoices)
 
         return invoices, 201
 
@@ -163,9 +175,9 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
     @marshal_with(invoice_fields)
     def post(self):
-        args = self.get_parser.parse_args()
+        args = self.post_parser.parse_args()
         event_id = args['event_id']
-        user_id = args['offer_id']
+        user_id = args['user_id']
         event_fee_ids = args['event_fee_ids']
 
         current_user_id = g.current_user["id"]
@@ -193,9 +205,10 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             line_items.append(line_item)
         
         user = user_repository.get_by_id(user_id)
+        invoice = Invoice(user.email, iso_currency_code, line_items, current_user_id, str(user_id))
+        invoice.link_offer(offer.id)
+        invoice_repository.add(invoice)
         
-        invoice = Invoice(user.email, iso_currency_code, line_items, current_user_id, user_id)
-        invoice_repository.save(invoice)
         return invoice, 201
 
 
@@ -245,9 +258,8 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
             cancel_url=f'{BOABAB_HOST}/payment-cancel',
         )
 
-        invoice_payment_intent = InvoicePaymentIntent(payment_intent=session.payment_intent)
-        invoice.invoice_payment_intents.append(invoice_payment_intent)
-        invoice_repository.save(invoice)
+        invoice.add_payment_intent(session.payment_intent)
+        invoice_repository.save()
 
         return session.url, 200
 
@@ -297,10 +309,10 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             payment_intent = event['data']['object']['id']
             invoice = invoice_repository.get_from_payment_intent(payment_intent)
             invoice.invoice_payment_statuses.append(invoice_payment_status)
-            invoice_repository.save(invoice)
+            invoice_repository.save()
 
             stripe_webhook_event = StripeWebhookEvent(event)
-            invoice_repository.save(stripe_webhook_event)
+            invoice_repository.add(stripe_webhook_event)
         else:
             LOGGER.warn(f"Receiving an unexpected event: {event['type']}")
 

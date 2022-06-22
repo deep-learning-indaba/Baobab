@@ -70,6 +70,10 @@ class InvoicePaymentIntent(db.Model):
 
     invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
 
+    def __init__(self, payment_intent):
+        self.payment_intent = payment_intent
+        self.created_at = datetime.now()
+
     @property
     def has_session_expired(self):
         hours_since_creation = (datetime.now() - self.created_at).total_seconds() / 3600
@@ -87,7 +91,7 @@ class Invoice(db.Model):
     invoice_line_items = db.relationship('InvoiceLineItem')
     invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at_unix)', lazy='dynamic')
     invoice_payment_intents = db.relationship('InvoicePaymentIntent')
-    invoice_offers = db.relationship('OfferInvoice')
+    offer_invoices = db.relationship('OfferInvoice')
 
     def __init__(
         self,
@@ -106,6 +110,7 @@ class Invoice(db.Model):
         self.invoice_line_items = line_items
         self.invoice_payment_statuses = [InvoicePaymentStatus.from_baobab(PaymentStatus.UNPAID, user_id)]
         self.invoice_payment_intents = []
+        self.offer_invoices = []
     
     @hybrid_property
     def total_amount(self):
@@ -113,7 +118,7 @@ class Invoice(db.Model):
     
     @property
     def current_payment_status(self):
-        return self.invoice_payment_statuses.first()
+        return self.invoice_payment_statuses[0]
     
     @property
     def is_paid(self):
@@ -125,7 +130,7 @@ class Invoice(db.Model):
     
     @property
     def offer_id(self):
-        return self.invoice_offers.first().offer_id if self.invoice_offers else None
+        return self.offer_invoices[0].offer_id if self.offer_invoices else None
 
     def cancel(self, user_id):
         if self.current_payment_status.payment_status == PaymentStatus.CANCELED.value:
@@ -136,6 +141,15 @@ class Invoice(db.Model):
 
         canceled_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, user_id)
         self.invoice_payment_statuses.append(canceled_status)
+    
+    def link_offer(self, offer_id):
+        offer_invoice = OfferInvoice(offer_id=offer_id)
+        self.offer_invoices.append(offer_invoice)
+    
+    def add_payment_intent(self, payment_intent):
+        payment_intent = InvoicePaymentIntent(payment_intent)
+        self.invoice_payment_intents.append(payment_intent)
+
 
 class OfferInvoice(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])

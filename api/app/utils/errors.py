@@ -129,5 +129,6 @@ NO_ACTIVE_REVIEW_FORM = ({'message': "There is no active review form for the eve
 REVIEW_FORM_FOR_STAGE_NOT_FOUND = ({'message': "There is no review form for the given stage"}, 404)
 REVIEW_FORM_EXISTS = ({'message': "A review form for this event and stage already exists"}, 403)
 INVOICE_PAID = ({'message': "Invoice has already been paid"}, 400)
+INVOICE_NOT_FOUND = ({'messsage': "Invoice not found."}, 404)
 INVOICE_CANCELED = ({'message': "Invoice has been canceled"}, 400)
 STRIPE_SETUP_INCOMPLETE = ({'message': 'Stripe setup has not yet been completed.'}, 400)
