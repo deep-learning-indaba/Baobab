@@ -1,9 +1,9 @@
 import json
 import warnings
 
+from app.invoice.models import PaymentStatus
 from app.utils.testing import ApiTestCase
-from app import db, LOGGER
-from app.invoice.models import Invoice, PaymentStatus
+from app.utils.errors import INVOICE_NOT_FOUND
 
 
 class InvoiceApiTest(ApiTestCase):
@@ -30,7 +30,8 @@ class InvoiceApiTest(ApiTestCase):
         applicant = self.add_user(applicant_email)
         offer = self.add_offer(applicant.id, self.event_id)
         offer_id = offer.id
-        invoice = self.add_invoice(self.treasurer_id, applicant.id, applicant_email)
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
         invoice_id = invoice.id
         self.add_invoice_payment_intent(invoice_id)
         self.add_offer_invoice(invoice_id, offer.id)
@@ -70,5 +71,17 @@ class InvoiceApiTest(ApiTestCase):
         self.assertIsNotNone(data["invoice_payment_intents"][0]["created_at"])
         self.assertEqual(data["invoice_payment_intents"][0]["has_session_expired"], False)
 
-    def test_get_invoice_not_found(self):
-        pass
+    def test_prevent_retrieval_of_someone_elses_invoice(self):
+        applicant_email = "applicant@user.com"
+        applicant = self.add_user("applicant@user.com")
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
+        invoice_id = invoice.id
+        another_applicant_email = "another_applicant@user.com"
+        self.add_user(another_applicant_email)
+        
+        header = self.get_auth_header_for(another_applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.get(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])

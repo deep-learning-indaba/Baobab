@@ -458,17 +458,20 @@ class ApiTestCase(unittest.TestCase):
         self,
         created_by_user_id,
         user_id,
+        line_items,
         email='user@user.com',
         iso_currency_code='usd',
-        line_items=[
-            InvoiceLineItem('registration', 'registration desc', 99.99),
-            InvoiceLineItem('accommodation', 'accommodation desc', 199.99)
-        ],
     ):
         invoice = Invoice(email, iso_currency_code, line_items, created_by_user_id, str(user_id))
         db.session.add(invoice)
         db.session.commit()
         return invoice
+
+    def get_default_line_items(self):
+        return [
+            InvoiceLineItem('registration', 'registration desc', 99.99),
+            InvoiceLineItem('accommodation', 'accommodation desc', 199.99)
+        ]
     
     def add_offer_invoice(self, invoice_id, offer_id):
         invoice = db.session.query(Invoice).get(invoice_id)
