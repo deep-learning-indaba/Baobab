@@ -2,8 +2,6 @@ from datetime import datetime
 from enum import Enum
 import time
 
-from sqlalchemy.ext.hybrid import hybrid_property
-
 from app import db
 from app.utils.exceptions import BaobabError
 
@@ -21,7 +19,7 @@ class InvoicePaymentStatus(db.Model):
     invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
     payment_status = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-    created_at_unix = db.Column(db.Integer, nullable=False)
+    created_at_unix = db.Column(db.Float(), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=True)
     
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
@@ -32,7 +30,7 @@ class InvoicePaymentStatus(db.Model):
         return cls(
             payment_status=payment_status.value,
             created_at=datetime.now(),
-            created_at_unix=round(time.time()),
+            created_at_unix=time.time(),
             created_by_user_id=user_id
         )
 
@@ -112,7 +110,7 @@ class Invoice(db.Model):
         self.invoice_payment_intents = []
         self.offer_invoices = []
     
-    @hybrid_property
+    @property
     def total_amount(self):
         return sum(ili.amount for ili in self.invoice_line_items)
     
@@ -137,7 +135,7 @@ class Invoice(db.Model):
             raise BaobabError("Invoice has already been canceled.")
         
         if self.current_payment_status.payment_status == PaymentStatus.PAID.value:
-            raise BaobabError("Cannot cancel and invoice that's already been paid.")
+            raise BaobabError("Cannot cancel an invoice that's already been paid.")
 
         canceled_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, user_id)
         self.invoice_payment_statuses.append(canceled_status)

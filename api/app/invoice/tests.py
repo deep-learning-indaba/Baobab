@@ -1,7 +1,9 @@
 import json
 import warnings
+from time import time
 
-from app.invoice.models import PaymentStatus
+from app import db
+from app.invoice.models import PaymentStatus, InvoicePaymentStatus, Invoice
 from app.utils.testing import ApiTestCase
 from app.utils.errors import INVOICE_NOT_FOUND
 
@@ -55,6 +57,7 @@ class InvoiceApiTest(ApiTestCase):
         self.assertEqual(len(data["invoice_payment_statuses"]), 1)
         self.assertEqual(data["invoice_payment_statuses"][0]["payment_status"], PaymentStatus.UNPAID.value)
         self.assertIsNotNone(data["invoice_payment_statuses"][0]["created_at"])
+        self.assertIsNotNone(data["invoice_payment_statuses"][0]["created_at_unix"])
         self.assertEqual(data["invoice_payment_statuses"][0]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data["invoice_payment_statuses"][0]["created_by"], self.treasurer_name)
 
@@ -85,3 +88,66 @@ class InvoiceApiTest(ApiTestCase):
         response = self.app.get(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
+    
+    def test_cancel_own_invoice(self):
+        applicant_email = "applicant@user.com"
+        applicant = self.add_user(applicant_email)
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
+        invoice_id = invoice.id
+
+        header = self.get_auth_header_for(applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, 200)
+    
+    def test_prevent_canceling_someone_else_invoices(self):
+        applicant_email = "applicant@user.com"
+        applicant = self.add_user("applicant@user.com")
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
+        invoice_id = invoice.id
+        another_applicant_email = "another_applicant@user.com"
+        self.add_user(another_applicant_email)
+        
+        header = self.get_auth_header_for(another_applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
+
+    def test_prevent_cancel_of_already_canceled_invoice(self):
+        applicant_email = "applicant@user.com"
+        applicant = self.add_user(applicant_email)
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
+        invoice_id = invoice.id
+        invoice.cancel(applicant.id)
+        db.session.commit()
+
+        header = self.get_auth_header_for(applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data["message"], "Invoice has already been canceled.")
+
+    def test_prevent_cancel_of_already_paid_invoice(self):
+        applicant_email = "applicant@user.com"
+        applicant = self.add_user(applicant_email)
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, applicant.id, line_items, applicant_email)
+        invoice_id = invoice.id
+        invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, time())
+        invoice.invoice_payment_statuses.append(invoice_payment_status)
+        db.session.commit()
+
+        header = self.get_auth_header_for(applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data["message"], "Cannot cancel an invoice that's already been paid.")
