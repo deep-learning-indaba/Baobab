@@ -33,6 +33,7 @@ invoice_payment_status_fields = {
     'id': fields.Integer,
     'payment_status': fields.String,
     'created_at': fields.DateTime(dt_format='iso8601'),
+    'created_at_unix': fields.Float,
     'created_by_user_id': fields.Integer(default=None),
     'created_by': fields.String(attribute='created_by.full_name', default=None)
 }
@@ -83,11 +84,14 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
         current_user = user_repository.get_by_id(user_id)
         invoice = invoice_repository.get_one_for_customer(args['invoice_id'], current_user.email)
 
+        if invoice is None:
+            return INVOICE_NOT_FOUND
+
         try:
             invoice.cancel(user_id)
             invoice_repository.save()
         except BaobabError as be:
-            return {'message': be.message}, 403
+            return {'message': be.message}, 400
 
         return 200
 
