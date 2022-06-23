@@ -60,6 +60,18 @@ invoice_fields = {
     'invoice_payment_intents': fields.List(fields.Nested(invoice_payment_intent_fields))
 }
 
+invoice_list_fields = {
+    'id': fields.Integer,
+    'customer_email': fields.String,
+    'client_reference_id': fields.String,
+    'iso_currency_code': fields.String,
+    'created_by_user_id': fields.Integer,
+    'created_by_user': fields.String(attribute='created_by.full_name'),
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'total_amount': fields.Float,
+    'current_payment_status': fields.String(attribute='current_payment_status.payment_status')
+}
+
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
     @marshal_with(invoice_fields)
@@ -98,14 +110,30 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
 class InvoiceListAPI(restful.Resource):
     @auth_required
-    @marshal_with(invoice_fields)
+    @marshal_with(invoice_list_fields)
     def get(self):
         current_user = user_repository.get_by_id(g.current_user["id"])
         invoices = invoice_repository.get_all_for_customer(current_user.email)
         return invoices, 200
 
+class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
-    @marshal_with(invoice_fields)
+    @marshal_with(invoice_list_fields)
+    def get(self):
+        args = self.get_parser.parse_args()
+        event_id = args['event_id']
+
+        user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(user_id)
+
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+
+        invoices = invoice_repository.get_for_event(event_id)
+        return invoices, 200
+
+    @auth_required
+    @marshal_with(invoice_list_fields)
     def post(self):
         args = self.get_parser.parse_args()
         event_id = args['event_id']
@@ -159,61 +187,6 @@ class InvoiceListAPI(restful.Resource):
         invoice_repository.add_all(invoices)
 
         return invoices, 201
-
-class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
-    @auth_required
-    @marshal_with(invoice_fields)
-    def get(self):
-        args = self.get_parser.parse_args()
-        event_id = args['event_id']
-
-        user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(user_id)
-
-        if not current_user.is_event_treasurer(event_id):
-            return FORBIDDEN
-
-        invoices = invoice_repository.get_for_event(event_id)
-        return invoices, 200
-
-    @auth_required
-    @marshal_with(invoice_fields)
-    def post(self):
-        args = self.post_parser.parse_args()
-        event_id = args['event_id']
-        user_id = args['user_id']
-        event_fee_ids = args['event_fee_ids']
-
-        current_user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(current_user_id)
-
-        if not current_user.is_event_treasurer(event_id):
-            return FORBIDDEN
-
-        offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
-        if not offer:
-            return OFFER_NOT_FOUND
-
-        event_fees = event_repository.get_event_fees(event_id, event_fee_ids)
-        if not event_fees:
-            return EVENT_FEE_NOT_FOUND
-        
-        iso_currency_codes = set([event_fee.iso_currency_code for event_fee in event_fees])
-        if len(iso_currency_codes) > 1:
-            return EVENT_FEES_MUST_HAVE_SAME_CURRENCY
-        iso_currency_code = list(iso_currency_codes)[0]
-        
-        line_items = []
-        for event_fee in event_fees:
-            line_item = InvoiceLineItem(event_fee.name, event_fee.description, event_fee.amount)
-            line_items.append(line_item)
-        
-        user = user_repository.get_by_id(user_id)
-        invoice = Invoice(user.email, iso_currency_code, line_items, current_user_id, str(user_id))
-        invoice.link_offer(offer.id)
-        invoice_repository.add(invoice)
-        
-        return invoice, 201
 
 
 class PaymentsAPI(PaymentsMixin, restful.Resource):

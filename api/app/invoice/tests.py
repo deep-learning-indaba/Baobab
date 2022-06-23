@@ -26,7 +26,6 @@ class InvoiceApiTest(ApiTestCase):
         self.treasurer_name = treasurer.full_name
         self.add_event_role("treasurer", self.treasurer_id, event.id)
 
-    
     def test_get_invoice_success(self):
         applicant_email = "applicant@user.com"
         applicant = self.add_user(applicant_email)
@@ -151,3 +150,41 @@ class InvoiceApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data["message"], "Cannot cancel an invoice that's already been paid.")
+
+class InvoiceListApiTest(ApiTestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.url = "/api/v1/invoice-list"
+
+        # we don't mind this since this warning is specific to sqlite
+        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
+    
+    def setUp(self):
+        super().setUp()
+        event = self.add_event()
+        self.event_id = event.id
+        self.treasurer_email = "treasurer@user.com"
+        treasurer = self.add_user(self.treasurer_email)
+        self.treasurer_id = treasurer.id
+        self.treasurer_name = treasurer.full_name
+        self.add_event_role("treasurer", self.treasurer_id, event.id)
+
+        self.applicant_email = "applicant@user.com"
+        applicant = self.add_user(self.applicant_email)
+        self.applicant_id = applicant.id
+    
+    def test_get_with_no_invoices_for_user(self):
+        another_applicant_email = "another_applicant@user.com"
+        another_applicant = self.add_user(another_applicant_email)
+        line_items = self.get_default_line_items()
+        self.add_invoice(self.treasurer_id, another_applicant.id, line_items, another_applicant_email)
+
+        header = self.get_auth_header_for(self.applicant_email)
+        response = self.app.get(self.url, headers=header)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data, [])
+
+    def test_get_with_multiple_invoices(self):
+        pass
