@@ -1,10 +1,12 @@
 from datetime import datetime
+from re import template
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 from app.utils.auth import verify_token
 from flask import g, request
 from app.invitationletter.models import InvitationTemplate
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationQuestion, Registration, RegistrationForm
+from app.invitedGuest.models import InvitedGuest
 from app.invitationletter.mixins import InvitationMixin
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.generator import generate
@@ -36,6 +38,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         passport_no = args['passport_no']
         passport_issued_by = args['passport_issued_by']
         passport_expiry_date = datetime.strptime((args['passport_expiry_date']), '%Y-%m-%d')
+        date_of_birth = datetime.strptime((args['date_of_birth']), '%Y-%m-%d')
+        country_of_residence = args['country_of_residence']
+        country_of_nationality = args['country_of_nationality']
 
         registration_event = EventRepository.get_by_id(event_id)
         if(registration_event is not None):
@@ -61,8 +66,10 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             GuestRegistration.user_id == user_id).filter(GuestRegistration.registration_form_id == registration_form.id).first()
         if registration:
             is_guest_registration = True
+            invited_guest = db.session.query(InvitedGuest).filter_by(event_id=event_id, user_id=user_id).first()
         else:
             is_guest_registration = False
+            invited_guest = None
 
         # Normal Registration
         if (not registration) and offer:
@@ -107,66 +114,53 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             LOGGER.error('Failed to add invitation letter request for user id {} due to: {}'.format(user_id, e))
             return errors.ADD_INVITATION_REQUEST_FAILED
 
-        invitation_template = None
-        if (is_guest_registration):
-            invitation_template = (
-                db.session.query(InvitationTemplate)
-                .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
-                .filter(InvitationTemplate.send_for_travel_award_only == False)
-                .filter(InvitationTemplate.send_for_accommodation_award_only == False)
-                .first()
-            )
-        elif (offer.accommodation_award and offer.accepted_accommodation_award
-                and offer.travel_award and offer.accepted_travel_award):
-            invitation_template = db.session.query(InvitationTemplate).filter(
-                InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_both_travel_accommodation == True).first()
-
-        elif (offer.travel_award and offer.accepted_travel_award):
-            invitation_template = db.session.query(InvitationTemplate).filter(
-                InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_travel_award_only == True).first()
-
-        elif (offer.accommodation_award and offer.accepted_accommodation_award):
-            invitation_template = db.session.query(InvitationTemplate).filter(
-                InvitationTemplate.event_id == offer.event_id).filter(
-                InvitationTemplate.send_for_accommodation_award_only == True).first()
-
-        else:
-            invitation_template = (
-                db.session.query(InvitationTemplate)
-                .filter(InvitationTemplate.send_for_both_travel_accommodation == False)
-                .filter(InvitationTemplate.send_for_travel_award_only == False)
-                .filter(InvitationTemplate.send_for_accommodation_award_only == False)
-                .first()
-            )
+        if (is_guest_registration and invited_guest is not None and invited_guest.role == "Indaba X"):
+            LOGGER.info("Generating invitation letter for IndabaX Guest")
+            accommodation = True
+            travel = True
+        elif is_guest_registration:
+            LOGGER.info("Generating invitation letter for Invited Guest")
+            accommodation = False
+            travel = False
+        elif offer is not None:
+            accommodation = offer.accepted_accommodation_award
+            travel = offer.accepted_travel_award
+            LOGGER.info(f"Generating invitation letter for General attendee with accommodation: {accommodation}, Travel: {travel}")
+        
+        invitation_template = (
+            db.session.query(InvitationTemplate)
+            .filter_by(
+                event_id=event_id,
+                send_for_both_travel_accommodation=travel and accommodation,
+                send_for_travel_award_only=travel and not accommodation,
+                send_for_accommodation_award_only=accommodation and not travel)
+            .first())
         
         template_url = invitation_template.template_path
+        LOGGER.info(f"Using template_url: {template_url}")
 
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
-        country_of_residence = db.session.query(Country).filter(Country.id == user.residence_country_id).first()
-        nationality = db.session.query(Country).filter(Country.id == user.nationality_country_id).first()
-
-        if user.user_dateOfBirth is not None:
-            date_of_birth = user.user_dateOfBirth.strftime("%Y-%m-%d")
-        else:
-            return errors.MISSING_DATE_OF_BIRTH
 
         # Poster registration
         bringing_poster = ""
-        poster_registration_question = db.session.query(RegistrationQuestion).filter(RegistrationQuestion.headline == "Will you be bringing a poster?").first()
+        poster_registration_question = (db.session.query(RegistrationQuestion)
+                .filter_by(
+                    headline="Will you be bringing a poster?",
+                    registration_form_id=registration_form.id
+                ).first())
         if poster_registration_question is not None:
             poster_answer = (
                 db.session.query(RegistrationAnswer)
                 .join(Registration, RegistrationAnswer.registration_id == Registration.id)
                 .join(Offer, Offer.id == Registration.offer_id)
-                .filter(Offer.user_id == user_id)
+                .filter_by(user_id=user_id, event_id=event_id)
                 .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
                 .first()
             )
             if poster_answer is not None and poster_answer.value == 'yes':
                 bringing_poster = "The participant will be presenting a poster of their research."
-
+        
+        LOGGER.info(f"Bringing poster: {bringing_poster}")
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
         is_sent = generate(template_path=template_url,
@@ -181,9 +175,9 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             expiry_date=passport_expiry_date.strftime("%Y-%m-%d"),
                             to_date=to_date.strftime("%Y-%m-%d"),
                             from_date=from_date.strftime("%Y-%m-%d"),
-                            country_of_residence=country_of_residence.name,
-                            nationality=nationality.name,
-                            date_of_birth=date_of_birth,
+                            country_of_residence=country_of_residence,
+                            nationality=country_of_nationality,
+                            date_of_birth=date_of_birth.strftime("%Y-%m-%d"),
                             email=user.email,
                             user_title=user.user_title,
                             firstname=user.firstname,
