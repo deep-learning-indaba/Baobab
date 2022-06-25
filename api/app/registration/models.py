@@ -39,7 +39,7 @@ class Offer(db.Model):
             PaymentStatus.FAILED.value
         ]
         for offer_invoice in self.offer_invoices:
-            if offer_invoice.invoice.payment_status in valid_payment_statuses:
+            if offer_invoice.invoice.current_payment_status.payment_status in valid_payment_statuses:
                 return True
         return False
 

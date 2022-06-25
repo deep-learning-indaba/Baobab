@@ -6,7 +6,13 @@ from app import db
 from app.invoice.models import PaymentStatus, InvoicePaymentStatus, Invoice
 from app.registration.models import Offer
 from app.utils.testing import ApiTestCase
-from app.utils.errors import INVOICE_NOT_FOUND
+from app.utils.errors import (
+    INVOICE_NOT_FOUND,
+    FORBIDDEN,
+    OFFER_NOT_FOUND,
+    EVENT_FEE_NOT_FOUND,
+    EVENT_FEES_MUST_HAVE_SAME_CURRENCY
+)
 
 class BaseInvoiceApiTest(ApiTestCase):
     def setUp(self):
@@ -264,4 +270,111 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertEqual(data[1]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[1]["created_at"])
         self.assertEqual(data[1]["total_amount"], 5.85)
+        self.assertEqual(data[1]["current_payment_status"], PaymentStatus.UNPAID.value)
+    
+    def test_prevent_invoice_creation_from_non_treasurer(self):
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'event_id': self.event_id, 'offer_ids': [1], 'event_fee_ids': [1]}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+
+    def test_prevent_invoice_creation_with_non_existent_offer(self):
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'event_id': self.event_id, 'offer_ids': [1], 'event_fee_ids': [1]}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, OFFER_NOT_FOUND[1])
+
+    def test_prevent_invoice_creation_with_non_existent_event_fees(self):
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'event_id': self.event_id, 'offer_ids': [offer_id], 'event_fee_ids': [1]}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, EVENT_FEE_NOT_FOUND[1])
+
+    def test_prevent_invoice_creation_with_event_fees_with_different_currencies(self):
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id, iso_currency_code='usd')
+        event_fee_1_id = event_fee_1.id
+        event_fee_2 = self.add_event_fee(self.event_id, self.treasurer_id, iso_currency_code='gbp')
+        event_fee_2_id = event_fee_2.id
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id],
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, EVENT_FEES_MUST_HAVE_SAME_CURRENCY[1])
+
+    def test_prevent_invoice_creation_when_valid_invoice_already_exists(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        invoice.link_offer(offer.id)
+        event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id)
+        event_fee_1_id = event_fee_1.id
+        event_fee_2 = self.add_event_fee(self.event_id, self.treasurer_id)
+        event_fee_2_id = event_fee_2.id
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id],
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, 400)
+
+
+    def test_invoice_creation(self):
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        another_applicant_email = "another_applicant@user.com"
+        another_applicant = self.add_user(another_applicant_email)
+        another_applicant_id = another_applicant.id
+        another_offer = self.add_offer(another_applicant.id, self.event_id)
+        another_offer_id = another_offer.id
+        event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id, amount=1.41)
+        event_fee_1_id = event_fee_1.id
+        event_fee_2 = self.add_event_fee(self.event_id, self.treasurer_id, amount=1.61)
+        event_fee_2_id = event_fee_2.id
+    
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id, another_offer_id],
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(data), 2)
+
+        self.assertEqual(data[0]["customer_email"], self.applicant_email)
+        self.assertEqual(data[0]["client_reference_id"], str(self.applicant_id))
+        self.assertEqual(data[0]["iso_currency_code"], 'usd')
+        self.assertEqual(data[0]["created_by_user_id"], self.treasurer_id)
+        self.assertEqual(data[0]["created_by_user"], self.treasurer_name)
+        self.assertIsNotNone(data[0]["created_at"])
+        self.assertEqual(data[0]["total_amount"], 3.02)
+        self.assertEqual(data[0]["current_payment_status"], PaymentStatus.UNPAID.value)
+
+        self.assertEqual(data[1]["customer_email"], another_applicant_email)
+        self.assertEqual(data[1]["client_reference_id"], str(another_applicant_id))
+        self.assertEqual(data[1]["iso_currency_code"], 'usd')
+        self.assertEqual(data[1]["created_by_user_id"], self.treasurer_id)
+        self.assertEqual(data[1]["created_by_user"], self.treasurer_name)
+        self.assertIsNotNone(data[1]["created_at"])
+        self.assertEqual(data[1]["total_amount"], 3.02)
         self.assertEqual(data[1]["current_payment_status"], PaymentStatus.UNPAID.value)

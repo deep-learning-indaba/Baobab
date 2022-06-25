@@ -885,21 +885,6 @@ class EventFeeAPITest(ApiTestCase):
         self.treasurer_email = "treasurer@user.com"
         self.treasurer = self.add_user(self.treasurer_email)
         self.add_event_role("treasurer", self.treasurer.id, self.event.id)
-
-    def add_event_fee(
-        self,
-        event_id,
-        created_by_user_id,
-        name='Registration fee',
-        iso_currency_code='usd',
-        amount=200.00,
-        description=None
-    ):
-        event_fee = EventFee(name, iso_currency_code, amount, created_by_user_id, description)
-        event_fee.event_id = event_id
-        db.session.add(event_fee)
-        db.session.commit()
-        return event_fee
      
     def test_get_event_fee_not_found(self):
         self.seed_static_data()

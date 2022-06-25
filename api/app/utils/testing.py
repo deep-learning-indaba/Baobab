@@ -16,7 +16,7 @@ from sqlalchemy.exc import ProgrammingError
 from app import LOGGER, app, db
 from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
                                          SectionTranslation)
-from app.events.models import Event, EventType, EventRole
+from app.events.models import Event, EventType, EventRole, EventFee
 from app.invitedGuest.models import InvitedGuest
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
@@ -453,6 +453,21 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rt)
         db.session.commit()
         return rt
+    
+    def add_event_fee(
+        self,
+        event_id,
+        created_by_user_id,
+        name='Registration fee',
+        iso_currency_code='usd',
+        amount=200.00,
+        description=None
+    ):
+        event_fee = EventFee(name, iso_currency_code, amount, created_by_user_id, description)
+        event_fee.event_id = event_id
+        db.session.add(event_fee)
+        db.session.commit()
+        return event_fee
 
     def add_invoice(
         self,

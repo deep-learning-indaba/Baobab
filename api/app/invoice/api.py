@@ -135,7 +135,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
     @marshal_with(invoice_list_fields)
     def post(self):
-        args = self.get_parser.parse_args()
+        args = self.post_parser.parse_args()
         event_id = args['event_id']
 
         user_id = g.current_user["id"]
@@ -151,7 +151,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
         event_fee_ids = args['event_fee_ids']
         event_fees = event_repository.get_event_fees(event_id, event_fee_ids)
-        if event_fees or (len(event_fee_ids) > len(event_fees)):
+        if not event_fees or (len(event_fee_ids) > len(event_fees)):
             return EVENT_FEE_NOT_FOUND
 
         iso_currency_codes = set([event_fee.iso_currency_code for event_fee in event_fees])
@@ -159,16 +159,16 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             return EVENT_FEES_MUST_HAVE_SAME_CURRENCY
         iso_currency_code = list(iso_currency_codes)[0]
 
-        line_items = []
-        for event_fee in event_fees:
-            line_item = InvoiceLineItem(event_fee.name, event_fee.description, event_fee.amount)
-            line_items.append(line_item)
-
         invoices = []
         invalid_offer_ids = []
         for offer in offers:
             if offer.has_valid_invoice():
                 invalid_offer_ids.append(offer.id)
+            
+            line_items = []
+            for event_fee in event_fees:
+                line_item = InvoiceLineItem(event_fee.name, event_fee.description, event_fee.amount)
+                line_items.append(line_item)
 
             invoice = Invoice(
                 offer.user.email,
@@ -182,7 +182,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         
         if invalid_offer_ids:
             error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice."
-            return error_message, 400
+            return {'message': error_message}, 400
 
         invoice_repository.add_all(invoices)
 
