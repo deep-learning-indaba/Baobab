@@ -1,17 +1,18 @@
 import json
+from unittest.mock import patch
 import warnings
-from time import time
 
 from app import db
-from app.invoice.models import PaymentStatus, InvoicePaymentStatus, Invoice
-from app.registration.models import Offer
+from app.invoice.models import PaymentStatus, InvoicePaymentStatus
 from app.utils.testing import ApiTestCase
 from app.utils.errors import (
     INVOICE_NOT_FOUND,
     FORBIDDEN,
     OFFER_NOT_FOUND,
     EVENT_FEE_NOT_FOUND,
-    EVENT_FEES_MUST_HAVE_SAME_CURRENCY
+    EVENT_FEES_MUST_HAVE_SAME_CURRENCY,
+    INVOICE_PAID,
+    INVOICE_CANCELED
 )
 
 class BaseInvoiceApiTest(ApiTestCase):
@@ -378,3 +379,77 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertIsNotNone(data[1]["created_at"])
         self.assertEqual(data[1]["total_amount"], 3.02)
         self.assertEqual(data[1]["current_payment_status"], PaymentStatus.UNPAID.value)
+
+class PaymentsApiTest(BaseInvoiceApiTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.url = "/api/v1/payment"
+
+        # we don't mind this since this warning is specific to sqlite
+        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
+
+    def setUp(self):
+        super().setUp()
+
+    def test_prevent_paying_wrong_invoice(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.treasurer_id, line_items, self.treasurer_email)
+        invoice_id = invoice.id
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
+    
+    def test_prevent_pay_invoice_again(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        payment_status = InvoicePaymentStatus.from_baobab(PaymentStatus.PAID, self.treasurer_id)
+        invoice.invoice_payment_statuses.append(payment_status)
+        db.session.commit()
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_PAID[1])
+
+    def test_prevent_pay_canceled_invoice(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        payment_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, self.treasurer_id)
+        invoice.invoice_payment_statuses.append(payment_status)
+        db.session.commit()
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_CANCELED[1])
+
+    @patch('app.invoice.api.stripe')
+    def test_make_payment(self, mock_stripe):
+        class TestSession:
+            def __init__(self, amount_total):
+                self.payment_intent = 'pi_3L7GhOEpDzoopUbL0jGJhE2i'
+                self.url = 'https://checkout.stripe.com/pay/cs_test_a1gR3cbI'
+                self.amount_total = amount_total
+
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        total_amount = invoice.total_amount
+        mock_stripe.checkout.Session.create.side_effect = [TestSession(total_amount)]
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['payment_intent'], 'pi_3L7GhOEpDzoopUbL0jGJhE2i')
+        self.assertEqual(data['url'], 'https://checkout.stripe.com/pay/cs_test_a1gR3cbI')
+        self.assertEqual(data['amount_total'], float(total_amount))

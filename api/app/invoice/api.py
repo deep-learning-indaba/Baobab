@@ -188,9 +188,14 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
         return invoices, 201
 
-
+payment_fields = {
+    'url': fields.String,
+    'payment_intent': fields.String,
+    'amount_total': fields.Float
+}
 class PaymentsAPI(PaymentsMixin, restful.Resource):
     @auth_required
+    @marshal_with(payment_fields)
     def post(self):
         args = self.post_parser.parse_args()
         invoice_id = args['invoice_id']
@@ -198,6 +203,9 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         invoice = invoice_repository.get_one_for_customer(invoice_id, current_user.email)
+
+        if not invoice:
+            return INVOICE_NOT_FOUND
 
         if invoice.is_paid:
             return INVOICE_PAID
@@ -231,14 +239,14 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
                 "invoice_id": invoice.id,
                 "user_id": user_id
             },
-            success_url=f'{BOABAB_HOST}/payment-sucess',
-            cancel_url=f'{BOABAB_HOST}/payment-cancel',
+            success_url=f'{g.organisation.system_url}/payment-sucess',
+            cancel_url=f'{g.organisation.system_url}/payment-cancel',
         )
 
         invoice.add_payment_intent(session.payment_intent)
         invoice_repository.save()
 
-        return session.url, 200
+        return session, 200
 
 class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
     def post(self):

@@ -120,11 +120,11 @@ class Invoice(db.Model):
     
     @property
     def is_paid(self):
-        return self.current_payment_status == PaymentStatus.PAID.value
+        return self.current_payment_status.payment_status == PaymentStatus.PAID.value
     
     @property
     def is_canceled(self):
-        return self.current_payment_status == PaymentStatus.CANCELED.value
+        return self.current_payment_status.payment_status == PaymentStatus.CANCELED.value
     
     @property
     def offer_id(self):
