@@ -81,6 +81,7 @@ class ApiTestCase(unittest.TestCase):
         dummy_org = self.add_organisation(domain='org')
         db.session.flush()
         self.dummy_org_id = dummy_org.id
+        self.dummy_org_webhook_secret = dummy_org.stripe_webhook_secret_key
 
     def _get_names(self):
         """Retrieve a list of names from a text file for testing"""
@@ -156,13 +157,23 @@ class ApiTestCase(unittest.TestCase):
 
         return users
 
-    def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
-                                    email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
-                                    privacy_policy='PrivacyPolicy.pdf', languages=[{"code": "en", "description": "English"}]):
+    def add_organisation(self,
+        name='My Org',
+        system_name='Baobab',
+        small_logo='org.png', 
+        large_logo='org_big.png',
+        icon_logo='org_icon.png',
+        domain='com',
+        url='www.org.com',
+        email_from='contact@org.com',
+        system_url='baobab.deeplearningindaba.com',
+        privacy_policy='PrivacyPolicy.pdf',
+        languages=[{"code": "en", "description": "English"}],
+        webhook_secret_key="webhook_secret_key"
+    ):
         org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages)
         org.set_currency('usd')
-        org.set_stripe_keys("not_secret", "secret_key", "webhook_secret_key")
+        org.set_stripe_keys("not_secret", "secret_key", webhook_secret_key)
         db.session.add(org)
         db.session.commit()
         return org

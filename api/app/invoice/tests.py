@@ -1,9 +1,12 @@
 import json
+from time import time
 from unittest.mock import patch
 import warnings
 
 from app import db
-from app.invoice.models import PaymentStatus, InvoicePaymentStatus
+from app.invoice.models import PaymentStatus, InvoicePaymentStatus, StripeWebhookEvent
+from app.invoice.repository import InvoiceRepository as invoice_repository
+from app.utils.auth import sign_payload
 from app.utils.testing import ApiTestCase
 from app.utils.errors import (
     INVOICE_NOT_FOUND,
@@ -32,14 +35,14 @@ class BaseInvoiceApiTest(ApiTestCase):
         self.applicant = self.add_user(self.applicant_email)
         self.applicant_id = self.applicant.id
 
+        # we don't mind this since this warning is specific to sqlite
+        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
+
 
 class InvoiceApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = "/api/v1/invoice"
-
-        # we don't mind this since this warning is specific to sqlite
-        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
     
     def setUp(self):
         super().setUp()
@@ -161,9 +164,6 @@ class InvoiceListApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = "/api/v1/invoice-list"
-
-        # we don't mind this since this warning is specific to sqlite
-        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
     
     def setUp(self):
         super().setUp()
@@ -221,9 +221,6 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = "/api/v1/invoice-admin"
-
-        # we don't mind this since this warning is specific to sqlite
-        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
 
     def setUp(self):
         super().setUp()
@@ -385,9 +382,6 @@ class PaymentsApiTest(BaseInvoiceApiTest):
         super().__init__(*args, **kwargs)
         self.url = "/api/v1/payment"
 
-        # we don't mind this since this warning is specific to sqlite
-        warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
-
     def setUp(self):
         super().setUp()
 
@@ -453,3 +447,139 @@ class PaymentsApiTest(BaseInvoiceApiTest):
         self.assertEqual(data['payment_intent'], 'pi_3L7GhOEpDzoopUbL0jGJhE2i')
         self.assertEqual(data['url'], 'https://checkout.stripe.com/pay/cs_test_a1gR3cbI')
         self.assertEqual(data['amount_total'], float(total_amount))
+
+class PaymentsWebhookApiTest(BaseInvoiceApiTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.url = "/api/v1/stripe-webhook"
+
+    def setUp(self):
+        super().setUp()
+        self.stripe_user_agent = 'Stripe/1.0 (+https://stripe.com/docs/webhooks)'
+        f = open('./app/invoice/test_event_payload.json', 'r')
+        self.data = json.loads(f.read())
+        f.close()
+    
+    def test_signature_verification_fails(self):
+        unix_timestamp = int(time())
+        payload = f"{unix_timestamp}.{json.dumps(self.data)}"
+        payload_signature = sign_payload(payload, 'wrong_secret')
+        stripe_signature = f"t={unix_timestamp},v1={payload_signature},v0=doesntmatter"
+
+        headers = {
+            'User-Agent': self.stripe_user_agent,
+            'Stripe-Signature': stripe_signature,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = self.app.post(self.url, headers=headers, data=json.dumps(self.data))
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['message'], 'Could not resolve organisation from stripe signature')
+        
+    
+    def test_payment_webhook_success_payment(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items)
+        invoice_id = invoice.id
+        invoice.add_payment_intent('pi_3L7GhOEpDzoopUbL0jGJhE2i')
+        db.session.commit()
+
+        unix_timestamp = int(time()) + 1
+        self.data['created'] = unix_timestamp
+        payload = f"{unix_timestamp}.{json.dumps(self.data)}"
+        payload_signature = sign_payload(payload, self.dummy_org_webhook_secret)
+        stripe_signature = f"t={unix_timestamp},v1={payload_signature},v0=doesntmatter"
+
+        headers = {
+            'User-Agent': self.stripe_user_agent,
+            'Stripe-Signature': stripe_signature,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = self.app.post(self.url, headers=headers, data=json.dumps(self.data))
+        
+        invoice = invoice_repository.get_by_id(invoice_id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(invoice.current_payment_status.payment_status, PaymentStatus.PAID.value)
+
+
+    def test_payment_webhook_fail_payment(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items)
+        invoice_id = invoice.id
+        invoice.add_payment_intent('pi_3L7GhOEpDzoopUbL0jGJhE2i')
+        db.session.commit()
+
+        unix_timestamp = int(time()) + 1
+        self.data['created'] = unix_timestamp
+        self.data['type'] = 'payment_intent.payment_failed'
+        payload = f"{unix_timestamp}.{json.dumps(self.data)}"
+        payload_signature = sign_payload(payload, self.dummy_org_webhook_secret)
+        stripe_signature = f"t={unix_timestamp},v1={payload_signature},v0=doesntmatter"
+
+        headers = {
+            'User-Agent': self.stripe_user_agent,
+            'Stripe-Signature': stripe_signature,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = self.app.post(self.url, headers=headers, data=json.dumps(self.data))
+        
+        invoice = invoice_repository.get_by_id(invoice_id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(invoice.current_payment_status.payment_status, PaymentStatus.FAILED.value)
+    
+    def test_payment_receive_events_out_of_order(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items)
+        invoice_id = invoice.id
+        invoice.add_payment_intent('pi_3L7GhOEpDzoopUbL0jGJhE2i')
+        unix_timestamp = int(time()) + 10
+        payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, unix_timestamp)
+        invoice.invoice_payment_statuses.append(payment_status)
+        db.session.commit()
+
+        unix_timestamp = int(time()) + 5
+        self.data['created'] = unix_timestamp
+        self.data['type'] = 'payment_intent.payment_failed'
+        payload = f"{unix_timestamp}.{json.dumps(self.data)}"
+        payload_signature = sign_payload(payload, self.dummy_org_webhook_secret)
+        stripe_signature = f"t={unix_timestamp},v1={payload_signature},v0=doesntmatter"
+
+        headers = {
+            'User-Agent': self.stripe_user_agent,
+            'Stripe-Signature': stripe_signature,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = self.app.post(self.url, headers=headers, data=json.dumps(self.data))
+        self.assertEqual(response.status_code, 200)
+
+        invoice = invoice_repository.get_by_id(invoice_id)
+        self.assertEqual(len(invoice.invoice_payment_statuses), 3)
+        self.assertEqual(invoice.current_payment_status.payment_status, PaymentStatus.PAID.value)
+    
+    def test_payment_receive_duplicated_event(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items)
+        invoice_id = invoice.id
+        invoice.add_payment_intent('pi_3L7GhOEpDzoopUbL0jGJhE2i')
+        stripe_webhook_event = StripeWebhookEvent(self.data)
+        invoice_repository.add(stripe_webhook_event)
+        db.session.commit()
+
+        unix_timestamp = int(time()) + 1
+        self.data['created'] = unix_timestamp
+        payload = f"{unix_timestamp}.{json.dumps(self.data)}"
+        payload_signature = sign_payload(payload, self.dummy_org_webhook_secret)
+        stripe_signature = f"t={unix_timestamp},v1={payload_signature},v0=doesntmatter"
+
+        headers = {
+            'User-Agent': self.stripe_user_agent,
+            'Stripe-Signature': stripe_signature,
+            'Content-Type': 'application/json; charset=utf-8'
+        }
+        response = self.app.post(self.url, headers=headers, data=json.dumps(self.data))
+        self.assertEqual(response.status_code, 200)
+
+        invoice = invoice_repository.get_by_id(invoice_id)
+        self.assertEqual(len(invoice.invoice_payment_statuses), 1)
+        self.assertEqual(invoice.current_payment_status.payment_status, PaymentStatus.UNPAID.value)

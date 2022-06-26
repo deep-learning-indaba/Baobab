@@ -277,7 +277,7 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
         ]
 
         if event['type'] in accepted_events:
-            created_at_unix = event['type']['created']
+            created_at_unix = event['created']
             invoice_payment_status = None
             if event['type'] == 'payment_intent.succeeded':
                 invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(

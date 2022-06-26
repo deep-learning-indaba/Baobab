@@ -87,7 +87,7 @@ class Invoice(db.Model):
 
     created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
     invoice_line_items = db.relationship('InvoiceLineItem')
-    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at_unix)', lazy='dynamic')
+    invoice_payment_statuses = db.relationship('InvoicePaymentStatus', order_by='desc(InvoicePaymentStatus.created_at_unix)')
     invoice_payment_intents = db.relationship('InvoicePaymentIntent')
     offer_invoices = db.relationship('OfferInvoice')
 

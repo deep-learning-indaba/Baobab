@@ -1,4 +1,6 @@
 from functools import wraps
+import hashlib
+import hmac
 
 from flask import request, g
 from flask_restful import reqparse
@@ -30,6 +32,17 @@ def verify_token(token):
         return None
     return data
 
+def sign_payload(payload: str, secret: str):
+    signature = hmac.new(
+        key=secret.encode('utf-8'),
+        msg=payload.encode('utf-8'),
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    return signature
+
+def verify_payload(payload: str, secret: str, expected_signature: str):
+    signature = sign_payload(payload, secret)
+    return signature == expected_signature
 
 def get_user_from_request():
     token = request.headers.get('Authorization', '')
