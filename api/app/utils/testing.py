@@ -61,6 +61,27 @@ class ApiTestCase(unittest.TestCase):
         self.firstnames = []
         self.lastnames = []
 
+    def setUp(self):
+        app.config['TESTING'] = True
+        app.config['DEBUG'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        self.app = app.test_client()
+        db.reflect()
+        db.drop_all()
+        db.create_all()
+        LOGGER.setLevel('ERROR')
+
+        # Add dummy metadata
+        self.user_category = UserCategory('Postdoc')
+        db.session.add(self.user_category)
+        self.country = Country('South Africa')
+        db.session.add(self.country)
+
+        # Add a dummy organisation
+        dummy_org = self.add_organisation(domain='org')
+        db.session.flush()
+        self.dummy_org_id = dummy_org.id
+
     def _get_names(self):
         """Retrieve a list of names from a text file for testing"""
         if len(self.firstnames):
@@ -134,27 +155,6 @@ class ApiTestCase(unittest.TestCase):
                 db.session.rollback()
 
         return users
-
-    def setUp(self):
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-        self.app = app.test_client()
-        db.reflect()
-        db.drop_all()
-        db.create_all()
-        LOGGER.setLevel('ERROR')
-
-        # Add dummy metadata
-        self.user_category = UserCategory('Postdoc')
-        db.session.add(self.user_category)
-        self.country = Country('South Africa')
-        db.session.add(self.country)
-
-        # Add a dummy organisation
-        dummy_org = self.add_organisation(domain='org')
-        db.session.flush()
-        self.dummy_org_id = dummy_org.id
 
     def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
                                     large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
