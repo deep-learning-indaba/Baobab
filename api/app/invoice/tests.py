@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from time import time
 from unittest.mock import patch
 import warnings
+import os
 
 from app import db
 from app.invoice.models import PaymentStatus, InvoicePaymentStatus, StripeWebhookEvent
@@ -575,7 +576,8 @@ class PaymentsWebhookApiTest(BaseInvoiceApiTest):
     def setUp(self):
         super().setUp()
         self.stripe_user_agent = 'Stripe/1.0 (+https://stripe.com/docs/webhooks)'
-        f = open('./app/invoice/test_event_payload.json', 'r')
+        path = f"{os.path.dirname(__file__)}/test_event_payload.json"
+        f = open(path, 'r')
         self.data = json.loads(f.read())
         f.close()
     
