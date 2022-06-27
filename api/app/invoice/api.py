@@ -72,6 +72,12 @@ invoice_list_fields = {
     'current_payment_status': fields.String(attribute='current_payment_status.payment_status')
 }
 
+invoice_payment_status_fields = {
+    'id': fields.Integer,
+    'payment_status': fields.String,
+    'created_at_unix': fields.Integer
+}
+
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
     @marshal_with(invoice_fields)
@@ -107,6 +113,21 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
         return 200
 
+class InvoicePaymentStatusApi(restful.Resource, InvoiceMixin):
+    @auth_required
+    @marshal_with(invoice_payment_status_fields)
+    def get(self):
+        args = self.req_parser.parse_args()
+
+        payment_status = invoice_repository.get_latest_payment_status(
+            args['invoice_id'],
+            g.current_user['email']
+        )
+
+        if not payment_status:
+            return INVOICE_NOT_FOUND
+
+        return payment_status, 200
 
 class InvoiceListAPI(restful.Resource):
     @auth_required

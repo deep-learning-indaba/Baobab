@@ -160,6 +160,38 @@ class InvoiceApiTest(BaseInvoiceApiTest):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(data["message"], "Cannot cancel an invoice that's already been paid.")
 
+class InvoicePaymentStatusApiTest(BaseInvoiceApiTest):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.url = '/api/v1/invoice-payment-status'
+    
+    def setUp(self):
+        super().setUp()
+
+    def test_invoice_not_found(self):
+        params = {'invoice_id': 12}
+        header = self.get_auth_header_for(self.applicant_email)
+        response = self.app.get(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
+    
+    def test_get_latest_payment_status(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, int(time()) + 1)
+        invoice.invoice_payment_statuses.append(payment_status)
+        invoice_repository.save()
+
+        params = {'invoice_id': invoice_id}
+        header = self.get_auth_header_for(self.applicant_email)
+        response = self.app.get(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['payment_status'], PaymentStatus.PAID.value)
+        self.assertIsNotNone(data['created_at_unix'])
+
 class InvoiceListApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
