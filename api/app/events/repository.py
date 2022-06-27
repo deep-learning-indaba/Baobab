@@ -62,9 +62,13 @@ class EventRepository(BaseRepository):
             .first()
         )
     
+    @staticmethod
     def get_event_fees(event_id, event_fee_ids):
         return (
             db.session.query(EventFee)
-            .filter(EventFee.event_id==event_id, EventFee.id.in_(event_fee_ids))
+            .filter(
+                EventFee.event_id==event_id,
+                EventFee.id.in_(event_fee_ids),
+                EventFee.is_active==True)
             .all()
         )

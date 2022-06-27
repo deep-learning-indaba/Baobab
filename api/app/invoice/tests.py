@@ -284,12 +284,15 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
 
         self.assertEqual(response.status_code, OFFER_NOT_FOUND[1])
 
-    def test_prevent_invoice_creation_with_non_existent_event_fees(self):
+    def test_prevent_invoice_creation_with_deactivated_event_fees(self):
+        event_fee = self.add_event_fee(self.event_id, self.treasurer_id, iso_currency_code='usd')
+        event_fee_id = event_fee.id
+        event_fee.deactivate(self.treasurer_id)
         offer = self.add_offer(self.applicant_id, self.event_id)
         offer_id = offer.id
 
         header = self.get_auth_header_for(self.treasurer_email)
-        params = {'event_id': self.event_id, 'offer_ids': [offer_id], 'event_fee_ids': [1]}
+        params = {'event_id': self.event_id, 'offer_ids': [offer_id], 'event_fee_ids': [event_fee_id]}
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, EVENT_FEE_NOT_FOUND[1])
