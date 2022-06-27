@@ -192,7 +192,8 @@ class GuestRegistrationApiTest(ApiTestCase):
         response = self.app.get(
             '/api/v1/guest-registration',
             content_type='application/json',
-            headers=self.headers)
+            headers=self.headers,
+            data=json.dumps({'event_id': 1}))
         self.assertEqual(response.status_code, 200)
 
     def test_update_200(self):
