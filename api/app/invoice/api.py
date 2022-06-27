@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import flask_restful as restful
 from flask_restful import fields, marshal_with
 from flask import g, request
@@ -17,7 +19,9 @@ from app.utils.errors import (
     EVENT_FEES_MUST_HAVE_SAME_CURRENCY,
     INVOICE_PAID,
     INVOICE_CANCELED,
-    INVOICE_NOT_FOUND)
+    INVOICE_NOT_FOUND,
+    INVOICE_MUST_HAVE_FUTURE_DATE,
+    INVOICE_OVERDUE)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
 from config import BOABAB_HOST
@@ -48,8 +52,10 @@ invoice_line_item_fields = {
 invoice_fields = {
     'id': fields.Integer,
     'customer_email': fields.String,
+    'customer_name': fields.String,
     'client_reference_id': fields.String,
     'iso_currency_code': fields.String,
+    'due_date': fields.DateTime(dt_format='iso8601'),
     'created_by_user_id': fields.Integer,
     'created_by_user': fields.String(attribute='created_by.full_name'),
     'created_at': fields.DateTime(dt_format='iso8601'),
@@ -63,8 +69,10 @@ invoice_fields = {
 invoice_list_fields = {
     'id': fields.Integer,
     'customer_email': fields.String,
+    'customer_name': fields.String,
     'client_reference_id': fields.String,
     'iso_currency_code': fields.String,
+    'due_date': fields.DateTime(dt_format='iso8601'),
     'created_by_user_id': fields.Integer,
     'created_by_user': fields.String(attribute='created_by.full_name'),
     'created_at': fields.DateTime(dt_format='iso8601'),
@@ -158,12 +166,16 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     def post(self):
         args = self.post_parser.parse_args()
         event_id = args['event_id']
+        due_date = args['due_date']
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
 
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
+        
+        if due_date < datetime.now():
+            return INVOICE_MUST_HAVE_FUTURE_DATE
 
         offer_ids = args['offer_ids']
         offers = offer_repository.get_offers_for_event(event_id, offer_ids)
@@ -193,7 +205,9 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
             invoice = Invoice(
                 offer.user.email,
+                offer.user.full_name,
                 iso_currency_code,
+                due_date,
                 line_items,
                 user_id,
                 str(offer.user_id)
@@ -233,6 +247,9 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
 
         if invoice.is_canceled:
             return INVOICE_CANCELED
+        
+        if invoice.is_overdue:
+            return INVOICE_OVERDUE
 
         stripe.api_key = g.organisation.stripe_api_secret_key
 

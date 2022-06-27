@@ -6,7 +6,6 @@ import random
 import unicodedata
 import unittest
 from datetime import datetime, timedelta
-from sqlite3 import Connection as SQLite3Connection
 
 import six
 from sqlalchemy import event
@@ -488,9 +487,19 @@ class ApiTestCase(unittest.TestCase):
         user_id,
         line_items,
         email='user@user.com',
+        name='User Lastname',
         iso_currency_code='usd',
+        due_date=datetime.now() + timedelta(days=7)
     ):
-        invoice = Invoice(email, iso_currency_code, line_items, created_by_user_id, str(user_id))
+        invoice = Invoice(
+            email,
+            name,
+            iso_currency_code,
+            due_date,
+            line_items,
+            created_by_user_id,
+            str(user_id)
+        )
         db.session.add(invoice)
         db.session.commit()
         return invoice

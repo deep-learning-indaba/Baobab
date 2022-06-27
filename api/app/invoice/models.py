@@ -80,8 +80,10 @@ class InvoicePaymentIntent(db.Model):
 class Invoice(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     customer_email = db.Column(db.String(255), nullable=False, index=True)
+    customer_name = db.Column(db.String(200), nullable=False)
     client_reference_id = db.Column(db.String(255), nullable=True)
     iso_currency_code = db.Column(db.String(3), nullable=False)
+    due_date = db.Column(db.DateTime(), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
 
@@ -94,14 +96,18 @@ class Invoice(db.Model):
     def __init__(
         self,
         customer_email,
+        customer_name,
         iso_currency_code,
+        due_date,
         line_items,
         user_id,
         client_reference_id=None
     ):
         self.customer_email = customer_email
+        self.customer_name = customer_name
         self.client_reference_id = client_reference_id
         self.iso_currency_code = iso_currency_code
+        self.due_date = due_date
         self.created_by_user_id = user_id
         self.created_at = datetime.now()
         
@@ -125,6 +131,10 @@ class Invoice(db.Model):
     @property
     def is_canceled(self):
         return self.current_payment_status.payment_status == PaymentStatus.CANCELED.value
+
+    @property
+    def is_overdue(self):
+        return self.due_date < datetime.now()
     
     @property
     def offer_id(self):

@@ -131,4 +131,6 @@ REVIEW_FORM_EXISTS = ({'message': "A review form for this event and stage alread
 INVOICE_PAID = ({'message': "Invoice has already been paid"}, 400)
 INVOICE_NOT_FOUND = ({'messsage': "Invoice not found."}, 404)
 INVOICE_CANCELED = ({'message': "Invoice has been canceled"}, 400)
+INVOICE_MUST_HAVE_FUTURE_DATE = ({'message': 'Invoice must have a due date in the future'}, 400)
+INVOICE_OVERDUE = ({'message': 'Invoice is overdue and cannot be paid anymore'}, 400)
 STRIPE_SETUP_INCOMPLETE = ({'message': 'Stripe setup has not yet been completed.'}, 400)

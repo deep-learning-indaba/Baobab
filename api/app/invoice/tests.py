@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from time import time
 from unittest.mock import patch
 import warnings
@@ -15,7 +16,9 @@ from app.utils.errors import (
     EVENT_FEE_NOT_FOUND,
     EVENT_FEES_MUST_HAVE_SAME_CURRENCY,
     INVOICE_PAID,
-    INVOICE_CANCELED
+    INVOICE_CANCELED,
+    INVOICE_MUST_HAVE_FUTURE_DATE,
+    INVOICE_OVERDUE
 )
 
 class BaseInvoiceApiTest(ApiTestCase):
@@ -34,6 +37,7 @@ class BaseInvoiceApiTest(ApiTestCase):
         self.applicant_email = "applicant@user.com"
         self.applicant = self.add_user(self.applicant_email)
         self.applicant_id = self.applicant.id
+        self.applicant_name = self.applicant.full_name
 
         # we don't mind this since this warning is specific to sqlite
         warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
@@ -64,8 +68,10 @@ class InvoiceApiTest(BaseInvoiceApiTest):
         self.assertEqual(response.status_code, 200)
         
         self.assertEqual(data["customer_email"], self.applicant_email)
+        self.assertEqual(data["customer_name"], self.applicant_name)
         self.assertEqual(data["client_reference_id"], str(self.applicant_id))
         self.assertEqual(data["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data["due_date"])
         self.assertEqual(data["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data["created_at"])
@@ -232,8 +238,10 @@ class InvoiceListApiTest(BaseInvoiceApiTest):
         self.assertEqual(len(data), 2)
 
         self.assertEqual(data[0]["customer_email"], self.applicant_email)
+        self.assertEqual(data[0]["customer_name"], self.applicant_name)
         self.assertEqual(data[0]["client_reference_id"], str(self.applicant_id))
         self.assertEqual(data[0]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[0]["due_date"])
         self.assertEqual(data[0]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[0]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[0]["created_at"])
@@ -241,8 +249,10 @@ class InvoiceListApiTest(BaseInvoiceApiTest):
         self.assertEqual(data[0]["current_payment_status"], PaymentStatus.PAID.value)
 
         self.assertEqual(data[1]["customer_email"], self.applicant_email)
+        self.assertEqual(data[1]["customer_name"], self.applicant_name)
         self.assertEqual(data[1]["client_reference_id"], str(self.applicant_id))
         self.assertEqual(data[1]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[1]["due_date"])
         self.assertEqual(data[1]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[1]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[1]["created_at"])
@@ -268,6 +278,7 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         another_applicant_email = "another_applicant@user.com"
         another_applicant = self.add_user(another_applicant_email)
         another_applicant_id = another_applicant.id
+        another_applicant_name = another_applicant.full_name
         line_items = self.get_default_line_items()
         line_items[0].amount = 3.14
         line_items[1].amount = 2.71
@@ -285,8 +296,10 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertEqual(len(data), 2)
 
         self.assertEqual(data[0]["customer_email"], self.applicant_email)
+        self.assertEqual(data[0]["customer_name"], self.applicant_name)
         self.assertEqual(data[0]["client_reference_id"], str(self.applicant_id))
         self.assertEqual(data[0]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[0]["due_date"])
         self.assertEqual(data[0]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[0]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[0]["created_at"])
@@ -294,8 +307,10 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertEqual(data[0]["current_payment_status"], PaymentStatus.FAILED.value)
 
         self.assertEqual(data[1]["customer_email"], another_applicant_email)
+        self.assertEqual(data[1]["customer_name"], another_applicant_name)
         self.assertEqual(data[1]["client_reference_id"], str(another_applicant_id))
         self.assertEqual(data[1]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[1]["due_date"])
         self.assertEqual(data[1]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[1]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[1]["created_at"])
@@ -304,14 +319,36 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
     
     def test_prevent_invoice_creation_from_non_treasurer(self):
         header = self.get_auth_header_for(self.applicant_email)
-        params = {'event_id': self.event_id, 'offer_ids': [1], 'event_fee_ids': [1]}
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [1],
+            'event_fee_ids': [1],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, FORBIDDEN[1])
+    
+    def test_prevent_invoice_creation_with_due_date_in_past(self):
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [1],
+            'event_fee_ids': [1],
+            'due_date': (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_MUST_HAVE_FUTURE_DATE[1])
 
     def test_prevent_invoice_creation_with_non_existent_offer(self):
         header = self.get_auth_header_for(self.treasurer_email)
-        params = {'event_id': self.event_id, 'offer_ids': [1], 'event_fee_ids': [1]}
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [1],
+            'event_fee_ids': [1],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, OFFER_NOT_FOUND[1])
@@ -324,7 +361,12 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         offer_id = offer.id
 
         header = self.get_auth_header_for(self.treasurer_email)
-        params = {'event_id': self.event_id, 'offer_ids': [offer_id], 'event_fee_ids': [event_fee_id]}
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id],
+            'event_fee_ids': [event_fee_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, EVENT_FEE_NOT_FOUND[1])
@@ -341,11 +383,12 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         params = {
             'event_id': self.event_id,
             'offer_ids': [offer_id],
-            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
         }
         response = self.app.post(self.url, headers=header, data=params)
 
-        self.assertEqual(response.status_code, EVENT_FEES_MUST_HAVE_SAME_CURRENCY[1])
+        self.assertEqual(response.status_code, EVENT_FEES_MUST_HAVE_SAME_CURRENCY[1])   
 
     def test_prevent_invoice_creation_when_valid_invoice_already_exists(self):
         line_items = self.get_default_line_items()
@@ -362,12 +405,12 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         params = {
             'event_id': self.event_id,
             'offer_ids': [offer_id],
-            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
         }
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, 400)
-
 
     def test_invoice_creation(self):
         offer = self.add_offer(self.applicant_id, self.event_id)
@@ -375,6 +418,7 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         another_applicant_email = "another_applicant@user.com"
         another_applicant = self.add_user(another_applicant_email)
         another_applicant_id = another_applicant.id
+        another_applicant_name = another_applicant.full_name
         another_offer = self.add_offer(another_applicant.id, self.event_id)
         another_offer_id = another_offer.id
         event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id, amount=1.41)
@@ -386,7 +430,8 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         params = {
             'event_id': self.event_id,
             'offer_ids': [offer_id, another_offer_id],
-            'event_fee_ids': [event_fee_1_id, event_fee_2_id]
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
         }
         response = self.app.post(self.url, headers=header, data=params)
 
@@ -395,8 +440,10 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertEqual(len(data), 2)
 
         self.assertEqual(data[0]["customer_email"], self.applicant_email)
+        self.assertEqual(data[0]["customer_name"], self.applicant_name)
         self.assertEqual(data[0]["client_reference_id"], str(self.applicant_id))
         self.assertEqual(data[0]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[0]["due_date"])
         self.assertEqual(data[0]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[0]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[0]["created_at"])
@@ -404,8 +451,10 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertEqual(data[0]["current_payment_status"], PaymentStatus.UNPAID.value)
 
         self.assertEqual(data[1]["customer_email"], another_applicant_email)
+        self.assertEqual(data[1]["customer_name"], another_applicant_name)
         self.assertEqual(data[1]["client_reference_id"], str(another_applicant_id))
         self.assertEqual(data[1]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[1]["due_date"])
         self.assertEqual(data[1]["created_by_user_id"], self.treasurer_id)
         self.assertEqual(data[1]["created_by_user"], self.treasurer_name)
         self.assertIsNotNone(data[1]["created_at"])
@@ -444,6 +493,17 @@ class PaymentsApiTest(BaseInvoiceApiTest):
         response = self.app.post(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, INVOICE_PAID[1])
+    
+    def test_prevent_pay_overdue_invoice(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email, due_date=datetime.now()-timedelta(days=7))
+        invoice_id = invoice.id
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id}
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_OVERDUE[1])
 
     def test_prevent_pay_canceled_invoice(self):
         line_items = self.get_default_line_items()
