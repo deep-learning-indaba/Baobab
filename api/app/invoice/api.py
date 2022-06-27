@@ -122,8 +122,7 @@ class InvoiceListAPI(restful.Resource):
     @auth_required
     @marshal_with(invoice_list_fields)
     def get(self):
-        current_user = user_repository.get_by_id(g.current_user["id"])
-        invoices = invoice_repository.get_all_for_customer(current_user.email)
+        invoices = invoice_repository.get_all_for_user(g.current_user["id"])
         return invoices, 200
 
 class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):

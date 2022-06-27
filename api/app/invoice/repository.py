@@ -15,10 +15,11 @@ class InvoiceRepository(BaseRepository):
         return db.session.query(Invoice).get(invoice_id)
 
     @staticmethod
-    def get_all_for_customer(customer_email):
+    def get_all_for_user(user_id: int):
+        user_id_str = str(user_id)
         return (
             db.session.query(Invoice)
-            .filter_by(customer_email=customer_email)
+            .filter_by(client_reference_id=user_id_str)
             .all()
         )
     
