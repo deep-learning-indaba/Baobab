@@ -19,6 +19,15 @@ class OrganisationResolver():
             cls._secrets_cache[org.domain] = org.stripe_webhook_secret_key
 
     @classmethod
+    def reset_cache(cls):
+        cls._cache = None
+        cls._secrets_cache = None
+
+    @classmethod
+    def bust_cache(cls):
+        cls._populate_cache()
+
+    @classmethod
     def resolve_from_domain(cls, domain):
         if not cls._cache or not cls._secrets_cache:
             cls._populate_cache()

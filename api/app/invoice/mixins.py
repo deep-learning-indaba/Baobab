@@ -1,4 +1,3 @@
-from email.charset import add_charset
 from flask_restful import reqparse
 
 class InvoiceMixin(object):

@@ -20,6 +20,7 @@ from app.events.models import Event, EventType, EventRole, EventFee
 from app.invitedGuest.models import InvitedGuest
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
+from app.organisation.resolver import OrganisationResolver
 from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
@@ -313,6 +314,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.remove()
         db.reflect()
         db.drop_all()
+        OrganisationResolver.reset_cache()
 
     def create_application_form(self,
                             event_id = 1,

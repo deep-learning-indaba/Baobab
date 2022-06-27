@@ -1,8 +1,9 @@
 from app import db
 from app.organisation.models import Organisation
+from app.utils.repository import BaseRepository
 
 
-class OrganisationRepository():
+class OrganisationRepository(BaseRepository):
 
     @staticmethod
     def get_by_id(organisation_id):
