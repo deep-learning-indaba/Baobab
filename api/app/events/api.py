@@ -508,7 +508,6 @@ class EventFeeAPI(EventFeeMixin, restful.Resource):
 
         event = event_repository.get_by_id(event_id)
         if not event:
-            print('not found')
             return EVENT_NOT_FOUND
 
         current_user = user_repository.get_by_id(user_id)
