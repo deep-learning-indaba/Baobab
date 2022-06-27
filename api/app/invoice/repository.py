@@ -51,6 +51,17 @@ class InvoiceRepository(BaseRepository):
         )
     
     @staticmethod
+    def get_one_from_event(event_id, invoice_id):
+        return (
+            db.session.query(Invoice)
+            .filter_by(id=invoice_id)
+            .join(OfferInvoice, OfferInvoice.invoice_id == Invoice.id)
+            .join(Offer, Offer.id == OfferInvoice.offer_id)
+            .filter_by(event_id=event_id)
+            .first()
+        )
+    
+    @staticmethod
     def has_processed_stripe_webhook_event(idempotency_key):
         return (
             db.session.query(StripeWebhookEvent.id)

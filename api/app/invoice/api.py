@@ -102,25 +102,6 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
 
         return invoice, 200
 
-    @auth_required
-    def delete(self):
-        args = self.req_parser.parse_args()
-
-        user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(user_id)
-        invoice = invoice_repository.get_one_for_customer(args['invoice_id'], current_user.email)
-
-        if invoice is None:
-            return INVOICE_NOT_FOUND
-
-        try:
-            invoice.cancel(user_id)
-            invoice_repository.save()
-        except BaobabError as be:
-            return {'message': be.message}, 400
-
-        return 200
-
 class InvoicePaymentStatusApi(restful.Resource, InvoiceMixin):
     @auth_required
     @marshal_with(invoice_payment_status_fields)
@@ -222,6 +203,29 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         invoice_repository.add_all(invoices)
 
         return invoices, 201
+
+    @auth_required
+    def delete(self):
+        args = self.delete_parser.parse_args()
+        event_id = args['event_id']
+        invoice_id = args['invoice_id']
+
+        current_user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+
+        invoice = invoice_repository.get_one_from_event(event_id, invoice_id)
+        if invoice is None:
+            return INVOICE_NOT_FOUND
+
+        try:
+            invoice.cancel(current_user_id)
+            invoice_repository.save()
+        except BaobabError as be:
+            return {'message': be.message}, 400
+
+        return 200
 
 payment_fields = {
     'url': fields.String,

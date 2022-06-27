@@ -110,61 +110,6 @@ class InvoiceApiTest(BaseInvoiceApiTest):
         response = self.app.get(self.url, headers=header, data=params)
 
         self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
-    
-    def test_cancel_own_invoice(self):
-        line_items = self.get_default_line_items()
-        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
-        invoice_id = invoice.id
-
-        header = self.get_auth_header_for(self.applicant_email)
-        params = {'invoice_id': invoice_id}
-        response = self.app.delete(self.url, headers=header, data=params)
-
-        self.assertEqual(response.status_code, 200)
-    
-    def test_prevent_canceling_someone_else_invoices(self):
-        line_items = self.get_default_line_items()
-        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
-        invoice_id = invoice.id
-        another_applicant_email = "another_applicant@user.com"
-        self.add_user(another_applicant_email)
-        
-        header = self.get_auth_header_for(another_applicant_email)
-        params = {'invoice_id': invoice_id}
-        response = self.app.delete(self.url, headers=header, data=params)
-
-        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
-
-    def test_prevent_cancel_of_already_canceled_invoice(self):
-        line_items = self.get_default_line_items()
-        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
-        invoice_id = invoice.id
-        invoice.cancel(self.applicant_id)
-        db.session.commit()
-
-        header = self.get_auth_header_for(self.applicant_email)
-        params = {'invoice_id': invoice_id}
-        response = self.app.delete(self.url, headers=header, data=params)
-
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["message"], "Invoice has already been canceled.")
-
-    def test_prevent_cancel_of_already_paid_invoice(self):
-        line_items = self.get_default_line_items()
-        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
-        invoice_id = invoice.id
-        invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, time())
-        invoice.invoice_payment_statuses.append(invoice_payment_status)
-        db.session.commit()
-
-        header = self.get_auth_header_for(self.applicant_email)
-        params = {'invoice_id': invoice_id}
-        response = self.app.delete(self.url, headers=header, data=params)
-
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(data["message"], "Cannot cancel an invoice that's already been paid.")
 
 class InvoicePaymentStatusApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
@@ -460,6 +405,85 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertIsNotNone(data[1]["created_at"])
         self.assertEqual(data[1]["total_amount"], 3.02)
         self.assertEqual(data[1]["current_payment_status"], PaymentStatus.UNPAID.value)
+    
+    def test_cancel_invoice_from_event(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        self.add_offer_invoice(invoice_id, offer_id)
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'invoice_id': invoice_id, 'event_id': self.event_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_prevent_cancel_when_not_treasurer(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+
+        header = self.get_auth_header_for(self.applicant_email)
+        params = {'invoice_id': invoice_id, 'event_id': self.event_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, FORBIDDEN[1])
+    
+    def test_prevent_canceling_invoice_from_another_event(self):
+        another_event = self.add_event(key='ANOTHERINDABA')
+        another_event_id = another_event.id
+        self.add_event_role('treasurer', self.treasurer_id, another_event_id)
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        offer = self.add_offer(self.applicant_id, another_event_id)
+        offer_id = offer.id
+        self.add_offer_invoice(invoice_id, offer_id)
+        
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'invoice_id': invoice_id, 'event_id': self.event_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
+
+    def test_prevent_cancel_of_already_canceled_invoice(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        invoice.cancel(self.applicant_id)
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        self.add_offer_invoice(invoice_id, offer_id)
+        db.session.commit()
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'invoice_id': invoice_id, 'event_id': self.event_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data["message"], "Invoice has already been canceled.")
+
+    def test_prevent_cancel_of_already_paid_invoice(self):
+        line_items = self.get_default_line_items()
+        invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
+        invoice_id = invoice.id
+        invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, time())
+        invoice.invoice_payment_statuses.append(invoice_payment_status)
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        self.add_offer_invoice(invoice_id, offer_id)
+        db.session.commit()
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {'invoice_id': invoice_id, 'event_id': self.event_id}
+        response = self.app.delete(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data["message"], "Cannot cancel an invoice that's already been paid.")
 
 class PaymentsApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):

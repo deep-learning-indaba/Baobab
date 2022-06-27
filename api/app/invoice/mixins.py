@@ -18,6 +18,10 @@ class InvoiceAdminMixin(object):
     post_parser.add_argument('event_fee_ids', type=int, required=True, action='append')
     post_parser.add_argument('due_date', type=dt_format, required=True)
 
+    delete_parser = reqparse.RequestParser()
+    delete_parser.add_argument('invoice_id', type=int, required=True)
+    delete_parser.add_argument('event_id', type=int, required=True)
+
 class PaymentsMixin(object):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('invoice_id', type=int, required=True)
