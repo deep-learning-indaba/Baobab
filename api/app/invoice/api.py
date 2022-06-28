@@ -334,7 +334,7 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             
             payment_intent = event['data']['object']['id']
             invoice = invoice_repository.get_from_payment_intent(payment_intent)
-            invoice.invoice_payment_statuses.append(invoice_payment_status)
+            invoice.add_invoice_payment_status(invoice_payment_status)
             invoice_repository.save()
 
             stripe_webhook_event = StripeWebhookEvent(event)

@@ -132,7 +132,7 @@ class InvoicePaymentStatusApiTest(BaseInvoiceApiTest):
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
         invoice_id = invoice.id
         payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, int(time()) + 1)
-        invoice.invoice_payment_statuses.append(payment_status)
+        invoice.add_invoice_payment_status(payment_status)
         invoice_repository.save()
 
         params = {'invoice_id': invoice_id}
@@ -169,7 +169,7 @@ class InvoiceListApiTest(BaseInvoiceApiTest):
         line_items_1 = self.get_default_line_items()
         invoice_1 = self.add_invoice(self.treasurer_id, self.applicant_id, line_items_1, self.applicant_email)
         invoice_payment_status_1 = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, time())
-        invoice_1.invoice_payment_statuses.append(invoice_payment_status_1)
+        invoice_1.add_invoice_payment_status(invoice_payment_status_1)
         line_items_2 = self.get_default_line_items()
         line_items_2[0].amount = 49.99
         line_items_2[1].amount = 39.99
@@ -217,7 +217,7 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         line_items = self.get_default_line_items()
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
         invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.FAILED, time())
-        invoice.invoice_payment_statuses.append(invoice_payment_status)
+        invoice.add_invoice_payment_status(invoice_payment_status)
         offer_1 = self.add_offer(self.applicant_id, self.event_id)
         invoice.link_offer(offer_1.id)
 
@@ -472,7 +472,7 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
         invoice_id = invoice.id
         invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, time())
-        invoice.invoice_payment_statuses.append(invoice_payment_status)
+        invoice.add_invoice_payment_status(invoice_payment_status)
         offer = self.add_offer(self.applicant_id, self.event_id)
         offer_id = offer.id
         self.add_offer_invoice(invoice_id, offer_id)
@@ -510,7 +510,7 @@ class PaymentsApiTest(BaseInvoiceApiTest):
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
         invoice_id = invoice.id
         payment_status = InvoicePaymentStatus.from_baobab(PaymentStatus.PAID, self.treasurer_id)
-        invoice.invoice_payment_statuses.append(payment_status)
+        invoice.add_invoice_payment_status(payment_status)
         db.session.commit()
 
         header = self.get_auth_header_for(self.applicant_email)
@@ -535,7 +535,7 @@ class PaymentsApiTest(BaseInvoiceApiTest):
         invoice = self.add_invoice(self.treasurer_id, self.applicant_id, line_items, self.applicant_email)
         invoice_id = invoice.id
         payment_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, self.treasurer_id)
-        invoice.invoice_payment_statuses.append(payment_status)
+        invoice.add_invoice_payment_status(payment_status)
         db.session.commit()
 
         header = self.get_auth_header_for(self.applicant_email)
@@ -656,7 +656,7 @@ class PaymentsWebhookApiTest(BaseInvoiceApiTest):
         invoice.add_payment_intent('pi_3L7GhOEpDzoopUbL0jGJhE2i')
         unix_timestamp = int(time()) + 10
         payment_status = InvoicePaymentStatus.from_stripe_webhook(PaymentStatus.PAID, unix_timestamp)
-        invoice.invoice_payment_statuses.append(payment_status)
+        invoice.add_invoice_payment_status(payment_status)
         db.session.commit()
 
         unix_timestamp = int(time()) + 5

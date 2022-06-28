@@ -77,6 +77,16 @@ class InvoicePaymentIntent(db.Model):
         hours_since_creation = (datetime.now() - self.created_at).total_seconds() / 3600
         return hours_since_creation > 24
 
+class OfferInvoice(db.Model):
+    __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])
+
+    id = db.Column(db.Integer(), primary_key=True)
+    offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
+    invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
+
+    offer = db.relationship('Offer', foreign_keys=[offer_id])
+    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
+
 class Invoice(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     customer_email = db.Column(db.String(255), nullable=False, index=True)
@@ -148,7 +158,7 @@ class Invoice(db.Model):
             raise BaobabError("Cannot cancel an invoice that's already been paid.")
 
         canceled_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, user_id)
-        self.invoice_payment_statuses.append(canceled_status)
+        self.add_invoice_payment_status(canceled_status)
     
     def link_offer(self, offer_id):
         offer_invoice = OfferInvoice(offer_id=offer_id)
@@ -158,16 +168,8 @@ class Invoice(db.Model):
         payment_intent = InvoicePaymentIntent(payment_intent)
         self.invoice_payment_intents.append(payment_intent)
 
-
-class OfferInvoice(db.Model):
-    __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])
-
-    id = db.Column(db.Integer(), primary_key=True)
-    offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
-    invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
-
-    offer = db.relationship('Offer', foreign_keys=[offer_id])
-    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
+    def add_invoice_payment_status(self, invoice_payment_status):
+        self.invoice_payment_statuses.append(invoice_payment_status)
 
 class StripeWebhookEvent(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('idempotency_key', name='uq_stripe_webhook_events_idempotency_key')])
