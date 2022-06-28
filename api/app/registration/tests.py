@@ -226,6 +226,7 @@ class RegistrationTest(ApiTestCase):
 
         offer.candidate_response = True
         offer.accepted_travel_award = True
+        offer.accepted_accommodation_award = True
 
         db.session.add(offer)
         db.session.commit()
@@ -243,7 +244,7 @@ class RegistrationTest(ApiTestCase):
             description="the section description",
             order=1,
             show_for_travel_award=True,
-            show_for_accommodation_award=False,
+            show_for_accommodation_award=True,
             show_for_payment_required=False,
         )
         db.session.add(section)
@@ -255,7 +256,7 @@ class RegistrationTest(ApiTestCase):
             description="the section 2 description",
             order=1,
             show_for_travel_award=True,
-            show_for_accommodation_award=False,
+            show_for_accommodation_award=True,
             show_for_payment_required=False,
         )
         db.session.add(section2)
@@ -308,17 +309,11 @@ class RegistrationTest(ApiTestCase):
 
     def test_get_form(self):
         self.seed_static_data()
-        url = "/api/v1/registration-form?offer_id=%d&event_id=%d" % (
-            self.offer_id, self.event_id)
-        LOGGER.debug(url)
-        response = self.app.get(url, headers=self.headers)
 
-        if response.status_code == 403:
-            return
-
-        LOGGER.debug(
-            "form: {}".format(json.loads(response.data)))
+        params = {'offer_id': self.offer_id, 'event_id': self.event_id}
+        response = self.app.get("/api/v1/registration-form", headers=self.headers, data=params)
 
         form = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
         assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
         assert form['registration_sections'][0]['name'] == 'Section 1'
