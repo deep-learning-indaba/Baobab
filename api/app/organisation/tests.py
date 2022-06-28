@@ -69,22 +69,18 @@ class StripeSettingsApiTest(ApiTestCase):
         return super().tearDown()
     
     def test_prevent_non_admin_on_get_stripe_settings(self):
-        print(OrganisationResolver._secrets_cache)
         self.add_user()
 
         header = self.get_auth_header_for('user@user.com')
         response = self.app.get(self.url, headers=header)
 
-        print(OrganisationResolver._secrets_cache)
         self.assertEqual(response.status_code, FORBIDDEN[1])
 
     def test_get_stripe_settings(self):
-        print(OrganisationResolver._secrets_cache)
         self.add_user(is_admin=True)
 
         header = self.get_auth_header_for('user@user.com')
         response = self.app.get(self.url, headers=header)
-        print(OrganisationResolver._secrets_cache)
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
@@ -94,17 +90,14 @@ class StripeSettingsApiTest(ApiTestCase):
         self.assertEqual(data['stripe_webhook_secret_key'], 'webhook_secret_key')
 
     def test_prevent_non_admin_on_post_stripe_settings(self):
-        print(OrganisationResolver._secrets_cache)
         self.add_user()
 
         header = self.get_auth_header_for('user@user.com')
         response = self.app.post(self.url, headers=header)
-        print(OrganisationResolver._secrets_cache)
 
         self.assertEqual(response.status_code, FORBIDDEN[1])
 
     def test_setting_of_stripe_currency_and_keys(self):
-        print(OrganisationResolver._secrets_cache)
 
         self.add_user(is_admin=True)
 
@@ -123,5 +116,3 @@ class StripeSettingsApiTest(ApiTestCase):
         self.assertEqual(data['stripe_api_publishable_key'], 'very_public')
         self.assertEqual(data['stripe_api_secret_key'], '42')
         self.assertEqual(data['stripe_webhook_secret_key'], '616')
-
-        print(OrganisationResolver._secrets_cache)
