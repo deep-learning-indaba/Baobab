@@ -77,21 +77,11 @@ class InvoicePaymentIntent(db.Model):
         hours_since_creation = (datetime.now() - self.created_at).total_seconds() / 3600
         return hours_since_creation > 24
 
-class OfferInvoice(db.Model):
-    __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])
-
-    id = db.Column(db.Integer(), primary_key=True)
-    offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
-    invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
-
-    offer = db.relationship('Offer', foreign_keys=[offer_id])
-    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
-
 class Invoice(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     customer_email = db.Column(db.String(255), nullable=False, index=True)
     customer_name = db.Column(db.String(200), nullable=False)
-    client_reference_id = db.Column(db.String(255), nullable=True)
+    client_reference_id = db.Column(db.String(255), nullable=True, index=True)
     iso_currency_code = db.Column(db.String(3), nullable=False)
     due_date = db.Column(db.DateTime(), nullable=False)
     created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
@@ -171,6 +161,15 @@ class Invoice(db.Model):
     def add_invoice_payment_status(self, invoice_payment_status):
         self.invoice_payment_statuses.append(invoice_payment_status)
 
+class OfferInvoice(db.Model):
+    __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])
+
+    id = db.Column(db.Integer(), primary_key=True)
+    offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
+    invoice_id = db.Column(db.Integer(), db.ForeignKey('invoice.id'), nullable=False)
+
+    offer = db.relationship('Offer', foreign_keys=[offer_id])
+    invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
 class StripeWebhookEvent(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('idempotency_key', name='uq_stripe_webhook_events_idempotency_key')])
 
