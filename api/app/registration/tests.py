@@ -22,7 +22,7 @@ OFFER_DATA = {
     'expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'payment_required': False,
     'travel_award': False,
-    'accommodation_award': True,
+    'accommodation_award': False,
     'accepted_accommodation_award': None,
     'accepted_travel_award': None,
     'rejected_reason': 'N/A',
@@ -111,14 +111,18 @@ class OfferApiTest(ApiTestCase):
     def test_create_offer(self):
         self.seed_static_data(add_offer=False)
 
-        response = self.app.post('/api/v1/offer', data=OFFER_DATA,
-                                 headers=self.adminHeaders)
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(OFFER_DATA),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(data['payment_required'])
-        self.assertTrue(data['travel_award'])
-        self.assertTrue(data['accommodation_award'])
+        self.assertFalse(data['payment_required'])
+        self.assertFalse(data['travel_award'])
+        self.assertFalse(data['accommodation_award'])
 
         outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
         self.assertEqual(outcome.status, Status.ACCEPTED)
@@ -136,14 +140,18 @@ class OfferApiTest(ApiTestCase):
         kthanksbye!    
         """
 
-        response = self.app.post('/api/v1/offer', data=offer_data,
-                                 headers=self.adminHeaders)
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(data['payment_required'])
-        self.assertTrue(data['travel_award'])
-        self.assertTrue(data['accommodation_award'])
+        self.assertFalse(data['payment_required'])
+        self.assertFalse(data['travel_award'])
+        self.assertFalse(data['accommodation_award'])
 
     def test_create_duplicate_offer(self):
         self.seed_static_data(add_offer=True)
