@@ -358,6 +358,27 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_prevent_invoice_creation_with_negative_total(self):
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id, name='Registration', amount=199.99)
+        event_fee_1_id = event_fee_1.id
+        event_fee_2 = self.add_event_fee(self.event_id, self.treasurer_id, name='Registration credit', amount=-199.99)
+        event_fee_2_id = event_fee_2.id
+        event_fee_3 = self.add_event_fee(self.event_id, self.treasurer_id, name='Misc credit', amount=-0.01)
+        event_fee_3_id = event_fee_3.id
+
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id],
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id, event_fee_3_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        self.assertEqual(response.status_code, 400)        
+
     def test_invoice_creation(self):
         offer = self.add_offer(self.applicant_id, self.event_id)
         offer_id = offer.id
@@ -406,6 +427,38 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
         self.assertIsNotNone(data[1]["created_at"])
         self.assertEqual(data[1]["total_amount"], 3.02)
         self.assertEqual(data[1]["current_payment_status"], PaymentStatus.UNPAID.value)
+
+    def test_invoice_creation_with_zero_total(self):
+        offer = self.add_offer(self.applicant_id, self.event_id)
+        offer_id = offer.id
+        event_fee_1 = self.add_event_fee(self.event_id, self.treasurer_id, name='Registration', amount=99.99)
+        event_fee_1_id = event_fee_1.id
+        event_fee_2 = self.add_event_fee(self.event_id, self.treasurer_id, name='Registration credit', amount=-99.99)
+        event_fee_2_id = event_fee_2.id
+    
+        header = self.get_auth_header_for(self.treasurer_email)
+        params = {
+            'event_id': self.event_id,
+            'offer_ids': [offer_id],
+            'event_fee_ids': [event_fee_1_id, event_fee_2_id],
+            'due_date': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        }
+        response = self.app.post(self.url, headers=header, data=params)
+
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(data), 1)
+
+        self.assertEqual(data[0]["customer_email"], self.applicant_email)
+        self.assertEqual(data[0]["customer_name"], self.applicant_name)
+        self.assertEqual(data[0]["client_reference_id"], str(self.applicant_id))
+        self.assertEqual(data[0]["iso_currency_code"], 'usd')
+        self.assertIsNotNone(data[0]["due_date"])
+        self.assertEqual(data[0]["created_by_user_id"], self.treasurer_id)
+        self.assertEqual(data[0]["created_by_user"], self.treasurer_name)
+        self.assertIsNotNone(data[0]["created_at"])
+        self.assertEqual(data[0]["total_amount"], 0.0)
+        self.assertEqual(data[0]["current_payment_status"], PaymentStatus.PAID.value)
     
     def test_cancel_invoice_from_event(self):
         line_items = self.get_default_line_items()

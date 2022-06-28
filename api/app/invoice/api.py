@@ -21,7 +21,8 @@ from app.utils.errors import (
     INVOICE_CANCELED,
     INVOICE_NOT_FOUND,
     INVOICE_MUST_HAVE_FUTURE_DATE,
-    INVOICE_OVERDUE)
+    INVOICE_OVERDUE,
+    INVOICE_NEGATIVE)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
 from config import BOABAB_HOST
@@ -172,6 +173,10 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             return EVENT_FEES_MUST_HAVE_SAME_CURRENCY
         iso_currency_code = list(iso_currency_codes)[0]
 
+        total_amount = sum([event_fee.amount for event_fee in event_fees])
+        if total_amount < 0:
+            return INVOICE_NEGATIVE
+
         invoices = []
         invalid_offer_ids = []
         for offer in offers:
@@ -193,6 +198,11 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
                 str(offer.user_id)
             )
             invoice.link_offer(offer.id)
+
+            if invoice.total_amount == 0:
+                paid_status = InvoicePaymentStatus.from_baobab(PaymentStatus.PAID, user_id)
+                invoice.add_invoice_payment_status(paid_status)
+            
             invoices.append(invoice)
         
         if invalid_offer_ids:
