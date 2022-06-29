@@ -148,6 +148,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                     headline="Will you be bringing a poster?",
                     registration_form_id=registration_form.id
                 ).first())
+        poster_title_question = (db.session.query(RegistrationQuestion)
+                .filter_by(
+                    headline="What is the provisional title of your poster?",
+                    registration_form_id=registration_form.id
+                ).first())
         if poster_registration_question is not None:
             poster_answer = (
                 db.session.query(RegistrationAnswer)
@@ -158,7 +163,18 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                 .first()
             )
             if poster_answer is not None and poster_answer.value == 'yes':
-                bringing_poster = "The participant will be presenting a poster of their research."
+                bringing_poster = "The participant will be presenting a poster of their research"
+                if poster_title_question is not None:
+                    poster_title_answer = (db.session.query(RegistrationAnswer)
+                        .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                        .join(Offer, Offer.id == Registration.offer_id)
+                        .filter_by(user_id=user_id, event_id=event_id)
+                        .filter(RegistrationAnswer.registration_question_id == poster_title_question.id)
+                        .first())
+                    if poster_title_answer is not None and len(poster_title_answer.value) > 0:
+                        bringing_poster += f' titled "{poster_title_answer.value}"'
+                
+                bringing_poster += "."
         
         LOGGER.info(f"Bringing poster: {bringing_poster}")
         # Handling fields
