@@ -6,7 +6,7 @@ from app.utils.auth import verify_token
 from flask import g, request
 from app.invitationletter.models import InvitationTemplate
 from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationQuestion, Registration, RegistrationForm
-from app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest, GuestRegistrationAnswer, GuestRegistration
 from app.invitationletter.mixins import InvitationMixin
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.generator import generate
@@ -15,13 +15,34 @@ from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required
 from app.events.repository import EventRepository
-from app.invitedGuest.models import GuestRegistration
 
 
 def invitation_info(invitation_request):
     return {
         'invitation_letter_request_id': invitation_request.id,
     }
+
+
+def find_registration_answer(is_guest_registration: bool, registration_question_id: int, user_id: int, event_id: int): 
+    if is_guest_registration:
+        answer = (
+                db.session.query(GuestRegistrationAnswer)
+                    .filter_by(is_active=True)
+                    .join(GuestRegistration, GuestRegistrationAnswer.guest_registration_id == GuestRegistration.id)
+                    .filter_by(user_id=user_id)
+                    .join(RegistrationForm, GuestRegistration.registration_form_id == RegistrationForm.id)
+                    .filter_by(event_id=event_id)
+                    .filter(GuestRegistrationAnswer.registration_question_id == registration_question_id)
+                    .first())
+    else:
+        answer = (
+            db.session.query(RegistrationAnswer)
+                .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+                .join(Offer, Offer.id == Registration.offer_id)
+                .filter_by(user_id=user_id, event_id=event_id)
+                .filter(RegistrationAnswer.registration_question_id == registration_question_id)
+                .first())
+    return answer
 
 
 class InvitationLetterAPI(InvitationMixin, restful.Resource):
@@ -154,23 +175,11 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                     registration_form_id=registration_form.id
                 ).first())
         if poster_registration_question is not None:
-            poster_answer = (
-                db.session.query(RegistrationAnswer)
-                .join(Registration, RegistrationAnswer.registration_id == Registration.id)
-                .join(Offer, Offer.id == Registration.offer_id)
-                .filter_by(user_id=user_id, event_id=event_id)
-                .filter(RegistrationAnswer.registration_question_id == poster_registration_question.id)
-                .first()
-            )
+            poster_answer = find_registration_answer(is_guest_registration, poster_registration_question.id, user_id, event_id)
             if poster_answer is not None and poster_answer.value == 'yes':
                 bringing_poster = "The participant will be presenting a poster of their research"
                 if poster_title_question is not None:
-                    poster_title_answer = (db.session.query(RegistrationAnswer)
-                        .join(Registration, RegistrationAnswer.registration_id == Registration.id)
-                        .join(Offer, Offer.id == Registration.offer_id)
-                        .filter_by(user_id=user_id, event_id=event_id)
-                        .filter(RegistrationAnswer.registration_question_id == poster_title_question.id)
-                        .first())
+                    poster_title_answer = find_registration_answer(is_guest_registration, poster_title_question.id, user_id, event_id)
                     if poster_title_answer is not None and len(poster_title_answer.value) > 0:
                         bringing_poster += f' titled "{poster_title_answer.value}"'
                 
