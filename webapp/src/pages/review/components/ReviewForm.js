@@ -28,6 +28,7 @@ const MULTI_FILE = "multi-file";
 const SECTION_DIVIDER = "section-divider";
 const HEADING = "heading";
 const SUB_HEADING = "sub-heading";
+const NUMERIC = "numeric-text";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
@@ -47,8 +48,8 @@ class ReviewQuestionComponent extends Component {
     linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
 
     formControl = (key, question, answer, score, validationError) => {
-        // return <p className="answer">Chipangura</p>
-        switch (question.type) {
+        const question_type = answer && answer.question_type === FILE ? FILE : question.type;
+        switch (question_type) {
             case LONG_TEXT:
                 return (
                     <FormTextArea
@@ -76,6 +77,20 @@ class ReviewQuestionComponent extends Component {
                       errorText={validationError}
                     />
                   );
+            case NUMERIC:
+                return (
+                    <FormTextBox
+                      id={this.id}
+                      name={this.id}
+                      type="number"
+                      placeholder={question.placeholder}
+                      onChange={this.handleChange}
+                      value={score || ""}
+                      key={"i_" + key}
+                      showError={validationError}
+                      errorText={validationError}
+                    />
+                );
             case INFORMATION:
                 return <p className="answer"><AnswerValue answer={answer} question={question} /></p>;
             case HEADING:
