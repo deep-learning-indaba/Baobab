@@ -22,7 +22,8 @@ function AnswerValue({answer, question, t}) {
   }
 
   if (answer && answer.value) {
-    switch (question.type) {
+    const question_type = answer && answer.question_type === FILE ? FILE : question.type;
+    switch (question_type) {
       case MULTI_CHOICE:
         const opts = question.options || answer.options
         const options = opts.filter(o => o.value === answer.value);
