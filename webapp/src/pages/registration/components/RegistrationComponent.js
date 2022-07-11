@@ -188,6 +188,16 @@ class RegistrationComponent extends Component {
   }
 
   validate = (question, answer) => {
+    if (question.depends_on_question_id) {
+      let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
+      if (answer.value === question.hide_for_dependent_value) {
+        return {
+          registration_question_id: question.id,
+          error: ""
+        };
+      }
+    }
+
     let errors = [];
 
     if (question.is_required && (!answer || !answer.value)) {
