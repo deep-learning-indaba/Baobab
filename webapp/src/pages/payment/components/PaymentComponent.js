@@ -26,6 +26,8 @@ class PaymentComponent extends Component {
     }
 
     initiatePayment = () => {
+        console.log("match params:", this.props.match.params);
+        console.log("invoiceId:", this.props.match.params.invoiceId);
         invoiceService.initiatePayment(this.props.match.params.invoiceId)
             .then(response => {
                 this.setState({
@@ -34,7 +36,7 @@ class PaymentComponent extends Component {
                     isLoading: false
                 }, () => {
                     if (this.state.paymentInfo) {
-                        window.location.replace(this.state.paymentInfo);
+                        window.location.replace(this.state.paymentInfo.url);
                     }
                 });
             });

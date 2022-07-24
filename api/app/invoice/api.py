@@ -1,7 +1,7 @@
 from datetime import datetime
 
 import flask_restful as restful
-from flask_restful import fields, marshal_with
+from flask_restful import fields, marshal_with, marshal
 from flask import g, request
 import stripe
 
@@ -94,7 +94,6 @@ invoice_payment_status_fields = {
 
 class InvoiceAPI(InvoiceMixin, restful.Resource):
     @auth_required
-    @marshal_with(invoice_fields)
     def get(self):
         args = self.req_parser.parse_args()
         invoice_id = args['invoice_id']
@@ -106,11 +105,10 @@ class InvoiceAPI(InvoiceMixin, restful.Resource):
         if invoice is None:
             return INVOICE_NOT_FOUND
 
-        return invoice, 200
+        return marshal(invoice, invoice_fields), 200
 
 class InvoicePaymentStatusApi(restful.Resource, InvoiceMixin):
     @auth_required
-    @marshal_with(invoice_payment_status_fields)
     def get(self):
         args = self.req_parser.parse_args()
 
@@ -122,18 +120,16 @@ class InvoicePaymentStatusApi(restful.Resource, InvoiceMixin):
         if not payment_status:
             return INVOICE_NOT_FOUND
 
-        return payment_status, 200
+        return marshal(payment_status, invoice_payment_status_fields), 200
 
 class InvoiceListAPI(restful.Resource):
     @auth_required
-    @marshal_with(invoice_list_fields)
     def get(self):
         invoices = invoice_repository.get_all_for_user(g.current_user["id"])
-        return invoices, 200
+        return marshal(invoices, invoice_list_fields), 200
 
 class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
-    @marshal_with(invoice_list_fields)
     def get(self):
         args = self.get_parser.parse_args()
         event_id = args['event_id']
@@ -145,10 +141,9 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             return FORBIDDEN
 
         invoices = invoice_repository.get_for_event(event_id)
-        return invoices, 200
+        return marshal(invoices,invoice_list_fields), 200
 
     @auth_required
-    @marshal_with(invoice_list_fields)
     def post(self):
         args = self.post_parser.parse_args()
         event_id = args['event_id']
@@ -156,12 +151,9 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         offer_ids = args['offer_ids']
         event_fee_ids = args['event_fee_ids']
 
-        print(f"Received post request for event_id {event_id}, due date {due_date}, offer_ids {offer_ids}, event_fee_ids {event_fee_ids}")
-
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
         event = event_repository.get_by_id(event_id)
-        print("Read current_user and event")
 
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
@@ -220,8 +212,6 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
         invoice_repository.add_all(invoices)
 
-        print("Generated invoices")
-
         # Generate PDFs and email them
         for invoice in invoices:
             invoice_pdf = generator.from_invoice_model(invoice, g.organisation)
@@ -230,11 +220,15 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
                 event=event,
                 user=current_user,
                 file_name="Invoice.pdf",
-                file_path=invoice_pdf
+                file_path=invoice_pdf,
+                template_parameters=dict(
+                    system_url=g.organisation.system_url,
+                    invoice_id=invoice.id
+                )
             )
             LOGGER.debug('successfully sent email...')
 
-        return invoices, 201
+        return marshal(invoices, invoice_list_fields), 201
 
     @auth_required
     def delete(self):
@@ -266,7 +260,6 @@ payment_fields = {
 }
 class PaymentsAPI(PaymentsMixin, restful.Resource):
     @auth_required
-    @marshal_with(payment_fields)
     def post(self):
         args = self.post_parser.parse_args()
         invoice_id = args['invoice_id']
@@ -298,7 +291,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
                         'name': invoice_line_item.name,
                         'description': invoice_line_item.description
                     },
-                    'unit_amount': invoice_line_item.amount
+                    'unit_amount': invoice_line_item.amount * 100  # Must be in cents
                 },
                 'quantity': 1,
             }
@@ -320,7 +313,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         invoice.add_payment_intent(session.payment_intent)
         invoice_repository.save()
 
-        return session, 200
+        return marshal(session, payment_fields), 200
 
 class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
     def post(self):
@@ -353,6 +346,8 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
 
         if event['type'] in accepted_events:
             created_at_unix = event['created']
+            LOGGER.info(f"Handling {event['type']} event")
+
             invoice_payment_status = None
             if event['type'] == 'payment_intent.succeeded':
                 invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(
@@ -375,9 +370,11 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             invoice_repository.add(stripe_webhook_event)
 
             if invoice.offer_id:
+                LOGGER.info("Invoice offer ID is ", invoice.offer_id)
                 offer = offer_repository.get_by_id(invoice.offer_id)
                 registration = registration_repository.from_offer(invoice.offer_id)
                 if registration:
+                    LOGGER.info("Confirming Registration ID ", registration.id)
                     registration_response_api.confirm_registration(registration, offer)
 
             invoice_repository.save()

@@ -187,7 +187,7 @@ def from_invoice_model(invoice, organisation):
     generator = InvoiceGenerator(
         sender=organisation.name,
         to=invoice.customer_name,
-        logo=f"{organisation.system_url}/static/media/indaba-logo-dark.d5a6196d.png", 
+        logo="https://baobab.deeplearningindaba.com/static/media/indaba-logo-dark.d5a6196d.png",  #  f"{organisation.system_url}/static/media/indaba-logo-dark.d5a6196d.png", 
         due_date=invoice.due_date,
         notes=_NOTES.format(invoice_no=invoice_number),
         amount_paid=invoice.total_amount if invoice.is_paid else 0,

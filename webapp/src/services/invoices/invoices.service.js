@@ -45,8 +45,14 @@ function getInvoice(invoiceId) {
 }
 
 function initiatePayment(invoiceId) {
+    const data = {
+        invoice_id: invoiceId
+    };
+
+    console.log("Data:", data);
+
     return axios
-        .post(baseUrl + `/api/v1/payment?invoice_id=${invoiceId}`, { headers: authHeader() })
+        .post(baseUrl + "/api/v1/payment", data, { headers: authHeader() })
         .then((response) => {
             return {
                 paymentInfo: response.data,

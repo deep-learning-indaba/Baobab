@@ -481,7 +481,7 @@ class AppComponent extends Component {
                 <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route exact path="/reference/:token" component={Reference} />
-                <Route exact path="/payment/:invoiceId" component={Payment} />
+                <PrivateRoute exact path="/payment/:invoiceId" component={Payment} />
                 <Route exact path="/payment-success" component={Success} />
                 <Route exact path="/payment-cancel" component={Failed} />
                 
