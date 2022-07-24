@@ -11,7 +11,12 @@ from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin, P
 from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentIntent, InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent, OfferInvoice
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.registration.repository import OfferRepository as offer_repository
+from app.registration.repository import RegistrationRepository as registration_repository
 from app.users.repository import UserRepository as user_repository
+from app.invoice import generator
+from app.utils import emailer
+from app.registrationResponse import api as registration_response_api
+
 from app.utils.errors import (
     FORBIDDEN,
     OFFER_NOT_FOUND,
@@ -148,9 +153,15 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         args = self.post_parser.parse_args()
         event_id = args['event_id']
         due_date = args['due_date']
+        offer_ids = args['offer_ids']
+        event_fee_ids = args['event_fee_ids']
+
+        print(f"Received post request for event_id {event_id}, due date {due_date}, offer_ids {offer_ids}, event_fee_ids {event_fee_ids}")
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
+        event = event_repository.get_by_id(event_id)
+        print("Read current_user and event")
 
         if not current_user.is_event_treasurer(event_id):
             return FORBIDDEN
@@ -158,12 +169,10 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         if due_date < datetime.now():
             return INVOICE_MUST_HAVE_FUTURE_DATE
 
-        offer_ids = args['offer_ids']
         offers = offer_repository.get_offers_for_event(event_id, offer_ids)
         if not offers or (len(offer_ids) > len(offers)):
             return OFFER_NOT_FOUND
 
-        event_fee_ids = args['event_fee_ids']
         event_fees = event_repository.get_event_fees(event_id, event_fee_ids)
         if not event_fees or (len(event_fee_ids) > len(event_fees)):
             return EVENT_FEE_NOT_FOUND
@@ -210,6 +219,20 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             return {'message': error_message}, 400
 
         invoice_repository.add_all(invoices)
+
+        print("Generated invoices")
+
+        # Generate PDFs and email them
+        for invoice in invoices:
+            invoice_pdf = generator.from_invoice_model(invoice, g.organisation)
+            emailer.email_user(
+                'invoice',
+                event=event,
+                user=current_user,
+                file_name="Invoice.pdf",
+                file_path=invoice_pdf
+            )
+            LOGGER.debug('successfully sent email...')
 
         return invoices, 201
 
@@ -290,7 +313,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
                 "invoice_id": invoice.id,
                 "user_id": user_id
             },
-            success_url=f'{g.organisation.system_url}/payment-sucess',
+            success_url=f'{g.organisation.system_url}/payment-success',
             cancel_url=f'{g.organisation.system_url}/payment-cancel',
         )
 
@@ -325,6 +348,7 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
         accepted_events = [
             'payment_intent.succeeded',
             'payment_intent.payment_failed',
+            'payment_intent.canceled'
         ]
 
         if event['type'] in accepted_events:
@@ -336,7 +360,7 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
                     created_at_unix
                 )
             
-            if event['type'] == 'payment_intent.payment_failed':
+            if event['type'] == 'payment_intent.payment_failed' or event['type'] == 'payment_intent.payment_canceled':
                 invoice_payment_status = InvoicePaymentStatus.from_stripe_webhook(
                     PaymentStatus.FAILED,
                     created_at_unix
@@ -349,6 +373,14 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
 
             stripe_webhook_event = StripeWebhookEvent(event)
             invoice_repository.add(stripe_webhook_event)
+
+            if invoice.offer_id:
+                offer = offer_repository.get_by_id(invoice.offer_id)
+                registration = registration_repository.from_offer(invoice.offer_id)
+                if registration:
+                    registration_response_api.confirm_registration(registration, offer)
+
+            invoice_repository.save()
         else:
             LOGGER.warn(f"Receiving an unexpected event: {event['type']}")
 

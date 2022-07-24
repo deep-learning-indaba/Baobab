@@ -58,6 +58,10 @@ class InvoiceLineItem(db.Model):
         self.description = description
         self.amount = amount
 
+    @property
+    def amount_float(self):
+        return float(self.amount)
+
 class InvoicePaymentIntent(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('payment_intent', name='uq_invoice_payment_intent_payment_intent')])    
 

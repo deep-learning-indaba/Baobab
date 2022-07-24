@@ -20,6 +20,7 @@ import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
+import { InvoiceList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList"
@@ -251,6 +252,12 @@ class EventHome extends Component {
             languages={organisation && organisation.languages}
             />}
         />
+        <Route
+          exact
+          path={`${match.path}/invoices`}
+          render={(props) => <InvoiceList {...props} event={event} />}
+        />
+
         
       </div>
     );
