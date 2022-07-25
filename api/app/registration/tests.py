@@ -22,7 +22,7 @@ OFFER_DATA = {
     'expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'payment_required': False,
     'travel_award': False,
-    'accommodation_award': True,
+    'accommodation_award': False,
     'accepted_accommodation_award': None,
     'accepted_travel_award': None,
     'rejected_reason': 'N/A',
@@ -111,14 +111,18 @@ class OfferApiTest(ApiTestCase):
     def test_create_offer(self):
         self.seed_static_data(add_offer=False)
 
-        response = self.app.post('/api/v1/offer', data=OFFER_DATA,
-                                 headers=self.adminHeaders)
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(OFFER_DATA),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(data['payment_required'])
-        self.assertTrue(data['travel_award'])
-        self.assertTrue(data['accommodation_award'])
+        self.assertFalse(data['payment_required'])
+        self.assertFalse(data['travel_award'])
+        self.assertFalse(data['accommodation_award'])
 
         outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
         self.assertEqual(outcome.status, Status.ACCEPTED)
@@ -136,14 +140,18 @@ class OfferApiTest(ApiTestCase):
         kthanksbye!    
         """
 
-        response = self.app.post('/api/v1/offer', data=offer_data,
-                                 headers=self.adminHeaders)
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(data['payment_required'])
-        self.assertTrue(data['travel_award'])
-        self.assertTrue(data['accommodation_award'])
+        self.assertFalse(data['payment_required'])
+        self.assertFalse(data['travel_award'])
+        self.assertFalse(data['accommodation_award'])
 
     def test_create_duplicate_offer(self):
         self.seed_static_data(add_offer=True)
@@ -226,6 +234,7 @@ class RegistrationTest(ApiTestCase):
 
         offer.candidate_response = True
         offer.accepted_travel_award = True
+        offer.accepted_accommodation_award = True
 
         db.session.add(offer)
         db.session.commit()
@@ -243,7 +252,7 @@ class RegistrationTest(ApiTestCase):
             description="the section description",
             order=1,
             show_for_travel_award=True,
-            show_for_accommodation_award=False,
+            show_for_accommodation_award=True,
             show_for_payment_required=False,
         )
         db.session.add(section)
@@ -255,7 +264,7 @@ class RegistrationTest(ApiTestCase):
             description="the section 2 description",
             order=1,
             show_for_travel_award=True,
-            show_for_accommodation_award=False,
+            show_for_accommodation_award=True,
             show_for_payment_required=False,
         )
         db.session.add(section2)
@@ -308,17 +317,11 @@ class RegistrationTest(ApiTestCase):
 
     def test_get_form(self):
         self.seed_static_data()
-        url = "/api/v1/registration-form?offer_id=%d&event_id=%d" % (
-            self.offer_id, self.event_id)
-        LOGGER.debug(url)
-        response = self.app.get(url, headers=self.headers)
 
-        if response.status_code == 403:
-            return
-
-        LOGGER.debug(
-            "form: {}".format(json.loads(response.data)))
+        params = {'offer_id': self.offer_id, 'event_id': self.event_id}
+        response = self.app.get("/api/v1/registration-form", headers=self.headers, data=params)
 
         form = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
         assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
         assert form['registration_sections'][0]['name'] == 'Section 1'

@@ -63,6 +63,10 @@ class AppUser(db.Model, UserMixin):
         self.verified_email = False
         self.agree_to_policy()
 
+    @property
+    def full_name(self):
+        return f"{self.firstname} {self.lastname}"
+
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
 
@@ -102,6 +106,9 @@ class AppUser(db.Model, UserMixin):
 
     def is_event_admin(self, event_id):
         return self._has_admin_role(event_id, 'admin')
+
+    def is_event_treasurer(self, event_id):
+        return self._has_admin_role(event_id, 'treasurer')
 
     def is_registration_admin(self, event_id):
         # An event admin is also a registration admin

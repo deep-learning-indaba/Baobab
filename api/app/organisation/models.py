@@ -16,6 +16,11 @@ class Organisation(db.Model):
     system_url = db.Column(db.String(100), nullable=False)
     privacy_policy = db.Column(db.String(100), nullable=False)
     languages = db.Column(db.JSON(), nullable=False)
+    iso_currency_code = db.Column(db.String(3), nullable=True)
+    stripe_api_publishable_key = db.Column(db.String(200), nullable=True)
+    stripe_api_secret_key = db.Column(db.String(200), nullable=True)
+    stripe_webhook_secret_key = db.Column(db.String(200), nullable=True)
+
     events = db.relationship('Event')
 
     def __init__(self, name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages):
@@ -30,3 +35,19 @@ class Organisation(db.Model):
         self.system_url = system_url
         self.privacy_policy = privacy_policy
         self.languages = languages
+
+    def can_accept_payments(self) -> bool:
+        return (
+            self.iso_currency_code is not None and
+            self.stripe_api_publishable_key is not None and
+            self.stripe_api_secret_key is not None and
+            self.stripe_webhook_secret_key is not None
+        )
+    
+    def set_currency(self, iso_currency_code):
+        self.iso_currency_code = iso_currency_code
+
+    def set_stripe_keys(self, publishable_key, secret_key, webhook_secret_key):
+        self.stripe_api_publishable_key = publishable_key
+        self.stripe_api_secret_key = secret_key
+        self.stripe_webhook_secret_key = webhook_secret_key

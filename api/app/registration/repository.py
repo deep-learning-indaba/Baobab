@@ -6,8 +6,20 @@ from sqlalchemy import and_, func, cast, Date
 class OfferRepository():
 
     @staticmethod
+    def get_by_id(offer_id):
+        return db.session.query(Offer).get(offer_id)
+
+    @staticmethod
     def get_by_user_id_for_event(user_id, event_id):
         return db.session.query(Offer).filter_by(user_id=user_id, event_id=event_id).first()
+
+    @staticmethod
+    def get_offers_for_event(event_id, offer_ids):
+        return (
+            db.session.query(Offer)
+            .filter(Offer.event_id==event_id, Offer.id.in_(offer_ids))
+            .all()
+        )
 
     @staticmethod
     def count_offers_allocated(event_id):
@@ -40,6 +52,12 @@ class OfferRepository():
         return timeseries
 
 class RegistrationRepository():
+    @staticmethod
+    def from_offer(offer_id):
+        return (db.session.query(Registration)
+                .filter_by(offer_id=offer_id)
+                .first())
+
     @staticmethod
     def count_registrations(event_id):
         count = (db.session.query(Registration)

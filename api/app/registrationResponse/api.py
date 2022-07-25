@@ -385,7 +385,7 @@ class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
         return _get_registrations(event_id, user_id, confirmed=None, exclude_already_signed_in=exclude_already_signed_in)
 
 
-def _send_registration_confirmation_mail(user, event):
+def send_registration_confirmation_mail(user, event):
     try:
         emailer.email_user(
             'registration-confirmed',
@@ -398,6 +398,14 @@ def _send_registration_confirmation_mail(user, event):
             'Error occured while sending email to {}: {}'.format(user.email, e))
         return False
 
+
+def confirm_registration(registration, offer):
+    registration.confirm()
+    registration_user = UserRepository.get_by_id(offer.user_id)
+    registration_event = EventRepository.get_by_id(offer.event_id)
+    if send_registration_confirmation_mail(registration_user, registration_event):
+        registration.confirmation_email_sent_at = datetime.now()
+    return registration_user
 
 class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
 
@@ -414,11 +422,7 @@ class RegistrationConfirmAPI(RegistrationConfirmMixin, restful.Resource):
             if not current_user.is_registration_admin(offer.event_id):
                 return errors.FORBIDDEN
 
-            registration.confirm()
-            registration_user = UserRepository.get_by_id(offer.user_id)
-            registration_event = EventRepository.get_by_id(offer.event_id)
-            if _send_registration_confirmation_mail(registration_user, registration_event):
-                registration.confirmation_email_sent_at = datetime.now()
+            registration_user = confirm_registration(registration, offer)
 
             db.session.commit()
             return 'Confirmed Registration for {} {}'.format(registration_user.firstname, registration_user.lastname), 200

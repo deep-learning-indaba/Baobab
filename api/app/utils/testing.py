@@ -6,7 +6,6 @@ import random
 import unicodedata
 import unittest
 from datetime import datetime, timedelta
-from sqlite3 import Connection as SQLite3Connection
 
 import six
 from sqlalchemy import event
@@ -16,9 +15,11 @@ from sqlalchemy.exc import ProgrammingError
 from app import LOGGER, app, db
 from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
                                          SectionTranslation)
-from app.events.models import Event, EventType
+from app.events.models import Event, EventType, EventRole, EventFee
 from app.invitedGuest.models import InvitedGuest
+from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
+from app.organisation.resolver import OrganisationResolver
 from app.registration.models import Offer, RegistrationForm
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
@@ -59,6 +60,28 @@ class ApiTestCase(unittest.TestCase):
         self.test_users = []
         self.firstnames = []
         self.lastnames = []
+
+    def setUp(self):
+        app.config['TESTING'] = True
+        app.config['DEBUG'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
+        self.app = app.test_client()
+        db.reflect()
+        db.drop_all()
+        db.create_all()
+        LOGGER.setLevel('ERROR')
+
+        # Add dummy metadata
+        self.user_category = UserCategory('Postdoc')
+        db.session.add(self.user_category)
+        self.country = Country('South Africa')
+        db.session.add(self.country)
+
+        # Add a dummy organisation
+        dummy_org = self.add_organisation(domain='org')
+        db.session.flush()
+        self.dummy_org_id = dummy_org.id
+        self.dummy_org_webhook_secret = dummy_org.stripe_webhook_secret_key
 
     def _get_names(self):
         """Retrieve a list of names from a text file for testing"""
@@ -134,32 +157,23 @@ class ApiTestCase(unittest.TestCase):
 
         return users
 
-    def setUp(self):
-        app.config['TESTING'] = True
-        app.config['DEBUG'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite://'
-        self.app = app.test_client()
-        db.reflect()
-        db.drop_all()
-        db.create_all()
-        LOGGER.setLevel('ERROR')
-
-        # Add dummy metadata
-        self.user_category = UserCategory('Postdoc')
-        db.session.add(self.user_category)
-        self.country = Country('South Africa')
-        db.session.add(self.country)
-
-        # Add a dummy organisation
-        dummy_org = self.add_organisation(domain='org')
-        db.session.flush()
-        self.dummy_org_id = dummy_org.id
-
-    def add_organisation(self, name='My Org', system_name='Baobab', small_logo='org.png', 
-                                    large_logo='org_big.png', icon_logo='org_icon.png', domain='com', url='www.org.com',
-                                    email_from='contact@org.com', system_url='baobab.deeplearningindaba.com',
-                                    privacy_policy='PrivacyPolicy.pdf', languages=[{"code": "en", "description": "English"}]):
+    def add_organisation(self,
+        name='My Org',
+        system_name='Baobab',
+        small_logo='org.png', 
+        large_logo='org_big.png',
+        icon_logo='org_icon.png',
+        domain='com',
+        url='www.org.com',
+        email_from='contact@org.com',
+        system_url='baobab.deeplearningindaba.com',
+        privacy_policy='PrivacyPolicy.pdf',
+        languages=[{"code": "en", "description": "English"}],
+        webhook_secret_key="webhook_secret_key"
+    ):
         org = Organisation(name, system_name, small_logo, large_logo, icon_logo, domain, url, email_from, system_url, privacy_policy, languages)
+        org.set_currency('usd')
+        org.set_stripe_keys("not_secret", "secret_key", webhook_secret_key)
         db.session.add(org)
         db.session.commit()
         return org
@@ -205,6 +219,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(event)
         db.session.commit()
         return event
+
+    def add_event_role(self, role, user_id, event_id):
+        event_role = EventRole(role, user_id, event_id)
+        db.session.add(event_role)
+        db.session.commit()
+        return event_role
 
     def add_review_config(self, review_form_id=1, num_reviews_required=1, num_optional_reviews=1):
         review_config = ReviewConfiguration(
@@ -293,6 +313,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.remove()
         db.reflect()
         db.drop_all()
+        OrganisationResolver.reset_cache()
 
     def create_application_form(self,
                             event_id = 1,
@@ -444,3 +465,57 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rt)
         db.session.commit()
         return rt
+    
+    def add_event_fee(
+        self,
+        event_id,
+        created_by_user_id,
+        name='Registration fee',
+        iso_currency_code='usd',
+        amount=200.00,
+        description=None
+    ):
+        event_fee = EventFee(name, iso_currency_code, amount, created_by_user_id, description)
+        event_fee.event_id = event_id
+        db.session.add(event_fee)
+        db.session.commit()
+        return event_fee
+
+    def add_invoice(
+        self,
+        created_by_user_id,
+        user_id,
+        line_items,
+        email='user@user.com',
+        name='User Lastname',
+        iso_currency_code='usd',
+        due_date=datetime.now() + timedelta(days=7)
+    ):
+        invoice = Invoice(
+            email,
+            name,
+            iso_currency_code,
+            due_date,
+            line_items,
+            created_by_user_id,
+            str(user_id)
+        )
+        db.session.add(invoice)
+        db.session.commit()
+        return invoice
+
+    def get_default_line_items(self):
+        return [
+            InvoiceLineItem('registration', 'registration desc', 99.99),
+            InvoiceLineItem('accommodation', 'accommodation desc', 199.99)
+        ]
+    
+    def add_offer_invoice(self, invoice_id, offer_id):
+        invoice = db.session.query(Invoice).get(invoice_id)
+        invoice.link_offer(offer_id)
+        db.session.commit()
+    
+    def add_invoice_payment_intent(self, invoice_id, payment_intent="pi_3L7GhOEpDzoopUbL0jGJhE2i"):
+        invoice = db.session.query(Invoice).get(invoice_id)
+        invoice.add_payment_intent(payment_intent)
+        db.session.commit()
