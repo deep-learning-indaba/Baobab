@@ -231,12 +231,15 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             LOGGER.debug('successfully sent invoice...')
 
             # Save invoice to Cloud storage
-            bucket = storage.get_storage_bucket("indaba-invoices")  # TODO: Replace bucket name with config from organisation
-            blob = bucket.blob(filename)
-            with open(invoice_pdf, 'rb') as file:
-                bytes_file = file.read()
-                content_type = file.content_type
-                blob.upload_from_string(bytes_file, content_type=content_type)
+            try:
+                bucket = storage.get_storage_bucket("indaba-invoices")  # TODO: Replace bucket name with config from organisation
+                blob = bucket.blob(filename)
+                with open(invoice_pdf, 'rb') as file:
+                    bytes_file = file.read()
+                    content_type = file.content_type
+                    blob.upload_from_string(bytes_file, content_type=content_type)
+            except Exception as e:
+                LOGGER.error("Could not upload invoice to cloud storage: " + e)
 
         return marshal(invoices, invoice_list_fields), 201
 
