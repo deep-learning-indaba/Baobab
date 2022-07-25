@@ -51,11 +51,34 @@ def get_domain():
     
     return domain
 
+def get_signed_payload_and_signature():
+    signature = request.environ.get('HTTP_STRIPE_SIGNATURE')
+    elements = signature.split(',')
+    elements_dict = {}
+    for elem in elements:
+        key, val = elem.split('=')
+        elements_dict[key] = val
+    
+    signed_payload = f"{elements_dict['t']}.{request.data.decode('utf-8')}"
+    expected_signature = elements_dict['v1']
+    return signed_payload, expected_signature
+
+def is_from_stripe():
+    stripe_user_agent = 'Stripe/1.0 (+https://stripe.com/docs/webhooks)'
+    return request.environ.get('HTTP_USER_AGENT') == stripe_user_agent
+
 @app.before_request
 def populate_organisation():
-    domain = get_domain()
-    LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
-    g.organisation = OrganisationResolver.resolve_from_domain(domain)
+    if is_from_stripe():
+        signed_payload, expected_signature = get_signed_payload_and_signature()
+        g.organisation = OrganisationResolver.resolve_from_stripe_signature(
+            signed_payload,
+            expected_signature
+        )
+    else:
+        domain = get_domain()
+        LOGGER.info('Origin Domain: {}'.format(domain))  # TODO: Remove this after testing
+        g.organisation = OrganisationResolver.resolve_from_domain(domain)
 
 ## Flask Admin Config
 

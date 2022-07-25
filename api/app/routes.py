@@ -17,6 +17,7 @@ from .organisation import api as organisation_api
 from .integration_tests import api as integration_tests_api
 from .outcome import api as outcome_api
 from .tags import api as tag_api
+from .invoice import api as invoice_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -54,6 +55,7 @@ rest_api.add_resource(events_api.EventStatsAPI,
                       '/api/v1/eventstats'),
 rest_api.add_resource(events_api.EventsByKeyAPI,
                       '/api/v1/event-by-key'),
+rest_api.add_resource(events_api.EventFeeAPI, '/api/v1/eventfee'),
 rest_api.add_resource(users_api.VerifyEmailAPI,
                       '/api/v1/verify-email'),
 rest_api.add_resource(users_api.ResendVerificationEmailAPI,
@@ -109,6 +111,7 @@ rest_api.add_resource(invitation_letter_api.InvitationLetterAPI,
                       '/api/v1/invitation-letter')
 rest_api.add_resource(attendance_api.AttendanceAPI, '/api/v1/attendance')
 rest_api.add_resource(organisation_api.OrganisationApi, '/api/v1/organisation')
+rest_api.add_resource(organisation_api.StripeSettingsApi, '/api/v1/stripe-settings')
 rest_api.add_resource(users_api.PrivacyPolicyAPI, '/api/v1/privacypolicy')
 rest_api.add_resource(integration_tests_api.CreateIntegrationUser, '/api/v1/integration-tests/createUser')
 rest_api.add_resource(integration_tests_api.DeleteIntegrationUser, '/api/v1/integration-tests/deleteUser')
@@ -128,3 +131,9 @@ rest_api.add_resource(reviews_api.ReviewResponseDetailListAPI, '/api/v1/reviewre
 rest_api.add_resource(reviews_api.ReviewResponseSummaryListAPI, '/api/v1/reviewresponsesummarylist')
 rest_api.add_resource(reviews_api.ReviewStageAPI, '/api/v1/reviewstage')
 rest_api.add_resource(reviews_api.ReviewFormDetailAPI, '/api/v1/review-form-detail')
+rest_api.add_resource(invoice_api.InvoiceAPI, '/api/v1/invoice')
+rest_api.add_resource(invoice_api.InvoiceAdminAPI, '/api/v1/invoice-admin')
+rest_api.add_resource(invoice_api.InvoiceListAPI, '/api/v1/invoice-list')
+rest_api.add_resource(invoice_api.InvoicePaymentStatusApi, '/api/v1/invoice-payment-status')
+rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')
+rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')

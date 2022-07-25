@@ -1,4 +1,5 @@
 from app.organisation.repository import OrganisationRepository
+from app.utils.auth import verify_payload
 from app import LOGGER
 from flask import request
 from werkzeug.exceptions import BadRequest
@@ -15,6 +16,14 @@ class OrganisationResolver():
             cls._cache[org.domain] = org
 
     @classmethod
+    def reset_cache(cls):
+        cls._cache = None
+
+    @classmethod
+    def bust_cache(cls):
+        cls._populate_cache()
+
+    @classmethod
     def resolve_from_domain(cls, domain):
         if not cls._cache:
             cls._populate_cache()
@@ -29,3 +38,18 @@ class OrganisationResolver():
                 raise BadRequest('Could not resolve organisation')
         
         return cls._cache[domain]
+    
+    @classmethod
+    def resolve_from_stripe_signature(cls, signed_payload: str, expected_signature: str):
+        if not cls._cache:
+            cls._populate_cache()
+        
+        for org in cls._cache.values():
+            secret = org.stripe_webhook_secret_key
+            if secret:
+                if verify_payload(signed_payload, secret, expected_signature):
+                    return org
+        
+        raise BadRequest('Could not resolve organisation from stripe signature')
+    
+

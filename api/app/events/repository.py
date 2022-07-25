@@ -1,15 +1,16 @@
 from datetime import datetime
 from app import db
-from app.events.models import Event
+from app.events.models import Event, EventFee
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
 from app.registration.models import Offer
 from app.invitedGuest.models import InvitedGuest
+from app.utils.repository import BaseRepository
 from sqlalchemy import and_, or_
 
 
-class EventRepository():
+class EventRepository(BaseRepository):
 
     @staticmethod
     def get_by_id(event_id):
@@ -52,9 +53,22 @@ class EventRepository():
                          .outerjoin(InvitedGuest, and_(Event.id == InvitedGuest.event_id, InvitedGuest.user_id == user_id))\
                          .filter(or_(Offer.id != None, InvitedGuest.id != None))\
                          .all()
-
+    
     @staticmethod
-    def add(event):
-        db.session.add(event)
-        db.session.commit()
-        return event
+    def get_event_fee(event_id, event_fee_id):
+        return (
+            db.session.query(EventFee)
+            .filter(EventFee.event_id==event_id, EventFee.id==event_fee_id)
+            .first()
+        )
+    
+    @staticmethod
+    def get_event_fees(event_id, event_fee_ids):
+        return (
+            db.session.query(EventFee)
+            .filter(
+                EventFee.event_id==event_id,
+                EventFee.id.in_(event_fee_ids),
+                EventFee.is_active==True)
+            .all()
+        )

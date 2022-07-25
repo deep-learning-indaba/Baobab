@@ -1,12 +1,13 @@
 from app import db
 from app.organisation.models import Organisation
+from app.utils.repository import BaseRepository
 
 
-class OrganisationRepository():
+class OrganisationRepository(BaseRepository):
 
     @staticmethod
     def get_by_id(organisation_id):
-        return db.session.query(Organisation).get(event_id)
+        return db.session.query(Organisation).get(organisation_id)
 
     @staticmethod
     def get_by_domain(domain):

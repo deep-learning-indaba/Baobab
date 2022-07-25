@@ -40,3 +40,17 @@ class EventsKeyMixin(object):
     req_parser = reqparse.RequestParser()
     req_parser.add_argument('event_key', type=str, required=True)
     req_parser.add_argument('language', type=str, required=False)
+
+class EventFeeMixin(object):
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('event_id', type=int, required=True)
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('event_id', type=int, required=True)
+    post_parser.add_argument('name', type=str, required=True)
+    post_parser.add_argument('description', type=str, required=False)
+    post_parser.add_argument('amount', type=float, required=True, )
+
+    delete_parser = reqparse.RequestParser()
+    delete_parser.add_argument('event_id', type=int, required=True)
+    delete_parser.add_argument('event_fee_id', type=int, required=True)

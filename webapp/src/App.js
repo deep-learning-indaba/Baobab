@@ -14,6 +14,7 @@ import Reference from "./pages/references";
 import CookieConsent from "react-cookie-consent";
 import ResponseList from './pages/ResponseList/ResponseList';
 import { AdminMenu } from './utils/adminMenu';
+import { Payment, Success, Failed } from './pages/payment';
 
 import ReactGA from "react-ga";
 import "./App.css";
@@ -111,6 +112,13 @@ class EventNav extends Component {
                       onClick={this.props.toggleMenu}
                     >
                       {t('Invitation Letter')}
+                    </NavLink>
+                    <NavLink
+                      to={`/${this.props.eventKey}/invoices`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      {t('Invoices')}
                     </NavLink>
                     {isRegistrationVolunteer(this.state.user) && (
                       <NavLink
@@ -473,6 +481,10 @@ class AppComponent extends Component {
                 <Route exact path="/file/:filename" component={ViewFile} />
                 <PrivateRoute exact path="/profile" component={Profile} />
                 <Route exact path="/reference/:token" component={Reference} />
+                <PrivateRoute exact path="/payment/:invoiceId" component={Payment} />
+                <Route exact path="/payment-success" component={Success} />
+                <Route exact path="/payment-cancel" component={Failed} />
+                
                 <Route
                   path="/:eventKey"
                   render={props => (

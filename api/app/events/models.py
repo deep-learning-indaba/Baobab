@@ -40,6 +40,7 @@ class Event(db.Model):
     email_templates = db.relationship('EmailTemplate')
     event_roles = db.relationship('EventRole')
     event_translations = db.relationship('EventTranslation', lazy='dynamic')
+    event_fees = db.relationship('EventFee')
 
     def __init__(
         self,
@@ -85,6 +86,7 @@ class Event(db.Model):
         self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
+        self.event_fees = []
 
         self.add_event_translations(names, descriptions)
 
@@ -167,6 +169,16 @@ class Event(db.Model):
             description = descriptions[language]
             event_translation = EventTranslation(name, description, language)
             self.event_translations.append(event_translation)
+    
+    def add_event_fee(self, name, amount, user_id, description=None):
+        event_fee = EventFee(
+            name,
+            self.organisation.iso_currency_code,
+            amount,
+            user_id,
+            description)
+        self.event_fees.append(event_fee)
+        return event_fee
 
     def has_specific_translation(self, language):
         return self.event_translations.filter_by(language=language).count() == 1
@@ -320,3 +332,41 @@ class EventRole(db.Model):
 
     def set_role(self, new_role):
         self.role = new_role
+
+class EventFee(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    name = db.Column(db.String(), nullable=False)
+    description = db.Column(db.String(), nullable=True)
+    iso_currency_code = db.Column(db.String(3), nullable=False)
+    amount = db.Column(db.Numeric(scale=2), nullable=False)
+    is_active = db.Column(db.Boolean(), nullable=False)
+    created_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    created_at = db.Column(db.DateTime(), nullable=False)
+    updated_by_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=True)
+    updated_at = db.Column(db.DateTime(), nullable=True)
+
+    event = db.relationship('Event', foreign_keys=[event_id])
+    created_by = db.relationship('AppUser', foreign_keys=[created_by_user_id])
+    updated_by = db.relationship('AppUser', foreign_keys=[updated_by_user_id])
+
+    def __init__(
+        self,
+        name,
+        iso_currency_code,
+        amount,
+        created_by,
+        description=None
+    ):
+        self.name = name
+        self.description = description
+        self.iso_currency_code = iso_currency_code
+        self.amount = round(amount, 2)
+        self.created_by_user_id = created_by
+        self.is_active = True
+        self.created_at = datetime.now()
+
+    def deactivate(self, updated_by_user_id):
+        self.is_active = False
+        self.updated_at = datetime.now()
+        self.updated_by_user_id = updated_by_user_id

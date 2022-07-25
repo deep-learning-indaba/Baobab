@@ -4,11 +4,11 @@ import itertools
 from flask import g, request
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.email_template.repository import EmailRepository as email_repository
-from app.events.models import Event, EventRole
-from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin
+from app.events.models import Event, EventRole, EventFee
+from app.events.mixins import EventsMixin, EventsKeyMixin, EventMixin, EventFeeMixin
 from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
@@ -21,12 +21,14 @@ from app.guestRegistrations.repository import GuestRegistrationRepository as gue
 from app import db, bcrypt, LOGGER
 from app.utils.errors import (
     EVENT_NOT_FOUND,
+    EVENT_FEE_NOT_FOUND,
     FORBIDDEN,
     EVENT_WITH_KEY_NOT_FOUND,
     EVENT_KEY_IN_USE,
     EVENT_WITH_TRANSLATION_NOT_FOUND,
     EVENT_MUST_CONTAIN_TRANSLATION,
-    EVENT_TRANSLATION_MISMATCH
+    EVENT_TRANSLATION_MISMATCH,
+    STRIPE_SETUP_INCOMPLETE
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -479,3 +481,85 @@ class NotStartedReminderAPI(EventsMixin, restful.Resource):
             )
 
         return {'not_started_responses': len(users)}, 201
+
+event_fee_fields = {
+    'id': fields.Integer,
+    'event_id': fields.Integer,
+    'name': fields.String,
+    'description': fields.String,
+    'iso_currency_code': fields.String,
+    'amount': fields.Float,
+    'is_active': fields.Boolean,
+    'created_by_user_id': fields.Integer,
+    'created_by': fields.String(attribute="created_by.full_name"),
+    'created_at': fields.DateTime(dt_format='iso8601'),
+    'updated_by_user_id': fields.Integer(default=None),
+    'updated_by': fields.String(attribute='updated_by.full_name'),
+    'updated_at': fields.DateTime(dt_format='iso8601')
+}
+
+class EventFeeAPI(EventFeeMixin, restful.Resource):
+    @auth_required
+    @marshal_with(event_fee_fields)
+    def get(self):
+        args = self.get_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+        
+        return event.event_fees, 200
+
+    @auth_required
+    @marshal_with(event_fee_fields)
+    def post(self):
+        args = self.post_parser.parse_args()
+        event_id = args['event_id']
+        user_id = g.current_user['id']
+
+        event = event_repository.get_by_id(event_id)
+        if not event:
+            return EVENT_NOT_FOUND
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+
+        if not event.organisation.can_accept_payments():
+            return STRIPE_SETUP_INCOMPLETE
+        
+        event_fee = event.add_event_fee(
+            args['name'],
+            args['amount'],
+            user_id,
+            args['description']
+        )
+        event_repository.save()
+        return event_fee, 201
+    
+    @auth_required
+    @marshal_with(event_fee_fields)
+    def delete(self):
+        args = self.delete_parser.parse_args()
+        event_id = args['event_id']
+        event_fee_id = args['event_fee_id']
+        user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(user_id)
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+
+        event_fee = event_repository.get_event_fee(event_id, event_fee_id)
+        if not event_fee:
+            return EVENT_FEE_NOT_FOUND
+        
+        event_fee.deactivate(user_id)
+        event_repository.save()
+
+        return event_fee, 200
