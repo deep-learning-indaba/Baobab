@@ -40,6 +40,8 @@ class BaseInvoiceApiTest(ApiTestCase):
         self.applicant_id = self.applicant.id
         self.applicant_name = self.applicant.full_name
 
+        self.add_email_template("invoice")
+
         # we don't mind this since this warning is specific to sqlite
         warnings.filterwarnings('ignore', r"^Dialect sqlite\+pysqlite does \*not\* support Decimal objects natively")
 
