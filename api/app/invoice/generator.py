@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.invoice.models import Invoice, InvoiceLineItem
 
+_USDGBP_PATH = "https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd/gbp.json"
 
 class InvoiceGenerator:
     URL = "https://invoice-generator.com"
@@ -167,8 +168,18 @@ class CustomField:
         self.value = value
 
 
+def _get_exchange_rate():
+    exchange_data = requests.get(_USDGBP_PATH)
+    return exchange_data.json()["gbp"]
+
+
 # TODO: Move to organisation table
-_NOTES = """Bank Details
+_NOTES = """Pay online at {payment_url} or by bank transfer.
+
+** Please note that bank transfers must be in GBP (British Pounds) **
+Total Amount in GBP: {gbp_amount}
+
+Bank Details
 
 Account name:       Deep Learning Indaba Limited
 Bank:               Barclays Bank UK PLC
@@ -176,7 +187,7 @@ Account number:     33650847
 Sort code:          20-10-53
 IBAN:               GB71 BUKB 20105333650847
 SWIFT:              BUKBGB22
-Reference:          {invoice_no}
+Reference:          Invoice {invoice_no}
 
 Please forward proof of payment to baobab@deeplearningindaba.com
 """
@@ -184,12 +195,15 @@ Please forward proof of payment to baobab@deeplearningindaba.com
 def from_invoice_model(invoice, organisation):
     print("Generating PDF invoice")
     invoice_number = f"B{invoice.id:03d}"
+    payment_url = f"{organisation.system_url}/payment/{invoice.id}"
     generator = InvoiceGenerator(
         sender=organisation.name,
         to=invoice.customer_name,
         logo="https://baobab.deeplearningindaba.com/static/media/indaba-logo-dark.d5a6196d.png",  #  f"{organisation.system_url}/static/media/indaba-logo-dark.d5a6196d.png", 
         due_date=invoice.due_date,
-        notes=_NOTES.format(invoice_no=invoice_number),
+        notes=_NOTES.format(invoice_no=invoice_number, 
+                            payment_url=payment_url,
+                            gbp_amount=round(invoice.total_amount * _get_exchange_rate())),
         amount_paid=invoice.total_amount if invoice.is_paid else 0,
         currency=invoice.iso_currency_code,
         number=invoice_number)
@@ -206,4 +220,4 @@ def from_invoice_model(invoice, organisation):
         os.remove(invoice_pdf)
 
     generator.download(invoice_pdf)
-    return invoice_pdf
+    return invoice_pdf, invoice_number

@@ -16,6 +16,7 @@ from app.users.repository import UserRepository as user_repository
 from app.invoice import generator
 from app.utils import emailer
 from app.registrationResponse import api as registration_response_api
+from app.utils import storage
 
 from app.utils.errors import (
     FORBIDDEN,
@@ -214,19 +215,28 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
         # Generate PDFs and email them
         for invoice in invoices:
-            invoice_pdf = generator.from_invoice_model(invoice, g.organisation)
+            invoice_pdf, invoice_number = generator.from_invoice_model(invoice, g.organisation)
+            filename = f"invoice_{invoice_number}.pdf"
             emailer.email_user(
                 'invoice',
                 event=event,
                 user=current_user,
-                file_name="Invoice.pdf",
+                file_name=filename,
                 file_path=invoice_pdf,
                 template_parameters=dict(
                     system_url=g.organisation.system_url,
                     invoice_id=invoice.id
                 )
             )
-            LOGGER.debug('successfully sent email...')
+            LOGGER.debug('successfully sent invoice...')
+
+            # Save invoice to Cloud storage
+            bucket = storage.get_storage_bucket("indaba-invoices")  # TODO: Replace bucket name with config from organisation
+            blob = bucket.blob(filename)
+            with open(invoice_pdf, 'rb') as file:
+                bytes_file = file.read()
+                content_type = file.content_type
+                blob.upload_from_string(bytes_file, content_type=content_type)
 
         return marshal(invoices, invoice_list_fields), 201
 
@@ -369,12 +379,12 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             stripe_webhook_event = StripeWebhookEvent(event)
             invoice_repository.add(stripe_webhook_event)
 
-            if invoice.offer_id:
-                LOGGER.info("Invoice offer ID is ", invoice.offer_id)
+            if invoice.is_paid and invoice.offer_id:
+                LOGGER.info(f"Invoice offer ID is {invoice.offer_id}")
                 offer = offer_repository.get_by_id(invoice.offer_id)
                 registration = registration_repository.from_offer(invoice.offer_id)
                 if registration:
-                    LOGGER.info("Confirming Registration ID ", registration.id)
+                    LOGGER.info(f"Confirming Registration ID {registration.id}")
                     registration_response_api.confirm_registration(registration, offer)
 
             invoice_repository.save()
