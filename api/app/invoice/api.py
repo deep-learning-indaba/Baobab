@@ -220,7 +220,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             emailer.email_user(
                 'invoice',
                 event=event,
-                user=current_user,
+                user=offer.user,
                 file_name=filename,
                 file_path=invoice_pdf,
                 template_parameters=dict(
