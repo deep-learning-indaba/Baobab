@@ -203,8 +203,8 @@ def from_invoice_model(invoice, organisation):
         due_date=invoice.due_date,
         notes=_NOTES.format(invoice_no=invoice_number, 
                             payment_url=payment_url,
-                            gbp_amount=round(invoice.total_amount * _get_exchange_rate())),
-        amount_paid=invoice.total_amount if invoice.is_paid else 0,
+                            gbp_amount=round(float(invoice.total_amount) * _get_exchange_rate())),
+        amount_paid=float(invoice.total_amount) if invoice.is_paid else 0,
         currency=invoice.iso_currency_code,
         number=invoice_number)
     for line_item in invoice.invoice_line_items:
