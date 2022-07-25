@@ -239,7 +239,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
                     content_type = file.content_type
                     blob.upload_from_string(bytes_file, content_type=content_type)
             except Exception as e:
-                LOGGER.error("Could not upload invoice to cloud storage: " + e)
+                LOGGER.error("Could not upload invoice to cloud storage: " + str(e))
 
         return marshal(invoices, invoice_list_fields), 201
 
