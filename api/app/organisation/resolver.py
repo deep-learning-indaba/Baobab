@@ -1,4 +1,5 @@
 from app.organisation.repository import OrganisationRepository
+from app.organisation.models import PlainOrganisation
 from app.utils.auth import verify_payload
 from app import LOGGER
 from flask import request
@@ -13,7 +14,7 @@ class OrganisationResolver():
         organisations = OrganisationRepository.get_all()
         cls._cache = {}
         for org in organisations:
-            cls._cache[org.domain] = org
+            cls._cache[org.domain] = PlainOrganisation.from_organisation_model(org)
 
     @classmethod
     def reset_cache(cls):
