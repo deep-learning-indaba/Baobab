@@ -1,4 +1,5 @@
 from app import db
+import dataclasses
 
 class Organisation(db.Model):
 
@@ -51,3 +52,45 @@ class Organisation(db.Model):
         self.stripe_api_publishable_key = publishable_key
         self.stripe_api_secret_key = secret_key
         self.stripe_webhook_secret_key = webhook_secret_key
+
+
+@dataclasses.dataclass
+class PlainOrganisation:
+    """Plain old Python organisation class."""
+    id: int
+    name: str
+    system_name: str
+    small_logo: str
+    large_logo: str
+    icon_logo: str
+    domain: str
+    url: str
+    email_from: str
+    system_url: str
+    privacy_policy: str
+    languages: list
+    iso_currency_code: str
+    stripe_api_publishable_key: str
+    stripe_api_secret_key: str
+    stripe_webhook_secret_key: str
+
+    @classmethod
+    def from_organisation_model(cls, organisation: Organisation):
+        return cls(
+            id=int(organisation.id),
+            name=str(organisation.name),
+            system_name=str(organisation.system_name),
+            small_logo=str(organisation.small_logo),
+            large_logo=str(organisation.large_logo),
+            icon_logo=str(organisation.icon_logo),
+            domain=str(organisation.domain),
+            url=str(organisation.url),
+            email_from=str(organisation.email_from),
+            system_url=str(organisation.system_url),
+            privacy_policy=str(organisation.privacy_policy),
+            languages=list(organisation.languages),
+            iso_currency_code=str(organisation.iso_currency_code),
+            stripe_api_publishable_key=str(organisation.stripe_api_publishable_key),
+            stripe_api_secret_key=str(organisation.stripe_api_secret_key),
+            stripe_webhook_secret_key=str(organisation.stripe_webhook_secret_key),
+        )
