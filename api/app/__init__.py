@@ -53,6 +53,7 @@ def get_domain():
 
 def get_signed_payload_and_signature():
     signature = request.environ.get('HTTP_STRIPE_SIGNATURE')
+    LOGGER.info(f"Processing stripe signature {signature}")
     elements = signature.split(',')
     elements_dict = {}
     for elem in elements:
