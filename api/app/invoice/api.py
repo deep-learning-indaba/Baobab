@@ -236,8 +236,7 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
                 blob = bucket.blob(filename)
                 with open(invoice_pdf, 'rb') as file:
                     bytes_file = file.read()
-                    content_type = file.content_type
-                    blob.upload_from_string(bytes_file, content_type=content_type)
+                    blob.upload_from_string(bytes_file, content_type="application/pdf")
             except Exception as e:
                 LOGGER.error("Could not upload invoice to cloud storage: " + str(e))
 
