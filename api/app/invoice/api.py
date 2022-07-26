@@ -391,6 +391,6 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
 
             invoice_repository.save()
         else:
-            LOGGER.warn(f"Receiving an unexpected event: {event['type']}")
+            LOGGER.warn(f"Received an unexpected event: {event['type']}")
 
         return 200
