@@ -1,4 +1,4 @@
-from api.app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest
 from app import db
 from app.attendance.models import Attendance, EventIndemnity
 from app.users.models import AppUser
