@@ -19,7 +19,7 @@ class AttendanceTable extends React.Component {
       undoResult: null,
       confirming: false,
       undoing: false,
-      exclude_already_signed_in: null,
+      excludeCheckedIn: null,
       location: props.location,
       userAlreadyExists: null,
       showAllColumns: null
@@ -29,20 +29,20 @@ class AttendanceTable extends React.Component {
     window.addEventListener("resize", this.resize);
     this.resize();
     let url = this.props.location;
-    // Default only show people who haven't signed in.
-    let exclude_already_signed_in = true;
+    // Default only show people who haven't checked in.
+    let excludeCheckedIn = true;
     if (url) {
       let params = queryString.parse(url);
       if (
         params &&
-        params.exclude_already_signed_in &&
-        params.exclude_already_signed_in.toLowerCase() === "false"
+        params.excludeCheckedIn &&
+        params.excludeCheckedIn.toLowerCase() === "false"
       ) {
-        exclude_already_signed_in = false;
+        excludeCheckedIn = false;
       }
     }
     this.setState(
-      { loading: true, exclude_already_signed_in: exclude_already_signed_in },
+      { loading: true, excludeCheckedIn: excludeCheckedIn },
       () => this.getAttendanceList()
     );
   }
@@ -51,9 +51,9 @@ class AttendanceTable extends React.Component {
     this.setState({ showAllColumns: window.innerWidth >= 500 });
   };
   getAttendanceList() {
-    const { exclude_already_signed_in } = this.state;
+    const { excludeCheckedIn } = this.state;
     attendanceService
-      .getAttendanceList(this.state.eventId, exclude_already_signed_in)
+      .getAttendanceList(this.state.eventId, excludeCheckedIn)
       .then(result => {
         this.setState({
           loading: false,
@@ -394,7 +394,7 @@ class AttendanceTable extends React.Component {
       );
     }
     let heading = "Attendance Registration";
-    if (this.state.exclude_already_signed_in === false) {
+    if (this.state.excludeCheckedIn === false) {
       heading = "Attendance Registration - Special Situations";
     }
 

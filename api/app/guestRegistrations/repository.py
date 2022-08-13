@@ -1,8 +1,8 @@
 from app import db
-from app.invitedGuest.models import InvitedGuest, GuestRegistration
+from app.invitedGuest.models import InvitedGuest, GuestRegistration, GuestRegistrationAnswer
 from app.users.models import AppUser
 from app.events.models import Event
-from app.registration.models import RegistrationForm
+from app.registration.models import RegistrationForm, RegistrationQuestion
 from app.attendance.models import Attendance
 from sqlalchemy.sql import exists
 from app import LOGGER
@@ -94,3 +94,14 @@ class GuestRegistrationRepository():
                         .order_by(cast(GuestRegistration.created_at, Date))
                         .all())
         return timeseries
+
+    @staticmethod
+    def get_guest_registration_answer_by_headline(user_id, event_id, headline):
+        answer = (
+            db.session.query(GuestRegistrationAnswer)
+            .join(GuestRegistration, GuestRegistrationAnswer.guest_registration_id == GuestRegistration.id)
+            .filter_by(user_id=user_id, event_id=event_id)
+            .join(RegistrationQuestion, GuestRegistrationAnswer.registration_question_id == RegistrationQuestion.id)
+            .filter_by(headline == headline)
+            .first())
+        return answer
