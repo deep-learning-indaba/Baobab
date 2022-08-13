@@ -104,22 +104,3 @@ def event_admin_required(func):
         return FORBIDDEN
 
     return wrapper
-
-
-def event_role_required(func):
-    @wraps(func)
-    def wrapper(role_fn: Callable[[AppUser, int], bool], *args, **kwargs):
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True)
-        args = req_parser.parse_args()
-
-        user = get_user_from_request()
-        if user:
-            user_info = user_repository.get_by_id(user['id'])
-            if role_fn(user_info, args['event_id']):
-                g.current_user = user
-                return func(*args, event_id=args['event_id'], **kwargs)
-        
-        return FORBIDDEN
-
-    return wrapper

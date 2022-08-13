@@ -235,12 +235,18 @@ class IndemnityAPI(restful.Resource):
         if not indemnity:
             return INDEMNITY_NOT_FOUND
 
+        event = event_repository.get_by_id(event_id)
+        user = user_repository.get_by_id(current_user_id)
         attendance = Attendance(event_id, current_user_id, current_user_id)
         attendance.sign_indemnity()
 
         attendance_repository.create(attendance)
 
-        event = event_repository.get_by_id(event_id)
+        email_user(
+            'indemnity-signed',
+            event=event,
+            user=user,
+            indemnity_form=indemnity.indemnity_form)
 
         return {
             'indemnity_form': indemnity.indemnity_form,
@@ -259,12 +265,18 @@ class GuestListApi(restful.Resource):
         'user_title': fields.String
     }
 
-    @event_role_required(lambda user, event_id: user.is_registration_volunteer(event_id))
+    @auth_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('exclude_already_checked_in', type=bool, required=True)
         args = req_parser.parse_args()
         exclude_already_checked_in = args['exclude_already_checked_in']
+        
+        registration_user_id = g.current_user["id"]
+        registration_user = user_repository.get_by_id(registration_user_id)
+        if not registration_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
         all_attendees = attendance_repository.get_all_guests_for_event(event_id)
 
         if exclude_already_checked_in:
