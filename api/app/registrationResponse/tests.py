@@ -343,27 +343,14 @@ class RegistrationApiTest(ApiTestCase):
                     headers=self.adminHeaders)
             responses = json.loads(response.data)
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(len(responses), 2)
+            self.assertEqual(len(responses), 1)  # Two unconfirmed, but only one where offer was accepted.
 
             self.assertEqual(responses[0]['registration_id'], self.registration1.id)
             self.assertEqual(responses[0]['user_id'], self.offer.user_id)
             self.assertEqual(responses[0]['firstname'], 'Some')
             self.assertEqual(responses[0]['lastname'], 'Thing')
             self.assertEqual(responses[0]['email'], 'something@email.com')
-            # TODO re-add once we get these fields outside of AppUser
-            # self.assertEqual(responses[0]['user_category'], 'Postdoc')
-            # self.assertEqual(responses[0]['affiliation'], 'University')
             self.assertEqual(responses[0]['created_at'][:9], datetime.today().isoformat()[:9])
-
-            self.assertEqual(responses[1]['registration_id'], self.registration3.id)
-            self.assertEqual(responses[1]['user_id'], self.offer3.user_id)
-            self.assertEqual(responses[1]['firstname'], 'event_admin')
-            self.assertEqual(responses[1]['lastname'], 'Lastname')
-            self.assertEqual(responses[1]['email'], 'event_admin@ea.com')
-            # TODO re-add once we get these fields outside of AppUser
-            # self.assertEqual(responses[1]['user_category'], 'Postdoc')
-            # self.assertEqual(responses[1]['affiliation'], 'NWU')
-            self.assertEqual(responses[1]['created_at'][:9], datetime.today().isoformat()[:9])
 
     def test_get_confirmed_not_event_admin(self):
         with app.app_context():
@@ -371,8 +358,6 @@ class RegistrationApiTest(ApiTestCase):
             response = self.app.get('/api/v1/registration/confirmed?event_id=1',
                     headers=self.headers)
             self.assertEqual(response.status_code, 403)
-
-
     
     def test_get_confirmed(self):
         with app.app_context():

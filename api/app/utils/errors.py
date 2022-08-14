@@ -135,3 +135,6 @@ INVOICE_MUST_HAVE_FUTURE_DATE = ({'message': 'Invoice must have a due date in th
 INVOICE_OVERDUE = ({'message': 'Invoice is overdue and cannot be paid anymore'}, 400)
 INVOICE_NEGATIVE = ({'message': 'Invoice cannot be negative'}, 400)
 STRIPE_SETUP_INCOMPLETE = ({'message': 'Stripe setup has not yet been completed.'}, 400)
+INDEMNITY_NOT_FOUND = ({'message': "The event does not have an indemnity form"}, 404)
+INDEMNITY_NOT_SIGNED = ({'message': "Indemnity form has not been signed"}, 400)
+NOT_A_GUEST = ({'message': "You are not a confirmed guest of this event."}, 404)

@@ -21,6 +21,7 @@ from app import LOGGER
 import json
 from app.organisation.models import Organisation
 from app.events.models import EventType
+import unittest
 
 
 class AttendanceApiTest(ApiTestCase):
@@ -120,7 +121,7 @@ class AttendanceApiTest(ApiTestCase):
     def test_non_admin_cannot_get_post_delete(self):
         self.seed_static_data()
         header = self.get_auth_header_for('attendee@mail.com')
-        params = {'user_id': 2, 'event_id': 1}
+        params = {'user_id': 2, 'event_id': 1, 'indemnity_signed': True}
 
         response_get = self.app.get(
             '/api/v1/attendance', headers=header, data=params)
@@ -135,7 +136,8 @@ class AttendanceApiTest(ApiTestCase):
 
     def setup_get_attendance(self):
         attendance = Attendance(1, 1, 2)
-        attendance_repository.create(attendance)
+        attendance_repository.add(attendance)
+        attendance_repository.save()
 
     def test_get_attendance(self):
         self.seed_static_data()
@@ -149,23 +151,12 @@ class AttendanceApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['event_id'], 1)
-        self.assertEqual(data['updated_by_user_id'], 2)
-
-    def test_post_attendance(self):
-        self.seed_static_data()
-        header = self.get_auth_header_for('ra@ra.com')
-        params = {'user_id': 1, 'event_id': 1}
-
-        response = self.app.post('/api/v1/attendance',
-                                 headers=header, data=params)
-
-        data = json.loads(response.data)
-        self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
         self.assertEqual(data['accommodation_award'], True)
 
     # Normal Attendance
+    @unittest.skip("Deprecated API")
     def test_get_attendance_list(self):
         self.seed_static_data()
 
@@ -224,6 +215,7 @@ class AttendanceApiTest(ApiTestCase):
         self.assertEqual(len(data2), 2)
 
     # Invited Guests attendance
+    @unittest.skip("Deprecated API")
     def test_get_attendance_list_2(self):
         self.seed_static_data()
         mrObama = self.add_user('obama@mail.com', 'Barack', 'Obama', 'Mr')
@@ -250,12 +242,15 @@ class AttendanceApiTest(ApiTestCase):
 
         # Confirm Attendance of Invited Guest
         params = {'user_id': invited_guest_id, 'event_id': 1}
-        attendance_response = self.app.post('/api/v1/attendance',
+        attendance_response = self.app.get('/api/v1/attendance',
                       headers=header, data=params)
       
         response = json.loads(attendance_response.data)
         self.assertEqual(response['is_invitedguest'],True)
         self.assertEqual(response['invitedguest_role'],role)
+
+        attendance_response = self.app.post('/api/v1/attendance',
+                      headers=header, data=params)
 
         # No Invited Guest since he/she has already been signed in.
         params = { 'event_id': 1,
@@ -303,7 +298,8 @@ class AttendanceApiTest(ApiTestCase):
 
     def setup_delete_attendance(self):
         attendance = Attendance(1, 1, 2)
-        attendance_repository.create(attendance)
+        attendance_repository.add(attendance)
+        attendance_repository.save()
 
     def test_delete_attendance(self):
         self.seed_static_data()

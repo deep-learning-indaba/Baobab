@@ -1,6 +1,7 @@
 from functools import wraps
 import hashlib
 import hmac
+from typing import Callable
 
 from flask import request, g
 from flask_restful import reqparse
@@ -9,6 +10,7 @@ from itsdangerous import SignatureExpired, BadSignature
 
 from app import app
 from app.users.repository import UserRepository as user_repository
+from app.users.models import AppUser
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
 
 
