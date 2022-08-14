@@ -23,8 +23,12 @@ def upgrade():
     sa.ForeignKeyConstraint(['event_id'], ['event.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.add_column('attendance', sa.Column('indemnity_signed', sa.Boolean(), nullable=False))
-    op.add_column('attendance', sa.Column('confirmed', sa.Boolean(), nullable=False))
+    op.add_column('attendance', sa.Column('indemnity_signed', sa.Boolean(), nullable=True))
+    op.execute("""UPDATE attendance SET indemnity_signed=False""")
+    op.alter_column('attendance', 'indemnity_signed', nullable=False)
+    op.add_column('attendance', sa.Column('confirmed', sa.Boolean(), nullable=True))
+    op.execute("""UPDATE attendance SET confirmed=True""")
+    op.alter_column('attendance', 'confirmed', nullable=False)
     # ### end Alembic commands ###
 
 
