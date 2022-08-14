@@ -8,3 +8,8 @@
     width: 100vw !important ;
   }
 }
+
+.indemnity-form {
+  white-space: pre-wrap;
+  text-align: left;
+}

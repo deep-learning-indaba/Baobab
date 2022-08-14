@@ -18,15 +18,14 @@ import CreateInvitedGuests from "../createInvitedGuest";
 import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
-import Attendance from "../attendance/Attendance";
 import Offer from "../offer";
 import { InvoiceList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
-import ResponseList from "../ResponseList/ResponseList"
-import ResponsePage from "../ResponsePage/ResponsePage"
-import ReviewDashboard from "../reviewDashboard"
-
+import ResponseList from "../ResponseList/ResponseList";
+import ResponsePage from "../ResponsePage/ResponsePage";
+import ReviewDashboard from "../reviewDashboard";
+import { Attendance, Indemnity } from '../attendance';
 
 class EventInfo extends Component {
   constructor(props) {
@@ -257,8 +256,12 @@ class EventHome extends Component {
           path={`${match.path}/invoices`}
           render={(props) => <InvoiceList {...props} event={event} />}
         />
+        <Route
+          exact
+          path={`${match.path}/indemnity`}
+          render={(props) => <Indemnity {...props} event={event} />}
+        />
 
-        
       </div>
     );
   }

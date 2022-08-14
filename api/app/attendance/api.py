@@ -1,7 +1,7 @@
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with, marshal
-from app import db
+from app import db, LOGGER
 from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
@@ -12,7 +12,7 @@ from app.registrationResponse.repository import RegistrationRepository as regist
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils.auth import auth_required, event_role_required
+from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
 from app.registration.models import Offer
@@ -215,9 +215,10 @@ class IndemnityAPI(restful.Resource):
 
         attendance = attendance_repository.get(event_id, user_id)
         event = event_repository.get_by_id(event_id)
+        user = user_repository.get_by_id(user_id)
 
         return {
-            'indemnity_form': indemnity.indemnity_form,
+            'indemnity_form': indemnity.indemnity_form.format(attendee_name=user.full_name),
             'signed': attendance.indemnity_signed if attendance is not None else False,
             'event_name': event.get_name("en"),
             'date': attendance.timestamp.isoformat() if attendance is not None else None,
@@ -231,25 +232,34 @@ class IndemnityAPI(restful.Resource):
         event_id = args['event_id']
         current_user_id = g.current_user['id']
 
+        LOGGER.info(f"Received indemnity signature for event {event_id}, user {current_user_id}")
+
         indemnity = indemnity_repository.get(event_id)
         if not indemnity:
+            LOGGER.error(f"Indemnity form not found")
             return INDEMNITY_NOT_FOUND
 
         event = event_repository.get_by_id(event_id)
         user = user_repository.get_by_id(current_user_id)
         attendance = Attendance(event_id, current_user_id, current_user_id)
         attendance.sign_indemnity()
-
-        attendance_repository.create(attendance)
+        LOGGER.info(f"Created attendance and signed")
+        
+        attendance_repository.add(attendance)
+        attendance_repository.save()
+        LOGGER.info(f"Saved")
 
         email_user(
             'indemnity-signed',
             event=event,
             user=user,
-            indemnity_form=indemnity.indemnity_form)
+            template_parameters={
+                "indemnity_form": indemnity.indemnity_form.format(attendee_name=user.full_name)
+            })
+        LOGGER.info(f"Emailed")
 
         return {
-            'indemnity_form': indemnity.indemnity_form,
+            'indemnity_form': indemnity.indemnity_form.format(attendee_name=user.full_name),
             'signed': attendance.indemnity_signed if attendance is not None else False,
             'event_name': event.get_name("en"),
             'date': attendance.timestamp.isoformat() if attendance is not None else None,

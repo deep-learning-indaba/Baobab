@@ -27,7 +27,8 @@ class IndemnityForm extends React.Component {
       });
   }
 
-  handleSubmit = () => {
+  handleSubmit = (event) => {
+    event.preventDefault();
     this.setState({submitting: true}, ()=> {
         attendanceService
             .postIndemnity(this.state.eventId)
@@ -35,10 +36,19 @@ class IndemnityForm extends React.Component {
                 this.setState({
                     submitting: false,
                     data: result.data,
-                    erorr: result.error
+                    error: result.error
                 })
             });
     });
+  }
+
+  handleChange = (e) => {
+    if (e.target) {
+        const value = e.target.checked | 0;
+        this.setState({
+            agreed: value
+        });
+    }
   }
 
   render() {
@@ -63,9 +73,11 @@ class IndemnityForm extends React.Component {
     return <div>
         <h2>Indemnity Form for {data.event_name}</h2>
         <form onSubmit={this.handleSubmit}>
-            <div className="card stretched">
+            <div className="card stretched indemnity-form">
                 {data.indemnity_form}
             </div>
+            <br/><br/>
+
             <FormCheckbox
                 id="indemnity_agreed"
                 name="indemnity_agreed"
