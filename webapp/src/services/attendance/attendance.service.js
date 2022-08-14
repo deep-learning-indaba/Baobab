@@ -1,22 +1,25 @@
 import axios from "axios";
-import { authHeader } from "../base.service";
+import { authHeader, extractErrorMessage } from "../base.service";
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const attendanceService = {
   getAttendanceList,
   confirm,
-  undoConfirmation
+  undoConfirmation,
+  getIndemnityForm,
+  postIndemnity,
+  checkIn
 };
 
-function getAttendanceList(eventId, exclude_already_signed_in) {
+function getAttendanceList(eventId, excludeCheckedIn) {
   return axios
     .get(
       baseUrl +
-        "/api/v1/registration/confirmed?event_id=" +
+        "/api/v1/guestlist?event_id=" +
         eventId +
-        "&exclude_already_signed_in=" +
-        exclude_already_signed_in,
+        "&exclude_already_checked_in=" +
+        excludeCheckedIn,
       {
         headers: authHeader()
       }
@@ -39,10 +42,12 @@ function getAttendanceList(eventId, exclude_already_signed_in) {
     });
 }
 
-function confirm(eventId, userId) {
+function confirm(eventId, userId, indemnitySigned) {
+  console.log(`Confirming for event ${eventId}, user ${userId}, indemnity signed ${indemnitySigned}`);
   const data = {
     user_id: userId,
-    event_id: eventId
+    event_id: eventId,
+    indemnity_signed: indemnitySigned
   };
 
   return axios
@@ -91,5 +96,56 @@ function undoConfirmation(eventId, userId) {
             : error.message,
         statusCode: error.response && error.response.status
       };
+    });
+}
+
+function checkIn(eventId, userId) {
+  return axios
+    .get(baseUrl + `/api/v1/attendance?event_id=${eventId}&user_id=${userId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+            data: response.data,
+            error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+            data: null,
+            error: extractErrorMessage(error)
+        }
+    });
+}
+
+function getIndemnityForm(eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/indemnity?event_id=${eventId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+            data: response.data,
+            error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+            data: null,
+            error: extractErrorMessage(error)
+        }
+    });
+}
+
+function postIndemnity(eventId) {
+  return axios
+    .post(baseUrl + "/api/v1/indemnity", {event_id: eventId}, { headers: authHeader() })
+    .then((response) => {
+      return {
+          data: response.data,
+          error: ""
+      }
+    })
+    .catch((error) => {
+        return {
+            data: null,
+            error: extractErrorMessage(error)
+        }
     });
 }

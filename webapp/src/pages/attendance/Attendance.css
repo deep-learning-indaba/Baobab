@@ -8,3 +8,33 @@
     width: 100vw !important ;
   }
 }
+
+.indemnity-form {
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.confirm-modal {
+  padding: 1em;
+}
+
+.confirm-submit {
+  margin-right: 2em;
+  margin-top: 1em;
+}
+
+.confirm-cancel {
+  margin-top: 1em;
+}
+
+.confirm-idemnity {
+  margin-right: 0.5em;
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.confirm-identity-label {
+  display: inline-block;
+  margin-top: -1em;
+  vertical-align: middle;
+}

@@ -41,17 +41,12 @@ class RegistrationRepository():
     @staticmethod
     def get_confirmed_for_event(event_id, confirmed):
         """Get registrations for an event according to confirmed status."""
-        return db.session.query(Registration, Offer, AppUser).filter(
-            Registration.confirmed == confirmed
-        ).join(
-            Offer, Registration.offer_id == Offer.id
-        ).join(
-            AppUser, Offer.user_id == AppUser.id
-        ).filter(
-            Offer.event_id == event_id
-        ).all()
-    
-    
+        return (db.session.query(Registration, Offer, AppUser)
+                .filter(Registration.confirmed == confirmed)
+                .join(Offer, Registration.offer_id == Offer.id)
+                .join(AppUser, Offer.user_id == AppUser.id)
+                .filter(Offer.event_id == event_id, Offer.candidate_response == True)
+                .all())
 
     @staticmethod
     def get_unsigned_in_attendees(event_id, confirmed):

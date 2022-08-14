@@ -113,22 +113,13 @@ class EventNav extends Component {
                     >
                       {t('Invitation Letter')}
                     </NavLink>
-                    <NavLink
+                    {/* <NavLink
                       to={`/${this.props.eventKey}/invoices`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
                       {t('Invoices')}
-                    </NavLink>
-                    {isRegistrationVolunteer(this.state.user) && (
-                      <NavLink
-                        to={`/${this.props.eventKey}/eventAttendance`}
-                        className="dropdown-item"
-                        onClick={this.props.toggleMenu}
-                      >
-                        {t('Event Attendance')}
-                      </NavLink>
-                    )}
+                    </NavLink> */}
                   </div>
                 </li>
               )}
@@ -211,7 +202,7 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {isRegistrationAdmin(this.props.user, this.props.event) &&
+            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) &&
               this.props.event &&
               this.props.event.is_registration_open && (
                 <li className="nav-item dropdown">
@@ -226,13 +217,22 @@ class EventNav extends Component {
                     {t('Registration Admin')}
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-                    <NavLink
+                    {isRegistrationAdmin(this.props.user, this.props.event) && <NavLink
                       to={`/${this.props.eventKey}/registrationAdmin`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
                       {t('Unconfirmed Registrations')}
-                    </NavLink>
+                    </NavLink>}
+                    {isRegistrationVolunteer(this.props.user, this.props.event) && (
+                      <NavLink
+                        to={`/${this.props.eventKey}/eventAttendance`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        {t('Event Attendance')}
+                      </NavLink>
+                    )}
                   </div>
                 </li>
               )}
