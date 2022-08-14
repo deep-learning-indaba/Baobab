@@ -108,10 +108,10 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             registration = registration_response_repository.get_by_user_id(user.id, event_id)
             confirmed = registration.confirmed if registration is not None else True
         # Shirt Size
-        shirt_answer = _get_registration_answer(user_id, event_id, "T-Shirt Size")
+        shirt_answer = _get_registration_answer(user_id, event_id, "T-Shirt Size", is_invited_guest)
 
         # Poster registration
-        bringing_poster = _get_registration_answer(user_id, event_id, "Will you be bringing a poster?") == 'yes'
+        bringing_poster = _get_registration_answer(user_id, event_id, "Will you be bringing a poster?", is_invited_guest) == 'yes'
 
         attendance_user = AttendanceUser(attendance, accommodation_award=has_accepted_accom_award, 
                                          shirt_size=shirt_answer, is_invitedguest=is_invited_guest, 
@@ -255,7 +255,7 @@ class IndemnityAPI(restful.Resource):
             user=user,
             template_parameters={
                 "indemnity_form": indemnity.indemnity_form.format(attendee_name=user.full_name)
-            })
+            })  
         LOGGER.info(f"Emailed")
 
         return {

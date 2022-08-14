@@ -100,8 +100,10 @@ class GuestRegistrationRepository():
         answer = (
             db.session.query(GuestRegistrationAnswer)
             .join(GuestRegistration, GuestRegistrationAnswer.guest_registration_id == GuestRegistration.id)
-            .filter_by(user_id=user_id, event_id=event_id)
+            .filter_by(user_id=user_id)
+            .join(RegistrationForm, GuestRegistration.registration_form_id == RegistrationForm.id)
+            .filter_by(event_id=event_id)
             .join(RegistrationQuestion, GuestRegistrationAnswer.registration_question_id == RegistrationQuestion.id)
-            .filter_by(headline == headline)
+            .filter_by(headline=headline)
             .first())
         return answer

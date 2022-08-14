@@ -90,7 +90,7 @@ def get_registration_answer_based_headline(user_id, event_id, headline):
         .join(Offer, Offer.id == Registration.offer_id)
         .filter_by(user_id=user_id, event_id=event_id)
         .join(RegistrationQuestion, RegistrationAnswer.registration_question_id == RegistrationQuestion.id)
-        .filter_by(headline == headline)
+        .filter_by(headline=headline)
         .first())
     return answer
 
