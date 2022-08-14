@@ -276,13 +276,15 @@ class GuestListApi(restful.Resource):
     }
 
     @auth_required
-    def get(self, event_id):
+    def get(self):
         req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('exclude_already_checked_in', type=bool, required=True)
         args = req_parser.parse_args()
         exclude_already_checked_in = args['exclude_already_checked_in']
-        
+        event_id = args['event_id']
         registration_user_id = g.current_user["id"]
+        
         registration_user = user_repository.get_by_id(registration_user_id)
         if not registration_user.is_registration_volunteer(event_id):
             return FORBIDDEN
