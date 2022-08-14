@@ -153,7 +153,7 @@ class EventHome extends Component {
           render={(props) => <Application {...props} event={event} />}
         />
         <Route
-          exact
+        exact
           path={`${match.path}/eventAttendance`}
           render={(props) => <Attendance {...props} event={event} />}
         />

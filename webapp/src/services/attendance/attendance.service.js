@@ -8,7 +8,8 @@ export const attendanceService = {
   confirm,
   undoConfirmation,
   getIndemnityForm,
-  postIndemnity
+  postIndemnity,
+  checkIn
 };
 
 function getAttendanceList(eventId, excludeCheckedIn) {
@@ -41,10 +42,12 @@ function getAttendanceList(eventId, excludeCheckedIn) {
     });
 }
 
-function confirm(eventId, userId) {
+function confirm(eventId, userId, indemnitySigned) {
+  console.log(`Confirming for event ${eventId}, user ${userId}, indemnity signed ${indemnitySigned}`);
   const data = {
     user_id: userId,
-    event_id: eventId
+    event_id: eventId,
+    indemnity_signed: indemnitySigned
   };
 
   return axios
@@ -96,6 +99,22 @@ function undoConfirmation(eventId, userId) {
     });
 }
 
+function checkIn(eventId, userId) {
+  return axios
+    .get(baseUrl + `/api/v1/attendance?event_id=${eventId}&user_id=${userId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+            data: response.data,
+            error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+            data: null,
+            error: extractErrorMessage(error)
+        }
+    });
+}
 
 function getIndemnityForm(eventId) {
   return axios

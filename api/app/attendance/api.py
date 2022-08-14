@@ -21,6 +21,7 @@ from app.invitedGuest.models import InvitedGuest
 
 attendance_fields = {
     'id': fields.Integer,
+    'fullname': fields.String,
     'event_id': fields.Integer,
     'user_id': fields.Integer,
     'timestamp': fields.DateTime('iso8601'),
@@ -37,10 +38,11 @@ attendance_fields = {
 
 
 class AttendanceUser():
-    def __init__(self, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, invitedguest_role, confirmed):
+    def __init__(self, user, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, invitedguest_role, confirmed):
         self.id = attendance.id if attendance is not None else None
+        self.fullname = user.full_name  
         self.event_id = attendance.event_id if attendance is not None else None
-        self.user_id = attendance.user_id if attendance is not None else None
+        self.user_id = user.id
         self.timestamp = attendance.timestamp if attendance is not None else None
         self.signed_indemnity_form = attendance.indemnity_signed if attendance is not None else None
         self.updated_by_user_id = attendance.updated_by_user_id if attendance is not None else None
@@ -86,9 +88,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             return USER_NOT_FOUND
 
         attendance = attendance_repository.get(event_id, user_id)
-
-        invitedguest_role = None
-        is_invited_guest = False
+        
         has_accepted_accom_award = False
 
         offer = db.session.query(Offer).filter(
@@ -107,20 +107,21 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
         else:
             registration = registration_response_repository.get_by_user_id(user.id, event_id)
             confirmed = registration.confirmed if registration is not None else True
+            invitedguest_role = "General Attendee"
+            is_invited_guest = False
         # Shirt Size
         shirt_answer = _get_registration_answer(user_id, event_id, "T-Shirt Size", is_invited_guest)
 
         # Poster registration
         bringing_poster = _get_registration_answer(user_id, event_id, "Will you be bringing a poster?", is_invited_guest) == 'yes'
 
-        attendance_user = AttendanceUser(attendance, accommodation_award=has_accepted_accom_award, 
+        attendance_user = AttendanceUser(user, attendance, accommodation_award=has_accepted_accom_award, 
                                          shirt_size=shirt_answer, is_invitedguest=is_invited_guest, 
                                          bringing_poster=bringing_poster, invitedguest_role=invitedguest_role,
                                          confirmed=confirmed)
         return marshal(attendance_user, attendance_fields), 200
 
     @auth_required
-    @marshal_with(attendance_fields)
     def post(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
@@ -148,7 +149,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             return INDEMNITY_NOT_SIGNED
 
         attendance = attendance_repository.get(event_id, user_id)
-        if attendance and attendance.is_confirmed:
+        if attendance and attendance.confirmed:
             return ATTENDANCE_ALREADY_CONFIRMED
         
         if not attendance:

@@ -358,8 +358,6 @@ class RegistrationApiTest(ApiTestCase):
             response = self.app.get('/api/v1/registration/confirmed?event_id=1',
                     headers=self.headers)
             self.assertEqual(response.status_code, 403)
-
-
     
     def test_get_confirmed(self):
         with app.app_context():

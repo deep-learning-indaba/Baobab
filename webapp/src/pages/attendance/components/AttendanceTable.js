@@ -4,7 +4,7 @@ import React from "react";
 import ReactTable from "react-table";
 import { attendanceService } from "../../../services/attendance/attendance.service";
 import FormTextBox from "../../../components/form/FormTextBox";
-import { ConfirmModal } from "react-bootstrap4-modal";
+import Modal from "react-bootstrap4-modal";
 import queryString from "query-string";
 class AttendanceTable extends React.Component {
   constructor(props) {
@@ -15,14 +15,16 @@ class AttendanceTable extends React.Component {
       filteredList: [],
       showDetailsModal: false,
       selectedUser: null,
-      confirmResult: null,
+      confirmStatus: null,
+      confirmError: null,
       undoResult: null,
       confirming: false,
       undoing: false,
       excludeCheckedIn: null,
       location: props.location,
       userAlreadyExists: null,
-      showAllColumns: null
+      showAllColumns: null,
+      signedIndemnityChecked: false
     };
   }
   componentDidMount() {
@@ -63,57 +65,51 @@ class AttendanceTable extends React.Component {
         });
       });
   }
-  onConfirm = user => {
+
+  onCheckin = user => {
+    console.log("On checkin, user is: ");
+    console.log(user);
     const { eventId } = this.state;
-    this.setState({ selectedUser: user, confirming: true }, () => {
-      attendanceService.confirm(eventId, user.user_id).then(result => {
-        if (
-          result.statusCode === 400 &&
-          result.error &&
-          result.error.toLowerCase() ===
-          "Attendance has already been confirmed for this user and event.".toLowerCase()
-        ) {
-          // Still Allow Undo if user exists
-          this.setState({
-            showDetailsModal: true,
-            confirming: false,
-            userAlreadyExists: true,
-            confirmResult: {
-              confirmed: result.data,
-              confirmError: result.error,
-              statusCode: result.statusCode,
-              success: false
-            }
-          });
-        } else {
-          let success =
-            (result.error === null || result.error === "") &&
-            result.statusCode === 201;
-          this.setState({
-            showDetailsModal: success,
-            confirming: false,
-            confirmResult: {
-              confirmed: result.data,
-              confirmError: result.error,
-              statusCode: result.statusCode,
-              success: success
-            }
-          });
-        }
+    attendanceService.checkIn(eventId, user.id).then(result => {
+      this.setState({
+        selectedUser: result.data,
+        showDetailsModal: true,
+        confirming: true
       });
+    })
+  }
+
+  onConfirm = () => {
+    const { eventId, selectedUser, signedIndemnityChecked } = this.state;
+    
+    attendanceService.confirm(eventId, selectedUser.user_id, selectedUser.signed_indemnity_form || signedIndemnityChecked).then(result => {
+      const success =
+        (result.error === null || result.error === "") &&
+        result.statusCode === 201;
+      this.setState({
+        showDetailsModal: false,
+        confirming: false,
+        selectedUser: null,
+        confirmStatus: success, 
+        confirmError: result.error
+      }, ()=>this.getAttendanceList());
     });
   };
   getTrProps = (state, rowInfo) => {
     if (rowInfo) {
       return {
         style: {
-          background: rowInfo.original.confirmed === true ? "white" : "#dc3545",
+          // background: rowInfo.original.confirmed === true ? "white" : "#dc3545",
           color: "black"
         }
       };
     }
     return {};
   };
+
+  handleCancel = () => {
+    this.setState({showDetailsModal: false, selectedUser: null});
+  }
 
   handleUndo = () => {
     const { eventId, selectedUser } = this.state;
@@ -136,12 +132,13 @@ class AttendanceTable extends React.Component {
     this.setState(
       {
         showDetailsModal: false,
-        loading: true,
-        confirmResult: null,
-        undoResult: null
-      },
-      () => this.getAttendanceList()
-    );
+        loading: false,
+        confirmStatus: null,
+        confirmError: null,
+        undoResult: null,
+        signedIndemnityChecked: false,
+        confirming: false
+      });
   };
 
   onSearchChange = field => {
@@ -165,224 +162,48 @@ class AttendanceTable extends React.Component {
     this.setState({ filteredList: filteredList });
   };
 
+  styleFromRole = (role) => {
+    if (role === "General Attendee") {
+      return "badge badge-dark";
+    }
+    if (role === "Speaker") {
+      return "badge badge-success";
+    }
+    if (role === "Organiser") {
+      return "badge badge-warning";
+    }
+    else {
+      return "badge badge-primary";
+    }
+  }
+
+  handleSignedIndemnityChanged = (e) => {
+    if (e.target) {
+        const value = e.target.checked | 0;
+        this.setState({
+            signedIndemnityChecked: value
+        });
+    }
+  }
+  
   render() {
     const {
       filteredList,
       loading,
       error,
       confirming,
-      confirmResult,
-      undoResult,
+      confirmStatus,
+      confirmError,
       searchTerm,
       selectedUser,
       originalAttendanceList,
-      userAlreadyExists
+      signedIndemnityChecked
     } = this.state;
 
     const loadingStyle = {
       width: "3rem",
       height: "3rem"
     };
-
-    let confirmResultDiv = null;
-    if (confirmResult) {
-      if (confirmResult.success) {
-        confirmResultDiv = (
-          <div class="alert alert-success alert-container">
-            Success - Attendance Confirmation.
-          </div>
-        );
-      } else {
-        confirmResultDiv = (
-          <div class="alert alert-danger alert-container">
-            {" "}
-            Failure - Attendance Confirmation. Http Code:
-            {confirmResult.statusCode} Message: {confirmResult.confirmError}
-          </div>
-        );
-      }
-    }
-
-    let undoResultDiv = null;
-    if (undoResult) {
-      if (undoResult.undo && !undoResult.undoError) {
-        undoResultDiv = (
-          <div class="alert alert-success">
-            Success - Undo Attendance Confirmation.
-          </div>
-        );
-      } else {
-        undoResultDiv = (
-          <div class="alert alert-danger alert-container">
-            {" "}
-            Failure - Undo Attendance Confirmation. Message :{" "}
-            {undoResult.undoError}
-          </div>
-        );
-      }
-    }
-
-    let userInfoDiv = null;
-    if (confirmResult && confirmResult.confirmed) {
-      userInfoDiv = (
-        <div>
-          <h1>
-            {selectedUser.firstname} {selectedUser.lastname}
-          </h1>
-          {confirmResult.confirmed.invitedguest_role !== null && (
-            <h5>
-              Invited Guest Role:
-              <div className="badge badge-primary">
-                {confirmResult.confirmed.invitedguest_role.toString()}
-              </div>{" "}
-            </h5>
-          )}
-          {confirmResult.confirmed.is_invitedguest !== null && (
-            <h5>
-              Is Invited Guest:
-              <div className="badge badge-success">
-                {confirmResult.confirmed.is_invitedguest.toString()}
-              </div>{" "}
-            </h5>
-          )}
-          {confirmResult.confirmed.bringing_poster !== null && (
-            <h5>
-              Bringing a Poster:
-              <div className="badge badge-success">
-                {confirmResult.confirmed.bringing_poster.toString()}
-              </div>
-            </h5>
-          )}
-          <div>
-            <h5>
-              Category:
-              <div
-                style={{ display: "inline-block" }}
-                className="badge badge-info"
-              >
-                {selectedUser.user_category} <br />
-              </div>
-            </h5>
-          </div>
-          {confirmResult.confirmed.accommodation_award !== null && (
-            <h5>
-              Accommodation Award :
-              <div className="badge badge-info">
-                {confirmResult.confirmed.accommodation_award.toString()}
-              </div>{" "}
-            </h5>
-          )}
-          {confirmResult.confirmed.shirt_size !== null && (
-            <h5>
-              Shirt Size :
-              <div className="badge badge-info">
-                {confirmResult.confirmed.shirt_size.toString()}
-              </div>
-            </h5>
-          )}
-        </div>
-      );
-    } else if (userAlreadyExists === true) {
-      userInfoDiv = (
-        <div>
-          <h4>
-            User {selectedUser.firstname} {selectedUser.lastname} has already
-            signed in, but you can undo this.
-          </h4>
-        </div>
-      );
-    }
-
-    let columns = null;
-    if (this.state.showAllColumns === true) {
-      columns = [
-        {
-          id: "user",
-          Header: <div>Full-Name</div>,
-          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
-          minWidth: 150,
-          sort: "asc"
-        },
-        {
-          id: "email",
-          Header: <div>Email</div>,
-          accessor: u => u.email
-        },
-        {
-          id: "affiliation",
-          Header: <div>Affiliation</div>,
-          accessor: u => u.affiliation
-        },
-        {
-          id: "role",
-          Header: <div>Category</div>,
-          accessor: u => u.user_category
-        },
-        {
-          id: "confirm",
-          Header: (
-            <div className="registration-admin-confirm">Mark attendance</div>
-          ),
-          accessor: u => u.user_id,
-          Cell: props => (
-            <div>
-              {props.original.confirmed ? (
-                <button
-                  className="btn btn-success btn-sm"
-                  onClick={() => {
-                    this.onConfirm(props.original);
-                  }}
-                  disabled={confirming}
-                >
-                  Confirm
-                </button>
-              ) : (
-                  <div>Payment Required</div>
-                )}
-            </div>
-          )
-        }
-      ];
-    } else {
-      columns = [
-        {
-          id: "user",
-          Header: <div>Full-Name</div>,
-          accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
-          minWidth: 150,
-          sort: "asc"
-        },
-        {
-          id: "email",
-          Header: <div>Email</div>,
-          accessor: u => u.email
-        },
-        {
-          id: "confirm",
-          Header: (
-            <div className="registration-admin-confirm">Mark attendance</div>
-          ),
-          accessor: u => u.user_id,
-          Cell: props => (
-            <div>
-              {props.original.confirmed ? (
-                <button
-                  className="btn btn-success btn-sm"
-                  onClick={() => {
-                    this.onConfirm(props.original);
-                  }}
-                  disabled={confirming}
-                >
-                  Confirm
-                </button>
-              ) : (
-                  <div>Payment Required</div>
-                )}
-            </div>
-          )
-        }
-      ];
-    }
 
     if (loading) {
       return (
@@ -393,10 +214,41 @@ class AttendanceTable extends React.Component {
         </div>
       );
     }
-    let heading = "Attendance Registration";
-    if (this.state.excludeCheckedIn === false) {
-      heading = "Attendance Registration - Special Situations";
-    }
+
+    const columns = [
+      {
+        id: "user",
+        Header: <div>Full-Name</div>,
+        accessor: u => <div>{u.firstname + " " + u.lastname}</div>,
+        minWidth: 150,
+        sort: "asc"
+      },
+      {
+        id: "email",
+        Header: <div>Email</div>,
+        accessor: u => u.email
+      },
+      {
+        id: "confirm",
+        Header: (
+          <div className="registration-admin-confirm">Mark attendance</div>
+        ),
+        accessor: u => u.user_id,
+        Cell: props => (
+          <div>
+              <button
+                className="btn btn-success btn-sm"
+                onClick={() => {
+                  this.onCheckin(props.original);
+                }}
+                disabled={confirming}
+              >
+                Check-in
+              </button>
+          </div>
+        )
+      }
+    ];
 
     return (
       <div className="container-fluid pad-top-30-md">
@@ -406,21 +258,72 @@ class AttendanceTable extends React.Component {
           </div>
         )}
 
-        <ConfirmModal
-          visible={this.state.showDetailsModal}
-          onOK={this.handleContinue}
-          onCancel={this.handleUndo}
-          okText={"Continue"}
-          cancelText={"Undo"}
-        >
-          {userInfoDiv}
-          {/* If we have an undo result - show it, otherwise show confirmed result. */}
-          {undoResultDiv ||
-            (confirmResult && confirmResult.success && confirmResultDiv)}
-        </ConfirmModal>
+        <Modal
+          visible={this.state.showDetailsModal}>
+          {selectedUser ? <div className="confirm-modal">
+            <h3>
+              {selectedUser.fullname}
+            </h3>
+            {!selectedUser.confirmed && <div className="alert alert-danger">
+              !Payment Required! Please refer to special situations desk.
+              </div>}
+            <h5>
+              Role:
+              <div className={this.styleFromRole(selectedUser.invitedguest_role)}>
+                {selectedUser.invitedguest_role}
+              </div>
+            </h5>
+            <h5>
+              T-Shirt Size :
+              <div className="badge badge-light">
+                {selectedUser.shirt_size}
+              </div>
+            </h5>
+            <h5>
+              Indemnity Form :
+              {selectedUser.signed_indemnity_form && <div className="badge badge-success">
+                Signed
+              </div>}
+              {!selectedUser.signed_indemnity_form && <div className="badge badge-danger">
+                Not Signed.
+              </div>}
+            </h5>
+            {!selectedUser.signed_indemnity_form && <div>
+              <label>
+                <input type="checkbox" 
+                  className="confirm-idemnity"
+                  checked={signedIndemnityChecked}
+                  onChange={this.handleSignedIndemnityChanged}/>
+                <span className="confirm-identity-label">Have they signed a paper copy of the indemnity form?</span>
+              </label>
+            </div>}
+            <button 
+              type="submit" 
+              className="btn btn-primary confirm-submit"
+              disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked)} 
+              onClick={this.onConfirm}>
+                Confirm
+            </button>
+            <button 
+              type="cancel" 
+              className="btn btn-secondary confirm-cancel"
+              onClick={this.handleContinue}>
+                Cancel
+            </button>
+          </div> : <div></div>}
+        </Modal>
+        
 
+        {confirmStatus && <div class="alert alert-success alert-container">
+          Successfully checked-in.
+        </div>}
+        
+        {confirmStatus !== null && !confirmStatus && <div class="alert alert-danger alert-container">
+          Failed to check-in due to {confirmError}
+        </div>}
+            
         <div class="card no-padding-h">
-          <p className="h5 text-center mb-4 ">{heading}</p>
+          <p className="h5 text-center mb-4 ">Check-in</p>
           <div class="row mb-4">
             <div class="col-12">
               <FormTextBox
@@ -440,8 +343,6 @@ class AttendanceTable extends React.Component {
                   getTrProps={this.getTrProps}
                 />
               )}
-
-              {confirmResult && !confirmResult.success && confirmResultDiv}
 
               {(!originalAttendanceList ||
                 originalAttendanceList.length === 0) && (
