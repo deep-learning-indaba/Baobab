@@ -251,7 +251,7 @@ class AttendanceTable extends React.Component {
     ];
 
     return (
-      <div className="container-fluid pad-top-30-md">
+      <div className="container-fluid pad-top-30-md attendance">
         {error && (
           <div className={"alert alert-danger alert-container"}>
             {JSON.stringify(error)}
