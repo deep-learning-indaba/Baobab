@@ -994,7 +994,7 @@ class ApplicationFormInstanceComponent extends Component {
 const ApplicationFormInstance = withRouter(withTranslation()(ApplicationFormInstanceComponent));
 
 
-class ApplicationList extends Component {
+class ApplicationListComponent extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -1054,6 +1054,10 @@ class ApplicationList extends Component {
     </div>
   }
 }
+
+
+const ApplicationList = withRouter(withTranslation()(ApplicationListComponent));
+
 
 class ApplicationForm extends Component {
   constructor(props) {

@@ -22,3 +22,6 @@ dispatch:
 
   - url: "baobab.imbizo.africa/*"
     service: prod-frontend
+
+  - url: "apply.aims.ac.za/*"
+    service: prod-frontend

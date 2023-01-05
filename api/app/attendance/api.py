@@ -36,6 +36,14 @@ attendance_fields = {
     'confirmed': fields.Boolean
 }
 
+_attendee_fields = {
+        'id': fields.Integer,
+        'email': fields.String,
+        'firstname': fields.String,
+        'lastname': fields.String,
+        'user_title': fields.String
+    }
+
 
 class AttendanceUser():
     def __init__(self, user, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, invitedguest_role, confirmed):
@@ -268,14 +276,6 @@ class IndemnityAPI(restful.Resource):
 
 
 class GuestListApi(restful.Resource):
-    _attendee_fields = {
-        'id': fields.Integer,
-        'email': fields.String,
-        'firstname': fields.String,
-        'lastname': fields.String,
-        'user_title': fields.String
-    }
-
     @auth_required
     def get(self):
         req_parser = reqparse.RequestParser()
@@ -298,4 +298,22 @@ class GuestListApi(restful.Resource):
             # TODO(avishkar): Check that this scales (n^2) appropriately.
             all_attendees = [u for u in all_attendees if u.id not in checked_in]
 
-        return marshal(all_attendees, self._attendee_fields)
+        return marshal(all_attendees, _attendee_fields)
+
+
+class AttendeesApi(restful.Resource):
+    @auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        args = req_parser.parse_args()
+        event_id = args['event_id']
+        registration_user_id = g.current_user["id"]
+        
+        registration_user = user_repository.get_by_id(registration_user_id)
+        if not registration_user.is_registration_volunteer(event_id):
+            return FORBIDDEN
+
+        confirmed = attendance_repository.get_confirmed_attendee_users(event_id)
+
+        return marshal(confirmed, _attendee_fields)
