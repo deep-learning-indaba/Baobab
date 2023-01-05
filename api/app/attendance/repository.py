@@ -40,6 +40,12 @@ class AttendanceRepository():
         return (db.session.query(Attendance)
                     .filter_by(event_id=event_id, confirmed=True))
 
+    @staticmethod
+    def get_confirmed_attendee_users(event_id):
+        return (db.session.query(AppUser)
+                    .join(Attendance, Attendance.user_id == AppUser.id)
+                    .filter_by(event_id=event_id, confirmed=True))
+
 
 class IndemnityRepository():
     @staticmethod
