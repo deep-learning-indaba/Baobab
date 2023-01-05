@@ -49,7 +49,7 @@ class FileUploadComponent extends Component {
     render() {
       return (
         <FormFileUpload
-          Id={this.props.id}
+          id={this.props.id}
           name={this.id}
           label={this.props.description}
           key={"i_" + this.props.key}
