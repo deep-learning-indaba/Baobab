@@ -4,7 +4,7 @@ import FormGroup from "./FormGroup";
 import MultiFileComponent from './MultiFileComponent';
 import "./Style.css";
 import _ from "lodash";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "../MarkdownRenderer";
 import FormToolTip from "./FormToolTip";
 
 
@@ -115,8 +115,6 @@ export class FormMultiFile extends Component {
         });
     }
 
-    linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
-
     render() {
         const t = this.props.t
         let canAddFile = true;
@@ -128,7 +126,7 @@ export class FormMultiFile extends Component {
             <div>
                 <FormGroup id={this.props.id + "-group"}>
                     <div className="rowC">
-                        <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+                        <MarkdownRenderer source={this.props.label}/>
                         {this.props.description ? (
                         <FormToolTip description={this.props.description} />
                         ) : (
