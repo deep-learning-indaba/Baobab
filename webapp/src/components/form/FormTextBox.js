@@ -2,7 +2,7 @@ import React from "react";
 import FormGroup from "./FormGroup";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "../MarkdownRenderer";
 
 class FormTextBox extends React.Component {
   shouldDisplayError = () => {
@@ -15,8 +15,6 @@ class FormTextBox extends React.Component {
     }
   }
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
-
   render() {
     return (
       <div>
@@ -25,7 +23,7 @@ class FormTextBox extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <MarkdownRenderer source={this.props.label}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (

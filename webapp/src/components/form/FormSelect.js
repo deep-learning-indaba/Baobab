@@ -3,7 +3,7 @@ import FormGroup from "./FormGroup";
 import { default as ReactSelect } from "react-select";
 import FormToolTip from "./FormToolTip";
 import "./Style.css";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "../MarkdownRenderer";
 
 class FormSelect extends React.Component {
   shouldDisplayError = () => {
@@ -15,8 +15,6 @@ class FormSelect extends React.Component {
       this.nameInput.focus();
     }
   }
-
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
 
   render() {
     const { id, options, placeholder, onChange, defaultValue } = this.props;
@@ -31,7 +29,7 @@ class FormSelect extends React.Component {
           errorText={this.props.errorText}
         >
           <div className="rowC">
-            <ReactMarkdown source={this.props.label} renderers={{link: this.linkRenderer}}/>
+            <MarkdownRenderer source={this.props.label}/>
             {this.props.description ? (
               <FormToolTip description={this.props.description} />
             ) : (

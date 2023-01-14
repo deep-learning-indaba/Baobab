@@ -1,7 +1,6 @@
 import React, { Component } from "react";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import { withRouter } from "react-router";
-import gfm from "remark-gfm";
 
 import AnswerValue from "../../../components/answerValue";
 import FormCheckbox from "../../../components/form/FormCheckbox";
@@ -193,7 +192,7 @@ class ReviewQuestionComponent extends Component {
             <div className={className}>
                 {this.renderHeader(this.props.model)}
 
-                {this.props.model.question.description && <ReactMarkdown remarkPlugins={[gfm]} source={this.props.model.question.description} renderers={{link: this.linkRenderer}}/>}
+                {this.props.model.question.description && <MarkdownRenderer source={this.props.model.question.description}/>}
 
                 {this.formControl(
                     this.props.model.question.id,
@@ -601,7 +600,7 @@ class ReviewForm extends Component {
                 {questionModels && questionModels.map(section =>
                     <div className="card review-section" key={"s_" + section.id}>
                         {section.headline && <h3 className="section-headline card-title">{section.headline}</h3>}
-                        {section.description && <div className="section-description"><ReactMarkdown remarkPlugins={[gfm]} source={section.description} renderers={{link: this.linkRenderer}}/></div>}
+                        {section.description && <div className="section-description"><MarkdownRenderer source={section.description} /></div>}
                         {section.questions && section.questions.map(qm => 
                             <ReviewQuestion
                                 model={qm}
