@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-import ReactMarkdown from "react-markdown";
 import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import FormMultiFile from '../../../components/form/FormMultiFile'
 import ReactToolTip from "react-tooltip";
 import { ConfirmModal } from "react-bootstrap4-modal";
@@ -443,8 +443,6 @@ class Section extends React.Component {
     }
   }
 
-  linkRenderer = (props) => <a href={props.href} target="_blank">{props.children}</a>
-
   render() {
     const {
       section,
@@ -460,7 +458,7 @@ class Section extends React.Component {
         <div className={"headline"}>
           <h1>{section.name}</h1>
           <div className="description">
-            <ReactMarkdown source={section.description} renderers={{link: this.linkRenderer}}/>
+            <MarkdownRenderer children={section.description}/>
           </div>
         </div>
         {questionModels &&
