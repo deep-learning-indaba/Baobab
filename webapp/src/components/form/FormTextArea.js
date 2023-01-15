@@ -44,18 +44,18 @@ class FormTextArea extends React.Component {
     
     return (
       <div>
+        <div className="rowC">
+          <MarkdownRenderer source={this.props.label}/>
+          {this.props.description ? (
+            <FormToolTip description={this.props.description} />
+          ) : (
+            <div />
+          )}
+        </div>
         <FormGroup
           id={this.props.id + "-group"}
           errorText={this.props.errorText}
         >
-          <div className="rowC">
-            <MarkdownRenderer source={this.props.label}/>
-            {this.props.description ? (
-              <FormToolTip description={this.props.description} />
-            ) : (
-              <div />
-            )}
-          </div>
           <textarea
             id={this.props.id}
             className={
