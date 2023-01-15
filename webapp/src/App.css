@@ -187,3 +187,7 @@ div.card-container {
 .dropdown-submenu-item {
   padding-left: 3em;
 }
+
+.katex-display>.katex {
+  text-align: left;
+}
