@@ -511,7 +511,7 @@ class AppComponent extends Component {
             <div className="container-flex">
               <div>
                 {this.props.organisation && this.props.organisation.system_name}
-                , © 2020 |{" "}
+                , © {new Date().getFullYear()} |{" "}
                 <a
                   href={this.props.organisation && this.props.organisation.url}
                 >
