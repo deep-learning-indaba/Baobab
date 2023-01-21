@@ -8,6 +8,7 @@ class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
     CALL = 'call'
+    PROGRAMME = 'programme'
 
 
 class Event(db.Model):
