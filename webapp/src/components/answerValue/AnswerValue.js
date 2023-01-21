@@ -9,6 +9,7 @@ const FILE = "file";
 const INFORMATION = 'information'
 const MULTI_CHOICE = "multi-choice";
 const MULTI_FILE = 'multi-file';
+const SINGLE_CHOICE = 'single-choice';
 
 function AnswerValue({answer, question, t}) {
   if (answer && answer.question_type) {
@@ -49,6 +50,8 @@ function AnswerValue({answer, question, t}) {
             *{t("Note: You may need to change the file name to open the file on certain operating systems")}
           </span>
         </div>
+      case SINGLE_CHOICE:
+        return answer.value ? t("Yes") : t("No")
       default:
         return <Linkify properties={{ target: '_blank' }}>{answer.value}</Linkify>
     }

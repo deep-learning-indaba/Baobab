@@ -20,6 +20,7 @@ import { withTranslation } from 'react-i18next';
 import AnswerValue from '../../../components/answerValue'
 import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
+import FormCheckbox from "../../../components/form/FormCheckbox";
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
@@ -87,6 +88,13 @@ class FieldEditor extends React.Component {
     }
   };
 
+  handleCheckChange = event => {
+    const value = event.target.checked;
+    if (this.props.onChange) {
+      this.props.onChange(this.props.question, value);
+    }
+  }
+
   handleChangeDropdown = (name, dropdown) => {
     if (this.props.onChange) {
       this.props.onChange(this.props.question, dropdown.value);
@@ -141,13 +149,12 @@ class FieldEditor extends React.Component {
         );
       case SINGLE_CHOICE:
         return (
-          <FormTextBox
+          <FormCheckbox
             id={this.id}
             name={this.id}
-            type="checkbox"
             label={question.description}
             placeholder={question.placeholder}
-            onChange={this.handleChange}
+            onChange={this.handleCheckChange}
             value={answer}
             key={"i_" + key}
             showError={validationError}

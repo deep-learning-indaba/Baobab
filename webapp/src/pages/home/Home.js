@@ -35,6 +35,7 @@ class Home extends Component {
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
                         awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
                         calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
+                        programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
                     });
                 }
@@ -64,6 +65,15 @@ class Home extends Component {
         return <EventStatus longForm={false} event={e} />;
     }
 
+    dateDisplay = (e) => {
+        if (e.event_type === 'EVENT') {
+            return `${e.start_date} to ${e.end_date}`;
+        }
+        else {
+            return this.props.t("Applications Close") + " " + e.application_close_date;
+        }
+    }
+
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (
@@ -75,7 +85,7 @@ class Home extends Component {
                                     <div class="event" key={e.key}>
                                         <div class="event-info">
                                             <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                            {e.start_date + " to " + e.end_date}
+                                            {this.dateDisplay(e)}
                                         </div>
                                         <div class="status-holder">{this.statusDisplay(e)}</div>
                                     </div>
@@ -92,11 +102,6 @@ class Home extends Component {
         const t = this.props.t;
         let logo = this.state.organisation && this.state.organisation.large_logo;
         // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
-        if (this.state.organisation) {
-            console.log("this.state.organisation.name:", this.state.organisation.name);
-            console.log("this.props.i18n.language:", this.props.i18n.language);
-        }
-        
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
         }
@@ -120,6 +125,7 @@ class Home extends Component {
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
                 {this.renderEventTable(this.state.awards, "Awards")}
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
+                {this.renderEventTable(this.state.programmes, "Programmes")}
                 {this.renderEventTable(this.state.attended, "Past Events")}
 
             </div >)
