@@ -61,6 +61,7 @@ def event_info(user_id, event, status, language):
         'key': event.key,
         'start_date': event.start_date.strftime("%d %B %Y"),
         'end_date': event.end_date.strftime("%d %B %Y"),
+        'application_close_date': event.application_close.strftime("%d %B %Y"),
         'status': status_info(status),
         'email_from': event.email_from,
         'organisation_name': event.organisation.name,
