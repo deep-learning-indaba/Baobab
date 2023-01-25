@@ -89,6 +89,7 @@ class FormMultiCheckboxOther extends React.Component {
                 id={this.props.id}
                 name={this.props.id}
                 options={this.state.options}
+                label={this.props.label}
                 onChange={this.onChange}
                 key={this.props.id}
                 showError={this.props.showError}
