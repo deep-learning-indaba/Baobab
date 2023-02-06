@@ -311,7 +311,10 @@ class FieldEditor extends React.Component {
   render() {
     return (
       <div className={"question"}>
-        <p className={INFORMATION.includes(this.props.question.type) ? "h3" : "h4"}>{this.props.question.headline}</p>
+        <p className={INFORMATION.includes(this.props.question.type) ? "h3" : "h4"}>
+          {this.props.question.is_required && <span className="required-indicator">*</span>}
+          {this.props.question.headline}
+        </p>
         {this.formControl(
           this.props.key,
           this.props.question,
