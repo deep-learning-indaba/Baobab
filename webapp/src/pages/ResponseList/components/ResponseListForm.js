@@ -251,7 +251,6 @@ class ResponseListForm extends Component {
                 }
             });
         }
-        console.log('table', colFormat)
         return colFormat
     }
 
