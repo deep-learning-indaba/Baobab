@@ -351,8 +351,8 @@ class ResponseListForm extends Component {
         function filterText(filter, row) {
             const id = filter.pivotId || filter.id;
             return (
-                row[id] !== undefined ?
-                    String(row[id].toLowerCase()).includes(filter.value.toLowerCase()) : true
+                row[id] === undefined ||
+                    String(row[id].toLowerCase()).includes(filter.value.toLowerCase())
             );
         }
 
