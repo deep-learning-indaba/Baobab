@@ -4,8 +4,12 @@ import EventConfigComponent from "./components/EventConfigComponent.js";
 
 export default class EventConfig extends Component {
   render() {
-    return <EventConfigComponent
-      {...this.props}
-    />;
+    return (
+      <EventConfigComponent
+        //{...this.props}
+        loggedIn={this.props.loggedIn}
+        organisation={this.props.organisation}>
+    </EventConfigComponent>
+    );
   }
 }
