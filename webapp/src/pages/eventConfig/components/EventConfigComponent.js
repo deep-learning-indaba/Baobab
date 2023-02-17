@@ -3,17 +3,47 @@ import { eventService } from "../../../services/events";
 import { withRouter } from "react-router";
 import DateTimePicker from "react-datetime-picker";
 import { withTranslation } from 'react-i18next';
+import FormTextBox from "../../../components/form/FormTextBox";
+import FormTextArea from "../../../components/form/FormTextArea";
+import FormDate from "../../../components/form/FormDate";
+
 
 class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
+    let today = new Date().toLocaleDateString();
+
+    this.emptyEvent = {
+      name: "",
+      description: "",
+      start_date: today,
+      end_date: today,
+      key: null,
+      organisation_id: this.props.organisation.id,
+      email_from: "",
+      url: "",
+      application_open: today,
+      application_close: today,
+      review_open: today,
+      review_close: today,
+      selection_open: today,
+      selection_close: today,
+      offer_open: today,
+      offer_close: today,
+      registration_open: today,
+      registration_close: today  
+    }
+
     this.state = {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
-      loading: true,
-      error: ""
+      hasBeenValidated: false,
+      loading: false,
+      error: "",
+      errors: [],
+      showErrors: true
     };
   }
 
@@ -36,6 +66,7 @@ class EventConfigComponent extends Component {
       updatedEvent: this.state.preEvent,
       hasBeenUpdated: false
     });
+    
   };
 
   onClickSubmit = () => {
@@ -60,7 +91,90 @@ class EventConfigComponent extends Component {
     this.setState({
       hasBeenUpdated: isEdited
     });
+    this.hasBeenValidated();
   };
+
+  validateEventDetails = () => {
+    let isValid = true;
+    if (
+      !this.state.updatedEvent.name || 
+      !this.state.updatedEvent.description || 
+      !this.state.updatedEvent.email_from || 
+      !this.state.updatedEvent.url) {    
+      isValid = false;
+    }
+    //TODO: potentially add some error reporting
+    //this.setState({
+    //  errors: errors
+    //});
+    return isValid;
+  };
+
+  validateDateTimeEventDetails = () => {
+    let isValid = true;
+    let errors = [];
+    if (this.state.updatedEvent.application_open <= new Date()) {
+      errors.push(this.props.t("Application open date must be in the future"));
+    }
+    //check date ranges
+    if (this.state.updatedEvent.application_open > this.state.updatedEvent.application_close) {
+      isValid = false;
+      errors.push(this.props.t("Application open date must be before application close date"));
+    }
+    if (this.state.updatedEvent.review_open > this.state.updatedEvent.review_close) {
+      isValid = false;
+      errors.push(this.props.t("Review open date must be before review close date"));
+    }
+    if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
+      isValid = false;
+      errors.push(this.props.t("Selection open date must be before selection close date"));
+    }
+    if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
+      isValid = false;
+      errors.push(this.props.t("Offer open date must be before offer close date"));
+    }
+    if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
+      isValid = false;
+      errors.push(this.props.t("Registration open date must be before registration close date"));
+    }
+    if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
+      isValid = false;
+      errors.push(this.props.t("Event start date must be before event end date"));
+    }
+    // check each phase starts after the next phase ends
+    if (this.state.updatedEvent.review_open < this.state.updatedEvent.application_close) {
+      isValid = false;
+      errors.push(this.props.t("Review open date must be after application close date"));
+    }
+    if (this.state.updatedEvent.selection_open < this.state.updatedEvent.review_close) {
+      isValid = false;
+      errors.push(this.props.t("Selection open date must be after review close date"));
+    }
+    if (this.state.updatedEvent.offer_open < this.state.updatedEvent.selection_close) {
+      isValid = false;
+      errors.push(this.props.t("Offer open date must be after selection close date"));
+    }
+    if (this.state.updatedEvent.registration_open < this.state.updatedEvent.offer_close) {
+      isValid = false;
+      errors.push(this.props.t("Registration open date must be after offer close date"));
+    }
+    if (this.state.updatedEvent.start_date < this.state.updatedEvent.registration_close) {
+      isValid = false;
+      errors.push(this.props.t("Event start date must be after registration close date"));
+    }
+
+    //this.setState({
+    //  errors: errors
+    //});
+    return isValid;
+  };
+
+  hasBeenValidated = () => {
+    let isValid = this.validateEventDetails() && this.validateDateTimeEventDetails();
+    this.setState({
+      hasBeenValidated: isValid
+    });
+  }
 
   updateEventDetails = (fieldName, e) => {
     let u = {
@@ -92,8 +206,10 @@ class EventConfigComponent extends Component {
     const {
       loading,
       error,
+      errors,
       updatedEvent,
-      hasBeenUpdated
+      hasBeenUpdated,
+      hasBeenValidated
     } = this.state;
 
     const loadingStyle = {
@@ -138,7 +254,7 @@ class EventConfigComponent extends Component {
                   type="text"
                   className={"form-control-plaintext readonly"}
                   id="organisation_id"
-                  value={updatedEvent.organisation_name}
+                  value={updatedEvent.organisation_id}
                 />
               </div>
             </div>
@@ -149,12 +265,15 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("name", e)}
-                  type="text"
-                  className="form-control"
+                <FormTextBox
                   id="name"
+                  type="text"
+                  placeholder="Name of event"
+                  required={true}
+                  onChange={e => this.updateEventDetails("name", e)}
                   value={updatedEvent.name}
+                  showError={!updatedEvent.name}
+                  errorText={"Event name is required"}
                 />
               </div>
             </div>
@@ -167,11 +286,15 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <textarea
-                  onChange={e => this.updateEventDetails("description", e)}
-                  className="form-control"
+                <FormTextArea
                   id="description"
+                  placeholder="Description of event"
+                  required={true}
+                  rows={2}
                   value={updatedEvent.description}
+                  onChange={e => this.updateEventDetails("description", e)}
+                  showError={!updatedEvent.description}
+                  errorText={"Event description is required"}
                 />
               </div>
             </div>
@@ -197,12 +320,15 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("email_from", e)}
-                  type="email"
-                  className="form-control"
+                <FormTextBox
                   id="email_from"
-                  value={updatedEvent.email_from} />
+                  type="email"
+                  placeholder="Administrator email"
+                  required={true}
+                  value={updatedEvent.email_from}
+                  onChange={e => this.updateEventDetails("email_from", e)}
+                  showError={!updatedEvent.email_from}
+                  errorText={"Administrator email is required"} />
               </div>
             </div>
 
@@ -212,12 +338,15 @@ class EventConfigComponent extends Component {
                 {t("URL")}
               </label>
               <div className="col-sm-10">
-                <input
-                  onChange={e => this.updateEventDetails("url", e)}
-                  type="text"
-                  className="form-control"
+                <FormTextBox
                   id="url"
-                  value={updatedEvent.url} />
+                  type="text"
+                  placeholder="Event website"
+                  value={updatedEvent.url}
+                  required={true}
+                  onChange={e => this.updateEventDetails("url", e)}
+                  showError={!updatedEvent.url}
+                  errorText={"Event website is required"} />
               </div>
             </div>
 
@@ -227,12 +356,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="start_date"
+                  value={new Date(updatedEvent.start_date)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("start_date", e)}
-                  value={new Date(updatedEvent.start_date)} />
+                    this.updateDateTimeEventDetails("start_date", e)} />
               </div>
 
               <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
@@ -240,11 +369,11 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e)}
-                  value={new Date(updatedEvent.end_date)} />
+                <FormDate
+                  id="end_date"
+                  value={new Date(updatedEvent.end_date)}
+                  required={true}
+                  onChange={e => this.updateDateTimeEventDetails("end_date", e)} />
               </div>
             </div>
 
@@ -256,12 +385,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="application_open"
+                  value={new Date(updatedEvent.application_open)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("application_open", e)}
-                  value={new Date(updatedEvent.application_open)} />
+                    this.updateDateTimeEventDetails("application_open", e)}/>
               </div>
 
               <label
@@ -272,13 +401,13 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="application_close"
+                  value={new Date(updatedEvent.application_close)}
+                  required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("application_close", e)
-                  }
-                  value={new Date(updatedEvent.application_close)} />
+                  } />
               </div>
 
             </div>
@@ -290,12 +419,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="review_open"
+                  value={new Date(updatedEvent.review_open)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("review_open", e)}
-                  value={new Date(updatedEvent.review_open)} />
+                    this.updateDateTimeEventDetails("review_open", e)} />
               </div>
 
               <label
@@ -305,12 +434,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="review_close"
+                  value={new Date(updatedEvent.review_close)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("review_close", e)}
-                  value={new Date(updatedEvent.review_close)} />
+                    this.updateDateTimeEventDetails("review_close", e)} />
               </div>
             </div>
 
@@ -322,12 +451,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="selection_open"
+                  value={new Date(updatedEvent.selection_open)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("selection_open", e)}
-                  value={new Date(updatedEvent.selection_open)} />
+                    this.updateDateTimeEventDetails("selection_open", e)} />
               </div>
 
               <label
@@ -337,12 +466,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="selection_close"
+                  value={new Date(updatedEvent.selection_close)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("selection_close", e)}
-                  value={new Date(updatedEvent.selection_close)} />
+                    this.updateDateTimeEventDetails("selection_close", e)} />
               </div>
             </div>
 
@@ -352,12 +481,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="offer_open"
+                  value={new Date(updatedEvent.offer_open)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("offer_open", e)}
-                  value={new Date(updatedEvent.offer_open)} />
+                    this.updateDateTimeEventDetails("offer_open", e)} />
               </div>
 
               <label
@@ -367,12 +496,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="offer_close"
+                  value={new Date(updatedEvent.offer_close)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("offer_close", e)}
-                  value={new Date(updatedEvent.offer_close)} />
+                    this.updateDateTimeEventDetails("offer_close", e)} />
               </div>
             </div>
 
@@ -384,12 +513,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
+                <FormDate
+                  id="registration_open"
+                  value={new Date(updatedEvent.registration_open)}
+                  required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("registration_open", e)}
-                  value={new Date(updatedEvent.registration_open)} />
+                    this.updateDateTimeEventDetails("registration_open", e)} />
               </div>
 
               <label
@@ -399,13 +528,12 @@ class EventConfigComponent extends Component {
               </label>
 
               <div className="col-sm-4">
-                <DateTimePicker
-                  clearIcon={null}
-                  disableClock={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_close", e)}
+                <FormDate
+                  id="registration_close"
                   value={new Date(updatedEvent.registration_close)}
-                />
+                  required={true}
+                  onChange={e =>
+                    this.updateDateTimeEventDetails("registration_close", e)}/>
               </div>
             </div>
           </form>
@@ -420,12 +548,12 @@ class EventConfigComponent extends Component {
                 {t("Cancel")}
               </button>
             </div>
-
+            
             <div className={"col-sm-4 "}>
               <button
                 onClick={() => this.onClickSubmit()}
                 className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenUpdated}>
+                disabled={!hasBeenValidated || !hasBeenUpdated}>
                 {t("Update Event")}
               </button>
             </div>
