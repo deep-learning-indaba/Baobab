@@ -5,6 +5,7 @@ import EventHome from "./pages/eventHome";
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
+import EventConfig from "./pages/eventConfig";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
@@ -464,6 +465,17 @@ class AppComponent extends Component {
                   path="/createAccount"
                   render={props => (
                     <CreateAccount
+                      {...props}
+                      loggedIn={this.refreshUser}
+                      organisation={this.props.organisation}
+                    />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/eventConfig"
+                  render={props => (
+                    <EventConfig
                       {...props}
                       loggedIn={this.refreshUser}
                       organisation={this.props.organisation}

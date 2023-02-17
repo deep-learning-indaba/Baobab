@@ -6,7 +6,6 @@ import { organisationService } from "../../services/organisation/organisation.se
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
 
-
 class Home extends Component {
 
     constructor(props) {
@@ -97,6 +96,10 @@ class Home extends Component {
         }
         return <div></div>
     }
+    
+    renderButton = (definition) => {
+        return <a href={definition.link} id={definition.id} name={definition.name} className={definition.class}>{definition.value}</a>
+      }
 
     render() {
         const t = this.props.t;
@@ -104,6 +107,13 @@ class Home extends Component {
         // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
+        }
+        let new_event_definition = {
+            id: "new_event_button",
+            name: "new_event_button",
+            link: "../eventConfig",
+            value: "Create New Event",
+            class: "btn btn-primary"
         }
 
         return (
@@ -122,11 +132,17 @@ class Home extends Component {
                     </div>
                 }
 
+                {this.props.user && this.props.user.is_admin &&
+                    this.renderButton(new_event_definition)
+                }
+
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
                 {this.renderEventTable(this.state.awards, "Awards")}
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
                 {this.renderEventTable(this.state.programmes, "Programmes")}
                 {this.renderEventTable(this.state.attended, "Past Events")}
+
+
 
             </div >)
     }
