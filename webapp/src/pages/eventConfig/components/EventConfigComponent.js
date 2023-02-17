@@ -1,12 +1,10 @@
 import React, { Component } from "react";
 import { eventService } from "../../../services/events";
 import { withRouter } from "react-router";
-import DateTimePicker from "react-datetime-picker";
 import { withTranslation } from 'react-i18next';
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
-
 
 class EventConfigComponent extends Component {
   constructor(props) {
