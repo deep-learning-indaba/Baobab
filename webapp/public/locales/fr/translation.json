@@ -169,8 +169,10 @@
     "Event Name": "Nom de l’événement",
     "Description": "Description",
     "Key": "Clé",
+    "Event Key": "Clé de l’événement",
     "Email From": "Courriel de",
     "URL": "Adresse URL",
+    "Event Website": "Site Web de l’événement",
     "Start Date": "Date de début",
     "End Date": "Date de fin",
     "Application Open": "Ouverture de la demande",
@@ -183,6 +185,12 @@
     "Offer Close": "Fermeture de l’offre",
     "Registration Open": "Inscription ouverte",
     "Registration Close": "Inscription fermée",
+    "Name of event (e.g. Deep Learning Indaba 2023)": "Nom de l’événement (par exemple Deep Learning Indaba 2023)",
+    "Event key (e.g. indaba2023) for URLs": "Clé de l’événement (par exemple indaba2023) pour les adresses URL",
+    "Description of event": "Description de l’événement",
+    "Organisation email": "Courriel de l’organisation",
+    "Organisation email (e.g. indaba2023@deeplearningindaba.com)": "Courriel de l’organisation (par exemple indaba2023@deeplearningindaba.com)",
+    "Event website (e.g. www.deeplearningindaba.com)": "Site Web de l’événement (par exemple www.deeplearningindaba.com)",
     "Cancel": "Annuler",
     "Update Event": "Mise à jour de l’événement",
     "Open": "En cours",
@@ -422,6 +430,7 @@
     "An application form is required to save the review form": "Un formulaire de demande est requis pour enregistrer le formulaire d'examen",
     "Invoices": "Factures",
     "Indemnity Form": "Formulaire d'indemnisation",
-    "Applications Close": "Candidatures Fermer"
+    "Applications Close": "Candidatures Fermer",
+    "Create New Event": "Créer un nouvel événement"
 }
 

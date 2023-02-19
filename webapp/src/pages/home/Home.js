@@ -97,23 +97,12 @@ class Home extends Component {
         return <div></div>
     }
     
-    renderButton = (definition) => {
-        return <a href={definition.link} id={definition.id} name={definition.name} className={definition.class}>{definition.value}</a>
-      }
-
     render() {
         const t = this.props.t;
         let logo = this.state.organisation && this.state.organisation.large_logo;
         // TODO: Remove this terrible hack once we have OrganisationTranslation on the backend
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
-        }
-        let new_event_definition = {
-            id: "new_event_button",
-            name: "new_event_button",
-            link: "../eventConfig",
-            value: "Create New Event",
-            class: "btn btn-primary"
         }
 
         return (
@@ -133,7 +122,7 @@ class Home extends Component {
                 }
 
                 {this.props.user && this.props.user.is_admin &&
-                    this.renderButton(new_event_definition)
+                    <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
                 }
 
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}

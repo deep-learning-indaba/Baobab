@@ -10,16 +10,19 @@ class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
-    let today = new Date().toLocaleDateString();
+    const today = new Date().toLocaleDateString();
+    eventService.getEvents().then(result => {
+      console.log(result);
+    });
 
     this.emptyEvent = {
       name: "",
       description: "",
       start_date: today,
       end_date: today,
-      key: null,
+      key: "",
       organisation_id: this.props.organisation.id,
-      email_from: "",
+      email_from: this.props.organisation.email_from,
       url: "",
       application_open: today,
       application_close: today,
@@ -37,7 +40,7 @@ class EventConfigComponent extends Component {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       hasBeenUpdated: false,
-      hasBeenValidated: false,
+      isValid: false,
       loading: false,
       error: "",
       errors: [],
@@ -167,11 +170,15 @@ class EventConfigComponent extends Component {
     return isValid;
   };
 
-  hasBeenValidated = () => {
-    let isValid = this.validateEventDetails() && this.validateDateTimeEventDetails();
+  validate = () => {
+    const isValid = this.validateEventDetails() && this.validateDateTimeEventDetails();
     this.setState({
-      hasBeenValidated: isValid
+      isValid: isValid
     });
+  }
+
+  hasBeenValidated = () => {
+    return this.state.isValid
   }
 
   updateEventDetails = (fieldName, e) => {
@@ -207,7 +214,7 @@ class EventConfigComponent extends Component {
       errors,
       updatedEvent,
       hasBeenUpdated,
-      hasBeenValidated
+      isValid
     } = this.state;
 
     const loadingStyle = {
@@ -242,7 +249,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="organisation_id">
+                htmlFor="organisation_name">
                 {t("Organisation")}
               </label>
 
@@ -251,27 +258,53 @@ class EventConfigComponent extends Component {
                   readOnly
                   type="text"
                   className={"form-control-plaintext readonly"}
-                  id="organisation_id"
-                  value={updatedEvent.organisation_id}
+                  id="organisation_name"
+                  name="organisation_name"
+                  value={this.props.organisation.name}
                 />
               </div>
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="name">
+              <label 
+                className={"col-sm-2 col-form-label"} 
+                htmlFor="name">
                 {t("Event Name")}
               </label>
 
               <div className="col-sm-10">
                 <FormTextBox
                   id="name"
+                  name="name"
                   type="text"
-                  placeholder="Name of event"
+                  placeholder={t("Name of event (e.g. Deep Learning Indaba 2023)")}
                   required={true}
                   onChange={e => this.updateEventDetails("name", e)}
                   value={updatedEvent.name}
                   showError={!updatedEvent.name}
-                  errorText={"Event name is required"}
+                  errorText={"Event name is required"} //TODO
+                />
+              </div>
+            </div>
+
+            <div className={"form-group row"}>
+              <label 
+                className={"col-sm-2 col-form-label"}
+                htmlFor="key">
+                {t("Event Key")}
+              </label>
+
+              <div className="col-sm-10">
+                <FormTextBox
+                  id="key"
+                  name="key"
+                  type="text"
+                  placeholder={t("Event key (e.g. indaba2023) for URLs")}
+                  required={true}
+                  onChange={e => this.updateEventDetails("key", e)}
+                  value={updatedEvent.key}
+                  showError={!updatedEvent.key}
+                  errorText={"Event key is required"}
                 />
               </div>
             </div>
@@ -286,7 +319,8 @@ class EventConfigComponent extends Component {
               <div className="col-sm-10">
                 <FormTextArea
                   id="description"
-                  placeholder="Description of event"
+                  name="description"
+                  placeholder={t("Description of event")}
                   required={true}
                   rows={2}
                   value={updatedEvent.description}
@@ -298,21 +332,6 @@ class EventConfigComponent extends Component {
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="key">
-                {t("Key")}
-              </label>
-
-              <div className="col-sm-10">
-                <input
-                  readOnly
-                  className={"form-control-plaintext readonly"}
-                  id="key"
-                  value={updatedEvent.key} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
                 {t("Email From")}
               </label>
@@ -320,26 +339,29 @@ class EventConfigComponent extends Component {
               <div className="col-sm-10">
                 <FormTextBox
                   id="email_from"
+                  name="email_from"
                   type="email"
-                  placeholder="Administrator email"
+                  placeholder={t("Organisation email (e.g. indaba2023@deeplearningindaba.com)")}
                   required={true}
                   value={updatedEvent.email_from}
                   onChange={e => this.updateEventDetails("email_from", e)}
                   showError={!updatedEvent.email_from}
-                  errorText={"Administrator email is required"} />
+                  errorText={"Organisation email is required"} />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="url">
-                {t("URL")}
+                {t("Event Website")}
               </label>
+
               <div className="col-sm-10">
                 <FormTextBox
                   id="url"
+                  name="url"
                   type="text"
-                  placeholder="Event website"
+                  placeholder={t("Event website (e.g. www.deeplearningindaba.com)")}
                   value={updatedEvent.url}
                   required={true}
                   onChange={e => this.updateEventDetails("url", e)}
@@ -356,6 +378,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="start_date"
+                  name="start_date"
                   value={new Date(updatedEvent.start_date)}
                   required={true}
                   onChange={e =>
@@ -369,6 +392,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="end_date"
+                  name="end_date"
                   value={new Date(updatedEvent.end_date)}
                   required={true}
                   onChange={e => this.updateDateTimeEventDetails("end_date", e)} />
@@ -385,6 +409,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="application_open"
+                  name="application_open"
                   value={new Date(updatedEvent.application_open)}
                   required={true}
                   onChange={e =>
@@ -401,6 +426,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="application_close"
+                  name="application_close"
                   value={new Date(updatedEvent.application_close)}
                   required={true}
                   onChange={e =>
@@ -419,6 +445,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="review_open"
+                  name="review_open"
                   value={new Date(updatedEvent.review_open)}
                   required={true}
                   onChange={e =>
@@ -434,6 +461,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="review_close"
+                  name="review_close"
                   value={new Date(updatedEvent.review_close)}
                   required={true}
                   onChange={e =>
@@ -451,6 +479,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="selection_open"
+                  name="selection_open"
                   value={new Date(updatedEvent.selection_open)}
                   required={true}
                   onChange={e =>
@@ -466,6 +495,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="selection_close"
+                  name="selection_close"
                   value={new Date(updatedEvent.selection_close)}
                   required={true}
                   onChange={e =>
@@ -481,6 +511,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="offer_open"
+                  name="offer_open"
                   value={new Date(updatedEvent.offer_open)}
                   required={true}
                   onChange={e =>
@@ -496,6 +527,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="offer_close"
+                  name="offer_close"
                   value={new Date(updatedEvent.offer_close)}
                   required={true}
                   onChange={e =>
@@ -513,6 +545,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="registration_open"
+                  name="registration_open"
                   value={new Date(updatedEvent.registration_open)}
                   required={true}
                   onChange={e =>
@@ -528,6 +561,7 @@ class EventConfigComponent extends Component {
               <div className="col-sm-4">
                 <FormDate
                   id="registration_close"
+                  name="registration_close"
                   value={new Date(updatedEvent.registration_close)}
                   required={true}
                   onChange={e =>
@@ -551,7 +585,7 @@ class EventConfigComponent extends Component {
               <button
                 onClick={() => this.onClickSubmit()}
                 className="btn btn-success btn-lg btn-block"
-                disabled={!hasBeenValidated || !hasBeenUpdated}>
+                disabled={!isValid || !hasBeenUpdated}>
                 {t("Update Event")}
               </button>
             </div>
