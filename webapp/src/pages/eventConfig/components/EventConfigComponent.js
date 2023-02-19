@@ -47,6 +47,7 @@ class EventConfigComponent extends Component {
 
   componentDidMount() {
     if (this.props.event) {
+      console.log('here' + this.props.event.id);
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
           loading: false,
@@ -425,7 +426,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="review_open"
                   name="review_open"
-                  value={new Date(updatedEvent.review_open)}
+                  value={updatedEvent.review_open}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("review_open", e)} />
@@ -441,7 +442,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="review_close"
                   name="review_close"
-                  value={new Date(updatedEvent.review_close)}
+                  value={updatedEvent.review_close}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("review_close", e)} />
@@ -459,7 +460,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="selection_open"
                   name="selection_open"
-                  value={new Date(updatedEvent.selection_open)}
+                  value={updatedEvent.selection_open}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("selection_open", e)} />
@@ -475,7 +476,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="selection_close"
                   name="selection_close"
-                  value={new Date(updatedEvent.selection_close)}
+                  value={updatedEvent.selection_close}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("selection_close", e)} />
@@ -491,7 +492,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="offer_open"
                   name="offer_open"
-                  value={new Date(updatedEvent.offer_open)}
+                  value={updatedEvent.offer_open}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("offer_open", e)} />
@@ -507,7 +508,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="offer_close"
                   name="offer_close"
-                  value={new Date(updatedEvent.offer_close)}
+                  value={updatedEvent.offer_close}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("offer_close", e)} />
@@ -525,7 +526,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="registration_open"
                   name="registration_open"
-                  value={new Date(updatedEvent.registration_open)}
+                  value={updatedEvent.registration_open}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("registration_open", e)} />
@@ -541,7 +542,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="registration_close"
                   name="registration_close"
-                  value={new Date(updatedEvent.registration_close)}
+                  value={updatedEvent.registration_close}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("registration_close", e)}/>
@@ -557,7 +558,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="start_date"
                   name="start_date"
-                  value={new Date(updatedEvent.start_date)}
+                  value={updatedEvent.start_date}
                   required={true}
                   onChange={e => this.updateDateTimeEventDetails("start_date", e)} />
               </div>
