@@ -11,9 +11,6 @@ class EventConfigComponent extends Component {
     super(props);
 
     const today = new Date().toLocaleDateString();
-    eventService.getEvents().then(result => {
-      console.log(result);
-    });
 
     this.emptyEvent = {
       name: "",
@@ -89,97 +86,114 @@ class EventConfigComponent extends Component {
         isEdited = true;
       }
     }
+    this.validateEventDetails();
     this.setState({
       hasBeenUpdated: isEdited
     });
-    this.hasBeenValidated();
+
+  };
+
+  getErrorMessages = errors => {
+    let errorMessages = [];
+
+    for (let i = 0; i < errors.length; i++) {
+      errorMessages.push( //TODO: warning appears for this - each child in list should have key prop
+        <div className={"alert alert-danger alert-container"}>
+          {errors[i]}
+        </div>
+      );
+    }
+    return errorMessages;
   };
 
   validateEventDetails = () => {
     let isValid = true;
-    if (
-      !this.state.updatedEvent.name || 
-      !this.state.updatedEvent.description || 
-      !this.state.updatedEvent.email_from || 
-      !this.state.updatedEvent.url) {    
-      isValid = false;
-    }
-    //TODO: potentially add some error reporting
-    //this.setState({
-    //  errors: errors
-    //});
-    return isValid;
-  };
-
-  validateDateTimeEventDetails = () => {
-    let isValid = true;
     let errors = [];
-    if (this.state.updatedEvent.application_open <= new Date()) {
-      errors.push(this.props.t("Application open date must be in the future"));
-    }
-    //check date ranges
-    if (this.state.updatedEvent.application_open > this.state.updatedEvent.application_close) {
+    if (this.state.updatedEvent.name.length === 0) {
       isValid = false;
-      errors.push(this.props.t("Application open date must be before application close date"));
+      errors.push(this.props.t("Event name is required"));
     }
-    if (this.state.updatedEvent.review_open > this.state.updatedEvent.review_close) {
+    if (this.state.updatedEvent.description.length === 0) {
       isValid = false;
-      errors.push(this.props.t("Review open date must be before review close date"));
+      errors.push(this.props.t("Event description is required"));
     }
-    if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
+    if (this.state.updatedEvent.key.length === 0) {
       isValid = false;
-      errors.push(this.props.t("Selection open date must be before selection close date"));
+      errors.push(this.props.t("Event key is required"));
     }
-    if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
+    if (this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
       isValid = false;
-      errors.push(this.props.t("Offer open date must be before offer close date"));
+      errors.push(this.props.t("Event key must be less than 16 characters and contain no spaces"));
     }
-    if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
+    if (this.state.updatedEvent.email_from.length === 0) {
       isValid = false;
-      errors.push(this.props.t("Registration open date must be before registration close date"));
+      errors.push(this.props.t("Organisation email is required"));
     }
-    if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
+    if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
       isValid = false;
-      errors.push(this.props.t("Event start date must be before event end date"));
+      errors.push(this.props.t("Organisation email is invalid"));
     }
-    // check each phase starts after the next phase ends
-    if (this.state.updatedEvent.review_open < this.state.updatedEvent.application_close) {
+    if (this.state.updatedEvent.url.length === 0) {
       isValid = false;
-      errors.push(this.props.t("Review open date must be after application close date"));
+      errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.selection_open < this.state.updatedEvent.review_close) {
+    if (this.state.updatedEvent.application_open < new Date().toLocaleDateString()) {
       isValid = false;
-      errors.push(this.props.t("Selection open date must be after review close date"));
+      errors.push(this.props.t("Application open date cannot be in the past"));
     }
-    if (this.state.updatedEvent.offer_open < this.state.updatedEvent.selection_close) {
-      isValid = false;
-      errors.push(this.props.t("Offer open date must be after selection close date"));
-    }
-    if (this.state.updatedEvent.registration_open < this.state.updatedEvent.offer_close) {
-      isValid = false;
-      errors.push(this.props.t("Registration open date must be after offer close date"));
-    }
-    if (this.state.updatedEvent.start_date < this.state.updatedEvent.registration_close) {
+    // working backwards, check each phase ends before the previous phase starts
+    if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
       isValid = false;
       errors.push(this.props.t("Event start date must be after registration close date"));
     }
+    if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.offer_close) {
+      isValid = false;
+      errors.push(this.props.t("Registration open date must be after offer close date"));
+    }
+    if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.selection_close) {
+      isValid = false;
+      errors.push(this.props.t("Offer open date must be after selection close date"));
+    }
+    if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
+      isValid = false;
+      errors.push(this.props.t("Selection open date must be after review close date"));
+    }
+    if (this.state.updatedEvent.review_open <= this.state.updatedEvent.application_close) {
+      isValid = false;
+      errors.push(this.props.t("Review open date must be after application close date"));
+    }
 
-    //this.setState({
-    //  errors: errors
-    //});
-    return isValid;
-  };
-
-  validate = () => {
-    const isValid = this.validateEventDetails() && this.validateDateTimeEventDetails();
+    //check date ranges
+    if (this.state.updatedEvent.application_open > this.state.updatedEvent.application_close) {
+      isValid = false;
+      errors.push(this.props.t("Application close date must be after application open date"));
+    }
+    if (this.state.updatedEvent.review_open > this.state.updatedEvent.review_close) {
+      isValid = false;
+      errors.push(this.props.t("Review close date must be after review open date"));
+    }
+    if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
+      isValid = false;
+      errors.push(this.props.t("Selection close date must be after selection open date"));
+    }
+    if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
+      isValid = false;
+      errors.push(this.props.t("Offer close date must be after offer open date"));
+    }
+    if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
+      isValid = false;
+      errors.push(this.props.t("Registration close date must be after registration open date"));
+    }
+    if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
+      isValid = false;
+      errors.push(this.props.t("Event end date must be after event start date"));
+    }
+    
     this.setState({
+      errors: errors,
       isValid: isValid
     });
-  }
-
-  hasBeenValidated = () => {
-    return this.state.isValid
-  }
+  };
 
   updateEventDetails = (fieldName, e) => {
     let u = {
@@ -197,7 +211,7 @@ class EventConfigComponent extends Component {
   updateDateTimeEventDetails = (fieldName, value) => {
     let u = {
       ...this.state.updatedEvent,
-      [fieldName]: value
+      [fieldName]: new Date(value).toLocaleDateString()
     };
 
     this.setState({
@@ -214,7 +228,8 @@ class EventConfigComponent extends Component {
       errors,
       updatedEvent,
       hasBeenUpdated,
-      isValid
+      isValid,
+      showErrors
     } = this.state;
 
     const loadingStyle = {
@@ -269,7 +284,7 @@ class EventConfigComponent extends Component {
               <label 
                 className={"col-sm-2 col-form-label"} 
                 htmlFor="name">
-                {t("Event Name")}
+                {t("Event Name")+"*"}
               </label>
 
               <div className="col-sm-10">
@@ -281,8 +296,6 @@ class EventConfigComponent extends Component {
                   required={true}
                   onChange={e => this.updateEventDetails("name", e)}
                   value={updatedEvent.name}
-                  showError={!updatedEvent.name}
-                  errorText={"Event name is required"} //TODO
                 />
               </div>
             </div>
@@ -291,7 +304,7 @@ class EventConfigComponent extends Component {
               <label 
                 className={"col-sm-2 col-form-label"}
                 htmlFor="key">
-                {t("Event Key")}
+                {t("Event Key")+"*"}
               </label>
 
               <div className="col-sm-10">
@@ -303,8 +316,6 @@ class EventConfigComponent extends Component {
                   required={true}
                   onChange={e => this.updateEventDetails("key", e)}
                   value={updatedEvent.key}
-                  showError={!updatedEvent.key}
-                  errorText={"Event key is required"}
                 />
               </div>
             </div>
@@ -313,7 +324,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="description">
-                {t("Description")}
+                {t("Description")+"*"}
               </label>
 
               <div className="col-sm-10">
@@ -325,15 +336,13 @@ class EventConfigComponent extends Component {
                   rows={2}
                   value={updatedEvent.description}
                   onChange={e => this.updateEventDetails("description", e)}
-                  showError={!updatedEvent.description}
-                  errorText={"Event description is required"}
                 />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                {t("Email From")}
+                {t("Email From")+"*"}
               </label>
 
               <div className="col-sm-10">
@@ -345,15 +354,14 @@ class EventConfigComponent extends Component {
                   required={true}
                   value={updatedEvent.email_from}
                   onChange={e => this.updateEventDetails("email_from", e)}
-                  showError={!updatedEvent.email_from}
-                  errorText={"Organisation email is required"} />
+                  />
               </div>
             </div>
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="url">
-                {t("Event Website")}
+                {t("Event Website")+"*"}
               </label>
 
               <div className="col-sm-10">
@@ -365,37 +373,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.url}
                   required={true}
                   onChange={e => this.updateEventDetails("url", e)}
-                  showError={!updatedEvent.url}
-                  errorText={"Event website is required"} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="start_date">
-                {t("Start Date")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="start_date"
-                  name="start_date"
-                  value={new Date(updatedEvent.start_date)}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("start_date", e)} />
-              </div>
-
-              <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
-                {t("End Date")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="end_date"
-                  name="end_date"
-                  value={new Date(updatedEvent.end_date)}
-                  required={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e)} />
+                  />
               </div>
             </div>
 
@@ -403,14 +381,14 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_open">
-                {t("Application Open")}
+                {t("Application Open")+"*"}
               </label>
 
               <div className="col-sm-4">
                 <FormDate
                   id="application_open"
                   name="application_open"
-                  value={new Date(updatedEvent.application_open)}
+                  value={updatedEvent.application_open}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("application_open", e)}/>
@@ -420,14 +398,14 @@ class EventConfigComponent extends Component {
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_close"
               >
-                {t("Application Close")}
+                {t("Application Close")+"*"}
               </label>
 
               <div className="col-sm-4">
                 <FormDate
                   id="application_close"
                   name="application_close"
-                  value={new Date(updatedEvent.application_close)}
+                  value={updatedEvent.application_close}
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("application_close", e)
@@ -435,11 +413,12 @@ class EventConfigComponent extends Component {
               </div>
 
             </div>
+
             <div className={"form-group row"}>
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_open">
-                {t("Review Open")}
+                {t("Review Open")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -455,7 +434,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_close">
-                {t("Review Close")}
+                {t("Review Close")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -473,7 +452,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_open">
-                {t("Selection Open")}
+                {t("Selection Open")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -489,7 +468,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_close">
-                {t("Selection Close")}
+                {t("Selection Close")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -505,7 +484,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="offer_open">
-                {t("Offer Open")}
+                {t("Offer Open")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -521,7 +500,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="offer_close">
-                {t("Offer Close")}
+                {t("Offer Close")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -539,7 +518,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_open">
-                {t("Registration Open")}
+                {t("Registration Open")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -555,7 +534,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_close">
-                {t("Registration Close")}
+                {t("Registration Close")+"*"}
               </label>
 
               <div className="col-sm-4">
@@ -566,6 +545,34 @@ class EventConfigComponent extends Component {
                   required={true}
                   onChange={e =>
                     this.updateDateTimeEventDetails("registration_close", e)}/>
+              </div>
+            </div>
+
+            <div className={"form-group row"}>
+              <label className={"col-sm-2 col-form-label"} htmlFor="start_date">
+                {t("Event Start Date")+"*"}
+              </label>
+
+              <div className="col-sm-4">
+                <FormDate
+                  id="start_date"
+                  name="start_date"
+                  value={new Date(updatedEvent.start_date)}
+                  required={true}
+                  onChange={e => this.updateDateTimeEventDetails("start_date", e)} />
+              </div>
+
+              <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
+                {t("Event End Date")+"*"}
+              </label>
+
+              <div className="col-sm-4">
+                <FormDate
+                  id="end_date"
+                  name="end_date"
+                  value={new Date(updatedEvent.end_date)}
+                  required={true}
+                  onChange={e => this.updateDateTimeEventDetails("end_date", e)} />
               </div>
             </div>
           </form>
@@ -589,8 +596,8 @@ class EventConfigComponent extends Component {
                 {t("Update Event")}
               </button>
             </div>
-
           </div>
+          {errors && showErrors && this.getErrorMessages(errors)}
         </div>
       </div>
     );
