@@ -446,10 +446,18 @@
     "Registration open date must be after offer close date": "Registration open date must be after offer close date",
     "Event start date must be after registration close date": "Event start date must be after registration close date",
     "Event name is required": "Event name is required",
+    "Event type is required": "Event type is required",
+    "Award travel grants is required": "Award travel grants is required",
     "Event description is required": "Event description is required",
     "Event key is required": "Event key is required",
     "Event key must be less than 16 characters and contain no spaces": "Event key must be less than 16 characters and contain no spaces",
     "Organisation email is required": "Organisation email is required",
     "Organisation email is invalid": "Organisation email is invalid",
-    "Event URL is required": "Event URL is required"
+    "Event URL is required": "Event URL is required",
+    "Event Type": "Event Type",
+    "Event": "Event",
+    "Call": "Call",
+    "Award": "Award",
+    "Programme": "Programme",
+    "Awards Travel Grants": "Awards Travel Grants"
 }

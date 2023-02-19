@@ -5,6 +5,7 @@ import { withTranslation } from 'react-i18next';
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
+import FormSelect from "../../../components/form/FormSelect";
 
 class EventConfigComponent extends Component {
   constructor(props) {
@@ -13,24 +14,27 @@ class EventConfigComponent extends Component {
     const today = new Date().toLocaleDateString();
 
     this.emptyEvent = {
-      name: "",
-      description: "",
-      start_date: today,
-      end_date: today,
-      key: "",
+      name: null,
+      description: null,
+      start_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
+      end_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
+      key: null,
       organisation_id: this.props.organisation.id,
       email_from: this.props.organisation.email_from,
-      url: "",
+      url: null,
       application_open: today,
       application_close: today,
-      review_open: today,
-      review_close: today,
-      selection_open: today,
-      selection_close: today,
-      offer_open: today,
-      offer_close: today,
-      registration_open: today,
-      registration_close: today  
+      review_open: new Date("2024/02/20").toLocaleDateString(),//today,
+      review_close: new Date("2024/02/20").toLocaleDateString(),//today,today,
+      selection_open: new Date("2024/02/21").toLocaleDateString(),//today,today,
+      selection_close: new Date("2024/02/21").toLocaleDateString(),//today,today,
+      offer_open: new Date("2024/02/22").toLocaleDateString(),//today,today,
+      offer_close: new Date("2024/02/22").toLocaleDateString(),//today,today,
+      registration_open: new Date("2024/02/23").toLocaleDateString(),//today,today,
+      registration_close: new Date("2024/02/23").toLocaleDateString(),//today,today,
+      event_type: null,
+      travel_grant: null,
+      miniconf_url: null
     }
 
     this.state = {
@@ -47,7 +51,6 @@ class EventConfigComponent extends Component {
 
   componentDidMount() {
     if (this.props.event) {
-      console.log('here' + this.props.event.id);
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
           loading: false,
@@ -70,13 +73,15 @@ class EventConfigComponent extends Component {
 
   onClickSubmit = () => {
     // PUT
-    eventService.update(this.state.updatedEvent).then(result => {
-      this.setState({
-        preEvent: result.event,
-        updatedEvent: result.event,
-        hasBeenUpdated: false,
-        error: result.error
-      });
+    console.log(this.state.updatedEvent);
+    eventService.create(this.state.updatedEvent).then(result => {
+      console.log(result);
+      //this.setState({
+       // preEvent: result.event,
+       // updatedEvent: result.event,
+       // hasBeenUpdated: false,
+        //error: result.error
+      //});
     });
   };
 
@@ -87,6 +92,8 @@ class EventConfigComponent extends Component {
         isEdited = true;
       }
     }
+    console.log(this.state.updatedEvent);
+
     this.validateEventDetails();
     this.setState({
       hasBeenUpdated: isEdited
@@ -95,11 +102,11 @@ class EventConfigComponent extends Component {
   };
 
   getErrorMessages = errors => {
-    let errorMessages = [];
+    const errorMessages = [];
 
     for (let i = 0; i < errors.length; i++) {
       errorMessages.push( //TODO: warning appears for this - each child in list should have key prop
-        <div className={"alert alert-danger alert-container"}>
+        <div key={"error_"+i} className={"alert alert-danger alert-container"}>
           {errors[i]}
         </div>
       );
@@ -110,23 +117,31 @@ class EventConfigComponent extends Component {
   validateEventDetails = () => {
     let isValid = true;
     let errors = [];
-    if (this.state.updatedEvent.name.length === 0) {
+    if (!this.state.updatedEvent.name || this.state.updatedEvent.name.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event name is required"));
     }
-    if (this.state.updatedEvent.description.length === 0) {
-      isValid = false;
-      errors.push(this.props.t("Event description is required"));
-    }
-    if (this.state.updatedEvent.key.length === 0) {
+    if (!this.state.updatedEvent.key || this.state.updatedEvent.key.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event key is required"));
     }
-    if (this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
+    if (!this.state.updatedEvent.key || this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
       isValid = false;
       errors.push(this.props.t("Event key must be less than 16 characters and contain no spaces"));
     }
-    if (this.state.updatedEvent.email_from.length === 0) {
+    if (!this.state.updatedEvent.event_type || this.state.updatedEvent.event_type.length === 0) {
+      isValid = false;
+      errors.push(this.props.t("Event type is required"));
+    }
+    if (this.state.updatedEvent.travel_grant == null || this.state.updatedEvent.travel_grant.length === 0) {
+      isValid = false;
+      errors.push(this.props.t("Award travel grants is required")); 
+    }
+    if (!this.state.updatedEvent.description || this.state.updatedEvent.description.length === 0) {
+      isValid = false;
+      errors.push(this.props.t("Event description is required"));
+    }
+    if (!this.state.updatedEvent.email_from || this.state.updatedEvent.email_from.length === 0) {
       isValid = false;
       errors.push(this.props.t("Organisation email is required"));
     }
@@ -134,7 +149,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Organisation email is invalid"));
     }
-    if (this.state.updatedEvent.url.length === 0) {
+    if (!this.state.updatedEvent.url || this.state.updatedEvent.url.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
@@ -197,7 +212,7 @@ class EventConfigComponent extends Component {
   };
 
   updateEventDetails = (fieldName, e) => {
-    let u = {
+    const u = {
       ...this.state.updatedEvent,
       [fieldName]: e.target.value
     };
@@ -210,9 +225,22 @@ class EventConfigComponent extends Component {
   };
 
   updateDateTimeEventDetails = (fieldName, value) => {
-    let u = {
+    const u = {
       ...this.state.updatedEvent,
       [fieldName]: new Date(value).toLocaleDateString()
+    };
+
+    this.setState({
+      updatedEvent: u
+    },
+      () => this.hasBeenEdited()
+    );
+  };
+
+  updateDropDownEventDetails = (fieldName, dropdown) => {
+    const u = {
+      ...this.state.updatedEvent,
+      [fieldName]: dropdown.value
     };
 
     this.setState({
@@ -285,7 +313,7 @@ class EventConfigComponent extends Component {
               <label 
                 className={"col-sm-2 col-form-label"} 
                 htmlFor="name">
-                {t("Event Name")+"*"}
+                {t("Event Name")}
               </label>
 
               <div className="col-sm-10">
@@ -302,10 +330,56 @@ class EventConfigComponent extends Component {
             </div>
 
             <div className={"form-group row"}>
+              <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor="event_type">
+                {t("Event Type")}
+              </label>
+
+              <div className="col-sm-10">
+                <FormSelect
+                  id="event_type"
+                  name="event_type"
+                  defaultValue={null || updatedEvent.event_type}
+                  required={true}
+                  onChange={this.updateDropDownEventDetails}
+                  options={[
+                    { value: "Event", label: t("Event") },
+                    { value: "Award", label: t("Award") },
+                    { value: "Call", label: t("Call") },
+                    { value: "Programme", label: t("Programme") }
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div className={"form-group row"}>
+              <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor="travel_grant">
+                {t("Awards Travel Grants")}
+              </label>
+
+              <div className="col-sm-10">
+                <FormSelect
+                  id="travel_grant"
+                  name="travel_grant"
+                  defaultValue={null || updatedEvent.travel_grant}
+                  required={true}
+                  onChange={this.updateDropDownEventDetails}
+                  options={[
+                    { value: true, label: t("Yes") },
+                    { value: false, label: t("No") }
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div className={"form-group row"}>
               <label 
                 className={"col-sm-2 col-form-label"}
                 htmlFor="key">
-                {t("Event Key")+"*"}
+                {t("Event Key")}
               </label>
 
               <div className="col-sm-10">
@@ -325,7 +399,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="description">
-                {t("Description")+"*"}
+                {t("Description")}
               </label>
 
               <div className="col-sm-10">
@@ -343,7 +417,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                {t("Email From")+"*"}
+                {t("Email From")}
               </label>
 
               <div className="col-sm-10">
@@ -362,7 +436,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="url">
-                {t("Event Website")+"*"}
+                {t("Event Website")}
               </label>
 
               <div className="col-sm-10">
@@ -382,7 +456,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_open">
-                {t("Application Open")+"*"}
+                {t("Application Open")}
               </label>
 
               <div className="col-sm-4">
@@ -399,7 +473,7 @@ class EventConfigComponent extends Component {
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_close"
               >
-                {t("Application Close")+"*"}
+                {t("Application Close")}
               </label>
 
               <div className="col-sm-4">
@@ -419,7 +493,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_open">
-                {t("Review Open")+"*"}
+                {t("Review Open")}
               </label>
 
               <div className="col-sm-4">
@@ -435,7 +509,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_close">
-                {t("Review Close")+"*"}
+                {t("Review Close")}
               </label>
 
               <div className="col-sm-4">
@@ -453,7 +527,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_open">
-                {t("Selection Open")+"*"}
+                {t("Selection Open")}
               </label>
 
               <div className="col-sm-4">
@@ -469,7 +543,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_close">
-                {t("Selection Close")+"*"}
+                {t("Selection Close")}
               </label>
 
               <div className="col-sm-4">
@@ -485,7 +559,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="offer_open">
-                {t("Offer Open")+"*"}
+                {t("Offer Open")}
               </label>
 
               <div className="col-sm-4">
@@ -501,7 +575,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="offer_close">
-                {t("Offer Close")+"*"}
+                {t("Offer Close")}
               </label>
 
               <div className="col-sm-4">
@@ -519,7 +593,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_open">
-                {t("Registration Open")+"*"}
+                {t("Registration Open")}
               </label>
 
               <div className="col-sm-4">
@@ -535,7 +609,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_close">
-                {t("Registration Close")+"*"}
+                {t("Registration Close")}
               </label>
 
               <div className="col-sm-4">
@@ -551,7 +625,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="start_date">
-                {t("Event Start Date")+"*"}
+                {t("Event Start Date")}
               </label>
 
               <div className="col-sm-4">
@@ -564,7 +638,7 @@ class EventConfigComponent extends Component {
               </div>
 
               <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
-                {t("Event End Date")+"*"}
+                {t("Event End Date")}
               </label>
 
               <div className="col-sm-4">

@@ -445,11 +445,19 @@
     "Registration open date must be after offer close date": "La date d'ouverture de l'inscription doit être postérieure à la date de clôture de l'offre",
     "Event start date must be after registration close date": "La date de début de l'événement doit être postérieure à la date de clôture de l'inscription",
     "Event name is required": "Le nom de l'événement est obligatoire",
+    "Event type is required": "Le type d'événement est obligatoire",
+    "Award travel grants is required": "Le prix des bourses de voyage est obligatoire",
     "Event description is required": "La description de l'événement est obligatoire",
     "Event key is required": "La clé de l'événement est obligatoire",
     "Event key must be less than 16 characters and contain no spaces": "La clé de l'événement doit comporter moins de 16 caractères et ne doit pas contenir d'espaces",
     "Organisation email is required": "L'adresse e-mail de l'organisation est obligatoire",
     "Organisation email is invalid": "L'adresse e-mail de l'organisation est invalide",
-    "Event URL is required": "L'URL de l'événement est obligatoire"
+    "Event URL is required": "L'URL de l'événement est obligatoire",
+    "Event Type": "Type d'événement",
+    "Event": "Événement",
+    "Call": "Appel",
+    "Award": "Prix",
+    "Programme": "Programme",
+    "Awards Travel Grants": "Bourses de voyage"
 }
 
