@@ -2,9 +2,14 @@ import React from "react";
 import errorHandler from "../utils/errorHandlerUtility";
 
 const BUG_SUBJECT_TEXT = "I encountered an bug in Baobab!";
-const BUG_BODY_TEXT = `Browser name and version:
-What I was trying to do:
-Description of problem: 
+const BUG_BODY_TEXT = `PLEASE ANSWER THE QUESTIONS BELOW. The more details you provide, 
+the better the chance we can diagnose and fix the issue in a timely manner.
+
+What is your browser name and version?
+What page were you on when the error occured? 
+What were you doing on the page?
+What happened after that (the error)?
+
 Error Message: 
 `;
 
@@ -38,8 +43,8 @@ export const ErrorPage = ({ componentStack, error }) => {
         </p>
         <p>
         Please try again and if this issue persists, please{" "}
-          <a href={bug_mailto}>get in touch</a> with us.<br/>
-          The bug report will go to the Baobab team at the Deep Learning Indaba who maintain the application.
+          <a href={bug_mailto}>get in touch</a> with us.<br/> The bug report will go to the Baobab team at the Deep Learning Indaba who maintain the application.
+          <span style={{"font-weight": "bold"}}>Please answer the questions in the email in as much detail as possible before sending</span>. The more details you provide, the quicker we can diagnose and fix the issue.
         </p>
       </div>
     </div>
