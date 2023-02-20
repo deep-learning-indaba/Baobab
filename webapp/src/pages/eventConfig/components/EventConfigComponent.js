@@ -14,14 +14,14 @@ class EventConfigComponent extends Component {
     const today = new Date().toLocaleDateString();
 
     this.emptyEvent = {
-      name: null,
-      description: null,
+      name: "",
+      description: "",
       start_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
       end_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
-      key: null,
+      key: "",
       organisation_id: this.props.organisation.id,
       email_from: this.props.organisation.email_from,
-      url: null,
+      url: "",
       application_open: today,
       application_close: today,
       review_open: new Date("2024/02/20").toLocaleDateString(),//today,
@@ -32,9 +32,9 @@ class EventConfigComponent extends Component {
       offer_close: new Date("2024/02/22").toLocaleDateString(),//today,today,
       registration_open: new Date("2024/02/23").toLocaleDateString(),//today,today,
       registration_close: new Date("2024/02/23").toLocaleDateString(),//today,today,
-      event_type: null,
-      travel_grant: null,
-      miniconf_url: null
+      event_type: "",
+      travel_grant: "",
+      miniconf_url: ""
     }
 
     this.state = {
@@ -117,31 +117,31 @@ class EventConfigComponent extends Component {
   validateEventDetails = () => {
     let isValid = true;
     let errors = [];
-    if (!this.state.updatedEvent.name || this.state.updatedEvent.name.length === 0) {
+    if (this.state.updatedEvent.name.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event name is required"));
     }
-    if (!this.state.updatedEvent.key || this.state.updatedEvent.key.length === 0) {
+    if (this.state.updatedEvent.key.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event key is required"));
     }
-    if (!this.state.updatedEvent.key || this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
+    if (this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
       isValid = false;
       errors.push(this.props.t("Event key must be less than 16 characters and contain no spaces"));
     }
-    if (!this.state.updatedEvent.event_type || this.state.updatedEvent.event_type.length === 0) {
+    if (this.state.updatedEvent.event_type.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event type is required"));
     }
-    if (this.state.updatedEvent.travel_grant == null || this.state.updatedEvent.travel_grant.length === 0) {
+    if (this.state.updatedEvent.travel_grant.length === 0) {
       isValid = false;
       errors.push(this.props.t("Award travel grants is required")); 
     }
-    if (!this.state.updatedEvent.description || this.state.updatedEvent.description.length === 0) {
+    if (this.state.updatedEvent.description.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event description is required"));
     }
-    if (!this.state.updatedEvent.email_from || this.state.updatedEvent.email_from.length === 0) {
+    if (this.state.updatedEvent.email_from.length === 0) {
       isValid = false;
       errors.push(this.props.t("Organisation email is required"));
     }
@@ -149,7 +149,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Organisation email is invalid"));
     }
-    if (!this.state.updatedEvent.url || this.state.updatedEvent.url.length === 0) {
+    if (this.state.updatedEvent.url.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }

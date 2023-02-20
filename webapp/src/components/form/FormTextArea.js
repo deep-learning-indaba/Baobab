@@ -78,7 +78,7 @@ class FormTextArea extends React.Component {
             tabIndex={this.props.tabIndex}
             autoFocus={this.props.autoFocus}
           />
-          <span class="question__word-count float-right">{t('Word Count') + ': ' + this.state.words}</span>
+          <span className="question__word-count float-right">{t('Word Count') + ': ' + this.state.words}</span>
         </FormGroup>
         
       </div>
