@@ -321,6 +321,7 @@ class ResponseListAPI(restful.Resource):
                 'user_title': response.user.user_title,
                 'firstname': response.user.firstname,
                 'lastname': response.user.lastname,
+                'email': response.user.email,
                 'start_date': response.started_timestamp.isoformat(),
                 'is_submitted': response.is_submitted,
                 'is_withdrawn': response.is_withdrawn,
