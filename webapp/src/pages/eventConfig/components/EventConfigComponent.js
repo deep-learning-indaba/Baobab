@@ -11,31 +11,34 @@ class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
-    const today = new Date().toLocaleDateString();
+    const today = new Date().toISOString();
+    const str_by_language = {};
+    this.props.organisation.languages.forEach((i) => str_by_language[i.code] = [""]);
 
     this.emptyEvent = {
-      name: "",
-      description: "",
-      start_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
-      end_date: new Date("2024/02/24").toLocaleDateString(),//today,today,
+      name: "",// TODO switch over to str_by_language when event handler can handle it
+      description: "",// TODO switch over to str_by_language when event handler can handle it
+      start_date: today,
+      end_date: today,
       key: "",
       organisation_id: this.props.organisation.id,
       email_from: this.props.organisation.email_from,
       url: "",
       application_open: today,
       application_close: today,
-      review_open: new Date("2024/02/20").toLocaleDateString(),//today,
-      review_close: new Date("2024/02/20").toLocaleDateString(),//today,today,
-      selection_open: new Date("2024/02/21").toLocaleDateString(),//today,today,
-      selection_close: new Date("2024/02/21").toLocaleDateString(),//today,today,
-      offer_open: new Date("2024/02/22").toLocaleDateString(),//today,today,
-      offer_close: new Date("2024/02/22").toLocaleDateString(),//today,today,
-      registration_open: new Date("2024/02/23").toLocaleDateString(),//today,today,
-      registration_close: new Date("2024/02/23").toLocaleDateString(),//today,today,
+      review_open: today,
+      review_close: today,
+      selection_open: today,
+      selection_close: today,
+      offer_open: today,
+      offer_close: today,
+      registration_open: today,
+      registration_close: today,
       event_type: "",
       travel_grant: "",
       miniconf_url: ""
     }
+    console.log(this.emptyEvent);
 
     this.state = {
       preEvent: this.emptyEvent,
@@ -76,12 +79,12 @@ class EventConfigComponent extends Component {
     console.log(this.state.updatedEvent);
     eventService.create(this.state.updatedEvent).then(result => {
       console.log(result);
-      //this.setState({
-       // preEvent: result.event,
-       // updatedEvent: result.event,
-       // hasBeenUpdated: false,
-        //error: result.error
-      //});
+      this.setState({
+        preEvent: result.event,
+        updatedEvent: result.event,
+        hasBeenUpdated: false,
+        error: result.error
+      });
     });
   };
 
@@ -105,7 +108,7 @@ class EventConfigComponent extends Component {
     const errorMessages = [];
 
     for (let i = 0; i < errors.length; i++) {
-      errorMessages.push( //TODO: warning appears for this - each child in list should have key prop
+      errorMessages.push(
         <div key={"error_"+i} className={"alert alert-danger alert-container"}>
           {errors[i]}
         </div>
@@ -117,6 +120,7 @@ class EventConfigComponent extends Component {
   validateEventDetails = () => {
     let isValid = true;
     let errors = [];
+    //TODO add validation for multi-lingual fields
     if (this.state.updatedEvent.name.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event name is required"));
@@ -153,7 +157,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < new Date().toLocaleDateString()) {
+    if (this.state.updatedEvent.application_open < new Date().toISOString()) {
       isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
@@ -212,6 +216,7 @@ class EventConfigComponent extends Component {
   };
 
   updateEventDetails = (fieldName, e) => {
+    //TODO add support for multilingual fields
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: e.target.value
@@ -227,7 +232,7 @@ class EventConfigComponent extends Component {
   updateDateTimeEventDetails = (fieldName, value) => {
     const u = {
       ...this.state.updatedEvent,
-      [fieldName]: new Date(value).toLocaleDateString()
+      [fieldName]: new Date(value).toISOString()
     };
 
     this.setState({
@@ -309,25 +314,28 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
-            <div className={"form-group row"}>
-              <label 
-                className={"col-sm-2 col-form-label"} 
-                htmlFor="name">
-                {t("Event Name")}
-              </label>
 
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder={t("Name of event (e.g. Deep Learning Indaba 2023)")}
-                  required={true}
-                  onChange={e => this.updateEventDetails("name", e)}
-                  value={updatedEvent.name}
-                />
+            {this.props.organisation.languages.map((lang) => (
+              <div className={"form-group row"}>
+                <label 
+                  className={"col-sm-2 col-form-label"} 
+                  htmlFor={"name_" + lang.code}>
+                  {t("Event Name ("+ lang.description +")")}
+                </label>
+
+                <div className="col-sm-10">
+                  <FormTextBox
+                    id={"name_" + lang.code}
+                    name={"name_" + lang.code}
+                    type="text"
+                    placeholder={t("Name of event in " + lang.description + " (e.g. Deep Learning Indaba 2023)")}
+                    required={true}
+                    onChange={e => this.updateEventDetails("name", e)}
+                    value={updatedEvent.name}
+                  />
+                </div>
               </div>
-            </div>
+            ))}
 
             <div className={"form-group row"}>
               <label
@@ -387,7 +395,7 @@ class EventConfigComponent extends Component {
                   id="key"
                   name="key"
                   type="text"
-                  placeholder={t("Event key (e.g. indaba2023) for URLs")}
+                  placeholder={t("Event key for URLs (e.g. indaba2023)")}
                   required={true}
                   onChange={e => this.updateEventDetails("key", e)}
                   value={updatedEvent.key}
@@ -395,25 +403,27 @@ class EventConfigComponent extends Component {
               </div>
             </div>
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="description">
-                {t("Description")}
-              </label>
+            {this.props.organisation.languages.map((lang) => (
+              <div className={"form-group row"}>
+                <label
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor={"description_" + lang.code}>
+                  {t("Event Description ("+ lang.description +")")}
+                </label>
 
-              <div className="col-sm-10">
-                <FormTextArea
-                  id="description"
-                  name="description"
-                  placeholder={t("Description of event")}
-                  required={true}
-                  rows={2}
-                  value={updatedEvent.description}
-                  onChange={e => this.updateEventDetails("description", e)}
-                />
+                <div className="col-sm-10">
+                  <FormTextArea
+                    id={"description_" + lang.code}
+                    name={"description_" + lang.code}
+                    placeholder={t("Description of event in " + lang.description)}
+                    required={true}
+                    rows={2}
+                    value={updatedEvent.description}
+                    onChange={e => this.updateEventDetails("description", e)}
+                  />
+                </div>
               </div>
-            </div>
+            ))}
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
