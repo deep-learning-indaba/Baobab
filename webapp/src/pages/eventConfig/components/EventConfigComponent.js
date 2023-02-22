@@ -11,13 +11,11 @@ class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
-    const today = new Date().toISOString();
-    const str_by_language = {};
-    this.props.organisation.languages.forEach((i) => str_by_language[i.code] = [""]);
+    const today = this.formatDate(new Date());
 
     this.emptyEvent = {
-      name: "",// TODO switch over to str_by_language when event handler can handle it
-      description: "",// TODO switch over to str_by_language when event handler can handle it
+      name: {},
+      description: {},
       start_date: today,
       end_date: today,
       key: "",
@@ -38,11 +36,11 @@ class EventConfigComponent extends Component {
       travel_grant: "",
       miniconf_url: ""
     }
-    console.log(this.emptyEvent);
 
     this.state = {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
+      todays_date: today,
       hasBeenUpdated: false,
       isValid: false,
       loading: false,
@@ -71,7 +69,7 @@ class EventConfigComponent extends Component {
       updatedEvent: this.state.preEvent,
       hasBeenUpdated: false
     });
-    
+    //TODO add route back to home page
   };
 
   onClickSubmit = () => {
@@ -86,6 +84,7 @@ class EventConfigComponent extends Component {
         error: result.error
       });
     });
+    //TODO: check error code and route back to home page
   };
 
   hasBeenEdited = () => {
@@ -95,8 +94,6 @@ class EventConfigComponent extends Component {
         isEdited = true;
       }
     }
-    console.log(this.state.updatedEvent);
-
     this.validateEventDetails();
     this.setState({
       hasBeenUpdated: isEdited
@@ -117,14 +114,23 @@ class EventConfigComponent extends Component {
     return errorMessages;
   };
 
+  formatDate = date => {
+    return date.toISOString().split('T')[0]+"T00:00:00Z";
+  }
+
   validateEventDetails = () => {
     let isValid = true;
     let errors = [];
-    //TODO add validation for multi-lingual fields
-    if (this.state.updatedEvent.name.length === 0) {
-      isValid = false;
-      errors.push(this.props.t("Event name is required"));
-    }
+    this.props.organisation.languages.forEach(lang => {
+      if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].length === 0) {
+        isValid = false;
+        errors.push(this.props.t("Event name in " + lang.description + " is required"));
+      }
+      if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].length === 0) {
+        isValid = false;
+        errors.push(this.props.t("Event description in " + lang.description + " is required"));
+      }
+    });
     if (this.state.updatedEvent.key.length === 0) {
       isValid = false;
       errors.push(this.props.t("Event key is required"));
@@ -141,10 +147,6 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Award travel grants is required")); 
     }
-    if (this.state.updatedEvent.description.length === 0) {
-      isValid = false;
-      errors.push(this.props.t("Event description is required"));
-    }
     if (this.state.updatedEvent.email_from.length === 0) {
       isValid = false;
       errors.push(this.props.t("Organisation email is required"));
@@ -157,7 +159,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < new Date().toISOString()) {
+    if (this.state.updatedEvent.application_open < this.state.todays_date) {
       isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
@@ -215,12 +217,23 @@ class EventConfigComponent extends Component {
     });
   };
 
-  updateEventDetails = (fieldName, e) => {
-    //TODO add support for multilingual fields
-    const u = {
-      ...this.state.updatedEvent,
-      [fieldName]: e.target.value
-    };
+  updateEventDetails = (fieldName, e, lang) => {
+    let u;
+    if (lang) {
+      u = {
+        ...this.state.updatedEvent,
+        [fieldName]: {
+          ...this.state.updatedEvent[fieldName],
+          [lang]: e.target.value
+        }
+      };
+    }
+    else {
+      u = {
+        ...this.state.updatedEvent,
+        [fieldName]: e.target.value
+      };
+  }
 
     this.setState({
       updatedEvent: u
@@ -232,7 +245,7 @@ class EventConfigComponent extends Component {
   updateDateTimeEventDetails = (fieldName, value) => {
     const u = {
       ...this.state.updatedEvent,
-      [fieldName]: new Date(value).toISOString()
+      [fieldName]: this.formatDate(new Date(value))
     };
 
     this.setState({
@@ -316,8 +329,8 @@ class EventConfigComponent extends Component {
 
 
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"}>
-                <label 
+              <div className={"form-group row"} key={"name_div"+lang.code}>
+                <label
                   className={"col-sm-2 col-form-label"} 
                   htmlFor={"name_" + lang.code}>
                   {t("Event Name ("+ lang.description +")")}
@@ -330,8 +343,8 @@ class EventConfigComponent extends Component {
                     type="text"
                     placeholder={t("Name of event in " + lang.description + " (e.g. Deep Learning Indaba 2023)")}
                     required={true}
-                    onChange={e => this.updateEventDetails("name", e)}
-                    value={updatedEvent.name}
+                    onChange={e => this.updateEventDetails("name", e, lang.code)}
+                    value={updatedEvent.name[lang.code]}
                   />
                 </div>
               </div>
@@ -404,7 +417,7 @@ class EventConfigComponent extends Component {
             </div>
 
             {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"}>
+              <div className={"form-group row"} key={"description_div"+lang.code}>
                 <label
                   className={"col-sm-2 col-form-label"}
                   htmlFor={"description_" + lang.code}>
@@ -418,8 +431,8 @@ class EventConfigComponent extends Component {
                     placeholder={t("Description of event in " + lang.description)}
                     required={true}
                     rows={2}
-                    value={updatedEvent.description}
-                    onChange={e => this.updateEventDetails("description", e)}
+                    onChange={e => this.updateEventDetails("description", e, lang.code)}
+                    value={updatedEvent.description[lang.code]}
                   />
                 </div>
               </div>
