@@ -9,6 +9,8 @@ class EventType(Enum):
     AWARD = 'award'
     CALL = 'call'
     PROGRAMME = 'programme'
+    JOURNAL = 'journal'
+    CONTINUOUS_JOURNAL = 'continuous_journal'
 
 
 class Event(db.Model):

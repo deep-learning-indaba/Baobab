@@ -14,6 +14,8 @@ class Home extends Component {
         this.state = {
             upcomingEvents: null,
             awards: null,
+            journals: null,
+            continuous_journals: null,
             organisation: null,
             errors: []
         }
@@ -34,6 +36,8 @@ class Home extends Component {
                     this.setState({
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
                         awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
+                        journals: response.events.filter(e => e.event_type === 'JOURNAL'),
+                        continuous_journals: response.events.filter(e => e.event_type === 'CONTINUOUS_JOURNAL'  && (e.is_event_opening || e.is_event_open)),
                         calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
                         programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
@@ -124,6 +128,8 @@ class Home extends Component {
 
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
                 {this.renderEventTable(this.state.awards, "Awards")}
+                {this.renderEventTable(this.state.journals, "Journals")}
+                {this.renderEventTable(this.state.continuous_journals, "Continuous Journals")}
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
                 {this.renderEventTable(this.state.programmes, "Programmes")}
                 {this.renderEventTable(this.state.attended, "Past Events")}
