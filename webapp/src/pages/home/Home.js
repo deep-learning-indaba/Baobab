@@ -36,8 +36,8 @@ class Home extends Component {
                     this.setState({
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
                         awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
-                        journals: response.events.filter(e => e.event_type === 'JOURNAL'),
-                        continuous_journals: response.events.filter(e => e.event_type === 'CONTINUOUS_JOURNAL'  && (e.is_event_opening || e.is_event_open)),
+                        journals: response.events.filter(e => e.event_type === 'JOURNAL'&& (e.is_event_opening || e.is_event_open)),
+                        continuous_journals: response.events.filter(e => e.event_type === 'CONTINUOUS_JOURNAL'),
                         calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
                         programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
