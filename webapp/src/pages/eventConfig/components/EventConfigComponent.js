@@ -8,7 +8,6 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
-//TODO: current when you click submit, it doesn't show errors (if there are any). It also doesn't check the post/put's return error code (if any). It just routes back to the home page. 
 //TODO: remove language prompts/description if there is only 1 language in this.props.organisation.languages
 class EventConfigComponent extends Component {
   constructor(props) {
@@ -50,7 +49,7 @@ class EventConfigComponent extends Component {
       loading: false,
       error: "",
       errors: [],
-      showErrors: true
+      showErrors: false
     };
     console.log(this.state);
   }
@@ -69,36 +68,43 @@ class EventConfigComponent extends Component {
     }
   }
 
-  onClickSubmit = () => {
+  onClickCreate = () => {
     const isValid = this.validateEventDetails();
     if (isValid) {
-      if (this.state.isNewEvent) { // POST
-        eventService.create(this.state.updatedEvent).then(result => {
-          this.setState({
-            preEvent: result.event,
-            updatedEvent: result.event,
-            hasBeenUpdated: false,
-            error: result.error
-          });
-        });
-      }
-      else { // PUT
-        eventService.update(this.state.updatedEvent).then(result => {
-          this.setState({
+      eventService.create(this.state.updatedEvent).then(result => {
+        this.setState({
           preEvent: result.event,
           updatedEvent: result.event,
           hasBeenUpdated: false,
           error: result.error
         });
+        this.props.history.push('/');
       });
-      }
     }
     else {
-      console.log('invalid');
-      //TODO: this doesn't work - errors not showing
-      return <div>
-        {this.state.errors && this.state.showErrors && this.getErrorMessages(this.state.errors)}
-        </div>
+      this.setState({
+        showErrors: true
+      });
+    }
+  };
+
+  onClickUpdate = () => {
+    const isValid = this.validateEventDetails();
+    if (isValid) { //PUT
+      eventService.update(this.state.updatedEvent).then(result => {
+        this.setState({
+        preEvent: result.event,
+        updatedEvent: result.event,
+        hasBeenUpdated: false,
+        error: result.error
+        });
+        this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+      });
+    }
+    else {
+      this.setState({
+        showErrors: true
+      });
     }
   };
 
@@ -109,7 +115,6 @@ class EventConfigComponent extends Component {
         isEdited = true;
       }
     }
-    this.validateEventDetails();
     this.setState({
       hasBeenUpdated: isEdited
     });
@@ -706,27 +711,27 @@ class EventConfigComponent extends Component {
             
             <div className={"col-sm-4 "}>
               {isNewEvent ? (
-                <Link to="..">
-                  <button
-                    onClick={() => this.onClickSubmit()}
-                    className="btn btn-success btn-lg btn-block"
-                    disabled={!isValid || !hasBeenUpdated}>
-                    {t("Create Event")}
-                  </button>
-                </Link>
+                <button
+                  onClick={() => this.onClickCreate()}
+                  className="btn btn-success btn-lg btn-block"
+                  disabled={!hasBeenUpdated}>
+                  {t("Create Event")}
+                </button>
                 ) :
                 (
-                <Link to="..">
-                  <button
-                    onClick={() => this.onClickSubmit()}
-                    className="btn btn-success btn-lg btn-block"
-                    disabled={!isValid || !hasBeenUpdated}>
-                    {t("Update Event")}
-                  </button>
-                </Link>
+                <button
+                  onClick={() => this.onClickUpdate()}
+                  className="btn btn-success btn-lg btn-block"
+                  disabled={!hasBeenUpdated}>
+                  {t("Update Event")}
+                </button>
               )}
             </div>
           </div>
+
+          <div className={"form-group-row"}>
+              {errors && showErrors && this.getErrorMessages(errors)}
+            </div>
         </div>
       </div>
     );
