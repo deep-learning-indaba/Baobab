@@ -78,15 +78,15 @@ class Home extends Component {
             return (
                 <div class="event-table-container">
                     <h3 className="text-center">{this.props.t(description)}</h3>
-                    <div class="custom-card">
+                    <div className="custom-card">
                            {events.map(e => {
                                 return (
                                     <div className="event" key={e.key}>
-                                        <div class="event-info">
+                                        <div className="event-info">
                                             <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                             {this.dateDisplay(e)}
                                         </div>
-                                        <div class="status-holder">{this.statusDisplay(e)}</div>
+                                        <div className="status-holder">{this.statusDisplay(e)}</div>
                                     </div>
                                 )
                             })}
