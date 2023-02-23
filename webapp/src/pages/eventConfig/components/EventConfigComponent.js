@@ -40,18 +40,17 @@ class EventConfigComponent extends Component {
     }
 
     this.state = {
-      preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
       isNewEvent: this.props.event && this.props.event.id ? false : true,
       timestamp: today,
-      hasBeenUpdated: false,
+      allFieldsComplete: false,
+      optionalFields: ["miniconf_url"],
       isValid: false,
       loading: false,
       error: "",
       errors: [],
       showErrors: false
     };
-    console.log(this.state);
   }
 
   componentDidMount() {
@@ -59,9 +58,7 @@ class EventConfigComponent extends Component {
       eventService.getEvent(this.props.event.id).then(result => {
         this.setState({
           loading: false,
-          preEvent: result.event,
           updatedEvent: result.event,
-          hasBeenUpdated: false,
           error: result.error
         });
       });
@@ -73,9 +70,7 @@ class EventConfigComponent extends Component {
     if (isValid) {
       eventService.create(this.state.updatedEvent).then(result => {
         this.setState({
-          preEvent: result.event,
           updatedEvent: result.event,
-          hasBeenUpdated: false,
           error: result.error
         });
         this.props.history.push('/');
@@ -93,7 +88,6 @@ class EventConfigComponent extends Component {
     if (isValid) { //PUT
       eventService.update(this.state.updatedEvent).then(result => {
         this.setState({
-        preEvent: result.event,
         updatedEvent: result.event,
         hasBeenUpdated: false,
         error: result.error
@@ -108,17 +102,25 @@ class EventConfigComponent extends Component {
     }
   };
 
-  hasBeenEdited = () => {
-    let isEdited = false;
-    for (var propname in this.state.preEvent) {
-      if (this.state.updatedEvent[propname] !== this.state.preEvent[propname]) {
-        isEdited = true;
+  areAllFieldsComplete = () => {
+    let allFieldsComplete = true;
+    for (var propname in this.state.updatedEvent) {
+        if (!this.state.optionalFields.includes(propname) && typeof this.state.updatedEvent[propname] === 'string') {
+          if (this.state.updatedEvent[propname].length === 0) {
+            allFieldsComplete = false;
+          }
+        }
+        else if (!this.state.optionalFields.includes(propname) && typeof this.state.updatedEvent[propname] === 'object') {
+          for (var key in this.state.updatedEvent[propname]) {
+            if (this.state.updatedEvent[propname][key].length === 0) {
+              allFieldsComplete = false;
+            }
+          }
+        }
       }
-    }
     this.setState({
-      hasBeenUpdated: isEdited
+      allFieldsComplete: allFieldsComplete
     });
-
   };
 
   getErrorMessages = errors => {
@@ -253,13 +255,14 @@ class EventConfigComponent extends Component {
         ...this.state.updatedEvent,
         [fieldName]: e.target.value
       };
-  }
+    }
 
     this.setState({
       updatedEvent: u
     },
-      () => this.hasBeenEdited()
+      () => this.areAllFieldsComplete()
     );
+    console.log(this.state.updatedEvent);
   };
 
   updateDateTimeEventDetails = (fieldName, value) => {
@@ -271,8 +274,9 @@ class EventConfigComponent extends Component {
     this.setState({
       updatedEvent: u
     },
-      () => this.hasBeenEdited()
+      () => this.areAllFieldsComplete()
     );
+    console.log(this.state.updatedEvent);
   };
 
   updateDropDownEventDetails = (fieldName, dropdown) => {
@@ -284,13 +288,10 @@ class EventConfigComponent extends Component {
     this.setState({
       updatedEvent: u
     },
-      () => this.hasBeenEdited()
+      () => this.areAllFieldsComplete()
     );
+    console.log(this.state.updatedEvent);
   };
-
-  renderButton = (definition) => {
-    return <a href={definition.link} id={definition.id} name={definition.name} className={definition.class}>{definition.value}</a>
-  }
 
   render() {
     const {
@@ -298,8 +299,7 @@ class EventConfigComponent extends Component {
       error,
       errors,
       updatedEvent,
-      hasBeenUpdated,
-      isValid,
+      allFieldsComplete,
       showErrors,
       isNewEvent
     } = this.state;
@@ -714,7 +714,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickCreate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={!hasBeenUpdated}>
+                  disabled={!allFieldsComplete}>
                   {t("Create Event")}
                 </button>
                 ) :
@@ -722,7 +722,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickUpdate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={!hasBeenUpdated}>
+                  disabled={!allFieldsComplete}>
                   {t("Update Event")}
                 </button>
               )}
