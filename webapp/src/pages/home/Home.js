@@ -16,8 +16,6 @@ class Home extends Component {
             awards: null,
             journals: null,
             continuous_journals: null,
-            journals: null,
-            continuous_journals: null,
             organisation: null,
             errors: []
         }
