@@ -81,7 +81,7 @@ class Home extends Component {
                     <div class="custom-card">
                            {events.map(e => {
                                 return (
-                                    <div class="event" key={e.key}>
+                                    <div className="event" key={e.key}>
                                         <div class="event-info">
                                             <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                             {this.dateDisplay(e)}
