@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { eventService } from "../../../services/events";
+import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
 import FormTextBox from "../../../components/form/FormTextBox";
@@ -7,6 +8,8 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
+//TODO: current when you click submit, it doesn't show errors (if there are any). It also doesn't check the post/put's return error code (if any). It just routes back to the home page. 
+//TODO: remove language prompts/description if there is only 1 language in this.props.organisation.languages
 class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
@@ -40,7 +43,8 @@ class EventConfigComponent extends Component {
     this.state = {
       preEvent: this.emptyEvent,
       updatedEvent: this.emptyEvent,
-      todays_date: today,
+      isNewEvent: this.props.event && this.props.event.id ? false : true,
+      timestamp: today,
       hasBeenUpdated: false,
       isValid: false,
       loading: false,
@@ -48,6 +52,7 @@ class EventConfigComponent extends Component {
       errors: [],
       showErrors: true
     };
+    console.log(this.state);
   }
 
   componentDidMount() {
@@ -64,27 +69,37 @@ class EventConfigComponent extends Component {
     }
   }
 
-  onClickCancel = () => {
-    this.setState({
-      updatedEvent: this.state.preEvent,
-      hasBeenUpdated: false
-    });
-    //TODO add route back to home page
-  };
-
   onClickSubmit = () => {
-    // PUT
-    console.log(this.state.updatedEvent);
-    eventService.create(this.state.updatedEvent).then(result => {
-      console.log(result);
-      this.setState({
-        preEvent: result.event,
-        updatedEvent: result.event,
-        hasBeenUpdated: false,
-        error: result.error
+    const isValid = this.validateEventDetails();
+    if (isValid) {
+      if (this.state.isNewEvent) { // POST
+        eventService.create(this.state.updatedEvent).then(result => {
+          this.setState({
+            preEvent: result.event,
+            updatedEvent: result.event,
+            hasBeenUpdated: false,
+            error: result.error
+          });
+        });
+      }
+      else { // PUT
+        eventService.update(this.state.updatedEvent).then(result => {
+          this.setState({
+          preEvent: result.event,
+          updatedEvent: result.event,
+          hasBeenUpdated: false,
+          error: result.error
+        });
       });
-    });
-    //TODO: check error code and route back to home page
+      }
+    }
+    else {
+      console.log('invalid');
+      //TODO: this doesn't work - errors not showing
+      return <div>
+        {this.state.errors && this.state.showErrors && this.getErrorMessages(this.state.errors)}
+        </div>
+    }
   };
 
   hasBeenEdited = () => {
@@ -159,7 +174,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < this.state.todays_date) {
+    if (this.state.updatedEvent.application_open < this.state.timestamp) {
       isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
@@ -210,11 +225,11 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event end date must be after event start date"));
     }
-    
     this.setState({
       errors: errors,
       isValid: isValid
     });
+    return isValid;
   };
 
   updateEventDetails = (fieldName, e, lang) => {
@@ -268,6 +283,10 @@ class EventConfigComponent extends Component {
     );
   };
 
+  renderButton = (definition) => {
+    return <a href={definition.link} id={definition.id} name={definition.name} className={definition.class}>{definition.value}</a>
+  }
+
   render() {
     const {
       loading,
@@ -276,7 +295,8 @@ class EventConfigComponent extends Component {
       updatedEvent,
       hasBeenUpdated,
       isValid,
-      showErrors
+      showErrors,
+      isNewEvent
     } = this.state;
 
     const loadingStyle = {
@@ -679,23 +699,34 @@ class EventConfigComponent extends Component {
 
           <div className={"form-group row"}>
             <div className={"col-sm-4 ml-md-auto"}>
-              <button
-                className="btn btn-danger btn-lg btn-block"
-                onClick={() => this.onClickCancel()} >
+              <Link to=".." className="btn btn-danger btn-lg btn-block">
                 {t("Cancel")}
-              </button>
+              </Link>
             </div>
             
             <div className={"col-sm-4 "}>
-              <button
-                onClick={() => this.onClickSubmit()}
-                className="btn btn-success btn-lg btn-block"
-                disabled={!isValid || !hasBeenUpdated}>
-                {t("Update Event")}
-              </button>
+              {isNewEvent ? (
+                <Link to="..">
+                  <button
+                    onClick={() => this.onClickSubmit()}
+                    className="btn btn-success btn-lg btn-block"
+                    disabled={!isValid || !hasBeenUpdated}>
+                    {t("Create Event")}
+                  </button>
+                </Link>
+                ) :
+                (
+                <Link to="..">
+                  <button
+                    onClick={() => this.onClickSubmit()}
+                    className="btn btn-success btn-lg btn-block"
+                    disabled={!isValid || !hasBeenUpdated}>
+                    {t("Update Event")}
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
-          {errors && showErrors && this.getErrorMessages(errors)}
         </div>
       </div>
     );
