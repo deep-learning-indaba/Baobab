@@ -13,27 +13,28 @@ class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
-    const today = this.formatDate(new Date());
+    const today_open = this.formatDate(new Date());
+    const today_close = this.formatDate(new Date(), "23:59:59");
 
     this.emptyEvent = {
       name: {},
       description: {},
-      start_date: today,
-      end_date: today,
+      start_date: today_open,
+      end_date: today_close,
       key: "",
       organisation_id: this.props.organisation.id,
       email_from: this.props.organisation.email_from,
       url: "",
-      application_open: today,
-      application_close: today,
-      review_open: today,
-      review_close: today,
-      selection_open: today,
-      selection_close: today,
-      offer_open: today,
-      offer_close: today,
-      registration_open: today,
-      registration_close: today,
+      application_open: today_open,
+      application_close: today_close,
+      review_open: today_open,
+      review_close: today_close,
+      selection_open: today_open,
+      selection_close: today_close,
+      offer_open: today_open,
+      offer_close: today_close,
+      registration_open: today_open,
+      registration_close: today_close,
       event_type: "",
       travel_grant: "",
       miniconf_url: ""
@@ -42,7 +43,7 @@ class EventConfigComponent extends Component {
     this.state = {
       updatedEvent: this.emptyEvent,
       isNewEvent: this.props.event && this.props.event.id ? false : true,
-      timestamp: today,
+      today: today_open,
       allFieldsComplete: false,
       optionalFields: ["miniconf_url"],
       isValid: false,
@@ -103,6 +104,7 @@ class EventConfigComponent extends Component {
   };
 
   areAllFieldsComplete = () => {
+    //note, since all the dates are set to today's date, they will already be complete
     let allFieldsComplete = true;
     for (var propname in this.state.updatedEvent) {
         if (!this.state.optionalFields.includes(propname) && typeof this.state.updatedEvent[propname] === 'string') {
@@ -136,8 +138,8 @@ class EventConfigComponent extends Component {
     return errorMessages;
   };
 
-  formatDate = date => {
-    return date.toISOString().split('T')[0]+"T00:00:00Z";
+  formatDate = (date, set_time_to="00:00:00") => {
+    return date.toISOString().split('T')[0]+"T"+set_time_to+"Z";
   }
 
   validateEventDetails = () => {
@@ -181,7 +183,7 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < this.state.timestamp) {
+    if (this.state.updatedEvent.application_open < this.state.today) {
       isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
@@ -265,10 +267,10 @@ class EventConfigComponent extends Component {
     console.log(this.state.updatedEvent);
   };
 
-  updateDateTimeEventDetails = (fieldName, value) => {
+  updateDateTimeEventDetails = (fieldName, value, set_time_to) => {
     const u = {
       ...this.state.updatedEvent,
-      [fieldName]: this.formatDate(new Date(value))
+      [fieldName]: this.formatDate(new Date(value), set_time_to)
     };
 
     this.setState({
@@ -328,6 +330,8 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
+    const open_time = "00:00:00";
+    const close_time = "23:59:59";
 
     return (
       <div>
@@ -531,7 +535,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.application_close}
                   required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("application_close", e)
+                    this.updateDateTimeEventDetails("application_close", e, close_time)
                   } />
               </div>
 
@@ -567,7 +571,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.review_close}
                   required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("review_close", e)} />
+                    this.updateDateTimeEventDetails("review_close", e, close_time)} />
               </div>
             </div>
 
@@ -601,7 +605,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.selection_close}
                   required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("selection_close", e)} />
+                    this.updateDateTimeEventDetails("selection_close", e, close_time)} />
               </div>
             </div>
 
@@ -633,7 +637,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.offer_close}
                   required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("offer_close", e)} />
+                    this.updateDateTimeEventDetails("offer_close", e, close_time)} />
               </div>
             </div>
 
@@ -667,7 +671,7 @@ class EventConfigComponent extends Component {
                   value={updatedEvent.registration_close}
                   required={true}
                   onChange={e =>
-                    this.updateDateTimeEventDetails("registration_close", e)}/>
+                    this.updateDateTimeEventDetails("registration_close", e, close_time)}/>
               </div>
             </div>
 
@@ -695,7 +699,7 @@ class EventConfigComponent extends Component {
                   name="end_date"
                   value={new Date(updatedEvent.end_date)}
                   required={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e)} />
+                  onChange={e => this.updateDateTimeEventDetails("end_date", e, close_time)} />
               </div>
             </div>
           </form>
