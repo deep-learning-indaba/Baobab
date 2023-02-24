@@ -264,7 +264,11 @@ class EventConfigComponent extends Component {
     },
       () => this.areAllFieldsComplete()
     );
-    console.log(this.state.updatedEvent);
+
+    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
+    if (this.state.showErrors) {
+      this.validateEventDetails();
+    }
   };
 
   updateDateTimeEventDetails = (fieldName, value, set_time_to) => {
@@ -278,7 +282,11 @@ class EventConfigComponent extends Component {
     },
       () => this.areAllFieldsComplete()
     );
-    console.log(this.state.updatedEvent);
+    
+    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
+    if (this.state.showErrors) {
+      this.validateEventDetails();
+    }
   };
 
   updateDropDownEventDetails = (fieldName, dropdown) => {
@@ -292,7 +300,11 @@ class EventConfigComponent extends Component {
     },
       () => this.areAllFieldsComplete()
     );
-    console.log(this.state.updatedEvent);
+
+    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
+    if (this.state.showErrors) {
+      this.validateEventDetails();
+    }
   };
 
   render() {
