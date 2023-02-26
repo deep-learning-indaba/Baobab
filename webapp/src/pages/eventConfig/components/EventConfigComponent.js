@@ -374,6 +374,7 @@ class EventConfigComponent extends Component {
                 <label
                   className={"col-sm-2 col-form-label"} 
                   htmlFor={"name_" + lang.code}>
+                  {<span className="required-indicator">*</span>}
                   {t("Event Name ("+ lang.description +")")}
                 </label>
 
@@ -395,6 +396,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="event_type">
+                {<span className="required-indicator">*</span>}
                 {t("Event Type")}
               </label>
 
@@ -419,6 +421,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="travel_grant">
+                {<span className="required-indicator">*</span>}
                 {t("Awards Travel Grants")}
               </label>
 
@@ -441,6 +444,7 @@ class EventConfigComponent extends Component {
               <label 
                 className={"col-sm-2 col-form-label"}
                 htmlFor="key">
+                {<span className="required-indicator">*</span>}
                 {t("Event Key")}
               </label>
 
@@ -462,6 +466,7 @@ class EventConfigComponent extends Component {
                 <label
                   className={"col-sm-2 col-form-label"}
                   htmlFor={"description_" + lang.code}>
+                  {<span className="required-indicator">*</span>}
                   {t("Event Description ("+ lang.description +")")}
                 </label>
 
@@ -481,6 +486,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
+                {<span className="required-indicator">*</span>}
                 {t("Email From")}
               </label>
 
@@ -500,6 +506,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="url">
+                {<span className="required-indicator">*</span>}
                 {t("Event Website")}
               </label>
 
@@ -520,6 +527,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_open">
+                {<span className="required-indicator">*</span>}
                 {t("Application Open")}
               </label>
 
@@ -535,8 +543,8 @@ class EventConfigComponent extends Component {
 
               <label
                 className={"col-sm-2 col-form-label"}
-                htmlFor="application_close"
-              >
+                htmlFor="application_close">
+                {<span className="required-indicator">*</span>}
                 {t("Application Close")}
               </label>
 
@@ -557,6 +565,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_open">
+                {<span className="required-indicator">*</span>}
                 {t("Review Open")}
               </label>
 
@@ -573,6 +582,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_close">
+                {<span className="required-indicator">*</span>}
                 {t("Review Close")}
               </label>
 
@@ -591,6 +601,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_open">
+                {<span className="required-indicator">*</span>}
                 {t("Selection Open")}
               </label>
 
@@ -607,6 +618,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_close">
+                {<span className="required-indicator">*</span>}
                 {t("Selection Close")}
               </label>
 
@@ -622,7 +634,9 @@ class EventConfigComponent extends Component {
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="offer_open">
+              <label className={"col-sm-2 col-form-label"}
+                htmlFor="offer_open">
+                {<span className="required-indicator">*</span>}
                 {t("Offer Open")}
               </label>
 
@@ -639,6 +653,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="offer_close">
+                {<span className="required-indicator">*</span>}
                 {t("Offer Close")}
               </label>
 
@@ -657,6 +672,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_open">
+                {<span className="required-indicator">*</span>}
                 {t("Registration Open")}
               </label>
 
@@ -673,6 +689,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_close">
+                {<span className="required-indicator">*</span>}
                 {t("Registration Close")}
               </label>
 
@@ -688,7 +705,9 @@ class EventConfigComponent extends Component {
             </div>
 
             <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="start_date">
+              <label className={"col-sm-2 col-form-label"} 
+                htmlFor="start_date">
+                {<span className="required-indicator">*</span>}
                 {t("Event Start Date")}
               </label>
 
@@ -701,7 +720,9 @@ class EventConfigComponent extends Component {
                   onChange={e => this.updateDateTimeEventDetails("start_date", e)} />
               </div>
 
-              <label className={"col-sm-2 col-form-label"} htmlFor="end_date">
+              <label className={"col-sm-2 col-form-label"}
+                htmlFor="end_date">
+                {<span className="required-indicator">*</span>}
                 {t("Event End Date")}
               </label>
 
