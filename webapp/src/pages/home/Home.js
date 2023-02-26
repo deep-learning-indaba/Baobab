@@ -76,7 +76,7 @@ class Home extends Component {
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (
-                <div class="event-table-container">
+                <div className="event-table-container">
                     <h3 className="text-center">{this.props.t(description)}</h3>
                     <div className="custom-card">
                            {events.map(e => {
