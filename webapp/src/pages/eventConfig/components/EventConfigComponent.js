@@ -8,7 +8,6 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
-//TODO: remove language prompts/description if there is only 1 language in this.props.organisation.languages
 class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
@@ -43,6 +42,7 @@ class EventConfigComponent extends Component {
     this.state = {
       updatedEvent: this.emptyEvent,
       isNewEvent: this.props.event && this.props.event.id ? false : true,
+      isMultiLingual: this.props.organisation.languages.length > 1,
       today: today_open,
       allFieldsComplete: false,
       optionalFields: ["miniconf_url"],
@@ -148,11 +148,13 @@ class EventConfigComponent extends Component {
     this.props.organisation.languages.forEach(lang => {
       if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].length === 0) {
         isValid = false;
-        errors.push(this.props.t("Event name in " + lang.description + " is required"));
+        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event name", lang.description) : "Event name") + " is required"
+        errors.push(this.props.t(error_text));
       }
       if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].length === 0) {
         isValid = false;
-        errors.push(this.props.t("Event description in " + lang.description + " is required"));
+        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event description", lang.description) : "Event description") + " is required"
+        errors.push(this.props.t(error_text));
       }
     });
     if (this.state.updatedEvent.key.length === 0) {
@@ -307,6 +309,10 @@ class EventConfigComponent extends Component {
     }
   };
 
+  getFieldNameWithLanguage = (input, lang) => {
+    return input + " in " + lang;
+  }
+
   render() {
     const {
       loading,
@@ -314,6 +320,7 @@ class EventConfigComponent extends Component {
       errors,
       updatedEvent,
       allFieldsComplete,
+      isMultiLingual,
       showErrors,
       isNewEvent
     } = this.state;
@@ -342,7 +349,6 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
-    const open_time = "00:00:00";
     const close_time = "23:59:59";
 
     return (
@@ -375,7 +381,7 @@ class EventConfigComponent extends Component {
                   className={"col-sm-2 col-form-label"} 
                   htmlFor={"name_" + lang.code}>
                   {<span className="required-indicator">*</span>}
-                  {t("Event Name ("+ lang.description +")")}
+                  {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
                 </label>
 
                 <div className="col-sm-10">
@@ -383,7 +389,7 @@ class EventConfigComponent extends Component {
                     id={"name_" + lang.code}
                     name={"name_" + lang.code}
                     type="text"
-                    placeholder={t("Name of event in " + lang.description + " (e.g. Deep Learning Indaba 2023)")}
+                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
                     required={true}
                     onChange={e => this.updateEventDetails("name", e, lang.code)}
                     value={updatedEvent.name[lang.code]}
@@ -467,14 +473,14 @@ class EventConfigComponent extends Component {
                   className={"col-sm-2 col-form-label"}
                   htmlFor={"description_" + lang.code}>
                   {<span className="required-indicator">*</span>}
-                  {t("Event Description ("+ lang.description +")")}
+                  {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
                 </label>
 
                 <div className="col-sm-10">
                   <FormTextArea
                     id={"description_" + lang.code}
                     name={"description_" + lang.code}
-                    placeholder={t("Description of event in " + lang.description)}
+                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
                     required={true}
                     rows={2}
                     onChange={e => this.updateEventDetails("description", e, lang.code)}
@@ -751,7 +757,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickCreate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
+                  disabled={null}>
                   {t("Create Event")}
                 </button>
                 ) :
