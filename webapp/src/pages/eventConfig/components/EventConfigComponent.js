@@ -312,6 +312,10 @@ class EventConfigComponent extends Component {
     return input + " in " + lang;
   }
 
+  getFieldNameWithLanguage = (input, lang) => {
+    return input + " in " + lang;
+  }
+
   render() {
     const {
       loading,
@@ -756,7 +760,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickCreate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
+                  disabled={null}>
                   {t("Create Event")}
                 </button>
                 ) :
