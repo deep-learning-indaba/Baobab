@@ -12,28 +12,25 @@ class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
 
-    const today_open = this.formatDate(new Date());
-    const today_close = this.formatDate(new Date(), "23:59:59");
-
     this.emptyEvent = {
       name: {},
       description: {},
-      start_date: today_open,
-      end_date: today_close,
+      start_date: "",
+      end_date: "",
       key: "",
       organisation_id: this.props.organisation.id,
       email_from: this.props.organisation.email_from,
       url: "",
-      application_open: today_open,
-      application_close: today_close,
-      review_open: today_open,
-      review_close: today_close,
-      selection_open: today_open,
-      selection_close: today_close,
-      offer_open: today_open,
-      offer_close: today_close,
-      registration_open: today_open,
-      registration_close: today_close,
+      application_open: "",
+      application_close: "",
+      review_open: "",
+      review_close: "",
+      selection_open: "",
+      selection_close: "",
+      offer_open: "",
+      offer_close: "",
+      registration_open: "",
+      registration_close: "",
       event_type: "",
       travel_grant: "",
       miniconf_url: ""
@@ -43,7 +40,6 @@ class EventConfigComponent extends Component {
       updatedEvent: this.emptyEvent,
       isNewEvent: this.props.event && this.props.event.id ? false : true,
       isMultiLingual: this.props.organisation.languages.length > 1,
-      today: today_open,
       allFieldsComplete: false,
       optionalFields: ["miniconf_url"],
       isValid: false,
@@ -85,6 +81,7 @@ class EventConfigComponent extends Component {
   };
 
   onClickUpdate = () => {
+    //TODO likely will fail - need to add event.id to the updatedEvent object
     const isValid = this.validateEventDetails();
     if (isValid) { //PUT
       eventService.update(this.state.updatedEvent).then(result => {
@@ -104,7 +101,6 @@ class EventConfigComponent extends Component {
   };
 
   areAllFieldsComplete = () => {
-    //note, since all the dates are set to today's date, they will already be complete
     let allFieldsComplete = true;
     for (var propname in this.state.updatedEvent) {
         if (!this.state.optionalFields.includes(propname) && typeof this.state.updatedEvent[propname] === 'string') {
@@ -185,11 +181,11 @@ class EventConfigComponent extends Component {
       isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < this.state.today) {
+    if (this.state.updatedEvent.application_open < this.formatDate(new Date()) ) {
       isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
-    // working backwards, check each phase ends before the previous phase starts
+    //working backwards, check each phase ends before the previous phase starts
     if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
       isValid = false;
       errors.push(this.props.t("Event start date must be after registration close date"));
@@ -244,6 +240,7 @@ class EventConfigComponent extends Component {
   };
 
   updateEventDetails = (fieldName, e, lang) => {
+    console.log(this.state.updatedEvent);
     let u;
     if (lang) {
       u = {
@@ -274,6 +271,7 @@ class EventConfigComponent extends Component {
   };
 
   updateDateTimeEventDetails = (fieldName, value, set_time_to) => {
+    console.log(this.state.updatedEvent);
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: this.formatDate(new Date(value), set_time_to)
@@ -292,6 +290,7 @@ class EventConfigComponent extends Component {
   };
 
   updateDropDownEventDetails = (fieldName, dropdown) => {
+    console.log(this.state.updatedEvent);
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: dropdown.value
@@ -736,7 +735,7 @@ class EventConfigComponent extends Component {
                 <FormDate
                   id="end_date"
                   name="end_date"
-                  value={new Date(updatedEvent.end_date)}
+                  value={updatedEvent.end_date}
                   required={true}
                   onChange={e => this.updateDateTimeEventDetails("end_date", e, close_time)} />
               </div>
@@ -757,7 +756,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickCreate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={null}>
+                  disabled={!allFieldsComplete}>
                   {t("Create Event")}
                 </button>
                 ) :
