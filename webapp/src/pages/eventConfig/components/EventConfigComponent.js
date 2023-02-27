@@ -8,6 +8,8 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
+//TODO, handle null event returned if POST error
+//TODO, trim name/desc before submission/validation
 class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
@@ -66,11 +68,17 @@ class EventConfigComponent extends Component {
     const isValid = this.validateEventDetails();
     if (isValid) {
       eventService.create(this.state.updatedEvent).then(result => {
+        console.log(this.state);
+        console.log(result);
         this.setState({
           updatedEvent: result.event,
-          error: result.error
+          error: result.error,
+          errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
         });
-        this.props.history.push('/');
+        console.log(this.state);
+        if (result.statusCode == 200) {
+          this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+        }
       });
     }
     else {
@@ -88,9 +96,12 @@ class EventConfigComponent extends Component {
         this.setState({
         updatedEvent: result.event,
         hasBeenUpdated: false,
-        error: result.error
+        error: result.error,
+        errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
         });
-        this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+        if (result.statusCode == 200) {
+          this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+        }
       });
     }
     else {
@@ -116,9 +127,7 @@ class EventConfigComponent extends Component {
           }
         }
       }
-    this.setState({
-      allFieldsComplete: allFieldsComplete
-    });
+    return allFieldsComplete;
   };
 
   getErrorMessages = errors => {
@@ -139,6 +148,7 @@ class EventConfigComponent extends Component {
   }
 
   validateEventDetails = () => {
+    console.log('validating');
     let isValid = true;
     let errors = [];
     this.props.organisation.languages.forEach(lang => {
@@ -234,13 +244,11 @@ class EventConfigComponent extends Component {
     }
     this.setState({
       errors: errors,
-      isValid: isValid
     });
     return isValid;
   };
 
   updateEventDetails = (fieldName, e, lang) => {
-    console.log(this.state.updatedEvent);
     let u;
     if (lang) {
       u = {
@@ -257,59 +265,32 @@ class EventConfigComponent extends Component {
         [fieldName]: e.target.value
       };
     }
-
-    this.setState({
-      updatedEvent: u
-    },
-      () => this.areAllFieldsComplete()
-    );
-
-    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
-    if (this.state.showErrors) {
-      this.validateEventDetails();
-    }
+    this.updateEventState(u);
   };
 
   updateDateTimeEventDetails = (fieldName, value, set_time_to) => {
-    console.log(this.state.updatedEvent);
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: this.formatDate(new Date(value), set_time_to)
     };
-
-    this.setState({
-      updatedEvent: u
-    },
-      () => this.areAllFieldsComplete()
-    );
-    
-    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
-    if (this.state.showErrors) {
-      this.validateEventDetails();
-    }
+    this.updateEventState(u);
   };
 
   updateDropDownEventDetails = (fieldName, dropdown) => {
-    console.log(this.state.updatedEvent);
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: dropdown.value
     };
-
-    this.setState({
-      updatedEvent: u
-    },
-      () => this.areAllFieldsComplete()
-    );
-
-    // if user has clicked submit and gotten errors, run validation as they're editing so as to update error displays
-    if (this.state.showErrors) {
-      this.validateEventDetails();
-    }
+    this.updateEventState(u);
   };
 
-  getFieldNameWithLanguage = (input, lang) => {
-    return input + " in " + lang;
+  updateEventState = (event) => {
+    console.log(this.state);
+    this.setState({
+      updatedEvent: event,
+      allFieldsComplete: this.areAllFieldsComplete(),
+      isValid: this.validateEventDetails()
+    });
   }
 
   getFieldNameWithLanguage = (input, lang) => {
@@ -383,7 +364,7 @@ class EventConfigComponent extends Component {
                 <label
                   className={"col-sm-2 col-form-label"} 
                   htmlFor={"name_" + lang.code}>
-                  {<span className="required-indicator">*</span>}
+                  <span className="required-indicator">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
                 </label>
 
@@ -405,7 +386,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="event_type">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Event Type")}
               </label>
 
@@ -430,7 +411,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="travel_grant">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Awards Travel Grants")}
               </label>
 
@@ -453,7 +434,7 @@ class EventConfigComponent extends Component {
               <label 
                 className={"col-sm-2 col-form-label"}
                 htmlFor="key">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Event Key")}
               </label>
 
@@ -475,7 +456,7 @@ class EventConfigComponent extends Component {
                 <label
                   className={"col-sm-2 col-form-label"}
                   htmlFor={"description_" + lang.code}>
-                  {<span className="required-indicator">*</span>}
+                  <span className="required-indicator">*</span>
                   {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
                 </label>
 
@@ -495,7 +476,7 @@ class EventConfigComponent extends Component {
 
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Email From")}
               </label>
 
@@ -515,7 +496,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="url">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Event Website")}
               </label>
 
@@ -536,7 +517,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_open">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Application Open")}
               </label>
 
@@ -553,7 +534,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="application_close">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Application Close")}
               </label>
 
@@ -574,7 +555,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_open">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Review Open")}
               </label>
 
@@ -591,7 +572,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="review_close">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Review Close")}
               </label>
 
@@ -610,7 +591,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_open">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Selection Open")}
               </label>
 
@@ -627,7 +608,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="selection_close">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Selection Close")}
               </label>
 
@@ -645,7 +626,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="offer_open">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Offer Open")}
               </label>
 
@@ -662,7 +643,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="offer_close">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Offer Close")}
               </label>
 
@@ -681,7 +662,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_open">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Registration Open")}
               </label>
 
@@ -698,7 +679,7 @@ class EventConfigComponent extends Component {
               <label
                 className={"col-sm-2 col-form-label"}
                 htmlFor="registration_close">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Registration Close")}
               </label>
 
@@ -716,7 +697,7 @@ class EventConfigComponent extends Component {
             <div className={"form-group row"}>
               <label className={"col-sm-2 col-form-label"} 
                 htmlFor="start_date">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Event Start Date")}
               </label>
 
@@ -731,7 +712,7 @@ class EventConfigComponent extends Component {
 
               <label className={"col-sm-2 col-form-label"}
                 htmlFor="end_date">
-                {<span className="required-indicator">*</span>}
+                <span className="required-indicator">*</span>
                 {t("Event End Date")}
               </label>
 
@@ -760,7 +741,7 @@ class EventConfigComponent extends Component {
                 <button
                   onClick={() => this.onClickCreate()}
                   className="btn btn-success btn-lg btn-block"
-                  disabled={null}>
+                  disabled={!allFieldsComplete}>
                   {t("Create Event")}
                 </button>
                 ) :
@@ -777,7 +758,7 @@ class EventConfigComponent extends Component {
 
           <div className={"form-group-row"}>
               {errors && showErrors && this.getErrorMessages(errors)}
-            </div>
+          </div>
         </div>
       </div>
     );

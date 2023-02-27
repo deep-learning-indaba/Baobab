@@ -71,7 +71,7 @@ export function create(event) {
     })
     .catch(error => {
       return {
-        event: null,
+        event: event,
         error:
           error.response && error.response.data
             ? error.response.data.message
@@ -120,7 +120,7 @@ export function update(event) {
     })
     .catch(error => {
       return {
-        event: null,
+        event: event,
         error:
           error.response && error.response.data
             ? error.response.data.message
