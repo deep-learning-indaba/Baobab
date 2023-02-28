@@ -43,7 +43,7 @@ class EventRepository(BaseRepository):
                          .filter(Event.end_date >= datetime.now())\
                          .filter_by(organisation_id=organisation_id)\
                          .all()
-
+#  .filter(Event.end_date >= datetime.now(), or_(Event.end_date==None))\
     @staticmethod
     def get_attended_by_user_for_organisation(organisation_id, user_id):
         return db.session.query(Event)\

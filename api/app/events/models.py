@@ -19,21 +19,21 @@ class Event(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     start_date = db.Column(db.DateTime(), nullable=False)
-    end_date = db.Column(db.DateTime(), nullable=False)
+    end_date = db.Column(db.DateTime(), nullable=True)
     key = db.Column(db.String(255), nullable=False, unique=True)
     organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
-    application_open = db.Column(db.DateTime(), nullable=False)
-    application_close = db.Column(db.DateTime(), nullable=False)
-    review_open = db.Column(db.DateTime(), nullable=False)
-    review_close = db.Column(db.DateTime(), nullable=False)
-    selection_open = db.Column(db.DateTime(), nullable=False)
-    selection_close = db.Column(db.DateTime(), nullable=False)
-    offer_open = db.Column(db.DateTime(), nullable=False)
-    offer_close = db.Column(db.DateTime(), nullable=False)
-    registration_open = db.Column(db.DateTime(), nullable=False)
-    registration_close = db.Column(db.DateTime(), nullable=False)
+    application_open = db.Column(db.DateTime(), nullable=True)
+    application_close = db.Column(db.DateTime(), nullable=True)
+    review_open = db.Column(db.DateTime(), nullable=True)
+    review_close = db.Column(db.DateTime(), nullable=True)
+    selection_open = db.Column(db.DateTime(), nullable=True)
+    selection_close = db.Column(db.DateTime(), nullable=True)
+    offer_open = db.Column(db.DateTime(), nullable=True)
+    offer_close = db.Column(db.DateTime(), nullable=True)
+    registration_open = db.Column(db.DateTime(), nullable=True)
+    registration_close = db.Column(db.DateTime(), nullable=True)
     event_type = db.Column(db.Enum(EventType), nullable=False)
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
@@ -70,21 +70,21 @@ class Event(db.Model):
         miniconf_url=None
     ):
         self.start_date = start_date
-        self.end_date = end_date
+        self.end_date = None if event_type == EventType.CONTINUOUS_JOURNAL else end_date
         self.key = key
         self.organisation_id = organisation_id
         self.email_from = email_from
         self.url = url
-        self.application_open = application_open
-        self.application_close = application_close
-        self.review_open = review_open
-        self.review_close = review_close
-        self.selection_open = selection_open
-        self.selection_close = selection_close
-        self.offer_open = offer_open
-        self.offer_close = offer_close
-        self.registration_open = registration_open
-        self.registration_close = registration_close
+        self.application_open = None if event_type == EventType.CONTINUOUS_JOURNAL else application_open
+        self.application_close = None if event_type == EventType.CONTINUOUS_JOURNAL else application_close
+        self.review_open = None if event_type == EventType.CONTINUOUS_JOURNAL else review_open
+        self.review_close = None if event_type == EventType.CONTINUOUS_JOURNAL else review_close
+        self.selection_open = None if event_type == EventType.CONTINUOUS_JOURNAL else selection_open
+        self.selection_close = None if event_type == EventType.CONTINUOUS_JOURNAL else selection_close
+        self.offer_open = None if event_type == EventType.CONTINUOUS_JOURNAL else offer_open
+        self.offer_close = None if event_type == EventType.CONTINUOUS_JOURNAL else offer_close
+        self.registration_open = None if event_type == EventType.CONTINUOUS_JOURNAL else registration_open
+        self.registration_close = None if event_type == EventType.CONTINUOUS_JOURNAL else registration_close
         self.event_roles = []
         self.event_type = event_type
         self.travel_grant = travel_grant
@@ -208,21 +208,21 @@ class Event(db.Model):
                travel_grant,
                miniconf_url=None):
         self.start_date = start_date
-        self.end_date = end_date
+        self.end_date = None if self.event_type == EventType.CONTINUOUS_JOURNAL else end_date
         self.key = key
         self.organisation_id = organisation_id
         self.email_from = email_from
         self.url = url
-        self.application_open = application_open
-        self.application_close = application_close
-        self.review_open = review_open
-        self.review_close = review_close
-        self.selection_open = selection_open
-        self.selection_close = selection_close
-        self.offer_open = offer_open
-        self.offer_close = offer_close
-        self.registration_open = registration_open
-        self.registration_close = registration_close
+        self.application_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else application_open
+        self.application_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else application_close
+        self.review_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else review_open
+        self.review_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else review_close
+        self.selection_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else selection_open
+        self.selection_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else selection_close
+        self.offer_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else offer_open
+        self.offer_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else offer_close
+        self.registration_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else registration_open
+        self.registration_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else registration_close
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 
@@ -231,61 +231,86 @@ class Event(db.Model):
 
     @property
     def is_application_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
-        return now >= self.application_open and now < self.application_close
+        return ((now >= self.application_open and now < self.application_close))
 
     @property
     def is_application_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.application_open
 
     @property
     def is_review_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now >= self.review_open and now < self.review_close
 
     @property
     def is_review_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.review_open
+        
 
     @property
     def is_selection_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now >= self.selection_open and now < self.selection_close
 
     @property
     def is_selection_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.selection_open
 
     @property
     def is_offer_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now >= self.offer_open and now < self.offer_close
 
     @property
     def is_offer_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.offer_open
 
     @property
     def is_registration_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now >= self.registration_open and now < self.registration_close
 
     @property
     def is_registration_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.registration_open
 
     @property
     def is_event_open(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now >= self.start_date and now <= self.end_date
 
     @property
     def is_event_opening(self):
+        if self.event_type == EventType.CONTINUOUS_JOURNAL:
+            return True
         now = datetime.now()
         return now < self.start_date
 

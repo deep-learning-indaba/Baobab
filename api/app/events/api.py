@@ -28,7 +28,8 @@ from app.utils.errors import (
     EVENT_WITH_TRANSLATION_NOT_FOUND,
     EVENT_MUST_CONTAIN_TRANSLATION,
     EVENT_TRANSLATION_MISMATCH,
-    STRIPE_SETUP_INCOMPLETE
+    STRIPE_SETUP_INCOMPLETE,
+    EVENT_MUST_HAVE_DATES
 )
 
 from app.utils.auth import auth_optional, auth_required, event_admin_required
@@ -188,6 +189,19 @@ class EventAPI(EventMixin, restful.Resource):
         if set(args['name']) != set(args['description']):
             return EVENT_TRANSLATION_MISMATCH
 
+        if (not (args['end_date'] and
+                args['application_open'] and
+                args['application_close'] and
+                args['review_open'] and
+                args['review_close'] and
+                args['selection_open'] and
+                args['selection_close'] and
+                args['offer_open'] and
+                args['offer_close'] and
+                args['registration_open'] and
+                args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
+            return EVENT_MUST_HAVE_DATES
+
         event = Event(
             args['name'],
             args['description'],
@@ -241,28 +255,41 @@ class EventAPI(EventMixin, restful.Resource):
         if not current_user.is_event_admin(event.id):
             return FORBIDDEN
 
+        if (not (args['end_date'] and
+                args['application_open'] and
+                args['application_close'] and
+                args['review_open'] and
+                args['review_close'] and
+                args['selection_open'] and
+                args['selection_close'] and
+                args['offer_open'] and
+                args['offer_close'] and
+                args['registration_open'] and
+                args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
+            return EVENT_MUST_HAVE_DATES
+        
         event.update(
-            args['name'],
-            args['description'],
-            args['start_date'],
-            args['end_date'],
-            args['key'],
-            args['organisation_id'],
-            args['email_from'],
-            args['url'],
-            args['application_open'],
-            args['application_close'],
-            args['review_open'],
-            args['review_close'],
-            args['selection_open'],
-            args['selection_close'],
-            args['offer_open'],
-            args['offer_close'],
-            args['registration_open'],
-            args['registration_close'],
-            args['travel_grant'],
-            args['miniconf_url']
-        )
+                args['name'],
+                args['description'],
+                args['start_date'],
+                args['end_date'],
+                args['key'],
+                args['organisation_id'],
+                args['email_from'],
+                args['url'],
+                args['application_open'],
+                args['application_close'],
+                args['review_open'],
+                args['review_close'],
+                args['selection_open'],
+                args['selection_close'],
+                args['offer_open'],
+                args['offer_close'],
+                args['registration_open'],
+                args['registration_close'],
+                args['travel_grant'],
+                args['miniconf_url']
+            )
         db.session.commit()
 
         event = event_repository.get_by_id(event.id)
