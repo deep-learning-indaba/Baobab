@@ -65,8 +65,8 @@ class EventConfigComponent extends Component {
   }
 
   onClickCreate = () => {
-    const isValid = this.validateEventDetails();
-    if (isValid) {
+    const errors = this.validateEventDetails();
+    if (errors.length === 0) {
       eventService.create(this.state.updatedEvent).then(result => {
         console.log(this.state);
         console.log(result);
@@ -149,103 +149,78 @@ class EventConfigComponent extends Component {
 
   validateEventDetails = () => {
     console.log('validating');
-    let isValid = true;
     let errors = [];
     this.props.organisation.languages.forEach(lang => {
       if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].length === 0) {
-        isValid = false;
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event name", lang.description) : "Event name") + " is required"
         errors.push(this.props.t(error_text));
       }
       if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].length === 0) {
-        isValid = false;
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event description", lang.description) : "Event description") + " is required"
         errors.push(this.props.t(error_text));
       }
     });
     if (this.state.updatedEvent.key.length === 0) {
-      isValid = false;
       errors.push(this.props.t("Event key is required"));
     }
     if (this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
-      isValid = false;
       errors.push(this.props.t("Event key must be less than 16 characters and contain no spaces"));
     }
     if (this.state.updatedEvent.event_type.length === 0) {
-      isValid = false;
       errors.push(this.props.t("Event type is required"));
     }
     if (this.state.updatedEvent.travel_grant.length === 0) {
-      isValid = false;
       errors.push(this.props.t("Award travel grants is required")); 
     }
     if (this.state.updatedEvent.email_from.length === 0) {
-      isValid = false;
       errors.push(this.props.t("Organisation email is required"));
     }
     if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
-      isValid = false;
       errors.push(this.props.t("Organisation email is invalid"));
     }
     if (this.state.updatedEvent.url.length === 0) {
-      isValid = false;
       errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
     }
     if (this.state.updatedEvent.application_open < this.formatDate(new Date()) ) {
-      isValid = false;
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
     //working backwards, check each phase ends before the previous phase starts
     if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
-      isValid = false;
       errors.push(this.props.t("Event start date must be after registration close date"));
     }
     if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.offer_close) {
-      isValid = false;
       errors.push(this.props.t("Registration open date must be after offer close date"));
     }
     if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.selection_close) {
-      isValid = false;
       errors.push(this.props.t("Offer open date must be after selection close date"));
     }
     if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
-      isValid = false;
       errors.push(this.props.t("Selection open date must be after review close date"));
     }
     if (this.state.updatedEvent.review_open <= this.state.updatedEvent.application_close) {
-      isValid = false;
       errors.push(this.props.t("Review open date must be after application close date"));
     }
 
     //check date ranges
     if (this.state.updatedEvent.application_open > this.state.updatedEvent.application_close) {
-      isValid = false;
       errors.push(this.props.t("Application close date must be after application open date"));
     }
     if (this.state.updatedEvent.review_open > this.state.updatedEvent.review_close) {
-      isValid = false;
       errors.push(this.props.t("Review close date must be after review open date"));
     }
     if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
-      isValid = false;
       errors.push(this.props.t("Selection close date must be after selection open date"));
     }
     if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
-      isValid = false;
       errors.push(this.props.t("Offer close date must be after offer open date"));
     }
     if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
-      isValid = false;
       errors.push(this.props.t("Registration close date must be after registration open date"));
     }
     if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
-      isValid = false;
       errors.push(this.props.t("Event end date must be after event start date"));
     }
-    this.setState({
-      errors: errors,
-    });
-    return isValid;
+    return errors;
   };
 
   updateEventDetails = (fieldName, e, lang) => {
@@ -287,9 +262,14 @@ class EventConfigComponent extends Component {
   updateEventState = (event) => {
     console.log(this.state);
     this.setState({
-      updatedEvent: event,
-      allFieldsComplete: this.areAllFieldsComplete(),
-      isValid: this.validateEventDetails()
+      updatedEvent: event
+    }, () => {
+      const errors = this.validateEventDetails();
+      this.setState({
+        allFieldsComplete: this.areAllFieldsComplete(),
+        errors: errors,
+        isValid: errors.length === 0
+      });
     });
   }
 
