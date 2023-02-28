@@ -234,7 +234,7 @@ class Event(db.Model):
         if self.event_type == EventType.CONTINUOUS_JOURNAL:
             return True
         now = datetime.now()
-        return ((now >= self.application_open and now < self.application_close))
+        return (now >= self.application_open and now < self.application_close)
 
     @property
     def is_application_opening(self):
