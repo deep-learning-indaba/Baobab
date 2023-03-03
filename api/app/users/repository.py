@@ -78,3 +78,11 @@ class UserRepository():
                 # both in the filter.
                 .filter(or_(InvitedGuest.event_id==event_id, ApplicationForm.event_id==event_id))
         ).all()
+
+    @staticmethod
+    def get_all_admin():
+        return (
+            db.session.query(AppUser)
+            .filter_by(active=True, is_deleted=False, is_admin=True)\
+            .all()
+        )
