@@ -280,17 +280,21 @@ class EventConfigComponent extends Component {
   };
 
   updateEventState = (event) => {
+    
     this.setState({
       updatedEvent: event
     }, () => {
+
+      //checks if all event details are valid
       const errors = this.validateEventDetails();
+
       this.setState({
         allFieldsComplete: this.areAllFieldsComplete(),
         errors: errors,
         isValid: errors.length === 0
       });
     });
-    console.log(this.state.updatedEvent);
+    console.log(this.state);
   }
 
   setRequiredDateFields = (event_type) => {
@@ -302,21 +306,22 @@ class EventConfigComponent extends Component {
       "Call": ALL_DATE_FIELDS.slice(0, 3)
     }
     const requiredDateFields = requiredDateFields_by_event[event_type];
-    const future_date = new Date();
-    future_date.setFullYear(2099);
+
     this.setState({
       requiredDateFields: requiredDateFields,
-      //sets all unrequired dates to a future date, and all required dates to ''
-      ...ALL_DATE_FIELDS.forEach(date => {
-        const updated_date = !requiredDateFields.includes(date) ? this.formatDate(future_date) : ""; //ensures all dates are reset each time user changes dropdown menu
-          this.setState(
-            {...this.state.updatedEvent,
-              [date]: updated_date
-            }
-          )
-      })
-    });
-  }
+    }, () => {  
+      //checks if event type has been selected. If so, sets all unrequired dates to a future date
+      const u = this.state.updatedEvent;
+      const future_date = new Date();
+      future_date.setFullYear(2099);
+      ALL_DATE_FIELDS.flat().forEach(date => {
+        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? this.formatDate(future_date) : u[date];
+        u[date] = updated_date;
+      });
+      this.updateEventState(u);
+    }
+  );
+}
 
   renderDatePickerTable = () => {
     const datePickers = [];
