@@ -71,17 +71,14 @@ class EventConfigComponent extends Component {
     const errors = this.validateEventDetails();
     if (errors.length === 0) {
       eventService.create(this.state.updatedEvent).then(result => {
-        console.log(this.state);
-        console.log(result);
-        this.setState({
-          updatedEvent: result.event,
-          error: result.error,
-          requiredDateFields: this.state.requiredDateFields,
-          //errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
-        });
-        console.log(this.state);
-        if (!result.error) {
-          this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+        if (result.error) {
+          this.setState({
+            errors: [this.props.t(result.error)],
+            showErrors: true
+          });
+        }
+        else {
+          this.props.history.push('/');
         }
       });
     }
@@ -97,13 +94,13 @@ class EventConfigComponent extends Component {
     const isValid = this.validateEventDetails();
     if (isValid) { //PUT
       eventService.update(this.state.updatedEvent).then(result => {
-        this.setState({
-        updatedEvent: result.event,
-        hasBeenUpdated: false,
-        error: result.error,
-        requiredDateFields: this.state.requiredDateFields,
-        });
-        if (!result.error) {
+        if (result.error) {
+          this.setState({
+            errors: [this.props.t(result.error)],
+            showErrors: true
+          });
+        }
+        else {
           this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
         }
       });
@@ -149,6 +146,10 @@ class EventConfigComponent extends Component {
 
   formatDate = (date, set_time_to="00:00:00") => {
     return date.toISOString().split('T')[0]+"T"+set_time_to+"Z";
+  }
+
+  getFieldNameWithLanguage = (input, lang) => {
+    return input + " in " + lang;
   }
 
   validateEventDetails = () => {
@@ -290,10 +291,6 @@ class EventConfigComponent extends Component {
       });
     });
     console.log(this.state.updatedEvent);
-  }
-
-  getFieldNameWithLanguage = (input, lang) => {
-    return input + " in " + lang;
   }
 
   setRequiredDateFields = (event_type) => {

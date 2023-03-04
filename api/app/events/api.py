@@ -3,7 +3,7 @@ import traceback
 import itertools
 from flask import g, request
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.email_template.repository import EmailRepository as email_repository
@@ -161,16 +161,14 @@ def get_user_event_response_status(user_id, event_id):
 
 class EventAPI(EventMixin, restful.Resource):
     @auth_required
-    @marshal_with(event_fields)
     def get(self):
         event_id = request.args['id']
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
-        return event
+        return marshal(event, event_fields), 200
 
     @auth_required
-    @marshal_with(event_fields)
     def post(self):
         args = self.req_parser.parse_args()
 
@@ -216,10 +214,9 @@ class EventAPI(EventMixin, restful.Resource):
         event = event_repository.add(event)
 
         event = event_repository.get_by_id(event.id)
-        return event, 201
+        return marshal(event, event_fields), 201
 
     @auth_required
-    @marshal_with(event_fields)
     def put(self):
         args = self.req_parser.parse_args()
 
@@ -266,7 +263,7 @@ class EventAPI(EventMixin, restful.Resource):
         db.session.commit()
 
         event = event_repository.get_by_id(event.id)
-        return event, 200
+        return marshal(event, event_fields), 200
 
 
 class EventsAPI(restful.Resource):
