@@ -8,6 +8,8 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
+const ALL_DATE_FIELDS = [["application_open", "application_close"], ["review_open", "review_close"], ["selection_open", "selection_close"], ["offer_open", "offer_close"], ["registration_open", "registration_close"], ["start_date", "end_date"]];
+
 //TODO, handle null event returned if POST error
 //TODO, trim name/desc before submission/validation
 class EventConfigComponent extends Component {
@@ -44,6 +46,7 @@ class EventConfigComponent extends Component {
       isMultiLingual: this.props.organisation.languages.length > 1,
       allFieldsComplete: false,
       optionalFields: ["miniconf_url"],
+      requiredDateFields: [],
       isValid: false,
       loading: false,
       error: "",
@@ -73,10 +76,11 @@ class EventConfigComponent extends Component {
         this.setState({
           updatedEvent: result.event,
           error: result.error,
-          errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
+          requiredDateFields: this.state.requiredDateFields,
+          //errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
         });
         console.log(this.state);
-        if (result.statusCode == 200) {
+        if (!result.error) {
           this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
         }
       });
@@ -97,9 +101,9 @@ class EventConfigComponent extends Component {
         updatedEvent: result.event,
         hasBeenUpdated: false,
         error: result.error,
-        errors: result.statusCode == 409 ? [this.props.t("Event key already exists")] : []
+        requiredDateFields: this.state.requiredDateFields,
         });
-        if (result.statusCode == 200) {
+        if (!result.error) {
           this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
         }
       });
@@ -185,14 +189,20 @@ class EventConfigComponent extends Component {
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
     //working backwards, check each phase ends before the previous phase starts
-    if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
-      errors.push(this.props.t("Event start date must be after registration close date"));
+    if (this.state.requiredDateFields.includes("start_date") && this.state.requiredDateFields.includes("registration_close")) {
+      if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
+        errors.push(this.props.t("Event start date must be after registration close date"));
+      }
     }
-    if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.offer_close) {
-      errors.push(this.props.t("Registration open date must be after offer close date"));
+    if (this.state.requiredDateFields.includes("registration_open") && this.state.requiredDateFields.includes("review_close")) {
+      if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.review_close) {
+        errors.push(this.props.t("Registration open date must be after review close date"));
+      }
     }
-    if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.selection_close) {
-      errors.push(this.props.t("Offer open date must be after selection close date"));
+    if (this.state.requiredDateFields.includes("offer_open") && this.state.requiredDateFields.includes("review_close")) {
+      if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.review_close) {
+        errors.push(this.props.t("Offer open date must be after review close date"));
+      }
     }
     if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
       errors.push(this.props.t("Selection open date must be after review close date"));
@@ -211,19 +221,25 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
       errors.push(this.props.t("Selection close date must be after selection open date"));
     }
-    if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
-      errors.push(this.props.t("Offer close date must be after offer open date"));
+    if (this.state.requiredDateFields.includes('offer_open') && this.state.requiredDateFields.includes('offer_close')) {
+      if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
+        errors.push(this.props.t("Offer close date must be after offer open date"));
+      }
     }
-    if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
-      errors.push(this.props.t("Registration close date must be after registration open date"));
+    if (this.state.requiredDateFields.includes('registration_open') && this.state.requiredDateFields.includes('registration_close')) {
+      if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
+        errors.push(this.props.t("Registration close date must be after registration open date"));
+      }
     }
-    if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
-      errors.push(this.props.t("Event end date must be after event start date"));
+    if (this.state.requiredDateFields.includes('start_date') && this.state.requiredDateFields.includes('end_date')) {
+      if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
+        errors.push(this.props.t("Event end date must be after event start date"));
+      }
     }
     return errors;
   };
 
-  updateEventDetails = (fieldName, e, lang) => {
+  updateEventTextField = (fieldName, e, lang) => {
     let u;
     if (lang) {
       u = {
@@ -243,7 +259,7 @@ class EventConfigComponent extends Component {
     this.updateEventState(u);
   };
 
-  updateDateTimeEventDetails = (fieldName, value, set_time_to) => {
+  updateEventDateTimePicker = (fieldName, value, set_time_to) => {
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: this.formatDate(new Date(value), set_time_to)
@@ -251,16 +267,18 @@ class EventConfigComponent extends Component {
     this.updateEventState(u);
   };
 
-  updateDropDownEventDetails = (fieldName, dropdown) => {
+  updateEventDropDown = (fieldName, dropdown) => {
     const u = {
       ...this.state.updatedEvent,
       [fieldName]: dropdown.value
     };
     this.updateEventState(u);
+    if (fieldName === "event_type") {
+      this.setRequiredDateFields(dropdown.value);
+    }
   };
 
   updateEventState = (event) => {
-    console.log(this.state);
     this.setState({
       updatedEvent: event
     }, () => {
@@ -271,10 +289,100 @@ class EventConfigComponent extends Component {
         isValid: errors.length === 0
       });
     });
+    console.log(this.state.updatedEvent);
   }
 
   getFieldNameWithLanguage = (input, lang) => {
     return input + " in " + lang;
+  }
+
+  setRequiredDateFields = (event_type) => {
+    //could shift this const globally?
+    const requiredDateFields_by_event = {
+      "Event": ALL_DATE_FIELDS,
+      "Programme": ALL_DATE_FIELDS,
+      "Award": ALL_DATE_FIELDS.slice(0, 4),
+      "Call": ALL_DATE_FIELDS.slice(0, 3)
+    }
+    const requiredDateFields = requiredDateFields_by_event[event_type];
+    const future_date = new Date();
+    future_date.setFullYear(2099);
+    this.setState({
+      requiredDateFields: requiredDateFields,
+      //sets all unrequired dates to a future date, and all required dates to ''
+      ...ALL_DATE_FIELDS.forEach(date => {
+        const updated_date = !requiredDateFields.includes(date) ? this.formatDate(future_date) : ""; //ensures all dates are reset each time user changes dropdown menu
+          this.setState(
+            {...this.state.updatedEvent,
+              [date]: updated_date
+            }
+          )
+      })
+    });
+  }
+
+  renderDatePickerTable = () => {
+    const datePickers = [];
+    const open_time = "00:00:00";
+    const close_time = "23:59:59";
+    const DATE_NAMES = {     // could shift this const globally?
+        "application_open": "Application Open",
+        "application_close": "Application Close",
+        "review_open": "Review Open",
+        "review_close": "Review Close",
+        "selection_open": "Selection Open",
+        "selection_close": "Selection Close",
+        "offer_open": "Offer Open",
+        "offer_close": "Offer Close",
+        "registration_open": "Registration Open",
+        "registration_close": "Registration Close",
+        "start_date": "Event Start Date",
+        "end_date": "Event End Date"
+    }
+    
+    for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
+      const open_date_name = DATE_NAMES[open_date_field];
+      const close_date_name = DATE_NAMES[close_date_field];
+      datePickers.push(
+        <div className={"form-group row"} key={i}>
+          <label
+            id={open_date_field + "_label"}
+            className={"col-sm-2 col-form-label"}
+            htmlFor={open_date_field}>
+            <span className="required-indicator">*</span>
+            {this.props.t(open_date_name)}
+          </label>
+
+          <div className="col-sm-4">
+            <FormDate
+              id={open_date_field}
+              name={open_date_field}
+              value={this.state.updatedEvent[open_date_field]}
+              required={true}
+              onChange={e =>
+                this.updateEventDateTimePicker(open_date_field, e, open_time)}/>
+          </div>
+
+          <label
+            className={"col-sm-2 col-form-label"}
+            htmlFor={close_date_field}>
+            <span className="required-indicator">*</span>
+            {this.props.t(close_date_name)}
+          </label>
+
+          <div className="col-sm-4">
+            <FormDate
+              id={close_date_field}
+              name={close_date_field}
+              value={this.state.updatedEvent[close_date_field]}
+              required={true}
+              onChange={e =>
+                this.updateEventDateTimePicker(close_date_field, e, close_time)} />
+          </div>
+        </div>
+      );
+    }
+    return datePickers;
   }
 
   render() {
@@ -313,7 +421,6 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
-    const close_time = "23:59:59";
 
     return (
       <div>
@@ -355,7 +462,7 @@ class EventConfigComponent extends Component {
                     type="text"
                     placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
                     required={true}
-                    onChange={e => this.updateEventDetails("name", e, lang.code)}
+                    onChange={e => this.updateEventTextField("name", e, lang.code)}
                     value={updatedEvent.name[lang.code]}
                   />
                 </div>
@@ -376,11 +483,11 @@ class EventConfigComponent extends Component {
                   name="event_type"
                   defaultValue={null || updatedEvent.event_type}
                   required={true}
-                  onChange={this.updateDropDownEventDetails}
+                  onChange={this.updateEventDropDown}
                   options={[
                     { value: "Event", label: t("Event") },
                     { value: "Award", label: t("Award") },
-                    { value: "Call", label: t("Call") },
+                    { value: "Call", label: t("Call"),  },
                     { value: "Programme", label: t("Programme") }
                   ]}
                 />
@@ -401,7 +508,7 @@ class EventConfigComponent extends Component {
                   name="travel_grant"
                   defaultValue={null || updatedEvent.travel_grant}
                   required={true}
-                  onChange={this.updateDropDownEventDetails}
+                  onChange={this.updateEventDropDown}
                   options={[
                     { value: true, label: t("Yes") },
                     { value: false, label: t("No") }
@@ -425,7 +532,7 @@ class EventConfigComponent extends Component {
                   type="text"
                   placeholder={t("Event key for URLs (e.g. indaba2023)")}
                   required={true}
-                  onChange={e => this.updateEventDetails("key", e)}
+                  onChange={e => this.updateEventTextField("key", e)}
                   value={updatedEvent.key}
                 />
               </div>
@@ -447,7 +554,7 @@ class EventConfigComponent extends Component {
                     placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
                     required={true}
                     rows={2}
-                    onChange={e => this.updateEventDetails("description", e, lang.code)}
+                    onChange={e => this.updateEventTextField("description", e, lang.code)}
                     value={updatedEvent.description[lang.code]}
                   />
                 </div>
@@ -468,7 +575,7 @@ class EventConfigComponent extends Component {
                   placeholder={t("Organisation email (e.g. indaba2023@deeplearningindaba.com)")}
                   required={true}
                   value={updatedEvent.email_from}
-                  onChange={e => this.updateEventDetails("email_from", e)}
+                  onChange={e => this.updateEventTextField("email_from", e)}
                   />
               </div>
             </div>
@@ -488,223 +595,13 @@ class EventConfigComponent extends Component {
                   placeholder={t("Event website (e.g. www.deeplearningindaba.com)")}
                   value={updatedEvent.url}
                   required={true}
-                  onChange={e => this.updateEventDetails("url", e)}
+                  onChange={e => this.updateEventTextField("url", e)}
                   />
               </div>
             </div>
 
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="application_open">
-                <span className="required-indicator">*</span>
-                {t("Application Open")}
-              </label>
+            {updatedEvent.event_type && this.renderDatePickerTable()}
 
-              <div className="col-sm-4">
-                <FormDate
-                  id="application_open"
-                  name="application_open"
-                  value={updatedEvent.application_open}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("application_open", e)}/>
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="application_close">
-                <span className="required-indicator">*</span>
-                {t("Application Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="application_close"
-                  name="application_close"
-                  value={updatedEvent.application_close}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("application_close", e, close_time)
-                  } />
-              </div>
-
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="review_open">
-                <span className="required-indicator">*</span>
-                {t("Review Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="review_open"
-                  name="review_open"
-                  value={updatedEvent.review_open}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_open", e)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="review_close">
-                <span className="required-indicator">*</span>
-                {t("Review Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="review_close"
-                  name="review_close"
-                  value={updatedEvent.review_close}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("review_close", e, close_time)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="selection_open">
-                <span className="required-indicator">*</span>
-                {t("Selection Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="selection_open"
-                  name="selection_open"
-                  value={updatedEvent.selection_open}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_open", e)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="selection_close">
-                <span className="required-indicator">*</span>
-                {t("Selection Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="selection_close"
-                  name="selection_close"
-                  value={updatedEvent.selection_close}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("selection_close", e, close_time)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="offer_open">
-                <span className="required-indicator">*</span>
-                {t("Offer Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="offer_open"
-                  name="offer_open"
-                  value={updatedEvent.offer_open}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_open", e)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="offer_close">
-                <span className="required-indicator">*</span>
-                {t("Offer Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="offer_close"
-                  name="offer_close"
-                  value={updatedEvent.offer_close}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("offer_close", e, close_time)} />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="registration_open">
-                <span className="required-indicator">*</span>
-                {t("Registration Open")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="registration_open"
-                  name="registration_open"
-                  value={updatedEvent.registration_open}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_open", e)} />
-              </div>
-
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="registration_close">
-                <span className="required-indicator">*</span>
-                {t("Registration Close")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="registration_close"
-                  name="registration_close"
-                  value={updatedEvent.registration_close}
-                  required={true}
-                  onChange={e =>
-                    this.updateDateTimeEventDetails("registration_close", e, close_time)}/>
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} 
-                htmlFor="start_date">
-                <span className="required-indicator">*</span>
-                {t("Event Start Date")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="start_date"
-                  name="start_date"
-                  value={updatedEvent.start_date}
-                  required={true}
-                  onChange={e => this.updateDateTimeEventDetails("start_date", e)} />
-              </div>
-
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="end_date">
-                <span className="required-indicator">*</span>
-                {t("Event End Date")}
-              </label>
-
-              <div className="col-sm-4">
-                <FormDate
-                  id="end_date"
-                  name="end_date"
-                  value={updatedEvent.end_date}
-                  required={true}
-                  onChange={e => this.updateDateTimeEventDetails("end_date", e, close_time)} />
-              </div>
-            </div>
           </form>
 
           <hr></hr>
