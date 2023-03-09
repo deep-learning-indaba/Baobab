@@ -8,9 +8,20 @@ import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
 
-const ALL_DATE_FIELDS = [["application_open", "application_close"], ["review_open", "review_close"], ["selection_open", "selection_close"], ["offer_open", "offer_close"], ["registration_open", "registration_close"], ["start_date", "end_date"]];
+const APPLICATION_DATES = ["application_open", "application_close"];
+const REVIEW_DATES = ["review_open", "review_close"];
+const SELECTION_DATES = ["selection_open", "selection_close"];
+const OFFER_DATES = ["offer_open", "offer_close"];
+const REGISTRATION_DATES = ["registration_open", "registration_close"];
+const EVENT_DATES = ["start_date", "end_date"];
+const ALL_DATE_FIELDS = [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES, REGISTRATION_DATES, EVENT_DATES];
+const REQUIRED_DATE_FIELDS_BY_EVENT = {
+      "Event": ALL_DATE_FIELDS,
+      "Programme": ALL_DATE_FIELDS,
+      "Award": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES],
+      "Call": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES],
+    }
 
-//TODO, handle null event returned if POST error
 //TODO, trim name/desc before submission/validation
 class EventConfigComponent extends Component {
   constructor(props) {
@@ -298,14 +309,7 @@ class EventConfigComponent extends Component {
   }
 
   setRequiredDateFields = (event_type) => {
-    //could shift this const globally?
-    const requiredDateFields_by_event = {
-      "Event": ALL_DATE_FIELDS,
-      "Programme": ALL_DATE_FIELDS,
-      "Award": ALL_DATE_FIELDS.slice(0, 4),
-      "Call": ALL_DATE_FIELDS.slice(0, 3)
-    }
-    const requiredDateFields = requiredDateFields_by_event[event_type];
+    const requiredDateFields = REQUIRED_DATE_FIELDS_BY_EVENT[event_type];
 
     this.setState({
       requiredDateFields: requiredDateFields,
