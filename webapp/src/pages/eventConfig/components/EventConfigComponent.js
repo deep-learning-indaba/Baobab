@@ -21,8 +21,21 @@ const REQUIRED_DATE_FIELDS_BY_EVENT = {
       "Award": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES],
       "Call": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES],
     }
+const DATE_NAMES = {
+      "application_open": "Application Open",
+      "application_close": "Application Close",
+      "review_open": "Review Open",
+      "review_close": "Review Close",
+      "selection_open": "Selection Open",
+      "selection_close": "Selection Close",
+      "offer_open": "Offer Open",
+      "offer_close": "Offer Close",
+      "registration_open": "Registration Open",
+      "registration_close": "Registration Close",
+      "start_date": "Event Start Date",
+      "end_date": "Event End Date"
+  }
 
-//TODO, trim name/desc before submission/validation
 class EventConfigComponent extends Component {
   constructor(props) {
     super(props);
@@ -164,19 +177,18 @@ class EventConfigComponent extends Component {
   }
 
   validateEventDetails = () => {
-    console.log('validating');
     let errors = [];
     this.props.organisation.languages.forEach(lang => {
-      if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].length === 0) {
+      if (!this.state.updatedEvent.name || !this.state.updatedEvent.name[lang.code] || this.state.updatedEvent.name[lang.code].trim().length === 0) {
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event name", lang.description) : "Event name") + " is required"
         errors.push(this.props.t(error_text));
       }
-      if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].length === 0) {
+      if (!this.state.updatedEvent.description || !this.state.updatedEvent.description[lang.code] || this.state.updatedEvent.description[lang.code].trim().length === 0) {
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Event description", lang.description) : "Event description") + " is required"
         errors.push(this.props.t(error_text));
       }
     });
-    if (this.state.updatedEvent.key.length === 0) {
+    if (this.state.updatedEvent.key.trim().length === 0) {
       errors.push(this.props.t("Event key is required"));
     }
     if (this.state.updatedEvent.key.length > 16 || this.state.updatedEvent.key.includes(" ")) {
@@ -188,14 +200,14 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.travel_grant.length === 0) {
       errors.push(this.props.t("Award travel grants is required")); 
     }
-    if (this.state.updatedEvent.email_from.length === 0) {
+    if (this.state.updatedEvent.email_from.trim().length === 0) {
       errors.push(this.props.t("Organisation email is required"));
     }
     if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(this.state.updatedEvent.email_from)) {
       errors.push(this.props.t("Organisation email is invalid"));
     }
-    if (this.state.updatedEvent.url.length === 0) {
-      errors.push(this.props.t("Event URL is required")); //TODO: check if valid URL?
+    if (this.state.updatedEvent.url.trim().length === 0) {
+      errors.push(this.props.t("Event website is required")); //TODO: check if valid URL?
     }
     if (this.state.updatedEvent.application_open < this.formatDate(new Date()) ) {
       errors.push(this.props.t("Application open date cannot be in the past"));
@@ -305,7 +317,6 @@ class EventConfigComponent extends Component {
         isValid: errors.length === 0
       });
     });
-    console.log(this.state);
   }
 
   setRequiredDateFields = (event_type) => {
@@ -319,7 +330,7 @@ class EventConfigComponent extends Component {
       const future_date = new Date();
       future_date.setFullYear(2099);
       ALL_DATE_FIELDS.flat().forEach(date => {
-        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? this.formatDate(future_date) : u[date];
+        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? this.formatDate(future_date) : "";
         u[date] = updated_date;
       });
       this.updateEventState(u);
@@ -331,20 +342,6 @@ class EventConfigComponent extends Component {
     const datePickers = [];
     const open_time = "00:00:00";
     const close_time = "23:59:59";
-    const DATE_NAMES = {     // could shift this const globally?
-        "application_open": "Application Open",
-        "application_close": "Application Close",
-        "review_open": "Review Open",
-        "review_close": "Review Close",
-        "selection_open": "Selection Open",
-        "selection_close": "Selection Close",
-        "offer_open": "Offer Open",
-        "offer_close": "Offer Close",
-        "registration_open": "Registration Open",
-        "registration_close": "Registration Close",
-        "start_date": "Event Start Date",
-        "end_date": "Event End Date"
-    }
     
     for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
       const open_date_name = DATE_NAMES[open_date_field];

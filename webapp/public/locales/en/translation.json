@@ -467,7 +467,7 @@
     "Event key must be less than 16 characters and contain no spaces": "Event key must be less than 16 characters and contain no spaces",
     "Organisation email is required": "Organisation email is required",
     "Organisation email is invalid": "Organisation email is invalid",
-    "Event URL is required": "Event URL is required",
+    "Event website is required": "Event website is required",
     "Event Type": "Event Type",
     "Event": "Event",
     "Call": "Call",
