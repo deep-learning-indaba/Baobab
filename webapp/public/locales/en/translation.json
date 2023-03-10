@@ -474,5 +474,14 @@
     "Award": "Award",
     "Programme": "Programme",
     "Awards Travel Grants": "Awards Travel Grants",
-    "Event key already exists": "Event key already exists"
+    "Edit Event Details": "Edit Event Details",
+    "No event exists with that ID": "No event exists with that ID",
+    "Event and/or event fee not found": "Event and/or event fee not found",
+    "Access to this resource is forbidden": "Access to this resource is forbidden",
+    "No event exists with that KEY": "No event exists with that KEY",
+    "Event with that KEY already exists": "Event with that KEY already exists",
+    "Translation for event not found": "Translation for event not found",
+    "Event must contain at least one translation for 'name' and 'description'" : "Event must contain at least one translation for 'name' and 'description'",
+    "Event must contain same translations for 'name' and 'description'" : "Event must contain same translations for 'name' and 'description'",
+    "Stripe setup has not yet been completed.": "Stripe setup has not yet been completed."
 }

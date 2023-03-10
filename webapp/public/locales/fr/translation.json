@@ -473,6 +473,15 @@
     "Award": "Prix",
     "Programme": "Programme",
     "Awards Travel Grants": "Bourses de voyage",
-    "Event key already exists": "La clé de l'événement existe déjà"
+    "Edit Event Details": "Modifier les détails de l'événement",
+    "No event exists with that ID": "Aucun événement n'existe avec cet ID",
+    "Event and/or event fee not found": "Événement et/ou frais d'événement introuvable",
+    "Access to this resource is forbidden": "L'accès à cette ressource est interdit",
+    "No event exists with that KEY": "Aucun événement n'existe avec cette clé",
+    "Event with that KEY already exists": "Un événement avec cette clé existe déjà",
+    "Translation for event not found": "Traduction pour l'événement introuvable",
+    "Event must contain at least one translation for 'name' and 'description'" : "L'événement doit contenir au moins une traduction pour 'nom' et 'description'",
+    "Event must contain same translations for 'name' and 'description'" : "L'événement doit contenir les mêmes traductions pour 'nom' et 'description'",
+    "Stripe setup has not yet been completed.": "La configuration de Stripe n'a pas encore été terminée."
 }
 
