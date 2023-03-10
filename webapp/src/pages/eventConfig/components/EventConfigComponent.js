@@ -16,10 +16,10 @@ const REGISTRATION_DATES = ["registration_open", "registration_close"];
 const EVENT_DATES = ["start_date", "end_date"];
 const ALL_DATE_FIELDS = [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES, REGISTRATION_DATES, EVENT_DATES];
 const REQUIRED_DATE_FIELDS_BY_EVENT = {
-      "Event": ALL_DATE_FIELDS,
-      "Programme": ALL_DATE_FIELDS,
-      "Award": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES],
-      "Call": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES],
+      "EVENT": ALL_DATE_FIELDS,
+      "PROGRAMME": ALL_DATE_FIELDS,
+      "AWARD": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES],
+      "CALL": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES],
     }
 const DATE_NAMES = {
       "application_open": "Application Open",
@@ -82,12 +82,22 @@ class EventConfigComponent extends Component {
   componentDidMount() {
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
+        this.addTimeZonesToDates(result.event); //dates come back from database without timezone
         this.setState({
           loading: false,
           updatedEvent: result.event,
-          error: result.error
+          error: result.error,
+          requiredDateFields: REQUIRED_DATE_FIELDS_BY_EVENT[result.event.event_type]
         });
       });
+    }
+  }
+
+  
+  addTimeZonesToDates = event => {
+    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+      event[ALL_DATE_FIELDS[i][0]] = event[ALL_DATE_FIELDS[i][0]] + "Z";
+      event[ALL_DATE_FIELDS[i][1]] = event[ALL_DATE_FIELDS[i][1]] + "Z";
     }
   }
 
@@ -114,9 +124,8 @@ class EventConfigComponent extends Component {
   };
 
   onClickUpdate = () => {
-    //TODO likely will fail - need to add event.id to the updatedEvent object
-    const isValid = this.validateEventDetails();
-    if (isValid) { //PUT
+    const errors = this.validateEventDetails();
+    if (errors.length == 0) { //PUT
       eventService.update(this.state.updatedEvent).then(result => {
         if (result.error) {
           this.setState({
@@ -125,7 +134,7 @@ class EventConfigComponent extends Component {
           });
         }
         else {
-          this.props.history.push('/'); //TODO change this to go to previous page rather than home page, once we've added Edit Event to the Event Details page
+          this.props.history.push('/');
         }
       });
     }
@@ -484,14 +493,14 @@ class EventConfigComponent extends Component {
                 <FormSelect
                   id="event_type"
                   name="event_type"
-                  defaultValue={null || updatedEvent.event_type}
+                  defaultValue={updatedEvent.event_type || null}
                   required={true}
                   onChange={this.updateEventDropDown}
                   options={[
-                    { value: "Event", label: t("Event") },
-                    { value: "Award", label: t("Award") },
-                    { value: "Call", label: t("Call"),  },
-                    { value: "Programme", label: t("Programme") }
+                    { value: "EVENT", label: t("Event") },
+                    { value: "AWARD", label: t("Award") },
+                    { value: "CALL", label: t("Call"),  },
+                    { value: "PROGRAMME", label: t("Programme") }
                   ]}
                 />
               </div>
@@ -509,12 +518,12 @@ class EventConfigComponent extends Component {
                 <FormSelect
                   id="travel_grant"
                   name="travel_grant"
-                  defaultValue={null || updatedEvent.travel_grant}
+                  defaultValue={String(updatedEvent.travel_grant) || null}
                   required={true}
                   onChange={this.updateEventDropDown}
                   options={[
-                    { value: true, label: t("Yes") },
-                    { value: false, label: t("No") }
+                    { value: "true", label: t("Yes") },
+                    { value: "false", label: t("No") }
                   ]}
                 />
               </div>

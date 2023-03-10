@@ -134,6 +134,13 @@ class EventNav extends Component {
             {isEventAdmin(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
                 <NavLink
+                    to={`/${this.props.eventKey}/eventConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Edit Event Details')}
+                </NavLink>
+                <NavLink
                     to={`/${this.props.eventKey}/reviewAssignment`}
                     className="dropdown-item"
                     onClick={this.props.toggleMenu}
