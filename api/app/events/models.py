@@ -203,6 +203,7 @@ class Event(db.Model):
                offer_close,
                registration_open,
                registration_close,
+               event_type,
                travel_grant,
                miniconf_url=None):
         self.start_date = start_date
@@ -221,6 +222,7 @@ class Event(db.Model):
         self.offer_close = offer_close
         self.registration_open = registration_open
         self.registration_close = registration_close
+        self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 

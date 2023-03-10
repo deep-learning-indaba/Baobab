@@ -106,6 +106,7 @@ event_fields = {
     'offer_close': fields.DateTime(dt_format='iso8601'),
     'registration_open': fields.DateTime(dt_format='iso8601'),
     'registration_close': fields.DateTime(dt_format='iso8601'),
+    'event_type': fields.Raw(attribute=lambda event: event.event_type.value.upper()),
     'travel_grant': fields.Boolean,
     'miniconf_url': fields.String
 }
@@ -257,6 +258,7 @@ class EventAPI(EventMixin, restful.Resource):
             args['offer_close'],
             args['registration_open'],
             args['registration_close'],
+            EventType[args['event_type'].upper()],
             args['travel_grant'],
             args['miniconf_url']
         )
