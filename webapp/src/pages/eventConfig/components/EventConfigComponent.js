@@ -82,10 +82,9 @@ class EventConfigComponent extends Component {
   componentDidMount() {
     if (this.props.event) {
       eventService.getEvent(this.props.event.id).then(result => {
-        this.addTimeZonesToDates(result.event); //dates come back from database without timezone
         this.setState({
           loading: false,
-          updatedEvent: result.event,
+          updatedEvent: this.stripTimeFromDates(result.event), //dates come back from database with times; strip to ensure proper rendering in datetimepickers
           error: result.error,
           requiredDateFields: REQUIRED_DATE_FIELDS_BY_EVENT[result.event.event_type]
         });
@@ -93,18 +92,29 @@ class EventConfigComponent extends Component {
     }
   }
 
-  
-  addTimeZonesToDates = event => {
+  stripTimeFromDates = event => {
+    const u = {...event}
     for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
-      event[ALL_DATE_FIELDS[i][0]] = event[ALL_DATE_FIELDS[i][0]] + "Z";
-      event[ALL_DATE_FIELDS[i][1]] = event[ALL_DATE_FIELDS[i][1]] + "Z";
+      u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10);
+      u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10);
     }
+    return u;
+  }
+
+  addTimeToDates = event => {
+    const u = {...event}
+    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+      u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10) + "T00:00:00Z"; //start date
+      u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10) + "T23:59:59Z"; //end date
+    }
+    return u;
   }
 
   onClickCreate = () => {
     const errors = this.validateEventDetails();
     if (errors.length === 0) {
-      eventService.create(this.state.updatedEvent).then(result => {
+      const event_with_times = this.addTimeToDates(this.state.updatedEvent);
+      eventService.create(event_with_times).then(result => {
         if (result.error) {
           this.setState({
             errors: [this.props.t(result.error)],
@@ -112,9 +122,8 @@ class EventConfigComponent extends Component {
           });
         }
         else {
-          this.props.history.push('/');
-        }
-      });
+          this.props.history.goBack();
+        }});
     }
     else {
       this.setState({
@@ -126,17 +135,17 @@ class EventConfigComponent extends Component {
   onClickUpdate = () => {
     const errors = this.validateEventDetails();
     if (errors.length == 0) { //PUT
-      eventService.update(this.state.updatedEvent).then(result => {
-        if (result.error) {
-          this.setState({
-            errors: [this.props.t(result.error)],
-            showErrors: true
-          });
-        }
-        else {
-          this.props.history.push('/');
-        }
-      });
+      const event_with_times = this.addTimeToDates(this.state.updatedEvent);
+      eventService.update(event_with_times).then(result => {
+      if (result.error) {
+        this.setState({
+          errors: [this.props.t(result.error)],
+          showErrors: true
+        });
+      }
+      else {
+        this.props.history.goBack();
+      }});
     }
     else {
       this.setState({
@@ -177,10 +186,6 @@ class EventConfigComponent extends Component {
     return errorMessages;
   };
 
-  formatDate = (date, set_time_to="00:00:00") => {
-    return date.toISOString().split('T')[0]+"T"+set_time_to+"Z";
-  }
-
   getFieldNameWithLanguage = (input, lang) => {
     return input + " in " + lang;
   }
@@ -218,7 +223,7 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.url.trim().length === 0) {
       errors.push(this.props.t("Event website is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < this.formatDate(new Date()) ) {
+    if (this.state.updatedEvent.application_open < new Date().toISOString().slice(0,10) ) {
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
     //working backwards, check each phase ends before the previous phase starts
@@ -245,27 +250,27 @@ class EventConfigComponent extends Component {
     }
 
     //check date ranges
-    if (this.state.updatedEvent.application_open > this.state.updatedEvent.application_close) {
+    if (this.state.updatedEvent.application_open >= this.state.updatedEvent.application_close) {
       errors.push(this.props.t("Application close date must be after application open date"));
     }
-    if (this.state.updatedEvent.review_open > this.state.updatedEvent.review_close) {
+    if (this.state.updatedEvent.review_open >= this.state.updatedEvent.review_close) {
       errors.push(this.props.t("Review close date must be after review open date"));
     }
-    if (this.state.updatedEvent.selection_open > this.state.updatedEvent.selection_close) {
+    if (this.state.updatedEvent.selection_open >= this.state.updatedEvent.selection_close) {
       errors.push(this.props.t("Selection close date must be after selection open date"));
     }
     if (this.state.requiredDateFields.includes('offer_open') && this.state.requiredDateFields.includes('offer_close')) {
-      if (this.state.updatedEvent.offer_open > this.state.updatedEvent.offer_close) {
+      if (this.state.updatedEvent.offer_open >= this.state.updatedEvent.offer_close) {
         errors.push(this.props.t("Offer close date must be after offer open date"));
       }
     }
     if (this.state.requiredDateFields.includes('registration_open') && this.state.requiredDateFields.includes('registration_close')) {
-      if (this.state.updatedEvent.registration_open > this.state.updatedEvent.registration_close) {
+      if (this.state.updatedEvent.registration_open >= this.state.updatedEvent.registration_close) {
         errors.push(this.props.t("Registration close date must be after registration open date"));
       }
     }
     if (this.state.requiredDateFields.includes('start_date') && this.state.requiredDateFields.includes('end_date')) {
-      if (this.state.updatedEvent.start_date > this.state.updatedEvent.end_date) {
+      if (this.state.updatedEvent.start_date >= this.state.updatedEvent.end_date) {
         errors.push(this.props.t("Event end date must be after event start date"));
       }
     }
@@ -292,10 +297,10 @@ class EventConfigComponent extends Component {
     this.updateEventState(u);
   };
 
-  updateEventDateTimePicker = (fieldName, value, set_time_to) => {
+  updateEventDateTimePicker = (fieldName, value) => {
     const u = {
       ...this.state.updatedEvent,
-      [fieldName]: this.formatDate(new Date(value), set_time_to)
+      [fieldName]: value
     };
     this.updateEventState(u);
   };
@@ -312,7 +317,6 @@ class EventConfigComponent extends Component {
   };
 
   updateEventState = (event) => {
-    
     this.setState({
       updatedEvent: event
     }, () => {
@@ -339,7 +343,7 @@ class EventConfigComponent extends Component {
       const future_date = new Date();
       future_date.setFullYear(2099);
       ALL_DATE_FIELDS.flat().forEach(date => {
-        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? this.formatDate(future_date) : "";
+        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? future_date.toISOString().slice(0,10) : "";
         u[date] = updated_date;
       });
       this.updateEventState(u);
@@ -349,8 +353,6 @@ class EventConfigComponent extends Component {
 
   renderDatePickerTable = () => {
     const datePickers = [];
-    const open_time = "00:00:00";
-    const close_time = "23:59:59";
     
     for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
       const open_date_name = DATE_NAMES[open_date_field];
@@ -369,10 +371,10 @@ class EventConfigComponent extends Component {
             <FormDate
               id={open_date_field}
               name={open_date_field}
-              value={this.state.updatedEvent[open_date_field]}
+              value={this.state.updatedEvent[open_date_field].slice(0,10)}
               required={true}
               onChange={e =>
-                this.updateEventDateTimePicker(open_date_field, e, open_time)}/>
+                this.updateEventDateTimePicker(open_date_field, e)}/>
           </div>
 
           <label
@@ -386,10 +388,10 @@ class EventConfigComponent extends Component {
             <FormDate
               id={close_date_field}
               name={close_date_field}
-              value={this.state.updatedEvent[close_date_field]}
+              value={this.state.updatedEvent[close_date_field].slice(0,10)}
               required={true}
               onChange={e =>
-                this.updateEventDateTimePicker(close_date_field, e, close_time)} />
+                this.updateEventDateTimePicker(close_date_field, e)} />
           </div>
         </div>
       );
