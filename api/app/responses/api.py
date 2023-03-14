@@ -109,7 +109,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_users = user_repository.get_all_admin()
+                    all_admin_users = event_repository.get_all_admin(event_id=response.id)
                     for admin_user in all_admin_users:
                         self.send_confirmation(admin_user, response, admin_user=True)
         except:
@@ -161,7 +161,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_users = user_repository.get_all_admin()
+                    all_admin_users = event_repository.get_all_admin(event_id=response.application_form.event_id)
                     for admin_user in all_admin_users:
                         self.send_confirmation(admin_user, response, admin_user=True)
         except:                
