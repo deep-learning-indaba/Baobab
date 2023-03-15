@@ -354,7 +354,6 @@ class EventConfigComponent extends Component {
 }
 
   renderDatePickerTable = () => {
-    console.log(this.state.updatedEvent);
     const datePickers = [];
     
     for (const [i, [open_date_field, close_date_field]] of this.state.requiredDateFields.entries()) {
