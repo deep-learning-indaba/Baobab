@@ -321,7 +321,6 @@ class EventConfigComponent extends Component {
       updatedEvent: event
     }, () => {
 
-      //checks if all event details are valid
       const errors = this.validateEventDetails();
 
       this.setState({
@@ -340,11 +339,14 @@ class EventConfigComponent extends Component {
     }, () => {  
       //checks if event type has been selected. If so, sets all unrequired dates to a future date
       const u = this.state.updatedEvent;
-      const future_date = new Date();
-      future_date.setFullYear(2099);
+      const future_date = new Date("2099-12-31").toISOString().slice(0,10);
       ALL_DATE_FIELDS.flat().forEach(date => {
-        const updated_date = !this.state.requiredDateFields.flat().includes(date) ? future_date.toISOString().slice(0,10) : "";
-        u[date] = updated_date;
+        if (!this.state.requiredDateFields.flat().includes(date)) { //if not a required date, set to future_date
+          u[date] = future_date;
+        }
+        else { //if a required date, set to empty string (if it was previously set to future_date), or just keep value as is
+          u[date] = u[date] === future_date ? "" : u[date];
+        }
       });
       this.updateEventState(u);
     }
