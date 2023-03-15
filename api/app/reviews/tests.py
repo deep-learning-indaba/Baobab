@@ -5,7 +5,7 @@ import itertools
 
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
-from app.events.models import Event, EventRole
+from app.events.models import Event, EventRole, EventType
 from app.users.models import AppUser, UserCategory, Country
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.responses.models import Response, Answer, ResponseReviewer
@@ -13,6 +13,8 @@ from app.responses.models import Response, Answer, ResponseReviewer
 from app.references.models import ReferenceRequest, Reference
 from app.references.repository import ReferenceRequestRepository as reference_request_repository
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewResponse, ReviewScore, ReviewConfiguration
+from app.outcome.models import Outcome, Status
+from app.outcome.repository import OutcomeRepository as outcome_repository
 
 from app.reviews.models import ReviewForm, ReviewQuestion, ReviewQuestionTranslation, ReviewResponse, ReviewScore, ReviewConfiguration
 from app.utils.errors import REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND
@@ -1418,6 +1420,8 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
     def seed_static_data(self):
         self.event = self.add_event(key='event1')
         self.event2 = self.add_event(key='event2')
+        self.journal = self.add_event(key='journal1', event_type=EventType.JOURNAL)
+
         self.event_admin = self.add_user('eventadmin@mail.com')
         self.reviewer = self.add_user('reviewer@mail.com')
         self.reviewer_user_id = self.reviewer.id
@@ -1426,17 +1430,28 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
         self.user2 = self.add_user('user2@mail.com')
         self.user3 = self.add_user('user3@mail.com')
 
+        self.user1_id = self.user1.id
+        self.user2_id = self.user2.id
+        
         self.event.add_event_role('admin', self.event_admin.id)
+        self.journal.add_event_role('admin', self.event_admin.id)
 
         application_form = self.create_application_form(self.event.id)
         application_form2 = self.create_application_form(self.event2.id)
+        application_form3 = self.create_application_form(self.journal.id)
+
         self.response1 = self.add_response(application_form.id, self.user1.id, is_submitted=True)
         self.response2 = self.add_response(application_form.id, self.user2.id, is_submitted=True)
         self.response3 = self.add_response(application_form.id, self.user3.id, is_submitted=True)
 
+        self.response1_journal = self.add_response(application_form3.id, self.user1.id, is_submitted=True)
+        self.response2_journal = self.add_response(application_form3.id, self.user2.id, is_submitted=True)
+        self.response3_journal = self.add_response(application_form3.id, self.user3.id, is_submitted=True)
+
         self.add_review_form(application_form.id)
         self.add_review_form(application_form2.id)
-
+        self.add_review_form(application_form3.id)
+ 
         self.event2_response_id = self.add_response(application_form2.id, self.user1.id, is_submitted=True).id
 
         self.add_email_template('reviews-assigned')
@@ -1461,6 +1476,36 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
 
         for rr in response_reviewers:
             self.assertEqual(rr.reviewer_user_id, self.reviewer_user_id)
+            
+    def test_journal_response_assigned(self):
+        """Test that the application status changes to REVIEW when a reviewer is assigned."""
+        self.seed_static_data()
+        params = {'event_id' : self.journal.id, 'response_ids': [self.response1_journal.id, self.response2_journal.id], 'reviewer_email': 'reviewer@mail.com'}
+        
+        response = self.app.post(
+            '/api/v1/assignresponsereviewer',
+            headers=self.get_auth_header_for('eventadmin@mail.com'),
+            data=params)
+        self.assertEqual(response.status_code, 201)
+
+        response_reviewers = (db.session.query(ResponseReviewer)
+                   .join(Response, ResponseReviewer.response_id == Response.id)
+                   .filter_by(application_form_id=3).all())
+        
+        self.assertEqual(len(response_reviewers), 2)
+
+        for rr in response_reviewers:
+            self.assertEqual(rr.reviewer_user_id, self.reviewer_user_id)
+      
+        outcomes = outcome_repository.get_latest_for_event(self.journal.id)
+        self.assertEqual(len(outcomes), 2)
+        ids = [self.user1_id, self.user2_id]
+        
+        for i, outcome in enumerate(outcomes):
+            self.assertEqual(outcome.event_id, self.journal.id)
+            self.assertEqual(outcome.user_id, ids[i])
+            self.assertEqual(outcome.status, Status.REVIEW)
+            self.assertEqual(outcome.updated_by_user_id, self.event_admin.id)
 
     def test_response_for_different_event_forbidden(self):
         self.seed_static_data()
