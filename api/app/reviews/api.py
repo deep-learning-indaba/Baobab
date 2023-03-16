@@ -10,7 +10,7 @@ from datetime import datetime
 
 from app import db, LOGGER
 from app.applicationModel.models import ApplicationForm
-from app.events.models import Event, EventRole
+from app.events.models import Event, EventRole, EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer
@@ -26,6 +26,9 @@ from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
+
+from app.outcome.models import Outcome, Status
+from app.outcome.repository import OutcomeRepository as outcome_repository
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
@@ -188,6 +191,16 @@ def _add_reviewer_role(user_id, event_id):
     db.session.add(event_role)
     db.session.commit()
 
+def _update_status(event, user_id, updated_user_id):
+    if event.event_type == EventType.JOURNAL or event.event_type == EventType.CONTINUOUS_JOURNAL:
+        new_outcome = Outcome(
+            event.id,
+            user_id,
+            Status.REVIEW,
+            updated_user_id
+            )
+        outcome_repository.add(new_outcome)
+        db.session.commit()
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses=None,
@@ -473,11 +486,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
 
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
                                                       config.num_reviews_required)
+
+        response_user_ids = [response_repository.get_by_id(response_id).user_id for response_id in response_ids]
+
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
 
         if len(response_ids) > 0:
+            for user_id in response_user_ids:
+                _update_status(event, user_id, g.current_user['id'])
             email_user(
                 'reviews-assigned',
                 template_parameters=dict(
@@ -633,6 +651,7 @@ class ResponseReviewAssignmentAPI(restful.Resource):
 
         event = event_repository.get_by_id(event_id)
 
+        response_user_ids = [response_repository.get_by_id(response_id).user_id for response_id in response_ids]
         reviewer_user = user_repository.get_by_email(reviewer_email, g.organisation.id)
         if reviewer_user is None:
             return USER_NOT_FOUND
@@ -645,6 +664,8 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         db.session.commit()
 
         if len(response_ids) > 0:
+            for user_id in response_user_ids:
+                _update_status(event, user_id, g.current_user['id'])
             email_user(
                 'reviews-assigned',
                 template_parameters=dict(
