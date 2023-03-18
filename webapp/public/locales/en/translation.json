@@ -284,7 +284,7 @@
     "No. Allocated": "No. Allocated",
     "No. Completed": "No. Completed",
     "No. to Assign": "No. to Assign",
-    "Total Unallocated Reviews:": "Total Unallocated Reviews:",
+    "Total Unallocated Reviews": "Total Unallocated Reviews",
     "Add new reviewer's email (they must already have an account)": "Add new reviewer's email (they must already have an account)",
     "Review email": "Review email",
     "Submitted Timestamp": "Submitted Timestamp",
@@ -483,5 +483,6 @@
     "Translation for event not found": "Translation for event not found",
     "Event must contain at least one translation for 'name' and 'description'" : "Event must contain at least one translation for 'name' and 'description'",
     "Event must contain same translations for 'name' and 'description'" : "Event must contain same translations for 'name' and 'description'",
-    "Stripe setup has not yet been completed.": "Stripe setup has not yet been completed."
+    "Stripe setup has not yet been completed.": "Stripe setup has not yet been completed.",
+    "review-assignment-filter-note": "If you have selected tag filters, then only responses matching those tags will be assigned. Note that the total unallocated review count takes the tag filters into account, but the No. assigned and No. Completed in the table do not."
 }

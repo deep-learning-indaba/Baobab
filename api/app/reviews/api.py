@@ -15,7 +15,7 @@ from app.events.repository import EventRepository as event_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
-    GetReviewAssignmentMixin, GetReviewHistoryMixin, GetReviewSummaryMixin
+    GetReviewAssignmentMixin, GetReviewHistoryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
@@ -402,21 +402,21 @@ class ReviewCountView():
         self.reviews_completed = count.reviews_completed
         self.reviewer_user_id = count.reviewer_user_id
 
-class ReviewSummaryAPI(GetReviewSummaryMixin, restful.Resource):
-    @auth_required
-    def get(self):
-        args = self.get_req_parser.parse_args()
-        event_id = args['event_id']
-        user_id = g.current_user['id']
+class ReviewSummaryAPI(restful.Resource):
 
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
+    @auth_required
+    @event_admin_required
+    def get(self, event_id):
+        get_req_parser = reqparse.RequestParser()
+        get_req_parser.add_argument('tags', type=int, action="append", location='json')
+        args = get_req_parser.parse_args()
+        tags = args['tags']
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
+        num_reviews_required = config.num_reviews_required if config is not None else 1
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, config.num_reviews_required)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, num_reviews_required, tag_ids=tags)
         }
 
 
@@ -446,21 +446,16 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         views = [ReviewCountView(count) for count in counts]
         return views
 
-    @auth_required
-    def post(self):
+    @event_admin_required
+    def post(self, event_id):
         args = self.post_req_parser.parse_args()
-        user_id = g.current_user['id']
-        event_id = args['event_id']
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
+        tags = args['tags']
 
         event = event_repository.get_by_id(event_id)
         if not event:
             return EVENT_NOT_FOUND
-
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
 
         reviewer_user = user_repository.get_by_email(reviewer_user_email, g.organisation.id)
         if reviewer_user is None:
@@ -470,9 +465,10 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
             _add_reviewer_role(reviewer_user.id, event_id)
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
+        num_reviews_required = config.num_reviews_required if config is not None else 1
 
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
-                                                      config.num_reviews_required)
+                                                      num_reviews_required)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -495,9 +491,18 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         db.session.add(event_role)
         db.session.commit()
 
-    def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required):
-        candidate_responses = review_repository.get_candidate_response_ids(event_id, reviewer_user_id, reviews_required)
-        candidate_response_ids = set([r.id for r in candidate_responses])
+    def get_eligible_response_ids(self, event_id, reviewer_user_id, num_reviews, reviews_required, tags):
+        candidate_responses = review_repository.get_candidate_responses(event_id, reviewer_user_id, reviews_required)
+        # Filter by tags
+        if tags:
+            filtered_candidates_responses = []
+            for response in candidate_responses:
+                if all(rt.tag_id in tags for rt in response.response_tags):
+                    filtered_candidates_responses.append(response)
+        else:
+            filtered_candidates_responses = candidate_responses
+
+        candidate_response_ids = set([r.id for r in filtered_candidates_responses])
 
         # Now remove any responses that the reviewer is already assigned to
         already_assigned = review_repository.get_already_assigned(reviewer_user_id)

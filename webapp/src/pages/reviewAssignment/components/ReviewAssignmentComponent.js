@@ -7,6 +7,7 @@ import { withTranslation } from 'react-i18next'
 import 'react-table/react-table.css'
 
 import FormTextBox from "../../../components/form/FormTextBox";
+import { tagsService } from '../../../services/tags/tags.service';
 
 class ReviewAssignmentComponent extends Component {
   constructor(props) {
@@ -21,23 +22,23 @@ class ReviewAssignmentComponent extends Component {
     };
   }
 
-
   componentDidMount() {
-    reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0).then(result => {
-      this.setState({
-        loading: false,
-        reviewers: result.reviewers,
-        error: result.error,
-        newReviewerEmail: ""
-      });
-      return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
-    })
-      .then(result => {
+    const event_id = this.props.event ? this.props.event.id : 0;
+
+    Promise.all([
+        tagsService.getTagList(event_id),
+        reviewService.getReviewAssignments(event_id),
+        reviewService.getReviewSummary(event_id)
+    ]).then(responses => {
         this.setState({
-          reviewSummary: result.reviewSummary,
-          error: result.error
-        })
-      });
+            tags: responses[0].tags.map(tag => { return { ...tag, active: false } }),
+            reviewers: responses[1].reviewers,
+            reviewSummary: responses[2].reviewSummary,
+            newReviewerEmail: "",
+            error: responses[0].error || responses[1].error || responses[2].error,
+            loading: false
+        }, this.handleData);
+    });
   }
 
   handleChange = event => {
@@ -46,6 +47,7 @@ class ReviewAssignmentComponent extends Component {
   };
 
   assignReviewers = (email, toAssign) => {
+    // TODO: Clean up! 
     this.setState({ loading: true });
 
     // Assign the reviews
@@ -101,6 +103,18 @@ class ReviewAssignmentComponent extends Component {
     );
   }
 
+  refreshSummary = () => {
+    reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0).then(
+      result => {
+        this.setState(prevState => ({
+          reviewSummary: result.reviewSummary,
+          error: prevState.error + result.error,
+        }));
+      },
+      error => this.setState({ error })
+    );
+  }
+
   renderButton = cellInfo => {
     return (
       <button
@@ -110,6 +124,14 @@ class ReviewAssignmentComponent extends Component {
         {this.props.t("Assign")}
       </button>
     )
+  }
+
+  toggleTag = (tag) => {
+    const tags = this.state.tags;
+    const index = tags.indexOf(tag);
+    tags[index].active = !tags[index].active;
+
+    this.setState({ tags }, this.refreshSummary);
   }
 
   render() {
@@ -158,15 +180,25 @@ class ReviewAssignmentComponent extends Component {
     }
 
     return (
-      <div className={"review-padding"}>
+      <section className="review-assignment-wrapper">
         {error && <div class="alert alert-danger alert-container">
           {error}
         </div>}
 
+        <h2 className="heading">{t('Review Assignment')}</h2>
+
+        <div className="tag-filter">
+          <span className="tag-filter-label">{t("Filter by tag")}</span>
+          <span className="tags">
+            {this.state.tags.map(tag => <span key={"tag_" + tag.id} className={"tag badge " + (tag.active ? "badge-success" : "badge-secondary")} onClick={()=> {this.toggleTag(tag)}}>{tag.name}</span>)}
+          </span>
+        </div>
+
         {reviewSummary &&
-         <span className="review-padding">{t("Total Unallocated Reviews:")} {reviewSummary.reviews_unallocated }</span>
+         <span className="review-unallocated">{t("Total Unallocated Reviews") + ": " + reviewSummary.reviews_unallocated}</span>
         }
        
+        <div className="review-assignment-note">{t("review-assignment-filter-note")}</div>
 
         <ReactTable
           data={reviewers}
@@ -190,7 +222,7 @@ class ReviewAssignmentComponent extends Component {
             </button>
 
         </div>
-      </div>
+      </section>
     )
   }
 }
