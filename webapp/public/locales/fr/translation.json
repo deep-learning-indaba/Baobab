@@ -284,7 +284,7 @@
     "No. Allocated": "Nombre attribué",
     "No. Completed": "Nombre terminé",
     "No. to Assign": "Nombre à attribuer",
-    "Total Unallocated Reviews:": "Total des examens non attribués :",
+    "Total Unallocated Reviews": "Total des examens non attribués",
     "Add new reviewer's email (they must already have an account)": "Ajouter le courriel du nouvel examinateur (il doit déjà avoir un compte)",
     "Review email": "Vérifier le courrier électronique",
     "Submitted Timestamp": "Horodatage soumis",
@@ -482,6 +482,7 @@
     "Translation for event not found": "Traduction pour l'événement introuvable",
     "Event must contain at least one translation for 'name' and 'description'" : "L'événement doit contenir au moins une traduction pour 'nom' et 'description'",
     "Event must contain same translations for 'name' and 'description'" : "L'événement doit contenir les mêmes traductions pour 'nom' et 'description'",
-    "Stripe setup has not yet been completed.": "La configuration de Stripe n'a pas encore été terminée."
+    "Stripe setup has not yet been completed.": "La configuration de Stripe n'a pas encore été terminée.",
+    "review-assignment-filter-note": "Si vous avez sélectionné des filtres de balises, seules les réponses correspondant à ces balises seront attribuées. Notez que le nombre total de révisions non attribuées tient compte des filtres de balises, mais pas le nombre attribué et le nombre terminé dans le tableau."
 }
 
