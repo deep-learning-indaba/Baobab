@@ -55,7 +55,10 @@ export function create(event) {
         offer_open: event.offer_open,
         offer_close: event.offer_close,
         registration_open: event.registration_open,
-        registration_close: event.registration_close
+        registration_close: event.registration_close,
+        event_type: event.event_type,
+        travel_grant: event.travel_grant,
+        miniconf_url: event.miniconf_url
       },
       { headers: authHeader() }
     )
@@ -68,7 +71,7 @@ export function create(event) {
     })
     .catch(error => {
       return {
-        event: null,
+        event: event,
         error:
           error.response && error.response.data
             ? error.response.data.message
@@ -101,7 +104,10 @@ export function update(event) {
         offer_open: event.offer_open,
         offer_close: event.offer_close,
         registration_open: event.registration_open,
-        registration_close: event.registration_close
+        registration_close: event.registration_close,
+        event_type: event.event_type,
+        travel_grant: event.travel_grant,
+        miniconf_url: event.miniconf_url
       },
       { headers: authHeader() }
     )
@@ -114,7 +120,7 @@ export function update(event) {
     })
     .catch(error => {
       return {
-        event: null,
+        event: event,
         error:
           error.response && error.response.data
             ? error.response.data.message

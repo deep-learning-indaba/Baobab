@@ -2,12 +2,14 @@ from sqlalchemy.sql import exists
 from sqlalchemy import and_, or_, func, cast, Date
 from app import db
 from app.applicationModel.models import ApplicationForm
-from app.responses.models import Response, ResponseReviewer
+from app.responses.models import Response, ResponseReviewer, ResponseTag
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewSection, ReviewSectionTranslation, ReviewQuestion, ReviewQuestionTranslation, ReviewConfiguration
 from app.users.models import AppUser
 from app.references.models import Reference
 from app.events.models import EventRole
 from app.utils import misc
+
+from typing import Sequence, Optional
 
 class ReviewRepository():
 
@@ -67,23 +69,28 @@ class ReviewRepository():
             """.format(event_id=event_id))
 
     @staticmethod
-    def count_unassigned_reviews(event_id, required_reviews_per_response):
-        responses =  (
-            db.session.query(func.count(Response.id))
+    def count_unassigned_reviews(event_id: int, required_reviews_per_response: int, tag_ids: Optional[Sequence[int]] = None) -> int:
+        response_ids =  (
+            db.session.query(Response.id)
             .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
             .filter(ApplicationForm.event_id == event_id)
             .filter(Response.is_submitted==True, Response.is_withdrawn==False)
-            .first()[0]
         )
+
+        if tag_ids:
+            response_ids = (response_ids
+                         .join(ResponseTag, Response.id == ResponseTag.response_id)
+                         .filter(ResponseTag.tag_id.in_(tag_ids))
+                         .group_by(Response.id)
+                         .having(func.count(ResponseTag.tag_id) == len(tag_ids)))
+        response_ids = [r.id for r in response_ids.all()]
 
         reviews = (
             db.session.query(func.count(ResponseReviewer.id))
-            .join(Response, ResponseReviewer.response_id ==Response.id)
-            .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
-            .filter(ApplicationForm.event_id == event_id).first()[0]
+            .filter(ResponseReviewer.response_id.in_(response_ids)).first()[0]
         )
 
-        return responses*required_reviews_per_response - reviews
+        return len(response_ids)*required_reviews_per_response - reviews
 
     @staticmethod
     def get_review_form(event_id, stage=None):
@@ -294,8 +301,8 @@ class ReviewRepository():
         return references
 
     @staticmethod
-    def get_candidate_response_ids(event_id, reviewer_user_id, reviews_required):
-        candidate_response_ids = db.session.query(Response.id) \
+    def get_candidate_responses(event_id, reviewer_user_id, reviews_required):
+        candidate_responses = db.session.query(Response) \
             .filter(Response.user_id != reviewer_user_id,
                     Response.is_submitted == True,
                     Response.is_withdrawn == False) \
@@ -305,7 +312,7 @@ class ReviewRepository():
             .group_by(Response.id) \
             .having(func.count(ResponseReviewer.reviewer_user_id) < reviews_required) \
             .all()
-        return candidate_response_ids
+        return candidate_responses
 
     def get_response_reviewers_for_event(event_id):
         return (db.session.query(ResponseReviewer)
