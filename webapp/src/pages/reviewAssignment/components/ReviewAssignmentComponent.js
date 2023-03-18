@@ -18,17 +18,19 @@ class ReviewAssignmentComponent extends Component {
       reviewers: null,
       error: "",
       newReviewerEmail: "",
-      reviewSummary: {}
+      reviewSummary: {},
+      tags: []
     };
   }
 
   componentDidMount() {
     const event_id = this.props.event ? this.props.event.id : 0;
+    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
 
     Promise.all([
         tagsService.getTagList(event_id),
         reviewService.getReviewAssignments(event_id),
-        reviewService.getReviewSummary(event_id)
+        reviewService.getReviewSummary(event_id, tags)
     ]).then(responses => {
         this.setState({
             tags: responses[0].tags.map(tag => { return { ...tag, active: false } }),
@@ -51,7 +53,8 @@ class ReviewAssignmentComponent extends Component {
     this.setState({ loading: true });
 
     // Assign the reviews
-    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, email, toAssign).then(
+    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
+    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, email, toAssign, tags).then(
       result => {
         // Get updated reviewers, with updated allocations
         this.setState({
@@ -67,7 +70,8 @@ class ReviewAssignmentComponent extends Component {
           error: prevState.error + result.error,
           newReviewerEmail: ""
         }));
-        return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0);
+        const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
+        return reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0, tags);
       },
       error => this.setState({ error, loading: false })
     )
@@ -104,7 +108,8 @@ class ReviewAssignmentComponent extends Component {
   }
 
   refreshSummary = () => {
-    reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0).then(
+    const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
+    reviewService.getReviewSummary(this.props.event ? this.props.event.id : 0, tags).then(
       result => {
         this.setState(prevState => ({
           reviewSummary: result.reviewSummary,

@@ -408,9 +408,9 @@ class ReviewSummaryAPI(restful.Resource):
     @event_admin_required
     def get(self, event_id):
         get_req_parser = reqparse.RequestParser()
-        get_req_parser.add_argument('tags', type=int, action="append", location='json')
+        get_req_parser.add_argument('tags[]', type=int, action="append")
         args = get_req_parser.parse_args()
-        tags = args['tags']
+        tags = args['tags[]']
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
         num_reviews_required = config.num_reviews_required if config is not None else 1
@@ -468,7 +468,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         num_reviews_required = config.num_reviews_required if config is not None else 1
 
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
-                                                      num_reviews_required)
+                                                      num_reviews_required, tags)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -497,7 +497,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if tags:
             filtered_candidates_responses = []
             for response in candidate_responses:
-                if all(rt.tag_id in tags for rt in response.response_tags):
+                if all(rt.tag_id in tags for rt in response.response_tags) and len(response.response_tags) == len(tags):
                     filtered_candidates_responses.append(response)
         else:
             filtered_candidates_responses = candidate_responses
