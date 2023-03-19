@@ -741,6 +741,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
                 if (review_score.review_question.type == 'multi-choice'
                     or review_score.review_question.type == 'long-text'
                     or review_score.review_question.type == 'short-text'
+                    or review_score.review_question.type == 'radio'
                     )
             ],
 
