@@ -74,9 +74,10 @@ class EventRepository(BaseRepository):
         )
 
     @staticmethod
-    def get_all_admin(event_id):
+    def get_event_admins(event_id):
         return (
-            db.session.query(EventRole).get(event_id)
-            .filter_by(role='admin')\
+            db.session.query(AppUser)
+            .join(EventRole, EventRole.user_id == AppUser.id)
+            .filter_by(event_id=event_id, role='admin')
             .all()
         )

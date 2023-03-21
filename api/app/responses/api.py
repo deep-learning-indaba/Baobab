@@ -109,9 +109,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_users = event_repository.get_all_admin(event_id=response.id)
-                    for admin_user in all_admin_users:
-                        self.send_confirmation(admin_user, response, admin_user=True)
+                    all_admin_event_roles = event_repository.get_event_admins(event_id=event.id)
+                    for admin_event_role in all_admin_event_roles:
+                        self.send_confirmation(admin_event_role.user, response, admin_user=True)
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
@@ -161,9 +161,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_users = event_repository.get_all_admin(event_id=response.application_form.event_id)
-                    for admin_user in all_admin_users:
-                        self.send_confirmation(admin_user, response, admin_user=True)
+                    all_admin_event_roles = event_repository.get_event_admins(event_id=event.id)
+                    for admin_event_role in all_admin_event_roles:
+                        self.send_confirmation(admin_event_role.user, response, admin_user=True)
         except:                
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:

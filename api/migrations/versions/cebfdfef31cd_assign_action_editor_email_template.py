@@ -44,8 +44,6 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    op.execute("""SELECT setval('email_template_id_seq', (SELECT max(id) FROM email_template));""")
-
     template = """Dear {title} {firstname} {lastname},
     
 A new application for {event_name} was received. Please assign an action editor to this application as soon as possible.
