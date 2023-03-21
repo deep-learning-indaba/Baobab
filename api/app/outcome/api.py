@@ -51,9 +51,10 @@ class OutcomeAPI(restful.Resource):
     def get(self):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_id', type=int, required=True)
         args = req_parser.parse_args()
 
-        user_id = g.current_user['id']
+        user_id = args['user_id']
         event_id = args['event_id']
 
         try:
@@ -74,6 +75,7 @@ class OutcomeAPI(restful.Resource):
     @marshal_with(outcome_fields)
     def post(self, event_id):
         req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
         args = req_parser.parse_args()
@@ -107,7 +109,7 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
-            if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates  
+            if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
                 email_user(
                     'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
                     template_parameters=dict(

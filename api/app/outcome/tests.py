@@ -84,7 +84,7 @@ class OutcomeApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.get(
                 '/api/v1/outcome', 
-                data={'event_id': self.event1.id},
+                data={'event_id': self.event1.id, 'user_id': self.test_user1.id},
                 headers=self.get_auth_header_for('something@email.com'))
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
@@ -97,7 +97,7 @@ class OutcomeApiTest(ApiTestCase):
         self.seed_static_data()
         response = self.app.get(
                 '/api/v1/outcome', 
-                data={'event_id': self.event2.id},
+                data={'event_id': self.event2.id, 'user_id': self.test_user2.id},
                 headers=self.get_auth_header_for('something_else@email.com'))
         self.assertEqual(response.status_code, 404)
 
