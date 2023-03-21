@@ -261,7 +261,6 @@ class EventAPI(EventMixin, restful.Resource):
             args['offer_close'],
             args['registration_open'],
             args['registration_close'],
-            EventType[args['event_type'].upper()],
             args['travel_grant'],
             args['miniconf_url']
         )
