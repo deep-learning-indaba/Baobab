@@ -109,9 +109,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_event_roles = event_repository.get_event_admins(event_id=event.id)
-                    for admin_event_role in all_admin_event_roles:
-                        self.send_confirmation(admin_event_role.user, response, admin_user=True)
+                    event_admins = event_repository.get_event_admins(event_id=event.id)
+                    for event_admin in event_admins:
+                        self.send_confirmation(event_admin, response)
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
@@ -161,9 +161,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 
                 event = event_repository.get_event_by_response_id(response.id)
                 if event.event_type == EventType.CONTINUOUS_JOURNAL:
-                    all_admin_event_roles = event_repository.get_event_admins(event_id=event.id)
-                    for admin_event_role in all_admin_event_roles:
-                        self.send_confirmation(admin_event_role.user, response, admin_user=True)
+                    event_admins = event_repository.get_event_admins(event_id=event.id)
+                    for event_admin in event_admins:
+                        self.send_confirmation(event_admin, response)
         except:                
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
@@ -203,7 +203,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         return {}, 204
 
-    def send_confirmation(self, user, response, admin_user=None):
+    def send_confirmation(self, user, response):
         try:
             answers = response.answers
             if not answers:
@@ -227,7 +227,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             else:
                 event_description = event.get_description('en')
 
-            if admin_user:
+            if user.is_event_admin(event.id):
                 emailer.email_user(
                 'assign-action-editor',
                 template_parameters=dict(
