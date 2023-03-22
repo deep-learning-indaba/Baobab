@@ -61,8 +61,8 @@ def event_info(user_id, event, status, language):
         'description': event.get_description(language),
         'key': event.key,
         'start_date': event.start_date.strftime("%d %B %Y"),
-        'end_date': event.end_date.strftime("%d %B %Y") if event.event_type != EventType.CONTINUOUS_JOURNAL else None,
-        'application_close_date': event.application_close.strftime("%d %B %Y") if event.event_type != EventType.CONTINUOUS_JOURNAL else None,
+        'end_date': event.end_date.strftime("%d %B %Y") if event.end_date is not None else None,
+        'application_close_date': event.application_close.strftime("%d %B %Y") if event.application_close is not None else None,
         'status': status_info(status),
         'email_from': event.email_from,
         'organisation_name': event.organisation.name,
@@ -159,7 +159,75 @@ def get_user_event_response_status(user_id, event_id):
     _log_application_status('not available')
     return "Application not available"
 
-
+def make_continuous_journal_event(
+    names,
+    descriptions,
+    start_date,
+    key,
+    organisation_id,
+    email_from,
+    url,
+    event_type,
+    travel_grant,
+    miniconf_url=None):
+    return Event(
+                names=names,
+                descriptions=descriptions,
+                start_date=start_date, 
+                end_date=None,
+                key=key,
+                organisation_id=organisation_id,
+                email_from=email_from,
+                url=url,
+                application_open=None,
+                application_close=None,
+                review_open=None,
+                review_close=None,
+                selection_open=None,
+                selection_close=None,
+                offer_open=None,
+                offer_close=None,
+                registration_open=None,
+                registration_close=None,
+                event_type=event_type,
+                travel_grant=travel_grant,
+                miniconf_url=miniconf_url
+    )
+    
+def update_continuous_journal_event(
+    event,
+    names,
+    descriptions,
+    start_date,
+    key,
+    organisation_id,
+    email_from,
+    url,
+    travel_grant,
+    miniconf_url=None):
+    return event.update(
+                names=names,
+                descriptions=descriptions,
+                start_date=start_date, 
+                end_date=None,
+                key=key,
+                organisation_id=organisation_id,
+                email_from=email_from,
+                url=url,
+                application_open=None,
+                application_close=None,
+                review_open=None,
+                review_close=None,
+                selection_open=None,
+                selection_close=None,
+                offer_open=None,
+                offer_close=None,
+                registration_open=None,
+                registration_close=None,
+                travel_grant=travel_grant,
+                miniconf_url=miniconf_url
+    )
+  
 class EventAPI(EventMixin, restful.Resource):
     @auth_required
     @marshal_with(event_fields)
@@ -201,30 +269,45 @@ class EventAPI(EventMixin, restful.Resource):
             args['registration_open'] and
             args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
             return EVENT_MUST_HAVE_DATES
+        
+        if EventType[args['event_type'].upper()] == EventType.CONTINUOUS_JOURNAL:
+            event = make_continuous_journal_event(
+                args['name'],
+                args['description'],
+                args['start_date'],
+                args['key'],
+                args['organisation_id'],
+                args['email_from'],
+                args['url'],
+                EventType[args['event_type'].upper()],
+                args['travel_grant'],
+                args['miniconf_url']
+            )
 
-        event = Event(
-            args['name'],
-            args['description'],
-            args['start_date'],
-            args['end_date'],
-            args['key'],
-            args['organisation_id'],
-            args['email_from'],
-            args['url'],
-            args['application_open'],
-            args['application_close'],
-            args['review_open'],
-            args['review_close'],
-            args['selection_open'],
-            args['selection_close'],
-            args['offer_open'],
-            args['offer_close'],
-            args['registration_open'],
-            args['registration_close'],
-            EventType[args['event_type'].upper()],
-            args['travel_grant'],
-            args['miniconf_url']
-        )
+        else:
+            event = Event(
+                args['name'],
+                args['description'],
+                args['start_date'],
+                args['end_date'],
+                args['key'],
+                args['organisation_id'],
+                args['email_from'],
+                args['url'],
+                args['application_open'],
+                args['application_close'],
+                args['review_open'],
+                args['review_close'],
+                args['selection_open'],
+                args['selection_close'],
+                args['offer_open'],
+                args['offer_close'],
+                args['registration_open'],
+                args['registration_close'],
+                EventType[args['event_type'].upper()],
+                args['travel_grant'],
+                args['miniconf_url']
+            )
 
         event.add_event_role('admin', user_id)
         event = event_repository.add(event)
@@ -268,28 +351,42 @@ class EventAPI(EventMixin, restful.Resource):
             args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
             return EVENT_MUST_HAVE_DATES
         
-        event.update(
-            args['name'],
-            args['description'],
-            args['start_date'],
-            args['end_date'],
-            args['key'],
-            args['organisation_id'],
-            args['email_from'],
-            args['url'],
-            args['application_open'],
-            args['application_close'],
-            args['review_open'],
-            args['review_close'],
-            args['selection_open'],
-            args['selection_close'],
-            args['offer_open'],
-            args['offer_close'],
-            args['registration_open'],
-            args['registration_close'],
-            args['travel_grant'],
-            args['miniconf_url']
-        )
+        if EventType[args['event_type'].upper()] == EventType.CONTINUOUS_JOURNAL:
+            update_continuous_journal_event(
+                event,
+                args['name'],
+                args['description'],
+                args['start_date'],
+                args['key'],
+                args['organisation_id'],
+                args['email_from'],
+                args['url'],
+                args['travel_grant'],
+                args['miniconf_url']
+            )
+        else:
+            event.update(
+                args['name'],
+                args['description'],
+                args['start_date'],
+                args['end_date'],
+                args['key'],
+                args['organisation_id'],
+                args['email_from'],
+                args['url'],
+                args['application_open'],
+                args['application_close'],
+                args['review_open'],
+                args['review_close'],
+                args['selection_open'],
+                args['selection_close'],
+                args['offer_open'],
+                args['offer_close'],
+                args['registration_open'],
+                args['registration_close'],
+                args['travel_grant'],
+                args['miniconf_url']
+            )
         db.session.commit()
 
         event = event_repository.get_by_id(event.id)

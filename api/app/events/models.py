@@ -12,7 +12,21 @@ class EventType(Enum):
     JOURNAL = 'journal'
     CONTINUOUS_JOURNAL = 'continuous_journal'
 
+def check_open(open, close):
+    now = datetime.now()
+    if open and close:
+        return now >= open and now < close
+    elif open:
+        return now >= open
+    elif close:
+        return now < close
+    return True
 
+def check_opening(open):
+    now = datetime.now()
+    if open:
+        return now < open
+    return True
 class Event(db.Model):
 
     __tablename__ = "event"
@@ -75,16 +89,16 @@ class Event(db.Model):
         self.organisation_id = organisation_id
         self.email_from = email_from
         self.url = url
-        self.application_open = None if event_type == EventType.CONTINUOUS_JOURNAL else application_open
-        self.application_close = None if event_type == EventType.CONTINUOUS_JOURNAL else application_close
-        self.review_open = None if event_type == EventType.CONTINUOUS_JOURNAL else review_open
-        self.review_close = None if event_type == EventType.CONTINUOUS_JOURNAL else review_close
-        self.selection_open = None if event_type == EventType.CONTINUOUS_JOURNAL else selection_open
-        self.selection_close = None if event_type == EventType.CONTINUOUS_JOURNAL else selection_close
-        self.offer_open = None if event_type == EventType.CONTINUOUS_JOURNAL else offer_open
-        self.offer_close = None if event_type == EventType.CONTINUOUS_JOURNAL else offer_close
-        self.registration_open = None if event_type == EventType.CONTINUOUS_JOURNAL else registration_open
-        self.registration_close = None if event_type == EventType.CONTINUOUS_JOURNAL else registration_close
+        self.application_open = application_open
+        self.application_close = application_close
+        self.review_open = review_open
+        self.review_close = review_close
+        self.selection_open = selection_open
+        self.selection_close = selection_close
+        self.offer_open = offer_open
+        self.offer_close = offer_close
+        self.registration_open = registration_open
+        self.registration_close = registration_close
         self.event_roles = []
         self.event_type = event_type
         self.travel_grant = travel_grant
@@ -208,21 +222,21 @@ class Event(db.Model):
                travel_grant,
                miniconf_url=None):
         self.start_date = start_date
-        self.end_date = None if self.event_type == EventType.CONTINUOUS_JOURNAL else end_date
+        self.end_date = end_date
         self.key = key
         self.organisation_id = organisation_id
         self.email_from = email_from
         self.url = url
-        self.application_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else application_open
-        self.application_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else application_close
-        self.review_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else review_open
-        self.review_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else review_close
-        self.selection_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else selection_open
-        self.selection_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else selection_close
-        self.offer_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else offer_open
-        self.offer_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else offer_close
-        self.registration_open = None if self.event_type == EventType.CONTINUOUS_JOURNAL else registration_open
-        self.registration_close = None if self.event_type == EventType.CONTINUOUS_JOURNAL else registration_close
+        self.application_open = application_open
+        self.application_close = application_close
+        self.review_open = review_open
+        self.review_close = review_close
+        self.selection_open = selection_open
+        self.selection_close = selection_close
+        self.offer_open = offer_open
+        self.offer_close = offer_close
+        self.registration_open = registration_open
+        self.registration_close = registration_close
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 
@@ -231,88 +245,51 @@ class Event(db.Model):
 
     @property
     def is_application_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return (now >= self.application_open and now < self.application_close)
+        return check_open(self.application_open, self.application_close)
 
     @property
-    def is_application_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.application_open
+    def is_application_opening(self):  
+        return check_opening(self.application_open)
 
     @property
     def is_review_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now >= self.review_open and now < self.review_close
+        return check_open(self.review_open, self.review_close)
 
     @property
-    def is_review_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.review_open
-        
+    def is_review_opening(self): 
+        return check_opening(self.registration_open)
 
     @property
     def is_selection_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now >= self.selection_open and now < self.selection_close
+        return check_open(self.selection_open, self.selection_close)
 
     @property
     def is_selection_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.selection_open
+        return check_opening(self.selection_open)
 
     @property
     def is_offer_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now >= self.offer_open and now < self.offer_close
+        return check_open(self.offer_open, self.offer_close)
 
     @property
     def is_offer_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.offer_open
+        return check_opening(self.offer_open)
 
     @property
     def is_registration_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now >= self.registration_open and now < self.registration_close
+        return check_open(self.registration_open, self.registration_close)
 
     @property
     def is_registration_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.registration_open
+        return check_opening(self.registration_open)
 
     @property
     def is_event_open(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now >= self.start_date and now <= self.end_date
+        return check_open(self.start_date, self.end_date)
 
     @property
     def is_event_opening(self):
-        if self.event_type == EventType.CONTINUOUS_JOURNAL:
-            return True
-        now = datetime.now()
-        return now < self.start_date
+        return check_opening(self.start_date)
 
 
 class EventTranslation(db.Model):
