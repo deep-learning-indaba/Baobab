@@ -204,6 +204,7 @@ def update_continuous_journal_event(
     organisation_id,
     email_from,
     url,
+    event_type,
     travel_grant,
     miniconf_url=None):
     return event.update(
@@ -225,6 +226,7 @@ def update_continuous_journal_event(
                 offer_close=None,
                 registration_open=None,
                 registration_close=None,
+                event_type=event_type,
                 travel_grant=travel_grant,
                 miniconf_url=miniconf_url
     )
@@ -359,6 +361,7 @@ class EventAPI(EventMixin, restful.Resource):
                 args['organisation_id'],
                 args['email_from'],
                 args['url'],
+                EventType[args['event_type'].upper()],
                 args['travel_grant'],
                 args['miniconf_url']
             )
@@ -383,7 +386,7 @@ class EventAPI(EventMixin, restful.Resource):
                 args['registration_open'],
                 args['registration_close'],
                 EventType[args['event_type'].upper()],
-            args['travel_grant'],
+                args['travel_grant'],
                 args['miniconf_url']
             )
         db.session.commit()
