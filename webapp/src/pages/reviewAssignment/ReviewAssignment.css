@@ -5,3 +5,32 @@
 .review-margin {
     margin: 1em;
 }
+
+.review-unallocated {
+    margin-bottom: 1em;
+    display: block;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.review-assignment-note {
+    margin-bottom: 1.5em;
+}
+
+.review-assignment-wrapper .heading {
+    color: grey;
+    font-weight: 300;
+    margin-top: 30px;
+    transition: 300ms;
+}
+
+.review-assignment-wrapper {
+    width: 87vw;
+    text-align: left;
+}
+
+.review-assignment-wrapper .tag-filter {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 1.1em;
+}

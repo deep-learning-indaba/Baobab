@@ -14,3 +14,10 @@
 .body {
   padding-top: 0em;
 }
+.required-indicator {
+  display: inline-block;
+  margin-left: -20px;
+  margin-right: 10px;
+  font-size: 0.8em;
+  color: #A84A43;
+}

@@ -142,11 +142,12 @@ function getReviewAssignments(eventId) {
     });
 }
 
-function assignReviews(eventId, reviewerUserEmail, numReviews) {
+function assignReviews(eventId, reviewerUserEmail, numReviews, tags) {
   let assignment = {
     event_id: eventId,
     reviewer_user_email: reviewerUserEmail,
-    num_reviews: numReviews
+    num_reviews: numReviews,
+    tags: tags
   };
 
   return axios
@@ -168,10 +169,11 @@ function assignReviews(eventId, reviewerUserEmail, numReviews) {
     });
 }
 
-function getReviewSummary(eventId) {
+function getReviewSummary(eventId, tags) {
   return axios
     .get(baseUrl + "/api/v1/reviewassignment/summary?event_id=" + eventId, {
-      headers: authHeader()
+      headers: authHeader(),
+      params: {tags: tags}
     })
     .then(function(response) {
       return {

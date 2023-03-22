@@ -5,6 +5,7 @@ import EventHome from "./pages/eventHome";
 import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
+import EventConfig from "./pages/eventConfig";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
@@ -132,6 +133,13 @@ class EventNav extends Component {
               )}
             {isEventAdmin(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
+                <NavLink
+                    to={`/${this.props.eventKey}/eventConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Edit Event Details')}
+                </NavLink>
                 <NavLink
                     to={`/${this.props.eventKey}/reviewAssignment`}
                     className="dropdown-item"
@@ -388,7 +396,7 @@ class AppComponent extends Component {
     const t = this.props.t;
     return (
       <Router history={history}>
-        <div>
+        <div class="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <a className="navbar-brand navbar-brand-main" href="/">
               <img
@@ -464,6 +472,17 @@ class AppComponent extends Component {
                   path="/createAccount"
                   render={props => (
                     <CreateAccount
+                      {...props}
+                      loggedIn={this.refreshUser}
+                      organisation={this.props.organisation}
+                    />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/eventConfig"
+                  render={props => (
+                    <EventConfig
                       {...props}
                       loggedIn={this.refreshUser}
                       organisation={this.props.organisation}

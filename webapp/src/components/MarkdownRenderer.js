@@ -14,14 +14,14 @@ function MarkdownRenderer(props) {
         remarkPlugins: [gfm],
         renderers: {
             ...props.renderers,
-            math: (props) => <BlockMath math={props.value}/>,
-            inlineMath: (props) => <InlineMath math={props.value}/>,
+            math: (props) => <span><BlockMath math={props.value}/></span>,
+            inlineMath: (props) => <span><InlineMath math={props.value}/></span>,
             link: (props) => <a href={props.href} target="_blank" rel="noopener noreferrer">{props.children}</a>
         }
       };
 
       return (
-        <div class="markdown-container"><ReactMarkdown {...newProps} /></div>
+        <div className="markdown-container"><ReactMarkdown {...newProps} /></div>
       );
 
 }

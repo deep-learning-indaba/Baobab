@@ -214,7 +214,7 @@ class ResponseListForm extends Component {
 
             // function
             function readColumns(rows) {
-                let tableColumns = ["response_id", "user", "start_date", "is_submitted", "is_withdrawn", "submitted_date", "tags"];
+                let tableColumns = ["response_id", "user", "email", "start_date", "is_submitted", "is_withdrawn", "submitted_date", "tags"];
                 rows.map(val => {
                     let newColumns = Object.keys(val);
                     newColumns.forEach(val => {
@@ -232,7 +232,7 @@ class ResponseListForm extends Component {
                     return 200
                 };
 
-                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date')) {
+                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date') || colItem.includes('email')) {
                     return 180
                 }
                 else {
@@ -243,9 +243,14 @@ class ResponseListForm extends Component {
             let col = readColumns(this.state.responseTable);
             
             // TODO: Make columns deterministic, add translations for headers
-            colFormat = col.map(val => ({ id: val, Header: val, accessor: val, className: "myCol", width: widthCalc(val) }));
+            colFormat = col.map(function (val) {
+                if (val === 'user' || val === 'email') {
+                    return { id: val, Header: val, accessor: val, className: "myCol", filterable: true, width: widthCalc(val) }
+                } else {
+                    return { id: val, Header: val, accessor: val, className: "myCol", filterable: false, width: widthCalc(val) }
+                }
+            });
         }
-
         return colFormat
     }
 
@@ -342,6 +347,14 @@ class ResponseListForm extends Component {
         // Generate Col
         const columns = this.generateCols();
         const renderReset = this.renderReset();
+
+        function filterText(filter, row) {
+            const id = filter.pivotId || filter.id;
+            return (
+                row[id] === undefined ||
+                    String(row[id].toLowerCase()).includes(filter.value.toLowerCase())
+            );
+        }
 
         return (
             <section className="response-list-wrapper">
@@ -454,6 +467,8 @@ class ResponseListForm extends Component {
                             data={responseTable ? responseTable : []}
                             columns={columns}
                             minRows={0}
+                            filterable
+                            defaultFilterMethod={(filter, row) => filterText(filter, row)}
                         />
                     }
                 </div>

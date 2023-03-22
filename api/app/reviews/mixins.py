@@ -19,19 +19,15 @@ class PostReviewResponseMixin(object):
     post_req_parser.add_argument('language', type=str, required=True)
     post_req_parser.add_argument('is_submitted', type=bool, required=True)
 
-class GetReviewSummaryMixin(object):
-    get_req_parser = reqparse.RequestParser()
-    get_req_parser.add_argument('event_id', type=int, required=True)
-
 class GetReviewAssignmentMixin(object):
     get_req_parser = reqparse.RequestParser()
     get_req_parser.add_argument('event_id', type=int, required=True)
 
 class PostReviewAssignmentMixin(object):
     post_req_parser = reqparse.RequestParser()
-    post_req_parser.add_argument('event_id', type=int, required=True)
     post_req_parser.add_argument('reviewer_user_email', type=str, required=True)
     post_req_parser.add_argument('num_reviews', type=int, required=True)
+    post_req_parser.add_argument('tags', type=int, action="append", location='json')
 
 class GetReviewHistoryMixin(object):
     get_req_parser = reqparse.RequestParser()
