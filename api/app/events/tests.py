@@ -414,6 +414,35 @@ class EventAPITest(ApiTestCase):
         'event_type':'EVENT',
         'travel_grant': False
     }
+    
+    test_continuous_journal_data_dict = {
+        'name': {
+            'en': 'Test Continuous Journal',
+            'fr': 'evenement de test'
+        },
+        'description': {
+            'en': 'Test Continuous Journal Description',
+            'fr': "Description de l'evenement de test"
+        },
+        'start_date': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'end_date': None,
+        'key': 'testjournalevent',
+        'organisation_id': 1,
+        'email_from': 'test@testindaba.com',
+        'url': 'testindaba.com',
+        'application_open': None,
+        'application_close': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'review_open': None,
+        'review_close': None,
+        'selection_open': None,
+        'selection_close': None,
+        'offer_open': None,
+        'offer_close': None,
+        'registration_open': None,
+        'registration_close': None,
+        'event_type':'CONTINUOUS_JOURNAL',
+        'travel_grant': False
+    }
 
     def seed_static_data(self):
         self.add_organisation('Test Indaba', 'blah.png',
@@ -518,6 +547,41 @@ class EventAPITest(ApiTestCase):
         for event_role in data['roles']:
             if event_role['event_id'] == event_data['id']:
                 self.assertEqual(data['roles'][0]['role'], 'admin')
+                
+    def test_post_event_missing_date(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        current_end = self.test_event_data_dict['end_date']
+        self.test_event_data_dict['end_date'] = None
+        response = self.app.post(
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
+        self.test_event_data_dict['end_date'] = current_end
+        self.assertEqual(response.status_code, 400)
+        
+    def test_post_event_continuous_journal(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        response = self.app.post(
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_continuous_journal_data_dict),
+            content_type='application/json')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(data['end_date'], None)
+        self.assertEqual(data['application_open'], None)
+        self.assertEqual(data['application_close'], None)
+        self.assertEqual(data['review_open'], None)
+        self.assertEqual(data['review_close'], None)
+        self.assertEqual(data['selection_open'], None)
+        self.assertEqual(data['selection_close'], None)
+        self.assertEqual(data['offer_open'], None)
+        self.assertEqual(data['offer_close'], None)
+        self.assertEqual(data['registration_open'], None)
+        self.assertEqual(data['registration_close'], None)
 
     def test_put_event_is_admin(self):
         self.seed_static_data()
@@ -616,6 +680,56 @@ class EventAPITest(ApiTestCase):
             content_type='application/json'
         )
 
+        self.assertEqual(response.status_code, 400)
+        
+    def test_put_event_continuous_journal(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        # update(put) event
+        self.test_continuous_journal_data_dict['id'] = 2
+        self.test_continuous_journal_data_dict['name'] = {'en': 'Test Continuous Journal'}
+        self.test_continuous_journal_data_dict['description'] = {'en': 'Test Continuous Journal Description'}
+        self.test_continuous_journal_data_dict['end_date'] = datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ')
+        
+        response = self.app.post(
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_continuous_journal_data_dict),
+            content_type='application/json')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        
+        response = self.app.put(
+            'api/v1/event',
+            headers=header,
+            data=json.dumps(self.test_continuous_journal_data_dict),
+            content_type='application/json')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['end_date'], None)
+        self.assertEqual(data['application_open'], None)
+        self.assertEqual(data['application_close'], None)
+        self.assertEqual(data['review_open'], None)
+        self.assertEqual(data['review_close'], None)
+        self.assertEqual(data['selection_open'], None)
+        self.assertEqual(data['selection_close'], None)
+        self.assertEqual(data['offer_open'], None)
+        self.assertEqual(data['offer_close'], None)
+        self.assertEqual(data['registration_open'], None)
+        self.assertEqual(data['registration_close'], None)
+        
+    def test_put_event_missing_date(self):
+        self.seed_static_data()
+        header = self.get_auth_header_for(self.test_admin_user.email)
+        self.test_event_data_dict['id'] = 1
+        self.test_event_data_dict['name'] = {'en': 'Update Test Continuous Journal'}
+        self.test_event_data_dict['description'] = {'en': 'Update Test Continuous Journal Description'}
+        self.test_event_data_dict['end_date'] = None
+        response = self.app.post(
+            'api/v1/event',
+            headers=header, 
+            data=json.dumps(self.test_event_data_dict),
+            content_type='application/json')
         self.assertEqual(response.status_code, 400)
 
 
