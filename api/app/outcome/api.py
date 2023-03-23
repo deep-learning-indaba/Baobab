@@ -46,9 +46,9 @@ outcome_list_fields = {
 
 
 class OutcomeAPI(restful.Resource):
-    @auth_required
+    @event_admin_required
     @marshal_with(outcome_fields)
-    def get(self):
+    def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('event_id', type=int, required=True)
         req_parser.add_argument('user_id', type=int, required=True)

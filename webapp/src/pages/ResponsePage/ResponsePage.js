@@ -30,7 +30,6 @@ class ResponsePage extends Component {
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null,
-            checkOutcome: true,
             outcome: {'status':null,'timestamp':null},
         }
     };
@@ -53,8 +52,8 @@ class ResponsePage extends Component {
                 tagList: responses[3].tags,
                 reviewers: responses[4].reviewers,
                 error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
-                isLoading: false
             }, this.handleData);
+            this.getOutcome();
         });
     };
 
@@ -72,7 +71,6 @@ class ResponsePage extends Component {
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null
-
         });
     };
 
@@ -111,7 +109,6 @@ class ResponsePage extends Component {
     };
 
     getOutcome() {
-        if (this.state.checkOutcome) {
             outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
                 if (response.status === 200) {
                     const newOutcome = {
@@ -129,12 +126,10 @@ class ResponsePage extends Component {
                 }
                 this.setState(
                     {
-                        checkOutcome: false,
+                        isLoading: false
                     }
                 )
-                
             });
-        }
     };
 
     submitOutcome(selectedOutcome) {
@@ -159,7 +154,6 @@ class ResponsePage extends Component {
         
         if (data) {
 
-            this.getOutcome();
             if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
                 if (this.state.outcome.status === 'ACCEPTED') {
                     return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
@@ -217,7 +211,7 @@ class ResponsePage extends Component {
                             type="button"
                             class="btn btn-success"
                             id="accept"
-                            onClick={(e) => this.goBack(e)}>
+                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
                             Accept
                         </button>
                     </div>
@@ -226,7 +220,7 @@ class ResponsePage extends Component {
                             type="button"
                             class="btn btn-danger"
                             id="reject"
-                            onClick={(e) => this.goBack(e)}>
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
                             Reject
                         </button>
                     </div>    
@@ -237,18 +231,9 @@ class ResponsePage extends Component {
                     <div className="user-details">
                         <button
                             type="button"
-                            class="btn btn-success"
-                            id="accept"
-                            onClick={(e) => this.goBack(e)}>
-                            Accept
-                        </button>
-                    </div>
-                    <div className="user-details">
-                        <button
-                            type="button"
                             class="btn btn-danger"
                             id="reject"
-                            onClick={(e) => this.goBack(e)}>
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
                             Reject
                         </button>
                     </div>    
@@ -256,8 +241,8 @@ class ResponsePage extends Component {
                     <button
                         type="button"
                         class="btn btn-warning"
-                        id="accept"
-                        onClick={(e) => this.goBack(e)}>
+                        id="waitlist"
+                        onClick={(e) => this.submitOutcome('WAITLIST')}>
                         Waitlist
                     </button>
                 </div>

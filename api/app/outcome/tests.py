@@ -85,7 +85,7 @@ class OutcomeApiTest(ApiTestCase):
         response = self.app.get(
                 '/api/v1/outcome', 
                 data={'event_id': self.event1.id, 'user_id': self.test_user1.id},
-                headers=self.get_auth_header_for('something@email.com'))
+                headers=self.get_auth_header_for('event1admin@email.com'))
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['id'], self.event1_user1_outcome2_id)
@@ -98,8 +98,17 @@ class OutcomeApiTest(ApiTestCase):
         response = self.app.get(
                 '/api/v1/outcome', 
                 data={'event_id': self.event2.id, 'user_id': self.test_user2.id},
-                headers=self.get_auth_header_for('something_else@email.com'))
+                headers=self.get_auth_header_for('event2admin@email.com'))
         self.assertEqual(response.status_code, 404)
+        
+    def test_get_outcome_non_event_admin(self):
+        """Test that a forbidden status is given when the logged in user is not an event admin and tries to get outcome."""
+        self.seed_static_data()
+        response = self.app.get(
+                '/api/v1/outcome', 
+                data={'event_id': self.event2.id, 'user_id': self.test_user2.id},
+                headers=self.get_auth_header_for('something@email.com'))
+        self.assertEqual(response.status_code, 403)
 
     def test_outcome_post_non_event_admin(self):
         """Test that a forbidden status is given when the logged in user is not an event admin."""
