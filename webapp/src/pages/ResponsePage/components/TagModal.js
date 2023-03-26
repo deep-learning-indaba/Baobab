@@ -28,7 +28,7 @@ class TagModal extends Component {
         let addTags = tags;
     
         if (event.target.value) {
-            addTags[label] = { headline: event.target.value, id: label }
+            addTags[label] = event.target.value
         }
         else {
            delete addTags[label]
