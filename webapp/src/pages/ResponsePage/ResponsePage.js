@@ -142,7 +142,6 @@ class ResponsePage extends Component {
     // Render Reviews
     renderCompleteReviews(){
         if (this.state.reviewResponses) {
-            console.log('review',this.state.reviewResponses, this.state.applicationData.reviewers)
                 const reviews = this.state.reviewResponses.map((val, index) => {
                     let num = index + 1;
                     return <div className="section">
