@@ -12,8 +12,12 @@ def _serialize_tag_detail(tag):
     result = {
         'id': tag.id,
         'event_id': tag.event_id,
+        'type': tag.type,
         'name': {
             t.language: t.name for t in tag.translations
+        },
+        'description': {
+            t.language: t.description for t in tag.translations
         }
     }
     return result
@@ -28,7 +32,9 @@ def _serialize_tag(tag, language):
     return {
         'id': tag.id,
         'event_id': tag.event_id,
-        'name': translation.name
+        'type': tag.type,
+        'name': translation.name,
+        'description': translation.description
     }
 
 class TagAPI(restful.Resource):
@@ -50,12 +56,16 @@ class TagAPI(restful.Resource):
     def post(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('name', type=dict, required=True)
+        req_parser.add_argument('type', type=str, required=True)
+        req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         name_translations = args['name']
+        description_translations = args['description']
 
-        tag = Tag(event_id)
+        tag = Tag(event_id, args['type'])
         for language, name in name_translations.items():
-            tag.translations.append(TagTranslation(tag.id, language, name))
+            description = description_translations.get(language)
+            tag.translations.append(TagTranslation(tag.id, language, name, description))
         tag_repository.add_tag(tag)
 
         return _serialize_tag_detail(tag), 201
@@ -65,9 +75,12 @@ class TagAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('name', type=dict, required=True)
+        req_parser.add_argument('type', type=str, required=True)
+        req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         id = args['id']
         name_translations = args['name']
+        description_translations = args['description']
 
         tag = tag_repository.get_by_id(id)
         if not tag or tag.event_id != event_id:
@@ -75,10 +88,12 @@ class TagAPI(restful.Resource):
 
         for language, name in name_translations.items():
             translation = tag.get_translation(language)
+            description = description_translations.get(language)
             if translation:
                 translation.name = name
+                translation.description = description
             else:
-                tag.translations.append(TagTranslation(tag.id, language, name))
+                tag.translations.append(TagTranslation(tag.id, language, name, description))
 
         for translation in tag.translations:
             if translation.language not in name_translations:
