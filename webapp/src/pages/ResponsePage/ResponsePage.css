@@ -220,6 +220,12 @@ html .headings-lower label {
     font-size: 13px;
 }
 
+.reviewers-section h4 {
+    font-size: 17px;
+    /* color: gray; */
+    font-weight: bold;
+}
+
 .reviewers-section h5 {
     margin-top: 11px;
     color: grey;

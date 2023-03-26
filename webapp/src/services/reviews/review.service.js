@@ -13,6 +13,7 @@ export const reviewService = {
   getReviewHistory,
   getReviewList,
   getResponseReview,
+  getResponseReviewAdmin,
   assignResponsesToReviewer,
   deleteResponseReviewer,
   getReviewDetails,
@@ -70,6 +71,28 @@ function getReviewResponse(id) {
 function getResponseReview(responseId, eventId) {
   return axios
     .get(baseUrl + `/api/v1/responsereview?response_id=${responseId}&event_id=${eventId}`, {
+      headers: authHeader()
+    })
+    .then(function(response) {
+      return {
+        form: response.data,
+        error: ""
+      };
+    })
+    .catch(function(error) {
+      return {
+        form: null,
+        error:
+          error.response && error.response.data
+            ? error.response.data.message
+            : error.message
+      };
+    });
+}
+
+function getResponseReviewAdmin(responseId, eventId, reviewerUserId) {
+  return axios
+    .get(baseUrl + `/api/v1/responsereview-admin?response_id=${responseId}&event_id=${eventId}&reviewer_user_id=${reviewerUserId}`, {
       headers: authHeader()
     })
     .then(function(response) {

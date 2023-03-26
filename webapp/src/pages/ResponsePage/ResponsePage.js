@@ -29,6 +29,7 @@ class ResponsePage extends Component {
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null,
+            reviewResponses: [],
         }
     };
 
@@ -39,7 +40,6 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
-            reviewService.getReviewAssignments(this.props.event.id)
         ]).then(responses => {
             console.log(responses);
             this.setState({
@@ -47,13 +47,23 @@ class ResponsePage extends Component {
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[4].reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
-                isLoading: false
-            }, this.handleData);
-        });
+                reviewers: responses[2].detail.reviewers,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+            }, this.handleData, this.getReviewResponses(responses[2].detail, responses[2].detail.reviewers));
+    });
     };
 
+    getReviewResponses(applicationData, reviewers) {
+        reviewers.map((val, index) => {
+            let num = index + 1;
+            reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id, val.reviewer_user_id)
+            .then(resp => {
+                this.state.reviewResponses.push(resp.form);
+                this.setState({isLoading: false});
+            }
+            );
+        });
+    }
 
     // Misc Functions
 
@@ -105,6 +115,52 @@ class ResponsePage extends Component {
             };
         };
     };
+
+    renderReviewResponse(review_response, section) {
+        const questions = section.review_questions.map(q => {
+            const a = review_response.scores.find(a => a.review_question_id === q.id);
+            if (q.type === "information") {
+                return <h4>{q.headline}</h4>
+            };
+
+            if (a) {
+                return <div>
+            <div key={q.question_id} className="question-answer-block">
+                <p><span className="question-headline">{q.headline}</span>
+                    {q.description && a && <span className="question-description"><br/>{q.description}</span>}
+                </p>
+                <h6><AnswerValue answer={a} question={q} /></h6>
+            </div>
+            </div>
+            }
+            
+            
+        });
+        return questions
+    };
+
+    // Render Reviews
+    renderCompleteReviews(){
+        if (this.state.reviewResponses) {
+            console.log('review',this.state.reviewResponses, this.state.applicationData.reviewers)
+                const reviews = this.state.reviewResponses.map((val, index) => {
+                    let num = index + 1;
+                    return <div className="section">
+                        {val.review_response.is_submitted === true &&
+                            
+                            <h4
+                                className="reviewer-section" >
+                                {this.props.t("Reviewer Feedback from " + val.reviewer.firstname + " " + val.reviewer.lastname)}
+                            </h4>
+                        }
+                        {this.renderReviewResponse(val.review_response, val.review_form.review_sections[0])}
+                    </div>
+                });
+                return reviews
+            }
+        
+    }
+
 
     // Render Sections
     renderSections() {
@@ -562,7 +618,7 @@ class ResponsePage extends Component {
                                     </button>
                                 </div>
                             </div>
-
+                            {this.renderCompleteReviews()}
                             <div className="divider"></div>
                         </div>
 
