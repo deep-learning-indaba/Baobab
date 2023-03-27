@@ -61,8 +61,6 @@ class Answer(db.Model):
 
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)
-    submission_id = db.Column(db.Integer(), db.ForeignKey("response.submission_id"), nullable=False)
-    version_id = db.Column(db.Integer(), db.ForeignKey("response.version_id"), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey("question.id"), nullable=False)
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
