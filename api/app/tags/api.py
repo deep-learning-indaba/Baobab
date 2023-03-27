@@ -12,7 +12,7 @@ def _serialize_tag_detail(tag):
     result = {
         'id': tag.id,
         'event_id': tag.event_id,
-        'tag_type': tag.tag_type,
+        'tag_type': tag.tag_type.value.upper(),
         'name': {
             t.language: t.name for t in tag.translations
         },
@@ -32,7 +32,7 @@ def _serialize_tag(tag, language):
     return {
         'id': tag.id,
         'event_id': tag.event_id,
-        'tag_type': tag.tag_type,
+        'tag_type': tag.tag_type.value.upper(),
         'name': translation.name,
         'description': translation.description
     }
@@ -62,7 +62,7 @@ class TagAPI(restful.Resource):
         name_translations = args['name']
         description_translations = args['description']
 
-        tag = Tag(event_id, args['type'])
+        tag = Tag(event_id, args['tag_type'])
         for language, name in name_translations.items():
             description = description_translations.get(language)
             tag.translations.append(TagTranslation(tag.id, language, name, description))
@@ -85,6 +85,8 @@ class TagAPI(restful.Resource):
         tag = tag_repository.get_by_id(id)
         if not tag or tag.event_id != event_id:
             return errors.TAG_NOT_FOUND
+    
+        tag.tag_type = args['tag_type']
 
         for language, name in name_translations.items():
             translation = tag.get_translation(language)
