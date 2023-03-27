@@ -25,7 +25,7 @@ from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
 from app.reviews.models import ReviewConfiguration, ReviewForm, ReviewSection, ReviewSectionTranslation, ReviewResponse, ReviewQuestion, ReviewQuestionTranslation, ReviewScore
-from app.tags.models import Tag, TagTranslation
+from app.tags.models import Tag, TagTranslation, TagType
 
 
 @event.listens_for(Engine, "connect")
@@ -449,12 +449,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return guest
 
-    def add_tag(self, event_id=1, names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}):
-        tag = Tag(event_id)
+    def add_tag(self, event_id=1, type=TagType.RESPONSE, names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}, descriptions={'en': 'Tag 1 en description', 'fr': 'Tag 1 fr description'}):
+        tag = Tag(event_id, type)
         db.session.add(tag)
         db.session.commit()
         translations = [
-            TagTranslation(tag.id, k, name) for k, name in names.items()
+            TagTranslation(tag.id, k, name, descriptions[k]) for k, name in names.items()
         ]
         db.session.add_all(translations)
         db.session.commit()

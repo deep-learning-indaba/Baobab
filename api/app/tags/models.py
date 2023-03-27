@@ -1,10 +1,9 @@
-from datetime import datetime
 from app import db
-from app.events.models import Event
 from enum import Enum
 
 class TagType(Enum):
-    REGISTERED = 'registered'
+    RESPONSE = 'response'
+    REGISTRATION = 'registration'
 
 class Tag(db.Model):
     __tablename__ = 'tag'
@@ -17,7 +16,7 @@ class Tag(db.Model):
     def __init__(
             self, 
             event_id,
-            type
+            tag_type
         ):
         self.event_id = event_id
         self.type = type
