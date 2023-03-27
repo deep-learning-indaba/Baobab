@@ -1025,7 +1025,7 @@ class ApplicationListComponent extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return  (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission " + response.id) : this.props.t("Self Nomination");
+    return  (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
@@ -1048,7 +1048,7 @@ class ApplicationListComponent extends Component {
 
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
-    let title = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
+    const title = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
     let firstColumn = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") : this.props.t("Nominee");
     return <div>
       <h4>{title}</h4>
