@@ -52,8 +52,10 @@ class ResponsePage extends Component {
                 tagList: responses[3].tags,
                 reviewers: responses[4].reviewers,
                 error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
-            }, this.handleData);
-            this.getOutcome();
+            }, () => {
+                this.handleData(); 
+                this.getOutcome();
+            });
         });
     };
 
