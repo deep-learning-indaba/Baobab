@@ -1,6 +1,6 @@
 import json
 from app.utils.testing import ApiTestCase
-from app.tags.models import Tag, TagTranslation, TagType
+from app.tags.models import Tag, TagTranslation
 from app import db
 
 class ReviewsApiTest(ApiTestCase):
@@ -10,8 +10,8 @@ class ReviewsApiTest(ApiTestCase):
         self.user1 = self.add_user('event1admin@mail.com')
         self.user2 = self.add_user('event2admin@mail.com')
         self.user3 = self.add_user('user@mail.com')
-        self.tag_type1 = TagType.RESPONSE
-        self.tag_type2 = TagType.REGISTRATION
+        self.tag_type1 = 'RESPONSE'
+        self.tag_type2 = 'REGISTRATION'
 
         self.event1.add_event_role('admin', self.user1.id)
         self.event2.add_event_role('admin', self.user2.id)
@@ -51,7 +51,7 @@ class ReviewsApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(data['id'], 1)
         self.assertEqual(data['event_id'], 1)
-        self.assertEqual(data['type'],  TagType.RESPONSE)
+        self.assertEqual(data['type'], 'RESPONSE')
         self.assertDictEqual(data['name'], {
             'en': 'English Tag 1 Event 1',
             'fr': 'French Tag 1 Event 1'
@@ -80,7 +80,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         params = {
             'event_id': 2,
-            'type': TagType.RESPONSE,
+            'type': 'RESPONSE',
             'name': {
                 'en': 'English Tag 2 Event 2',
                 'fr': 'French Tag 2 Event 2',
@@ -104,7 +104,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['id'], new_id)
         self.assertEqual(data['event_id'], 2)
-        self.assertEqual(data['type'],  TagType.RESPONSE)
+        self.assertEqual(data['type'], 'RESPONSE')
         self.assertDictEqual(data['name'], {
             'en': 'English Tag 2 Event 2',
             'fr': 'French Tag 2 Event 2'
@@ -119,7 +119,7 @@ class ReviewsApiTest(ApiTestCase):
         self.seed_static_data()
         params = {
             'event_id': 2,
-            'type': TagType.RESPONSE,
+            'type': 'RESPONSE',
             'name': {
                 'en': 'English Tag 2 Event 2',
                 'fr': 'French Tag 2 Event 2',
@@ -144,7 +144,7 @@ class ReviewsApiTest(ApiTestCase):
         params = {
             'id': 2,
             'event_id': 1,
-            'type': TagType.REGISTRATION,
+            'type': 'REGISTRATION',
             'name': {
                 'en': 'Renamed English Name',  # Rename
                 'zu': 'Zulu Name'
@@ -167,7 +167,7 @@ class ReviewsApiTest(ApiTestCase):
 
         self.assertEqual(data['id'], 2)
         self.assertEqual(data['event_id'], 1)
-        self.assertEqual(data['type'],  TagType.REGISTRATION)
+        self.assertEqual(data['type'], 'REGISTRATION')
         self.assertDictEqual(data['name'], {
             'en': 'Renamed English Name',
             'zu': 'Zulu Name'
@@ -191,12 +191,12 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['id'], 1)
         self.assertEqual(data[0]['event_id'], 1)
-        self.assertEqual(data[0]['type'], TagType.RESPONSE)
+        self.assertEqual(data[0]['type'], 'RESPONSE')
         self.assertEqual(data[0]['name'], 'English Tag 1 Event 1')
         self.assertEqual(data[0]['description'], 'English Tag 1 Event 1 Description')
         self.assertEqual(data[1]['id'], 2)
         self.assertEqual(data[1]['event_id'], 1)
-        self.assertEqual(data[1]['type'], TagType.REGISTRATION)
+        self.assertEqual(data[1]['type'], 'REGISTRATION')
         self.assertEqual(data[1]['name'], 'English Tag 2 Event 1')
         self.assertEqual(data[1]['description'], 'English Tag 2 Event 1 Description')
 
@@ -211,12 +211,12 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['id'], 1)
         self.assertEqual(data[0]['event_id'], 1)
-        self.assertEqual(data[0]['type'], TagType.RESPONSE)
+        self.assertEqual(data[0]['type'], 'RESPONSE')
         self.assertEqual(data[0]['name'], 'French Tag 1 Event 1')
         self.assertEqual(data[0]['description'], 'French Tag 1 Event 1 Description')
         self.assertEqual(data[1]['id'], 2)
         self.assertEqual(data[1]['event_id'], 1)
-        self.assertEqual(data[1]['type'], TagType.REGISTRATION)
+        self.assertEqual(data[1]['type'], 'REGISTRATION')
         self.assertEqual(data[1]['name'], 'French Tag 2 Event 1')
         self.assertEqual(data[1]['description'], 'French Tag 2 Event 1 Description')
 
@@ -235,6 +235,6 @@ class ReviewsApiTest(ApiTestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]['id'], 3)
         self.assertEqual(data[0]['event_id'], 2)
-        self.assertEqual(data[0]['type'], TagType.RESPONSE)
+        self.assertEqual(data[0]['type'], 'RESPONSE')
         self.assertEqual(data[0]['name'], 'English Tag 1 Event 2')
         self.assertEqual(data[0]['description'], 'English Tag 1 Event 2 Description')
