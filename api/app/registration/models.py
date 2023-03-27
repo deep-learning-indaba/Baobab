@@ -1,8 +1,9 @@
-from app import db
-from app.invoice.models import PaymentStatus
 from datetime import datetime, date, time
 from sqlalchemy import func
 
+from app import db
+from app.invoice.models import PaymentStatus
+from app.tags.models import Tag
 
 class Offer(db.Model):
 
@@ -26,6 +27,7 @@ class Offer(db.Model):
     payment_amount = db.Column(db.String(), nullable=True)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
+    #offer_tags = db.relationship('OfferTag')
     offer_invoices = db.relationship('OfferInvoice')
 
     def is_expired(self):
@@ -42,6 +44,18 @@ class Offer(db.Model):
             if offer_invoice.invoice.current_payment_status.payment_status in valid_payment_statuses:
                 return True
         return False
+
+""" class OfferTag(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+
+    offer = db.relationship('Offer', foreign_keys=[user_id])
+    tag = db.relationship('Tag', foreign_keys=[tag_id])
+
+    def __init__(self, user_id, tag_id):
+        self.user_id = user_id
+        self.tag_id = tag_id """
 
 class RegistrationForm(db.Model):
 
