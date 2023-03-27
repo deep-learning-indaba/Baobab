@@ -12,7 +12,7 @@ def _serialize_tag_detail(tag):
     result = {
         'id': tag.id,
         'event_id': tag.event_id,
-        'type': tag.type,
+        'tag_type': tag.tag_type,
         'name': {
             t.language: t.name for t in tag.translations
         },
@@ -32,7 +32,7 @@ def _serialize_tag(tag, language):
     return {
         'id': tag.id,
         'event_id': tag.event_id,
-        'type': tag.type,
+        'tag_type': tag.tag_type,
         'name': translation.name,
         'description': translation.description
     }
@@ -56,7 +56,7 @@ class TagAPI(restful.Resource):
     def post(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('name', type=dict, required=True)
-        req_parser.add_argument('type', type=str, required=True)
+        req_parser.add_argument('tag_type', type=str, required=True)
         req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         name_translations = args['name']
@@ -75,7 +75,7 @@ class TagAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('name', type=dict, required=True)
-        req_parser.add_argument('type', type=str, required=True)
+        req_parser.add_argument('tag_type', type=str, required=True)
         req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         id = args['id']

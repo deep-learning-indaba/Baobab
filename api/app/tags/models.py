@@ -9,7 +9,7 @@ class Tag(db.Model):
     __tablename__ = 'tag'
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
-    type = db.Column(db.Enum(TagType), nullable=True)
+    tag_type = db.Column(db.Enum(TagType), nullable=True)
 
     translations = db.relationship('TagTranslation', lazy='dynamic')
 
@@ -19,7 +19,7 @@ class Tag(db.Model):
             tag_type
         ):
         self.event_id = event_id
-        self.type = type
+        self.tag_type = tag_type
     
     def get_translation(self, language):
         translation = self.translations.filter_by(language=language).first()
