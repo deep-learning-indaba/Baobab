@@ -1,5 +1,5 @@
 from app import db
-from app.invitedGuest.models import InvitedGuest, GuestRegistration
+from app.invitedGuest.models import InvitedGuest, GuestRegistration, InvitedGuestTag
 from app.registration.models import RegistrationForm
 
 class InvitedGuestRepository():
@@ -18,3 +18,15 @@ class InvitedGuestRepository():
                 .filter(RegistrationForm.event_id == event_id)
                 .first())
 
+    @staticmethod
+    def tag_invited_guest(invited_guest_id, tag_id):
+        invited_guest_tag = InvitedGuestTag(invited_guest_id, tag_id)
+        db.session.add(invited_guest_tag)
+        db.session.commit()
+
+    @staticmethod
+    def remove_tag_from_invited_guest(invited_guest_id, tag_id):
+        (db.session.query(InvitedGuestTag)
+         .filter_by(invited_guest_id=invited_guest_id, tag_id=tag_id)
+         .delete())
+        db.session.commit()

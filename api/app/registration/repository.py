@@ -1,5 +1,5 @@
 from app import db
-from app.registration.models import Offer, Registration, RegistrationForm
+from app.registration.models import Offer, Registration, RegistrationForm, OfferTag
 from sqlalchemy import and_, func, cast, Date
 
 
@@ -50,6 +50,19 @@ class OfferRepository():
                         .order_by(cast(Offer.responded_at, Date))
                         .all())
         return timeseries
+    
+    @staticmethod
+    def tag_offer(offer_id, tag_id):
+        offer_tag = OfferTag(offer_id, tag_id)
+        db.session.add(offer_tag)
+        db.session.commit()
+
+    @staticmethod
+    def remove_tag_from_offer(offer_id, tag_id):
+        (db.session.query(OfferTag)
+         .filter_by(offer_id=offer_id, tag_id=tag_id)
+         .delete())
+        db.session.commit()
 
 class RegistrationRepository():
     @staticmethod
