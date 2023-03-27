@@ -54,7 +54,7 @@ A new application for {event_name} was received. Please assign an action editor 
 
     template = """Dear {title} {firstname} {lastname},
     
-A new application {event_name} was received but has not been assigned to an action editor yet. Please assign an action editor to this application as soon as possible.
+A new application for {event_name} was received but has not been assigned to an action editor yet. Please assign an action editor to this application as soon as possible.
 
 """
 
