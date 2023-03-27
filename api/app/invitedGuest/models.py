@@ -10,8 +10,8 @@ class InvitedGuest(db.Model):
     user_id = db.Column(db.Integer(), db.ForeignKey(
         "app_user.id"), nullable=False)
     role = db.Column(db.String(50), nullable=False)
-    invited_guest_tags = db.relationship('InvitedGuestTag')
 
+    invited_guest_tags = db.relationship('InvitedGuestTag')
 
     def __init__(self, event_id, user_id, role):
         self.event_id = event_id
@@ -20,16 +20,15 @@ class InvitedGuest(db.Model):
 
 class InvitedGuestTag(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    invited_guest_id = db.Column(db.Integer(), db.ForeignKey('invited_guest.id'), nullable=False)
     tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
 
-    invited_guest = db.relationship('InvitedGuest', foreign_keys=[user_id])
+    invited_guest = db.relationship('InvitedGuest', foreign_keys=[invited_guest_id])
     tag = db.relationship('Tag', foreign_keys=[tag_id])
 
-    def __init__(self, user_id, tag_id):
-        self.user_id = user_id
+    def __init__(self, invited_guest_id, tag_id):
+        self.invited_guest_id = invited_guest_id
         self.tag_id = tag_id
-
 
 class GuestRegistration(db.Model):
     __tablename__ = "guest_registration"
