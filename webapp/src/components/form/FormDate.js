@@ -20,9 +20,6 @@ class FormDate extends React.Component {
     if (nextProps.showFocus) {
       this.dateInput.focus();
     }
-
-
-
   }
 
   onChange = value => {

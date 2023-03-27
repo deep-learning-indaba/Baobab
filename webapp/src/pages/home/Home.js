@@ -6,7 +6,6 @@ import { organisationService } from "../../services/organisation/organisation.se
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
 
-
 class Home extends Component {
 
     constructor(props) {
@@ -73,6 +72,9 @@ class Home extends Component {
         if (e.event_type === 'EVENT') {
             return `${e.start_date} to ${e.end_date}`;
         }
+        if (e.event_type === 'CONTINUOUS_JOURNAL') {
+            return `Rolling Submissions`;
+        }
         else {
             return this.props.t("Applications Close") + " " + e.application_close_date;
         }
@@ -81,17 +83,17 @@ class Home extends Component {
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (
-                <div class="event-table-container">
+                <div className="event-table-container">
                     <h3 className="text-center">{this.props.t(description)}</h3>
-                    <div class="custom-card">
+                    <div className="custom-card">
                            {events.map(e => {
                                 return (
-                                    <div class="event" key={e.key}>
-                                        <div class="event-info">
+                                    <div className="event" key={e.key}>
+                                        <div className="event-info">
                                             <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
                                             {this.dateDisplay(e)}
                                         </div>
-                                        <div class="status-holder">{this.statusDisplay(e)}</div>
+                                        <div className="status-holder">{this.statusDisplay(e)}</div>
                                     </div>
                                 )
                             })}
@@ -101,7 +103,7 @@ class Home extends Component {
         }
         return <div></div>
     }
-
+    
     render() {
         const t = this.props.t;
         let logo = this.state.organisation && this.state.organisation.large_logo;
@@ -126,6 +128,10 @@ class Home extends Component {
                     </div>
                 }
 
+                {this.props.user && this.props.user.is_admin &&
+                    <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
+                }
+
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
                 {this.renderEventTable(this.state.awards, "Awards")}
                 {this.renderEventTable(this.state.journals, "Journals")}
@@ -133,6 +139,8 @@ class Home extends Component {
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
                 {this.renderEventTable(this.state.programmes, "Programmes")}
                 {this.renderEventTable(this.state.attended, "Past Events")}
+
+
 
             </div >)
     }

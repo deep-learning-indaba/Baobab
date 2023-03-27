@@ -91,7 +91,7 @@ class LoginForm extends Component {
         <form
           onSubmit={this.handleSubmit}>
 
-          <div class="login-header-logo text-center">
+          <div className="login-header-logo text-center">
             <img src={this.props.organisation && require("../../../images/" + this.props.organisation.small_logo)} alt="Logo"/>
             <h3>{t("Sign in to your account")}</h3>
             <h6>{t("Or")} <Link to="/createAccount" className="sign-up">{t("Sign Up")}</Link> {t("for a new one")}</h6>

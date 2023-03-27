@@ -12,28 +12,42 @@ class EventType(Enum):
     JOURNAL = 'journal'
     CONTINUOUS_JOURNAL = 'continuous_journal'
 
+def check_open(open, close):
+    now = datetime.now()
+    if open and close:
+        return now >= open and now < close
+    elif open:
+        return now >= open
+    elif close:
+        return now < close
+    return True
 
+def check_opening(open):
+    now = datetime.now()
+    if open:
+        return now < open
+    return True
 class Event(db.Model):
 
     __tablename__ = "event"
 
     id = db.Column(db.Integer(), primary_key=True)
     start_date = db.Column(db.DateTime(), nullable=False)
-    end_date = db.Column(db.DateTime(), nullable=False)
+    end_date = db.Column(db.DateTime(), nullable=True)
     key = db.Column(db.String(255), nullable=False, unique=True)
     organisation_id = db.Column(db.Integer(), db.ForeignKey('organisation.id'), nullable=False)
     email_from = db.Column(db.String(255), nullable=False)
     url = db.Column(db.String(255), nullable=False)
-    application_open = db.Column(db.DateTime(), nullable=False)
-    application_close = db.Column(db.DateTime(), nullable=False)
-    review_open = db.Column(db.DateTime(), nullable=False)
-    review_close = db.Column(db.DateTime(), nullable=False)
-    selection_open = db.Column(db.DateTime(), nullable=False)
-    selection_close = db.Column(db.DateTime(), nullable=False)
-    offer_open = db.Column(db.DateTime(), nullable=False)
-    offer_close = db.Column(db.DateTime(), nullable=False)
-    registration_open = db.Column(db.DateTime(), nullable=False)
-    registration_close = db.Column(db.DateTime(), nullable=False)
+    application_open = db.Column(db.DateTime(), nullable=True)
+    application_close = db.Column(db.DateTime(), nullable=True)
+    review_open = db.Column(db.DateTime(), nullable=True)
+    review_close = db.Column(db.DateTime(), nullable=True)
+    selection_open = db.Column(db.DateTime(), nullable=True)
+    selection_close = db.Column(db.DateTime(), nullable=True)
+    offer_open = db.Column(db.DateTime(), nullable=True)
+    offer_close = db.Column(db.DateTime(), nullable=True)
+    registration_open = db.Column(db.DateTime(), nullable=True)
+    registration_close = db.Column(db.DateTime(), nullable=True)
     event_type = db.Column(db.Enum(EventType), nullable=False)
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
@@ -70,7 +84,7 @@ class Event(db.Model):
         miniconf_url=None
     ):
         self.start_date = start_date
-        self.end_date = end_date
+        self.end_date = None if event_type == EventType.CONTINUOUS_JOURNAL else end_date
         self.key = key
         self.organisation_id = organisation_id
         self.email_from = email_from
@@ -205,6 +219,7 @@ class Event(db.Model):
                offer_close,
                registration_open,
                registration_close,
+               event_type,
                travel_grant,
                miniconf_url=None):
         self.start_date = start_date
@@ -223,6 +238,7 @@ class Event(db.Model):
         self.offer_close = offer_close
         self.registration_open = registration_open
         self.registration_close = registration_close
+        self.event_type = event_type
         self.travel_grant = travel_grant
         self.miniconf_url = miniconf_url
 
@@ -231,63 +247,51 @@ class Event(db.Model):
 
     @property
     def is_application_open(self):
-        now = datetime.now()
-        return now >= self.application_open and now < self.application_close
+        return check_open(self.application_open, self.application_close)
 
     @property
-    def is_application_opening(self):
-        now = datetime.now()
-        return now < self.application_open
+    def is_application_opening(self):  
+        return check_opening(self.application_open)
 
     @property
     def is_review_open(self):
-        now = datetime.now()
-        return now >= self.review_open and now < self.review_close
+        return check_open(self.review_open, self.review_close)
 
     @property
-    def is_review_opening(self):
-        now = datetime.now()
-        return now < self.review_open
+    def is_review_opening(self): 
+        return check_opening(self.registration_open)
 
     @property
     def is_selection_open(self):
-        now = datetime.now()
-        return now >= self.selection_open and now < self.selection_close
+        return check_open(self.selection_open, self.selection_close)
 
     @property
     def is_selection_opening(self):
-        now = datetime.now()
-        return now < self.selection_open
+        return check_opening(self.selection_open)
 
     @property
     def is_offer_open(self):
-        now = datetime.now()
-        return now >= self.offer_open and now < self.offer_close
+        return check_open(self.offer_open, self.offer_close)
 
     @property
     def is_offer_opening(self):
-        now = datetime.now()
-        return now < self.offer_open
+        return check_opening(self.offer_open)
 
     @property
     def is_registration_open(self):
-        now = datetime.now()
-        return now >= self.registration_open and now < self.registration_close
+        return check_open(self.registration_open, self.registration_close)
 
     @property
     def is_registration_opening(self):
-        now = datetime.now()
-        return now < self.registration_open
+        return check_opening(self.registration_open)
 
     @property
     def is_event_open(self):
-        now = datetime.now()
-        return now >= self.start_date and now <= self.end_date
+        return check_open(self.start_date, self.end_date)
 
     @property
     def is_event_opening(self):
-        now = datetime.now()
-        return now < self.start_date
+        return check_opening(self.start_date)
 
 
 class EventTranslation(db.Model):

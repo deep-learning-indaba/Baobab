@@ -21,7 +21,7 @@ function MarkdownRenderer(props) {
       };
 
       return (
-        <div class="markdown-container"><ReactMarkdown {...newProps} /></div>
+        <div className="markdown-container"><ReactMarkdown {...newProps} /></div>
       );
 
 }
