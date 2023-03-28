@@ -133,3 +133,126 @@ class InvitedGuestTest(ApiTestCase):
                          INVITED_GUEST['email'])
         self.assertEqual(data[1]['user']['email'],
                          INVITED_GUEST_2['email'])
+
+class InvitedGuestTagAPITest(ApiTestCase):
+    def _seed_static_data(self):
+        self.event1 = self.add_event(key='event1')
+        self.event1admin = self.add_user('event1admin@mail.com')
+        self.event1reviewer1 = self.add_user('event1reviewer1@mail.com')
+        self.event1reviewer2 = self.add_user('event1reviewer2@mail.com')
+        self.user1 = self.add_user('user1@mail.com')
+        self.user2 = self.add_user('user2@mail.com')
+        self.invited_guest1 = self.add_invited_guest(user_id=self.user1.id, event_id=self.event1.id, role="Guest")
+        self.invited_guest2 = self.add_invited_guest(user_id=self.user2.id, event_id=self.event1.id, role="Mentor")
+
+        self.event1.add_event_role('admin', self.event1admin.id)
+        self.event1.add_event_role('reviewer', self.event1reviewer1.id)
+        self.event1.add_event_role('reviewer', self.event1reviewer2.id)
+
+        self.tag1 = self.add_tag()
+        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+
+        self.tag_invited_guest(self.invited_guest1.id, self.tag1.id)
+        self.tag_invited_guest(self.invited_guest2.id, self.tag2.id)
+
+    def test_tag_admin(self):
+        """Test that an event admin can add a tag to an invited guest."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'invited_guest_id': self.invited_guest1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/invitedguesttag',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 201)
+
+        params = {
+            'event_id': self.event1.id,
+            'invited_guest_id' : self.invited_guest1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/invitedGuest',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+        print(data)
+
+        self.assertEqual(len(data[0]['tags']), 1)
+        self.assertEqual(data[0]['tags'][0]['id'], 1)
+
+    def test_remove_tag_admin(self):
+        """Test that an event admin can remove a tag from an invited guest."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'invited_guest_id': self.invited_guest2.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/invitedguesttag',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 200)
+
+        params = {
+            'event_id': self.event1.id,
+            'invited_guest_id' : self.invited_guest1.id,
+            'language': 'en',
+            'include_unsubmitted': False
+        }
+
+        response = self.app.get(
+            '/api/v1/invitedGuest',
+            headers=self.get_auth_header_for('event1admin@mail.com'),
+            json=params)
+
+        data = json.loads(response.data)
+
+        self.assertEqual(len(data[1]['tags']), 0)
+
+    def test_tag_non_admin(self):
+        """Test that a non admin can't add a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'invited_guest_id': self.invited_guest1.id
+        }
+
+        response = self.app.post(
+            '/api/v1/invitedguesttag',
+            headers=self.get_auth_header_for('user2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_remove_tag_non_admin(self):
+        """Test that a non admin can't remove a tag."""
+        self._seed_static_data()
+
+        params = {
+            'event_id': self.event1.id,
+            'tag_id': self.tag1.id,
+            'invited_guest_id': self.invited_guest1.id
+        }
+
+        response = self.app.delete(
+            '/api/v1/invitedguesttag',
+            headers=self.get_auth_header_for('user2@mail.com'),
+            json=params)
+
+        self.assertEqual(response.status_code, 403)

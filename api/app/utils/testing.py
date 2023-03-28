@@ -16,11 +16,11 @@ from app import LOGGER, app, db
 from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
                                          SectionTranslation)
 from app.events.models import Event, EventType, EventRole, EventFee
-from app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
 from app.organisation.resolver import OrganisationResolver
-from app.registration.models import Offer, RegistrationForm
+from app.registration.models import Offer, RegistrationForm, OfferTag
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
@@ -465,6 +465,18 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rt)
         db.session.commit()
         return rt
+    
+    def tag_offer(self, offer_id, tag_id):
+        ot = OfferTag(offer_id, tag_id)
+        db.session.add(ot)
+        db.session.commit()
+        return ot
+
+    def tag_invited_guest(self, invited_guest_id, tag_id):
+        gt = InvitedGuestTag(invited_guest_id, tag_id)
+        db.session.add(gt)
+        db.session.commit()
+        return gt
     
     def add_event_fee(
         self,
