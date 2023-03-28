@@ -54,7 +54,6 @@ class OutcomeAPI(restful.Resource):
         args = req_parser.parse_args()
 
         user_id = args['user_id']
-        event_id = args['event_id']
 
         try:
             outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
