@@ -74,6 +74,7 @@ rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
 rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
 rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')
 rest_api.add_resource(invitedGuest_api.InvitedGuestAPI, '/api/v1/invitedGuest')
+rest_api.add_resource(invitedGuest_api.InvitedGuestTagAPI, '/api/v1/invitedguesttag')
 rest_api.add_resource(invitedGuest_api.CreateUser,
                       '/api/v1/invitedGuest/create')
 rest_api.add_resource(invitedGuest_api.InvitedGuestList,
@@ -89,6 +90,7 @@ rest_api.add_resource(reference_api.ReferenceRequestAPI,
 rest_api.add_resource(reference_api.ReferenceAPI,
                       '/api/v1/reference')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
+rest_api.add_resource(registration_api.OfferTagAPI, '/api/v1/offertag')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
 rest_api.add_resource(registration_api.RegistrationSectionAPI,
