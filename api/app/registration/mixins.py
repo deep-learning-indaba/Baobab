@@ -20,6 +20,11 @@ class OfferMixin(object):
     req_parser.add_argument('email_template', type=str, required=False)
     req_parser.add_argument('payment_amount', type=str, required=False)
 
+class OfferTagMixin(object):
+    req_parser = reqparse.RequestParser()
+    req_parser.add_argument('event_id', type=int, required=True)
+    req_parser.add_argument('tag_id', type=int, required=True)
+    req_parser.add_argument('offer_id', type=int, required=True)
 
 class RegistrationFormMixin(object):
     req_parser = reqparse.RequestParser()
