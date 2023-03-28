@@ -67,6 +67,22 @@ const answerByQuestionKey = (key, allQuestions, answers) => {
   return null;
 }
 
+function ResponsesBySubmission(responses) {
+  var by_submissions = {};
+
+  responses.forEach(response => {
+    if (!(response.submission_id in by_submissions)){
+      by_submissions[response.submission_id] = [response]
+    } else {
+      // add responses with the same submission id to the same array and sort by revision_id in descending order
+      by_submissions[response.submission_id].push(response)
+      by_submissions[response.submission_id].sort((a, b) => a.version_id < b.version_id ? 1 : -1)
+    }
+    }
+  )
+  return by_submissions;
+}
+
 class FieldEditor extends React.Component {
   constructor(props) {
     super(props);
@@ -1013,7 +1029,7 @@ class ApplicationListComponent extends Component {
   componentDidMount() {
     eventService.getEvent(this.props.formSpec.event_id).then(response => {
       this.setState({
-        event_type: response.event.event_type
+        isJournalEvent: response.event.event_type === 'JOURNAL' || response.event.event_type ==='CONTINUOUS_JOURNAL'
       });
     })};
   
@@ -1025,7 +1041,7 @@ class ApplicationListComponent extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return  (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
+    return  this.state.isJournalEvent ? (this.props.submissionSelected ? this.props.t("Revision") + " " + response.version_id: this.props.t("Submission") + " " + response.submission_id) : this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
@@ -1037,8 +1053,8 @@ class ApplicationListComponent extends Component {
     }
   }
 
-  getAction = (response) => {
-    if (response.is_submitted) {
+  getAction = (response, submitted) => {
+    if (submitted) {
       return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
     }
     else {
@@ -1047,29 +1063,45 @@ class ApplicationListComponent extends Component {
   }
 
   render() {
+    const by_submissions = ResponsesBySubmission(this.props.responses);
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
-    const title = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
-    let firstColumn = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") : this.props.t("Nominee");
+    const title = this.state.isJournalEvent ? 
+                (this.props.submissionSelected ? this.props.t("Your Revisions") : this.props.t("Your Submissions")) 
+                : this.props.t("Your Nominations");
+    let firstColumn = this.state.isJournalEvent ? (this.props.submissionSelected ? this.props.t("Revision") : this.props.t("Submission")) : this.props.t("Nominee");
     return <div>
-      <h4>{title}</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">{firstColumn}</th>
-            <th scope="col">{this.props.t("Status")}</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.props.responses.map(response => {
-            return <tr key={"response_" + response.id}>
-              <td>{this.getCandidate(allQuestions, response)}</td>
-              <td>{this.getStatus(response)}</td>
-              <td>{this.getAction(response)}</td>
-            </tr>
-          })}
-        </tbody>
-      </table>
+            <h4>{title}</h4>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">{firstColumn}</th>
+                  <th scope="col">{this.props.t("Status")}</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              {this.state.isJournalEvent && !this.props.submissionSelected && (
+                <tbody>
+                {Object.keys(by_submissions).map(submission_id => {
+                  return <tr key={"response_" + submission_id}>
+                    <td>{this.getCandidate(allQuestions, by_submissions[submission_id][0])}</td>
+                    <td>{this.getStatus(by_submissions[submission_id][0])}</td>
+                    <td>{this.getAction(by_submissions[submission_id], by_submissions[submission_id][0].is_submitted)}</td>
+                  </tr>
+                })}
+              </tbody>
+              )}
+              {(!this.state.isJournalEvent || this.props.submissionSelected) && (
+              <tbody>
+                {this.props.responses.map(response => {
+                  return <tr key={"response_" + response.response_id}>
+                    <td>{this.getCandidate(allQuestions, response)}</td>
+                    <td>{this.getStatus(response)}</td>
+                    <td>{this.getAction(response, response.is_submitted)}</td>
+                  </tr>
+                })}
+              </tbody>
+              )}
+            </table>
     </div>
   }
 }
@@ -1087,7 +1119,8 @@ class ApplicationForm extends Component {
       errorMessage: "",
       formSpec: null,
       responses: [],
-      selectedResponse: null
+      selectedResponse: null,
+      selectedSubmission: null
     }
   }
 
@@ -1108,7 +1141,8 @@ class ApplicationForm extends Component {
         isLoading: false,
         selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
         responseSelected: selectFirstResponse,
-        event_type: eventResponse.event.event_type
+        event_type: eventResponse.event.event_type,
+        isJournalEvent: eventResponse.event.event_type === 'JOURNAL' || eventResponse.event.event_type ==='CONTINUOUS_JOURNAL'
       });
     });
   }
@@ -1122,7 +1156,15 @@ class ApplicationForm extends Component {
 
   newNomination = () => {
     this.setState({
-      responseSelected: true
+      responseSelected: true,
+      submissionSelected: true
+    });
+  }
+
+  submissionSelected = (response_array) => {
+    this.setState({
+      selectedSubmission: response_array,
+      submissionSelected: true
     });
   }
 
@@ -1134,7 +1176,9 @@ class ApplicationForm extends Component {
       formSpec,
       responses,
       selectedResponse,
-      responseSelected } = this.state;
+      responseSelected,
+      selectedSubmission,
+      submissionSelected } = this.state;
 
     if (isLoading) {
       return (<Loading />);
@@ -1144,11 +1188,22 @@ class ApplicationForm extends Component {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
 
-    if (formSpec.nominations && responses.length > 0 && !responseSelected) {
-      let newForm = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
+    if (!this.state.isJournalEvent && formSpec.nominations && responses.length > 0 && !responseSelected) {
       return <div>
         <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
-        <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>{this.props.t("New Nomination")} &gt;</button>
+      </div>
+    }
+    else if (this.state.isJournalEvent && formSpec.nominations && responses.length > 0 && !responseSelected && !submissionSelected) {
+      return <div>
+        <ApplicationList responses={responses} submissionSelected={submissionSelected} formSpec={formSpec} click={this.submissionSelected} /><br />
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>{this.props.t("New Submission")} &gt;</button>
+      </div>
+    }
+    else if (this.state.isJournalEvent && formSpec.nominations && responses.length > 0 && !responseSelected) {
+      return <div>
+        <ApplicationList responses={selectedSubmission} submissionSelected={submissionSelected} formSpec={formSpec} click={this.responseSelected} /><br />
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>{this.props.t("New Revision")} &gt;</button>
       </div>
     }
     else {

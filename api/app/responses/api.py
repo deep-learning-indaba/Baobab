@@ -38,6 +38,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
     response_fields = {
         'id': fields.Integer,
+        'submission_id': fields.Integer,
+        'version_id': fields.Integer,
         'application_form_id': fields.Integer,
         'user_id': fields.Integer,
         'is_submitted': fields.Boolean,
