@@ -11,6 +11,7 @@ import ReviewAssignment from "../reviewAssignment";
 import ReviewHistory from "../reviewHistory";
 import EventStats from "../eventStats";
 import EventConfig from "../eventConfig";
+import TagConfig from "../tagConfig";
 import ProfileList from "../profileList";
 import ViewProfile from "../viewprofile";
 import InvitedGuests from "../invitedGuests";
@@ -162,7 +163,11 @@ class EventHome extends Component {
           path={`${match.path}/eventConfig`}
           render={(props) => <EventConfig {...props} event={event} organisation={this.props.organisation} />}
         />
-
+        <Route
+          exact
+          path={`${match.path}/tagConfig`}
+          render={(props) => <TagConfig {...props} event={event} organisation={this.props.organisation} />}
+        />
         <Route
           exact
           path={`${match.path}/eventStats`}
