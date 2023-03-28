@@ -5,6 +5,12 @@ from app.registration.models import RegistrationForm
 class InvitedGuestRepository():
 
     @staticmethod
+    def get_by_id(invited_guest_id):
+        return (db.session.query(InvitedGuest)
+                .filter_by(id=invited_guest_id)
+                .first())
+    
+    @staticmethod
     def get_for_event_and_user(event_id, user_id):
         return (db.session.query(InvitedGuest)
                 .filter(InvitedGuest.event_id == event_id, InvitedGuest.user_id == user_id)

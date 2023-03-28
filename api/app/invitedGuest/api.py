@@ -12,7 +12,7 @@ import string
 
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
-from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED
+from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED, INVITED_GUEST_NOT_FOUND
 from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin, InvitedGuestTagMixin
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
@@ -22,6 +22,21 @@ from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_
 from sqlalchemy import func
 from app.utils import misc, errors
 from app.utils.emailer import email_user
+
+user_profile_list_fields = {
+    'user_id': fields.Integer,
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'user_title': fields.String,
+}
+
+invited_guest = {
+    'invited_guest_id': fields.Integer,
+    'event_id': fields.Integer,
+    'user': user_profile_list_fields,
+    'role': fields.String
+}
 
 def invitedGuest_info(invitedGuest, user):
     return {
@@ -34,6 +49,24 @@ def invitedGuest_info(invitedGuest, user):
 
 class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
+    @marshal_with(invited_guest)
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+        event_id = args['event_id']
+        invited_guest_id = args['invited_guest_id']
+        current_user_id = g.current_user['id']
+
+        current_user = user_repository.get_by_id(current_user_id)
+        if not (current_user.is_event_admin(event_id) or current_user.is_admin):
+            return FORBIDDEN
+    
+        invited_guest = invited_guest_repository.get_by_id(invited_guest_id)
+        if not invited_guest:
+            return INVITED_GUEST_NOT_FOUND
+
+        return invited_guest
+        
     @auth_required
     def post(self, send_email=True):
         args = self.req_parser.parse_args()
@@ -195,21 +228,6 @@ class InvitedGuestView():
 
 
 class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
-
-    user_profile_list_fields = {
-        'user_id': fields.Integer,
-        'email': fields.String,
-        'firstname': fields.String,
-        'lastname': fields.String,
-        'user_title': fields.String,
-    }
-
-    invited_guest = {
-        'invited_guest_id': fields.Integer,
-        'event_id': fields.Integer,
-        'user': user_profile_list_fields,
-        'role': fields.String
-    }
 
     @marshal_with(invited_guest)
     @auth_required
