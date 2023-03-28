@@ -13,15 +13,15 @@ import string
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
 from app.utils.errors import EVENT_NOT_FOUND, USER_NOT_FOUND, ADD_INVITED_GUEST_FAILED, INVITED_GUEST_FOR_EVENT_EXISTS, FORBIDDEN, INVITED_GUEST_EMAIL_FAILED
-from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin
+from app.invitedGuest.mixins import InvitedGuestMixin, InvitedGuestListMixin, InvitedGuestTagMixin
 from app.users import api as UserAPI
 from app.users.mixins import SignupMixin
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
+from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from sqlalchemy import func
-from app.utils import misc
+from app.utils import misc, errors
 from app.utils.emailer import email_user
-
 
 def invitedGuest_info(invitedGuest, user):
     return {
@@ -31,7 +31,6 @@ def invitedGuest_info(invitedGuest, user):
         'role': invitedGuest.role,
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
-
 
 class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
@@ -91,6 +90,41 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
         return invitedGuest_info(invitedGuest, user), 201
 
+class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
+    invited_guest_tag_fields = {
+        'id': fields.Integer,
+        'invited_guest_id': fields.Integer,
+        'tag_id': fields.Integer
+    }
+
+    @marshal_with(invited_guest_tag_fields)
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        invited_guest_id = args['invited_guest_id']
+
+        if not _validate_user_admin(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        return invited_guest_repository.tag_invited_guest(invited_guest_id, tag_id), 201
+
+    @auth_required
+    def delete(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        invited_guest_id = args['invited_guest_id']
+
+        if not _validate_user_admin(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        invited_guest_repository.remove_tag_from_invited_guest(invited_guest_id, tag_id)
+
+        return {}
 
 class CreateUser(SignupMixin, restful.Resource):
 
@@ -214,3 +248,8 @@ class CheckIfInvitedGuest(InvitedGuestListMixin, restful.Resource):
                 return "Invited Guest", 200
         except Exception as e:
             return 'Could not access DB', 400
+
+def _validate_user_admin(user_id, event_id):
+    user = user_repository.get_by_id(user_id)
+    # Check if the user is an event admin
+    return user.is_event_admin(event_id)

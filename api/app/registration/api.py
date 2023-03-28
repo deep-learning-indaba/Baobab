@@ -6,7 +6,7 @@ from app.responses.models import Answer, Response
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationForm
-from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
+from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin, OfferTagMixin
 from app.utils.auth import verify_token
 import traceback
 from flask import g, request
@@ -24,7 +24,8 @@ from app.utils import misc
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
-
+from app.registration.repository import OfferRepository as offer_repository
+from app.users.repository import UserRepository as user_repository
 
 def offer_info(offer_entity, requested_travel=None):
     return {
@@ -216,6 +217,41 @@ class OfferAPI(OfferMixin, restful.Resource):
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
+class OfferTagAPI(restful.Resource, OfferTagMixin):
+    offer_tag_fields = {
+        'id': fields.Integer,
+        'offer_id': fields.Integer,
+        'tag_id': fields.Integer
+    }
+
+    @marshal_with(offer_tag_fields)
+    @auth_required
+    def post(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        offer_id = args['offer_id']
+
+        if not _validate_user_admin(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        return offer_repository.tag_offer(offer_id, tag_id), 201
+
+    @auth_required
+    def delete(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        offer_id = args['offer_id']
+
+        if not _validate_user_admin(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        offer_repository.remove_tag_from_offer(offer_id, tag_id)
+
+        return {}
 
 def registration_form_info(registration_form):
     return {
@@ -536,3 +572,8 @@ class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
             return errors.ADD_REGISTRATION_QUESTION_FAILED
 
         return registration_question_info(registration_question), 201
+
+def _validate_user_admin(user_id, event_id):
+    user = user_repository.get_by_id(user_id)
+    # Check if the user is an event admin
+    return user.is_event_admin(event_id)
