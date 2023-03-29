@@ -1010,14 +1010,6 @@ class ApplicationListComponent extends Component {
     }
   }
 
-  componentDidMount() {
-    eventService.getEvent(this.props.formSpec.event_id).then(response => {
-      this.setState({
-        event_type: response.event.event_type
-      });
-    })};
-  
-
   getCandidate = (allQuestions, response) => {
     const nominating_capacity = answerByQuestionKey("nominating_capacity", allQuestions, response.answers);
     if (nominating_capacity === "other") {
@@ -1025,7 +1017,7 @@ class ApplicationListComponent extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return  (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
+    return  (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
@@ -1048,8 +1040,8 @@ class ApplicationListComponent extends Component {
 
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
-    const title = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
-    let firstColumn = (this.state.event_type ==='JOURNAL' || this.state.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") : this.props.t("Nominee");
+    const title = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
+    let firstColumn = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") : this.props.t("Nominee");
     return <div>
       <h4>{title}</h4>
       <table class="table">
@@ -1108,7 +1100,7 @@ class ApplicationForm extends Component {
         isLoading: false,
         selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
         responseSelected: selectFirstResponse,
-        event_type: eventResponse.event.event_type
+        event: eventResponse.event
       });
     });
   }
@@ -1145,9 +1137,9 @@ class ApplicationForm extends Component {
     }
 
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
-      let newForm = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
+      let newForm = (this.state.event.event_type ==='JOURNAL' || this.state.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
       return <div>
-        <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
+        <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
         <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
       </div>
     }
