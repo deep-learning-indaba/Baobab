@@ -21,6 +21,7 @@ import AnswerValue from '../../../components/answerValue'
 import FormSelectOther from "../../../components/form/FormSelectOther";
 import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOther";
 import FormCheckbox from "../../../components/form/FormCheckbox";
+import { eventService } from "../../../services/events";
 
 
 const baseUrl = process.env.REACT_APP_API_URL;
@@ -1016,7 +1017,7 @@ class ApplicationListComponent extends Component {
       let lastname = answerByQuestionKey("nomination_lastname", allQuestions, response.answers);
       return firstname + " " + lastname;
     }
-    return this.props.t("Self Nomination");
+    return  (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") + " " + response.id : this.props.t("Self Nomination");
   }
 
   getStatus = (response) => {
@@ -1039,12 +1040,14 @@ class ApplicationListComponent extends Component {
 
   render() {
     let allQuestions = _.flatMap(this.props.formSpec.sections, s => s.questions);
+    const title = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Your Submissions") : this.props.t("Your Nominations");
+    let firstColumn = (this.props.event.event_type ==='JOURNAL' || this.props.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("Submission") : this.props.t("Nominee");
     return <div>
-      <h4>{this.props.t("Your Nominations")}</h4>
+      <h4>{title}</h4>
       <table class="table">
         <thead>
           <tr>
-            <th scope="col">{this.props.t("Nominee")}</th>
+            <th scope="col">{firstColumn}</th>
             <th scope="col">{this.props.t("Status")}</th>
             <th scope="col"></th>
           </tr>
@@ -1084,9 +1087,10 @@ class ApplicationForm extends Component {
     const eventId = this.props.event ? this.props.event.id : 0;
     Promise.all([
       applicationFormService.getForEvent(eventId),
-      applicationFormService.getResponse(eventId)
+      applicationFormService.getResponse(eventId),
+      eventService.getEvent(eventId)
     ]).then(responses => {
-      let [formResponse, responseResponse] = responses;
+      let [formResponse, responseResponse, eventResponse] = responses;
       let selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
       this.setState({
         formSpec: formResponse.formSpec,
@@ -1095,7 +1099,8 @@ class ApplicationForm extends Component {
         errorMessage: (formResponse.error + " " + responseResponse.error).trim(),
         isLoading: false,
         selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
-        responseSelected: selectFirstResponse
+        responseSelected: selectFirstResponse,
+        event: eventResponse.event
       });
     });
   }
@@ -1132,9 +1137,10 @@ class ApplicationForm extends Component {
     }
 
     if (formSpec.nominations && responses.length > 0 && !responseSelected) {
+      let newForm = (this.state.event.event_type ==='JOURNAL' || this.state.event.event_type ==='CONTINUOUS_JOURNAL') ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
       return <div>
-        <ApplicationList responses={responses} formSpec={formSpec} click={this.responseSelected} /><br />
-        <button className="btn btn-primary" onClick={() => this.newNomination()}>{this.props.t("New Nomination") + " "} &gt;</button>
+        <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
+        <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
       </div>
     }
     else {
