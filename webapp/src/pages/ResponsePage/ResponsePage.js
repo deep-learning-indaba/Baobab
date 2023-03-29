@@ -7,6 +7,7 @@ import TagModal from './components/TagModal';
 import { eventService } from '../../services/events/events.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
 import { reviewService } from '../../services/reviews/review.service';
+import { outcomeService } from '../../services/outcome/outcome.service';
 import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
@@ -30,6 +31,7 @@ class ResponsePage extends Component {
             tagToRemove: null,
             reviewToRemove: null,
             reviewResponses: [],
+            outcome: {'status':null,'timestamp':null},
         }
     };
 
@@ -44,13 +46,18 @@ class ResponsePage extends Component {
             console.log(responses);
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
+                event_type: responses[0].event.event_type,
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[2].detail.reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
-            }, this.handleData, this.getReviewResponses(responses[2].detail, responses[2].detail.reviewers));
-    });
+                reviewers: responses[4].reviewers,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
+            }, () => {
+                this.handleData(); 
+                this.getOutcome();
+                this.getReviewResponses(responses[2].detail, responses[2].detail.reviewers);
+            });
+        });
     };
 
     getReviewResponses(applicationData, reviewers) {
@@ -78,7 +85,6 @@ class ResponsePage extends Component {
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null
-
         });
     };
 
@@ -138,7 +144,7 @@ class ResponsePage extends Component {
         });
         return questions
     };
-
+    
     // Render Reviews
     renderCompleteReviews(){
         if (this.state.reviewResponses) {
@@ -160,6 +166,148 @@ class ResponsePage extends Component {
         
     }
 
+    getOutcome() {
+            outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+                if (response.status === 200) {
+                    const newOutcome = {
+                        timestamp: response.outcome.timestamp,
+                        status: response.outcome.status,
+                    };
+                    this.setState(
+                        {
+                            outcome: newOutcome
+                        }
+                    );
+                }
+                else{
+                    this.error(response.error)
+                }
+                this.setState(
+                    {
+                        isLoading: false
+                    }
+                )
+            });
+    };
+
+    submitOutcome(selectedOutcome) {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+            if (response.status === 201) {
+                const newOutcome = {
+                    timestamp: response.outcome.timestamp,
+                    status: response.outcome.status,
+                };
+
+                this.setState({
+                    outcome: newOutcome
+                });
+            } else {
+                this.error(response.error);
+            }
+        });
+    }
+
+    outcomeStatus() {
+        const data = this.state.applicationData;
+        
+        if (data) {
+
+            if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
+                if (this.state.outcome.status === 'ACCEPTED') {
+                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                } else if (this.state.outcome.status === 'REJECTED') {
+                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                } else {
+                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                }
+            };
+
+            if (this.state.event_type === 'CONTINUOUS_JOURNAL' || this.state.event_type === 'JOURNAL') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
+                            Accept
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-warning"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPT_W_REVISION')}>
+                            Accept with Minor Revision
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-warning"
+                            id="reject with encouragement"
+                            onClick={(e) => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>
+                            Reject with Encouragement to Resubmit
+                        </button>
+                    </div>    
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                </div>
+            }
+            else if (this.state.event_type === 'CALL') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
+                            Accept
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                </div>
+            }
+            else if (this.state.event_type === 'EVENT') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                    <div className="user-details">
+                    <button
+                        type="button"
+                        class="btn btn-warning"
+                        id="waitlist"
+                        onClick={(e) => this.submitOutcome('WAITLIST')}>
+                        Waitlist
+                    </button>
+                </div>
+                </div>
+            }
+        };
+    };
 
     // Render Sections
     renderSections() {
@@ -590,6 +738,7 @@ class ResponsePage extends Component {
                         <div>
                             <div className="user-details right">
                                 <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
+                                <label>{t('Application Outcome')}</label> <p>{this.outcomeStatus()}</p>
                                 <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
                             </div>
 
