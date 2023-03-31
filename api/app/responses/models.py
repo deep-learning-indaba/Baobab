@@ -118,3 +118,21 @@ class ResponseTag(db.Model):
     def __init__(self, response_id, tag_id):
         self.response_id = response_id
         self.tag_id = tag_id
+        
+        
+class ResponseActionEditor(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)
+    action_editor_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    active = db.Column(db.Boolean(), nullable=False)
+
+    response = db.relationship('Response', foreign_keys=[response_id])
+    user = db.relationship('AppUser', foreign_keys=[action_editor_user_id])
+
+    def __init__(self, response_id, action_editor_user_id):
+        self.response_id = response_id
+        self.action_editor_user_id = action_editor_user_id
+        self.active = True
+
+    def deactivate(self):
+        self.active = False
