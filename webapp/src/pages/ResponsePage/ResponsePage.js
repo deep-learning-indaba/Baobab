@@ -50,26 +50,23 @@ class ResponsePage extends Component {
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[4].reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
             }, () => {
-                this.handleData(); 
                 this.getOutcome();
-                this.getReviewResponses(responses[2].detail, responses[2].detail.reviewers);
+                this.getReviewResponses(responses[2].detail);
             });
         });
     };
 
-    getReviewResponses(applicationData, reviewers) {
-        reviewers.map((val, index) => {
-            let num = index + 1;
-            reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id, val.reviewer_user_id)
+    getReviewResponses(applicationData) {
+        reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
             .then(resp => {
-                this.state.reviewResponses.push(resp.form);
-                this.setState({isLoading: false});
-            }
-            );
-        });
+                this.setState( {
+                    reviewResponses: resp.form.review_responses,
+                    reviewForm: resp.form.review_form,
+                    isLoading: false
+                 });
+            });
     }
 
     // Misc Functions
@@ -125,9 +122,6 @@ class ResponsePage extends Component {
     renderReviewResponse(review_response, section) {
         const questions = section.review_questions.map(q => {
             const a = review_response.scores.find(a => a.review_question_id === q.id);
-            if (q.type === "information") {
-                return <h4>{q.headline}</h4>
-            };
 
             if (a) {
                 return <div>
@@ -149,21 +143,16 @@ class ResponsePage extends Component {
     renderCompleteReviews(){
         if (this.state.reviewResponses) {
                 const reviews = this.state.reviewResponses.map((val, index) => {
-                    let num = index + 1;
                     return <div className="section">
-                        {val.review_response.is_submitted === true &&
-                            
                             <h4
                                 className="reviewer-section" >
-                                {this.props.t("Reviewer Feedback from " + val.reviewer.firstname + " " + val.reviewer.lastname)}
+                                {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
                             </h4>
-                        }
-                        {this.renderReviewResponse(val.review_response, val.review_form.review_sections[0])}
+                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
                     </div>
                 });
                 return reviews
             }
-        
     }
 
     getOutcome() {
@@ -410,7 +399,6 @@ class ResponsePage extends Component {
    
     };
 
-
     // Tag Functions
     // Post Response API
     postResponseTag(tagId, responseId, eventId) {
@@ -647,7 +635,7 @@ class ResponsePage extends Component {
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
-            reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
+            reviewers={this.state.reviewResponses.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
         />
@@ -766,11 +754,21 @@ class ResponsePage extends Component {
                                     </button>
                                 </div>
                             </div>
-                            {this.renderCompleteReviews()}
                             <div className="divider"></div>
                         </div>
 
                         {this.renderSections()}
+                        {
+                            this.reviewResponses && (
+                        <div>
+                            <div className="divider"></div>
+                            <div className="reviewers-section">
+                            <h3>{t('Reviewer Feedback')}</h3>
+                            {this.renderCompleteReviews()}
+                            </div>
+                        </div>
+                        
+                        )}
                     </div>
                 }
 

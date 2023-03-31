@@ -65,7 +65,7 @@ class ReviewListComponent extends Component {
                         Header: headline,
                         accessor: r => {
                             const score = r.scores.find(s => s.review_question_id === i.review_question_id);
-                            return score ? score.score : "";
+                            return score ? score.value : "";
                         }
                     });
                 }

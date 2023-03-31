@@ -90,9 +90,9 @@ function getResponseReview(responseId, eventId) {
     });
 }
 
-function getResponseReviewAdmin(responseId, eventId, reviewerUserId) {
+function getResponseReviewAdmin(responseId, eventId) {
   return axios
-    .get(baseUrl + `/api/v1/responsereview-admin?response_id=${responseId}&event_id=${eventId}&reviewer_user_id=${reviewerUserId}`, {
+    .get(baseUrl + `/api/v1/responsereview-admin?response_id=${responseId}&event_id=${eventId}`, {
       headers: authHeader()
     })
     .then(function(response) {

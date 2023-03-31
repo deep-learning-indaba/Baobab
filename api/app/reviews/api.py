@@ -1,6 +1,6 @@
 from flask import g
 import flask_restful as restful
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, marshal
 from math import ceil
 import random
 from sqlalchemy.sql import func, exists
@@ -84,6 +84,23 @@ review_response_fields = {
     'submitted_timestamp': fields.DateTime(dt_format='iso8601')
 }
 
+extended_scores_fields = {
+    'review_question_id': fields.Integer, 
+    'headline': fields.String, 
+    'description': fields.String, 
+    'type': fields.String,
+    'value': fields.String
+}
+
+extended_review_fields = {
+    'review_response_id': fields.Integer,
+    'response_id': fields.Integer,
+    'reviewer_user_title': fields.String,
+    'reviewer_user_firstname': fields.String,
+    'reviewer_user_lastname': fields.String,
+    'scores': fields.List(fields.Nested(extended_scores_fields), attribute='scores'),
+}
+
 reference_fields = {
     'firstname': fields.String,
     'title': fields.String,
@@ -109,16 +126,6 @@ reviewer_user_fields = {
     'firstname': fields.String,
     'lastname': fields.String,
     'user_title': fields.String,
-}
-
-reviewer_review_fields = {
-    'review_form': fields.Raw,
-    'response': fields.Nested(response_fields),
-    'user': fields.Nested(reviewer_user_fields),
-    'reviews_remaining_count': fields.Integer,
-    'review_response': fields.Nested(review_response_fields),
-    'references': fields.List(fields.Nested(reference_fields)),
-    'reviewer': fields.Nested(reviewer_user_fields),
 }
 
 review_question_detail_fields = {
@@ -153,6 +160,11 @@ review_form_detail_fields = {
     'active': fields.Boolean,
     'stage': fields.Integer,
     'sections': fields.List(fields.Nested(review_section_detail_fields), attribute='review_sections')
+}
+
+response_review_fields = {
+    'review_form': fields.Raw,
+    'review_responses': fields.List(fields.Nested(extended_review_fields)),
 }
 
 def _serialize_review_question(review_question, language):
@@ -219,6 +231,11 @@ class ReviewResponseUser():
         self.references = reference_responses
         self.review_response = review_response
         self.reviewer = reviewer
+
+class ReviewResponses():
+    def __init__(self, review_form, review_responses, language):
+        self.review_form = _serialize_review_form(review_form, language)
+        self.review_responses = review_responses
 
 
 class ReviewResponseReference():
@@ -317,30 +334,25 @@ class ResponseReviewAPI(restful.Resource):
 
 class ResponseReviewEventAdminAPI(restful.Resource):
     @event_admin_required
-    @marshal_with(reviewer_review_fields)
     def get(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('response_id', type=int, required=True)
-        parser.add_argument('reviewer_user_id', type=int, required=True)
         parser.add_argument('language', type=str, required=True)
         args = parser.parse_args()
 
         response_id = args['response_id']
-        reviewer_user_id = args['reviewer_user_id']
 
         review_form = review_repository.get_review_form(event_id)
         if review_form is None:
             return REVIEW_FORM_NOT_FOUND
 
-        response = review_repository.get_response_by_reviewer(response_id, reviewer_user_id)
-        if response is None:
-            return RESPONSE_NOT_FOUND
+        response_reviews = (review_repository.get_all_review_responses_by_response(review_form.id, response_id))
+        serialized_reviews =  [
+            ReviewResponseDetailListAPI._serialise_review_response(response, args['language'])
+            for response in response_reviews
+        ]
+        return marshal(ReviewResponses(review_form, serialized_reviews, args['language']), response_review_fields), 201
 
-        review_response = review_repository.get_review_response(review_form.id, response_id, reviewer_user_id)
-        reviewer = user_repository.get_by_id(reviewer_user_id)
-        
-
-        return ReviewResponseUser(review_form, response, 0, args['language'], review_response=review_response, reviewer=reviewer)
 
 
 class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful.Resource):
@@ -759,7 +771,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
             'headline': review_question_translation.headline,
             'description': review_question_translation.description,
             'type': review_score.review_question.type,
-            'score': review_score.value,
+            'value': review_score.value,
             'weight': review_score.review_question.weight,
         }
 
