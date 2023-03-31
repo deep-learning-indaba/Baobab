@@ -103,7 +103,7 @@ class ResponseReviewer(db.Model):
         self.response_id = response_id
         self.reviewer_user_id = reviewer_user_id
         self.active = True
-        is_action_editor = is_action_editor
+        self.is_action_editor = is_action_editor
 
     def deactivate(self):
         self.active = False
