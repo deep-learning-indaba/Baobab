@@ -82,7 +82,6 @@ class InvitedGuestTest(ApiTestCase):
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
-        print(data)
         header = {'Authorization': data['token']}
         return header
 
@@ -147,7 +146,7 @@ class InvitedGuestTagAPITest(ApiTestCase):
         self.invited_guest1 = self.add_invited_guest(user_id=self.user1.id, event_id=self.event1.id, role="Guest")
         self.invited_guest2 = self.add_invited_guest(user_id=self.user2.id, event_id=self.event1.id, role="Mentor")
         db.session.commit()
-        
+
         self.event1.add_event_role('admin', self.event1admin.id)
         db.session.commit()
 

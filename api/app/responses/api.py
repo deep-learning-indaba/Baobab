@@ -265,13 +265,16 @@ def _serialize_answer(answer, language):
     }
 
 def _serialize_tag(tag, language):
-    tag_translation = tag.get_translation(language)
-    if not tag_translation:
+    translation = tag.get_translation(language)
+    if translation is None:
         LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-        tag_translation = tag.get_translation('en')
+        translation = tag.get_translation('en')
     return {
         'id': tag.id,
-        'name': tag_translation.name
+        'event_id': tag.event_id,
+        'tag_type': tag.tag_type.value.upper(),
+        'name': translation.name,
+        'description': translation.description
     }
 
 class ResponseListAPI(restful.Resource):
@@ -385,8 +388,6 @@ class ResponseTagAPI(restful.Resource, ResponseTagMixin):
 
         return {}
 
-
-
 class ResponseDetailAPI(restful.Resource):
 
     @staticmethod
@@ -408,9 +409,13 @@ class ResponseDetailAPI(restful.Resource):
         translation = tag.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+            translation = tag.get_translation('en')
         return {
             'id': tag.id,
-            'name': translation.name
+            'event_id': tag.event_id,
+            'tag_type': tag.tag_type.value.upper(),
+            'name': translation.name,
+            'description': translation.description
         }
 
     @staticmethod
