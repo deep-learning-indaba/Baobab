@@ -158,20 +158,6 @@ class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
 
     @marshal_with(invited_guest_tag_fields)
     @auth_required
-    def get(self):
-        args = self.req_parser.parse_args()
-
-        event_id = args['event_id']
-        tag_id = args['tag_id']
-        invited_guest_id = args['invited_guest_id']
-
-        if not _validate_user_admin(g.current_user['id'], event_id):
-            return errors.FORBIDDEN
-
-        return invited_guest_repository.get_invited_guest_tag(invited_guest_id, tag_id)
-
-    @marshal_with(invited_guest_tag_fields)
-    @auth_required
     def post(self):
         args = self.req_parser.parse_args()
 
