@@ -396,6 +396,19 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return response
     
+    def add_offer(self, user_id=1, event_id=1, offer_date=datetime.now(), expiry_date=datetime.now() + timedelta(days=15), payment_required=False, travel_award=True, accommodation_award=False):
+        offer = Offer(
+            user_id=user_id,
+            event_id=event_id,
+            offer_date=offer_date,
+            expiry_date=expiry_date,
+            payment_required=payment_required,
+            travel_award=travel_award,
+            accommodation_award=accommodation_award)
+        db.session.add(offer)
+        db.session.commit()
+        return offer
+    
     def add_response_reviewer(self, response_id, reviewer_user_id):
         rr = ResponseReviewer(response_id, reviewer_user_id)
         db.session.add(rr)

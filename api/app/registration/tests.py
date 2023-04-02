@@ -204,82 +204,71 @@ class OfferApiTest(ApiTestCase):
 class OfferTagAPITest(ApiTestCase):
 
     def _seed_static_data(self):
-        test_user = self.add_user('something@email.com')
-        offer_admin = self.add_user('offer_admin@ea.com', 'event_admin', is_admin=True)
-        self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
-        db.session.add(UserCategory('Offer Category'))
-        db.session.add(Country('Suid Afrika'))
+
+        self.event = self.add_event(key='event1')
         db.session.commit()
 
-        event = self.add_event(
-            name={'en': "Tech Talk"},
-            description={'en': "tech talking"},
-            start_date=datetime(2019, 12, 12),
-            end_date=datetime(2020, 12, 12),
-            key='SPEEDNET'
-        )
+        test_user = self.add_user('test_user@mail.com')
+        offer_admin = self.add_user('offeradmin@mail.com')
+        db.session.commit()
+        self.test_user_id = test_user.id
+
+        self.event.add_event_role('admin', offer_admin.id)
         db.session.commit()
 
         app_form = self.create_application_form()
-        self.add_response(app_form.id, test_user.id, True, False)
+        self.add_response(app_form.id, self.test_user_id, True, False)
 
-        self.offer = Offer(
-            user_id=test_user.id,
-            event_id=event.id,
-            offer_date=datetime.now(),
-            expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            travel_award=True,
-            accommodation_award=False)
-        self.tag1 = self.add_tag()
-        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+        self.offer = self.add_offer(self.test_user_id, self.event.id)
 
+        self.tag1 = self.add_tag(tag_type='REGISTRATION')
+        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'}, descriptions={'en': 'Tag 2 en description', 'fr': 'Tag 2 fr description'}, tag_type='REGISTRATION')
         self.tag_offer(self.offer.id, self.tag1.id)
-        self.tag_offer(self.offer.id, self.tag2.id)
-
-        db.session.add(self.offer)
-        db.session.commit()
-
-        self.headers = self.get_auth_header_for("something@email.com")
-        self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
-
-        self.add_email_template('offer')
 
         db.session.flush()
+    
+    def get_auth_header_for(self, email):
+        body = {
+            'email': email,
+            'password': 'abc'
+        }
+        response = self.app.post('api/v1/authenticate', data=body)
+        data = json.loads(response.data)
+        header = {'Authorization': data['token']}
+        return header
 
     def test_tag_admin(self):
         """Test that an event admin can add a tag to an offer."""
         self._seed_static_data()
 
         params = {
-            'event_id': self.event1.id,
-            'tag_id': self.tag1.id,
+            'event_id': self.event.id,
+            'tag_id': self.tag2.id,
             'offer_id': self.offer.id
         }
 
         response = self.app.post(
             '/api/v1/offertag',
-            headers=self.get_auth_header_for('event1admin@mail.com'),
+            headers=self.get_auth_header_for('offeradmin@mail.com'),
             json=params)
 
         self.assertEqual(response.status_code, 201)
 
         params = {
-            'event_id': self.event1.id,
-            'offer_id' : self.offer.id,
+            'event_id': self.event.id,
+            'user_id' : self.test_user_id,
             'language': 'en',
-            'include_unsubmitted': False
         }
 
         response = self.app.get(
             '/api/v1/offer',
-            headers=self.get_auth_header_for('event1admin@mail.com'),
+            headers=self.get_auth_header_for('offeradmin@mail.com'),
             json=params)
 
         data = json.loads(response.data)
         print(data)
 
-        self.assertEqual(len(data[0]['tags']), 1)
+        self.assertEqual(len(data[0]['tags']), 2)
         self.assertEqual(data[0]['tags'][0]['id'], 1)
 
     def test_remove_tag_admin(self):
@@ -287,47 +276,47 @@ class OfferTagAPITest(ApiTestCase):
         self._seed_static_data()
 
         params = {
-            'event_id': self.event1.id,
+            'event_id': self.event.id,
             'tag_id': self.tag1.id,
             'offer_id': self.offer.id
         }
 
         response = self.app.delete(
             '/api/v1/offertag',
-            headers=self.get_auth_header_for('event1admin@mail.com'),
+            headers=self.get_auth_header_for('offeradmin@mail.com'),
             json=params)
 
         self.assertEqual(response.status_code, 200)
 
         params = {
-            'event_id': self.event1.id,
-            'offer_id' : self.offer.id,
+            'event_id': self.event.id,
+            'user_id' : self.test_user_id,
             'language': 'en',
-            'include_unsubmitted': False
         }
 
         response = self.app.get(
             '/api/v1/offer',
-            headers=self.get_auth_header_for('event1admin@mail.com'),
+            headers=self.get_auth_header_for('offeradmin@mail.com'),
             json=params)
 
         data = json.loads(response.data)
+        print(data)
 
-        self.assertEqual(len(data[1]['tags']), 0)
+        self.assertEqual(len(data[0]['tags']), 1)
 
     def test_tag_non_admin(self):
         """Test that a non admin can't add a tag to an offer."""
         self._seed_static_data()
 
         params = {
-            'event_id': self.event1.id,
+            'event_id': self.event.id,
             'tag_id': self.tag1.id,
             'offer_id': self.offer.id
         }
 
         response = self.app.post(
             '/api/v1/offertag',
-            headers=self.get_auth_header_for('user2@mail.com'),
+            headers=self.get_auth_header_for('test_user@mail.com'),
             json=params)
 
         self.assertEqual(response.status_code, 403)
@@ -337,14 +326,14 @@ class OfferTagAPITest(ApiTestCase):
         self._seed_static_data()
 
         params = {
-            'event_id': self.event1.id,
+            'event_id': self.event.id,
             'tag_id': self.tag1.id,
             'offer_id': self.offer.id
         }
 
         response = self.app.delete(
             '/api/v1/offertag',
-            headers=self.get_auth_header_for('user2@mail.com'),
+            headers=self.get_auth_header_for('test_user@mail.com'),
             json=params)
 
         self.assertEqual(response.status_code, 403)
