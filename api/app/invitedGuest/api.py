@@ -1,14 +1,12 @@
 
-from flask_restful import reqparse, fields, marshal_with
+from flask_restful import reqparse, fields, marshal_with, inputs
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 
 from app.utils.auth import auth_required
 from app import LOGGER
 from app import db, bcrypt
-from flask import g, request
-import random
-import string
+from flask import g
 
 from app.users.models import AppUser, PasswordReset
 from app.invitedGuest.models import InvitedGuest
@@ -49,12 +47,40 @@ def invitedGuest_info(invitedGuest, user):
 
 class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
-    @marshal_with(invited_guest)
+    @staticmethod
+    def _serialize_tag(tag, language):
+        translation = tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+            translation = tag.get_translation('en')
+        return {
+            'id': tag.id,
+            'event_id': tag.event_id,
+            'tag_type': tag.tag_type.value.upper(),
+            'name': translation.name,
+            'description': translation.description
+        }
+
+    @staticmethod
+    def _serialize_invited_guest(invited_guest, language):
+        return {
+            'invited_guest_id': invited_guest.id,
+            'event_id': invited_guest.event_id,
+            'user_id': invited_guest.user_id,
+            'role': invited_guest.role,
+            'tags': [InvitedGuestAPI._serialize_tag(it.tag, language) for it in invited_guest.invited_guest_tags]
+        }
+    
     @auth_required
     def get(self):
-        args = self.req_parser.parse_args()
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('invited_guest_id', type=int, required=True)
+        req_parser.add_argument('language', type=str, required=True)
+        args = req_parser.parse_args()
         event_id = args['event_id']
         invited_guest_id = args['invited_guest_id']
+        language = args['language']
         current_user_id = g.current_user['id']
 
         current_user = user_repository.get_by_id(current_user_id)
@@ -65,7 +91,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         if not invited_guest:
             return INVITED_GUEST_NOT_FOUND
 
-        return invited_guest
+        return InvitedGuestAPI._serialize_invited_guest(invited_guest, language)
         
     @auth_required
     def post(self, send_email=True):
@@ -129,6 +155,20 @@ class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
         'invited_guest_id': fields.Integer,
         'tag_id': fields.Integer
     }
+
+    @marshal_with(invited_guest_tag_fields)
+    @auth_required
+    def get(self):
+        args = self.req_parser.parse_args()
+
+        event_id = args['event_id']
+        tag_id = args['tag_id']
+        invited_guest_id = args['invited_guest_id']
+
+        if not _validate_user_admin(g.current_user['id'], event_id):
+            return errors.FORBIDDEN
+
+        return invited_guest_repository.get_invited_guest_tag(invited_guest_id, tag_id)
 
     @marshal_with(invited_guest_tag_fields)
     @auth_required
