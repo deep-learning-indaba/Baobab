@@ -41,9 +41,8 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
-            reviewService.getReviewAssignments(this.props.event.id, this.props.match.params.id)
         ]).then(responses => {
-            console.log('r',responses);
+            console.log(responses);
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
                 event_type: responses[0].event.event_type,
@@ -51,9 +50,8 @@ class ResponsePage extends Component {
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
                 reviewers: responses[2].detail.reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
             }, () => {
-                // this.handleData(); 
                 this.getOutcome();
             });
         });

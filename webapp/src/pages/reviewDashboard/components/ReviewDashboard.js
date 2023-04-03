@@ -249,7 +249,7 @@ class ReviewAssignmentComponent extends Component {
     }
 
     componentDidMount() {
-        reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0, this.props.match.params.id).then(result => {
+        reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0).then(result => {
             this.setState({
                 loading: false,
                 reviewers: result.reviewers,
