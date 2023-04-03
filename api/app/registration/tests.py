@@ -262,14 +262,13 @@ class OfferTagAPITest(ApiTestCase):
 
         response = self.app.get(
             '/api/v1/offer',
-            headers=self.get_auth_header_for('offeradmin@mail.com'),
+            headers=self.get_auth_header_for('test_user@mail.com'),
             json=params)
 
         data = json.loads(response.data)
-        print(data)
 
-        self.assertEqual(len(data[0]['tags']), 2)
-        self.assertEqual(data[0]['tags'][0]['id'], 1)
+        self.assertEqual(len(data['tags']), 2)
+        self.assertEqual(data['tags'][0]['id'], 1)
 
     def test_remove_tag_admin(self):
         """Test that an event admin can remove a tag from an offer."""
@@ -296,13 +295,12 @@ class OfferTagAPITest(ApiTestCase):
 
         response = self.app.get(
             '/api/v1/offer',
-            headers=self.get_auth_header_for('offeradmin@mail.com'),
+            headers=self.get_auth_header_for('test_user@mail.com'),
             json=params)
 
         data = json.loads(response.data)
-        print(data)
 
-        self.assertEqual(len(data[0]['tags']), 1)
+        self.assertEqual(len(data['tags']), 0)
 
     def test_tag_non_admin(self):
         """Test that a non admin can't add a tag to an offer."""

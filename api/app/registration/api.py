@@ -44,7 +44,8 @@ def offer_info(offer_entity, requested_travel=None):
         'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
         'rejected_reason': offer_entity.rejected_reason,
-        'payment_amount': offer_entity.payment_amount
+        'payment_amount': offer_entity.payment_amount,
+        'tags': [OfferAPI._serialize_tag(it.tag) for it in offer_entity.offer_tags]
     }
 
 
@@ -84,6 +85,20 @@ class OfferAPI(OfferMixin, restful.Resource):
         'responded_at': fields.DateTime('iso8601'),
         'payment_amount': fields.String
     }
+
+    @staticmethod
+    def _serialize_tag(tag, language='en'):
+        translation = tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+            translation = tag.get_translation('en')
+        return {
+            'id': tag.id,
+            'event_id': tag.event_id,
+            'tag_type': tag.tag_type.value.upper(),
+            'name': translation.name,
+            'description': translation.description
+        }
 
     @auth_required
     def put(self):
