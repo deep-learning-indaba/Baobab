@@ -484,7 +484,6 @@ class ResponsePage extends Component {
 
     renderActionEditor() {
         const action_editor = this.state.reviewers.find(reviewer => reviewer.is_action_editor === true)
-        console.log(action_editor)
         if (action_editor) {
             return <div className="reviewer">
                         <label>Action Editor</label>
@@ -493,18 +492,7 @@ class ResponsePage extends Component {
                             
                         </div>
                     </div>
-        } else {
-            return  <div className="add-reviewer">
-            <button
-                data-toggle="modal"
-                type="button"
-                data-target="#exampleModalReview"
-                className="btn btn-light">
-                {("Assign Action Editor")}
-            </button>
-        </div>
         }
-        
     }
 
     // Reviews
