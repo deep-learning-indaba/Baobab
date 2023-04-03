@@ -104,7 +104,21 @@ class TagAPI(restful.Resource):
         tag_repository.commit()
 
         return _serialize_tag_detail(tag), 200
+    
+    @event_admin_required
+    def delete(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('id', type=int, required=True)
+        args = req_parser.parse_args()
+        id = args['id']
 
+        tag = tag_repository.get_by_id(id)
+        if not tag or tag.event_id != event_id:
+            return errors.TAG_NOT_FOUND
+
+        tag_repository.delete_tag(id)
+        tag_repository.delete_translation_by_tag_id(id)
+        return '', 204
 
 class TagListAPI(restful.Resource):
     @event_admin_required
@@ -115,4 +129,5 @@ class TagListAPI(restful.Resource):
         language = args['language']
 
         tags = tag_repository.get_all_for_event(event_id)
+        
         return [_serialize_tag(t, language) for t in tags]

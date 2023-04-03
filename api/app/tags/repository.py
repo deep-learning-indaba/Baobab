@@ -16,6 +16,14 @@ class TagRepository():
     @staticmethod
     def delete_translation(id):
         db.session.query(TagTranslation).filter_by(id=id).delete()
+    
+    @staticmethod
+    def delete_tag(id):
+        db.session.query(Tag).filter_by(id=id).delete()
+
+    @staticmethod
+    def delete_translation_by_tag_id(id):
+        db.session.query(TagTranslation).filter_by(tag_id=id).delete()
 
     @staticmethod
     def commit():
