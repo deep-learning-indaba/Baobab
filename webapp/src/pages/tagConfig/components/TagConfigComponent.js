@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { tagsService } from "../../../services/tags";
+import { usePagination, useTable, Column } from "react-table";
 import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
@@ -45,9 +46,9 @@ class TagConfigComponent extends Component {
   }
 
   onClickAdd = () => {
-    const errors = []; //TDDO, validate tag
+    const errors = this.validateTagDetails();
     if (errors.length === 0) {
-      tagsService.addTag(this.state.updatedTag).then(result => {
+      tagsService.addTag(this.state.updatedTag, this.props.event.id).then(result => {
         if (result.error) {
           this.setState({
             errors: [this.props.t(result.error)],
@@ -65,10 +66,10 @@ class TagConfigComponent extends Component {
     }
   };
 
-  onClickUpdate = () => {
-    const errors = []; //TODO, validate tag
+  onClickUpdate = (tag) => {
+    const errors = this.validateTagDetails();
     if (errors.length === 0) {
-      tagsService.updateTag(this.state.updatedTag).then(result => {
+      tagsService.updateTag(tag, this.props.event.id).then(result => {
         if (result.error) {
           this.setState({
             errors: [this.props.t(result.error)],
@@ -86,9 +87,10 @@ class TagConfigComponent extends Component {
     }
   };
 
-  onClickDelete = () => {
-    const tag = null; //TODO
-    tagsService.deleteTag(tag).then(result => { //TODO: will fail, need to add deleteTag to tagsService
+  onClickDelete = (tag) => {
+    //TODO - debug, not working
+    tagsService.deleteTag(tag, this.props.event.id).then(result => {
+      console.log(result)
       if (result.error) {
         this.setState({
           errors: [this.props.t(result.error)],
@@ -113,12 +115,19 @@ class TagConfigComponent extends Component {
     return errorMessages;
   };
 
-  validateTag = (tag) => {
+  validateTagDetails = () => {
     let errors = [];
-    if (tag.name.length === 0) {
-      errors.push(this.props.t("Tag name is required"));
-    }
-    if (tag.type.length === 0) {
+    this.props.organisation.languages.forEach(lang => {
+      if (!this.state.updatedTag.name || !this.state.updatedTag.name[lang.code] || this.state.updatedTag.name[lang.code].trim().length === 0) {
+        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Tag name", lang.description) : "Tag name") + " is required"
+        errors.push(this.props.t(error_text));
+      }
+      if (!this.state.updatedTag.description || !this.state.updatedTag.description[lang.code] || this.state.updatedTag.description[lang.code].trim().length === 0) {
+        const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Tag description", lang.description) : "Tag description") + " is required"
+        errors.push(this.props.t(error_text));
+      }
+    });
+    if (!this.state.updatedTag.tag_type.length === 0) {
       errors.push(this.props.t("Tag type is required"));
     }
     return errors;
@@ -157,13 +166,20 @@ class TagConfigComponent extends Component {
       updatedTag: tag
     }, () => {
 
-      const errors = [];//this.validateEventDetails();
+      const errors = this.validateTagDetails();
 
       this.setState({
-        //allFieldsComplete: this.areAllFieldsComplete(),
         errors: errors,
         isValid: errors.length === 0
       });
+    });
+  }
+
+  onClickEdit = (tag) => {
+    this.setState({
+      updatedTag: tag
+    }, () => {
+      this.setTagEntryVisible()
     });
   }
 
@@ -175,17 +191,28 @@ class TagConfigComponent extends Component {
     for (let i = 0; i < tags.length; i++) {
       const tag = tags[i];
       tagRows.push(
-        <div className="tag">
-          <div className="tag-info">
-            {tag.name}
-          </div>
+        <div className="tag-table">
+          <tr>
+            <td>{tag.name}</td>
+            <td>{tag.description}</td>
+            <td>{tag.tag_type}</td>
+            <td>
+              <button
+                onClick={() => this.onClickDelete(tag)}>
+                {t("Delete Tag")}
+              </button>
+              </td>
+            <td>
+              <button
+                onClick={() => this.onClickEdit(tag)}>
+                {t("Edit Tag")}
+              </button>
+            </td>
+          </tr>
         </div>
       );
     }
-
-    //TODO
     return tagRows
-    return <div></div>;
   }
 
   renderTagEntry = () => {
@@ -261,12 +288,15 @@ class TagConfigComponent extends Component {
 
     tagEntryForm.push(
       <div className={"form-group row"}>
-        <button className="btn btn-primary" onClick={this.onClickAdd()}>
-          {t("Save")}
-        </button>
+        <button
+          onClick={this.onClickAdd}
+          className="btn btn-success btn-lg btn-block">
+          {t("Save Tag")}
+          </button>
       </div>
     );
     console.log(this.state);
+
     return tagEntryForm;
   }
 
@@ -317,10 +347,16 @@ class TagConfigComponent extends Component {
     return (
       <div>
         <div className="card">
-          <form>
+          <form key='tag-form'>
           {this.renderTagTable()}
-          {
-            <a onClick={this.setTagEntryVisible} id="new_tag_button" name="new_tag_button" className="btn btn-primary">{t("New Tag")}</a>
+          {!tagEntryVisible && 
+            <div className={"col-sm-4 "}>
+              <button
+                onClick={this.setTagEntryVisible}
+                className="btn btn-success btn-lg btn-block">
+                {t("New Tag")}
+              </button>
+            </div>
           }
           {tagEntryVisible && this.renderTagEntry()}
           {this.state.showErrors && this.getErrorMessages(this.state.errors)}
