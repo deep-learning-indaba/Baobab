@@ -41,19 +41,19 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
-            reviewService.getReviewAssignments(this.props.event.id)
+            reviewService.getReviewAssignments(this.props.event.id, this.props.match.params.id)
         ]).then(responses => {
-            console.log(responses);
+            console.log('r',responses);
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
                 event_type: responses[0].event.event_type,
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[4].reviewers,
+                reviewers: responses[2].detail.reviewers,
                 error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
             }, () => {
-                this.handleData(); 
+                // this.handleData(); 
                 this.getOutcome();
             });
         });
@@ -482,17 +482,43 @@ class ResponsePage extends Component {
         };
     };
 
+    renderActionEditor() {
+        const action_editor = this.state.reviewers.find(reviewer => reviewer.is_action_editor === true)
+        console.log(action_editor)
+        if (action_editor) {
+            return <div className="reviewer">
+                        <label>Action Editor</label>
+                        <div>
+                        <p>{action_editor.user_title} {action_editor.firstname} {action_editor.lastname}</p>
+                            
+                        </div>
+                    </div>
+        } else {
+            return  <div className="add-reviewer">
+            <button
+                data-toggle="modal"
+                type="button"
+                data-target="#exampleModalReview"
+                className="btn btn-light">
+                {("Assign Action Editor")}
+            </button>
+        </div>
+        }
+        
+    }
 
     // Reviews
     // Render Reviews
     renderReviews() {
 
-        if (this.state.applicationData) {
-            if (this.state.applicationData.reviewers) {
-                const reviews = this.state.applicationData.reviewers.map((val, index) => {
-                    let num = index + 1;
-                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed"},
-                    return <div className="reviewer">
+        if (this.state.reviewers) {
+            if (this.state.reviewers) {
+                let num = 0
+                const reviews = this.state.reviewers.map((val) => {
+                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed", "is_action_editor": False},
+                    if (!val.is_action_editor) {
+                        num = num + 1;
+                        return <div className="reviewer">
                         <label>{this.props.t("Reviewer") + " " + num}</label>
                         <div>
                             <p>{val.user_title} {val.firstname} {val.lastname}</p>
@@ -512,7 +538,9 @@ class ResponsePage extends Component {
                             }
                         </div>
                     </div>
-                });
+                }
+                    }
+                    );
     
                 return reviews
             };
@@ -696,6 +724,14 @@ class ResponsePage extends Component {
                 {applicationData &&
                     <div className="response-details">
                         {/* Reviews */}
+                        <div className="reviewers-section">
+                            <h3>{t('Action Editor')}</h3>
+                            <div className="list">
+                            {this.renderActionEditor()}
+                            
+                            </div>
+                        </div>
+                        <div className="divider"></div>
                         <div className="reviewers-section">
                         <h3>{t('Reviewers')}</h3>
                             <div className="list">

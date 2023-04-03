@@ -11,6 +11,19 @@ export const isEventAdmin = (user, event) => {
     );
   };
 
+  export const isActionEditor = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_admin ||
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "action-editor" && event && r.event_id === event.id
+        ))
+    );
+  };
+
   export const isRegistrationAdmin = (user, event) => {
     if (!user) {
       return false;

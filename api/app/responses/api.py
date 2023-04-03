@@ -22,7 +22,7 @@ from app.users.models import AppUser
 from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings, pdfconvertor, zipping, storage
 from app.utils.zipping import zip_in_memory
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import auth_required, event_admin_or_action_editor_required
 from flask import g, request, send_file
 from flask_restful import fields, inputs, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
@@ -276,7 +276,7 @@ def _serialize_tag(tag, language):
 
 class ResponseListAPI(restful.Resource):
 
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('include_unsubmitted', type=inputs.boolean, required=True)
@@ -288,10 +288,15 @@ class ResponseListAPI(restful.Resource):
         include_unsubmitted = args['include_unsubmitted']
         question_ids = args['question_ids[]']
         language = args['language']
-        
+        current_user = user_repository.get_by_id(g.current_user['id'])
+
         print(('Include unsubmitted:', include_unsubmitted))
 
-        responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
+        if current_user.is_event_admin(event_id):
+            responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
+        
+        elif current_user.is_action_editor(event_id):
+            responses = response_repository.get_all_for_action_editor(event_id, g.current_user['id'], not include_unsubmitted)
 
         review_config = review_configuration_repository.get_configuration_for_event(event_id)
         required_reviewers = 1 if review_config is None else review_config.num_reviews_required + review_config.num_optional_reviews
@@ -306,10 +311,18 @@ class ResponseListAPI(restful.Resource):
             r.reviewer_user_id: r for r in review_responses
         }
 
+        event = event_repository.get_by_id(event_id)
+        
         serialized_responses = []
         for response in responses:
-            reviewers = [_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)) 
-                         for r in response_to_reviewers.get(response.id, [])]
+            reviewers = []
+            action_editor = None
+            for r in response_to_reviewers.get(response.id, []):
+                if not r.is_action_editor:
+                    reviewers.append(_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)))
+                else:
+                    action_editor = _serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None))
+
             reviewers = _pad_list(reviewers, required_reviewers)
             if question_ids:
                 answers = [_serialize_answer(answer, language) for answer in response.answers if answer.question_id in question_ids]
@@ -332,8 +345,10 @@ class ResponseListAPI(restful.Resource):
                 'tags': [_serialize_tag(rt.tag, language) for rt in response.response_tags]
             }
 
+            if (event.event_type == EventType.CONTINUOUS_JOURNAL or event.event_type == EventType.JOURNAL):
+                serialized['action_editor'] = action_editor
+            
             serialized_responses.append(serialized)
-
         return serialized_responses
 
 
@@ -425,7 +440,8 @@ class ResponseDetailAPI(restful.Resource):
             'user_title': response_reviewer.user.user_title,
             'firstname': response_reviewer.user.firstname,
             'lastname': response_reviewer.user.lastname,
-            'status': _review_response_status(review_response)
+            'status': _review_response_status(review_response),
+            'is_action_editor':  response_reviewer.is_action_editor
         }
 
 
@@ -449,7 +465,7 @@ class ResponseDetailAPI(restful.Resource):
             'reviewers': [ResponseDetailAPI._serialize_reviewer(r, review_form_id) for r in response.reviewers]
         }
 
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('response_id', type=int, required=True) 
@@ -458,6 +474,9 @@ class ResponseDetailAPI(restful.Resource):
 
         response_id = args['response_id']   
         language = args['language']
+        
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
+            return errors.FORBIDDEN
 
         response = response_repository.get_by_id(response_id)
         review_form = review_repository.get_review_form(event_id)

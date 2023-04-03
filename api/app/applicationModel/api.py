@@ -11,7 +11,7 @@ from app.applicationModel.models import ApplicationForm, Question, Section, Sect
 from app.events.repository import EventRepository as event_repository
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import auth_required, event_admin_required, event_admin_or_action_editor_required
 from app.utils.errors import APPLICATION_FORM_EXISTS, EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
 
 from app import db, bcrypt
@@ -406,7 +406,7 @@ def _serialize_question(question, language):
 
 class QuestionListApi(restful.Resource):
 
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('language', type=str, required=True)

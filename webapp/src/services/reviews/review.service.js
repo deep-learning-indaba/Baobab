@@ -119,9 +119,9 @@ function submit(responseId, reviewFormId, scores, shouldUpdate, isSubmitted) {
     });
 }
 
-function getReviewAssignments(eventId) {
+function getReviewAssignments(eventId,responseId) {
   return axios
-    .get(baseUrl + "/api/v1/reviewassignment?event_id=" + eventId, {
+    .get(baseUrl + "/api/v1/reviewassignment?event_id=" + eventId + "&response_id=" + responseId, {
       headers: authHeader()
     
     })

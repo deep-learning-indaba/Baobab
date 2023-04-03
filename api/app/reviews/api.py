@@ -25,9 +25,8 @@ from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
-from app.utils.auth import auth_required
 
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import auth_required, event_admin_required, event_admin_or_action_editor_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
     REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND
 
@@ -187,6 +186,18 @@ def _add_reviewer_role(user_id, event_id):
     event_role = EventRole('reviewer', user_id, event_id)
     db.session.add(event_role)
     db.session.commit()
+    
+def _validate_user_admin_or_reviewer(user_id, event_id, response_id):
+    user = user_repository.get_by_id(user_id)
+    # Check if the user is an event admin
+    permitted = user.is_event_admin(event_id)
+    # If they're not an event admin, check if they're a reviewer for the relevant response
+    if not permitted and user.is_reviewer(event_id):
+        response_reviewer = review_repository.get_response_reviewer(response_id, user.id)
+        if response_reviewer is not None:
+            permitted = True
+    
+    return permitted
 
 
 class ReviewResponseUser():
@@ -431,15 +442,14 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         'reviews_completed': fields.Integer
     }
 
-    @auth_required
+    @event_admin_or_action_editor_required
     @marshal_with(reviews_count_fields)
-    def get(self):
+    def get(self, event_id):
         args = self.get_req_parser.parse_args()
-        event_id = args['event_id']
+        response_id = args['response_id']
         user_id = g.current_user['id']
 
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
+        if not _validate_user_admin_or_reviewer(user_id, event_id, response_id):
             return FORBIDDEN
 
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
@@ -621,7 +631,7 @@ class ReviewListAPI(restful.Resource):
                 for response, review_response in responses_to_review]
 
 class ResponseReviewAssignmentAPI(restful.Resource):
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def post(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('response_ids', type=int, required=True, action='append')
@@ -662,7 +672,7 @@ class ResponseReviewAssignmentAPI(restful.Resource):
                 user=reviewer_user)
         return {}, 201
 
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def delete(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('response_id', type=int, required=True)
@@ -749,7 +759,7 @@ class ReviewResponseDetailListAPI(restful.Resource):
         }
 
     @auth_required
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def get(self, event_id):
         parser = reqparse.RequestParser()
         parser.add_argument('language', type=str, required=True)

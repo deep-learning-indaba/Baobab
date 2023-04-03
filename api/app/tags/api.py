@@ -1,7 +1,7 @@
 from flask import g
 import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import event_admin_required, event_admin_or_action_editor_required
 from app.tags.repository import TagRepository as tag_repository
 from app.utils import errors
 from app.tags.models import Tag, TagTranslation
@@ -90,7 +90,7 @@ class TagAPI(restful.Resource):
 
 
 class TagListAPI(restful.Resource):
-    @event_admin_required
+    @event_admin_or_action_editor_required
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('language', type=str, required=True)

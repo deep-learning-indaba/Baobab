@@ -29,7 +29,7 @@ class ReviewAssignmentComponent extends Component {
 
     Promise.all([
         tagsService.getTagList(event_id),
-        reviewService.getReviewAssignments(event_id),
+        reviewService.getReviewAssignments(event_id, this.props.match.params.id),
         reviewService.getReviewSummary(event_id, tags)
     ]).then(responses => {
         this.setState({
@@ -60,7 +60,7 @@ class ReviewAssignmentComponent extends Component {
         this.setState({
           error: result.error
         })
-        return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0)
+        return reviewService.getReviewAssignments(this.props.event ? this.props.event.id : 0, this.props.match.params.id)
       },
     ).then(
       result => {

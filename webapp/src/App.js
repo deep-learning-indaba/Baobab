@@ -21,7 +21,7 @@ import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
 
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
+import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer, isActionEditor } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
 
@@ -217,6 +217,45 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
+              {isActionEditor(this.props.user, this.props.event) &&
+                this.props.event &&
+                this.props.event.is_review_open && (
+                  <li className="nav-item dropdown">
+                    <div
+                      className="nav-link dropdown-toggle"
+                      id="navbarDropdown"
+                      role="button"
+                      data-toggle="dropdown"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                    >
+                      {t('Reviews')}
+                    </div>
+                    <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <NavLink
+                        to={`/${this.props.eventKey}/responseList`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        {t('Response List')}
+                      </NavLink>
+                      <NavLink
+                        to={`/${this.props.eventKey}/reviewlist`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        {t('Review')}
+                      </NavLink>
+                      <NavLink
+                        to={`/${this.props.eventKey}/reviewHistory`}
+                        className="dropdown-item"
+                        onClick={this.props.toggleMenu}
+                      >
+                        {t('Review History')}
+                      </NavLink>
+                    </div>
+                  </li>
+                )}
             {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) &&
               this.props.event &&
               this.props.event.is_registration_open && (

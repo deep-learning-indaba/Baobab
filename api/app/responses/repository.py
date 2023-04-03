@@ -1,7 +1,7 @@
 from typing import List
 
 from app import db
-from app.responses.models import Response, Answer, ResponseTag
+from app.responses.models import Response, Answer, ResponseTag, ResponseReviewer
 from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
 from sqlalchemy import func, cast, Date
@@ -136,6 +136,18 @@ class ResponseRepository():
         return (query
                 .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
                 .filter_by(event_id=event_id)
+                .all())
+        
+    def get_all_for_action_editor(event_id, action_editor_id, submitted_only=True) -> List[Response]:
+        query = db.session.query(Response)
+        if submitted_only:
+            query = query.filter_by(is_submitted=True)
+        
+        return (query
+                .join(ApplicationForm, Response.application_form_id == ApplicationForm.id)
+                .filter_by(event_id=event_id)
+                .join(ResponseReviewer, Response.id == ResponseReviewer.response_id)
+                .filter_by(reviewer_user_id=action_editor_id, is_action_editor=True)
                 .all())
 
     @staticmethod
