@@ -317,12 +317,13 @@
     "Previous": "Retourner",
     "Application Status": "État de la candidature",
     "Reviewer": "Critique",
-    "Tags": "Mots clés",
+    "Tags": "Balises",
     "Yes": "Oui",
-    "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer ce tag?",
+    "Are you sure you want to delete this tag?": "Voulez-vous vraiment supprimer cette balise?",
     "Save": "Enregistrer",
-    "Add Tags": "Ajouter des tags",
-    "New tag": "Nouveau tag",
+    "Add Tags": "Ajouter des balises",
+    "New tag": "Nouvelle balise",
+    "New Tag": "Nouvelle Balise",
     "Total Score": "Score Total",
     "Post": "Publier",
     "Applications Status": "Statut des applications",
@@ -485,6 +486,13 @@
     "Stripe setup has not yet been completed.": "La configuration de Stripe n'a pas encore été terminée.",
     "review-assignment-filter-note": "Si vous avez sélectionné des filtres de balises, seules les réponses correspondant à ces balises seront attribuées. Notez que le nombre total de révisions non attribuées tient compte des filtres de balises, mais pas le nombre attribué et le nombre terminé dans le tableau.",
     "Reviewers": "Les réviseurs",
-    "Configure Tags": "Configurer les balises"
+    "Configure Tags": "Configurer les balises",
+    "Tag Name": "Nom de la balise",
+    "Name of the tag": "Nom de la balise",
+    "Tag Type": "Type de balise",
+    "Tag Description": "Description de la balise",
+    "Description of the tag": "Description de la balise",
+    "RESPONSE": "RÉPONSE",
+    "REGISTRATION": "INSCRIPTION"
 }
 

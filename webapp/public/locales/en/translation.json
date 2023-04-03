@@ -323,6 +323,7 @@
     "Save": "Save",
     "Add Tags": "Add Tags",
     "New tag": "New tag",
+    "New Tag": "New Tag",
     "Total Score": "Total Score",
     "Post": "Post",
     "Applications Status": "Applications Status",
@@ -486,5 +487,12 @@
     "Stripe setup has not yet been completed.": "Stripe setup has not yet been completed.",
     "review-assignment-filter-note": "If you have selected tag filters, then only responses matching those tags will be assigned. Note that the total unallocated review count takes the tag filters into account, but the No. assigned and No. Completed in the table do not.",
     "Reviewers": "Reviewers",
-    "Configure Tags": "Configure Tags"
+    "Configure Tags": "Configure Tags",
+    "Tag Name": "Tag Name",
+    "Name of the tag": "Name of the tag",
+    "Tag Type": "Tag Type",
+    "Tag Description": "Tag Description",
+    "Description of the tag": "Description of the tag",
+    "RESPONSE" : "RESPONSE",
+    "REGISTRATION": "REGISTRATION"
 }
