@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.events.models import Event, EventFee, EventType
+from app.events.models import Event, EventFee, EventType, EventRole
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
@@ -70,5 +70,14 @@ class EventRepository(BaseRepository):
                 EventFee.event_id==event_id,
                 EventFee.id.in_(event_fee_ids),
                 EventFee.is_active==True)
+            .all()
+        )
+
+    @staticmethod
+    def get_event_admins(event_id):
+        return (
+            db.session.query(AppUser)
+            .join(EventRole, EventRole.user_id == AppUser.id)
+            .filter_by(event_id=event_id, role='admin')
             .all()
         )
