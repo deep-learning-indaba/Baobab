@@ -41,6 +41,7 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
+            reviewService.getReviewAssignments(this.props.event.id)
         ]).then(responses => {
             console.log(responses);
             this.setState({
@@ -49,8 +50,8 @@ class ResponsePage extends Component {
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[2].detail.reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+                reviewers: responses[4].reviewers,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
             }, () => {
                 this.getOutcome();
             });
@@ -481,7 +482,7 @@ class ResponsePage extends Component {
     };
 
     renderActionEditor() {
-        const action_editor = this.state.reviewers.find(reviewer => reviewer.is_action_editor === true)
+        const action_editor = this.state.applicationData.reviewers.find(reviewer => reviewer.is_action_editor === true)
         if (action_editor) {
             return <div className="reviewer">
                         <label>Action Editor</label>
@@ -497,40 +498,38 @@ class ResponsePage extends Component {
     // Render Reviews
     renderReviews() {
 
-        if (this.state.reviewers) {
-            if (this.state.reviewers) {
-                let num = 0
-                const reviews = this.state.reviewers.map((val) => {
-                    //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed", "is_action_editor": False},
-                    if (!val.is_action_editor) {
-                        num = num + 1;
-                        return <div className="reviewer">
-                        <label>{this.props.t("Reviewer") + " " + num}</label>
-                        <div>
-                            <p>{val.user_title} {val.firstname} {val.lastname}</p>
-                            
-                            {val.status === "completed" && <p className="review-completed">{this.props.t("Completed")}</p>}
-                            {val.status === "started" && <p className="review-started">{this.props.t("In Progress")}</p>}
-                            {val.status === "not_started" &&
-                                <p
-                                    className="review-not-started" >
-                                    {this.props.t("Not Started")}
-                                    <button
-                                        className="trash-review"
-                                        onClick={(e) => this.removeReview(val.reviewer_user_id)} >
-                                        <i className="far fa-trash-alt cursor-pointer"></i>
-                                    </button>
-                                </p>
-                            }
-                        </div>
+        if (this.state.applicationData.reviewers) {
+            let num = 0
+            const reviews = this.state.applicationData.reviewers.map((val) => {
+                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed", "is_action_editor": False},
+                if (!val.is_action_editor) {
+                    num = num + 1;
+                    return <div className="reviewer">
+                    <label>{this.props.t("Reviewer") + " " + num}</label>
+                    <div>
+                        <p>{val.user_title} {val.firstname} {val.lastname}</p>
+                        
+                        {val.status === "completed" && <p className="review-completed">{this.props.t("Completed")}</p>}
+                        {val.status === "started" && <p className="review-started">{this.props.t("In Progress")}</p>}
+                        {val.status === "not_started" &&
+                            <p
+                                className="review-not-started" >
+                                {this.props.t("Not Started")}
+                                <button
+                                    className="trash-review"
+                                    onClick={(e) => this.removeReview(val.reviewer_user_id)} >
+                                    <i className="far fa-trash-alt cursor-pointer"></i>
+                                </button>
+                            </p>
+                        }
                     </div>
-                }
-                    }
-                    );
-    
-                return reviews
-            };
+                </div>
             }
+                }
+                );
+
+            return reviews
+        };
         
     };
 

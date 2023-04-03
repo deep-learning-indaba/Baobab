@@ -27,7 +27,8 @@ class ReviewRepository():
                         0 as reviews_completed
                     from app_user
                     join event_role on event_role.user_id = app_user.id
-                    where event_role.role = 'reviewer'
+                    where event_role.role = 'reviewer' 
+                    or event_role.role = 'action-editor'
                     and event_role.event_id = {event_id}
                     and not exists (
                         select 1
