@@ -319,7 +319,7 @@ class ResponseListAPI(restful.Resource):
             action_editor = None
             for r in response_to_reviewers.get(response.id, []):
                 reviewer = _serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None))
-                if reviewer.is_action_editor:
+                if r.is_action_editor:
                     action_editor = reviewer
                 else:
                     reviewers.append(reviewer)
