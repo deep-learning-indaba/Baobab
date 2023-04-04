@@ -498,39 +498,37 @@ class ResponsePage extends Component {
     // Render Reviews
     renderReviews() {
 
-        if (this.state.applicationData.reviewers) {
-            let num = 0
-            const reviews = this.state.applicationData.reviewers.map((val) => {
-                //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed", "is_action_editor": False},
-                if (!val.is_action_editor) {
-                    num = num + 1;
-                    return <div className="reviewer">
+        if (! this.state.applicationData || ! this.state.applicationData.reviewers){
+            return <div></div>
+        }
+        let num = 0
+        const reviews = this.state.applicationData.reviewers.map((val) => {
+            //   {"reviewer_user_id": 4, "user_title": "Mr", "firstname": "Joe", "lastname": "Soap", "status": "completed", "is_action_editor": False},
+            if (!val.is_action_editor) {
+                num = num + 1;
+                return <div className="reviewer">
                     <label>{this.props.t("Reviewer") + " " + num}</label>
                     <div>
                         <p>{val.user_title} {val.firstname} {val.lastname}</p>
-                        
+                    
                         {val.status === "completed" && <p className="review-completed">{this.props.t("Completed")}</p>}
                         {val.status === "started" && <p className="review-started">{this.props.t("In Progress")}</p>}
                         {val.status === "not_started" &&
-                            <p
-                                className="review-not-started" >
-                                {this.props.t("Not Started")}
-                                <button
-                                    className="trash-review"
-                                    onClick={(e) => this.removeReview(val.reviewer_user_id)} >
-                                    <i className="far fa-trash-alt cursor-pointer"></i>
-                                </button>
-                            </p>
+                        <p
+                            className="review-not-started" >
+                            {this.props.t("Not Started")}
+                            <button
+                                className="trash-review"
+                                onClick={(e) => this.removeReview(val.reviewer_user_id)} >
+                                <i className="far fa-trash-alt cursor-pointer"></i>
+                            </button>
+                        </p>
                         }
                     </div>
                 </div>
             }
-                }
-                );
-
-            return reviews
-        };
-        
+        });
+        return reviews;
     };
 
     // Remove Reviewer

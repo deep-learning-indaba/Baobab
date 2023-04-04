@@ -318,10 +318,11 @@ class ResponseListAPI(restful.Resource):
             reviewers = []
             action_editor = None
             for r in response_to_reviewers.get(response.id, []):
-                if not r.is_action_editor:
-                    reviewers.append(_serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None)))
+                reviewer = _serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None))
+                if reviewer.is_action_editor:
+                    action_editor = reviewer
                 else:
-                    action_editor = _serialize_reviewer(r, reviewer_to_review_response.get(r.reviewer_user_id, None))
+                    reviewers.append(reviewer)
 
             reviewers = _pad_list(reviewers, required_reviewers)
             if question_ids:
@@ -342,11 +343,9 @@ class ResponseListAPI(restful.Resource):
                 'language': response.language,
                 'answers': answers,
                 'reviewers': reviewers,
+                'action_editor': action_editor,
                 'tags': [_serialize_tag(rt.tag, language) for rt in response.response_tags]
             }
-
-            if (event.event_type == EventType.CONTINUOUS_JOURNAL or event.event_type == EventType.JOURNAL):
-                serialized['action_editor'] = action_editor
             
             serialized_responses.append(serialized)
         return serialized_responses

@@ -445,13 +445,6 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
     @event_admin_or_action_editor_required
     @marshal_with(reviews_count_fields)
     def get(self, event_id):
-        args = self.get_req_parser.parse_args()
-        user_id = g.current_user['id']
-
-        current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_event_admin(event_id):
-            return FORBIDDEN
-
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
         views = [ReviewCountView(count) for count in counts]
         return views
