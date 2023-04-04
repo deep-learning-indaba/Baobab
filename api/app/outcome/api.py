@@ -10,7 +10,7 @@ from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.emailer import email_user
 
-from app.utils.auth import auth_required, event_admin_required
+from app.utils.auth import auth_required, event_admin_required, event_admin_or_action_editor_required
 from app import LOGGER
 from app import db
 from app.utils import errors
@@ -46,7 +46,7 @@ outcome_list_fields = {
 
 
 class OutcomeAPI(restful.Resource):
-    @event_admin_required
+    @event_admin_or_action_editor_required
     @marshal_with(outcome_fields)
     def get(self, event_id):
         req_parser = reqparse.RequestParser()
@@ -69,7 +69,7 @@ class OutcomeAPI(restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @event_admin_required
+    @event_admin_or_action_editor_required
     @marshal_with(outcome_fields)
     def post(self, event_id):
         req_parser = reqparse.RequestParser()

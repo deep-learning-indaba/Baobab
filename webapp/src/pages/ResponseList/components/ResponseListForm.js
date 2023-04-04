@@ -52,7 +52,7 @@ class ResponseListForm extends Component {
         this.toggleList(false);
         const { selectedTags, selectedQuestions, includeUnsubmitted } = this.state;
 
-        responsesService.getResponseList(this.props.event.id, includeUnsubmitted, selectedQuestions).then(resp => {
+        responsesService.getResponseList(this.props.event.id, includeUnsubmitted, selectedQuestions).then(resp => {            
             this.setState({
                 responses: resp.responses.filter(r => selectedTags.length == 0 || r.tags.map(t => t.name).some(t => selectedTags.includes(t))),
                 error: resp.error
@@ -150,6 +150,8 @@ class ResponseListForm extends Component {
             val.is_submitted = val.is_submitted ? "True" : "False";
             val.is_withdrawn = val.is_withdrawn ? "True" : "False";
 
+            val.action_editor = val.action_editor ? val.action_editor.reviewer_name : "";
+
             // delete original review and answer rows as they don't need to be displayed with all their data
             delete val.answers;
             delete val.reviewers;
@@ -232,7 +234,7 @@ class ResponseListForm extends Component {
                     return 200
                 };
 
-                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date') || colItem.includes('email')) {
+                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date') || colItem.includes('email') || colItem.includes('action_editor')) {
                     return 180
                 }
                 else {
