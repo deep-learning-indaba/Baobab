@@ -491,6 +491,17 @@ class ResponsePage extends Component {
                             
                         </div>
                     </div>
+        } else {
+            return <div className="add-reviewer">
+            <button
+                data-toggle="modal"
+                type="button"
+                data-target="#action-editor"
+                data-whatever="Action Editors"
+                className="btn btn-light">
+                {("Assign Action Editor")}
+            </button>
+        </div>
         }
     }
 
@@ -570,10 +581,10 @@ class ResponsePage extends Component {
         });
     };
 
-    postReviewerService(reviewer) {
+    postReviewerService(reviewer, is_action_editor) {
         const { applicationData } = this.state;
 
-        reviewService.assignResponsesToReviewer(this.props.event.id, [applicationData.id], reviewer.email)
+        reviewService.assignResponsesToReviewer(this.props.event.id, [applicationData.id], reviewer.email, is_action_editor)
             .then(response => {
                 if (response.error) {
                     this.error(response.error);
@@ -584,7 +595,8 @@ class ResponsePage extends Component {
                         "user_title": reviewer.user_title, 
                         "firstname": reviewer.firstname, 
                         "lastname": reviewer.lastname, 
-                        "completed": false
+                        "completed": false,
+                        "is_action_editor": is_action_editor
                     }
 
                     const newReviewers = [...applicationData.reviewers, newReviewer];
@@ -599,14 +611,30 @@ class ResponsePage extends Component {
             });
     };
 
+    
+    // Render Action Editor Modal
+    renderActionEditorModal() {
+        return < ReviewModal
+            handlePost={(data) => this.postReviewerService(data, true)}
+            response={this.state.applicationData}
+            reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id) && r.is_action_editor)}
+            event={this.props.event}
+            title={"Action Editor"}
+            t={this.props.t}
+            id={'action-editor'}
+        />
+    };
+
     // Render Review Modal
     renderReviewerModal() {
-        return < ReviewModal
+        return <ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
             reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
+            title={("Reviewers")}
             t={this.props.t}
+            id={'reviewer'}
         />
     };
 
@@ -621,6 +649,21 @@ class ResponsePage extends Component {
                 cancelText={t("No")}>
                 <p>
                     {t('Are you sure you want to delete this reviewer?')}
+                </p>
+            </ConfirmModal>  
+    };
+
+    renderDeleteActionEditorModal() {
+        const t = this.props.t;
+
+            return <ConfirmModal
+                visible={this.state.removeReviewerModalVisible}
+                onOK={(e) => this.removeReviewerService(e)}
+                onCancel={(e) => this.cancelRemoveReviewer(e)}
+                okText={t("Yes")}
+                cancelText={t("No")}>
+                <p>
+                    {t('Are you sure you want to delete this action editor?')}
                 </p>
             </ConfirmModal>  
     };
@@ -648,6 +691,7 @@ class ResponsePage extends Component {
                 {/* Add Tag Modal*/}
                 {this.renderTagModal()}
                 {this.renderReviewerModal()}
+                {this.renderActionEditorModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
                 
@@ -725,7 +769,7 @@ class ResponsePage extends Component {
                                     <button
                                         data-toggle="modal"
                                         type="button"
-                                        data-target="#exampleModalReview"
+                                        data-target="#reviewer"
                                         className="btn btn-light">
                                         {t("Assign Reviewer")}
                                     </button>

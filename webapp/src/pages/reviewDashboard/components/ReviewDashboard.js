@@ -25,9 +25,7 @@ class ReviewListComponent extends Component {
     }
 
     componentDidMount() {
-        console.log('got to load', this.props)
         this.loadReviewList(this.state.mode);
-        console.log('loaded')
     }
 
     responseIDCell = props => {

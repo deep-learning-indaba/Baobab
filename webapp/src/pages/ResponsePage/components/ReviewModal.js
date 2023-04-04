@@ -31,16 +31,15 @@ class ReviewModal extends Component {
     renderModal() {
         const { selectedReviewer } = this.state;
 
-        const { reviewers, t } = this.props;
-
+        const { reviewers, t, id, title } = this.props;
 
         if (this.props.event) {
             return (
-                <div className="modal fade" id="exampleModalReview" tabIndex="-1" role="dialog" aria-labelledby="exampleModalReview" aria-hidden="true">
+                <div className="modal fade" id={id} tabIndex="-1" role="dialog" aria-labelledby="exampleModalReview" aria-hidden="true">
                     <div className="modal-dialog" role="document">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title" id="exampleModalLabel">{t('Reviewers')}</h5>
+                                <h5 className="modal-title" id="exampleModalLabel">{title}</h5>
                                 <button type="button" className="close" data-dismiss="modal" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
@@ -61,7 +60,7 @@ class ReviewModal extends Component {
 
                                     </button>
                                 })}
-                                {!reviewers && <span>{t("There are no more reviewers available")}</span>}
+                                {!reviewers.length && <span>{"There are no more"} {id}{"s available"}</span>}
 
 
                             </div>

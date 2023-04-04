@@ -697,7 +697,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_adding_first_reviewer(self):
         self.seed_static_data()
         self.setup_responses_without_reviewers()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 4}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 4, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -708,7 +708,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_limit_of_num_reviews(self):
         self.seed_static_data()
         self.setup_responses_without_reviewers()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -723,7 +723,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_reviewer_does_not_get_assigned_to_own_response(self):
         self.seed_static_data()
         self.setup_reviewer_with_own_response()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -740,7 +740,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_withdrawn_and_unsubmitted_responses_are_not_assigned_reviewers(self):
         self.seed_static_data()
         self.setup_withdrawn_and_unsubmitted_responses()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -781,7 +781,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_response_will_get_multiple_reviewers_assigned(self):
         self.seed_static_data()
         self.setup_responsereview_with_different_reviewer()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -884,7 +884,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_reviewer_is_not_assigned_to_response_more_than_once(self):
         self.seed_static_data()
         self.setup_reviewer_is_not_assigned_to_response_more_than_once()
-        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3}
+        params = {'event_id': 1, 'reviewer_user_email': 'r3@r.com', 'num_reviews': 3, 'is_action_editor': False}
         header = self.get_auth_header_for('ea@ea.com')
 
         response = self.app.post('/api/v1/reviewassignment', headers=header, data=params)
@@ -1444,7 +1444,7 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
     def test_responses_assigned(self):
         self.seed_static_data()
 
-        params = {'event_id' : 1, 'response_ids': [1, 2], 'reviewer_email': 'reviewer@mail.com'}
+        params = {'event_id' : 1, 'response_ids': [1, 2], 'reviewer_email': 'reviewer@mail.com', 'is_action_editor': False}
 
         response = self.app.post(
             '/api/v1/assignresponsereviewer',
@@ -1465,7 +1465,7 @@ class ResponseReviewerAssignmentApiTest(ApiTestCase):
     def test_response_for_different_event_forbidden(self):
         self.seed_static_data()
 
-        params = {'event_id' : 1, 'response_ids': [1, 2, self.event2_response_id], 'reviewer_email': 'reviewer@mail.com'}
+        params = {'event_id' : 1, 'response_ids': [1, 2, self.event2_response_id], 'reviewer_email': 'reviewer@mail.com', 'is_action_editor': False}
 
         response = self.app.post(
             '/api/v1/assignresponsereviewer',

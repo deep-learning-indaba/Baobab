@@ -28,6 +28,7 @@ class PostReviewAssignmentMixin(object):
     post_req_parser.add_argument('reviewer_user_email', type=str, required=True)
     post_req_parser.add_argument('num_reviews', type=int, required=True)
     post_req_parser.add_argument('tags', type=int, action="append", location='json')
+    post_req_parser.add_argument('is_action_editor', type=bool, required=False)
 
 class GetReviewHistoryMixin(object):
     get_req_parser = reqparse.RequestParser()

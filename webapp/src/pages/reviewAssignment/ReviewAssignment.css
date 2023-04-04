@@ -17,6 +17,11 @@
     margin-bottom: 1.5em;
 }
 
+.review-assignment-add {
+    margin-bottom: 2em;
+    padding-bottom: 2em;
+}
+
 .review-assignment-wrapper .heading {
     color: grey;
     font-weight: 300;
@@ -27,6 +32,11 @@
 .review-assignment-wrapper {
     width: 87vw;
     text-align: left;
+}
+
+.review-assignment-table-wrapper {
+    padding-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .review-assignment-wrapper .tag-filter {

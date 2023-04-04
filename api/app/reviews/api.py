@@ -182,8 +182,11 @@ def _serialize_review_form(review_form: ReviewForm, language: str) -> Mapping[st
     return form
 
 
-def _add_reviewer_role(user_id, event_id):
-    event_role = EventRole('reviewer', user_id, event_id)
+def _add_reviewer_role(user_id, event_id, is_action_editor=False):
+    if is_action_editor:
+        event_role = EventRole('action-editor', user_id, event_id)
+    else: 
+        event_role = EventRole('reviewer', user_id, event_id)
     db.session.add(event_role)
     db.session.commit()
     
@@ -411,7 +414,9 @@ class ReviewCountView():
         self.lastname = count.lastname
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
+        self.editor_reviews_allocated = count.editor_reviews_allocated
         self.reviewer_user_id = count.reviewer_user_id
+        self.is_action_editor = count.is_action_editor
 
 class ReviewSummaryAPI(restful.Resource):
 
@@ -427,7 +432,8 @@ class ReviewSummaryAPI(restful.Resource):
         num_reviews_required = config.num_reviews_required if config is not None else 1
 
         return {
-            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, num_reviews_required, tag_ids=tags)
+            'reviews_unallocated': review_repository.count_unassigned_reviews(event_id, num_reviews_required, tag_ids=tags),
+            'action_editors_unallocated': review_repository.count_unassigned_action_editors(event_id, tag_ids=tags)
         }
 
 
@@ -439,7 +445,9 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         'firstname': fields.String,
         'lastname': fields.String,
         'reviews_allocated': fields.Integer,
-        'reviews_completed': fields.Integer
+        'reviews_completed': fields.Integer,
+        'editor_reviews_allocated': fields.Integer,
+        'is_action_editor': fields.Boolean
     }
 
     @event_admin_or_action_editor_required
@@ -462,6 +470,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
         tags = args['tags']
+        is_action_editor = args['is_action_editor']
 
         event = event_repository.get_by_id(event_id)
         if not event:
@@ -472,14 +481,14 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
             return USER_NOT_FOUND
 
         if not reviewer_user.is_reviewer(event_id):
-            _add_reviewer_role(reviewer_user.id, event_id)
+            _add_reviewer_role(reviewer_user.id, event_id, is_action_editor)
 
         config = review_configuration_repository.get_configuration_for_event(event_id)
         num_reviews_required = config.num_reviews_required if config is not None else 1
 
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
                                                       num_reviews_required, tags)
-        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
+        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id, is_action_editor) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
 
@@ -636,10 +645,12 @@ class ResponseReviewAssignmentAPI(restful.Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('response_ids', type=int, required=True, action='append')
         parser.add_argument('reviewer_email', type=str, required=True)
+        parser.add_argument('is_action_editor', type=bool, required=True)
         args = parser.parse_args()
 
         response_ids = args['response_ids']
         reviewer_email = args['reviewer_email']
+        is_action_editor = args['is_action_editor']
 
         filtered_response_ids = response_repository.filter_ids_to_event(response_ids, event_id)
 
@@ -653,9 +664,9 @@ class ResponseReviewAssignmentAPI(restful.Resource):
             return USER_NOT_FOUND
 
         if not reviewer_user.is_reviewer(event_id):
-            _add_reviewer_role(reviewer_user.id, event_id)
+            _add_reviewer_role(reviewer_user.id, event_id, is_action_editor)
 
-        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
+        response_reviewers = [ResponseReviewer(response_id, reviewer_user.id, is_action_editor) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
 

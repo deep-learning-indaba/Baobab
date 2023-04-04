@@ -24,11 +24,12 @@ class ReviewRepository():
                         firstname,
                         lastname,
                         0 as reviews_allocated,
-                        0 as reviews_completed
+                        0 as reviews_completed,
+                        0 as editor_reviews_allocated,
+                        event_role.role='action-editor' as is_action_editor
                     from app_user
                     join event_role on event_role.user_id = app_user.id
-                    where event_role.role = 'reviewer' 
-                    or event_role.role = 'action-editor'
+                    where (event_role.role = 'reviewer' or event_role.role = 'action-editor')
                     and event_role.event_id = {event_id}
                     and not exists (
                         select 1
@@ -48,7 +49,9 @@ class ReviewRepository():
                         firstname,
                         lastname,
                         count(response_reviewer.id) as reviews_allocated,
-                        count(review_response.id) as reviews_completed
+                        count(review_response.id) as reviews_completed,
+                        SUM(CASE WHEN response_reviewer.is_action_editor=True THEN 1 ELSE 0 END) as editor_reviews_allocated,
+                        event_role.role='action-editor' as is_action_editor
                     from response_reviewer
                     join app_user
                     on response_reviewer.reviewer_user_id = app_user.id
@@ -61,10 +64,10 @@ class ReviewRepository():
                     on review_response.response_id = response.id
                     and review_response.reviewer_user_id = app_user.id
                     where
-                        event_role.role = 'reviewer'
+                        (event_role.role = 'reviewer' or event_role.role = 'action-editor')
                         and event_role.event_id = {event_id}
                         and application_form.event_id = {event_id}
-                    group by app_user.id
+                    group by app_user.id, event_role.role
 
                 )
             """.format(event_id=event_id))
@@ -88,10 +91,34 @@ class ReviewRepository():
 
         reviews = (
             db.session.query(func.count(ResponseReviewer.id))
-            .filter(ResponseReviewer.response_id.in_(response_ids)).first()[0]
+            .filter(ResponseReviewer.response_id.in_(response_ids), ResponseReviewer.is_action_editor==False).first()[0]
         )
 
         return len(response_ids)*required_reviews_per_response - reviews
+    
+    @staticmethod
+    def count_unassigned_action_editors(event_id: int, tag_ids: Optional[Sequence[int]] = None) -> int:
+        response_ids =  (
+            db.session.query(Response.id)
+            .join(ApplicationForm, Response.application_form_id ==ApplicationForm.id)
+            .filter(ApplicationForm.event_id == event_id)
+            .filter(Response.is_submitted==True, Response.is_withdrawn==False)
+        )
+
+        if tag_ids:
+            response_ids = (response_ids
+                         .join(ResponseTag, Response.id == ResponseTag.response_id)
+                         .filter(ResponseTag.tag_id.in_(tag_ids))
+                         .group_by(Response.id)
+                         .having(func.count(ResponseTag.tag_id) == len(tag_ids)))
+        response_ids = [r.id for r in response_ids.all()]
+
+        reviews = (
+            db.session.query(func.count(ResponseReviewer.id))
+            .filter(ResponseReviewer.response_id.in_(response_ids), ResponseReviewer.is_action_editor==True).first()[0]
+        )
+
+        return len(response_ids) - reviews
 
     @staticmethod
     def get_review_form(event_id, stage=None):

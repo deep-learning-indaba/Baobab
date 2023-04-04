@@ -48,13 +48,13 @@ class ReviewAssignmentComponent extends Component {
     this.setState({ newReviewerEmail: value });
   };
 
-  assignReviewers = (email, toAssign) => {
+  assignReviewers = (email, toAssign, is_action_editor=false) => {
     // TODO: Clean up! 
     this.setState({ loading: true });
 
     // Assign the reviews
     const tags = this.state.tags.filter(tag => tag.active).map(tag => tag.id);
-    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, email, toAssign, tags).then(
+    reviewService.assignReviews(this.props.event ? this.props.event.id : 0, email, toAssign, tags, is_action_editor).then(
       result => {
         // Get updated reviewers, with updated allocations
         this.setState({
@@ -160,6 +160,10 @@ class ReviewAssignmentComponent extends Component {
       Header: t("Name"),
       accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
     }, {
+      id: 'role',
+      Header: t("Role"),
+      accessor: d => d.is_action_editor ? 'Action Editor' : 'Reviewer'
+    },{
       Header: t("No. Allocated"),
       accessor: 'reviews_allocated'
     }, {
@@ -172,6 +176,21 @@ class ReviewAssignmentComponent extends Component {
     }, {
       Header: t("Assign"),
       Cell: this.renderButton
+    }]
+
+    const editorColumns = [{
+      Header: t("Title"),
+      accessor: 'user_title' // String-based value accessors!
+    }, {
+      Header: t("Email"),
+      accessor: 'email'
+    }, {
+      id: 'fullName', // Required because our accessor is not a string
+      Header: t("Name"),
+      accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
+    }, {
+      Header: t("No. Editor Reviews Allocated"),
+      accessor: 'editor_reviews_allocated'
     }]
 
     if (loading) {
@@ -199,33 +218,63 @@ class ReviewAssignmentComponent extends Component {
           </span>
         </div>
 
+        <div className="review-assignment-table-wrapper">
         {reviewSummary &&
-         <span className="review-unallocated">{t("Total Unallocated Reviews") + ": " + reviewSummary.reviews_unallocated}</span>
+          <span className="review-unallocated">{t("Total Unallocated Reviews") + ": " + reviewSummary.reviews_unallocated}</span>
         }
        
         <div className="review-assignment-note">{t("review-assignment-filter-note")}</div>
-
-        <ReactTable
-          data={reviewers}
-          columns={columns}
-          minRows={0} />
+            <ReactTable
+            data={reviewers}
+            columns={columns}
+            minRows={0} />
+          <br />
         <br />
-        <div>
-          <FormTextBox
-            id={"newReviewEmail"}
-            name={'newReviewEmail'}
-            label={t("Add new reviewer's email (they must already have an account)")}
-            placeholder={t("Review email")}
-            onChange={this.handleChange}
-            value={newReviewerEmail}
-            key={"i_newReviewEmail"} />
+        </div>
 
-          <button
+        {(this.props.event.event_type === 'CONTINUOUS_JOURNAL' || this.props.event.event_type === 'JOURNAL') && (
+          <div className="review-assignment-table-wrapper">
+            <span className="review-unallocated">{t("Total Unallocated Action Editors") + ": " + reviewSummary.action_editors_unallocated}</span>
+            <ReactTable
+            data={reviewers.filter(r => r.is_action_editor===true)}
+            columns={editorColumns}
+            minRows={0} />
+           
+            </div>
+        )}
+
+        <div className="review-assignment-note">
+        <FormTextBox
+        id={"newReviewEmail"}
+        name={'newReviewEmail'}
+        label={t("Add new action reviewer's email (they must already have an account)")}
+        placeholder={t("Email")}
+        onChange={this.handleChange}
+        value={newReviewerEmail}
+        key={"i_newReviewEmail"} />
+
+        <br/>
+
+        <div className="review-assignment-add">
+        <button
             class="btn btn-primary float-right"
             onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0) }}>
-            {t("Add")}
+            {t("Add Reviewer")}
             </button>
-
+        </div>
+        
+            {(this.props.event.event_type === 'CONTINUOUS_JOURNAL' || this.props.event.event_type === 'JOURNAL') && (
+              <div className="review-assignment-add">
+          
+              <button
+                class="btn btn-primary float-right"
+                onClick={() => { this.assignReviewers(this.state.newReviewerEmail, 0, true) }}>
+                {t("Add Action Editor")}
+              </button>
+              </div>
+              )}
+        
+        
         </div>
       </section>
     )

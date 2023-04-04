@@ -142,12 +142,13 @@ function getReviewAssignments(eventId) {
     });
 }
 
-function assignReviews(eventId, reviewerUserEmail, numReviews, tags) {
+function assignReviews(eventId, reviewerUserEmail, numReviews, tags, is_action_editor=false) {
   let assignment = {
     event_id: eventId,
     reviewer_user_email: reviewerUserEmail,
     num_reviews: numReviews,
-    tags: tags
+    tags: tags,
+    is_action_editor: is_action_editor
   };
 
   return axios
@@ -256,11 +257,12 @@ function getReviewList(eventId) {
     });
 }
 
-function assignResponsesToReviewer(eventId, responseIds, reviewerEmail) {
+function assignResponsesToReviewer(eventId, responseIds, reviewerEmail, isActionEditor=false) {
   const assignment = {
     event_id: eventId,
     response_ids: responseIds,
-    reviewer_email: reviewerEmail
+    reviewer_email: reviewerEmail,
+    is_action_editor: isActionEditor
   };
 
   return axios
