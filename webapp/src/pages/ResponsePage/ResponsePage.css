@@ -232,6 +232,15 @@ html .headings-lower label {
     font-weight: bold;
 }
 
+.reviewers-section h6 {
+    font-size: 15px;
+    color: grey;
+    margin: 0;
+    padding-left: 7px;
+    padding-bottom: 4px;
+    padding-right: 4px;
+}
+
 .reviewers-section h5 {
     margin-top: 11px;
     color: grey;

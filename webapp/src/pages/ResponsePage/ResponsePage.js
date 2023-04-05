@@ -61,11 +61,19 @@ class ResponsePage extends Component {
     getReviewResponses(applicationData) {
         reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
             .then(resp => {
-                this.setState( {
-                    reviewResponses: resp.form.review_responses,
-                    reviewForm: resp.form.review_form,
-                    isLoading: false
-                 });
+                if (resp.error) {
+                    this.setState({
+                        error: resp.error
+                    });
+                }
+                if(resp.form) {
+                    this.setState( {
+                        reviewResponses: resp.form.review_responses,
+                        reviewForm: resp.form.review_form,
+                        isLoading: false,
+                        error: resp.error
+                     });
+                }
             });
     }
 
@@ -141,8 +149,8 @@ class ResponsePage extends Component {
     
     // Render Reviews
     renderCompleteReviews(){
-        if (this.state.reviewResponses) {
-                const reviews = this.state.reviewResponses.map((val, index) => {
+        if (this.state.reviewResponses.length) {
+                const reviews = this.state.reviewResponses.map(val => {
                     return <div className="section">
                             <h4
                                 className="reviewer-section" >
@@ -632,6 +640,9 @@ class ResponsePage extends Component {
 
     // Render Review Modal
     renderReviewerModal() {
+        if (!this.state.reviewResponses || !this.state.applicationData) {
+            return <div></div>
+        }
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
@@ -759,11 +770,12 @@ class ResponsePage extends Component {
 
                         {this.renderSections()}
                         {
-                            this.reviewResponses && (
+                            this.state.reviewResponses.length > 0 && (
                         <div>
                             <div className="divider"></div>
                             <div className="reviewers-section">
                             <h3>{t('Reviewer Feedback')}</h3>
+                            <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
                             {this.renderCompleteReviews()}
                             </div>
                         </div>

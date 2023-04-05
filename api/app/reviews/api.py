@@ -85,9 +85,7 @@ review_response_fields = {
 }
 
 extended_scores_fields = {
-    'review_question_id': fields.Integer, 
-    'headline': fields.String, 
-    'description': fields.String, 
+    'review_question_id': fields.Integer,
     'type': fields.String,
     'value': fields.String
 }
@@ -351,7 +349,7 @@ class ResponseReviewEventAdminAPI(restful.Resource):
             ReviewResponseDetailListAPI._serialise_review_response(response, args['language'])
             for response in response_reviews
         ]
-        return marshal(ReviewResponses(review_form, serialized_reviews, args['language']), response_review_fields), 201
+        return marshal(ReviewResponses(review_form, serialized_reviews, args['language']), response_review_fields), 200
 
 
 
