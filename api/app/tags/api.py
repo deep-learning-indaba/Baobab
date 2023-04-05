@@ -13,6 +13,7 @@ def _serialize_tag_detail(tag):
         'id': tag.id,
         'event_id': tag.event_id,
         'tag_type': tag.tag_type.value.upper(),
+        'active': tag.active,
         'name': {
             t.language: t.name for t in tag.translations
         },
@@ -33,6 +34,7 @@ def _serialize_tag(tag, language):
         'id': tag.id,
         'event_id': tag.event_id,
         'tag_type': tag.tag_type.value.upper(),
+        'active': tag.active,
         'name': translation.name,
         'description': translation.description
     }
@@ -49,6 +51,8 @@ class TagAPI(restful.Resource):
         tag = tag_repository.get_by_id(id)
         if tag.event_id != event_id:
             return errors.FORBIDDEN
+        if not tag.active:
+            return errors.TAG_NOT_FOUND
 
         return _serialize_tag_detail(tag)
 
@@ -57,12 +61,13 @@ class TagAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('name', type=dict, required=True)
         req_parser.add_argument('tag_type', type=str, required=True)
+        req_parser.add_argument('active', type=bool, default=True)
         req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         name_translations = args['name']
         description_translations = args['description']
 
-        tag = Tag(event_id, args['tag_type'])
+        tag = Tag(event_id, args['tag_type'], args['active'])
         for language, name in name_translations.items():
             description = description_translations.get(language)
             tag.translations.append(TagTranslation(tag.id, language, name, description))
@@ -76,6 +81,7 @@ class TagAPI(restful.Resource):
         req_parser.add_argument('id', type=int, required=True)
         req_parser.add_argument('name', type=dict, required=True)
         req_parser.add_argument('tag_type', type=str, required=True)
+        req_parser.add_argument('active', type=bool, required=True)
         req_parser.add_argument('description', type=dict, required=False)
         args = req_parser.parse_args()
         id = args['id']
@@ -86,14 +92,13 @@ class TagAPI(restful.Resource):
         if not tag or tag.event_id != event_id:
             return errors.TAG_NOT_FOUND
     
-        tag.tag_type = args['tag_type']
+        tag.update(args['tag_type'], args['active'])
 
         for language, name in name_translations.items():
             translation = tag.get_translation(language)
             description = description_translations.get(language)
             if translation:
-                translation.name = name
-                translation.description = description
+                translation.update(language, name, description)
             else:
                 tag.translations.append(TagTranslation(tag.id, language, name, description))
 
@@ -105,21 +110,6 @@ class TagAPI(restful.Resource):
 
         return _serialize_tag_detail(tag), 200
     
-    @event_admin_required
-    def delete(self, event_id):
-        req_parser = reqparse.RequestParser()
-        req_parser.add_argument('id', type=int, required=True)
-        args = req_parser.parse_args()
-        id = args['id']
-
-        tag = tag_repository.get_by_id(id)
-        if not tag or tag.event_id != event_id:
-            return errors.TAG_NOT_FOUND
-
-        tag_repository.delete_tag(id)
-        tag_repository.delete_translation_by_tag_id(id)
-        return '', 204
-
 class TagListAPI(restful.Resource):
     @event_admin_required
     def get(self, event_id):
@@ -131,3 +121,11 @@ class TagListAPI(restful.Resource):
         tags = tag_repository.get_all_for_event(event_id)
         
         return [_serialize_tag(t, language) for t in tags]
+
+class TagListConfigAPI(restful.Resource):
+    @event_admin_required
+    def get(self, event_id):
+
+        tags = tag_repository.get_all_for_event(event_id)
+        
+        return [_serialize_tag_detail(t) for t in tags]

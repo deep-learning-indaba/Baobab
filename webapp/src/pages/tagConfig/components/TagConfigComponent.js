@@ -20,7 +20,7 @@ class TagConfigComponent extends Component {
         name: {},
         tag_type: "",
         description: {},
-        language: ""
+        active: true
       },
       isMultiLingual: this.props.organisation.languages.length > 1,
       isValid: false,
@@ -34,7 +34,7 @@ class TagConfigComponent extends Component {
 
   componentDidMount() {
     if (this.props.event) {
-      tagsService.getTagList(this.props.event.id).then(result => {
+      tagsService.getTagListConfig(this.props.event.id).then(result => {
         this.setState({
           loading: false,
           tags: result.tags,
@@ -45,8 +45,8 @@ class TagConfigComponent extends Component {
     }
   }
 
-  onClickAdd = () => {
-    const errors = this.validateTagDetails();
+  onClickAdd = (tag) => {
+    const errors = this.validateTagDetails(tag);
     if (errors.length === 0) {
       tagsService.addTag(this.state.updatedTag, this.props.event.id).then(result => {
         if (result.error) {
@@ -67,7 +67,8 @@ class TagConfigComponent extends Component {
   };
 
   onClickUpdate = (tag) => {
-    const errors = this.validateTagDetails();
+    const errors = this.validateTagDetails(tag);
+    console.log(errors);
     if (errors.length === 0) {
       tagsService.updateTag(tag, this.props.event.id).then(result => {
         if (result.error) {
@@ -81,26 +82,12 @@ class TagConfigComponent extends Component {
         }});
     }
     else {
+      console.log('put failed')
       this.setState({
         showErrors: true
       });
     }
   };
-
-  onClickDelete = (tag) => {
-    //TODO - debug, not working
-    tagsService.deleteTag(tag, this.props.event.id).then(result => {
-      console.log(result)
-      if (result.error) {
-        this.setState({
-          errors: [this.props.t(result.error)],
-          showErrors: true
-        });
-      }
-      else {
-        //go back to tag table
-      }});
-  }
 
   getErrorMessages = errors => {
     const errorMessages = [];
@@ -115,19 +102,19 @@ class TagConfigComponent extends Component {
     return errorMessages;
   };
 
-  validateTagDetails = () => {
+  validateTagDetails = (tag) => {
     let errors = [];
     this.props.organisation.languages.forEach(lang => {
-      if (!this.state.updatedTag.name || !this.state.updatedTag.name[lang.code] || this.state.updatedTag.name[lang.code].trim().length === 0) {
+      if (!tag.name || !tag.name[lang.code] || tag.name[lang.code].trim().length === 0) {
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Tag name", lang.description) : "Tag name") + " is required"
         errors.push(this.props.t(error_text));
       }
-      if (!this.state.updatedTag.description || !this.state.updatedTag.description[lang.code] || this.state.updatedTag.description[lang.code].trim().length === 0) {
+      if (!tag.description || !tag.description[lang.code] || tag.description[lang.code].trim().length === 0) {
         const error_text = (this.state.isMultiLingual ? this.getFieldNameWithLanguage("Tag description", lang.description) : "Tag description") + " is required"
         errors.push(this.props.t(error_text));
       }
     });
-    if (!this.state.updatedTag.tag_type.length === 0) {
+    if (!tag.tag_type.length === 0) {
       errors.push(this.props.t("Tag type is required"));
     }
     return errors;
@@ -166,7 +153,7 @@ class TagConfigComponent extends Component {
       updatedTag: tag
     }, () => {
 
-      const errors = this.validateTagDetails();
+      const errors = this.validateTagDetails(this.state.updatedTag);
 
       this.setState({
         errors: errors,
@@ -193,12 +180,15 @@ class TagConfigComponent extends Component {
       tagRows.push(
         <div className="tag-table">
           <tr>
-            <td>{tag.name}</td>
-            <td>{tag.description}</td>
+            <td>{tag.name['en']}</td>
+            <td>{tag.description['en']}</td>
             <td>{tag.tag_type}</td>
             <td>
               <button
-                onClick={() => this.onClickDelete(tag)}>
+                onClick={() => {
+                  tag.active = false; 
+                  this.onClickUpdate(tag)
+                }}>
                 {t("Delete Tag")}
               </button>
               </td>
@@ -289,7 +279,7 @@ class TagConfigComponent extends Component {
     tagEntryForm.push(
       <div className={"form-group row"}>
         <button
-          onClick={this.onClickAdd}
+          onClick={this.onClickAdd(this.state.updatedTag)}
           className="btn btn-success btn-lg btn-block">
           {t("Save Tag")}
           </button>

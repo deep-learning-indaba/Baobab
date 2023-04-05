@@ -6,9 +6,9 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const tagsService = {
     getTag,
     addTag,
-    deleteTag,
     updateTag,
-    getTagList
+    getTagList,
+    getTagListConfig
 }
 
 function getTag(tagId, eventId) {
@@ -99,26 +99,26 @@ function updateTag(tag, eventId) {
         });
 }
 
-function deleteTag(tag, eventId) {
+function getTagList(eventId) {
     return axios
-        .delete(baseUrl + "/api/v1/tag", tag, { 
+        .get(baseUrl + "/api/v1/tags", { 
             "headers": authHeader(),
             "params": {
                 event_id: eventId
             }
         })
         .then(response => {
-            let tag = null;
-            if (response) tag = response.data;
+            let tags = null;
+            if (response) tags = response.data;
             return {
-                tag: tag,
+                tags: tags,
                 status: response.status,
                 message: response.statusText
             }
         })
         .catch(function(error){
             return{
-                tag: null,
+                tags: null,
                 error:
                     error.response && error.response.data
                     ? error.response.data.message
@@ -128,9 +128,10 @@ function deleteTag(tag, eventId) {
         });
 }
 
-function getTagList(eventId) {
+
+function getTagListConfig(eventId) {
     return axios
-        .get(baseUrl + "/api/v1/tags", { 
+        .get(baseUrl + "/api/v1/tagsconfig", { 
             "headers": authHeader(),
             "params": {
                 event_id: eventId

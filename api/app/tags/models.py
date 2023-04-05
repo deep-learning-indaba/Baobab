@@ -18,9 +18,13 @@ class Tag(db.Model):
             self, 
             event_id,
             tag_type, 
-            active
+            active=True
         ):
         self.event_id = event_id
+        self.tag_type = tag_type
+        self.active = active
+    
+    def update(self, tag_type, active):
         self.tag_type = tag_type
         self.active = active
     
@@ -39,6 +43,11 @@ class TagTranslation(db.Model):
 
     def __init__(self, tag_id, language, name, description=None):
         self.tag_id = tag_id
+        self.language = language
+        self.name = name
+        self.description = description
+    
+    def update(self, language, name, description=None):
         self.language = language
         self.name = name
         self.description = description
