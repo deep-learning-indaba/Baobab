@@ -30,6 +30,7 @@ class ResponsePage extends Component {
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null,
+            reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
         }
     };
@@ -41,7 +42,6 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
-            reviewService.getReviewAssignments(this.props.event.id)
         ]).then(responses => {
             console.log(responses);
             this.setState({
@@ -50,15 +50,32 @@ class ResponsePage extends Component {
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[4].reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
             }, () => {
-                this.handleData(); 
                 this.getOutcome();
+                this.getReviewResponses(responses[2].detail);
             });
         });
     };
 
+    getReviewResponses(applicationData) {
+        reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
+            .then(resp => {
+                if (resp.error) {
+                    this.setState({
+                        error: resp.error
+                    });
+                }
+                if(resp.form) {
+                    this.setState( {
+                        reviewResponses: resp.form.review_responses,
+                        reviewForm: resp.form.review_form,
+                        isLoading: false,
+                        error: resp.error
+                     });
+                }
+            });
+    }
 
     // Misc Functions
 
@@ -109,6 +126,42 @@ class ResponsePage extends Component {
             };
         };
     };
+
+    renderReviewResponse(review_response, section) {
+        const questions = section.review_questions.map(q => {
+            const a = review_response.scores.find(a => a.review_question_id === q.id);
+
+            if (a) {
+                return <div>
+            <div key={q.question_id} className="question-answer-block">
+                <p><span className="question-headline">{q.headline}</span>
+                    {q.description && a && <span className="question-description"><br/>{q.description}</span>}
+                </p>
+                <h6><AnswerValue answer={a} question={q} /></h6>
+            </div>
+            </div>
+            }
+            
+            
+        });
+        return questions
+    };
+    
+    // Render Reviews
+    renderCompleteReviews(){
+        if (this.state.reviewResponses.length) {
+                const reviews = this.state.reviewResponses.map(val => {
+                    return <div className="section">
+                            <h4
+                                className="reviewer-section" >
+                                {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
+                            </h4>
+                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
+                    </div>
+                });
+                return reviews
+            }
+    }
 
     getOutcome() {
             outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
@@ -354,7 +407,6 @@ class ResponsePage extends Component {
    
     };
 
-
     // Tag Functions
     // Post Response API
     postResponseTag(tagId, responseId, eventId) {
@@ -588,10 +640,13 @@ class ResponsePage extends Component {
 
     // Render Review Modal
     renderReviewerModal() {
+        if (!this.state.reviewResponses || !this.state.applicationData) {
+            return <div></div>
+        }
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
-            reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
+            reviewers={this.state.reviewResponses.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
         />
@@ -710,11 +765,22 @@ class ResponsePage extends Component {
                                     </button>
                                 </div>
                             </div>
-
                             <div className="divider"></div>
                         </div>
 
                         {this.renderSections()}
+                        {
+                            this.state.reviewResponses.length > 0 && (
+                        <div>
+                            <div className="divider"></div>
+                            <div className="reviewers-section">
+                            <h3>{t('Reviewer Feedback')}</h3>
+                            <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
+                            {this.renderCompleteReviews()}
+                            </div>
+                        </div>
+                        
+                        )}
                     </div>
                 }
 
