@@ -1,4 +1,4 @@
-"""empty message
+"""Add invited guest and offer tags.
 
 Revision ID: 1cdf3a2cf02b
 Revises: 095650171b26

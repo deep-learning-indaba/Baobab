@@ -59,9 +59,9 @@ class InvitedGuests extends Component {
           result => {
             this.setState({
               loading: false,
-              guestList: result.form,
+              guestList: result.guests,
               error: result.error,
-              filteredList: result.form
+              filteredList: result.guests
             });
           });
   }
@@ -311,6 +311,11 @@ class InvitedGuests extends Component {
       id: "role",
       Header: <div className="invitedguest-role">{t("Role")}</div>,
       accessor: u => u.role
+    }, {
+      id: "tags",
+      Header: <div className="invitedguest-tags">{t("Tags")}</div>,
+      Cell: props => <div>{props.original.tags.map(t => <span className="tag badge badge-info">{t.name}</span>)}</div>,
+      accessor: u => u.tags.map(t => t.name).join("; ")
     }];
 
     return (

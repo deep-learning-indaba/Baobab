@@ -35,13 +35,13 @@ function getInvitedGuestList(eventId) {
     })  
     .then(function (response) {
       return {
-        form: response.data,
+        guests: response.data,
         error: ""
       };
     })
     .catch(function (error) {
       return {
-        form: null,
+        guests: null,
         error:
           error.response && error.response.data
             ? error.response.data.message

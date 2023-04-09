@@ -33,7 +33,8 @@ invited_guest = {
     'invited_guest_id': fields.Integer,
     'event_id': fields.Integer,
     'user': user_profile_list_fields,
-    'role': fields.String
+    'role': fields.String,
+    'tags': fields.Raw
 }
 
 def invitedGuest_info(invitedGuest, user):
@@ -45,21 +46,20 @@ def invitedGuest_info(invitedGuest, user):
         'fullname': '{} {} {}'.format(user.user_title, user.firstname, user.lastname)
     }
 
-class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
+def _serialize_tag(tag, language):
+    translation = tag.get_translation(language)
+    if translation is None:
+        LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+        translation = tag.get_translation('en')
+    return {
+        'id': tag.id,
+        'event_id': tag.event_id,
+        'tag_type': tag.tag_type.value.upper(),
+        'name': translation.name,
+        'description': translation.description
+    }
 
-    @staticmethod
-    def _serialize_tag(tag, language):
-        translation = tag.get_translation(language)
-        if translation is None:
-            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-            translation = tag.get_translation('en')
-        return {
-            'id': tag.id,
-            'event_id': tag.event_id,
-            'tag_type': tag.tag_type.value.upper(),
-            'name': translation.name,
-            'description': translation.description
-        }
+class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
 
     @staticmethod
     def _serialize_invited_guest(invited_guest, language):
@@ -68,7 +68,7 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
             'event_id': invited_guest.event_id,
             'user_id': invited_guest.user_id,
             'role': invited_guest.role,
-            'tags': [InvitedGuestAPI._serialize_tag(it.tag, language) for it in invited_guest.invited_guest_tags]
+            'tags': [_serialize_tag(it.tag, language) for it in invited_guest.invited_guest_tags]
         }
     
     @auth_required
@@ -232,7 +232,7 @@ class CreateUser(SignupMixin, restful.Resource):
 
 
 class InvitedGuestView():
-    def __init__(self, invitedGuest):
+    def __init__(self, invitedGuest, language: str):
         self.invited_guest_id = invitedGuest.InvitedGuest.id
         self.event_id = invitedGuest.InvitedGuest.event_id
         self.role = invitedGuest.InvitedGuest.role
@@ -241,16 +241,7 @@ class InvitedGuestView():
         self.firstname = invitedGuest.AppUser.firstname
         self.lastname = invitedGuest.AppUser.lastname
         self.user_title = invitedGuest.AppUser.user_title
-        # TODO re-add this using information given from some form of questionnaire
-        # self.affiliation = invitedGuest.AppUser.affiliation
-        # self.department = invitedGuest.AppUser.department
-        # self.nationality_country = invitedGuest.AppUser.nationality_country.name
-        # self.residence_country = invitedGuest.AppUser.residence_country.name
-        # self.user_category = invitedGuest.AppUser.user_category.name
-        # self.user_disability = invitedGuest.AppUser.user_disability
-        # self.user_gender = invitedGuest.AppUser.user_gender
-        # self.user_dateOfBirth = invitedGuest.AppUser.user_dateOfBirth
-        # self.user_primaryLanguage = invitedGuest.AppUser.user_primaryLanguage
+        self.tags = [_serialize_tag(it.tag, language) for it in invitedGuest.InvitedGuest.invited_guest_tags]
 
 
 class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
@@ -260,6 +251,7 @@ class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
+        language = args['language']
         current_user_id = g.current_user['id']
 
         current_user = user_repository.get_by_id(current_user_id)
@@ -269,7 +261,7 @@ class InvitedGuestList(InvitedGuestListMixin, restful.Resource):
         invited_guests = db.session.query(InvitedGuest, AppUser).filter_by(event_id=event_id).join(
             AppUser, InvitedGuest.user_id == AppUser.id).all()
 
-        views = [InvitedGuestView(invited_guest)
+        views = [InvitedGuestView(invited_guest, language)
                  for invited_guest in invited_guests]
         return views
 
