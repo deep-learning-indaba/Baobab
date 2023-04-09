@@ -107,3 +107,7 @@ span.not-found {
     background-color: hsl(0, 64%, 61%);
     transition: 300ms;
 }
+
+.InvitedGuests .add-tag:hover {
+    cursor: pointer;
+}

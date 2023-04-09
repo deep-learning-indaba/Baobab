@@ -373,7 +373,7 @@ class InvitedGuests extends Component {
       Cell: props => <div>
         {props.original.tags.map(t => 
             <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
-        <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
+        <i className="fa fa-plus-circle add-tag" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; ")
     }];
