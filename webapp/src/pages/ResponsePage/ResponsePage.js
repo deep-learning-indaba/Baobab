@@ -201,7 +201,7 @@ class ResponsePage extends Component {
                 okText={t("Yes")}
                 cancelText={t("No")}>
                 <p>
-                    {t('Are you sure you want to delete this tag?')}
+                    {t('Are you sure you want to remove this tag?')}
                 </p>
             </ConfirmModal>
    

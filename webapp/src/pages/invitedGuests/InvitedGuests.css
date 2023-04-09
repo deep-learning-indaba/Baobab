@@ -103,6 +103,7 @@ span.not-found {
     font-weight: bold;
 }
 
-.InvitedGuests .tag {
-    
+.InvitedGuests .tag.badge:hover {
+    background-color: hsl(0, 64%, 61%);
+    transition: 300ms;
 }

@@ -20,6 +20,7 @@ import {
 import {
   getTitleOptions
 } from "../../../utils/validation/contentHelpers";
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 const baseFieldValidations = [
   ruleRunner(validationFields.email, validEmail),
@@ -298,6 +299,41 @@ class InvitedGuests extends Component {
     })
   }
 
+  confirmRemoveTag = () => {
+    const {selectedGuest, selectedTag} = this.state;
+
+    invitedGuestServices.removeTag(selectedGuest.invited_guest_id, this.props.event.id, selectedTag.id)
+    .then(resp => {
+      if (resp.statusCode === 204) {
+        const newGuest = {
+          ...selectedGuest,
+          tags: selectedGuest.tags.filter(t=>t.id !== selectedTag.id)
+        }
+        const newGuests = this.state.guestList.map(g => 
+            g.invited_guest_id === selectedGuest.invited_guest_id  ? newGuest : g);
+        this.setState({
+          guestList: newGuests,
+          confirmRemoveTagVisible: false
+        }, this.filterGuestList);
+      }
+      else {
+        this.setState({
+          error: resp.error,
+          confirmRemoveTagVisible: false
+        });
+      }
+    })
+
+  }
+
+  removeTag = (guest, tag) => {
+    this.setState({
+      selectedGuest: guest,
+      selectedTag: tag,
+      confirmRemoveTagVisible: true
+    });
+  }
+
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
     const t = this.props.t;
@@ -335,7 +371,8 @@ class InvitedGuests extends Component {
       id: "tags",
       Header: <div className="invitedguest-tags">{t("Tags")}</div>,
       Cell: props => <div>
-        {props.original.tags.map(t => <span className="tag badge badge-primary" key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
+        {props.original.tags.map(t => 
+            <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
         <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; ")
@@ -530,6 +567,17 @@ class InvitedGuests extends Component {
             onCancel={() => this.setState({ tagSelectorVisible: false })}
             onSelectTag={this.onSelectTag}
         />
+
+        <ConfirmModal
+            visible={this.state.confirmRemoveTagVisible}
+            onOK={this.confirmRemoveTag}
+            onCancel={() => this.setState({ confirmRemoveTagVisible: false })}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+                {t('Are you sure you want to remove this tag?')}
+            </p>
+        </ConfirmModal>
 
       </div>
     );

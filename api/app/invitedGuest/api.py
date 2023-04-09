@@ -171,7 +171,7 @@ class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
 
         invited_guest_repository.remove_tag_from_invited_guest(invited_guest_id, tag_id)
 
-        return {}
+        return {}, 204
 
 class CreateUser(SignupMixin, restful.Resource):
 
