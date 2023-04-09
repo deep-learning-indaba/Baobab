@@ -124,7 +124,8 @@ class InvitedGuestTest(ApiTestCase):
         response = self.app.post(
             '/api/v1/invitedGuest', data=INVITED_GUEST_2, headers=self.headers)
         response = self.app.get(
-            '/api/v1/invitedGuestList?event_id='+str(event_id), headers=self.adminHeaders)
+            f'/api/v1/invitedGuestList?event_id={event_id}&language=en', headers=self.adminHeaders)
+
         data = json.loads(response.data)
         data = sorted(data, key=lambda k: k['invited_guest_id'])
         self.assertEqual(len(data), 2)
@@ -164,7 +165,8 @@ class InvitedGuestTagAPITest(ApiTestCase):
         params = {
             'event_id': self.event1.id,
             'tag_id': self.tag2.id,
-            'invited_guest_id': self.invited_guest1.id
+            'invited_guest_id': self.invited_guest1.id,
+            'language': 'en',
         }
 
         response = self.app.post(
@@ -197,7 +199,8 @@ class InvitedGuestTagAPITest(ApiTestCase):
         params = {
             'event_id': self.event1.id,
             'tag_id': self.tag2.id,
-            'invited_guest_id': self.invited_guest2.id
+            'invited_guest_id': self.invited_guest2.id,
+            'language': 'en'
         }
 
         response = self.app.delete(
@@ -228,7 +231,8 @@ class InvitedGuestTagAPITest(ApiTestCase):
         params = {
             'event_id': self.event1.id,
             'tag_id': self.tag1.id,
-            'invited_guest_id': self.invited_guest1.id
+            'invited_guest_id': self.invited_guest1.id,
+            'language': 'en'
         }
 
         response = self.app.post(
@@ -245,7 +249,8 @@ class InvitedGuestTagAPITest(ApiTestCase):
         params = {
             'event_id': self.event1.id,
             'tag_id': self.tag1.id,
-            'invited_guest_id': self.invited_guest1.id
+            'invited_guest_id': self.invited_guest1.id,
+            'language': 'en'
         }
 
         response = self.app.delete(

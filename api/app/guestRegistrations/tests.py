@@ -283,12 +283,13 @@ class GuestRegistrationApiTest(ApiTestCase):
         USER_DATA = {
             'email': 'something@email.com',
             'role': 'mentor',
-            'event_id': 1
+            'event_id': 1,
+            'language': 'en'
         }
         response = self.app.post(
             '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
         response_guest = self.app.get(
-            '/api/v1/checkIfInvitedGuest?event_id=%d' % self.event_id, headers=self.headers)
+            f'/api/v1/checkIfInvitedGuest?event_id={self.event_id}&language=en', headers=self.headers)
         LOGGER.debug(
             "guest response: {}".format(response_guest))
         self.assertEqual(response_guest.status_code, 200)
@@ -298,12 +299,13 @@ class GuestRegistrationApiTest(ApiTestCase):
         USER_DATA = {
             'email': 'some@email.com',
             'role': 'mentor',
-            'event_id': 1
+            'event_id': 1,
+            'language': 'en'
         }
         response = self.app.post(
             '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
         response_guest = self.app.get(
-            '/api/v1/checkIfInvitedGuest?event_id=%d' % self.event_id, headers=self.headers)
+            f'/api/v1/checkIfInvitedGuest?event_id={self.event_id}&language=en', headers=self.headers)
         LOGGER.debug(
             "guest response: {}".format(response_guest))
         self.assertEqual(response_guest.status_code, 404)

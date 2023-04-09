@@ -141,6 +141,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_put(self):
         """Test typcial put request."""
         self.seed_static_data()
+
         params = {
             'id': 2,
             'event_id': 1,
@@ -152,7 +153,8 @@ class ReviewsApiTest(ApiTestCase):
             'description': {
                 'en': 'Renamed English Description',
                 'zu': 'Zulu Description'
-            }
+            },
+            'active': True
         }
 
         response = self.app.put(
@@ -162,7 +164,7 @@ class ReviewsApiTest(ApiTestCase):
             content_type='application/json')
         self.assertEqual(response.status_code, 200)
 
-        response = self.app.get('/api/v1/tag', headers=self.user1_headers, data={'id': 2, 'event_id': 1})
+        response = self.app.get('/api/v1/tag', headers=self.user1_headers, data={'id': 2, 'event_id': 1, 'language': 'en'})
         data = json.loads(response.data)
 
         self.assertEqual(data['id'], 2)
