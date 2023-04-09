@@ -29,6 +29,7 @@ class InvitedGuestRepository():
         invited_guest_tag = InvitedGuestTag(invited_guest_id, tag_id)
         db.session.add(invited_guest_tag)
         db.session.commit()
+        return invited_guest_tag
 
     @staticmethod
     def remove_tag_from_invited_guest(invited_guest_id, tag_id):

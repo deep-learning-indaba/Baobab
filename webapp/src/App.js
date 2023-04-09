@@ -404,7 +404,7 @@ class AppComponent extends Component {
     const t = this.props.t;
     return (
       <Router history={history}>
-        <div class="notranslate" translate="no">
+        <div className="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <a className="navbar-brand navbar-brand-main" href="/">
               <img

@@ -9,7 +9,8 @@ export const invitedGuestServices = {
   addInvitedGuest,
   createInvitedGuest,
   getRoles,
-  determineIfInvitedGuest
+  determineIfInvitedGuest,
+  addTag
 }
 
 const roleOptions = [
@@ -139,6 +140,32 @@ function createInvitedGuest(user, event_Id, role) {
           msg: "Failed",
           error: (error.response && error.response.data) ? error.response.data.message : error.message,
         }
+      }
+    })
+}
+
+function addTag(invitedGuestId, eventId, tagId) {
+  console.log("addTag", invitedGuestId, eventId, tagId);
+  let data = {
+    tag_id: tagId,
+    event_id: eventId,
+    invited_guest_id: invitedGuestId
+  };
+
+  return axios
+    .post(baseUrl + "/api/v1/invitedguesttag", data, { headers: authHeader() })
+    .then(function (response) {
+      return {
+        msg: "succeeded",
+        statusCode: response.status,
+        response: response
+      }
+    })
+    .catch(function (error) {
+      return {
+        msg: "Failed",
+        statusCode: error.response && error.response.status,
+        error: (error.response && error.response.data) ? error.response.data.message : error.message,
       }
     })
 }

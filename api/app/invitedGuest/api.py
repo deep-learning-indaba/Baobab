@@ -3,7 +3,7 @@ from flask_restful import reqparse, fields, marshal_with, inputs
 import flask_restful as restful
 from sqlalchemy.exc import IntegrityError
 
-from app.utils.auth import auth_required
+from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
 from app import db, bcrypt
 from flask import g
@@ -150,36 +150,24 @@ class InvitedGuestAPI(InvitedGuestMixin, restful.Resource):
         return invitedGuest_info(invitedGuest, user), 201
 
 class InvitedGuestTagAPI(restful.Resource, InvitedGuestTagMixin):
-    invited_guest_tag_fields = {
-        'id': fields.Integer,
-        'invited_guest_id': fields.Integer,
-        'tag_id': fields.Integer
-    }
-
-    @marshal_with(invited_guest_tag_fields)
-    @auth_required
-    def post(self):
+    @event_admin_required
+    def post(self, event_id):
+        del event_id
         args = self.req_parser.parse_args()
-
-        event_id = args['event_id']
         tag_id = args['tag_id']
         invited_guest_id = args['invited_guest_id']
+        language = args['language']
 
-        if not _validate_user_admin(g.current_user['id'], event_id):
-            return errors.FORBIDDEN
+        invited_guest_tag = invited_guest_repository.tag_invited_guest(invited_guest_id, tag_id)
+        return _serialize_tag(invited_guest_tag.tag, language), 201
 
-        return invited_guest_repository.tag_invited_guest(invited_guest_id, tag_id), 201
-
-    @auth_required
-    def delete(self):
+    @event_admin_required
+    def delete(self, event_id):
+        del event_id
         args = self.req_parser.parse_args()
 
-        event_id = args['event_id']
         tag_id = args['tag_id']
         invited_guest_id = args['invited_guest_id']
-
-        if not _validate_user_admin(g.current_user['id'], event_id):
-            return errors.FORBIDDEN
 
         invited_guest_repository.remove_tag_from_invited_guest(invited_guest_id, tag_id)
 
@@ -284,8 +272,3 @@ class CheckIfInvitedGuest(InvitedGuestListMixin, restful.Resource):
                 return "Invited Guest", 200
         except Exception as e:
             return 'Could not access DB', 400
-
-def _validate_user_admin(user_id, event_id):
-    user = user_repository.get_by_id(user_id)
-    # Check if the user is an event admin
-    return user.is_event_admin(event_id)
