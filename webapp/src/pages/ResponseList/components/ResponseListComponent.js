@@ -41,7 +41,7 @@ class ResponseListForm extends Component {
     getResponseList() {
         Promise.all([
             tagsService.getTagList(this.props.event.id),
-            responsesService.getResponseList(this.props.event.id, false, []),
+            responsesService.getResponseList(this.props.event.id, this.state.includeUnsubmitted, []),
         ]).then(([tagsResponse, responsesResponse]) => {
             this.setState({
                 tags: tagsResponse.tags,
@@ -137,7 +137,7 @@ class ResponseListForm extends Component {
     toggleUnsubmitted = () => {
         this.setState({
             includeUnsubmitted: !this.state.includeUnsubmitted
-        }, this.filterResponses);
+        }, this.getResponseList);
     }
 
     handleChange = event => {
@@ -304,7 +304,7 @@ class ResponseListForm extends Component {
                         className="table-nav-link">
                         {u.response_id}
                         </NavLink>,
-            minWidth: 80
+            minWidth: 150
         }, {
             id: "user",
             Header: <div className="response-fullname">{t("Full Name")}</div>,
