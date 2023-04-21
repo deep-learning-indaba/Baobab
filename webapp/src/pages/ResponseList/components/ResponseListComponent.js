@@ -285,8 +285,6 @@ class ResponseListForm extends Component {
             tags,
             filteredResponses
         } = this.state
-        console.log(tags);
-
 
         if (loading) {
             return (
@@ -298,7 +296,70 @@ class ResponseListForm extends Component {
             );
           }
 
-        const columns = this.generateColumns();
+        const columns = [{
+            id: "response_link",
+            Header: <div className="response-link">{t("Response Link")}</div>,
+            accessor: u => <NavLink
+                        to={`/${this.props.event.key}/responsePage/${u.response_id}`}
+                        className="table-nav-link">
+                        {u.response_id}
+                        </NavLink>,
+            minWidth: 80
+        }, {
+            id: "user",
+            Header: <div className="response-fullname">{t("Full Name")}</div>,
+            accessor: u =>
+              <div className="response-fullname">
+                {u.user_title + " " + u.firstname + " " + u.lastname}
+              </div>,
+            minWidth: 150
+        }, {
+            id: "email",
+            Header: <div className="response-email">{t("Email")}</div>,
+            accessor: u => u.email,
+            minWidth: 150
+        }, {
+            id: "tags",
+            Header: <div className="response-tags">{t("Tags")}</div>,
+            Cell: props => <div>
+              {props.original.tags.map(t => 
+                  <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
+              <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
+            </div>,
+            accessor: u => u.tags.map(t => t.name).join("; "),
+            minWidth: 150
+          },
+          {
+            id: "start_date",
+            Header: <div className="response-start-date">{t("Start Date")}</div>,
+            accessor: u => u.start_date,
+            minWidth: 150
+          },
+          {
+            id: "is_submitted",
+            Header: <div className="response-submitted">{t("Submitted")}</div>,
+            accessor: u => u.is_submitted ? "True" : "False",
+            minWidth: 80
+          },
+          {
+            id: "is_withdrawn",
+            Header: <div className="response-withdrawn">{t("Withdrawn")}</div>,
+            accessor: u => u.is_withdrawn ? "True" : "False",
+            minWidth: 80
+          },
+          {
+            id: "submitted_date",
+            Header: <div className="response-submitted-date">{t("Submitted Date")}</div>,
+            accessor: u => u.submitted_date,
+            minWidth: 150
+          },
+          {
+            id: "reviewers",
+            Header: <div className="response-reviewers">{t("Reviewers")}</div>,
+            accessor: u => u.reviewers.map(r => r.reviewer_name).join("; "),
+            minWidth: 300
+          }
+        ];
 
         return (
             <div className="ResponseList container-fluid pad-top-30-md">
@@ -416,7 +477,7 @@ class ResponseListForm extends Component {
                 </ConfirmModal>
 
             </div>
-        )
+        );
     }
 }
 
