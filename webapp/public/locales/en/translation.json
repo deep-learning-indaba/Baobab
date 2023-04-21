@@ -344,7 +344,7 @@
     "You have no reviews assigned": "You have no reviews assigned",
     "Hide Completed": "Hide Completed",
     "Return to review list": "Return to review list",
-    "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)": "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)",
+    "Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)": "Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)",
     "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}",
     "There are no more reviewers available": "There are no more reviewers available",
     "Not Started": "Not Started",

@@ -344,7 +344,7 @@
     "You have no reviews assigned": "Vous n'avez attribué aucun avis",
     "Hide Completed": "Masquer terminé",
     "Return to review list": "Revenir à la liste de révision",
-    "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)": "Filtrez le tableau ci-dessus, puis entrez un courriel pour attribuer un évaluateur aux lignes filtrées (l'évaluateur doit déjà avoir un compte Baobab)",
+    "Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)": "Filtrez le tableau ci-dessus, puis entrez un courriel pour attribuer un évaluateur aux lignes filtrées (l'évaluateur doit déjà avoir un compte Baobab)",
     "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}",
     "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles",
     "Not Started": "Pas commencé",

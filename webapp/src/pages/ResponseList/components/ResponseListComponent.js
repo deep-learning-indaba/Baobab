@@ -437,7 +437,7 @@ class ResponseListForm extends Component {
                     <p className="h4 text-center mb-4">{t("Assign Reviewer")}</p>
 
                     <div className="row">
-                        <p className="h6 text-center mb-3">{t("Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)")}</p>
+                        <p className="h6 text-center mb-3">{t("Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)")}</p>
                         
                         <div className={twoColClassName}>
                             <FormTextBox
