@@ -246,10 +246,14 @@ class ResponseListForm extends Component {
         this.setState({tagSearch: event.value}, this.filterResponses);
     }
 
+    getSearchTags(tags) {
+        const tag_options = tags.map(t => ({ value: t.name, label: t.name }));
+        return [{ value: "none", label: this.props.t("None") }, ...tag_options];
+    }
+
     filterResponses = () => {
         const { nameSearch, tagSearch, emailSearch } = this.state;
         const filtered = this.state.responses.filter(r => {
-            console.log(r);
           let passed = true;
           if (nameSearch) {
             passed = r.user.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1;
@@ -257,8 +261,8 @@ class ResponseListForm extends Component {
           if (emailSearch && passed) {
             passed = r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
           }
-          if (tagSearch && passed && tagSearch !== "all") {
-            passed = r.tags.includes(tagSearch);
+          if (tagSearch && passed && tagSearch !== "none") {
+            passed = r.tags.some(t => t.name === tagSearch);
           }
           return passed;
         });
@@ -281,6 +285,7 @@ class ResponseListForm extends Component {
             tags,
             filteredResponses
         } = this.state
+        console.log(tags);
 
 
         if (loading) {
@@ -330,12 +335,12 @@ class ResponseListForm extends Component {
 
                         <div className={threeColClassName}>
                             <FormSelect
-                            options={tags}
+                            options={this.getSearchTags(tags)}
                             id="TagFilter"
                             placeholder="Search"
                             onChange={this.updateTagSearch}
                             label={t("Filter by tag")}
-                            defaultValue={this.state.tagSearch || "all"} />
+                            defaultValue={this.state.tagSearch || "none"} />
                         </div>
                     </div>
                     
