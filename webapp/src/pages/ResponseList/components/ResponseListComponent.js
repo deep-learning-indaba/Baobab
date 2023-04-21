@@ -29,7 +29,8 @@ class ResponseListForm extends Component {
             loading: true,
             nameSearch : "",
             tagSearch : "",
-            emailSearch: ""
+            emailSearch: "",
+            gettingResponseList: false
         }
     }
 
@@ -39,6 +40,7 @@ class ResponseListForm extends Component {
     }
 
     getResponseList() {
+        this.setState({ gettingResponseList: true });
         Promise.all([
             tagsService.getTagList(this.props.event.id),
             responsesService.getResponseList(this.props.event.id, this.state.includeUnsubmitted, []),
@@ -48,7 +50,8 @@ class ResponseListForm extends Component {
                 responses: responsesResponse.responses,
                 filteredResponses : responsesResponse.responses,
                 error: tagsResponse.error || responsesResponse.error,
-                loading: false
+                loading: false,
+                gettingResponseList: false
             });
         });
     }
@@ -406,9 +409,16 @@ class ResponseListForm extends Component {
                     </div>
                     
                     <div className="checkbox-top">
-                        <input onClick={(e) => this.toggleUnsubmitted()} className="form-check-input input" type="checkbox" value="" id="toggle_unsubmitted" />
+                        <input 
+                            onClick={(e) => this.toggleUnsubmitted()}
+                            className="form-check-input input"
+                            type="checkbox"
+                            value=""
+                            id="toggle_unsubmitted"
+                            disabled={this.state.gettingResponseList}>
+                        </input>
                         <label id="label" className="label-top" htmlFor="toggle_unsubmitted">
-                            {t('Include un-submitted')}
+                            {this.state.gettingResponseList ? t('Getting responses...') : t('Include un-submitted')}
                         </label>
                     </div>
 

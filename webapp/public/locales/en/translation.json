@@ -502,5 +502,6 @@
     "Start Date": "Start Date",
     "Submitted Date": "Submitted Date",
     "Response Link": "Response Link",
-    "None": "None"
+    "None": "None",
+    "Getting responses...": "Getting responses..."
 }
