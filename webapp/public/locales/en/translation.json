@@ -230,6 +230,8 @@
     "to the guest list": "to the guest list",
     "Filter by name": "Filter by name",
     "Filter by role": "Filter by role",
+    "Filter by email": "Filter by email",
+    "Filter by tag": "Filter by tag",
     "No invited guests": "No invited guests",
     "Download csv": "Download csv",
     "Invited guest with this email already exists.": "Invited guest with this email already exists.",
@@ -342,7 +344,7 @@
     "You have no reviews assigned": "You have no reviews assigned",
     "Hide Completed": "Hide Completed",
     "Return to review list": "Return to review list",
-    "Assign Reviewer (they must already have an account)": "Assign Reviewer (they must already have an account)",
+    "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)": "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)",
     "reviewsAssigned": "Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}",
     "There are no more reviewers available": "There are no more reviewers available",
     "Not Started": "Not Started",
@@ -495,5 +497,6 @@
     "Description of the tag": "Description of the tag",
     "RESPONSE" : "RESPONSE",
     "REGISTRATION": "REGISTRATION",
-    "Select A Tag": "Select A Tag"
+    "Select A Tag": "Select A Tag",
+    "Close": "Close"
 }

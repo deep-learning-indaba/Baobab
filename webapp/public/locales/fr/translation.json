@@ -230,6 +230,8 @@
     "to the guest list": "à la liste des invités",
     "Filter by name": "Filtrer par nom",
     "Filter by role": "Filtrer par rôle",
+    "Filter by email": "Filtrer par courriel",
+    "Filter by tag": "Filtrer par balise",
     "No invited guests": "Nombre d’invités",
     "Download csv": "Télécharger le csv",
     "Invited guest with this email already exists.": "L’invité avec ce courriel existe déjà.",
@@ -342,7 +344,7 @@
     "You have no reviews assigned": "Vous n'avez attribué aucun avis",
     "Hide Completed": "Masquer terminé",
     "Return to review list": "Revenir à la liste de révision",
-    "Assign Reviewer (they must already have an account)": "Attribuer un réviseur (ils doivent déjà avoir un compte)",
+    "Filter the table above then enter an email to assign a reviewer to the filtered rows (the reviewer must already have a Baobab account)": "Filtrez le tableau ci-dessus, puis entrez un courriel pour attribuer un examinateur aux lignes filtrées (l'examinateur doit déjà avoir un compte Baobab)",
     "reviewsAssigned": "{{numReviewsAssigned}} avis attribués à {{assignedReviewerEmail}}",
     "There are no more reviewers available": "Il n'y a plus d'évaluateurs disponibles",
     "Not Started": "Pas commencé",
@@ -494,6 +496,7 @@
     "Description of the tag": "Description de la balise",
     "RESPONSE": "RÉPONSE",
     "REGISTRATION": "INSCRIPTION",
-    "Select A Tag": "Sélectionnez une balise"
+    "Select A Tag": "Sélectionnez une balise",
+    "Close": "Fermer"
 }
 
