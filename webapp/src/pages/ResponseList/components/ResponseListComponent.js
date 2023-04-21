@@ -49,7 +49,7 @@ class ResponseListForm extends Component {
                 filteredResponses : responsesResponse.responses,
                 error: tagsResponse.error || responsesResponse.error,
                 loading: false
-            }, this.handleData);
+            });
         });
     }
 
@@ -60,170 +60,84 @@ class ResponseListForm extends Component {
             this.setState({
                 responses: resp.responses,
                 error: resp.error
-            }, this.handleData);
-        });
-    }
-
-    // Handle/Format Data
-    handleData = () => {
-        const { responses } = this.state;
-        console.log(responses);
-
-
-        if (!responses) {
-            console.log('ERROR: responses is not defined: ', responses);
-            return;
-        }
-
-        // TODO: Change this to a map and don't mutate the state. 
-        responses.forEach(val => {
-            let handleReviews = [];
-            let handleTags = [];
-
-            // Create Response Id Link
-            if (this.props.event) {
-                val.response_link = <NavLink
-                    to={`/${this.props.event.key}/responsePage/${val.response_id}`}
-                    className="table-nav-link"
-                >
-                    {val.response_id}
-                </NavLink>;
-            }
-
-            // tags
-            const tagCell = <div key={'tags_{val.response_id}'}>
-                {val.tags.map(tag => {
-                    return <span className="tag badge badge-primary" onClick={()=>this.removeTag(val, tag)} key={`tag_${val.response_id}_${tag.id}`}>{tag.name}</span>
-                })}
-                <i className="fa fa-plus-circle" onClick={() => this.addTag(val)}></i>
-            </div>
-            handleTags.push(tagCell);
-
-            // extract only the reviewers name
-            val.reviewers.forEach(review => {
-                review ? handleReviews.push(review.reviewer_name) : handleReviews.push("");
-            })
-
-            // add User Title as new column 
-            function userTitleCol(row, user_title, firstname, lastname) {
-                return row.user = user_title + " " + firstname + " " + lastname;
-            }
-
-            // envoke and store new columns for UserTitle
-            // combine user credentials
-            userTitleCol(val, val.user_title, val.firstname, val.lastname);
-
-            // insert new reviews values as columns
-            if (handleReviews.length) {
-                handleReviews.forEach((review, index) => {
-                    let num = (index) + (1);
-                    let key = this.props.t("Reviewer") + " " + num;
-                    val[key] = review;
-                    handleReviews = [];
-                })
-            };
-
-            val.tags = handleTags;
-            val.is_submitted = val.is_submitted ? "True" : "False";
-            val.is_withdrawn = val.is_withdrawn ? "True" : "False";
-
-            // delete original review and answer rows as they don't need to be displayed with all their data
-            delete val.reviewers;
-            delete val.user_title;
-            delete val.firstname;
-            delete val.lastname;
-
-        })
-
-        this.setState({
-            responseTable: responses,
-            btnUpdate: false
+            });
         });
     }
 
     generateColumns() {
         const t = this.props.t;
         const columns = [{
+            id: "response_link",
+            Header: <div className="response-link">{t("Response Link")}</div>,
+            accessor: u => <NavLink
+                        to={`/${this.props.event.key}/responsePage/${u.response_id}`}
+                        className="table-nav-link">
+                        {u.response_id}
+                        </NavLink>,
+            minWidth: 80
+        }, {
             id: "user",
-            Header: <div className="invitedguest-fullname">{t("Full Name")}</div>,
+            Header: <div className="response-fullname">{t("Full Name")}</div>,
             accessor: u =>
-              <div className="invitedguest-fullname">
-                {u.user.user_title + " " + u.user.firstname + " " + u.user.lastname}
+              <div className="response-fullname">
+                {u.user_title + " " + u.firstname + " " + u.lastname}
               </div>,
             minWidth: 150
-          }, {
+        }, {
             id: "email",
-            Header: <div className="invitedguest-email">{t("Email")}</div>,
-            accessor: u => u.user.email
-          }, {
-            id: "role",
-            Header: <div className="invitedguest-role">{t("Role")}</div>,
-            accessor: u => u.role
-          }, {
+            Header: <div className="response-email">{t("Email")}</div>,
+            accessor: u => u.email,
+            minWidth: 150
+        }, {
             id: "tags",
-            Header: <div className="invitedguest-tags">{t("Tags")}</div>,
+            Header: <div className="response-tags">{t("Tags")}</div>,
             Cell: props => <div>
               {props.original.tags.map(t => 
-                  <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
+                  <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
               <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
             </div>,
-            accessor: u => u.tags.map(t => t.name).join("; ")
-          }];
+            accessor: u => u.tags.map(t => t.name).join("; "),
+            minWidth: 150
+          },
+          {
+            id: "start_date",
+            Header: <div className="response-start-date">{t("Start Date")}</div>,
+            accessor: u => u.start_date,
+            minWidth: 150
+          },
+          {
+            id: "is_submitted",
+            Header: <div className="response-submitted">{t("Submitted")}</div>,
+            accessor: u => u.is_submitted ? "True" : "False",
+            minWidth: 80
+          },
+          {
+            id: "is_withdrawn",
+            Header: <div className="response-withdrawn">{t("Withdrawn")}</div>,
+            accessor: u => u.is_withdrawn ? "True" : "False",
+            minWidth: 80
+          },
+          {
+            id: "submitted_date",
+            Header: <div className="response-submitted-date">{t("Submitted Date")}</div>,
+            accessor: u => u.submitted_date,
+            minWidth: 150
+          },
+          {
+            id: "reviewers",
+            Header: <div className="response-reviewers">{t("Reviewers")}</div>,
+            accessor: u => u.reviewers.map(r => r.reviewer_name).join("; "),
+            minWidth: 300
+          }
+        ];
 
         return columns;
-    }
-
-    // Generate table columns
-    generateCols() {
-        let colFormat = [];
-        // Find the row with greatest col count and assign the col values to React Table
-        if (this.state.responseTable) {
-
-            // function
-            function readColumns(rows) {
-                let tableColumns = ["response_link", "user", "email", "tags", "start_date", "is_submitted", "is_withdrawn", "submitted_date"];
-                rows.map(val => {
-                    let newColumns = Object.keys(val);
-                    newColumns.forEach(val => {
-                        if (!tableColumns.includes(val)) {
-                            tableColumns.push(val)
-                        };
-                    });
-                });
-                return tableColumns
-            };
-
-            // function
-            function widthCalc(colItem) {
-
-                if (colItem.includes('user') || colItem.includes('Review') || colItem.includes('date') || colItem.includes('email')) {
-                    return 180
-                }
-                else {
-                    return 100
-                }
-            }
-
-            let col = readColumns(this.state.responseTable);
-            
-            // TODO: Make columns deterministic, add translations for headers
-            colFormat = col.map(function (val) {
-                return { id: val, Header: val, accessor: val, className: "myCol", filterable: false, width: widthCalc(val) }
-            });
-        }
-        return colFormat
-    }
-
-    // Reset state and tag list UI 
-    reset() {
-        // reset checkboxes
-        document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
     }
 
     toggleUnsubmitted = () => {
         this.setState({
             includeUnsubmitted: !this.state.includeUnsubmitted
-        }, () => this.refreshResponses());
+        }, this.filterResponses);
     }
 
     handleChange = event => {
@@ -283,7 +197,7 @@ class ResponseListForm extends Component {
                 selectedResponse: null,
                 filteredTags: [],
                 responses: newResponses
-                }, () => this.filterResponses);
+                }, this.filterResponses);
                 }
             else {
                 this.setState({
@@ -344,7 +258,7 @@ class ResponseListForm extends Component {
             passed = r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
           }
           if (tagSearch && passed && tagSearch !== "all") {
-            passed = r.tag === tagSearch;
+            passed = r.tags.includes(tagSearch);
           }
           return passed;
         });
@@ -356,7 +270,6 @@ class ResponseListForm extends Component {
         const twoColClassName = createColClassName(12, 6, 6, 6);  //xs, sm, md, lg
         const t = this.props.t;
 
-        // State values
         const {
             error,
             loading,
@@ -380,8 +293,7 @@ class ResponseListForm extends Component {
             );
           }
 
-        // Generate Col
-        const columns = this.generateCols();
+        const columns = this.generateColumns();
 
         return (
             <div className="ResponseList container-fluid pad-top-30-md">
@@ -428,8 +340,8 @@ class ResponseListForm extends Component {
                     </div>
                     
                     <div className="checkbox-top">
-                        <input onClick={(e) => this.toggleUnsubmitted()} className="form-check-input input" type="checkbox" value="" id="defaultCheck1" />
-                        <label id="label" className="label-top" htmlFor="defaultCheck1">
+                        <input onClick={(e) => this.toggleUnsubmitted()} className="form-check-input input" type="checkbox" value="" id="toggle_unsubmitted" />
+                        <label id="label" className="label-top" htmlFor="toggle_unsubmitted">
                             {t('Include un-submitted')}
                         </label>
                     </div>

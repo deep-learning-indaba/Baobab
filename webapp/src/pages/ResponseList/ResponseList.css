@@ -4,10 +4,10 @@
     }
 }
 
-.form-check-input.input {
-    float: left;
+.checkbox-top {
+    display: flex;
+    padding-left: 30px; 
 }
-
 
 .light-gray{
     background-color: lightgray;

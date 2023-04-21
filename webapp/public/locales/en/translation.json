@@ -498,5 +498,8 @@
     "RESPONSE" : "RESPONSE",
     "REGISTRATION": "REGISTRATION",
     "Select A Tag": "Select A Tag",
-    "Close": "Close"
+    "Close": "Close",
+    "Start Date": "Start Date",
+    "Submitted Date": "Submitted Date",
+    "Response Link": "Response Link"
 }
