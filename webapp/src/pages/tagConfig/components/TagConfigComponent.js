@@ -191,13 +191,10 @@ class TagConfigComponent extends Component {
   }
 
   renderTagTable = () => {
-    const tagRows = [];
     const t = this.props.t;
     const tags = this.state.tags;
-    tagRows.push(<h3>{t("Tags")}</h3>)
-    for (let i = 0; i < tags.length; i++) {
-      const tag = tags[i];
-      tagRows.push(
+    //tagRows.push(<h3>{t("Tags")}</h3>)
+    const tagRows = tags.map(tag => (
         <div className="tag-table">
           <tr>
             <td>{tag.name['en']}</td>
@@ -205,7 +202,7 @@ class TagConfigComponent extends Component {
             <td>{tag.tag_type}</td>
             <td>
               <button
-                onClick={this.onClickDelete(tag)}>
+                onClick={() => this.onClickDelete(tag)}>
                 {t("Delete Tag")}
               </button>
               </td>
@@ -217,8 +214,7 @@ class TagConfigComponent extends Component {
             </td>
           </tr>
         </div>
-      );
-    }
+    ));
     return tagRows
   }
 
@@ -296,7 +292,7 @@ class TagConfigComponent extends Component {
     tagEntryForm.push(
       <div className={"form-group row"}>
         <button
-          onClick={this.onClickSave}
+          onClick={() => this.onClickSave()}
           className="btn btn-success btn-lg btn-block">
           {t("Save Tag")}
           </button>
@@ -353,12 +349,11 @@ class TagConfigComponent extends Component {
     return (
       <div>
         <div className="card">
-          <form key='tag-form'>
           {this.renderTagTable()}
           {!tagEntryVisible && 
-            <div className={"col-sm-4 "}>
+            <div className={"col-sm-4"}>
               <button
-                onClick={this.setTagEntryVisible}
+                onClick={() => this.setTagEntryVisible()}
                 className="btn btn-success btn-lg btn-block">
                 {t("New Tag")}
               </button>
@@ -366,7 +361,6 @@ class TagConfigComponent extends Component {
           }
           {tagEntryVisible && this.renderTagEntry()}
           {this.state.showErrors && this.getErrorMessages(this.state.errors)}
-          </form>
         </div>
       </div>)        
   }

@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
-import ResponseListForm from './components/ResponseListForm'
+import ResponseListComponent from './components/ResponseListComponent'
 
 
 class ResponseList extends Component {
 
     render() {
-        return <ResponseListForm event={this.props.event} />
+        return <ResponseListComponent event={this.props.event} />
     }
 }
 
