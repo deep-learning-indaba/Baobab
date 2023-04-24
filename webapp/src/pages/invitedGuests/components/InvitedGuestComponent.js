@@ -304,7 +304,7 @@ class InvitedGuests extends Component {
 
     invitedGuestServices.removeTag(selectedGuest.invited_guest_id, this.props.event.id, selectedTag.id)
     .then(resp => {
-      if (resp.statusCode === 204) {
+      if (resp.statusCode === 200) {
         const newGuest = {
           ...selectedGuest,
           tags: selectedGuest.tags.filter(t=>t.id !== selectedTag.id)
