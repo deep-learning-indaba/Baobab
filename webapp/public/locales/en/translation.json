@@ -501,7 +501,7 @@
     "Close": "Close",
     "Start Date": "Start Date",
     "Submitted Date": "Submitted Date",
-    "Response Link": "Response Link",
+    "ID": "ID",
     "None": "None",
-    "Getting responses...": "Getting responses..."
+    "Loading responses...": "Loading responses..."
 }

@@ -500,8 +500,8 @@
     "Start Date": "Date de début",
     "Submitted Date": "Date de soumission",
     "Reviewers": "Évaluateurs",
-    "Response Link": "Lien de réponse",
+    "ID": "ID",
     "None": "Aucun",
-    "Getting responses...": "Obtention de réponses..."
+    "Loading responses...": "Chargement des réponses..."
 }
 

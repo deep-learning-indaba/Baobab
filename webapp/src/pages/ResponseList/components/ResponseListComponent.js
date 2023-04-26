@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import Select from 'react-select';
+import makeAnimated from 'react-select/lib/animated';
 import '../ResponseList.css';
 import { Trans, withTranslation } from 'react-i18next'
 import { responsesService } from '../../../services/responses/responses.service';
@@ -28,7 +30,7 @@ class ResponseListForm extends Component {
             error: null,
             loading: true,
             nameSearch : "",
-            tagSearch : "",
+            tagSearch : [],
             emailSearch: "",
             gettingResponseList: false
         }
@@ -54,87 +56,6 @@ class ResponseListForm extends Component {
                 gettingResponseList: false
             });
         });
-    }
-
-    refreshResponses() {
-        const { includeUnsubmitted } = this.state;
-
-        responsesService.getResponseList(this.props.event.id, includeUnsubmitted, []).then(resp => {
-            this.setState({
-                responses: resp.responses,
-                error: resp.error
-            });
-        });
-    }
-
-    generateColumns() {
-        const t = this.props.t;
-        const columns = [{
-            id: "response_link",
-            Header: <div className="response-link">{t("Response Link")}</div>,
-            accessor: u => <NavLink
-                        to={`/${this.props.event.key}/responsePage/${u.response_id}`}
-                        className="table-nav-link">
-                        {u.response_id}
-                        </NavLink>,
-            minWidth: 80
-        }, {
-            id: "user",
-            Header: <div className="response-fullname">{t("Full Name")}</div>,
-            accessor: u =>
-              <div className="response-fullname">
-                {u.user_title + " " + u.firstname + " " + u.lastname}
-              </div>,
-            minWidth: 150
-        }, {
-            id: "email",
-            Header: <div className="response-email">{t("Email")}</div>,
-            accessor: u => u.email,
-            minWidth: 150
-        }, {
-            id: "tags",
-            Header: <div className="response-tags">{t("Tags")}</div>,
-            Cell: props => <div>
-              {props.original.tags.map(t => 
-                  <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
-              <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
-            </div>,
-            accessor: u => u.tags.map(t => t.name).join("; "),
-            minWidth: 150
-          },
-          {
-            id: "start_date",
-            Header: <div className="response-start-date">{t("Start Date")}</div>,
-            accessor: u => u.start_date,
-            minWidth: 150
-          },
-          {
-            id: "is_submitted",
-            Header: <div className="response-submitted">{t("Submitted")}</div>,
-            accessor: u => u.is_submitted ? "True" : "False",
-            minWidth: 80
-          },
-          {
-            id: "is_withdrawn",
-            Header: <div className="response-withdrawn">{t("Withdrawn")}</div>,
-            accessor: u => u.is_withdrawn ? "True" : "False",
-            minWidth: 80
-          },
-          {
-            id: "submitted_date",
-            Header: <div className="response-submitted-date">{t("Submitted Date")}</div>,
-            accessor: u => u.submitted_date,
-            minWidth: 150
-          },
-          {
-            id: "reviewers",
-            Header: <div className="response-reviewers">{t("Reviewers")}</div>,
-            accessor: u => u.reviewers.map(r => r.reviewer_name).join("; "),
-            minWidth: 300
-          }
-        ];
-
-        return columns;
     }
 
     toggleUnsubmitted = () => {
@@ -163,7 +84,7 @@ class ResponseListForm extends Component {
                     reviewerAssignSuccess: !response.error
                 });
                 if (!response.error) {
-                    this.refreshResponses();
+                    this.filterResponses();
                 }
             });
     }
@@ -246,12 +167,21 @@ class ResponseListForm extends Component {
     }
 
     updateTagSearch = (id, event) => {
-        this.setState({tagSearch: event.value}, this.filterResponses);
+      const newTagSearch = this.state.tagSearch;
+      if (event.action === "remove-value") {
+        newTagSearch.splice(newTagSearch.indexOf(event.removedValue.value), 1);
+      }
+      else if (event.action === "clear") {
+        newTagSearch = [];
+      }
+      else if (event.action === "select-option") {
+        newTagSearch.push(event.option.value);
+      }
+      this.setState({tagSearch: newTagSearch}, this.filterResponses);
     }
 
     getSearchTags(tags) {
-        const tag_options = tags.map(t => ({ value: t.name, label: t.name }));
-        return [{ value: "none", label: this.props.t("None") }, ...tag_options];
+        return tags.map(t => ({ value: t.name, label: t.name }));
     }
 
     filterResponses = () => {
@@ -264,8 +194,8 @@ class ResponseListForm extends Component {
           if (emailSearch && passed) {
             passed = r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
           }
-          if (tagSearch && passed && tagSearch !== "none") {
-            passed = r.tags.some(t => t.name === tagSearch);
+          if (tagSearch.length > 0 && passed) {
+            passed = tagSearch.every(t => r.tags.some(rt => rt.name === t));
           }
           return passed;
         });
@@ -275,6 +205,7 @@ class ResponseListForm extends Component {
     render() {
         const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
         const twoColClassName = createColClassName(12, 6, 6, 6);  //xs, sm, md, lg
+        const animatedComponents = makeAnimated();
         const t = this.props.t;
 
         const {
@@ -301,13 +232,13 @@ class ResponseListForm extends Component {
 
         const columns = [{
             id: "response_link",
-            Header: <div className="response-link">{t("Response Link")}</div>,
+            Header: <div className="response-link">{t("ID")}</div>,
             accessor: u => <NavLink
                         to={`/${this.props.event.key}/responsePage/${u.response_id}`}
                         className="table-nav-link">
                         {u.response_id}
                         </NavLink>,
-            minWidth: 150
+            minWidth: 50
         }, {
             id: "user",
             Header: <div className="response-fullname">{t("Full Name")}</div>,
@@ -359,7 +290,7 @@ class ResponseListForm extends Component {
           {
             id: "reviewers",
             Header: <div className="response-reviewers">{t("Reviewers")}</div>,
-            accessor: u => u.reviewers.map(r => r.reviewer_name).join("; "),
+            accessor: u => u.reviewers.filter(r=>r).map(r=>r.reviewer_name).join("; "),
             minWidth: 300
           }
         ];
@@ -377,34 +308,37 @@ class ResponseListForm extends Component {
 
                     <div className="row">
                         <div className={threeColClassName}>
+                            <label className="col-form-label" htmlFor="NameFilter">{t("Filter by name")}</label>
                             <FormTextBox
                             id="NameFilter"
                             type="text"
                             placeholder="Search"
                             onChange={this.updateNameSearch}
-                            label={t("Filter by name")}
                             name=""
                             value={this.state.nameSearch} />
                         </div>
 
                         <div className={threeColClassName}>
+                          <label className="col-form-label" htmlFor="EmailFilter">{t("Filter by email")}</label>
                             <FormTextBox
                             id="EmailFilter"
                             type="text"
                             placeholder="Search"
                             onChange={this.updateEmailSearch}
-                            label={t("Filter by email")}
                             defaultValue={this.state.emailSearch} />
                         </div>
 
                         <div className={threeColClassName}>
-                            <FormSelect
-                            options={this.getSearchTags(tags)}
-                            id="TagFilter"
-                            placeholder="Search"
-                            onChange={this.updateTagSearch}
-                            label={t("Filter by tag")}
-                            defaultValue={this.state.tagSearch || "none"} />
+                            <label className="col-form-label" htmlFor="TagFilter">{t("Filter by tag")}</label>
+                            <Select
+                              closeMenuOnSelect={false}
+                              components={animatedComponents}
+                              isMulti
+                              options={this.getSearchTags(tags)}
+                              id="TagFilter"
+                              placeholder="Search"
+                              onChange={this.updateTagSearch}
+                              defaultValue={"none"}/>
                         </div>
                     </div>
                     
@@ -418,7 +352,7 @@ class ResponseListForm extends Component {
                             disabled={this.state.gettingResponseList}>
                         </input>
                         <label id="label" className="label-top" htmlFor="toggle_unsubmitted">
-                            {this.state.gettingResponseList ? t('Getting responses...') : t('Include un-submitted')}
+                            {this.state.gettingResponseList ? t('Loading responses...') : t('Include un-submitted')}
                         </label>
                     </div>
 
@@ -450,7 +384,7 @@ class ResponseListForm extends Component {
                         </div>
                         <div className={twoColClassName}>
                             <button
-                                class="btn btn-primary stretched"
+                                className="btn btn-primary"
                                 onClick={() => { this.assignReviewer() }}
                                 disabled={!newReviewerEmail}>
                                 {t("Assign")}
