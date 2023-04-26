@@ -106,4 +106,11 @@ span.not-found {
 .InvitedGuests .tag.badge:hover {
     background-color: hsl(0, 64%, 61%);
     transition: 300ms;
+    cursor: pointer;
+}
+
+.InvitedGuests .fa.fa-plus-circle:hover {
+    color: hsl(110, 76%, 31%);
+    transition: 300ms;
+    cursor: pointer;
 }
