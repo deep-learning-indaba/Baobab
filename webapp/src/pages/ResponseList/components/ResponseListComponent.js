@@ -12,7 +12,6 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import { reviewService } from '../../../services/reviews/review.service';
 import { ConfirmModal } from "react-bootstrap4-modal";
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
-import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
 
 class ResponseListForm extends Component {
