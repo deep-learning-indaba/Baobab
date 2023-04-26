@@ -109,10 +109,10 @@ class ResponseListForm extends Component {
     onSelectTag = (tag) => {
         responsesService.tagResponse(this.state.selectedResponse.response_id, tag.id, this.props.event.id)
         .then(resp => {
-            if (resp.statusCode === 201) {
+            if (resp.status === 201) {
                 const newResponse = {
                 ...this.state.selectedResponse,
-                tags: [...this.state.selectedResponse.tags, resp.response.data]
+                tags: [...this.state.selectedResponse.tags, tag]
                 } 
                 const newResponses = this.state.responses.map(r => 
                     r.response_id === this.state.selectedResponse.response_id  ? newResponse : r);
@@ -137,7 +137,7 @@ class ResponseListForm extends Component {
 
     responsesService.removeTag(selectedResponse.response_id, selectedTag.id, this.props.event.id)
     .then(resp => {
-      if (resp.statusCode === 204) {
+      if (resp.status === 200) {
         const newResponse = {
           ...selectedResponse,
           tags: selectedResponse.tags.filter(t=>t.id !== selectedTag.id)
