@@ -117,6 +117,7 @@ class ResponsePage extends Component {
         this.setState({
             filteredTagList: filteredTagList
         });
+        console.log(this.state.filteredTagList);
     };
 
     // Render questions and answers
@@ -200,11 +201,13 @@ class ResponsePage extends Component {
     onSelectTag = (tag) => {
         responsesService.tagResponse(this.state.applicationData.id, tag.id, this.props.event.id)
         .then(resp => {
-            if (resp.statusCode === 201) {
+            if (resp.status === 201) {
                 this.setState({
                     tagSelectorVisible: false,
-                    tagList: [...this.state.applicationData.tags, resp.response.data]
-                    }, this.filterTagList);
+                    applicationData: {
+                        ...this.state.applicationData,
+                        tags: [...this.state.applicationData.tags, tag]
+                    }}, this.filterTagList);
                 }
             else {
                 this.setState({
@@ -228,11 +231,14 @@ class ResponsePage extends Component {
     
         responsesService.removeTag(applicationData.id, tagToRemove, this.props.event.id)
         .then(resp => {
-          if (resp.statusCode === 204) {
+            console.log(resp);
+          if (resp.status === 200) {
             this.setState({
                 removeTagModalVisible: false,
-                tagList: this.state.tagList.filter(t => t.id !== tagToRemove)
-            }, this.filterTagList);
+                applicationData: {
+                    ...this.state.applicationData,
+                    tags: this.state.applicationData.tags.filter(t => t.id !== tagToRemove)
+                }}, this.filterTagList);
           }
           else {
             this.setState({
@@ -255,12 +261,13 @@ class ResponsePage extends Component {
 
         if (data) {
             let tags = data.tags ? data.tags.map(tag => {
-                return <span
-                    key={tag.id}
-                    className="btn badge badge-info"
-                >
-                    {tag.name}
-                    <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt cursor-pointer"></i></span>
+                return <span className="btn badge badge-primary" onClick={()=>this.removeTag(tag.id)} key={`tag_${tag.id}`}>{tag.name}</span>
+
+                //return <span
+                 //   key={tag.id}
+                 //   className="btn badge badge-primary">
+                 //   {tag.name}
+                 //   <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt cursor-pointer"></i></span>
             })
                 :
                 null
@@ -454,11 +461,8 @@ class ResponsePage extends Component {
                             <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
                             <div className="tags">
                                 {this.renderTags()}
-                                <span onClick={() => this.setTagSelectorVisible()} className={tagList.length || eventLanguages.length
-                                    ? "btn btn-light active"
-                                    : "btn btn-light add-tags"}>
-                                {t('Add tags')}
-                                </span>
+                                <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>
+
                             </div>
 
                         </div>
