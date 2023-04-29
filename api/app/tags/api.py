@@ -133,5 +133,4 @@ class TagListConfigAPI(restful.Resource):
 class TagTypeListAPI(restful.Resource):
     @event_admin_required
     def get(self, event_id):
-        print(t.value.upper() for t in TagType)
         return [t.value.upper() for t in TagType]

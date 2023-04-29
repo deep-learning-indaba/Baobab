@@ -27,7 +27,8 @@ class ResponsePage extends Component {
             reviewToRemove: null,
             tagSelectorVisible : false,
             filteredTagList: [],
-            tagList: []
+            tagList: [],
+            assignableTagTypes: ["RESPONSE"]
         }
     };
 
@@ -109,15 +110,15 @@ class ResponsePage extends Component {
     };
 
     filterTagList() {
-        const tagList = this.state.tagList;
+        const tagList = this.state.tagList
+        const responseTagList = tagList.filter(t => this.state.assignableTagTypes.includes(t.tag_type));
         const applicationData = this.state.applicationData;
-        const filteredTagList = tagList.filter(tag => {
+        const filteredTagList = responseTagList.filter(tag => {
             return !applicationData.tags.some(t => t.id === tag.id)
         });
         this.setState({
             filteredTagList: filteredTagList
         });
-        console.log(this.state.filteredTagList);
     };
 
     // Render questions and answers

@@ -105,7 +105,8 @@ function getTagList(eventId) {
         .get(baseUrl + "/api/v1/tags", { 
             "headers": authHeader(),
             "params": {
-                event_id: eventId            }
+                event_id: eventId
+            }
         })
         .then(response => {
             let tags = null;

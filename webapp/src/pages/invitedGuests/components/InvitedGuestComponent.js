@@ -53,6 +53,7 @@ class InvitedGuests extends Component {
       nameSearch: "",
       tags: [],
       filteredTags: [],
+      assignableTagTypes: ["REGISTRATION", "GRANT"],
       tagSelectorVisible: false,
       selectedGuest: null
     };
@@ -269,7 +270,7 @@ class InvitedGuests extends Component {
     this.setState({
       selectedGuest: guest,
       tagSelectorVisible: true,
-      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id))
+      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.state.assignableTagTypes.includes(t.tag_type))
     })
   }
 

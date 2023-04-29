@@ -31,7 +31,8 @@ class ResponseListForm extends Component {
             nameSearch : "",
             tagSearch : [],
             emailSearch: "",
-            gettingResponseList: false
+            gettingResponseList: false,
+            assignableTagTypes: ["RESPONSE"]
         }
     }
 
@@ -101,7 +102,7 @@ class ResponseListForm extends Component {
         this.setState({
           selectedResponse: response,
           tagSelectorVisible: true,
-          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id))
+          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.state.assignableTagTypes.includes(t.tag_type))
         })
     }
 
@@ -180,7 +181,7 @@ class ResponseListForm extends Component {
     }
 
     getSearchTags(tags) {
-        return tags.map(t => ({ value: t.name, label: t.name }));
+      return tags.filter(t=>t).map(t => ({ value: t.name, label: t.name}));
     }
 
     filterResponses = () => {
