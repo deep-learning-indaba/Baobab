@@ -4,6 +4,7 @@ from enum import Enum
 class TagType(Enum):
     RESPONSE = 'response'
     REGISTRATION = 'registration'
+    GRANT = 'grant'
 
 class Tag(db.Model):
     __tablename__ = 'tag'

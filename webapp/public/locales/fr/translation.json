@@ -495,6 +495,7 @@
     "Description of the tag": "Description de la balise",
     "RESPONSE": "RÉPONSE",
     "REGISTRATION": "INSCRIPTION",
+    "GRANT": "BOURSE",
     "Select A Tag": "Sélectionnez une balise",
     "Close": "Fermer",
     "Start Date": "Date de début",
@@ -503,6 +504,7 @@
     "ID": "ID",
     "None": "Aucun",
     "Loading responses...": "Chargement des réponses...", 
-    "Add tag": "Ajouter une balise"
+    "Add tag": "Ajouter une balise",
+    "Save tag": "Enregistrer la balise"
 }
 

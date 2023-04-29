@@ -4,7 +4,7 @@ from flask_restful import reqparse, fields, marshal_with
 from app.utils.auth import auth_required, event_admin_required
 from app.tags.repository import TagRepository as tag_repository
 from app.utils import errors
-from app.tags.models import Tag, TagTranslation
+from app.tags.models import Tag, TagTranslation, TagType
 from app import LOGGER
 
 def _serialize_tag_detail(tag):
@@ -129,3 +129,9 @@ class TagListConfigAPI(restful.Resource):
         tags = tag_repository.get_all_for_event(event_id)
         
         return [_serialize_tag_detail(t) for t in tags]
+
+class TagTypeListAPI(restful.Resource):
+    @event_admin_required
+    def get(self, event_id):
+        print(t.value.upper() for t in TagType)
+        return [t.value.upper() for t in TagType]

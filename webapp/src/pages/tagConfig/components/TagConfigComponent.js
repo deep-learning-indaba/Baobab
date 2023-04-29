@@ -8,8 +8,6 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
 
-const TAG_TYPES = ["RESPONSE", "REGISTRATION"];
-
 class TagConfigComponent extends Component {
   constructor(props) {
     super(props);
@@ -22,6 +20,7 @@ class TagConfigComponent extends Component {
         description: {},
         active: true
       },
+      tag_types: [],
       isMultiLingual: this.props.organisation.languages.length > 1,
       isValid: false,
       loading: false,
@@ -34,14 +33,18 @@ class TagConfigComponent extends Component {
 
   componentDidMount() {
     if (this.props.event) {
-      tagsService.getTagListConfig(this.props.event.id).then(result => {
-        this.setState({
-          loading: false,
-          tags: result.tags,
-          error: result.error
+      Promise.all([
+        tagsService.getTagListConfig(this.props.event.id),
+        tagsService.getTagTypeList(this.props.event.id),
+        ]).then(([tagsResponse, tagTypesResponse]) => {
+          this.setState({
+              tags: tagsResponse.tags,
+              tag_types: tagTypesResponse.tag_types,
+              error: tagsResponse.error || tagTypesResponse.error,
+              loading: false,
+          });
+          console.log(this.state.tag_types);
         });
-        console.log(this.state.tags);
-      });
     }
   }
 
@@ -237,7 +240,7 @@ class TagConfigComponent extends Component {
             defaultValue={this.state.updatedTag.tag_type || null}
             onChange={this.updateDropDown}
             options={
-              TAG_TYPES.map((tagType) => ({
+              this.state.tag_types.map((tagType) => ({
                 value: tagType,
                 label: t(tagType)
               }))

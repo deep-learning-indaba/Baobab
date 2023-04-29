@@ -497,6 +497,7 @@
     "Description of the tag": "Description of the tag",
     "RESPONSE" : "RESPONSE",
     "REGISTRATION": "REGISTRATION",
+    "GRANT": "GRANT",
     "Select A Tag": "Select A Tag",
     "Close": "Close",
     "Start Date": "Start Date",
@@ -504,5 +505,6 @@
     "ID": "ID",
     "None": "None",
     "Loading responses...": "Loading responses...",
-    "Add tag": "Add tag"
+    "Add tag": "Add tag",
+    "Save tag": "Save tag"
 }
