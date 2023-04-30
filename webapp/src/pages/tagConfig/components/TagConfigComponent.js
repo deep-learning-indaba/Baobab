@@ -1,12 +1,16 @@
 import React, { Component } from "react";
 import { tagsService } from "../../../services/tags";
-import { usePagination, useTable, Column } from "react-table";
-import { Link } from "react-router-dom";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
+import ReactTable from 'react-table';
+import { ConfirmModal } from "react-bootstrap4-modal";
+
+//TODO not auto loading when tag is added or edited
+//TODO add margins on top of add tag and save tag buttons
+//TODO display tags in default language in table
 
 class TagConfigComponent extends Component {
   constructor(props) {
@@ -27,7 +31,8 @@ class TagConfigComponent extends Component {
       error: "",
       errors: [],
       showErrors: false,
-      tagEntryVisible: false
+      tagEntryVisible: false,
+      confirmRemoveTagVisible: false
     };
   }
 
@@ -43,7 +48,6 @@ class TagConfigComponent extends Component {
               error: tagsResponse.error || tagTypesResponse.error,
               loading: false,
           });
-          console.log(this.state.tag_types);
         });
     }
   }
@@ -52,21 +56,34 @@ class TagConfigComponent extends Component {
     const errors = this.validateTagDetails();
     if (errors.length === 0) {
       tagsService.addTag(this.state.updatedTag, this.props.event.id).then(result => {
-        if (result.error) {
+        console.log(result);
+        if (result.status === 201) {
           this.setState({
-            errors: [this.props.t(result.error)],
-            showErrors: true
+            updatedTag: {
+              name: {},
+              tag_type: "",
+              description: {},
+              active: true
+            },
+            tagEntryVisible: false,
+            confirmRemoveTagVisible: false
           });
         }
-        else {
-          //this.props.history.goBack();
-        }});
+        else if (result.error) {
+          this.setState({
+            errors: [this.props.t(result.error)],
+            showErrors: true,
+            confirmRemoveTagVisible: false
+          });
+        }
+      });
     }
     else {
       console.log('post failed');
       this.setState({
         showErrors: true,
-        errors: [this.props.t(errors)]
+        errors: [this.props.t(errors)],
+        confirmRemoveTagVisible: false
       });
     }
   };
@@ -75,21 +92,34 @@ class TagConfigComponent extends Component {
     const errors = this.validateTagDetails();
     if (errors.length === 0) {
       tagsService.updateTag(this.state.updatedTag, this.props.event.id).then(result => {
-        if (result.error) {
+        console.log(result);
+        if (result.status === 200) {
           this.setState({
-            errors: [this.props.t(result.error)],
-            showErrors: true
+            updatedTag: {
+              name: {},
+              tag_type: "",
+              description: {},
+              active: true
+            },
+            tagEntryVisible: false,
+            confirmRemoveTagVisible: false
           });
         }
-        else {
-          //go back to tag table
-        }});
+        else if (result.error) {
+          this.setState({
+            errors: [this.props.t(result.error)],
+            showErrors: true,
+            confirmRemoveTagVisible: false
+          });
+        }
+      });
     }
     else {
       console.log('put failed')
       this.setState({
         showErrors: true,
-        errors: [this.props.t(errors)]
+        errors: [this.props.t(errors)],
+        confirmRemoveTagVisible: false
       });
     }
   };
@@ -105,7 +135,8 @@ class TagConfigComponent extends Component {
   onClickDelete = (tag) => {
     tag.active = false;
     this.setState({
-      updatedTag : tag
+      updatedTag : tag,
+      confirmRemoveTagVisible: true
     }, () => {
       this.updateExistingTag();
     });
@@ -193,39 +224,11 @@ class TagConfigComponent extends Component {
     });
   }
 
-  renderTagTable = () => {
-    const t = this.props.t;
-    const tags = this.state.tags;
-    //tagRows.push(<h3>{t("Tags")}</h3>)
-    const tagRows = tags.map(tag => (
-        <div className="tag-table">
-          <tr>
-            <td>{tag.name['en']}</td>
-            <td>{tag.description['en']}</td>
-            <td>{tag.tag_type}</td>
-            <td>
-              <button
-                onClick={() => this.onClickDelete(tag)}>
-                {t("Delete Tag")}
-              </button>
-              </td>
-            <td>
-              <button
-                onClick={() => this.onClickEdit(tag)}>
-                {t("Edit Tag")}
-              </button>
-            </td>
-          </tr>
-        </div>
-    ));
-    return tagRows
-  }
-
   renderTagEntry = () => {
     const t = this.props.t;
     const tagEntryForm = [];
     tagEntryForm.push(
-      <div className={"form-group row"}>
+      <div className={"form-group row"} key="tag-type">
         <label
           className={"col-sm-2 col-form-label"}
           htmlFor={"tag_type"}>
@@ -275,6 +278,7 @@ class TagConfigComponent extends Component {
         <label
           className={"col-sm-2 col-form-label"}
           htmlFor={"description"}>
+          <span className="required-indicator">*</span>
           {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Description")}
         </label>
         <div className="col-sm-10">
@@ -293,10 +297,10 @@ class TagConfigComponent extends Component {
     )));
 
     tagEntryForm.push(
-      <div className={"form-group row"}>
+      <div className={"form-group row float-right"} key="save-tag">
         <button
           onClick={() => this.onClickSave()}
-          className="btn btn-success btn-lg btn-block">
+          className="btn btn-primary">
           {t("Save Tag")}
           </button>
       </div>
@@ -349,15 +353,48 @@ class TagConfigComponent extends Component {
     //console.log(this.props.user);
     //console.log(this.props.user.is_admin);
 
+    const columns = [{
+      id: "tag_name",
+      Header: <div className="tag-name">{t("Tag Name")}</div>,
+      accessor: u => u.name['en'],
+      minWidth: 150
+  }, {
+      id: "tag_description",
+      Header: <div className="tag-description">{t("Tag Description")}</div>,
+      accessor: u => u.description['en'],
+      minWidth: 150
+  }, {
+      id: "tag_type",
+      Header: <div className="tag-type">{t("Tag Type")}</div>,
+      accessor: u => u.tag_type,
+      minWidth: 80
+  }, {
+      id: "actions",
+      Header: <div className="actions"/>,
+      Cell: props => <div className="action-buttons">
+        <i className="fa fa-edit" onClick={() => this.onClickEdit(props.original)}></i>
+        <i className="fa fa-trash" onClick={() => this.onClickDelete(props.original)}></i>
+      </div>,
+      minWidth: 50
+    }
+  ];
+
     return (
-      <div>
-        <div className="card">
-          {this.renderTagTable()}
+      <div key='card-container'>
+        <div className="card" key="tag-table">
+          <div className="react-table">
+              <ReactTable
+                className="ReactTable"
+                data={this.state.tags}
+                columns={columns}
+                minRows={0}
+              />
+            </div>
           {!tagEntryVisible && 
-            <div className={"col-sm-4"}>
+            <div className={"row-mb-3"}>
               <button
                 onClick={() => this.setTagEntryVisible()}
-                className="btn btn-success btn-lg btn-block">
+                className="btn btn-primary float-right">
                 {t("New Tag")}
               </button>
             </div>
@@ -365,6 +402,17 @@ class TagConfigComponent extends Component {
           {tagEntryVisible && this.renderTagEntry()}
           {this.state.showErrors && this.getErrorMessages(this.state.errors)}
         </div>
+
+        <ConfirmModal
+          visible={this.state.confirmRemoveTagVisible}
+          onOK={this.updateExistingTag}
+          onCancel={() => this.setState({ confirmRemoveTagVisible: false })}
+          okText={t("Yes")}
+          cancelText={t("No")}>
+          <p>
+            {t('Are you sure you want to remove this tag?')}
+          </p>
+        </ConfirmModal>
       </div>)        
   }
 }
