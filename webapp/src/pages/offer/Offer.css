@@ -26,7 +26,6 @@
     width:100%;
 }
 
-
 .card{
     margin-top: 30px;
     background-color: white;
@@ -56,7 +55,7 @@
     font-weight:bold; 
 }
 
-.accommodation-container {
+.award-container {
     text-align: right;
     display: contents;
 }

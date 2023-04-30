@@ -505,6 +505,18 @@
     "None": "Aucun",
     "Loading responses...": "Chargement des réponses...", 
     "Add tag": "Ajouter une balise",
-    "Save tag": "Enregistrer la balise"
+    "Save Tag": "Enregistrer la balise",
+    "We are pleased to offer you the following awards": "Nous sommes heureux de vous offrir les bourses suivantes",
+    "I accept this award": "J'accepte cette bourse",
+    "Unfortunately we are unable to grant you any awards for this event": "Malheureusement, nous ne pouvons pas vous accorder de bourses pour cet événement",
+    "We are pleased to offer you a place at": "Nous sommes heureux de vous offrir une place à",
+    "Please see the details of this offer below" : "Veuillez consulter les détails de cette offre ci-dessous",
+    "Offer Details": "Détails de l'offre",
+    "In order to confirm your place, you will be liable for a registration fee": "Afin de confirmer votre place, vous serez redevable de",
+    "registration fee": "frais d'inscription",
+    "Please accept or reject this offer by": "Veuillez accepter ou rejeter cette offre avant le",
+    "Enter rejection message": "Entrez le message de rejet",
+    "Your registration fee has been waived": "Vos frais d'inscription ont été annulés",
+    "Please await further communication": "Veuillez attendre une communication ultérieure"
 }
 

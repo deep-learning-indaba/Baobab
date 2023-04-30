@@ -1,12 +1,10 @@
-// TODO: ADD TRANSLATION
-
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
 import { applicationFormService } from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
-
+import { withTranslation } from 'react-i18next';
 
 class Offer extends Component {
   constructor(props) {
@@ -23,8 +21,7 @@ class Offer extends Component {
       offer: null,
       noOffer: null,
       category: "",
-      accepted_accommodation_award: false,
-      accepted_travel_award: false,
+      awards: [],
       applicationExist: null
     };
   }
@@ -44,9 +41,10 @@ class Offer extends Component {
   buttonSubmit = (candidate_response) => {
     const { offer,
       rejected_reason,
-      accepted_accommodation_award,
-      accepted_travel_award
+      awards,
     } = this.state;
+
+    const accepted_awards = awards.filter(a => a.accepted).map(a => a.id);
 
     if (candidate_response !== null) {
       offerServices
@@ -55,8 +53,7 @@ class Offer extends Component {
           this.props.event ? this.props.event.id : 0,
           candidate_response,
           candidate_response ? "" : rejected_reason,
-          accepted_accommodation_award,
-          accepted_travel_award)
+          accepted_awards)
         .then(response => {
           if (response.response && response.response.status === 201) {
             this.setState({
@@ -85,20 +82,17 @@ class Offer extends Component {
     </div>
   }
 
-  onChangeAccommodation = () => {
+  onChangeAward = tag_id => {
+    const u = this.state.awards;
+    const idx = u.findIndex(a => a.id === tag_id);
+    u[idx].accepted = !u[idx].accepted;
     this.setState({
-      accepted_accommodation_award: !this.state.accepted_accommodation_award
-    });
-  }
-
-  onChangeTravel = () => {
-    this.setState({
-      accepted_travel_award: !this.state.accepted_travel_award
-    });
+      awards: u
+    })
   }
 
   displayOfferResponse = () => {
-    const { offer } = this.state;
+    const { offer, awards } = this.state;
     const event = this.props.event;
     let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
 
@@ -114,8 +108,7 @@ class Offer extends Component {
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
           {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
 
-          {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Tunis will be arranged by the Indaba" : "You are responsible for your own travel to and from Tunis.")}
-          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.")}
+          {this.props.event && awards && this.row("Awards", "You have accepted the following awards:" + awards.filter(a => a.accepted).map(a => a.name).join(", "))}
         </div>}
 
         {offer.candidate_response &&
@@ -167,66 +160,46 @@ class Offer extends Component {
       </div>);
   }
 
-  renderTravelAward = (offer, accepted_travel_award) => {
-    return <div class="row mb-4">
-      <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
-      <div class="col-md-6" align="left">
-        {offer && offer.travel_award && accepted_travel_award &&
-          "We are pleased to offer you a travel award which will cover your flights to and from Tunis."}
-        {offer && offer.travel_award && !accepted_travel_award &&
-          <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Tunis!</span>}
-        {offer && offer.requested_travel && !offer.travel_award &&
-          "Unfortunately we are unable to grant you the travel award you requested in your application."}
-        {offer && !offer.requested_travel && !offer.travel_award &&
-          "You did not request a travel award. You will be responsible for your own travel to and from Tunis"}
-      </div>
+  renderAwards = () => {
+    const { awards } = this.state;
+    const t = this.props.t;
 
-      <div class="col-md-3">
-        {offer.travel_award &&
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
-              id="CheckTravel" />
-            <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
-          </div>}
-      </div>
-    </div>
-  }
-
-  renderAccommodationAward = (offer, accepted_accommodation_award) => {
-    return <div class="row mb-2">
-      <div class="col-md-3 font-weight-bold pr-2" align="center">Accommodation:</div>
-
-      <div class="col-md-6" align="left">
-        {offer && offer.accommodation_award && accepted_accommodation_award &&
-          "We are pleased to offer you an accommodation award which will cover your stay between the 21st and 26th of August. Note that this will be in a shared hostel room (with someone of the same gender) at the university."}
-        {offer && offer.accommodation_award && !accepted_accommodation_award &&
-          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba! We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
-        {offer && offer.requested_accommodation && !offer.accommodation_award &&
-          <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
-        {offer && !offer.requested_accommodation && !offer.accommodation_award &&
-          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon."}
-      </div>
-
-      <div class="col-md-3">
-        {offer.accommodation_award &&
-          <div class="form-check accommodation-container">
-            <input type="checkbox" class="form-check-input"
-              checked={accepted_accommodation_award}
-              onChange={this.onChangeAccommodation}
-              id="CheckAccommodation" />
-            <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
-          </div>}
-      </div>
+    return <div class="row mb-3">
+      <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Awards")}</div>
+      {awards ?
+        <div>
+        <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following awards") + ":"}</div>
+          {awards.map((tag) => {
+            return <div class="row mb-3" align="center">
+                      <div class="col-md-12" align="center">
+                        <span class="font-weight-bold">{tag.name + ": "}</span>
+                        {tag.description}
+                      </div>
+                      <div class="col-md-12" align="center">
+                        <div class="form-check award-container">
+                          <input type="checkbox" class="form-check-input"
+                            checked={null || awards.find(a => a.id === tag.id).accepted}
+                            onChange={() => this.onChangeAward(tag.id)}
+                            id={"check_" + tag.id} />
+                          <label class="form-check-label" htmlFor={"check_" + tag.id}>{t("I accept this award")}.</label>
+                        </div>
+                      </div>
+                    </div>
+          })}
+        </div>
+        :
+        <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to grant you any awards for this event")}</div>
+      } 
     </div>
   }
 
   displayOfferContent = e => {
     const { offer,
       rejected_reason,
-      accepted_accommodation_award,
-      accepted_travel_award
+      awards,
     } = this.state;
+
+    const t = this.props.t;
 
     return (
       <div>
@@ -235,28 +208,28 @@ class Offer extends Component {
           :
           <div className="container">
             <p className="h5 pt-5">
-              We are pleased to offer you a place at {this.props.event ? this.props.event.name : ""}.
-          Please see the details of this offer below{" "}
+                {t("We are pleased to offer you a place at") + " " + (this.props.event ? this.props.event.name : "") + ". "}
+                {t("Please see the details of this offer below") + "."}
             </p>
 
             <form class="form pt-2 ">
 
               <div className="white-background card form">
-                <p class="font-weight-bold">Offer Details</p>
+                <p class="font-weight-bold">{t("Offer Details")}</p>
 
-                {this.props.event && this.props.event.travel_grant && this.renderTravelAward(offer, accepted_travel_award)}
-                {this.props.event && this.props.event.travel_grant && this.renderAccommodationAward(offer, accepted_accommodation_award)}
+                {this.props.event && awards && this.renderAwards()}
 
                 <div class="row mb-3">
-                  <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
+                  <div class="col-md-3 font-weight-bold pr-2" align="left">Registration Fee:</div>
                   <div class="col-md-6" align="left">
-                    {offer && offer.payment_required && `In order to confirm your place, you will be liable for a ${offer.payment_amount} registration fee.`}
-                    {offer && !offer.payment_required && "Your registration fee has been waived."}
+
+                    {offer && offer.payment_required && (t("In order to confirm your place, you will be liable for a") + " " + offer.payment_amount + "USD " + t("registration fee") + ".")}
+                    {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>
 
                 <p class="font-weight-bold">
-                  Please accept or reject this offer by{" "}
+                  {t("Please accept or reject this offer by")}{" "}
                   {offer !== null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-" : "unable to load expiry date"}{" "}
                 </p>
 
@@ -266,7 +239,7 @@ class Offer extends Component {
                       <textarea
                         class="form-control reason-box pr-5 pl-10 pb-5"
                         onChange={this.handleChange(rejected_reason)}
-                        placeholder="Enter rejection message" />
+                        placeholder={t("Enter rejection message")} />
                       <button
                         type="button"
                         class="btn btn-outline-danger mt-2"
@@ -368,9 +341,17 @@ class Offer extends Component {
             loading: false,
             offer: result.offer,
             error: result.error,
-            accepted_accommodation_award: result.offer.accepted_accommodation_award === null ? result.offer.accommodation_award : result.offer.accepted_accommodation_award,
-            accepted_travel_award: result.offer.accepted_travel_award === null ? result.offer.travel_award : result.offer.accepted_travel_award
+            awards: this.initAwards(result.offer.tags) 
           });
+        }
+      });
+  }
+
+  initAwards = (tags) => {
+    return tags.filter(tag => tag.tag_type === "GRANT").map(tag => {
+      return {
+        ...tag,
+        accepted: true
         }
       });
   }
@@ -382,6 +363,7 @@ class Offer extends Component {
       width: "3rem",
       height: "3rem"
     };
+    const t = this.props.t;
 
     if (loading) {
       return (
@@ -389,7 +371,7 @@ class Offer extends Component {
           <div class="spinner-border"
             style={loadingStyle}
             role="status">
-            <span class="sr-only">Loading...</span>
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       );
@@ -417,11 +399,11 @@ class Offer extends Component {
       return (
         <div className="h5 pt-5" align="center">
           {" "}
-          Please await further communication
+          {t("Please await further communication")}
         </div>
       );
     }
   }
 }
 
-export default withRouter(Offer);
+export default withRouter(withTranslation()(Offer));

@@ -506,5 +506,17 @@
     "None": "None",
     "Loading responses...": "Loading responses...",
     "Add tag": "Add tag",
-    "Save tag": "Save tag"
+    "Save Tag": "Save Tag",
+    "We are pleased to offer you the following awards": "We are pleased to offer you the following awards",
+    "I accept this award": "I accept this award",
+    "Unfortunately we are unable to grant you any awards for this event": "Unfortunately we are unable to grant you any awards for this event",
+    "We are pleased to offer you a place at": "We are pleased to offer you a place at",
+    "Please see the details of this offer below" : "Please see the details of this offer below",
+    "Offer Details": "Offer Details",
+    "In order to confirm your place, you will be liable for a": "In order to confirm your place, you will be liable for a",
+    "registration fee": "registration fee",
+    "Please accept or reject this offer by": "Please accept or reject this offer by",
+    "Enter rejection message": "Enter rejection message",
+    "Your registration fee has been waived": "Your registration fee has been waived",
+    "Please await further communication": "Please await further communication"
 }
