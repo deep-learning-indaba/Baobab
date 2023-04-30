@@ -52,8 +52,8 @@ class OfferRepository():
         return timeseries
     
     @staticmethod
-    def tag_offer(offer_id, tag_id):
-        offer_tag = OfferTag(offer_id, tag_id)
+    def tag_offer(offer_id, tag_id, accepted):
+        offer_tag = OfferTag(offer_id, tag_id, accepted)
         db.session.add(offer_tag)
         db.session.commit()
 

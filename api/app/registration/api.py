@@ -236,7 +236,8 @@ class OfferTagAPI(restful.Resource, OfferTagMixin):
     offer_tag_fields = {
         'id': fields.Integer,
         'offer_id': fields.Integer,
-        'tag_id': fields.Integer
+        'tag_id': fields.Integer,
+        'accepted': fields.Boolean,
     }
 
     @marshal_with(offer_tag_fields)
@@ -247,11 +248,12 @@ class OfferTagAPI(restful.Resource, OfferTagMixin):
         event_id = args['event_id']
         tag_id = args['tag_id']
         offer_id = args['offer_id']
+        accepted = args['accepted']
 
         if not _validate_user_admin(g.current_user['id'], event_id):
             return errors.FORBIDDEN
 
-        return offer_repository.tag_offer(offer_id, tag_id), 201
+        return offer_repository.tag_offer(offer_id, tag_id, accepted), 201
 
     @auth_required
     def delete(self):

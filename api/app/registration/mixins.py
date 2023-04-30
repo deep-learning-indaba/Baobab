@@ -25,6 +25,7 @@ class OfferTagMixin(object):
     req_parser.add_argument('event_id', type=int, required=True)
     req_parser.add_argument('tag_id', type=int, required=True)
     req_parser.add_argument('offer_id', type=int, required=True)
+    req_parser.add_argument('accepted', type=bool, required=False)
 
 class RegistrationFormMixin(object):
     req_parser = reqparse.RequestParser()
