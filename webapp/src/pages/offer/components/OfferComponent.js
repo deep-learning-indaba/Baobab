@@ -170,7 +170,7 @@ class Offer extends Component {
         <div>
         <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following awards") + ":"}</div>
           {awards.map((tag) => {
-            return <div class="row mb-3" align="center">
+            return <div class="row mb-3" align="center" key={"award_"+tag.id}>
                       <div class="col-md-12" align="center">
                         <span class="font-weight-bold">{tag.name + ": "}</span>
                         {tag.description}
@@ -181,7 +181,7 @@ class Offer extends Component {
                             checked={null || awards.find(a => a.id === tag.id).accepted}
                             onChange={() => this.onChangeAward(tag.id)}
                             id={"check_" + tag.id} />
-                          <label class="form-check-label" htmlFor={"check_" + tag.id}>{t("I accept this award")}.</label>
+                          <label class="form-check-label" htmlFor={"check_"+tag.id}>{t("I accept this award")}.</label>
                         </div>
                       </div>
                     </div>
@@ -220,7 +220,7 @@ class Offer extends Component {
                 {this.props.event && awards && this.renderAwards()}
 
                 <div class="row mb-3">
-                  <div class="col-md-3 font-weight-bold pr-2" align="left">Registration Fee:</div>
+                  <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Registration Fee")}</div>
                   <div class="col-md-6" align="left">
 
                     {offer && offer.payment_required && (t("In order to confirm your place, you will be liable for a") + " " + offer.payment_amount + "USD " + t("registration fee") + ".")}
