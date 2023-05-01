@@ -9,12 +9,12 @@ import ReactTable from 'react-table';
 import { ConfirmModal } from "react-bootstrap4-modal";
 
 //TODO not auto loading when tag is added or edited
-//TODO add margins on top of add tag and save tag buttons
 //TODO display tags in default language in table
 
 class TagConfigComponent extends Component {
   constructor(props) {
     super(props);
+    console.log(props);
 
     this.state = {
       tags: [],
@@ -79,7 +79,6 @@ class TagConfigComponent extends Component {
       });
     }
     else {
-      console.log('post failed');
       this.setState({
         showErrors: true,
         errors: [this.props.t(errors)],
@@ -115,7 +114,6 @@ class TagConfigComponent extends Component {
       });
     }
     else {
-      console.log('put failed')
       this.setState({
         showErrors: true,
         errors: [this.props.t(errors)],
@@ -226,9 +224,8 @@ class TagConfigComponent extends Component {
 
   renderTagEntry = () => {
     const t = this.props.t;
-    const tagEntryForm = [];
-    tagEntryForm.push(
-      <div className={"form-group row"} key="tag-type">
+    return <div className={"form-group margin-top-20px"} key="tag-entry-form">
+      <div className={"form-group row"}>
         <label
           className={"col-sm-2 col-form-label"}
           htmlFor={"tag_type"}>
@@ -251,62 +248,69 @@ class TagConfigComponent extends Component {
           />
         </div>
       </div>
-    );
-    tagEntryForm.push(
-    this.props.organisation.languages.map((lang) => (
-      <div>
-      <div className={"form-group row"} key={"name_div"+lang.code}>
-        <label
-        className={"col-sm-2 col-form-label"} 
-        htmlFor={"name_" + lang.code}>
-        <span className="required-indicator">*</span>
-        {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
-        </label>
-        <div className="col-sm-10">
-          <FormTextBox
-          id={"name_" + lang.code}
-          name={"name_" + lang.code}
-          type="text"
-          placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Name of the tag", lang.description)) : t("Name of the tag")}
-          required={true}
-          onChange={e => this.updateTextField("name", e, lang.code)}
-          value={this.state.updatedTag.name[lang.code]}
-        />
-        </div>
-      </div>
-      <div className={"form-group row"} key={"description_div"+lang.code}>
-        <label
-          className={"col-sm-2 col-form-label"}
-          htmlFor={"description"}>
-          <span className="required-indicator">*</span>
-          {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Description")}
-        </label>
-        <div className="col-sm-10">
-          <FormTextArea
-            id={"description"}
-            name={"description"}
-            type="text"
-            placeholder={t("Description of the tag")}
-            required={false}
-            onChange={e => this.updateTextField("description", e, lang.code)}
-            value={this.state.updatedTag.description[lang.code]}
-          />
-        </div>
-      </div>
-    </div>
-    )));
 
-    tagEntryForm.push(
-      <div className={"form-group row float-right"} key="save-tag">
-        <button
-          onClick={() => this.onClickSave()}
-          className="btn btn-primary">
-          {t("Save Tag")}
+      {this.props.organisation.languages.map((lang) => (
+        <div className={"form-group row"} key={"name_div"+lang.code}>
+          <label
+            className={"col-sm-2 col-form-label"}
+            htmlFor={"name_" + lang.code}>
+            <span className="required-indicator">*</span>
+            {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
+          </label>
+
+          <div className="col-sm-10">
+              <FormTextBox
+              id={"name_" + lang.code}
+              name={"name_" + lang.code}
+              type="text"
+              placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Name of the tag", lang.description)) : t("Name of the tag")}
+              required={true}
+              onChange={e => this.updateTextField("name", e, lang.code)}
+              value={this.state.updatedTag.name[lang.code] || ""}
+              />
+          </div>
+        </div>
+      ))}
+      {this.props.organisation.languages.map((lang) => (
+        <div className={"form-group row"} key={"description_div"+lang.code}>
+          <label
+            className={"col-sm-2 col-form-label"}
+            htmlFor={"description_" + lang.code}>
+            <span className="required-indicator">*</span>
+            {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Description", lang.description)) : t("Tag Description")}
+          </label>
+            
+          <div className="col-sm-10">
+              <FormTextArea
+              id={"description_" + lang.code}
+              name={"description_" + lang.code}
+              type="text"
+              placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Description of the tag", lang.description)) : t("Description of the tag")}
+              required={true}
+              onChange={e => this.updateTextField("description", e, lang.code)}
+              value={this.state.updatedTag.description[lang.code] || ""}
+              />
+          </div>
+        </div>
+      ))}
+      
+      <div className={"form-group row"} key="save-tag">
+        <div className="col-sm-2 ml-md-auto pr-2 pl-2">
+          <button
+            onClick={() => this.setState({ tagEntryVisible: false })}
+            className="btn btn-danger btn-block">
+            {t("Cancel")}
           </button>
+        </div>
+        <div className="col-sm-2 pr-2 pl-2">
+          <button
+            onClick={() => this.onClickSave()}
+            className="btn btn-primary btn-block">
+            {t("Save Tag")}
+            </button>
+        </div>
       </div>
-    );
-
-    return tagEntryForm;
+    </div>;
   }
 
   setTagEntryVisible = () => {
@@ -350,8 +354,6 @@ class TagConfigComponent extends Component {
     }
 
     const t = this.props.t;
-    //console.log(this.props.user);
-    //console.log(this.props.user.is_admin);
 
     const columns = [{
       id: "tag_name",
@@ -394,7 +396,7 @@ class TagConfigComponent extends Component {
             <div className={"row-mb-3"}>
               <button
                 onClick={() => this.setTagEntryVisible()}
-                className="btn btn-primary float-right">
+                className="btn btn-primary float-right margin-top-10px">
                 {t("New Tag")}
               </button>
             </div>
