@@ -108,9 +108,9 @@ test("Check if tag list renders.", async () => {
         isLoading: false,
         applicationData: applicationData,
         reviewers: reviewersData,
-        tagMenu: true,
-        tagList: [{headline: ""},{headline: ""}],
+        tagList: [{name: "tag-1", id: 1},{name: "tag-2", id:2}],
+        filteredTagList: [{name: "tag-1", id:1},{name: "tag-2", id:2}],
         eventLanguages: ["En", "Fr"]
     })
-    expect(wrapper.find('.tag-response.show').length).toEqual(1);
+    expect(wrapper.find('.tags').length).toEqual(2+1);
 });

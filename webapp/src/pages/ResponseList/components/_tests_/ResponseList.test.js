@@ -1,6 +1,6 @@
 import React from "react";
 import { shallow, mount } from "enzyme";
-import ResponseList from "../ResponseListForm";
+import ResponseList from "../ResponseListComponent";
 import { applicationFormService } from '../../../../services/applicationForm/applicationForm.service';
 import { responsesService } from '../../../../services/responses/responses.service';
 import { tagsService } from '../../../../services/tags/tags.service';

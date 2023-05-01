@@ -263,13 +263,7 @@ class ResponsePage extends Component {
         if (data) {
             let tags = data.tags ? data.tags.map(tag => {
                 return <span className="btn badge badge-primary" onClick={()=>this.removeTag(tag.id)} key={`tag_${tag.id}`}>{tag.name}</span>
-
-                //return <span
-                 //   key={tag.id}
-                 //   className="btn badge badge-primary">
-                 //   {tag.name}
-                 //   <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt cursor-pointer"></i></span>
-            })
+                })
                 :
                 null
             return tags
@@ -427,7 +421,7 @@ class ResponsePage extends Component {
     }
 
     render() {
-        const { applicationData, tagList, error, eventLanguages, isLoading } = this.state;
+        const { applicationData, error, isLoading } = this.state;
         // Translation
         const t = this.props.t;
 
@@ -450,7 +444,6 @@ class ResponsePage extends Component {
                     </div>
                 }
 
-                {/* Add Tag Modal*/}
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
