@@ -14,7 +14,6 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 class TagConfigComponent extends Component {
   constructor(props) {
     super(props);
-    console.log(props);
 
     this.state = {
       tags: [],
@@ -81,7 +80,7 @@ class TagConfigComponent extends Component {
     else {
       this.setState({
         showErrors: true,
-        errors: [this.props.t(errors)],
+        errors: errors,
         confirmRemoveTagVisible: false
       });
     }
@@ -91,7 +90,6 @@ class TagConfigComponent extends Component {
     const errors = this.validateTagDetails();
     if (errors.length === 0) {
       tagsService.updateTag(this.state.updatedTag, this.props.event.id).then(result => {
-        console.log(result);
         if (result.status === 200) {
           this.setState({
             updatedTag: {
@@ -151,7 +149,6 @@ class TagConfigComponent extends Component {
 
   getErrorMessages = errors => {
     const errorMessages = [];
-
     for (let i = 0; i < errors.length; i++) {
       errorMessages.push(
         <div key={"error_"+i} className={"alert alert-danger alert-container"}>
@@ -174,7 +171,7 @@ class TagConfigComponent extends Component {
         errors.push(this.props.t(error_text));
       }
     });
-    if (!this.state.updatedTag.tag_type.length === 0) {
+    if (!this.state.updatedTag.tag_type || this.state.updatedTag.tag_type.trim().length === 0) {
       errors.push(this.props.t("Tag type is required"));
     }
     return errors;
@@ -291,6 +288,10 @@ class TagConfigComponent extends Component {
               value={this.state.updatedTag.description[lang.code] || ""}
               />
           </div>
+
+          {this.state.updatedTag.tag_type && this.state.updatedTag.tag_type === "GRANT" &&
+            <div className="required-indicator ml-2">{t("Note, the grant name and description will be visible to users when asked to accept/reject the grant.")}
+            </div>}
         </div>
       ))}
       
@@ -412,7 +413,7 @@ class TagConfigComponent extends Component {
           okText={t("Yes")}
           cancelText={t("No")}>
           <p>
-            {t('Are you sure you want to remove this tag?')}
+            {t('Are you sure you want to delete this tag? This will also un-tag all entities with this tag.')}
           </p>
         </ConfirmModal>
       </div>)        
