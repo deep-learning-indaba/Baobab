@@ -526,5 +526,13 @@
     "Enter rejection message": "Enter rejection message",
     "Your registration fee has been waived": "Your registration fee has been waived",
     "Please await further communication": "Please await further communication",
-    "Registration Fee": "Registration Fee"
+    "Registration Fee": "Registration Fee",
+    "You have accepted the following awards": "You have accepted the following awards",
+    "Fee Waived": "Fee Waived",
+    "Payment of": "Payment of",
+    "required to confirm your place": "required to confirm your place",
+    "You rejected your offer for a spot at": "You rejected your offer for a spot at",
+    "on" : "on",
+    "for the following reason": "for the following reason",
+    "Invitation Letter": "Invitation Letter"
 }

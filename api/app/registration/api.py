@@ -13,7 +13,7 @@ from flask import g, request
 from flask_restful import  fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
-from app.registration.models import Offer
+from app.registration.models import Offer, OfferTag
 from app.registration.mixins import OfferMixin
 from app.users.models import AppUser
 from app import db, LOGGER
@@ -37,15 +37,11 @@ def offer_info(offer_entity, requested_travel=None):
         'responded_at': offer_entity.responded_at and offer_entity.responded_at.strftime('%Y-%m-%d'),
         'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
-        'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award,
-        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
-        'accepted_travel_award': offer_entity.accepted_travel_award,
         'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
         'rejected_reason': offer_entity.rejected_reason,
         'payment_amount': offer_entity.payment_amount,
-        'tags': [OfferAPI._serialize_tag(it.tag) for it in offer_entity.offer_tags]
+        'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
 
@@ -56,15 +52,12 @@ def offer_update_info(offer_entity):
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
         'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
-        'payment_required': offer_entity.payment_required,
-        'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award,
-        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
-        'accepted_travel_award': offer_entity.accepted_travel_award,
+        'payment_required': offer_entity.payment_required,        
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
-        'payment_amount': offer_entity.payment_amount
+        'payment_amount': offer_entity.payment_amount,
+        'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
 
@@ -76,10 +69,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         'offer_date': fields.DateTime('iso8601'),
         'expiry_date': fields.DateTime('iso8601'),
         'payment_required': fields.Boolean,
-        'travel_award': fields.Boolean,
-        'accommodation_award': fields.Boolean,
-        'accepted_accommodation_award': fields.Boolean,
-        'accepted_travel_award': fields.Boolean,
         'rejected_reason': fields.String,
         'candidate_response': fields.Boolean,
         'responded_at': fields.DateTime('iso8601'),
@@ -87,17 +76,18 @@ class OfferAPI(OfferMixin, restful.Resource):
     }
 
     @staticmethod
-    def _serialize_tag(tag, language='en'):
-        translation = tag.get_translation(language)
+    def _serialize_tag(offer_tag, language='en'):
+        translation = offer_tag.tag.get_translation(language)
         if translation is None:
-            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-            translation = tag.get_translation('en')
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
+            translation = offer_tag.tag.get_translation('en')
         return {
-            'id': tag.id,
-            'event_id': tag.event_id,
-            'tag_type': tag.tag_type.value.upper(),
+            'id': offer_tag.tag.id,
+            'event_id': offer_tag.tag.event_id,
+            'tag_type': offer_tag.tag.tag_type.value.upper(),
             'name': translation.name,
-            'description': translation.description
+            'description': translation.description,
+            'accepted': offer_tag.accepted
         }
 
     @auth_required
@@ -106,14 +96,12 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
-        accepted_accommodation_award = args['accepted_accommodation_award']
-        accepted_travel_award = args['accepted_travel_award']
+        accepted_awards = args['accepted_awards']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
-        LOGGER.info('Updating offer {} with values: candidate response: {}, Accepted accommodation: {}, '
-        'Accepted travel: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_accommodation_award,
-        accepted_travel_award, rejected_reason))
+        LOGGER.info('Updating offer {} with values: candidate response: {}, '
+        'Accepted awards: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_awards, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -126,9 +114,14 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
-            offer.accepted_accommodation_award = accepted_accommodation_award
-            offer.accepted_travel_award = accepted_travel_award
             offer.rejected_reason = rejected_reason
+            for a in accepted_awards:
+                award_id = a['id']
+                award_accepted = a['accepted']
+                offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == award_id).first()
+                if not offer_tag or offer_tag.offer_id != offer_id:
+                    return errors.OFFER_TAG_NOT_FOUND
+                offer_tag.accepted = award_accepted
 
             db.session.commit()
 
@@ -176,8 +169,6 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer_date=offer_date,
             expiry_date=expiry_date,
             payment_required=payment_required,
-            travel_award=travel_award,
-            accommodation_award=accommodation_award,
             payment_amount=payment_amount
         )
 

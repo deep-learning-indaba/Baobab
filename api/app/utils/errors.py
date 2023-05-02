@@ -56,6 +56,7 @@ VERIFY_EMAIL_OFFER = (
 MISSING_PASSWORD = (
     {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
 OFFER_EXPIRED = ({'message': 'Your offer has expired'}, 403)
+OFFER_TAG_NOT_FOUND = ({'message': 'No offer tag found for the given offer id'}, 404)
 ADD_OFFER_FAILED = (
     {'message': 'Unable to add an offer.'}, 500)
 OFFER_NOT_FOUND = (

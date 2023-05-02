@@ -44,7 +44,9 @@ class Offer extends Component {
       awards,
     } = this.state;
 
-    const accepted_awards = awards.filter(a => a.accepted).map(a => a.id);
+    const accepted_awards = awards.map(a => {
+      return { 'id': a.id, 'accepted': a.accepted }}
+      );
 
     if (candidate_response !== null) {
       offerServices
@@ -58,6 +60,7 @@ class Offer extends Component {
           if (response.response && response.response.status === 201) {
             this.setState({
               offer: response.response.data,
+              awards: this.initAwards(response.response.data.tags),
               showReasonBox: false
             }, () => {
               this.displayOfferResponse();
@@ -82,33 +85,37 @@ class Offer extends Component {
     </div>
   }
 
-  onChangeAward = tag_id => {
+  onChangeAward = award_id => {
     const u = this.state.awards;
-    const idx = u.findIndex(a => a.id === tag_id);
-    u[idx].accepted = !u[idx].accepted;
+    u.forEach(a => {
+      if (a.id === award_id) {
+        a.accepted = !a.accepted;
+      }
+    });
     this.setState({
       awards: u
-    })
+    });
   }
 
   displayOfferResponse = () => {
     const { offer, awards } = this.state;
     const event = this.props.event;
+    const t = this.props.t;
     let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
 
     return (
       <div className="container">
         <p className="h5 pt-5">
           {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-          {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at {event ? event.name : ""} on {responded_date} for the following reason:<br /><br />{offer.rejected_reason}</span>}
+          {!offer.candidate_response && <span class="text-danger">{t("You rejected your offer for a spot at") + " " + (event ? event.name : "") + " " + "on" + " " + responded_date + " " + t("for the following reason") + ":"}<br /><br />{offer.rejected_reason}</span>}
         </p>
 
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
+          {this.row("Registration fee", offer.payment_required ? (t("Payment of") + " " + offer.payment_amount + "USD" + " required to confirm your place"): t("Fee Waived"))}
 
-          {this.props.event && awards && this.row("Awards", "You have accepted the following awards:" + awards.filter(a => a.accepted).map(a => a.name).join(", "))}
+          {this.props.event && awards && this.row(t("Awards"), t("You have accepted the following awards") + ": " + awards.filter(a => a.accepted).map(a => a.name).join(", "))}
         </div>}
 
         {offer.candidate_response &&
@@ -169,19 +176,19 @@ class Offer extends Component {
       {awards ?
         <div>
         <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following awards") + ":"}</div>
-          {awards.map((tag) => {
-            return <div class="row mb-3" align="center" key={"award_"+tag.id}>
+          {awards.map((award) => {
+            return <div class="row mb-3" align="center" key={"award_"+award.id}>
                       <div class="col-md-12" align="center">
-                        <span class="font-weight-bold">{tag.name + ": "}</span>
-                        {tag.description}
+                        <span class="font-weight-bold">{award.name + ": "}</span>
+                        {award.description}
                       </div>
                       <div class="col-md-12" align="center">
                         <div class="form-check award-container">
                           <input type="checkbox" class="form-check-input"
-                            checked={null || awards.find(a => a.id === tag.id).accepted}
-                            onChange={() => this.onChangeAward(tag.id)}
-                            id={"check_" + tag.id} />
-                          <label class="form-check-label" htmlFor={"check_"+tag.id}>{t("I accept this award")}.</label>
+                            checked={award.accepted}
+                            onChange={() => this.onChangeAward(award.id)}
+                            id={"check_" + award.id} />
+                          <label class="form-check-label" htmlFor={"check_"+award.id}>{t("I accept this award")}.</label>
                         </div>
                       </div>
                     </div>
@@ -341,7 +348,7 @@ class Offer extends Component {
             loading: false,
             offer: result.offer,
             error: result.error,
-            awards: this.initAwards(result.offer.tags) 
+            awards: this.initAwards(result.offer.tags)
           });
         }
       });
@@ -351,7 +358,7 @@ class Offer extends Component {
     return tags.filter(tag => tag.tag_type === "GRANT").map(tag => {
       return {
         ...tag,
-        accepted: true
+        accepted: tag.accepted === null ? true : tag.accepted,
         }
       });
   }
@@ -368,7 +375,7 @@ class Offer extends Component {
     if (loading) {
       return (
         <div class="d-flex justify-content-center pt-5">
-          <div class="spinner-border"
+          <div className="spinner-border"
             style={loadingStyle}
             role="status">
             <span className="sr-only">Loading...</span>

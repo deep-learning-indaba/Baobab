@@ -15,8 +15,7 @@ import sqlalchemy as sa
 
 def upgrade():
     op.add_column('offer_tag', sa.Column('accepted', sa.Boolean(), nullable=True))
-    op.execute("""UPDATE offer_tag SET accepted=False""")
-    op.alter_column('offer_tag', 'accepted', nullable=False)
+    op.execute("""UPDATE offer_tag SET accepted=null""")
 
 def downgrade():
     op.drop_column('offer_tag', 'accepted')

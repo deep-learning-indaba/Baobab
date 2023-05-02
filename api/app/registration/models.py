@@ -17,10 +17,6 @@ class Offer(db.Model):
     offer_date = db.Column(db.DateTime(), nullable=False)
     expiry_date = db.Column(db.DateTime(), nullable=False)
     payment_required = db.Column(db.Boolean(), nullable=False)
-    travel_award = db.Column(db.Boolean(), nullable=False)
-    accommodation_award = db.Column(db.Boolean(), nullable=False)
-    accepted_accommodation_award = db.Column(db.Boolean(), nullable=True)
-    accepted_travel_award = db.Column(db.Boolean(), nullable=True)
     rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
@@ -49,12 +45,12 @@ class OfferTag(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
     tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
-    accepted = db.Column(db.Boolean(), default=False, nullable=False)
+    accepted = db.Column(db.Boolean(), nullable=True)
 
     offer = db.relationship('Offer', foreign_keys=[offer_id])
     tag = db.relationship('Tag', foreign_keys=[tag_id])
 
-    def __init__(self, offer_id, tag_id, accepted=False):
+    def __init__(self, offer_id, tag_id, accepted=None):
         self.offer_id = offer_id
         self.tag_id = tag_id
         self.accepted = accepted
