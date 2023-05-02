@@ -57,14 +57,14 @@ def upgrade():
     aims = Organisation(
         name='Deep Learning IndabaX South Africa',
         system_name='Baobab',
-        small_logo='dlxza_logo_white.png',
-        large_logo='dlxza_logo_white.png',
-        icon_logo='dlxza_logo_white.png',
+        small_logo='dlxza_logo_black.png',
+        large_logo='dlxza_logo_black.png',
+        icon_logo='dlxza_logo_black.png',
         domain='indabax',
         url='https://indabax.co.za',
-        email_from='apply@indabax.co.za', 
+        email_from='info@indabax.co.za', 
         system_url='https://apply.indabax.co.za',
-        privacy_policy='PrivacyPolicy.pdf', 
+        privacy_policy='dlxza-privacy-policy.pdf', 
         languages=[{"code": "en", "description": "English"}]
     )
 
