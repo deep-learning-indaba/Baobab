@@ -54,7 +54,7 @@ def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
 
-    aims = Organisation(
+    dlxza = Organisation(
         name='Deep Learning IndabaX South Africa',
         system_name='Baobab',
         small_logo='dlxza_logo_black.png',
@@ -68,7 +68,7 @@ def upgrade():
         languages=[{"code": "en", "description": "English"}]
     )
 
-    session.add(aims)
+    session.add(dlxza)
     session.commit()
 
 
