@@ -33,18 +33,14 @@ function getOffer(event_id){
 
 }
 
-function addOffer(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accommodation_award, accepted_accommodation_award, accepted_travel_award){
-  //TODO - replace with accpeted_awards  
+function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, award_acceptance){
   let data = {
         user_id:user_id, 
         event_id:event_id,
         offer_date:offer_date,
         expiry_date:expiry_date,
         payment_required:payment_required,
-        travel_award:travel_award,
-        accommodation_award:accommodation_award,
-        accepted_accommodation_award:accepted_accommodation_award,
-        accepted_travel_award: accepted_travel_award
+        award_acceptance:award_acceptance
     }
 
     return axios
@@ -66,13 +62,13 @@ function addOffer(user_id, event_id,offer_date,expiry_date,payment_required,trav
           });
 }
 
-function updateOffer(offer_id, event_id, candidate_response, rejected_reason, accepted_awards){
+function updateOffer(offer_id, event_id, candidate_response, rejected_reason, award_acceptance){
     let data = {
         offer_id:offer_id, 
         event_id:event_id,
         candidate_response:candidate_response,
         rejected_reason:rejected_reason,
-        accepted_awards:accepted_awards
+        award_acceptance:award_acceptance
     };
 
     return axios

@@ -6,6 +6,8 @@ import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 import { withTranslation } from 'react-i18next';
 
+//TODO switch to lighter weight version of awards
+
 class Offer extends Component {
   constructor(props) {
     super(props);
@@ -44,10 +46,6 @@ class Offer extends Component {
       awards,
     } = this.state;
 
-    const accepted_awards = awards.map(a => {
-      return { 'id': a.id, 'accepted': a.accepted }}
-      );
-
     if (candidate_response !== null) {
       offerServices
         .updateOffer(
@@ -55,7 +53,9 @@ class Offer extends Component {
           this.props.event ? this.props.event.id : 0,
           candidate_response,
           candidate_response ? "" : rejected_reason,
-          accepted_awards)
+          awards.map(a => {
+            return { 'id': a.id, 'accepted': a.accepted }}
+            ))
         .then(response => {
           if (response.response && response.response.status === 201) {
             this.setState({
