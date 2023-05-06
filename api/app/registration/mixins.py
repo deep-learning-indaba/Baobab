@@ -10,7 +10,7 @@ class OfferMixin(object):
     req_parser.add_argument('offer_date', type=str, required=False)
     req_parser.add_argument('expiry_date', type=str, required=False)
     req_parser.add_argument('payment_required', type=bool, required=False)
-    req_parser.add_argument('award_acceptance', type=list, location='json', required=False)
+    req_parser.add_argument('award_acceptance', type=list, location='json', required=False, default=[])
     req_parser.add_argument('rejected_reason', type=str, required=False)
     req_parser.add_argument('candidate_response', type=bool, required=False)
     req_parser.add_argument('responded_at', type=str, required=False)

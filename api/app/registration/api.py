@@ -181,12 +181,15 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.add(offer_entity)
         db.session.commit()
 
-        email_template = 'offer'
-        awards_str = ''
         awards = [OfferAPI._stringify_tag_name_description(it) for it in offer_entity.offer_tags if it.tag.active and it.tag.tag_type == "GRANT"]
+        print(awards)
         if awards:
             awards_str = '\n\u2022' + awards.join("\n\u2022")
             email_template = 'offer-awards'
+        else:
+            awards_str = ''
+            email_template = 'offer'
+
 
         email_user(
             email_template,

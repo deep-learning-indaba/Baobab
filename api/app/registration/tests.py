@@ -21,10 +21,6 @@ OFFER_DATA = {
     'offer_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'expiry_date': datetime(1984, 12, 12).strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
     'payment_required': False,
-    'travel_award': False,
-    'accommodation_award': False,
-    'accepted_accommodation_award': None,
-    'accepted_travel_award': None,
     'rejected_reason': 'N/A',
 }
 
@@ -85,11 +81,12 @@ class OfferApiTest(ApiTestCase):
                 event_id=event.id,
                 offer_date=datetime.now(),
                 expiry_date=datetime.now() + timedelta(days=15),
-                payment_required=False,
-                travel_award=True,
-                accommodation_award=False)
+                payment_required=False)
             db.session.add(offer)
             db.session.commit()
+
+        self.tag1 = self.add_tag(tag_type='REGISTRATION')
+        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'}, descriptions={'en': 'Tag 2 en description', 'fr': 'Tag 2 fr description'}, tag_type='GRANT')
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
@@ -121,8 +118,6 @@ class OfferApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertFalse(data['payment_required'])
-        self.assertFalse(data['travel_award'])
-        self.assertFalse(data['accommodation_award'])
 
         outcome = outcome_repository.get_latest_by_user_for_event(OFFER_DATA['user_id'], OFFER_DATA['event_id'])
         self.assertEqual(outcome.status, Status.ACCEPTED)
@@ -150,8 +145,6 @@ class OfferApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertFalse(data['payment_required'])
-        self.assertFalse(data['travel_award'])
-        self.assertFalse(data['accommodation_award'])
 
     def test_create_duplicate_offer(self):
         self._seed_static_data(add_offer=True)
@@ -362,13 +355,9 @@ class RegistrationTest(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            travel_award=True,
-            accommodation_award=False)
+            payment_required=False)
 
         offer.candidate_response = True
-        offer.accepted_travel_award = True
-        offer.accepted_accommodation_award = True
 
         db.session.add(offer)
         db.session.commit()

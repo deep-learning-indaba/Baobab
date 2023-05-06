@@ -83,7 +83,6 @@ test("Check if tag API call is successful.",  async () => {
   expect(response.status).toBeTruthy();
 });
 
-
 test("Check if React Table renders.", async () => {
   const wrapper = shallow(<ResponseList  {...props} />);
   wrapper.setState({
