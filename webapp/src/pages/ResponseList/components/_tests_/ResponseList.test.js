@@ -80,14 +80,14 @@ test("Check if responsesService API call works.", async () => {
 
 test("Check if tag API call is successful.",  async () => {
   const response = await tagsService.getTagList(props.event.id);
-  expect(response.error).toBeTruthy();
+  expect(response.status).toBeTruthy();
 });
 
 
 test("Check if React Table renders.", async () => {
   const wrapper = shallow(<ResponseList  {...props} />);
   wrapper.setState({
-    isLoading: false,
+    loading: false,
   })
   expect(wrapper.find('.ReactTable').length).toEqual(1);
 });
