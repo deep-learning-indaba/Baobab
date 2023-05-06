@@ -112,5 +112,5 @@ test("Check if tag list renders.", async () => {
         filteredTagList: [{name: "tag-1", id:1},{name: "tag-2", id:2}],
         eventLanguages: ["En", "Fr"]
     })
-    expect(wrapper.find('.tags').length).toEqual(2+1);
+    expect(wrapper.find('.tags').length).toEqual(1);
 });

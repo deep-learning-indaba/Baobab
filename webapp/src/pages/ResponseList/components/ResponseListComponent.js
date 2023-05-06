@@ -14,7 +14,7 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
 import { createColClassName } from "../../../utils/styling/styling";
 
-class ResponseListForm extends Component {
+class ResponseListComponent extends Component {
     constructor(props) {
         super(props);
         this.state = {
