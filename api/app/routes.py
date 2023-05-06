@@ -93,10 +93,6 @@ rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
 rest_api.add_resource(registration_api.OfferTagAPI, '/api/v1/offertag')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
-rest_api.add_resource(registration_api.RegistrationSectionAPI,
-                      '/api/v1/registration-section')
-rest_api.add_resource(registration_api.RegistrationQuestionAPI,
-                      '/api/v1/registration-question')
 rest_api.add_resource(registration_response.RegistrationApi,
                       '/api/v1/registration-response')
 rest_api.add_resource(guest_registration.GuestRegistrationApi,

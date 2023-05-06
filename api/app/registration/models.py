@@ -64,6 +64,7 @@ class RegistrationForm(db.Model):
         "event.id"), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
+    registration_sections = db.relationship('RegistrationSection')
 
     def __init__(self, event_id):
         self.event_id = event_id
@@ -82,7 +83,9 @@ class RegistrationSection(db.Model):
     show_for_tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=True)
     show_for_invited_guest = db.Column(db.Boolean(), nullable=True)
 
-    def __init__(self, registration_form_id, name, description, order, show_for_tag_id, show_for_invited_guest=None):
+    registration_questions = db.relationship('RegistrationQuestion')
+
+    def __init__(self, registration_form_id, name, description, order, show_for_tag_id=None, show_for_invited_guest=None):
         self.registration_form_id = registration_form_id
         self.name = name
         self.description = description

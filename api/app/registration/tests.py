@@ -5,13 +5,10 @@ import json
 from datetime import datetime, timedelta
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
-from app.users.models import AppUser, UserCategory, Country
-from app.events.models import Event
+from app.users.models import UserCategory, Country
 from app.registration.models import Offer, OfferTag
-from app.organisation.models import Organisation
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.outcome.models import Status
-from app.responses.models import Response
 
 
 OFFER_DATA = {
@@ -332,7 +329,8 @@ class OfferTagAPITest(ApiTestCase):
 class RegistrationTest(ApiTestCase):
 
     def _seed_static_data(self):
-        test_user = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        test_user_no_tag = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+        test_user_tag = self.add_user('something2@email.com', 'Some', 'Thing', 'Ms')
         event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png')
         db.session.add(UserCategory('Postdoc'))
@@ -348,20 +346,32 @@ class RegistrationTest(ApiTestCase):
         )
         db.session.commit()
 
+        tag = self.add_tag(event.id, 
+                     tag_type='GRANT', 
+                     names={'en': 'Grant Tag', 'fr': 'Grant Tag fr'}, 
+                     descriptions={'en': 'Grant Tag description', 'fr': 'Grant Tag fr description'})
+
         self.event_id = event.id
 
-        offer = Offer(
-            user_id=test_user.id,
+        offer_no_tag = self.add_offer(
+            user_id=test_user_no_tag.id,
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False)
+            payment_required=False,
+            candidate_response=True)
 
-        offer.candidate_response = True
+        self.offer_no_tag_id = offer_no_tag.id
 
-        db.session.add(offer)
-        db.session.commit()
-        self.offer_id = offer.id
+        offer_with_tag = self.add_offer(
+            user_id=test_user_tag.id,
+            event_id=event.id,
+            offer_date=datetime.now(),
+            expiry_date=datetime.now() + timedelta(days=15),
+            payment_required=False,
+            candidate_response=True)
+        self.tag_offer(offer_with_tag.id, tag.id)
+        self.offer_with_tag_id = offer_with_tag.id
 
         form = RegistrationForm(
             event_id=event.id
@@ -374,9 +384,7 @@ class RegistrationTest(ApiTestCase):
             name="Section 1",
             description="the section description",
             order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=True,
-            show_for_payment_required=False,
+            show_for_tag_id=None
         )
         db.session.add(section)
         db.session.commit()
@@ -385,12 +393,32 @@ class RegistrationTest(ApiTestCase):
             registration_form_id=form.id,
             name="Section 2",
             description="the section 2 description",
-            order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=True,
-            show_for_payment_required=False,
+            order=2,
+            show_for_tag_id=tag.id
         )
         db.session.add(section2)
+        db.session.commit()
+
+        section3 = RegistrationSection(
+            registration_form_id=form.id,
+            name="Section 3",
+            description="the section 3 description",
+            order=3,
+            show_for_tag_id=None,
+            show_for_invited_guest=True
+        )
+        db.session.add(section3)
+        db.session.commit()
+
+        section4 = RegistrationSection(
+            registration_form_id=form.id,
+            name="Section 4",
+            description="the section 4 description",
+            order=3,
+            show_for_tag_id=tag.id,
+            show_for_invited_guest=True
+        )
+        db.session.add(section4)
         db.session.commit()
 
         question = RegistrationQuestion(
@@ -423,28 +451,33 @@ class RegistrationTest(ApiTestCase):
         db.session.add(question2)
         db.session.commit()
 
-        self.headers = self.get_auth_header_for("something@email.com")
+        self.headers_no_tag = self.get_auth_header_for("something@email.com")
+        self.headers_with_tag = self.get_auth_header_for("something2@email.com")
         self.adminHeaders = self.get_auth_header_for("event_admin@ea.com")
 
         db.session.flush()
 
-    def test_create_registration_form(self):
-        self._seed_static_data()
-        response = self.app.post(
-            '/api/v1/registration-form', data=REGISTRATION_FORM, headers=self.adminHeaders)
-        data = json.loads(response.data)
-        LOGGER.debug(
-            "Reg-form: {}".format(data))
-        assert response.status_code == 201
-        assert data['registration_form_id'] == 2
-
-    def test_get_form(self):
+    def test_offer_no_tag(self):
+        """Test that an offer without a tag sees the correct sections."""
         self._seed_static_data()
 
-        params = {'offer_id': self.offer_id, 'event_id': self.event_id}
-        response = self.app.get("/api/v1/registration-form", headers=self.headers, data=params)
+        params = {'offer_id': self.offer_no_tag_id, 'event_id': self.event_id}
+        response = self.app.get("/api/v1/registration-form", headers=self.headers_no_tag, data=params)
 
         form = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
-        assert form['registration_sections'][0]['registration_questions'][0]['type'] == 'short-text'
-        assert form['registration_sections'][0]['name'] == 'Section 1'
+        self.assertEqual(len(form['registration_sections']), 1)
+        self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
+
+    def test_offer_with_tag(self):
+        """Test that an offer with a tag sees the correct sections."""
+        self._seed_static_data()
+
+        params = {'offer_id': self.offer_with_tag_id, 'event_id': self.event_id}
+        response = self.app.get("/api/v1/registration-form", headers=self.headers_with_tag, data=params)
+
+        form = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(form['registration_sections']), 2)
+        self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
+        self.assertEqual(form['registration_sections'][1]['name'], 'Section 2')

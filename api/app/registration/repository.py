@@ -92,3 +92,13 @@ class RegistrationRepository():
     @staticmethod
     def get_form_for_event(event_id):
         return (db.session.query(RegistrationForm).filter_by(event_id=event_id)).first()
+
+
+class RegistrationFormRepository():
+    @staticmethod
+    def get_by_event_id(event_id):
+        return (db.session.query(RegistrationForm)
+                .filter_by(event_id=event_id)
+                .first())
+    
+    
