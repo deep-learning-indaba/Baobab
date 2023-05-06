@@ -70,7 +70,7 @@ class EventNav extends Component {
                     className="nav-link"
                     onClick={this.props.toggleMenu}
                   >
-                    {t('Apply')}
+                    {(this.props.event.event_type === 'JOURNAL' || this.props.event.event_type === 'CONTINUOUS_JOURNAL')? t('Submit') : t('Apply')}
                   </NavLink>
                 </li>
               )}

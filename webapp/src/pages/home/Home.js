@@ -72,6 +72,9 @@ class Home extends Component {
         if (e.event_type === 'EVENT') {
             return `${e.start_date} to ${e.end_date}`;
         }
+        if (e.event_type === 'CONTINUOUS_JOURNAL') {
+            return `Rolling Submissions`;
+        }
         else {
             return this.props.t("Applications Close") + " " + e.application_close_date;
         }

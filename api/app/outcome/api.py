@@ -46,15 +46,14 @@ outcome_list_fields = {
 
 
 class OutcomeAPI(restful.Resource):
-    @auth_required
+    @event_admin_required
     @marshal_with(outcome_fields)
-    def get(self):
+    def get(self, event_id):
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('user_id', type=int, required=True)
         args = req_parser.parse_args()
 
-        user_id = g.current_user['id']
-        event_id = args['event_id']
+        user_id = args['user_id']
 
         try:
             outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
@@ -107,7 +106,7 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
-            if status != Status.ACCEPTED:  # Email will be sent with offer for accepted candidates  
+            if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
                 email_user(
                     'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
                     template_parameters=dict(

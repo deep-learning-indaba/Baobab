@@ -62,6 +62,13 @@
     padding: 0 2px
 }
 
+.outcome {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    grid-auto-rows: auto;
+}
+
 .user-details.right {
     padding: 0 10px
 }
@@ -217,6 +224,20 @@ html .headings-lower label {
 .reviewers-section  p {
     margin: 0 8px 0 0;
     font-size: 13px;
+}
+
+.reviewers-section h4 {
+    font-size: 17px;
+    font-weight: bold;
+}
+
+.reviewers-section h6 {
+    font-size: 15px;
+    color: grey;
+    margin: 0;
+    padding-left: 7px;
+    padding-bottom: 4px;
+    padding-right: 4px;
 }
 
 .reviewers-section h5 {

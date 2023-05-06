@@ -6,6 +6,7 @@ import ReviewModal from './components/ReviewModal';
 import { eventService } from '../../services/events/events.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
 import { reviewService } from '../../services/reviews/review.service';
+import { outcomeService } from '../../services/outcome/outcome.service';
 import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
@@ -28,7 +29,9 @@ class ResponsePage extends Component {
             tagSelectorVisible : false,
             filteredTagList: [],
             tagList: [],
-            assignableTagTypes: ["RESPONSE"]
+            assignableTagTypes: ["RESPONSE"],
+            reviewResponses: [],
+            outcome: {'status':null,'timestamp':null},
         }
     };
 
@@ -39,20 +42,40 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
-            reviewService.getReviewAssignments(this.props.event.id)
         ]).then(responses => {
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
+                event_type: responses[0].event.event_type,
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                reviewers: responses[4].reviewers,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
-                isLoading: false
-            }, this.filterTagList);
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+            }, () => {
+                this.getOutcome();
+                this.getReviewResponses(responses[2].detail);
+                this.filterTagList();
+            });
         });
     };
 
+    getReviewResponses(applicationData) {
+        reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
+            .then(resp => {
+                if (resp.error) {
+                    this.setState({
+                        error: resp.error
+                    });
+                }
+                if(resp.form) {
+                    this.setState( {
+                        reviewResponses: resp.form.review_responses,
+                        reviewForm: resp.form.review_form,
+                        isLoading: false,
+                        error: resp.error
+                     });
+                }
+            });
+    }
 
     // Misc Functions
 
@@ -83,6 +106,185 @@ class ResponsePage extends Component {
             if (withdrawn) {
                 return <span><span class="badge badge-pill badge-danger">Withdrawn</span> {this.formatDate(data.started_timestamp)}</span>
             };
+        };
+    };
+
+    renderReviewResponse(review_response, section) {
+        const questions = section.review_questions.map(q => {
+            const a = review_response.scores.find(a => a.review_question_id === q.id);
+
+            if (a) {
+                return <div>
+            <div key={q.question_id} className="question-answer-block">
+                <p><span className="question-headline">{q.headline}</span>
+                    {q.description && a && <span className="question-description"><br/>{q.description}</span>}
+                </p>
+                <h6><AnswerValue answer={a} question={q} /></h6>
+            </div>
+            </div>
+            }
+            
+            
+        });
+        return questions
+    };
+    
+    // Render Reviews
+    renderCompleteReviews(){
+        if (this.state.reviewResponses.length) {
+                const reviews = this.state.reviewResponses.map(val => {
+                    return <div className="section">
+                            <h4
+                                className="reviewer-section" >
+                                {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
+                            </h4>
+                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
+                    </div>
+                });
+                return reviews
+            }
+    }
+
+    getOutcome() {
+            outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+                if (response.status === 200) {
+                    const newOutcome = {
+                        timestamp: response.outcome.timestamp,
+                        status: response.outcome.status,
+                    };
+                    this.setState(
+                        {
+                            outcome: newOutcome
+                        }
+                    );
+                }
+                else{
+                    this.error(response.error)
+                }
+                this.setState(
+                    {
+                        isLoading: false
+                    }
+                )
+            });
+    };
+
+    submitOutcome(selectedOutcome) {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+            if (response.status === 201) {
+                const newOutcome = {
+                    timestamp: response.outcome.timestamp,
+                    status: response.outcome.status,
+                };
+
+                this.setState({
+                    outcome: newOutcome
+                });
+            } else {
+                this.error(response.error);
+            }
+        });
+    }
+
+    outcomeStatus() {
+        const data = this.state.applicationData;
+        
+        if (data) {
+
+            if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
+                if (this.state.outcome.status === 'ACCEPTED') {
+                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                } else if (this.state.outcome.status === 'REJECTED') {
+                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                } else {
+                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                }
+            };
+
+            if (this.state.event_type === 'CONTINUOUS_JOURNAL' || this.state.event_type === 'JOURNAL') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
+                            Accept
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-warning"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPT_W_REVISION')}>
+                            Accept with Minor Revision
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-warning"
+                            id="reject with encouragement"
+                            onClick={(e) => this.submitOutcome('REJECT_W_ENCOURAGEMENT')}>
+                            Reject with Encouragement to Resubmit
+                        </button>
+                    </div>    
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                </div>
+            }
+            else if (this.state.event_type === 'CALL') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                            id="accept"
+                            onClick={(e) => this.submitOutcome('ACCEPTED')}>
+                            Accept
+                        </button>
+                    </div>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                </div>
+            }
+            else if (this.state.event_type === 'EVENT') {
+                return <div className='user-details'>
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            id="reject"
+                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            Reject
+                        </button>
+                    </div>    
+                    <div className="user-details">
+                    <button
+                        type="button"
+                        class="btn btn-warning"
+                        id="waitlist"
+                        onClick={(e) => this.submitOutcome('WAITLIST')}>
+                        Waitlist
+                    </button>
+                </div>
+                </div>
+            }
         };
     };
 
@@ -381,10 +583,13 @@ class ResponsePage extends Component {
 
     // Render Review Modal
     renderReviewerModal() {
+        if (!this.state.reviewResponses || !this.state.applicationData) {
+            return <div></div>
+        }
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
-            reviewers={this.state.reviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
+            reviewers={this.state.reviewResponses.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
         />
@@ -465,6 +670,7 @@ class ResponsePage extends Component {
                         <div>
                             <div className="user-details right">
                                 <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
+                                <label>{t('Application Outcome')}</label> <p>{this.outcomeStatus()}</p>
                                 <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
                             </div>
 
@@ -491,11 +697,22 @@ class ResponsePage extends Component {
                                     </button>
                                 </div>
                             </div>
-
                             <div className="divider"></div>
                         </div>
 
                         {this.renderSections()}
+                        {
+                            this.state.reviewResponses.length > 0 && (
+                        <div>
+                            <div className="divider"></div>
+                            <div className="reviewers-section">
+                            <h3>{t('Reviewer Feedback')}</h3>
+                            <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
+                            {this.renderCompleteReviews()}
+                            </div>
+                        </div>
+                        
+                        )}
                     </div>
                 }
 

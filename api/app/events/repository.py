@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.events.models import Event, EventFee
+from app.events.models import Event, EventFee, EventType, EventRole
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
@@ -40,7 +40,7 @@ class EventRepository(BaseRepository):
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
         return db.session.query(Event)\
-                         .filter(Event.end_date >= datetime.now())\
+                         .filter(or_(Event.end_date >= datetime.now(), Event.event_type == EventType.CONTINUOUS_JOURNAL))\
                          .filter_by(organisation_id=organisation_id)\
                          .all()
 
@@ -70,5 +70,14 @@ class EventRepository(BaseRepository):
                 EventFee.event_id==event_id,
                 EventFee.id.in_(event_fee_ids),
                 EventFee.is_active==True)
+            .all()
+        )
+
+    @staticmethod
+    def get_event_admins(event_id):
+        return (
+            db.session.query(AppUser)
+            .join(EventRole, EventRole.user_id == AppUser.id)
+            .filter_by(event_id=event_id, role='admin')
             .all()
         )
