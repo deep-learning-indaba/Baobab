@@ -146,27 +146,26 @@ class ResponsePage extends Component {
     }
 
     getOutcome() {
-            outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
-                if (response.status === 200) {
-                    const newOutcome = {
-                        timestamp: response.outcome.timestamp,
-                        status: response.outcome.status,
-                    };
-                    this.setState(
-                        {
-                            outcome: newOutcome
-                        }
-                    );
-                }
-                else{
-                    this.error(response.error)
-                }
+        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+            if (response.status === 200) {
+                const newOutcome = {
+                    timestamp: response.outcome.timestamp,
+                    status: response.outcome.status,
+                };
                 this.setState(
                     {
+                        outcome: newOutcome,
                         isLoading: false
                     }
-                )
-            });
+                );
+            }
+            else{
+                this.setState({
+                    error: response.error,
+                    isLoading: false
+                });
+            }
+        });
     };
 
     submitOutcome(selectedOutcome) {
@@ -181,7 +180,7 @@ class ResponsePage extends Component {
                     outcome: newOutcome
                 });
             } else {
-                this.error(response.error);
+                this.setState({erorr: response.error});
             }
         });
     }

@@ -190,13 +190,14 @@ class ResponseListComponent extends Component {
         const filtered = this.state.responses.filter(r => {
           let passed = true;
           if (nameSearch) {
-            passed = r.user.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1;
+            passed = ((r.firstname && r.firstname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1) 
+                      || (r.lastname && r.lastname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1));
           }
           if (emailSearch && passed) {
-            passed = r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
+            passed = r.email && r.email.toLowerCase().indexOf(emailSearch.toLowerCase()) > -1;
           }
           if (tagSearch.length > 0 && passed) {
-            passed = tagSearch.every(t => r.tags.some(rt => rt.name === t));
+            passed = tagSearch && tagSearch.every(t => r.tags.some(rt => rt.name === t));
           }
           return passed;
         });
