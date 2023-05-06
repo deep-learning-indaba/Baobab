@@ -425,4 +425,4 @@ class ResponseListComponent extends Component {
     }
 }
 
-export default withTranslation()(ResponseListForm);
+export default withTranslation()(ResponseListComponent);
