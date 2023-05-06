@@ -37,7 +37,7 @@ oauthlib
 enum34
 psycopg2-binary
 docx-mailmerge
-requests
+requests==2.29.0
 google
 requests-file
 tldextract
