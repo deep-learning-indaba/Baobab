@@ -90,18 +90,26 @@ class OfferAPI(OfferMixin, restful.Resource):
             'accepted': offer_tag.accepted
         }
 
+    @staticmethod
+    def _stringify_tag_name_description(offer_tag, language='en'):
+        translation = offer_tag.tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
+            translation = offer_tag.tag.get_translation('en')
+        return '{}: {}'.format(translation.name, translation.description)
+
     @auth_required
     def put(self):
         # update existing offer
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
-        accepted_awards = args['accepted_awards']
+        award_acceptance = args['award_acceptance']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
         LOGGER.info('Updating offer {} with values: candidate response: {}, '
-        'Accepted awards: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_awards, rejected_reason))
+        'Award Acceptance: {}, Rejected Reason: {}'.format(offer_id, candidate_response, award_acceptance, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -115,9 +123,9 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
             offer.rejected_reason = rejected_reason
-            for a in accepted_awards:
-                award_id = a['id']
-                award_accepted = a['accepted']
+            for ai in award_acceptance:
+                award_id = ai['id']
+                award_accepted = ai['accepted']
                 offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == award_id).first()
                 if not offer_tag or offer_tag.offer_id != offer_id:
                     return errors.OFFER_TAG_NOT_FOUND
@@ -138,8 +146,6 @@ class OfferAPI(OfferMixin, restful.Resource):
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
-        travel_award = args['travel_award']
-        accommodation_award = args['accommodation_award']
         payment_amount = args['payment_amount']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
@@ -176,19 +182,19 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.commit()
 
         email_template = 'offer'
-        if travel_award and accommodation_award:
-            email_template = 'offer-travel-accommodation'
-        elif travel_award:
-            email_template = 'offer-travel'
-        elif accommodation_award:
-            email_template = 'offer-accommodation'
+        awards_str = ''
+        awards = [OfferAPI._stringify_tag_name_description(it) for it in offer_entity.offer_tags if it.tag.active and it.tag.tag_type == "GRANT"]
+        if awards:
+            awards_str = '\n\u2022' + awards.join("\n\u2022")
+            email_template = 'offer-awards'
 
         email_user(
             email_template,
             template_parameters=dict(
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
-                event_email_from=event_email_from
+                event_email_from=event_email_from,
+                awards=awards_str
             ),
             event=event,
             user=user)
