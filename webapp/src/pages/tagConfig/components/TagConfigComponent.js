@@ -9,7 +9,7 @@ import ReactTable from 'react-table';
 import { ConfirmModal } from "react-bootstrap4-modal";
 
 //TODO not auto loading when tag is added or edited
-//TODO display tags in default language in table
+//TODO test multilingual language
 
 class TagConfigComponent extends Component {
   constructor(props) {
@@ -55,7 +55,6 @@ class TagConfigComponent extends Component {
     const errors = this.validateTagDetails();
     if (errors.length === 0) {
       tagsService.addTag(this.state.updatedTag, this.props.event.id).then(result => {
-        console.log(result);
         if (result.status === 201) {
           this.setState({
             updatedTag: {
@@ -355,16 +354,17 @@ class TagConfigComponent extends Component {
     }
 
     const t = this.props.t;
+    const current_lang = this.props.i18n.language;
 
     const columns = [{
       id: "tag_name",
       Header: <div className="tag-name">{t("Tag Name")}</div>,
-      accessor: u => u.name['en'],
+      accessor: u => u.name[current_lang],
       minWidth: 150
   }, {
       id: "tag_description",
       Header: <div className="tag-description">{t("Tag Description")}</div>,
-      accessor: u => u.description['en'],
+      accessor: u => u.description[current_lang],
       minWidth: 150
   }, {
       id: "tag_type",
