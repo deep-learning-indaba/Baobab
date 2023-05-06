@@ -16,7 +16,7 @@ class TagSelectorDialog extends Component {
                 <h5 className="modal-title">{t('Select A Tag')}</h5>
             </div>
             <div className="modal-body">
-                <div class="d-flex flex-wrap">
+                <div className="d-flex flex-wrap">
                     {tags.map(tag => 
                         <button key={"tag_" + tag.id} className="tag-btn btn btn-primary" onClick={() => onSelectTag(tag)}>{tag.name}</button>    
                     )}

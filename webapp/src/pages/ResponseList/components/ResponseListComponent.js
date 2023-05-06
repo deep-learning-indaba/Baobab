@@ -25,6 +25,7 @@ class ResponseListComponent extends Component {
             tags: [],
             filteredTags: [],
             tagSelectorVisible: false,
+            confirmRemoveTagVisible: false,
             selectedResponse: null,
             error: null,
             loading: true,
@@ -181,7 +182,7 @@ class ResponseListComponent extends Component {
     }
 
     getSearchTags(tags) {
-      return tags.filter(t=>t).map(t => ({ value: t.name, label: t.name}));
+      return tags ? tags.filter(t=>t).map(t => ({ value: t.name, label: t.name})) : tags;
     }
 
     filterResponses = () => {
@@ -204,7 +205,6 @@ class ResponseListComponent extends Component {
 
     render() {
         const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
-        const twoColClassName = createColClassName(12, 6, 6, 6);  //xs, sm, md, lg
         const animatedComponents = makeAnimated();
         const t = this.props.t;
 
@@ -373,7 +373,7 @@ class ResponseListComponent extends Component {
                     <div className="row">
                         <p className="h6 text-center mb-3">{t("Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)")}</p>
                         
-                        <div className={twoColClassName}>
+                        <div className="col-md-10 pr-2">
                             <FormTextBox
                                 id={"newReviewEmail"}
                                 name={'newReviewEmail'}
@@ -382,9 +382,9 @@ class ResponseListComponent extends Component {
                                 value={newReviewerEmail}
                                 key={"newReviewEmail"} />
                         </div>
-                        <div className={twoColClassName}>
+                        <div className="col-md-2 pr-2">
                             <button
-                                className="btn btn-primary"
+                                className="btn btn-primary btn-block"
                                 onClick={() => { this.assignReviewer() }}
                                 disabled={!newReviewerEmail}>
                                 {t("Assign")}
