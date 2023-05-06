@@ -79,19 +79,15 @@ class RegistrationSection(db.Model):
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    show_for_travel_award = db.Column(db.Boolean(), nullable=True)
-    show_for_accommodation_award = db.Column(db.Boolean(), nullable=True)
-    show_for_payment_required = db.Column(db.Boolean(), nullable=True)
+    show_for_tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=True)
     show_for_invited_guest = db.Column(db.Boolean(), nullable=True)
 
-    def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award, show_for_payment_required, show_for_invited_guest=None):
+    def __init__(self, registration_form_id, name, description, order, show_for_tag_id, show_for_invited_guest=None):
         self.registration_form_id = registration_form_id
         self.name = name
         self.description = description
         self.order = order
-        self.show_for_payment_required = show_for_payment_required
-        self.show_for_accommodation_award = show_for_accommodation_award
-        self.show_for_travel_award = show_for_travel_award
+        self.show_for_tag_id = show_for_tag_id
         self.show_for_invited_guest = show_for_invited_guest
 
 
