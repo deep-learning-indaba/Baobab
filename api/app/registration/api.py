@@ -13,6 +13,7 @@ from flask import g, request
 from flask_restful import  fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
+from app.tags.models import Tag, TagType
 from app.registration.models import Offer, OfferTag
 from app.registration.mixins import OfferMixin
 from app.users.models import AppUser
@@ -105,12 +106,12 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
-        award_acceptance = args['award_acceptance']
+        awards = args['awards']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
         LOGGER.info('Updating offer {} with values: candidate response: {}, '
-        'Award Acceptance: {}, Rejected Reason: {}'.format(offer_id, candidate_response, award_acceptance, rejected_reason))
+        'Awards: {}, Rejected Reason: {}'.format(offer_id, candidate_response, awards, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -124,7 +125,7 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
             offer.rejected_reason = rejected_reason
-            for ai in award_acceptance:
+            for ai in awards:
                 award_id = ai['id']
                 award_accepted = ai['accepted']
                 offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == award_id).first()
@@ -144,6 +145,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
         event_id = args['event_id']
+        awards = args['awards']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
@@ -182,15 +184,37 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.add(offer_entity)
         db.session.commit()
 
-        awards = [OfferAPI._stringify_tag_name_description(it) for it in offer_entity.offer_tags if it.tag.active and it.tag.tag_type == "GRANT"]
-        print(awards)
+        #award_strs = []
+        for ai in awards:
+            award_id = ai['id']
+            existing_tag = db.session.query(Tag).filter(Tag.id == award_id).first()
+            if not existing_tag:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.GRANT:
+                return errors.TAG_NOT_TYPE_GRANT
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+                        
+            offer_tag = OfferTag(
+                offer_id=offer_entity.id,
+                tag_id=existing_tag.id,
+                accepted=None
+            )
+            db.session.add(offer_tag)
+        
+        db.session.commit()
+        
         if awards:
-            awards_str = '\n\u2022' + awards.join("\n\u2022")
+            award_strs = [OfferAPI._stringify_tag_name_description(offer_tag) for offer_tag in offer_entity.offer_tags]
+            awards_summary = "\n\u2022 " + "\n\u2022 ".join(award_strs)
             email_template = 'offer-awards'
         else:
-            awards_str = ''
+            awards_summary = ''
             email_template = 'offer'
 
+        print(awards_summary)
 
         email_user(
             email_template,
@@ -198,7 +222,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
                 event_email_from=event_email_from,
-                awards=awards_str
+                awards=awards_summary
             ),
             event=event,
             user=user)

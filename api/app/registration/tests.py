@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import UserCategory, Country
-from app.registration.models import Offer, OfferTag
+from app.registration.models import Offer
+from app.registration.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.outcome.models import Status
 
@@ -68,6 +69,7 @@ class OfferApiTest(ApiTestCase):
             key='SPEEDNET'
         )
         db.session.commit()
+        self.event_id = event.id
 
         app_form = self.create_application_form()
         self.add_response(app_form.id, test_user.id, True, False)
@@ -81,9 +83,6 @@ class OfferApiTest(ApiTestCase):
                 payment_required=False)
             db.session.add(offer)
             db.session.commit()
-
-        self.tag1 = self.add_tag(tag_type='REGISTRATION')
-        self.tag2 = self.add_tag(names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'}, descriptions={'en': 'Tag 2 en description', 'fr': 'Tag 2 fr description'}, tag_type='GRANT')
 
         self.headers = self.get_auth_header_for("something@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
@@ -142,6 +141,97 @@ class OfferApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertFalse(data['payment_required'])
+
+    def test_create_offer_with_grant_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        tag1 = self.add_tag(event_id=self.event_id, names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'}, descriptions={'en': 'Tag 2 en description', 'fr': 'Tag 2 fr description'}, tag_type='GRANT')
+        tag2 = self.add_tag(event_id=self.event_id, tag_type='GRANT')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['awards'] = [{'id': tag1.id}, {'id': tag2.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+        data = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse(data['payment_required'])
+
+        offer = offer_repository.get_by_id(data['id'])
+        self.assertEqual(len(offer.tags), 2)
+
+    def test_create_offer_with_non_grant_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        tag1 = self.add_tag(event_id=self.event_id, tag_type='REGISTRATION')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['awards'] = [{'id': tag1.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 500)
+
+    def test_create_offer_with_non_existent_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['awards'] = [{'id': 9999}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_create_offer_with_inactive_tags(self):
+        self._seed_static_data(add_offer=False)
+
+        tag1 = self.add_tag(event_id=self.event_id, tag_type='GRANT', active=False)
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['awards'] = [{'id': tag1.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 500)
+
+    def test_create_offer_with_tags_from_another_event(self):
+        self._seed_static_data(add_offer=False)
+
+        event2 = self.add_event(name={'en': 'Event 2'})
+
+        tag = self.add_tag(event_id=event2.id, tag_type='GRANT')
+
+        offer_data = OFFER_DATA.copy()
+        offer_data['awards'] = [{'id': tag.id}]
+
+        response = self.app.post(
+            '/api/v1/offer',
+            data=json.dumps(offer_data),
+            headers=self.adminHeaders,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_create_duplicate_offer(self):
         self._seed_static_data(add_offer=True)

@@ -458,8 +458,8 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return guest
 
-    def add_tag(self, event_id=1, tag_type='RESPONSE', names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}, descriptions={'en': 'Tag 1 en description', 'fr': 'Tag 1 fr description'}):
-        tag = Tag(event_id, tag_type)
+    def add_tag(self, event_id=1, tag_type='RESPONSE', names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}, descriptions={'en': 'Tag 1 en description', 'fr': 'Tag 1 fr description'}, active=True):
+        tag = Tag(event_id, tag_type, active)
         db.session.add(tag)
         db.session.commit()
         translations = [
