@@ -20,6 +20,7 @@ import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
+import OfferAdmin from "../offerAdmin";
 import { InvoiceList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
@@ -265,6 +266,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/indemnity`}
           render={(props) => <Indemnity {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/offerAdmin`}
+          render={(props) => <OfferAdmin {...props} event={event} />}
         />
 
       </div>

@@ -33,6 +33,7 @@ def offer_info(offer_entity, requested_travel=None):
     return {
         'id': offer_entity.id,
         'user_id': offer_entity.user_id,
+        'user_title': offer_entity.user.user_title,
         'firstname': offer_entity.user.firstname,
         'lastname': offer_entity.user.lastname,
         'email': offer_entity.user.email,
