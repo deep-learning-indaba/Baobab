@@ -101,4 +101,8 @@ class RegistrationFormRepository():
                 .filter_by(event_id=event_id)
                 .first())
     
+    @staticmethod
+    def get_by_id(id):
+        return db.session.query(RegistrationForm).get(id)
+    
     

@@ -365,7 +365,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
             registration_form.filtered_registration_sections = included_sections
 
-            return marshal(registration_form, self.registration_form_fields), 201
+            return marshal(registration_form, self.registration_form_fields), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))

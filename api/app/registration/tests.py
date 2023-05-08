@@ -558,6 +558,8 @@ class RegistrationTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(form['registration_sections']), 1)
         self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
+        self.assertEqual(len(form['registration_sections'][0]['registration_questions']), 1)
+
 
     def test_offer_with_tag(self):
         """Test that an offer with a tag sees the correct sections."""
@@ -570,4 +572,5 @@ class RegistrationTest(ApiTestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(form['registration_sections']), 2)
         self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
+        self.assertEqual(len(form['registration_sections'][0]['registration_questions']), 1)
         self.assertEqual(form['registration_sections'][1]['name'], 'Section 2')
