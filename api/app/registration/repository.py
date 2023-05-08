@@ -20,6 +20,14 @@ class OfferRepository():
             .filter(Offer.event_id==event_id, Offer.id.in_(offer_ids))
             .all()
         )
+    
+    @staticmethod
+    def get_all_offers_for_event(event_id):
+        return (
+            db.session.query(Offer)
+            .filter(Offer.event_id==event_id)
+            .all()
+        )
 
     @staticmethod
     def count_offers_allocated(event_id):

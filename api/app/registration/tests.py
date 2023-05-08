@@ -574,3 +574,59 @@ class RegistrationTest(ApiTestCase):
         self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
         self.assertEqual(len(form['registration_sections'][0]['registration_questions']), 1)
         self.assertEqual(form['registration_sections'][1]['name'], 'Section 2')
+
+
+class OfferListAPITest(ApiTestCase):
+    
+        def _seed_static_data(self):
+            """Seed static data for the tests."""
+            test_user1 = self.add_user('something@email.com', 'Some', 'Thing', 'Mr')
+            test_user2 = self.add_user('something2@email.com', 'Some', 'Thing2', 'Ms')
+            event_admin = self.add_user('event_admin@ea.com', 'event_admin', is_admin=True)
+
+            event = self.add_event(
+                name={'en': "Tech Talk"},
+                description={'en': "tech talking"},
+                start_date=datetime(2019, 12, 12, 10, 10, 10),
+                end_date=datetime(2020, 12, 12, 10, 10, 10),
+                key='SPEEDNET'
+            )
+            db.session.commit()
+
+            self.event_id = event.id
+
+            self.add_offer(
+                user_id=test_user1.id,
+                event_id=event.id,
+                offer_date=datetime.now(),
+                expiry_date=datetime.now() + timedelta(days=15),
+                payment_required=False,
+                candidate_response=True)
+            
+            self.add_offer(
+                user_id=test_user2.id,
+                event_id=event.id,
+                offer_date=datetime.now() - timedelta(days=30),
+                expiry_date=datetime.now() + timedelta(days=15),
+                payment_required=False,
+                candidate_response=False)
+            
+            db.session.commit()
+            self.headers = self.get_auth_header_for(event_admin.email)
+            
+        def test_offer_list(self):
+            """Test that an offer list is returned."""
+            self._seed_static_data()
+
+            params = {'event_id': self.event_id}
+            response = self.app.get("/api/v1/offerlist", headers=self.headers, data=params)
+
+            offers = json.loads(response.data)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(len(offers), 2)
+            self.assertEqual(offers[0]['firstname'], 'Some')
+            self.assertEqual(offers[0]['lastname'], 'Thing')
+            self.assertTrue(offers[0]['candidate_response'])
+            self.assertEqual(offers[1]['lastname'], 'Thing2')
+            self.assertEqual(offers[1]['firstname'], 'Some')
+            self.assertFalse(offers[1]['candidate_response'])

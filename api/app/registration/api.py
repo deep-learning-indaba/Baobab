@@ -33,9 +33,13 @@ def offer_info(offer_entity, requested_travel=None):
     return {
         'id': offer_entity.id,
         'user_id': offer_entity.user_id,
+        'firstname': offer_entity.user.firstname,
+        'lastname': offer_entity.user.lastname,
+        'email': offer_entity.user.email,
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
         'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
+        'is_expired': offer_entity.is_expired(),
         'responded_at': offer_entity.responded_at and offer_entity.responded_at.strftime('%Y-%m-%d'),
         'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
@@ -140,11 +144,10 @@ class OfferAPI(OfferMixin, restful.Resource):
             return errors.ADD_OFFER_FAILED
         return offer_update_info(offer), 201
 
-    @admin_required
-    def post(self):
+    @event_admin_required
+    def post(self, event_id):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
-        event_id = args['event_id']
         awards = args['awards']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -374,3 +377,11 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             LOGGER.error("Encountered unknown error: {}".format(
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+
+class OfferListAPI(restful.Resource):
+
+    @event_admin_required
+    def get(self, event_id):
+        offers = offer_repository.get_all_offers_for_event(event_id)
+        return [offer_info(offer) for offer in offers], 200
+        
