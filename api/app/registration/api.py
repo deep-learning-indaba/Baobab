@@ -127,8 +127,8 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer.rejected_reason = rejected_reason
             for gi in grant_tags:
                 tag_id = gi['id']
-                tag_accepted = ai['accepted']
-                offer_tag = db.session.query(OfferTag).get(tag_id)
+                tag_accepted = gi['accepted']
+                offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == tag_id).first()
                 if not offer_tag or offer_tag.offer_id != offer_id:
                     return errors.OFFER_TAG_NOT_FOUND
                 offer_tag.accepted = tag_accepted

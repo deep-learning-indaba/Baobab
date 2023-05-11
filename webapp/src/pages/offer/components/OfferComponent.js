@@ -4,7 +4,7 @@ import { offerServices } from "../../../services/offer/offer.service";
 import { applicationFormService } from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
-import { withTranslation } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 
 class Offer extends Component {
   constructor(props) {
@@ -99,21 +99,25 @@ class Offer extends Component {
     const { offer, grant_tags } = this.state;
     const event = this.props.event;
     const t = this.props.t;
-    let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
+
+    const eventName = event ? event.name : "";
+    const respondedDate = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-";
+    const paymentAmount = offer.payment_amount;
+    const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
       <div className="container">
         <p className="h5 pt-5">
-          {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-          {!offer.candidate_response && <span class="text-danger">{t("You rejected your offer for a spot at") + " " + (event ? event.name : "") + " " + "on" + " " + responded_date + " " + t("for the following reason") + ":"}<br /><br />{offer.rejected_reason}</span>}
+          {offer.candidate_response && <span>You accepted the following offer on {respondedDate}.</span>}
+          {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
         </p>
 
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? (t("Payment of") + " " + offer.payment_amount + "USD" + " required to confirm your place"): t("Fee Waived"))}
+          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}}USD is required to confirm your place</Trans>: t("Fee Waived"))}
 
-          {this.props.event && grant_tags && this.row(t("Grants"), t("You have accepted the following grants") + ": " + grant_tags.filter(a => a.accepted).map(a => a.name).join(", "))}
+          {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
 
         {offer.candidate_response &&
@@ -175,8 +179,8 @@ class Offer extends Component {
         <div>
         <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following grants") + ":"}</div>
           {grant_tags.map((grant_tag) => {
-            return <div class="row mb-3" align="center" key={"grant_tag_"+grant_tag.id}>
-                      <div class="col-md-12" align="center">
+            return <div class="row mb-3" align="left" key={"grant_tag_"+grant_tag.id}>
+                      <div class="col-md-12" align="left">
                         <span class="font-weight-bold">{grant_tag.name + ": "}</span>
                         {grant_tag.description}
                       </div>
@@ -205,6 +209,7 @@ class Offer extends Component {
     } = this.state;
 
     const t = this.props.t;
+    const paymentAmount = offer.payment_amount;
 
     return (
       <div>
@@ -227,8 +232,7 @@ class Offer extends Component {
                 <div class="row mb-3">
                   <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Registration Fee")}</div>
                   <div class="col-md-6" align="left">
-
-                    {offer && offer.payment_required && (t("In order to confirm your place, you will be liable for a") + " " + offer.payment_amount + "USD " + t("registration fee") + ".")}
+                    {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}}USD registration fee.</Trans>}
                     {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>
