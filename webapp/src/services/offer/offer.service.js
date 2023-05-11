@@ -33,14 +33,14 @@ function getOffer(event_id){
 
 }
 
-function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, awards){
+function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags){
   let data = {
         user_id:user_id, 
         event_id:event_id,
         offer_date:offer_date,
         expiry_date:expiry_date,
         payment_required:payment_required,
-        awards:awards
+        grant_tags:grant_tags
     }
 
     return axios
@@ -62,13 +62,13 @@ function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, 
           });
 }
 
-function updateOffer(offer_id, event_id, candidate_response, rejected_reason, awards){
+function updateOffer(offer_id, event_id, candidate_response, rejected_reason, grant_tags){
     let data = {
         offer_id:offer_id, 
         event_id:event_id,
         candidate_response:candidate_response,
         rejected_reason:rejected_reason,
-        awards:awards
+        grant_tags:grant_tags
     };
 
     return axios

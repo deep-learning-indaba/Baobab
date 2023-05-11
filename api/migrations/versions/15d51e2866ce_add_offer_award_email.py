@@ -1,4 +1,4 @@
-"""add offer award email template
+"""add offer with grants email template
 
 Revision ID: 15d51e2866ce
 Revises: '3e271c360a92'
@@ -47,7 +47,7 @@ def upgrade():
     template = """Dear {title} {firstname} {lastname},
 
 Congratulations! You've been selected for {event_name}! We are also pleased to award you the following grants:
-{awards}.
+{grants}.
 
 Please follow the link below to see details and accept your offer: {host}/offer
 You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
@@ -64,7 +64,7 @@ The {event_name} organisers
     template = """Madame / Monsieur {lastname},
 
 Félicitations ! Votre candidature a été retenue pour {event_name} ! Nous sommes heureux de vous accorder les bourses suivantes :
-{awards}.
+{grants}.
 
 Veuillez consulter le lien ci-dessous pour en savoir plus et accepter votre offre : {host}/offer Vous avez jusqu’au {expiry_date} pour accepter l’offre. Dans le cas contraire, nous attribuerons automatiquement votre place à quelqu’un d’autre.
 
