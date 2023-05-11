@@ -18,6 +18,9 @@ import TagSelectorDialog from '../../components/TagSelectorDialog';
 class ResponsePage extends Component {
     constructor(props) {
         super(props);
+
+        this.assignable_tag_types =  ["RESPONSE"]
+
         this.state = {
             error: false,
             eventLanguages: [],

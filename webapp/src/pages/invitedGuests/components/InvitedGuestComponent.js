@@ -36,6 +36,7 @@ const extraFieldValidations = [
 class InvitedGuests extends Component {
   constructor(props) {
     super(props);
+    this.assignable_tag_types = ["REGISTRATION", "GRANT"];
     this.state = {
       isLoading: true,
       isError: false,
@@ -53,7 +54,6 @@ class InvitedGuests extends Component {
       nameSearch: "",
       tags: [],
       filteredTags: [],
-      assignableTagTypes: ["REGISTRATION", "GRANT"],
       tagSelectorVisible: false,
       selectedGuest: null
     };
@@ -270,7 +270,7 @@ class InvitedGuests extends Component {
     this.setState({
       selectedGuest: guest,
       tagSelectorVisible: true,
-      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.state.assignableTagTypes.includes(t.tag_type))
+      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.assignable_tag_types.includes(t.tag_type))
     })
   }
 

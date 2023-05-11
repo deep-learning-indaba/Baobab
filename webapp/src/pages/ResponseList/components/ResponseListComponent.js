@@ -17,6 +17,9 @@ import { createColClassName } from "../../../utils/styling/styling";
 class ResponseListComponent extends Component {
     constructor(props) {
         super(props);
+
+        this.assignable_tag_types = ["RESPONSE"];
+
         this.state = {
             btnUpdate: false,
             includeUnsubmitted: false,
@@ -32,8 +35,7 @@ class ResponseListComponent extends Component {
             nameSearch : "",
             tagSearch : [],
             emailSearch: "",
-            gettingResponseList: false,
-            assignableTagTypes: ["RESPONSE"]
+            gettingResponseList: false
         }
     }
 
@@ -103,7 +105,7 @@ class ResponseListComponent extends Component {
         this.setState({
           selectedResponse: response,
           tagSelectorVisible: true,
-          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.state.assignableTagTypes.includes(t.tag_type))
+          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.assignable_tag_types.includes(t.tag_type))
         })
     }
 
