@@ -1,12 +1,13 @@
 import axios from "axios";
-import {authHeader} from '../base.service';
+import {authHeader, extractErrorMessage} from '../base.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const offerServices = {
     getOffer,
     addOffer,
-    updateOffer
+    updateOffer,
+    getOfferList
 }
 
 function getOffer(event_id){
@@ -87,4 +88,21 @@ function updateOffer(offer_id, event_id, candidate_response, rejected_reason, gr
                   : error.message
             };
           });     
+}
+
+function getOfferList(eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/offerlist?event_id=${eventId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+          offers: response.data,
+          error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+          offers: null,
+          error: extractErrorMessage(error)
+        }
+    });
 }

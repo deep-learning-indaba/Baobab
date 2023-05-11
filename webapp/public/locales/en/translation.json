@@ -535,5 +535,12 @@
     "spotRejected": "You have rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:",
     "Invitation Letter": "Invitation Letter",
     "Are you sure you want to delete this tag? This will also un-tag all entities with this tag.": "Are you sure you want to delete this tag? This will also un-tag all entities with this tag.",
-    "Note, the grant name and description will be visible to users when asked to accept/reject the grant.": "Note, the grant name and description will be visible to users when asked to accept/reject the grant."
+    "Note, the grant name and description will be visible to users when asked to accept/reject the grant.": "Note, the grant name and description will be visible to users when asked to accept/reject the grant.",
+    "Offer Date": "Offer Date",
+    "Expiry Date": "Expiry Date",
+    "Response": "Response",
+    "No Response": "No Response",
+    "Payment Required": "Payment Required",
+    "Payment Amount": "Payment Amount",
+    "Rejected Reason": "Rejected Reason"
 }

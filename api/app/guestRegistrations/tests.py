@@ -16,6 +16,7 @@ class GuestRegistrationApiTest(ApiTestCase):
 
     def seed_static_data(self):
         test_user = self.add_user('something@email.com')
+        
         event_admin = self.add_user('event_admin@ea.com')
         
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
@@ -33,6 +34,8 @@ class GuestRegistrationApiTest(ApiTestCase):
 
         db.session.commit()
 
+        self.add_invited_guest(test_user.id, event.id)
+
         self.form = RegistrationForm(
             event_id=event.id
         )
@@ -47,9 +50,6 @@ class GuestRegistrationApiTest(ApiTestCase):
             name="Section 1",
             description="the section description",
             order=1,
-            show_for_travel_award=None,
-            show_for_accommodation_award=None,
-            show_for_payment_required=None,
         )
         db.session.add(section)
         db.session.commit()
@@ -59,9 +59,6 @@ class GuestRegistrationApiTest(ApiTestCase):
             name="Section 2",
             description="the section 2 description",
             order=1,
-            show_for_travel_award=None,
-            show_for_accommodation_award=None,
-            show_for_payment_required=None,
         )
         db.session.add(section2)
         db.session.commit()
@@ -265,16 +262,11 @@ class GuestRegistrationApiTest(ApiTestCase):
     def test_get_form(self):
         self.seed_static_data()
         url = "/api/v1/guest-registration-form?event_id=%d" % self.event_id
-        LOGGER.debug(url)
         response = self.app.get(url, headers=self.headers)
-
-        if response.status_code == 403:
-            return
-
-        LOGGER.debug(
-            "form: {}".format(json.loads(response.data)))
-
+        
         form = json.loads(response.data)
+        print(form)
+
         self.assertEqual(form['registration_sections'][0]['registration_questions'][0]['type'], 'short-text')
         self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
 
