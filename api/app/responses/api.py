@@ -106,6 +106,12 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 user = user_repository.get_by_id(user_id)
                 response = response_repository.get_by_id_and_user_id(response.id, user_id)
                 self.send_confirmation(user, response)
+                
+                event = event_repository.get_event_by_response_id(response.id)
+                if event.event_type == EventType.CONTINUOUS_JOURNAL:
+                    event_admins = event_repository.get_event_admins(event_id=event.id)
+                    for event_admin in event_admins:
+                        self.send_confirmation(event_admin, response)
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
@@ -152,6 +158,12 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 user = user_repository.get_by_id(user_id)
                 response = response_repository.get_by_id_and_user_id(response.id, user_id)
                 self.send_confirmation(user, response)
+                
+                event = event_repository.get_event_by_response_id(response.id)
+                if event.event_type == EventType.CONTINUOUS_JOURNAL:
+                    event_admins = event_repository.get_event_admins(event_id=event.id)
+                    for event_admin in event_admins:
+                        self.send_confirmation(event_admin, response)
         except:                
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
@@ -215,8 +227,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             else:
                 event_description = event.get_description('en')
 
-            emailer.email_user(
-                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
+            if user.is_event_admin(event.id):
+                emailer.email_user(
+                'assign-action-editor',
                 template_parameters=dict(
                     event_description=event_description,
                     question_answer_summary=question_answer_summary,
@@ -224,6 +237,16 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event=event,
                 user=user
             )
+            else:
+                emailer.email_user(
+                    'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
+                    template_parameters=dict(
+                        event_description=event_description,
+                        question_answer_summary=question_answer_summary,
+                    ),
+                    event=event,
+                    user=user
+                )
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

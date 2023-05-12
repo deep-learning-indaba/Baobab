@@ -346,6 +346,14 @@ class ReviewRepository():
             .filter_by(event_id=event_id)
             .all()
         )
+        
+    @staticmethod
+    def get_all_review_responses_by_response(review_form_id, response_id):
+        return (
+            db.session.query(ReviewResponse)
+                    .filter_by(review_form_id=review_form_id, response_id=response_id, is_submitted=True)
+                    .all()
+        )
 
     @staticmethod
     def get_average_score_for_review_question(response_id: int, review_question_id: int):
