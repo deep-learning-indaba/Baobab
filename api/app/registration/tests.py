@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import UserCategory, Country
-from app.registration.models import Offer
+from app.registration.models import Offer, OfferTag
 from app.registration.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.outcome.models import Status
@@ -461,7 +461,8 @@ class RegistrationTest(ApiTestCase):
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
             candidate_response=True)
-        self.tag_offer(offer_with_tag.id, tag.id)
+        offer_tag = self.tag_offer(offer_with_tag.id, tag.id)
+        self.offer_tag_id = offer_tag.id
         self.offer_with_tag_id = offer_with_tag.id
 
         form = RegistrationForm(
@@ -575,6 +576,20 @@ class RegistrationTest(ApiTestCase):
         self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
         self.assertEqual(len(form['registration_sections'][0]['registration_questions']), 1)
         self.assertEqual(form['registration_sections'][1]['name'], 'Section 2')
+
+    def test_offer_with_tag_not_accepted(self):
+        """Test that an offer with an unaccepted tag sees the correct sections."""
+        self._seed_static_data()
+        db.session.query(OfferTag).filter(OfferTag.id == self.offer_tag_id).update({'accepted': False})
+        db.session.commit()
+        
+        params = {'offer_id': self.offer_with_tag_id, 'event_id': self.event_id}
+        response = self.app.get("/api/v1/registration-form", headers=self.headers_with_tag, data=params)
+
+        form = json.loads(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(form['registration_sections']), 1)
+        self.assertEqual(form['registration_sections'][0]['name'], 'Section 1')
 
 
 class OfferListAPITest(ApiTestCase):
