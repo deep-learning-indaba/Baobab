@@ -88,6 +88,7 @@ class OfferApiTest(ApiTestCase):
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
 
         self.add_email_template('offer')
+        self.add_email_template('offer-grants', template='These are your grants: {grants}')
 
         db.session.flush()
 
@@ -149,7 +150,7 @@ class OfferApiTest(ApiTestCase):
         tag2 = self.add_tag(event_id=self.event_id, tag_type='GRANT')
 
         offer_data = OFFER_DATA.copy()
-        offer_data['awards'] = [{'id': tag1.id}, {'id': tag2.id}]
+        offer_data['grant_tags'] = [{'id': tag1.id}, {'id': tag2.id}]
 
         response = self.app.post(
             '/api/v1/offer',
@@ -163,7 +164,7 @@ class OfferApiTest(ApiTestCase):
         self.assertFalse(data['payment_required'])
 
         offer = offer_repository.get_by_id(data['id'])
-        self.assertEqual(len(offer.tags), 2)
+        self.assertEqual(len(offer.offer_tags), 2)
 
     def test_create_offer_with_non_grant_tags(self):
         self._seed_static_data(add_offer=False)
@@ -171,7 +172,7 @@ class OfferApiTest(ApiTestCase):
         tag1 = self.add_tag(event_id=self.event_id, tag_type='REGISTRATION')
 
         offer_data = OFFER_DATA.copy()
-        offer_data['awards'] = [{'id': tag1.id}]
+        offer_data['grant_tags'] = [{'id': tag1.id}]
 
         response = self.app.post(
             '/api/v1/offer',
@@ -186,7 +187,7 @@ class OfferApiTest(ApiTestCase):
         self._seed_static_data(add_offer=False)
 
         offer_data = OFFER_DATA.copy()
-        offer_data['awards'] = [{'id': 9999}]
+        offer_data['grant_tags'] = [{'id': 9999}]
 
         response = self.app.post(
             '/api/v1/offer',
@@ -203,7 +204,7 @@ class OfferApiTest(ApiTestCase):
         tag1 = self.add_tag(event_id=self.event_id, tag_type='GRANT', active=False)
 
         offer_data = OFFER_DATA.copy()
-        offer_data['awards'] = [{'id': tag1.id}]
+        offer_data['grant_tags'] = [{'id': tag1.id}]
 
         response = self.app.post(
             '/api/v1/offer',
@@ -222,7 +223,7 @@ class OfferApiTest(ApiTestCase):
         tag = self.add_tag(event_id=event2.id, tag_type='GRANT')
 
         offer_data = OFFER_DATA.copy()
-        offer_data['awards'] = [{'id': tag.id}]
+        offer_data['grant_tags'] = [{'id': tag.id}]
 
         response = self.app.post(
             '/api/v1/offer',

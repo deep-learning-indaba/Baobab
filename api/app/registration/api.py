@@ -111,12 +111,12 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
-        awards = args['awards']
+        grant_tags = args['grant_tags']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
         LOGGER.info('Updating offer {} with values: candidate response: {}, '
-        'Awards: {}, Rejected Reason: {}'.format(offer_id, candidate_response, awards, rejected_reason))
+        'Grant Tags: {}, Rejected Reason: {}'.format(offer_id, candidate_response, grant_tags, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -130,13 +130,13 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
             offer.rejected_reason = rejected_reason
-            for ai in awards:
-                award_id = ai['id']
-                award_accepted = ai['accepted']
-                offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == award_id).first()
+            for gi in grant_tags:
+                tag_id = gi['id']
+                tag_accepted = gi['accepted']
+                offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == tag_id).first()
                 if not offer_tag or offer_tag.offer_id != offer_id:
                     return errors.OFFER_TAG_NOT_FOUND
-                offer_tag.accepted = award_accepted
+                offer_tag.accepted = tag_accepted
 
             db.session.commit()
 
@@ -149,7 +149,8 @@ class OfferAPI(OfferMixin, restful.Resource):
     def post(self, event_id):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
-        awards = args['awards']
+        event_id = args['event_id']
+        grant_tags = args['grant_tags']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
@@ -188,13 +189,10 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.add(offer_entity)
         db.session.commit()
 
-        #award_strs = []
-        for ai in awards:
-            award_id = ai['id']
-            existing_tag = db.session.query(Tag).filter(Tag.id == award_id).first()
-            if not existing_tag:
-                return errors.TAG_NOT_FOUND
-            if existing_tag.event_id != event_id:
+        for gi in grant_tags:
+            tag_id = gi['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
                 return errors.TAG_NOT_FOUND
             if existing_tag.tag_type != TagType.GRANT:
                 return errors.TAG_NOT_TYPE_GRANT
@@ -210,15 +208,13 @@ class OfferAPI(OfferMixin, restful.Resource):
         
         db.session.commit()
         
-        if awards:
-            award_strs = [OfferAPI._stringify_tag_name_description(offer_tag) for offer_tag in offer_entity.offer_tags]
-            awards_summary = "\n\u2022 " + "\n\u2022 ".join(award_strs)
-            email_template = 'offer-awards'
+        if grant_tags:
+            grant_strs = [OfferAPI._stringify_tag_name_description(offer_tag) for offer_tag in offer_entity.offer_tags]
+            grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
+            email_template = 'offer-grants'
         else:
-            awards_summary = ''
+            grants_summary = ''
             email_template = 'offer'
-
-        print(awards_summary)
 
         email_user(
             email_template,
@@ -226,7 +222,7 @@ class OfferAPI(OfferMixin, restful.Resource):
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
                 event_email_from=event_email_from,
-                awards=awards_summary
+                grants=grants_summary
             ),
             event=event,
             user=user)

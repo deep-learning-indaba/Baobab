@@ -4,9 +4,7 @@ import { offerServices } from "../../../services/offer/offer.service";
 import { applicationFormService } from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
-import { withTranslation } from 'react-i18next';
-
-//TODO switch to lighter weight version of awards
+import { Trans, withTranslation } from 'react-i18next';
 
 class Offer extends Component {
   constructor(props) {
@@ -23,7 +21,7 @@ class Offer extends Component {
       offer: null,
       noOffer: null,
       category: "",
-      awards: [],
+      grant_tags: [],
       applicationExist: null
     };
   }
@@ -43,7 +41,7 @@ class Offer extends Component {
   buttonSubmit = (candidate_response) => {
     const { offer,
       rejected_reason,
-      awards,
+      grant_tags,
     } = this.state;
 
     if (candidate_response !== null) {
@@ -53,14 +51,14 @@ class Offer extends Component {
           this.props.event ? this.props.event.id : 0,
           candidate_response,
           candidate_response ? "" : rejected_reason,
-          awards.map(a => {
-            return { 'id': a.id, 'accepted': a.accepted }}
+          grant_tags.map(t => {
+            return { 'id': t.id, 'accepted': t.accepted }}
             ))
         .then(response => {
           if (response.response && response.response.status === 201) {
             this.setState({
               offer: response.response.data,
-              awards: this.initAwards(response.response.data.tags),
+              grant_tags: this.initGrants(response.response.data.tags),
               showReasonBox: false
             }, () => {
               this.displayOfferResponse();
@@ -85,37 +83,41 @@ class Offer extends Component {
     </div>
   }
 
-  onChangeAward = award_id => {
-    const u = this.state.awards;
-    u.forEach(a => {
-      if (a.id === award_id) {
-        a.accepted = !a.accepted;
+  onChangeGrant = tag_id => {
+    const u = this.state.grant_tags;
+    u.forEach(t => {
+      if (t.id === tag_id) {
+        t.accepted = !t.accepted;
       }
     });
     this.setState({
-      awards: u
+      grant_tags: u
     });
   }
 
   displayOfferResponse = () => {
-    const { offer, awards } = this.state;
+    const { offer, grant_tags } = this.state;
     const event = this.props.event;
     const t = this.props.t;
-    let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
+
+    const eventName = event ? event.name : "";
+    const respondedDate = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-";
+    const paymentAmount = offer.payment_amount;
+    const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
       <div className="container">
         <p className="h5 pt-5">
-          {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-          {!offer.candidate_response && <span class="text-danger">{t("You rejected your offer for a spot at") + " " + (event ? event.name : "") + " " + "on" + " " + responded_date + " " + t("for the following reason") + ":"}<br /><br />{offer.rejected_reason}</span>}
+          {offer.candidate_response && <span>You accepted the following offer on {respondedDate}.</span>}
+          {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
         </p>
 
         {offer.candidate_response && <div className="white-background card form mt-5">
           {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? (t("Payment of") + " " + offer.payment_amount + "USD" + " required to confirm your place"): t("Fee Waived"))}
+          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}}USD is required to confirm your place</Trans>: t("Fee Waived"))}
 
-          {this.props.event && awards && this.row(t("Awards"), t("You have accepted the following awards") + ": " + awards.filter(a => a.accepted).map(a => a.name).join(", "))}
+          {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
 
         {offer.candidate_response &&
@@ -167,35 +169,35 @@ class Offer extends Component {
       </div>);
   }
 
-  renderAwards = () => {
-    const { awards } = this.state;
+  renderGrants = () => {
+    const { grant_tags } = this.state;
     const t = this.props.t;
 
     return <div class="row mb-3">
-      <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Awards")}</div>
-      {awards ?
+      <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Grants")}</div>
+      {grant_tags ?
         <div>
-        <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following awards") + ":"}</div>
-          {awards.map((award) => {
-            return <div class="row mb-3" align="center" key={"award_"+award.id}>
-                      <div class="col-md-12" align="center">
-                        <span class="font-weight-bold">{award.name + ": "}</span>
-                        {award.description}
+        <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following grants") + ":"}</div>
+          {grant_tags.map((grant_tag) => {
+            return <div class="row mb-3" align="left" key={"grant_tag_"+grant_tag.id}>
+                      <div class="col-md-12" align="left">
+                        <span class="font-weight-bold">{grant_tag.name + ": "}</span>
+                        {grant_tag.description}
                       </div>
                       <div class="col-md-12" align="center">
-                        <div class="form-check award-container">
+                        <div class="form-check grant-container">
                           <input type="checkbox" class="form-check-input"
-                            checked={award.accepted}
-                            onChange={() => this.onChangeAward(award.id)}
-                            id={"check_" + award.id} />
-                          <label class="form-check-label" htmlFor={"check_"+award.id}>{t("I accept this award")}.</label>
+                            checked={grant_tag.accepted}
+                            onChange={() => this.onChangeGrant(grant_tag.id)}
+                            id={"check_" + grant_tag.id} />
+                          <label class="form-check-label" htmlFor={"check_"+grant_tag.id}>{t("I accept this grant")}.</label>
                         </div>
                       </div>
                     </div>
           })}
         </div>
         :
-        <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to grant you any awards for this event")}</div>
+        <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to award you any grants for this event")}</div>
       } 
     </div>
   }
@@ -203,10 +205,11 @@ class Offer extends Component {
   displayOfferContent = e => {
     const { offer,
       rejected_reason,
-      awards,
+      grant_tags,
     } = this.state;
 
     const t = this.props.t;
+    const paymentAmount = offer.payment_amount;
 
     return (
       <div>
@@ -224,13 +227,12 @@ class Offer extends Component {
               <div className="white-background card form">
                 <p class="font-weight-bold">{t("Offer Details")}</p>
 
-                {this.props.event && awards && this.renderAwards()}
+                {this.props.event && grant_tags && this.renderGrants()}
 
                 <div class="row mb-3">
                   <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Registration Fee")}</div>
                   <div class="col-md-6" align="left">
-
-                    {offer && offer.payment_required && (t("In order to confirm your place, you will be liable for a") + " " + offer.payment_amount + "USD " + t("registration fee") + ".")}
+                    {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}}USD registration fee.</Trans>}
                     {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>
@@ -348,13 +350,13 @@ class Offer extends Component {
             loading: false,
             offer: result.offer,
             error: result.error,
-            awards: this.initAwards(result.offer.tags)
+            grant_tags: this.initGrants(result.offer.tags)
           });
         }
       });
   }
 
-  initAwards = (tags) => {
+  initGrants = (tags) => {
     return tags.filter(tag => tag.tag_type === "GRANT").map(tag => {
       return {
         ...tag,

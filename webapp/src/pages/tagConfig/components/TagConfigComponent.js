@@ -64,7 +64,8 @@ class TagConfigComponent extends Component {
               active: true
             },
             tagEntryVisible: false,
-            confirmRemoveTagVisible: false
+            confirmRemoveTagVisible: false,
+            tags: [...this.state.tags, result.tag]
           });
         }
         else if (result.error) {
@@ -98,7 +99,13 @@ class TagConfigComponent extends Component {
               active: true
             },
             tagEntryVisible: false,
-            confirmRemoveTagVisible: false
+            confirmRemoveTagVisible: false,
+            tags: result.tag.active ? this.state.tags.map(tag => {
+                  return tag.id === result.tag.id ? result.tag : tag;
+                })
+                : this.state.tags.filter(tag => {
+                  return tag.id !== result.tag.id;
+                })
           });
         }
         else if (result.error) {
@@ -384,6 +391,7 @@ class TagConfigComponent extends Component {
 
     return (
       <div key='card-container'>
+        <p className="h4 text-center mb-4">{t("Tags")}</p>
         <div className="card" key="tag-table">
           <div className="react-table">
               <ReactTable
