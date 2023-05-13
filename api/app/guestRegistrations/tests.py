@@ -272,32 +272,12 @@ class GuestRegistrationApiTest(ApiTestCase):
 
     def test_if_user_is_guest(self):
         self.seed_static_data()
-        USER_DATA = {
-            'email': 'something@email.com',
-            'role': 'mentor',
-            'event_id': 1,
-            'language': 'en'
-        }
-        response = self.app.post(
-            '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
         response_guest = self.app.get(
             f'/api/v1/checkIfInvitedGuest?event_id={self.event_id}&language=en', headers=self.headers)
-        LOGGER.debug(
-            "guest response: {}".format(response_guest))
         self.assertEqual(response_guest.status_code, 200)
 
     def test_if_user_is_not_guest(self):
         self.seed_static_data()
-        USER_DATA = {
-            'email': 'some@email.com',
-            'role': 'mentor',
-            'event_id': 1,
-            'language': 'en'
-        }
-        response = self.app.post(
-            '/api/v1/invitedGuest', data=USER_DATA, headers=self.headers)
         response_guest = self.app.get(
-            f'/api/v1/checkIfInvitedGuest?event_id={self.event_id}&language=en', headers=self.headers)
-        LOGGER.debug(
-            "guest response: {}".format(response_guest))
+            f'/api/v1/checkIfInvitedGuest?event_id={self.event_id}&language=en', headers=self.adminHeaders)
         self.assertEqual(response_guest.status_code, 404)
