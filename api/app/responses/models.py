@@ -106,7 +106,6 @@ class ResponseReviewer(db.Model):
     def deactivate(self):
         self.active = False
 
-
 class ResponseTag(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey('response.id'), nullable=False)

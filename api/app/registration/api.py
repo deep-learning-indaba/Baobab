@@ -6,44 +6,49 @@ from app.responses.models import Answer, Response
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationQuestion
 from app.registration.models import RegistrationForm
-from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin
+from app.registration.mixins import RegistrationFormMixin, RegistrationSectionMixin, RegistrationQuestionMixin, OfferTagMixin
 from app.utils.auth import verify_token
 import traceback
 from flask import g, request
 from flask_restful import  fields, marshal_with, marshal
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
-from app.registration.models import Offer
+from app.tags.models import Tag, TagType
+from app.registration.models import Offer, OfferTag
 from app.registration.mixins import OfferMixin
 from app.users.models import AppUser
 from app import db, LOGGER
 from app.utils import errors
-from app.utils.auth import auth_required, admin_required
+from app.utils.auth import auth_required, admin_required, event_admin_required
 from app.utils.emailer import email_user
 from app.utils import misc
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
-
+from app.registration.repository import OfferRepository as offer_repository
+from app.registration.repository import RegistrationRepository as registration_repository
+from app.users.repository import UserRepository as user_repository
 
 def offer_info(offer_entity, requested_travel=None):
     return {
         'id': offer_entity.id,
         'user_id': offer_entity.user_id,
+        'user_title': offer_entity.user.user_title,
+        'firstname': offer_entity.user.firstname,
+        'lastname': offer_entity.user.lastname,
+        'email': offer_entity.user.email,
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
         'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
+        'is_expired': offer_entity.is_expired(),
         'responded_at': offer_entity.responded_at and offer_entity.responded_at.strftime('%Y-%m-%d'),
         'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
-        'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award,
-        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
-        'accepted_travel_award': offer_entity.accepted_travel_award,
         'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
         'rejected_reason': offer_entity.rejected_reason,
-        'payment_amount': offer_entity.payment_amount
+        'payment_amount': offer_entity.payment_amount,
+        'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
 
@@ -54,15 +59,12 @@ def offer_update_info(offer_entity):
         'event_id': offer_entity.event_id,
         'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
         'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
-        'payment_required': offer_entity.payment_required,
-        'travel_award': offer_entity.travel_award,
-        'accommodation_award': offer_entity.accommodation_award,
-        'accepted_accommodation_award': offer_entity.accepted_accommodation_award,
-        'accepted_travel_award': offer_entity.accepted_travel_award,
+        'payment_required': offer_entity.payment_required,        
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
-        'payment_amount': offer_entity.payment_amount
+        'payment_amount': offer_entity.payment_amount,
+        'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
 
@@ -74,15 +76,34 @@ class OfferAPI(OfferMixin, restful.Resource):
         'offer_date': fields.DateTime('iso8601'),
         'expiry_date': fields.DateTime('iso8601'),
         'payment_required': fields.Boolean,
-        'travel_award': fields.Boolean,
-        'accommodation_award': fields.Boolean,
-        'accepted_accommodation_award': fields.Boolean,
-        'accepted_travel_award': fields.Boolean,
         'rejected_reason': fields.String,
         'candidate_response': fields.Boolean,
         'responded_at': fields.DateTime('iso8601'),
         'payment_amount': fields.String
     }
+
+    @staticmethod
+    def _serialize_tag(offer_tag, language='en'):
+        translation = offer_tag.tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
+            translation = offer_tag.tag.get_translation('en')
+        return {
+            'id': offer_tag.tag.id,
+            'event_id': offer_tag.tag.event_id,
+            'tag_type': offer_tag.tag.tag_type.value.upper(),
+            'name': translation.name,
+            'description': translation.description,
+            'accepted': offer_tag.accepted
+        }
+
+    @staticmethod
+    def _stringify_tag_name_description(offer_tag, language='en'):
+        translation = offer_tag.tag.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
+            translation = offer_tag.tag.get_translation('en')
+        return '{}: {}'.format(translation.name, translation.description)
 
     @auth_required
     def put(self):
@@ -90,14 +111,12 @@ class OfferAPI(OfferMixin, restful.Resource):
         args = self.req_parser.parse_args()
         offer_id = args['offer_id']
         candidate_response = args['candidate_response']
-        accepted_accommodation_award = args['accepted_accommodation_award']
-        accepted_travel_award = args['accepted_travel_award']
+        grant_tags = args['grant_tags']
         rejected_reason = args['rejected_reason']
         offer = db.session.query(Offer).filter(Offer.id == offer_id).first()
 
-        LOGGER.info('Updating offer {} with values: candidate response: {}, Accepted accommodation: {}, '
-        'Accepted travel: {}, Rejected Reason: {}'.format(offer_id, candidate_response, accepted_accommodation_award,
-        accepted_travel_award, rejected_reason))
+        LOGGER.info('Updating offer {} with values: candidate response: {}, '
+        'Grant Tags: {}, Rejected Reason: {}'.format(offer_id, candidate_response, grant_tags, rejected_reason))
 
         if not offer:
             return errors.OFFER_NOT_FOUND
@@ -110,9 +129,14 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             offer.responded_at = datetime.now()
             offer.candidate_response = candidate_response
-            offer.accepted_accommodation_award = accepted_accommodation_award
-            offer.accepted_travel_award = accepted_travel_award
             offer.rejected_reason = rejected_reason
+            for gi in grant_tags:
+                tag_id = gi['id']
+                tag_accepted = gi['accepted']
+                offer_tag = db.session.query(OfferTag).filter(OfferTag.tag_id == tag_id).first()
+                if not offer_tag or offer_tag.offer_id != offer_id:
+                    return errors.OFFER_TAG_NOT_FOUND
+                offer_tag.accepted = tag_accepted
 
             db.session.commit()
 
@@ -121,16 +145,15 @@ class OfferAPI(OfferMixin, restful.Resource):
             return errors.ADD_OFFER_FAILED
         return offer_update_info(offer), 201
 
-    @admin_required
-    def post(self):
+    @event_admin_required
+    def post(self, event_id):
         args = self.req_parser.parse_args()
         user_id = args['user_id']
         event_id = args['event_id']
+        grant_tags = args['grant_tags']
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
-        travel_award = args['travel_award']
-        accommodation_award = args['accommodation_award']
         payment_amount = args['payment_amount']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
@@ -160,28 +183,46 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer_date=offer_date,
             expiry_date=expiry_date,
             payment_required=payment_required,
-            travel_award=travel_award,
-            accommodation_award=accommodation_award,
             payment_amount=payment_amount
         )
 
         db.session.add(offer_entity)
         db.session.commit()
 
-        email_template = 'offer'
-        if travel_award and accommodation_award:
-            email_template = 'offer-travel-accommodation'
-        elif travel_award:
-            email_template = 'offer-travel'
-        elif accommodation_award:
-            email_template = 'offer-accommodation'
+        for gi in grant_tags:
+            tag_id = gi['id']
+            existing_tag = db.session.query(Tag).get(tag_id)
+            if not existing_tag or existing_tag.event_id != event_id:
+                return errors.TAG_NOT_FOUND
+            if existing_tag.tag_type != TagType.GRANT:
+                return errors.TAG_NOT_TYPE_GRANT
+            if not existing_tag.active:
+                return errors.TAG_NOT_ACTIVE
+                        
+            offer_tag = OfferTag(
+                offer_id=offer_entity.id,
+                tag_id=existing_tag.id,
+                accepted=None
+            )
+            db.session.add(offer_tag)
+        
+        db.session.commit()
+        
+        if grant_tags:
+            grant_strs = [OfferAPI._stringify_tag_name_description(offer_tag) for offer_tag in offer_entity.offer_tags]
+            grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
+            email_template = 'offer-grants'
+        else:
+            grants_summary = ''
+            email_template = 'offer'
 
         email_user(
             email_template,
             template_parameters=dict(
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
-                event_email_from=event_email_from
+                event_email_from=event_email_from,
+                grants=grants_summary
             ),
             event=event,
             user=user)
@@ -216,6 +257,35 @@ class OfferAPI(OfferMixin, restful.Resource):
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
+class OfferTagAPI(restful.Resource, OfferTagMixin):
+    offer_tag_fields = {
+        'id': fields.Integer,
+        'offer_id': fields.Integer,
+        'tag_id': fields.Integer,
+        'accepted': fields.Boolean,
+    }
+
+    @marshal_with(offer_tag_fields)
+    @event_admin_required
+    def post(self, event_id):
+        del event_id
+        args = self.req_parser.parse_args()
+        tag_id = args['tag_id']
+        offer_id = args['offer_id']
+        accepted = args['accepted']
+
+        return offer_repository.tag_offer(offer_id, tag_id, accepted), 201
+
+    @event_admin_required
+    def delete(self, event_id):
+        del event_id
+        args = self.req_parser.parse_args()
+        tag_id = args['tag_id']
+        offer_id = args['offer_id']
+
+        offer_repository.remove_tag_from_offer(offer_id, tag_id)
+
+        return {}
 
 def registration_form_info(registration_form):
     return {
@@ -257,7 +327,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
     registration_form_fields = {
         'id':fields.Integer,
         'event_id': fields.Integer,
-        'registration_sections': fields.List(fields.Nested(registration_section_fields))
+        'registration_sections': fields.List(fields.Nested(registration_section_fields), attribute='filtered_registration_sections')
     }
 
     @auth_required
@@ -266,9 +336,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
         event_id = args['event_id']
         offer_id = args['offer_id']
         try:
-            offer = db.session.query(Offer).filter(
-                Offer.id == offer_id).first()
-
+            offer = offer_repository.get_by_id(offer_id)
             user_id = verify_token(request.headers.get('Authorization'))['id']
 
             if offer and (not offer.user_id == user_id):
@@ -277,15 +345,12 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             if not offer.candidate_response:
                 return errors.OFFER_NOT_ACCEPTED
 
-            registration_form = db.session.query(RegistrationForm).filter(
-                RegistrationForm.event_id == event_id).first()
+            registration_form = registration_repository.get_form_for_event(event_id)
 
             if not registration_form:
                 return errors.REGISTRATION_FORM_NOT_FOUND
 
-            sections = db.session.query(RegistrationSection).filter(
-                RegistrationSection.registration_form_id == registration_form.id).all()
-
+            sections = registration_form.registration_sections
             if not sections:
                 LOGGER.warn(
                     'Sections not found for event_id: {}'.format(args['event_id']))
@@ -294,29 +359,13 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             included_sections = []
 
             for section in sections:
-                if ((section.show_for_travel_award is None or section.show_for_travel_award == offer.accepted_travel_award) 
-                    and (section.show_for_accommodation_award is None or section.show_for_accommodation_award == offer.accepted_accommodation_award) 
-                    and (section.show_for_payment_required is None or section.show_for_payment_required == offer.payment_required) 
+                if ((section.show_for_tag_id is None or section.show_for_tag_id in [tag.id for tag in offer.offer_tags if tag.accepted is None or tag.accepted])
                     and ((section.show_for_invited_guest is None) or (not section.show_for_invited_guest))):
                     included_sections.append(section)
 
-            registration_form.registration_sections = included_sections
+            registration_form.filtered_registration_sections = included_sections
 
-            questions = db.session.query(RegistrationQuestion).filter(
-                RegistrationQuestion.registration_form_id == registration_form.id).all()
-
-            if not questions:
-                LOGGER.warn(
-                    'Questions not found for  event_id: {}'.format(args['event_id']))
-                return errors.QUESTION_NOT_FOUND
-
-            for s in registration_form.registration_sections:
-                s.registration_questions = []
-                for q in questions:
-                    if q.section_id == s.id:
-                        s.registration_questions.append(q)
-
-            return marshal(registration_form, self.registration_form_fields), 201
+            return marshal(registration_form, self.registration_form_fields), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -326,213 +375,10 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
                 traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
 
-    @admin_required
-    def post(self):
-        args = self.req_parser.parse_args()
-        event_id = args['event_id']
+class OfferListAPI(restful.Resource):
 
-        event = db.session.query(Event).filter(
-            Event.id == event_id).first()
-
-        if not event:
-            return errors.EVENT_NOT_FOUND
-
-        registration_form = RegistrationForm(
-
-            event_id=event_id
-        )
-
-        db.session.add(registration_form)
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration form for event : {}".format(event_id))
-            return errors.ADD_REGISTRATION_FORM_FAILED
-
-        return registration_form_info(registration_form), 201
-
-
-def registration_section_info(registration_section):
-    return {
-        'registration_form_id': registration_section.registration_form_id,
-        'name': registration_section.name,
-        'description': registration_section.description,
-        'order': registration_section.order,
-        'show_for_accommodation_award': registration_section.show_for_accommodation_award,
-        'show_for_travel_award': registration_section.show_for_travel_award,
-        'show_for_payment_required': registration_section.show_for_payment_required
-    }
-
-
-class RegistrationSectionAPI(RegistrationSectionMixin, restful.Resource):
-    registration_section_fields = {
-        'sectionId': fields.Integer,
-        'name': fields.Boolean,
-        'description': fields.String,
-        'order': fields.String,
-        'questions': RegistrationQuestion,
-    }
-
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        section_id = args['section_id']
-
-        try:
-
-            registration_section = db.session.query(RegistrationSection).filter(
-                RegistrationSection.id == section_id).first()
-
-            if not registration_section:
-                return errors.REGISTRATION_SECTION_NOT_FOUND
-            else:
-                return registration_section, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(
-                traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
-
-    @admin_required
-    def post(self):
-        args = self.req_parser.parse_args()
-        registration_form_id = args['registration_form_id']
-        name = args['name']
-        description = args['description']
-        order = args['order']
-        show_for_travel_award = args['show_for_travel_award']
-        show_for_accommodation_award = args['show_for_accommodation_award']
-        show_for_payment_required = args['show_for_payment_required']
-
-        registration_form = db.session.query(RegistrationForm).filter(
-            RegistrationForm.id == registration_form_id).first()
-
-        if not registration_form:
-            return errors.REGISTRATION_FORM_NOT_FOUND
-
-        registration_section = RegistrationSection(
-
-            registration_form_id=registration_form_id,
-            name=name,
-            description=description,
-            order=order,
-            show_for_accommodation_award=show_for_accommodation_award,
-            show_for_travel_award=show_for_travel_award,
-            show_for_payment_required=show_for_payment_required
-        )
-
-        db.session.add(registration_section)
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration section with form id : {}".format(registration_form_id))
-            return errors.ADD_REGISTRATION_SECTION_FAILED
-
-        return registration_section_info(registration_section), 201
-
-
-def registration_question_info(registration_question):
-    return {
-        'registration_form_id': registration_question.registration_form_id,
-        'section_id': registration_question.section_id,
-        'type': registration_question.type,
-        'description': registration_question.description,
-        'headline': registration_question.headline,
-        'placeholder': registration_question.placeholder,
-        'validation_regex': registration_question.validation_regex,
-        'validation_text': registration_question.validation_text,
-        'order': registration_question.order,
-        'options': registration_question.options,
-        'is_required': registration_question.is_required
-    }
-
-
-class RegistrationQuestionAPI(RegistrationQuestionMixin, restful.Resource):
-    registration_section_fields = {
-        'description': fields.String,
-        'type': fields.String,
-        'required': fields.Boolean,
-        'order': fields.Integer,
-    }
-    @auth_required
-    @marshal_with(registration_section_fields)
-    def get(self):
-        args = self.req_parser.parse_args()
-        question_id = args['question_id']
-
-        try:
-
-            question = db.session.query(RegistrationQuestion).filter(
-                RegistrationQuestion.id == question_id).first()
-
-            if not question:
-                return errors.REGISTRATION_QUESTION_NOT_FOUND
-            else:
-                return question, 201
-
-        except SQLAlchemyError as e:
-            LOGGER.error("Database error encountered: {}".format(e))
-            return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(
-                traceback.format_exc()))
-            return errors.DB_NOT_AVAILABLE
-
-    @admin_required
-    def post(self):
-        args = self.req_parser.parse_args()
-        registration_form_id = args['registration_form_id']
-        section_id = args['section_id']
-        type = args['type']
-        description = args['description']
-        headline = args['headline']
-        placeholder = args['placeholder']
-        validation_regex = args['validation_regex']
-        validation_text = args['validation_text']
-        order = args['order']
-        options = args['options']
-        is_required = args['is_required']
-
-        registration_form = db.session.query(RegistrationForm).filter(
-            RegistrationForm.id == registration_form_id).first()
-
-        registration_section = db.session.query(RegistrationSection).filter(
-            RegistrationSection.id == section_id).first()
-
-        if not registration_form:
-            return errors.REGISTRATION_FORM_NOT_FOUND
-        elif not registration_section:
-            return errors.SECTION_NOT_FOUND
-
-        registration_question = RegistrationQuestion(
-            registration_form_id=registration_form_id,
-            section_id=section_id,
-            type=type,
-            description=description,
-            headline=headline,
-            placeholder=placeholder,
-            validation_regex=validation_regex,
-            validation_text=validation_text,
-            order=order,
-            options=options,
-            is_required=is_required
-        )
-
-        db.session.add(registration_question)
-
-        try:
-            db.session.commit()
-        except IntegrityError:
-            LOGGER.error(
-                "Failed to add registration question with form id : {}".format(section_id))
-            return errors.ADD_REGISTRATION_QUESTION_FAILED
-
-        return registration_question_info(registration_question), 201
+    @event_admin_required
+    def get(self, event_id):
+        offers = offer_repository.get_all_offers_for_event(event_id)
+        return [offer_info(offer) for offer in offers], 200
+        

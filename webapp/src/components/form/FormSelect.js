@@ -17,7 +17,7 @@ class FormSelect extends React.Component {
   }
 
   render() {
-    const { id, options, placeholder, onChange, defaultValue } = this.props;
+    const { id, options, placeholder, onChange, defaultValue, searchable } = this.props;
     let value = this.props.value;
     if (defaultValue) {
       value = options.filter(option => option.value === defaultValue);
@@ -43,6 +43,7 @@ class FormSelect extends React.Component {
             value={value}
             onChange={e => onChange(id, e)}
             defaultValue={value || null}
+            isSearchable={searchable}
             className={
               this.shouldDisplayError()
                 ? "select-control is-invalid"

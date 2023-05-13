@@ -101,9 +101,7 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
 
         offer = db.session.query(Offer).filter(
             Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
-        if offer:
-            has_accepted_accom_award = (
-                offer.accommodation_award and offer.accepted_accommodation_award)
+        # TODO: Add tags from offer to attendance.
         
         # Check if invited guest
         invited_guest = db.session.query(InvitedGuest).filter(

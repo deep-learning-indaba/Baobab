@@ -22,7 +22,8 @@ class OrganisationApi(restful.Resource):
         'email_from': fields.String,
         'system_url': fields.String,
         'privacy_policy': fields.String,
-        'languages': fields.Raw
+        'languages': fields.Raw,
+        'iso_currency_code': fields.String
     }
 
     @marshal_with(organisation_fields)

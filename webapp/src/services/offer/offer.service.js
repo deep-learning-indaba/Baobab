@@ -1,12 +1,13 @@
 import axios from "axios";
-import {authHeader} from '../base.service';
+import {authHeader, extractErrorMessage} from '../base.service';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 
 export const offerServices = {
     getOffer,
     addOffer,
-    updateOffer
+    updateOffer,
+    getOfferList
 }
 
 function getOffer(event_id){
@@ -33,17 +34,14 @@ function getOffer(event_id){
 
 }
 
-function addOffer(user_id, event_id,offer_date,expiry_date,payment_required,travel_award,accommodation_award, accepted_accommodation_award, accepted_travel_award){
-    let data = {
-        user_id:user_id, 
-        event_id:event_id,
-        offer_date:offer_date,
-        expiry_date:expiry_date,
-        payment_required:payment_required,
-        travel_award:travel_award,
-        accommodation_award:accommodation_award,
-        accepted_accommodation_award:accepted_accommodation_award,
-        accepted_travel_award: accepted_travel_award
+function addOffer(user_id, event_id, offer_date, expiry_date, payment_required, grant_tags){
+  const data = {
+        user_id: user_id, 
+        event_id: event_id,
+        offer_date: offer_date,
+        expiry_date: expiry_date,
+        payment_required: payment_required,
+        grant_tags: grant_tags
     }
 
     return axios
@@ -65,14 +63,13 @@ function addOffer(user_id, event_id,offer_date,expiry_date,payment_required,trav
           });
 }
 
-function updateOffer(offer_id, event_id, candidate_response, rejected_reason, accepted_accommodation_award, accepted_travel_award){
+function updateOffer(offer_id, event_id, candidate_response, rejected_reason, grant_tags){
     let data = {
         offer_id:offer_id, 
         event_id:event_id,
         candidate_response:candidate_response,
         rejected_reason:rejected_reason,
-        accepted_travel_award:accepted_travel_award,
-        accepted_accommodation_award:accepted_accommodation_award
+        grant_tags:grant_tags
     };
 
     return axios
@@ -91,4 +88,21 @@ function updateOffer(offer_id, event_id, candidate_response, rejected_reason, ac
                   : error.message
             };
           });     
+}
+
+function getOfferList(eventId) {
+  return axios
+    .get(baseUrl + `/api/v1/offerlist?event_id=${eventId}`, { headers: authHeader() })
+    .then((response) => {
+        return {
+          offers: response.data,
+          error: ""
+        }
+    })
+    .catch((error) => {
+        return {
+          offers: null,
+          error: extractErrorMessage(error)
+        }
+    });
 }

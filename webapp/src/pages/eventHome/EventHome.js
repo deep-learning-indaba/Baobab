@@ -11,6 +11,7 @@ import ReviewAssignment from "../reviewAssignment";
 import ReviewHistory from "../reviewHistory";
 import EventStats from "../eventStats";
 import EventConfig from "../eventConfig";
+import TagConfig from "../tagConfig";
 import ProfileList from "../profileList";
 import ViewProfile from "../viewprofile";
 import InvitedGuests from "../invitedGuests";
@@ -19,6 +20,7 @@ import Registration from "../registration";
 import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
+import OfferAdmin from "../offerAdmin";
 import { InvoiceList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
@@ -162,7 +164,11 @@ class EventHome extends Component {
           path={`${match.path}/eventConfig`}
           render={(props) => <EventConfig {...props} event={event} organisation={this.props.organisation} />}
         />
-
+        <Route
+          exact
+          path={`${match.path}/tagConfig`}
+          render={(props) => <TagConfig {...props} event={event} organisation={this.props.organisation} />}
+        />
         <Route
           exact
           path={`${match.path}/eventStats`}
@@ -260,6 +266,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/indemnity`}
           render={(props) => <Indemnity {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/offerAdmin`}
+          render={(props) => <OfferAdmin {...props} event={event} organisation={this.props.organisation}/>}
         />
 
       </div>

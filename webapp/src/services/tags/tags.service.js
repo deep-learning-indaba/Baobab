@@ -7,7 +7,9 @@ export const tagsService = {
     getTag,
     addTag,
     updateTag,
-    getTagList
+    getTagList,
+    getTagListConfig,
+    getTagTypeList
 }
 
 function getTag(tagId, eventId) {
@@ -101,6 +103,65 @@ function updateTag(tag, eventId) {
 function getTagList(eventId) {
     return axios
         .get(baseUrl + "/api/v1/tags", { 
+            "headers": authHeader(),
+            "params": {
+                event_id: eventId
+            }
+        })
+        .then(response => {
+            let tags = null;
+            if (response) tags = response.data;
+            return {
+                tags: tags,
+                status: response.status,
+                message: response.statusText
+            }
+        })
+        .catch(function(error){
+            return{
+                tags: null,
+                error:
+                    error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function getTagTypeList(eventId) {
+    return axios
+    .get(baseUrl + "/api/v1/tagtypes", { 
+        "headers": authHeader(),
+        "params": {
+            event_id: eventId
+        }
+    })
+    .then(response => {
+        let tag_types = null;
+        if (response) tag_types = response.data;
+        return {
+            tag_types: tag_types,
+            status: response.status,
+            message: response.statusText
+        }
+    })
+    .catch(function(error){
+        return{
+            tag_types: null,
+            error:
+                error.response && error.response.data
+                ? error.response.data.message
+                : error.message,
+            status: error.response && error.response.status
+        };
+    });
+}
+
+
+function getTagListConfig(eventId) {
+    return axios
+        .get(baseUrl + "/api/v1/tagsconfig", { 
             "headers": authHeader(),
             "params": {
                 event_id: eventId

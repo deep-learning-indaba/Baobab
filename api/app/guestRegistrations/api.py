@@ -2,7 +2,7 @@ from datetime import date, datetime
 import traceback
 from flask_restful import reqparse
 import flask_restful as restful
-from flask import request
+from flask import request, g
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
 from app.utils.auth import verify_token
@@ -19,6 +19,9 @@ from app.utils import errors, emailer, strings
 from app.users.repository import UserRepository as user_repository
 from app.events.repository import EventRepository as event_repository
 from app.registration.repository import RegistrationRepository as registration_repository
+from app.registration.repository import RegistrationFormRepository as registration_form_repository
+from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
+from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app import LOGGER
 
 from app import db
@@ -69,7 +72,6 @@ class GuestRegistrationApi(restful.Resource):
         'answers': fields.List(fields.Nested(answer_fields))
     }
 
-    @marshal_with(response_fields)
     @auth_required
     def get(self):
         req_parser = reqparse.RequestParser()
@@ -77,28 +79,25 @@ class GuestRegistrationApi(restful.Resource):
         args = req_parser.parse_args()
 
         try:
-            user_id = verify_token(request.headers.get('Authorization'))['id']
+            user_id = g.current_user['id']
             event_id = args['event_id']
             registration_form = registration_repository.get_form_for_event(event_id)
             if registration_form is None:
                 return errors.REGISTRATION_FORM_NOT_FOUND
 
-            registration = db.session.query(GuestRegistration).filter_by(user_id=user_id, registration_form_id=registration_form.id).first()
-
+            registration = guest_registration_repository.get_guest_registration(user_id, event_id)
             if registration is None:
                 return 'no Registration', 404
 
-            db_answers = db.session.query(GuestRegistrationAnswer).filter(
-                GuestRegistrationAnswer.guest_registration_id ==
-                registration.id, GuestRegistrationAnswer.is_active == True).all()
+            answers = guest_registration_repository.get_answers(registration.id)
 
             response = {
                 'guest_registration_id': registration.id,
                 'registration_form_id': registration_form.id,
-                'answers': db_answers
+                'answers': answers
             }
 
-            return response
+            return marshal(response, self.response_fields), 200
 
         except Exception as e:
             LOGGER.error("Database error encountered: {}".format(e))
@@ -115,14 +114,9 @@ class GuestRegistrationApi(restful.Resource):
         args = req_parser.parse_args()
 
         try:
-
-            user_id = verify_token(request.headers.get('Authorization'))['id']
-            if not user_id:
-                return errors.USER_NOT_FOUND
-            current_user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
-
-            registration_form = db.session.query(RegistrationForm).filter(
-                RegistrationForm.id == args['registration_form_id']).first()
+            user_id = g.current_user['id']
+            current_user = user_repository.get_by_id(user_id)
+            registration_form = registration_form_repository.get_by_id(args['registration_form_id'])
 
             if not registration_form:
                 return errors.REGISTRATION_FORM_NOT_FOUND
@@ -178,7 +172,7 @@ class GuestRegistrationApi(restful.Resource):
         args = req_parser.parse_args()
         
         try:
-            user_id = verify_token(request.headers.get('Authorization'))['id']
+            user_id = g.current_user['id']
             registration = db.session.query(GuestRegistration).filter(
                 GuestRegistration.id == args['guest_registration_id']).one_or_none()
             if registration is None:
@@ -274,81 +268,68 @@ class GuestRegistrationApi(restful.Resource):
 
 
 class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
-    option_fields = {
-        'value': fields.String,
-        'label': fields.String
-    }
+    def _serialize_option(self, option):
+        return {
+            'value': option.value,
+            'label': option.label
+        }
 
-    registration_question_fields = {
-        'id': fields.Integer,
-        'description': fields.String,
-        'headline': fields.String,
-        'placeholder': fields.String,
-        'validation_regex': fields.String,
-        'validation_text': fields.String,
-        'depends_on_question_id': fields.String,
-        'hide_for_dependent_value': fields.String,
-        'type': fields.String,
-        'is_required': fields.Boolean,
-        'order': fields.Integer,
-        'options': fields.List(fields.Nested(option_fields))
-    }
+    def _serialize_question(self, question):
+        return {
+            'id': question.id,
+            'description': question.description,
+            'headline': question.headline,
+            'placeholder': question.placeholder,
+            'validation_regex': question.validation_regex,
+            'validation_text': question.validation_text,
+            'depends_on_question_id': question.depends_on_question_id,
+            'hide_for_dependent_value': question.hide_for_dependent_value,
+            'type': question.type,
+            'is_required': question.is_required,
+            'order': question.order,
+            'options': [] if not question.options else [self._serialize_option(option) for option in question.options]
+        }
 
-    registration_section_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'order': fields.Integer,
-        'registration_questions': fields.List(fields.Nested(registration_question_fields))
-    }
+    def _serialize_section(self, section):
+        return {
+            'id': section.id,
+            'name': section.name,
+            'description': section.description,
+            'order': section.order,
+            'registration_questions': [self._serialize_question(question) for question in section.registration_questions]
+        }
 
-    registration_form_fields = {
-        'id': fields.Integer,
-        'event_id': fields.Integer,
-        'registration_sections': fields.List(fields.Nested(registration_section_fields))
-    }
+    def _serialize_registration_form(self, registration_form):
+        return {
+            'id': registration_form.id,
+            'event_id': registration_form.event_id,
+            'registration_sections': [self._serialize_section(section) for section in registration_form.filtered_registration_sections]
+        }
+
 
     @auth_required
     def get(self):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         try:
-            registration_form = db.session.query(RegistrationForm).filter(
-                RegistrationForm.event_id == event_id).first()
+            registration_form = registration_repository.get_form_for_event(event_id)
 
             if not registration_form:
                 return errors.REGISTRATION_FORM_NOT_FOUND
 
-            sections = (db.session.query(RegistrationSection)
-                        .filter(RegistrationSection.registration_form_id == registration_form.id)
-                        .filter(RegistrationSection.show_for_travel_award == None)
-                        .filter(RegistrationSection.show_for_accommodation_award == None)
-                        .filter(RegistrationSection.show_for_payment_required == None)
-                        .filter(or_(RegistrationSection.show_for_invited_guest == True, RegistrationSection.show_for_invited_guest == None))
-                        .all())
+            invited_guest = invited_guest_repository.get_for_event_and_user(event_id, g.current_user['id'])
+            if not invited_guest:
+                return errors.INVITED_GUEST_NOT_FOUND
 
-            if not sections:
-                LOGGER.warn(
-                    'Sections not found for event_id: {}'.format(args['event_id']))
-                return errors.SECTION_NOT_FOUND
+            included_sections = []
+            for section in registration_form.registration_sections:
+                if ((section.show_for_tag_id is None or section.show_for_tag_id in [tag.id for tag in invited_guest.invited_guest_tags])
+                    and ((section.show_for_invited_guest is None) or section.show_for_invited_guest)):
+                    included_sections.append(section)
 
-            registration_form.registration_sections = sections
+            registration_form.filtered_registration_sections = included_sections
 
-            questions = db.session.query(RegistrationQuestion).filter(
-                RegistrationQuestion.registration_form_id == registration_form.id).all()
-
-            if not questions:
-                LOGGER.warn(
-                    'Questions not found for  event_id: {}'.format(args['event_id']))
-                return errors.QUESTION_NOT_FOUND
-
-            for s in registration_form.registration_sections:
-                s.registration_questions = []
-                for q in questions:
-                    if q.section_id == s.id:
-                        s.registration_questions.append(q)
-
-            return marshal(registration_form, self.registration_form_fields), 201
+            return self._serialize_registration_form(registration_form), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))

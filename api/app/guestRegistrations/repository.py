@@ -107,3 +107,17 @@ class GuestRegistrationRepository():
             .filter_by(headline=headline)
             .first())
         return answer
+    
+    @staticmethod
+    def get_guest_registration(user_id, event_id):
+        registration = (db.session.query(GuestRegistration)
+                        .filter_by(user_id=user_id)
+                        .join(RegistrationForm)
+                        .filter_by(event_id=event_id)
+                        .first())
+        return registration
+
+    @staticmethod
+    def get_answers(registration_id):
+        answers = db.session.query(GuestRegistrationAnswer).filter_by(guest_registration_id=registration_id, is_active=True).all()
+        return answers

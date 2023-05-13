@@ -9,7 +9,9 @@ export const invitedGuestServices = {
   addInvitedGuest,
   createInvitedGuest,
   getRoles,
-  determineIfInvitedGuest
+  determineIfInvitedGuest,
+  addTag,
+  removeTag
 }
 
 const roleOptions = [
@@ -35,13 +37,13 @@ function getInvitedGuestList(eventId) {
     })  
     .then(function (response) {
       return {
-        form: response.data,
+        guests: response.data,
         error: ""
       };
     })
     .catch(function (error) {
       return {
-        form: null,
+        guests: null,
         error:
           error.response && error.response.data
             ? error.response.data.message
@@ -139,6 +141,56 @@ function createInvitedGuest(user, event_Id, role) {
           msg: "Failed",
           error: (error.response && error.response.data) ? error.response.data.message : error.message,
         }
+      }
+    })
+}
+
+function addTag(invitedGuestId, eventId, tagId) {
+  const data = {
+    tag_id: tagId,
+    event_id: eventId,
+    invited_guest_id: invitedGuestId
+  };
+
+  return axios
+    .post(baseUrl + "/api/v1/invitedguesttag", data, { headers: authHeader() })
+    .then(function (response) {
+      return {
+        msg: "succeeded",
+        statusCode: response.status,
+        response: response
+      }
+    })
+    .catch(function (error) {
+      return {
+        msg: "Failed",
+        statusCode: error.response && error.response.status,
+        error: (error.response && error.response.data) ? error.response.data.message : error.message,
+      }
+    })
+}
+
+function removeTag(invitedGuestId, eventId, tagId) {
+  const data = {
+    tag_id: tagId,
+    event_id: eventId,
+    invited_guest_id: invitedGuestId
+  };
+
+  return axios
+    .delete(baseUrl + "/api/v1/invitedguesttag", { headers: authHeader(), data: data })
+    .then(function (response) {
+      return {
+        msg: "succeeded",
+        statusCode: response.status,
+        response: response
+      }
+    })
+    .catch(function (error) {
+      return {
+        msg: "Failed",
+        statusCode: error.response && error.response.status,
+        error: (error.response && error.response.data) ? error.response.data.message : error.message,
       }
     })
 }

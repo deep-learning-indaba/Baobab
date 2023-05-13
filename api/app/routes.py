@@ -74,6 +74,7 @@ rest_api.add_resource(reviews_api.ReviewHistoryAPI, '/api/v1/reviewhistory')
 rest_api.add_resource(users_api.UserProfileList, '/api/v1/userprofilelist')
 rest_api.add_resource(users_api.UserProfile, '/api/v1/userprofile')
 rest_api.add_resource(invitedGuest_api.InvitedGuestAPI, '/api/v1/invitedGuest')
+rest_api.add_resource(invitedGuest_api.InvitedGuestTagAPI, '/api/v1/invitedguesttag')
 rest_api.add_resource(invitedGuest_api.CreateUser,
                       '/api/v1/invitedGuest/create')
 rest_api.add_resource(invitedGuest_api.InvitedGuestList,
@@ -89,12 +90,9 @@ rest_api.add_resource(reference_api.ReferenceRequestAPI,
 rest_api.add_resource(reference_api.ReferenceAPI,
                       '/api/v1/reference')
 rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
+rest_api.add_resource(registration_api.OfferTagAPI, '/api/v1/offertag')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
-rest_api.add_resource(registration_api.RegistrationSectionAPI,
-                      '/api/v1/registration-section')
-rest_api.add_resource(registration_api.RegistrationQuestionAPI,
-                      '/api/v1/registration-question')
 rest_api.add_resource(registration_response.RegistrationApi,
                       '/api/v1/registration-response')
 rest_api.add_resource(guest_registration.GuestRegistrationApi,
@@ -122,6 +120,8 @@ rest_api.add_resource(responses_api.ResponseListAPI, '/api/v1/responses')
 rest_api.add_resource(form_api.QuestionListApi, '/api/v1/questions')
 rest_api.add_resource(tag_api.TagAPI, '/api/v1/tag')
 rest_api.add_resource(tag_api.TagListAPI, '/api/v1/tags')
+rest_api.add_resource(tag_api.TagListConfigAPI, '/api/v1/tagsconfig')
+rest_api.add_resource(tag_api.TagTypeListAPI, '/api/v1/tagtypes')
 rest_api.add_resource(responses_api.ResponseTagAPI, '/api/v1/responsetag')
 rest_api.add_resource(responses_api.ResponseDetailAPI, '/api/v1/responsedetail')
 rest_api.add_resource(reviews_api.ReviewListAPI, '/api/v1/reviewlist')
@@ -140,3 +140,4 @@ rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')
 rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')
 rest_api.add_resource(attendance_api.GuestListApi, '/api/v1/guestlist')
 rest_api.add_resource(attendance_api.IndemnityAPI, '/api/v1/indemnity')
+rest_api.add_resource(registration_api.OfferListAPI, '/api/v1/offerlist')

@@ -1,0 +1,64 @@
+.body {
+  padding-top: 0em;
+}
+.required-indicator {
+  display: inline-block;
+  margin-left: -20px;
+  margin-right: 10px;
+  font-size: 0.8em;
+  color: #A84A43;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  margin: 3rem 0;
+  flex-direction: column;
+}
+
+.ReactTable {
+  font-size: small;
+  text-align: left;
+}
+
+.ReactTable .rt-th {
+  text-align: left;
+  font-weight: bold;
+}
+
+.ReactTable .fa.fa-trash {
+  color: hsl(0, 52%, 40%);
+  font-size: 1.2em;
+  padding: 0 0.5em 0 0.5em;
+}
+
+.ReactTable .fa.fa-trash:hover {
+  color: hsl(0, 64%, 61%);
+  transition: 300ms;
+  cursor: pointer;
+}
+
+.ReactTable .fa.fa-edit {
+  color: #007bff;
+  font-size: 1.2em;
+  padding: 0 0.5em 0 0.5em;
+}
+
+.ReactTable .fa.fa-edit:hover {
+  color: #014084;
+  transition: 300ms;
+  cursor: pointer;
+}
+
+.ReactTable .action-buttons {
+  display: block;
+  text-align: center;
+}
+
+.margin-top-10px {
+  margin-top: 10px;
+}
+
+.margin-top-20px {
+  margin-top: 20px;
+}

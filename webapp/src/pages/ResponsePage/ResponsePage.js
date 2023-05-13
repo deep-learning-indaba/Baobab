@@ -3,7 +3,6 @@ import "react-table/react-table.css";
 import './ResponsePage.css'
 import { withTranslation } from 'react-i18next';
 import ReviewModal from './components/ReviewModal';
-import TagModal from './components/TagModal';
 import { eventService } from '../../services/events/events.service';
 import { applicationFormService } from '../../services/applicationForm/applicationForm.service';
 import { reviewService } from '../../services/reviews/review.service';
@@ -11,25 +10,29 @@ import { outcomeService } from '../../services/outcome/outcome.service';
 import { tagsService } from '../../services/tags/tags.service';
 import { responsesService } from '../../services/responses/responses.service';
 import AnswerValue from "../../components/answerValue";
-import Loading from "../../components/Loading";
 import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
-
+import TagSelectorDialog from '../../components/TagSelectorDialog';
 
 class ResponsePage extends Component {
     constructor(props) {
         super(props);
+
+        this.assignable_tag_types =  ["RESPONSE"]
+
         this.state = {
-            tagMenu: false,
             error: false,
-            addNewTags: [],
             eventLanguages: [],
             isLoading: true,
             removeTagModalVisible: false,
             removeReviewerModalVisible: false,
             tagToRemove: null,
             reviewToRemove: null,
+            tagSelectorVisible : false,
+            filteredTagList: [],
+            tagList: [],
+            assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
         }
@@ -43,7 +46,6 @@ class ResponsePage extends Component {
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
         ]).then(responses => {
-            console.log(responses);
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
                 event_type: responses[0].event.event_type,
@@ -54,6 +56,7 @@ class ResponsePage extends Component {
             }, () => {
                 this.getOutcome();
                 this.getReviewResponses(responses[2].detail);
+                this.filterTagList();
             });
         });
     };
@@ -82,24 +85,6 @@ class ResponsePage extends Component {
     goBack() {
         this.props.history.goBack();
     };
-
-    error(error) {
-        this.setState({
-            error: error,
-            removeTagModalVisible: false,
-            removeReviewerModalVisible: false,
-            tagToRemove: null,
-            reviewToRemove: null
-        });
-    };
-
-    // Toggle Tag Menu
-    toggleTags(list) {
-        this.setState({
-            tagMenu: list ? false : true
-        });
-    };
-
 
     // Render Page HTML
     // Generate Applciation Status
@@ -164,27 +149,26 @@ class ResponsePage extends Component {
     }
 
     getOutcome() {
-            outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
-                if (response.status === 200) {
-                    const newOutcome = {
-                        timestamp: response.outcome.timestamp,
-                        status: response.outcome.status,
-                    };
-                    this.setState(
-                        {
-                            outcome: newOutcome
-                        }
-                    );
-                }
-                else{
-                    this.error(response.error)
-                }
+        outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
+            if (response.status === 200) {
+                const newOutcome = {
+                    timestamp: response.outcome.timestamp,
+                    status: response.outcome.status,
+                };
                 this.setState(
                     {
+                        outcome: newOutcome,
                         isLoading: false
                     }
-                )
-            });
+                );
+            }
+            else{
+                this.setState({
+                    error: response.error,
+                    isLoading: false
+                });
+            }
+        });
     };
 
     submitOutcome(selectedOutcome) {
@@ -199,7 +183,7 @@ class ResponsePage extends Component {
                     outcome: newOutcome
                 });
             } else {
-                this.error(response.error);
+                this.setState({erorr: response.error});
             }
         });
     }
@@ -329,6 +313,18 @@ class ResponsePage extends Component {
         return html
     };
 
+    filterTagList() {
+        const tagList = this.state.tagList
+        const responseTagList = tagList.filter(t => this.state.assignableTagTypes.includes(t.tag_type));
+        const applicationData = this.state.applicationData;
+        const filteredTagList = responseTagList.filter(tag => {
+            return !applicationData.tags.some(t => t.id === tag.id)
+        });
+        this.setState({
+            filteredTagList: filteredTagList
+        });
+    };
+
     // Render questions and answers
     renderResponses(section) {
         const applicationData = this.state.applicationData;
@@ -401,64 +397,31 @@ class ResponsePage extends Component {
                 okText={t("Yes")}
                 cancelText={t("No")}>
                 <p>
-                    {t('Are you sure you want to delete this tag?')}
+                    {t('Are you sure you want to remove this tag?')}
                 </p>
             </ConfirmModal>
    
     };
 
-    // Tag Functions
-    // Post Response API
-    postResponseTag(tagId, responseId, eventId) {
-        const updateApplicationData = this.state.applicationData;
-        const updateTagList = this.state.tagList;
-
-        responsesService.tagResponse(responseId, tagId, eventId)
-            .then(response => {
-                if (response.status == 201) {
-                    const getTag = this.state.tagList.find(t => t.id === response.responseTag.tag_id);
-                    updateApplicationData.tags.push({ "name": getTag.name, "id": getTag.id });
-                    updateTagList.splice(getTag, 1);
-
-                    this.setState({
-                        applicationData: updateApplicationData,
-                        tagList: updateTagList
-                    });
+    onSelectTag = (tag) => {
+        responsesService.tagResponse(this.state.applicationData.id, tag.id, this.props.event.id)
+        .then(resp => {
+            if (resp.status === 201) {
+                this.setState({
+                    tagSelectorVisible: false,
+                    applicationData: {
+                        ...this.state.applicationData,
+                        tags: [...this.state.applicationData.tags, tag]
+                    }}, this.filterTagList);
                 }
-                else {
-                    this.error(response.error);
-                }
+            else {
+                this.setState({
+                tagSelectorVisible: false,
+                error: resp.error
             });
-    };
-
-    // Post Tag List API
-    addTag = (tagTranslations) => {
-        if (Object.keys(tagTranslations).length) {
-            const newTag = {
-                name: tagTranslations
-            };
-
-
-            tagsService.addTag(newTag, this.props.event.id).then(response => {
-                if (response.status == 201) {
-                    const updateTagList = this.state.tagList;
-                    const newTag = {
-                        id: response.tag.id,
-                        name: response.tag.name[this.props.i18n.language]
-                    };
-                    updateTagList.push(newTag);
-                    this.setState({
-                        tagList: updateTagList
-                    }, () => {
-                        this.postResponseTag(response.tag.id, this.props.match.params.id, this.props.event.id);
-                    });
-                }
-                else {
-                    this.error(response.error);
-                }
-            });
-        };
-    };
+            }
+        })
+    }
 
     // Del Tag
     removeTag(tag_id) {
@@ -469,31 +432,27 @@ class ResponsePage extends Component {
     };
 
     confirmRemoveTag = () => {
-        const updateApplicationData = this.state.applicationData;
-        const { tagToRemove } = this.state;
-
-        responsesService.removeTag(
-            parseInt(this.props.match.params.id),
-            tagToRemove,
-            this.props.event.id
-        ).then(response => {
-            if (response.status == 200) {
-                const index = updateApplicationData.tags.findIndex(t => t.id === tagToRemove);
-                if (index >= 0)
-                    updateApplicationData.tags.splice(index, 1);
-
-                this.setState({
-                    applicationData: updateApplicationData,
-                    removeTagModalVisible: false,
-                    tagToRemove: null
-                });
-            }
-            else {
-                this.cancelRemoveTag();
-                this.error(response.message);
-            }
-        });
-    };
+        const { applicationData, tagToRemove } = this.state;
+    
+        responsesService.removeTag(applicationData.id, tagToRemove, this.props.event.id)
+        .then(resp => {
+            console.log(resp);
+          if (resp.status === 200) {
+            this.setState({
+                removeTagModalVisible: false,
+                applicationData: {
+                    ...this.state.applicationData,
+                    tags: this.state.applicationData.tags.filter(t => t.id !== tagToRemove)
+                }}, this.filterTagList);
+          }
+          else {
+            this.setState({
+              error: resp.error,
+              confirmRemoveTagVisible: false
+            });
+          }
+        })
+        }
 
     cancelRemoveTag = () => {
         this.setState({
@@ -507,33 +466,13 @@ class ResponsePage extends Component {
 
         if (data) {
             let tags = data.tags ? data.tags.map(tag => {
-                return <span
-                    key={tag.id}
-                    className="btn badge badge-info"
-                >
-                    {tag.name}
-                    <i onClick={(e) => this.removeTag(tag.id)} className="far fa-trash-alt cursor-pointer"></i></span>
-            })
+                return <span className="btn badge badge-primary" onClick={()=>this.removeTag(tag.id)} key={`tag_${tag.id}`}>{tag.name}</span>
+                })
                 :
                 null
             return tags
         };
     };
-
-    renderTagModal() {
-        const { eventLanguages } = this.state;
-
-        if (eventLanguages) {
-            return <TagModal
-                keys={this.state.keys}
-                i18nt={this.props.i18n}
-                t={this.props.t}
-                postTag={(tag) => this.addTag(tag)}
-                eventLanguages={eventLanguages}
-            />
-        };
-    };
-
 
     // Reviews
     // Render Reviews
@@ -587,7 +526,13 @@ class ResponsePage extends Component {
         reviewService.deleteResponseReviewer(event.id, applicationData.id, reviewToRemove)
             .then(response => {
                 if (response.error) {
-                    this.error(response.error);
+                    this.setState({
+                            error: response.error,
+                            removeTagModalVisible: false,
+                            removeReviewerModalVisible: false,
+                            tagToRemove: null,
+                            reviewToRemove: null
+                        })
                 } else {
                     const newReviewers = applicationData.reviewers.filter(r => r === null || r.reviewer_user_id !== reviewToRemove);
                     
@@ -667,16 +612,35 @@ class ResponsePage extends Component {
             </ConfirmModal>  
     };
 
+    addTag = (response) => {
+        console.log(response);
+        const tagIds = response.tags.map(t=>t.id);
+        this.setState({
+          tagSelectorVisible: true,
+          filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id))
+        })
+    }
+
+    setTagSelectorVisible = () => {
+        this.setState({
+            tagSelectorVisible: true
+        })
+    }
 
     render() {
-        const { applicationData, tagList, tagMenu, error, eventLanguages, isLoading } = this.state;
+        const { applicationData, error, isLoading } = this.state;
         // Translation
         const t = this.props.t;
 
-        // Loading
         if (isLoading) {
-            return <Loading />
-        };
+            return (
+              <div className="d-flex justify-content-center">
+                <div className="spinner-border" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+              </div>
+            );
+          }
 
         return (
             <div className="table-wrapper response-page">
@@ -687,12 +651,9 @@ class ResponsePage extends Component {
                     </div>
                 }
 
-                {/* Add Tag Modal*/}
-                {this.renderTagModal()}
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
-                
 
                 {/* Headings */}
                 {applicationData &&
@@ -701,36 +662,10 @@ class ResponsePage extends Component {
                             <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
                             <div className="tags">
                                 {this.renderTags()}
-                                <span onClick={(e) => this.toggleTags(tagMenu)} className={tagMenu && tagList.length || tagMenu && eventLanguages.length
-                                    ? "btn btn-light active"
-                                    : "btn btn-light add-tags"}>
-                                {t('Add tags')}
-                            </span>
-                            </div>
-
-                            {/*Tag List*/}
-                            <div className={tagMenu && tagList.length || tagMenu && eventLanguages.length
-                                ? "tag-response show"
-                                : "tag-response"}
-                            >
-                                {tagList &&
-                                    tagList.map(val => {
-                                        return <div className="tag-item" key={val.id} >
-                                            <button
-                                                onClick={(e) => this.postResponseTag(
-                                                    val.id,
-                                                    parseInt(this.props.match.params.id),
-                                                    this.props.event.id
-                                                )} className="btn tag">{val.name}</button>
-                                        </div>
-                                    })}
-
-                                <button data-toggle="modal" type="button" className="btn btn-primary" data-target="#exampleModalTag">
-                                    {t('New tag')}
-                                </button>
-
+                                <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>
 
                             </div>
+
                         </div>
 
                         {/* User details Right Tab */}
@@ -744,7 +679,6 @@ class ResponsePage extends Component {
                         </div>
                     </div>
                 }
-
 
 
                 {/*Response Data*/}
@@ -784,6 +718,12 @@ class ResponsePage extends Component {
                     </div>
                 }
 
+                <TagSelectorDialog
+                    tags={this.state.filteredTagList}
+                    visible={this.state.tagSelectorVisible}
+                    onCancel={() => this.setState({ tagSelectorVisible: false })}
+                    onSelectTag={this.onSelectTag}
+                />
             </div>
         )
     };

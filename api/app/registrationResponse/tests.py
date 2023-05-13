@@ -38,8 +38,6 @@ class RegistrationApiTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=False,
-            travel_award=True,
-            accommodation_award=False,
             responded_at=datetime.now())
         self.offer.candidate_response = True
         self.offer.accepted_travel_award = True
@@ -52,8 +50,6 @@ class RegistrationApiTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=True,
-            travel_award=True,
-            accommodation_award=False,
             responded_at=datetime.now())
         db.session.add(self.offer2)
         db.session.commit()
@@ -64,8 +60,6 @@ class RegistrationApiTest(ApiTestCase):
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
             payment_required=True,
-            travel_award=False,
-            accommodation_award=True,
             responded_at=datetime.now())
         db.session.add(self.offer3)
         db.session.commit()
@@ -80,10 +74,7 @@ class RegistrationApiTest(ApiTestCase):
             registration_form_id=self.form.id,
             name="Section 1",
             description="the section description",
-            order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            order=1
         )
         db.session.add(section)
         db.session.commit()
@@ -92,10 +83,7 @@ class RegistrationApiTest(ApiTestCase):
             registration_form_id=self.form.id,
             name="Section 2",
             description="the section 2 description",
-            order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            order=1
         )
         db.session.add(section2)
         db.session.commit()

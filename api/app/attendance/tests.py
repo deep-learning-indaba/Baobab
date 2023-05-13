@@ -51,11 +51,7 @@ class AttendanceApiTest(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            accommodation_award=True,
-            travel_award=True,
-            accepted_accommodation_award=True,
-            accepted_travel_award=True
+            payment_required=False
         )
         db.session.add_all([offer])
 
@@ -69,10 +65,7 @@ class AttendanceApiTest(ApiTestCase):
             registration_form_id=form.id,
             name="Section 1",
             description="the section description",
-            order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            order=1
         )
         db.session.add(section)
         db.session.commit()
@@ -153,7 +146,6 @@ class AttendanceApiTest(ApiTestCase):
         self.assertEqual(data['event_id'], 1)
         self.assertEqual(data['bringing_poster'], True)
         self.assertEqual(data['updated_by_user_id'], 2)
-        self.assertEqual(data['accommodation_award'], True)
 
     # Normal Attendance
     @unittest.skip("Deprecated API")
@@ -168,11 +160,7 @@ class AttendanceApiTest(ApiTestCase):
             event_id=self.event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            accommodation_award=True,
-            travel_award=True,
-            accepted_accommodation_award=True,
-            accepted_travel_award=True
+            payment_required=False
         )
         db.session.add(offer2)
         db.session.commit()
