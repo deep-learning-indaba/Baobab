@@ -1,5 +1,5 @@
 from app import db
-from app.registration.models import Offer, Registration, RegistrationForm
+from app.registration.models import Offer, Registration, RegistrationForm, OfferTag
 from sqlalchemy import and_, func, cast, Date
 
 
@@ -18,6 +18,14 @@ class OfferRepository():
         return (
             db.session.query(Offer)
             .filter(Offer.event_id==event_id, Offer.id.in_(offer_ids))
+            .all()
+        )
+    
+    @staticmethod
+    def get_all_offers_for_event(event_id):
+        return (
+            db.session.query(Offer)
+            .filter(Offer.event_id==event_id)
             .all()
         )
 
@@ -50,6 +58,19 @@ class OfferRepository():
                         .order_by(cast(Offer.responded_at, Date))
                         .all())
         return timeseries
+    
+    @staticmethod
+    def tag_offer(offer_id, tag_id, accepted):
+        offer_tag = OfferTag(offer_id, tag_id, accepted)
+        db.session.add(offer_tag)
+        db.session.commit()
+
+    @staticmethod
+    def remove_tag_from_offer(offer_id, tag_id):
+        (db.session.query(OfferTag)
+         .filter_by(offer_id=offer_id, tag_id=tag_id)
+         .delete())
+        db.session.commit()
 
 class RegistrationRepository():
     @staticmethod
@@ -79,3 +100,17 @@ class RegistrationRepository():
     @staticmethod
     def get_form_for_event(event_id):
         return (db.session.query(RegistrationForm).filter_by(event_id=event_id)).first()
+
+
+class RegistrationFormRepository():
+    @staticmethod
+    def get_by_event_id(event_id):
+        return (db.session.query(RegistrationForm)
+                .filter_by(event_id=event_id)
+                .first())
+    
+    @staticmethod
+    def get_by_id(id):
+        return db.session.query(RegistrationForm).get(id)
+    
+    

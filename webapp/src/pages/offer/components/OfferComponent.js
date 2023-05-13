@@ -1,12 +1,10 @@
-// TODO: ADD TRANSLATION
-
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
 import { applicationFormService } from "../../../services/applicationForm/applicationForm.service.js"
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
-
+import { Trans, withTranslation } from 'react-i18next';
 
 class Offer extends Component {
   constructor(props) {
@@ -23,8 +21,7 @@ class Offer extends Component {
       offer: null,
       noOffer: null,
       category: "",
-      accepted_accommodation_award: false,
-      accepted_travel_award: false,
+      grant_tags: [],
       applicationExist: null
     };
   }
@@ -44,8 +41,7 @@ class Offer extends Component {
   buttonSubmit = (candidate_response) => {
     const { offer,
       rejected_reason,
-      accepted_accommodation_award,
-      accepted_travel_award
+      grant_tags,
     } = this.state;
 
     if (candidate_response !== null) {
@@ -55,12 +51,14 @@ class Offer extends Component {
           this.props.event ? this.props.event.id : 0,
           candidate_response,
           candidate_response ? "" : rejected_reason,
-          accepted_accommodation_award,
-          accepted_travel_award)
+          grant_tags.map(t => {
+            return { 'id': t.id, 'accepted': t.accepted }}
+            ))
         .then(response => {
           if (response.response && response.response.status === 201) {
             this.setState({
               offer: response.response.data,
+              grant_tags: this.initGrants(response.response.data.tags),
               showReasonBox: false
             }, () => {
               this.displayOfferResponse();
@@ -85,37 +83,41 @@ class Offer extends Component {
     </div>
   }
 
-  onChangeAccommodation = () => {
-    this.setState({
-      accepted_accommodation_award: !this.state.accepted_accommodation_award
+  onChangeGrant = tag_id => {
+    const u = this.state.grant_tags;
+    u.forEach(t => {
+      if (t.id === tag_id) {
+        t.accepted = !t.accepted;
+      }
     });
-  }
-
-  onChangeTravel = () => {
     this.setState({
-      accepted_travel_award: !this.state.accepted_travel_award
+      grant_tags: u
     });
   }
 
   displayOfferResponse = () => {
-    const { offer } = this.state;
+    const { offer, grant_tags } = this.state;
     const event = this.props.event;
-    let responded_date = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-"
+    const t = this.props.t;
+
+    const eventName = event ? event.name : "";
+    const respondedDate = offer.responded_at ? offer.responded_at.substring(0, 10) : "-date-";
+    const paymentAmount = offer.payment_amount;
+    const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
       <div className="container">
-        <p className="h5 pt-5">
-          {offer.candidate_response && <span>You accepted the following offer on {responded_date}.</span>}
-          {!offer.candidate_response && <span class="text-danger">You rejected your offer for a spot at {event ? event.name : ""} on {responded_date} for the following reason:<br /><br />{offer.rejected_reason}</span>}
+        <p className="h5">
+          {offer.candidate_response && <span>You accepted the following offer on {respondedDate}.</span>}
+          {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
         </p>
 
-        {offer.candidate_response && <div className="white-background card form mt-5">
-          {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
-          {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? `Payment of ${offer.payment_amount} required to confirm your place` : "Fee Waived")}
+        {offer.candidate_response && <div className="white-background card form mt-5 offer-container">
+          {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
+          {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
+          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}}USD is required to confirm your place</Trans>: t("Fee Waived"))}
 
-          {this.props.event && this.props.event.travel_grant && this.row("Travel", offer.accepted_travel_award ? "Your travel to and from Tunis will be arranged by the Indaba" : "You are responsible for your own travel to and from Tunis.")}
-          {this.props.event && this.props.event.travel_grant && this.row("Accommodation", offer.accepted_accommodation_award ? "Your accommodation will be covered by the Indaba in a shared hostel from the 21st to 26th August" : "You are responsible for your own accommodation in Tunis. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.")}
+          {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
 
         {offer.candidate_response &&
@@ -167,66 +169,53 @@ class Offer extends Component {
       </div>);
   }
 
-  renderTravelAward = (offer, accepted_travel_award) => {
-    return <div class="row mb-4">
-      <div class="col-md-3 font-weight-bold pr-2" align="center">Travel:</div>
-      <div class="col-md-6" align="left">
-        {offer && offer.travel_award && accepted_travel_award &&
-          "We are pleased to offer you a travel award which will cover your flights to and from Tunis."}
-        {offer && offer.travel_award && !accepted_travel_award &&
-          <span class="text-danger">You have chosen to reject the travel award - you will be responsible for your own travel to and from Tunis!</span>}
-        {offer && offer.requested_travel && !offer.travel_award &&
-          "Unfortunately we are unable to grant you the travel award you requested in your application."}
-        {offer && !offer.requested_travel && !offer.travel_award &&
-          "You did not request a travel award. You will be responsible for your own travel to and from Tunis"}
-      </div>
+  renderGrants = () => {
+    const { grant_tags } = this.state;
+    const t = this.props.t;
 
-      <div class="col-md-3">
-        {offer.travel_award &&
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" checked={accepted_travel_award} onChange={this.onChangeTravel}
-              id="CheckTravel" />
-            <label class="form-check-label" for="CheckTravel">I accept the travel award.</label>
-          </div>}
-      </div>
-    </div>
-  }
-
-  renderAccommodationAward = (offer, accepted_accommodation_award) => {
-    return <div class="row mb-2">
-      <div class="col-md-3 font-weight-bold pr-2" align="center">Accommodation:</div>
-
-      <div class="col-md-6" align="left">
-        {offer && offer.accommodation_award && accepted_accommodation_award &&
-          "We are pleased to offer you an accommodation award which will cover your stay between the 21st and 26th of August. Note that this will be in a shared hostel room (with someone of the same gender) at the university."}
-        {offer && offer.accommodation_award && !accepted_accommodation_award &&
-          <span class="text-danger">You have chosen to reject the accommodation award - you will be responsible for your own accommodation in Tunis during the Indaba! We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
-        {offer && offer.requested_accommodation && !offer.accommodation_award &&
-          <span>Unfortunately we are unable to grant you the accomodation award you requested in your application.
-                    We have secured hotel deals from 38 USD per night, details on how to book these will follow soon.</span>}
-        {offer && !offer.requested_accommodation && !offer.accommodation_award &&
-          "You did not request an accommodation award. You will be responsible for your own accommodation during the Indaba. We have secured hotel deals from 38 USD per night, details on how to book these will follow soon."}
-      </div>
-
-      <div class="col-md-3">
-        {offer.accommodation_award &&
-          <div class="form-check accommodation-container">
-            <input type="checkbox" class="form-check-input"
-              checked={accepted_accommodation_award}
-              onChange={this.onChangeAccommodation}
-              id="CheckAccommodation" />
-            <label class="form-check-label" for="CheckAccommodation">I accept the accommodation award.</label>
-          </div>}
-      </div>
+    return <div class="row mb-3">
+      <div class="col-md-3 font-weight-bold pr-2 h4" align="left">{t("Grants")}</div>
+      {grant_tags.length > 0 ?
+        <div>
+          <div class="col-md-12 pr-2" align="left">
+            <div className="mb-5">{t("We are pleased to offer you the following grants") + ":"}</div>
+          </div>
+          {grant_tags.map((grant_tag) => {
+            return <div class="row mb-3" align="left" key={"grant_tag_"+grant_tag.id}>
+                      <div class="col-md-2">
+                        <span class="font-weight-bold">{grant_tag.name}</span>
+                        
+                      </div>
+                      <div class="col-md-8">
+                        {grant_tag.description}
+                      </div>
+                      <div class="col-md-2">
+                        <div class="form-check grant-container">
+                          <input type="checkbox" class="form-check-input"
+                            checked={grant_tag.accepted}
+                            onChange={() => this.onChangeGrant(grant_tag.id)}
+                            id={"check_" + grant_tag.id} />
+                          <label class="form-check-label" htmlFor={"check_"+grant_tag.id}>{t("I accept this grant")}.</label>
+                        </div>
+                      </div>
+                    </div>
+          })}
+        </div>
+        :
+        <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to award you any grants for this event")}</div>
+      } 
+      <hr/>
     </div>
   }
 
   displayOfferContent = e => {
     const { offer,
       rejected_reason,
-      accepted_accommodation_award,
-      accepted_travel_award
+      grant_tags,
     } = this.state;
+
+    const t = this.props.t;
+    const paymentAmount = offer.payment_amount;
 
     return (
       <div>
@@ -234,29 +223,30 @@ class Offer extends Component {
           this.displayOfferResponse()
           :
           <div className="container">
-            <p className="h5 pt-5">
-              We are pleased to offer you a place at {this.props.event ? this.props.event.name : ""}.
-          Please see the details of this offer below{" "}
+            <p className="h5">
+                {t("We are pleased to offer you a place at") + " " + (this.props.event ? this.props.event.name : "") + ". "}
+                {t("Please see the details of this offer below") + "."}
             </p>
 
-            <form class="form pt-2 ">
+            <form class="form offer-container">
 
               <div className="white-background card form">
-                <p class="font-weight-bold">Offer Details</p>
+                <p class="font-weight-bold h3">{t("Offer Details")}</p>
 
-                {this.props.event && this.props.event.travel_grant && this.renderTravelAward(offer, accepted_travel_award)}
-                {this.props.event && this.props.event.travel_grant && this.renderAccommodationAward(offer, accepted_accommodation_award)}
+                {this.props.event && grant_tags && this.renderGrants()}
 
-                <div class="row mb-3">
-                  <div class="col-md-3 font-weight-bold pr-2" align="center">Registration Fee:</div>
-                  <div class="col-md-6" align="left">
-                    {offer && offer.payment_required && `In order to confirm your place, you will be liable for a ${offer.payment_amount} registration fee.`}
-                    {offer && !offer.payment_required && "Your registration fee has been waived."}
+                <div class="row">
+                  <div class="col-md-12 font-weight-bold pr-2 h4" align="left">{t("Registration Fee")}</div>
+                </div>
+                <div class="row mb-5">
+                  <div class="col-md-12" align="left">
+                    {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}}USD registration fee.</Trans>}
+                    {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>
 
                 <p class="font-weight-bold">
-                  Please accept or reject this offer by{" "}
+                  {t("Please accept or reject this offer by")}{" "}
                   {offer !== null ? offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-" : "unable to load expiry date"}{" "}
                 </p>
 
@@ -266,7 +256,7 @@ class Offer extends Component {
                       <textarea
                         class="form-control reason-box pr-5 pl-10 pb-5"
                         onChange={this.handleChange(rejected_reason)}
-                        placeholder="Enter rejection message" />
+                        placeholder={t("Enter rejection message")} />
                       <button
                         type="button"
                         class="btn btn-outline-danger mt-2"
@@ -368,9 +358,17 @@ class Offer extends Component {
             loading: false,
             offer: result.offer,
             error: result.error,
-            accepted_accommodation_award: result.offer.accepted_accommodation_award === null ? result.offer.accommodation_award : result.offer.accepted_accommodation_award,
-            accepted_travel_award: result.offer.accepted_travel_award === null ? result.offer.travel_award : result.offer.accepted_travel_award
+            grant_tags: this.initGrants(result.offer.tags)
           });
+        }
+      });
+  }
+
+  initGrants = (tags) => {
+    return tags.filter(tag => tag.tag_type === "GRANT").map(tag => {
+      return {
+        ...tag,
+        accepted: tag.accepted === null ? true : tag.accepted,
         }
       });
   }
@@ -382,14 +380,15 @@ class Offer extends Component {
       width: "3rem",
       height: "3rem"
     };
+    const t = this.props.t;
 
     if (loading) {
       return (
         <div class="d-flex justify-content-center pt-5">
-          <div class="spinner-border"
+          <div className="spinner-border"
             style={loadingStyle}
             role="status">
-            <span class="sr-only">Loading...</span>
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       );
@@ -417,11 +416,11 @@ class Offer extends Component {
       return (
         <div className="h5 pt-5" align="center">
           {" "}
-          Please await further communication
+          {t("Please await further communication")}
         </div>
       );
     }
   }
 }
 
-export default withRouter(Offer);
+export default withRouter(withTranslation()(Offer));

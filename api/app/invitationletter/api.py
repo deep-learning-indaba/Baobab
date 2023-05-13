@@ -144,6 +144,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             accommodation = False
             travel = False
         elif offer is not None:
+            # TODO: Base on tags
             accommodation = offer.accepted_accommodation_award
             travel = offer.accepted_travel_award
             LOGGER.info(f"Generating invitation letter for General attendee with accommodation: {accommodation}, Travel: {travel}")

@@ -16,11 +16,11 @@ from app import LOGGER, app, db
 from app.applicationModel.models import (ApplicationForm, Question, QuestionTranslation, Section,
                                          SectionTranslation)
 from app.events.models import Event, EventType, EventRole, EventFee
-from app.invitedGuest.models import InvitedGuest
+from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
 from app.organisation.resolver import OrganisationResolver
-from app.registration.models import Offer, RegistrationForm
+from app.registration.models import Offer, RegistrationForm, OfferTag
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate
@@ -396,6 +396,17 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return response
     
+    def add_offer(self, user_id=1, event_id=1, offer_date=datetime.now(), expiry_date=datetime.now() + timedelta(days=15), payment_required=False):
+        offer = Offer(
+            user_id=user_id,
+            event_id=event_id,
+            offer_date=offer_date,
+            expiry_date=expiry_date,
+            payment_required=payment_required)
+        db.session.add(offer)
+        db.session.commit()
+        return offer
+    
     def add_response_reviewer(self, response_id, reviewer_user_id):
         rr = ResponseReviewer(response_id, reviewer_user_id)
         db.session.add(rr)
@@ -424,7 +435,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return rs
 
-    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, travel_award=False, accommodation_award=False, candidate_response=None):
+    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, candidate_response=None):
         offer_date = offer_date or datetime.now()
         expiry_date = expiry_date or datetime.now() + timedelta(10)
 
@@ -434,8 +445,6 @@ class ApiTestCase(unittest.TestCase):
             offer_date=offer_date, 
             expiry_date=expiry_date,
             payment_required=payment_required,
-            travel_award=travel_award,
-            accommodation_award=accommodation_award,
             candidate_response=candidate_response)
 
         db.session.add(offer)
@@ -449,12 +458,12 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return guest
 
-    def add_tag(self, event_id=1, names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}):
-        tag = Tag(event_id)
+    def add_tag(self, event_id=1, tag_type='RESPONSE', names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}, descriptions={'en': 'Tag 1 en description', 'fr': 'Tag 1 fr description'}, active=True):
+        tag = Tag(event_id, tag_type, active)
         db.session.add(tag)
         db.session.commit()
         translations = [
-            TagTranslation(tag.id, k, name) for k, name in names.items()
+            TagTranslation(tag.id, k, name, descriptions[k]) for k, name in names.items()
         ]
         db.session.add_all(translations)
         db.session.commit()
@@ -465,6 +474,18 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(rt)
         db.session.commit()
         return rt
+    
+    def tag_offer(self, offer_id, tag_id):
+        ot = OfferTag(offer_id, tag_id)
+        db.session.add(ot)
+        db.session.commit()
+        return ot
+
+    def tag_invited_guest(self, invited_guest_id, tag_id):
+        gt = InvitedGuestTag(invited_guest_id, tag_id)
+        db.session.add(gt)
+        db.session.commit()
+        return gt
     
     def add_event_fee(
         self,

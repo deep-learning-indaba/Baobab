@@ -47,6 +47,8 @@ ADD_INVITED_GUEST_FAILED = (
     {'message': 'Unable to add invited guest.'}, 500)
 INVITED_GUEST_FOR_EVENT_EXISTS = (
     {'message': 'Invited guest already exists for this event.'}, 409)
+INVITED_GUEST_NOT_FOUND = (
+    {'message': 'No invited guest exists with that email'}, 404)
 VERIFY_EMAIL_INVITED_GUEST = (
     {'message': 'Unable to verify email of invited guest.'}, 500)
 
@@ -55,6 +57,7 @@ VERIFY_EMAIL_OFFER = (
 MISSING_PASSWORD = (
     {'message': 'Password not provided', 'type': 'MISSING_CREDENTIALS'}, 400)
 OFFER_EXPIRED = ({'message': 'Your offer has expired'}, 403)
+OFFER_TAG_NOT_FOUND = ({'message': 'No offer tag found for the given offer id'}, 404)
 ADD_OFFER_FAILED = (
     {'message': 'Unable to add an offer.'}, 500)
 OFFER_NOT_FOUND = (
@@ -124,6 +127,10 @@ DUPLICATE_RESPONSE = ({'message': 'A response has already been submitted for thi
 BAD_CONFIGURATION = ({'message': 'There is an error with the form configuration'}, 500)
 TAG_NOT_FOUND = (
     {'message': 'No tag found with the given id'}, 404)
+TAG_NOT_TYPE_GRANT = (
+    {'message': 'Tag is not of type GRANT'}, 500)
+TAG_NOT_ACTIVE = (
+    {'message': 'Tag has been deleted'}, 500)
 REVIEW_FORM_NOT_FOUND = ({'message': "No review form found for the event"}, 404)
 REVIEW_ALREADY_COMPLETED = ({'message': "Can't delete reviewer, the review has already been completed"}, 400)
 NO_ACTIVE_REVIEW_FORM = ({'message': "There is no active review form for the event"}, 404)

@@ -906,9 +906,7 @@ class EventStatusTest(ApiTestCase):
             event_id=self.event.id, 
             offer_date=date.today(), 
             expiry_date=date.today() + timedelta(days=1),
-            payment_required=False,
-            travel_award=False,
-            accommodation_award=False)
+            payment_required=False)
         db.session.add(offer)
         db.session.commit()
 
@@ -962,8 +960,6 @@ class EventStatusTest(ApiTestCase):
             offer_date=date.today(), 
             expiry_date=date.today() + timedelta(days=1),
             payment_required=False,
-            travel_award=False,
-            accommodation_award=False,
             candidate_response=True)
         db.session.add(offer)
         db.session.commit()

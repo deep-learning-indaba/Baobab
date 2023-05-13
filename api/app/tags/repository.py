@@ -16,6 +16,7 @@ class TagRepository():
     @staticmethod
     def delete_translation(id):
         db.session.query(TagTranslation).filter_by(id=id).delete()
+        db.session.commit()
 
     @staticmethod
     def commit():
@@ -23,4 +24,4 @@ class TagRepository():
 
     @staticmethod
     def get_all_for_event(event_id):
-        return db.session.query(Tag).filter_by(event_id=event_id).all()
+        return db.session.query(Tag).filter_by(event_id=event_id, active=True).all()

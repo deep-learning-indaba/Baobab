@@ -6,6 +6,7 @@ import Login from "./pages/login";
 import ResetPassword from "./pages/resetPassword";
 import CreateAccount from "./pages/createAccount";
 import EventConfig from "./pages/eventConfig";
+import TagConfig from "./pages/tagConfig";
 import VerifyEmail from "./pages/verifyEmail";
 import Profile from "./pages/profile";
 import { PrivateRoute } from "./components";
@@ -107,7 +108,7 @@ class EventNav extends Component {
                     >
                       {t('Registration Form')}
                     </NavLink>
-                    <NavLink
+                    {/* <NavLink
                       to={`/${this.props.eventKey}/invitationLetter`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
@@ -120,7 +121,7 @@ class EventNav extends Component {
                       onClick={this.props.toggleMenu}
                     >
                       {t('Indemnity Form')}
-                    </NavLink>
+                    </NavLink> */}
                     {/* <NavLink
                       to={`/${this.props.eventKey}/invoices`}
                       className="dropdown-item"
@@ -167,6 +168,20 @@ class EventNav extends Component {
                     onClick={this.props.toggleMenu}
                   >
                     {t('Review Dashboard')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/tagConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Configure Tags')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/offerAdmin`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Offers')}
                   </NavLink>
                   <h6 className='dropdown-submenu-header'>Form Settings</h6>
                   <NavLink
@@ -396,7 +411,7 @@ class AppComponent extends Component {
     const t = this.props.t;
     return (
       <Router history={history}>
-        <div class="notranslate" translate="no">
+        <div className="notranslate" translate="no">
           <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
             <a className="navbar-brand navbar-brand-main" href="/">
               <img
@@ -501,6 +516,17 @@ class AppComponent extends Component {
                   path="/responseList"
                   render={props => (
                     <ResponseList {...props} loggedIn={this.refreshUser} />
+                  )}
+                />
+                <Route
+                  exact
+                  path="/tagConfig"
+                  render={props => (
+                    <TagConfig
+                      {...props}
+                      loggedIn={this.refreshUser}
+                      organisation={this.props.organisation}
+                    />
                   )}
                 />
                 <Route exact path="/verifyEmail" component={VerifyEmail} />

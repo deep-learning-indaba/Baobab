@@ -60,11 +60,7 @@ class InvitationLetterTests(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=False,
-            accommodation_award=True,
-            travel_award=True,
-            accepted_accommodation_award=True,
-            accepted_travel_award=True
+            payment_required=False
         )
         db.session.add(offer)
         db.session.commit()
@@ -75,11 +71,7 @@ class InvitationLetterTests(ApiTestCase):
             event_id=event.id,
             offer_date=datetime.now(),
             expiry_date=datetime.now() + timedelta(days=15),
-            payment_required=True,
-            accommodation_award=False,
-            travel_award=False,
-            accepted_accommodation_award=False,
-            accepted_travel_award=False,
+            payment_required=True
         )
         db.session.add(offer_2)
         db.session.commit()
@@ -94,10 +86,7 @@ class InvitationLetterTests(ApiTestCase):
             registration_form_id=form.id,
             name="Section 1",
             description="the section description",
-            order=1,
-            show_for_travel_award=True,
-            show_for_accommodation_award=False,
-            show_for_payment_required=False,
+            order=1
         )
         db.session.add(section)
         db.session.commit()

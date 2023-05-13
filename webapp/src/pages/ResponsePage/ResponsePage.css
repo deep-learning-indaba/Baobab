@@ -165,22 +165,21 @@ html .headings-lower label {
     min-width: 1px;
 }
 
-.tags .btn.badge-info {
-    background: hsl(28deg, 79%, 54%);
+.tags .btn.badge-primary:hover {
+    background-color: hsl(0, 64%, 61%);
+    transition: 300ms;
+    cursor: pointer;
 }
 
-.tag-response .btn.tag {
-    background: hsl(0deg, 0%, 90%);
-    padding: 2px 4px;
-    border: none;
-    color: hsl(0deg 0% 32%);
+.tags .btn.badge-add:hover {
+    background-color: hsl(110, 76%, 31%);
+    transition: 300ms;
+    cursor: pointer;
 }
 
-.tag-response .btn {
-    width: 100%;
-    font-size: 12px;
-    text-align: left;
-    margin: 0;
+.tags .btn.badge-add {
+    background: hsl(0deg 0% 32%);
+    color: hsl(0, 0%, 100%);
 }
 
 /* New Tag Modal */

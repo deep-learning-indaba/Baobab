@@ -191,3 +191,8 @@ div.card-container {
 .katex-display>.katex {
   text-align: left;
 }
+
+.tag-selector .tag-btn {
+  margin-right: 0.5em;
+  margin-bottom: 0.5em;
+}

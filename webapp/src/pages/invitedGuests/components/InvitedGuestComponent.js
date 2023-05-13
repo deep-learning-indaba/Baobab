@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { invitedGuestServices } from "../../../services/invitedGuests/invitedGuests.service";
+import { tagsService } from "../../../services/tags/tags.service";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
 import { createColClassName } from "../../../utils/styling/styling";
@@ -9,7 +10,7 @@ import validationFields from "../../../utils/validation/validationFields";
 import { run, ruleRunner } from "../../../utils/validation/ruleRunner";
 import ReactTable from 'react-table';
 import { withTranslation } from 'react-i18next';
-
+import TagSelectorDialog from '../../../components/TagSelectorDialog';
 import { downloadCSV } from "../../../utils/files";
 import {
   requiredText,
@@ -19,6 +20,7 @@ import {
 import {
   getTitleOptions
 } from "../../../utils/validation/contentHelpers";
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 const baseFieldValidations = [
   ruleRunner(validationFields.email, validEmail),
@@ -34,6 +36,7 @@ const extraFieldValidations = [
 class InvitedGuests extends Component {
   constructor(props) {
     super(props);
+    this.assignable_tag_types = ["REGISTRATION", "GRANT"];
     this.state = {
       isLoading: true,
       isError: false,
@@ -48,22 +51,29 @@ class InvitedGuests extends Component {
       successMessage: "",
       adding: false,
       roleSearch: "all",
-      searchTerm: ""
+      nameSearch: "",
+      tags: [],
+      filteredTags: [],
+      tagSelectorVisible: false,
+      selectedGuest: null
     };
   }
 
   getGuestList() {
-    invitedGuestServices.getInvitedGuestList(
-      this.props.event ?
-        this.props.event.id : 0).then(
-          result => {
-            this.setState({
-              loading: false,
-              guestList: result.form,
-              error: result.error,
-              filteredList: result.form
-            });
-          });
+    const eventId = this.props.event ? this.props.event.id : 0;
+
+    Promise.all([
+      invitedGuestServices.getInvitedGuestList(eventId),
+      tagsService.getTagList(eventId)
+    ]).then(([guestResponse, tagsResponse]) => {
+      this.setState({
+        loading: false,
+        guestList: guestResponse.guests,
+        filteredList: guestResponse.guests,
+        tags: tagsResponse.tags,
+        error: guestResponse.error || tagsResponse.error
+      });
+    });
   }
 
   checkOptionsList(optionsList) {
@@ -120,11 +130,12 @@ class InvitedGuests extends Component {
   };
 
   convertToCsv = (guestList) => {
-    var str = "NAME,EMAIL,ROLE\r\n";
+    var str = "NAME,EMAIL,ROLE,TAGS\r\n";
 
     for (var i = 0; i < guestList.length; i++) {
-      let fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
-      str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].role;
+      const tags = guestList[i].tags.map(t=>t.name).join("; ");
+      const fullname = guestList[i].user.user_title + " " + guestList[i].user.firstname + " " + guestList[i].user.lastname
+      str += fullname + ',' + guestList[i].user.email + ',' + guestList[i].role + ',' + tags;
       str += "\r\n";
     }
     return str;
@@ -136,56 +147,32 @@ class InvitedGuests extends Component {
     downloadCSV(csv, filename);
   };
 
-
-
-  filterByName = field => {
-    let searchList = this.state.guestList;
-
-    let value = field.target.value.toLowerCase();
-    var roleSearch = this.state.roleSearch;
-    let tempList = searchList.filter((guest) => {
-      let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
-      return (fullname.toLowerCase().indexOf(value) > -1) && (roleSearch === "all" || guest.role === roleSearch)
-    })
-
-    this.setState({
-      filteredList: tempList,
-      searchTerm: value
-    })
-  };
-
-  filterByRole = (name, dropdown) => {
-    let searchList = this.state.guestList
-    let tempList = searchList;
-    var searchTerm = this.state.searchTerm;
-    this.setState({
-      roleSearch: dropdown.value
+  filterGuestList = () => {
+    const { nameSearch, roleSearch } = this.state;
+    const filtered = this.state.guestList.filter(g => {
+      let passed = true;
+      if (nameSearch) {
+        const fullname = g.user.user_title + " " + g.user.firstname + " " + g.user.lastname;
+        passed = fullname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1;
+      }
+      if (roleSearch && passed && roleSearch !== "all") {
+        passed = g.role === roleSearch;
+      }
+      return passed;
     });
+    this.setState({ filteredList: filtered });
+  }
 
-    tempList = searchList.filter(function (guest) {
-      let fullname = guest.user.user_title + " " + guest.user.firstname + " " + guest.user.lastname;
-      if (guest.role === dropdown.value || dropdown.value === "all")
-        if (searchTerm !== "") {
-          if (fullname.toLowerCase().indexOf(searchTerm) > -1) {
-            return guest;
-          }
-        }
-        else {
-          return guest;
-        }
-      return false;
-    })
+  updateNameSearch = (event) => {
+    this.setState({nameSearch: event.target.value}, this.filterGuestList);
+  }
 
-    this.setState({
-      filteredList: tempList,
-    })
-  };
+  updateRoleSearch = (id, event) => {
+    this.setState({roleSearch: event.value}, this.filterGuestList);
+  }
 
   getSearchRoles(roles) {
-    let temp = roles.slice();
-    let role = { value: "all", label: this.props.t("All") };
-    temp.push(role);
-    return temp;
+    return [{ value: "all", label: this.props.t("All") }, ...roles];
   }
 
   handleResponse = response => {
@@ -278,6 +265,76 @@ class InvitedGuests extends Component {
     return "";
   }
 
+  addTag = (guest) => {
+    const tagIds = guest.tags.map(t=>t.id);
+    this.setState({
+      selectedGuest: guest,
+      tagSelectorVisible: true,
+      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.assignable_tag_types.includes(t.tag_type))
+    })
+  }
+
+  onSelectTag = (tag) => {
+    invitedGuestServices.addTag(this.state.selectedGuest.invited_guest_id, this.props.event.id, tag.id)
+    .then(resp => {
+      if (resp.statusCode === 201) {
+        const newGuest = {
+          ...this.state.selectedGuest,
+          tags: [...this.state.selectedGuest.tags, resp.response.data]
+        }
+        const newGuests = this.state.guestList.map(g => 
+            g.invited_guest_id === this.state.selectedGuest.invited_guest_id  ? newGuest : g);
+        this.setState({
+          tagSelectorVisible: false,
+          selectedGuest: null,
+          filteredTags: [],
+          guestList: newGuests
+        }, this.filterGuestList);
+      }
+      else {
+        this.setState({
+          tagSelectorVisible: false,
+          error: resp.error
+        });
+      }
+    })
+  }
+
+  confirmRemoveTag = () => {
+    const {selectedGuest, selectedTag} = this.state;
+
+    invitedGuestServices.removeTag(selectedGuest.invited_guest_id, this.props.event.id, selectedTag.id)
+    .then(resp => {
+      if (resp.statusCode === 200) {
+        const newGuest = {
+          ...selectedGuest,
+          tags: selectedGuest.tags.filter(t=>t.id !== selectedTag.id)
+        }
+        const newGuests = this.state.guestList.map(g => 
+            g.invited_guest_id === selectedGuest.invited_guest_id  ? newGuest : g);
+        this.setState({
+          guestList: newGuests,
+          confirmRemoveTagVisible: false
+        }, this.filterGuestList);
+      }
+      else {
+        this.setState({
+          error: resp.error,
+          confirmRemoveTagVisible: false
+        });
+      }
+    })
+
+  }
+
+  removeTag = (guest, tag) => {
+    this.setState({
+      selectedGuest: guest,
+      selectedTag: tag,
+      confirmRemoveTagVisible: true
+    });
+  }
+
   render() {
     const threeColClassName = createColClassName(12, 4, 4, 4);  //xs, sm, md, lg
     const t = this.props.t;
@@ -287,9 +344,9 @@ class InvitedGuests extends Component {
 
     if (loading) {
       return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" role="status">
-            <span class="sr-only">Loading...</span>
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border" role="status">
+            <span className="sr-only">Loading...</span>
           </div>
         </div>
       );
@@ -311,6 +368,15 @@ class InvitedGuests extends Component {
       id: "role",
       Header: <div className="invitedguest-role">{t("Role")}</div>,
       accessor: u => u.role
+    }, {
+      id: "tags",
+      Header: <div className="invitedguest-tags">{t("Tags")}</div>,
+      Cell: props => <div>
+        {props.original.tags.map(t => 
+            <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.invited_guest_id}_${t.id}`}>{t.name}</span>)}
+        <i className="fa fa-plus-circle add-tag" onClick={() => this.addTag(props.original)}></i>
+      </div>,
+      accessor: u => u.tags.map(t => t.name).join("; ")
     }];
 
     return (
@@ -320,7 +386,7 @@ class InvitedGuests extends Component {
             {JSON.stringify(error)}
           </div>}
 
-        <div class="card no-padding-h">
+        <div className="card no-padding-h">
           <p className="h5 text-center mb-4">{t("Invited Guests")}</p>
 
           <div className="row">
@@ -329,18 +395,18 @@ class InvitedGuests extends Component {
                 id="s"
                 type="text"
                 placeholder="Search"
-                onChange={this.filterByName}
+                onChange={this.updateNameSearch}
                 label={t("Filter by name")}
                 name=""
-                value={this.state.searchTerm} />
+                value={this.state.nameSearch} />
             </div>
 
-            <div class={threeColClassName}>
+            <div className={threeColClassName}>
               <FormSelect
                 options={searchRoleOptions}
                 id="RoleFilter"
                 placeholder="search"
-                onChange={this.filterByRole}
+                onChange={this.updateRoleSearch}
                 label={t("Filter by role")}
                 defaultValue={this.state.roleSearch || "all"} />
             </div>
@@ -355,7 +421,7 @@ class InvitedGuests extends Component {
           }
 
           {(!this.state.guestList || this.state.guestList.length === 0) &&
-            <div class="alert alert-danger alert-container">
+            <div className="alert alert-danger alert-container">
               {t("No invited guests")}
               </div>
           }
@@ -370,23 +436,23 @@ class InvitedGuests extends Component {
         </div>
 
         {this.state.addedSucess && (
-          <div class="card flat-card success">
+          <div className="card flat-card success">
             {this.state.successMessage}
           </div>
         )}
 
         {this.state.addedSucess === false && this.state.conflict && (
-          <div class="card flat-card conflict">
+          <div className="card flat-card conflict">
             {t("Invited guest with this email already exists.")}
           </div>
         )}
 
         <form>
-          <div class="card">
+          <div className="card">
             <p className="h5 text-center mb-4">{t("Add Guest")}</p>
 
-            <div class="row">
-              <div class={threeColClassName}>
+            <div className="row">
+              <div className={threeColClassName}>
                 <FormTextBox
                   id={validationFields.email.name}
                   type="email"
@@ -398,7 +464,7 @@ class InvitedGuests extends Component {
                   value={this.state.user[validationFields.email.name] || ""} />
               </div>
 
-              <div class={threeColClassName}>
+              <div className={threeColClassName}>
                 <FormSelect
                   options={roleOptions}
                   id={validationFields.role.name}
@@ -411,16 +477,16 @@ class InvitedGuests extends Component {
                   value={this.state.user[validationFields.role.name] || ""} />
               </div>
 
-              <div class={threeColClassName}>
+              <div className={threeColClassName}>
                 {!this.state.notFound &&
                   <button
                     type="button"
-                    class="btn btn-primary stretched margin-top-32"
+                    className="btn btn-primary stretched margin-top-32"
                     onClick={() => this.buttonSubmit()}
                     disabled={this.state.adding}>
                     {this.state.adding && (
                       <span
-                        class="spinner-grow spinner-grow-sm"
+                        className="spinner-grow spinner-grow-sm"
                         role="status"
                         aria-hidden="true" />
                     )}
@@ -436,7 +502,7 @@ class InvitedGuests extends Component {
 
             {!this.state.addedSucess && this.state.notFound &&
               <div>
-                <div class="row">
+                <div className="row">
                   <div className={threeColClassName}>
                     <FormSelect
                       options={this.state.titleOptions}
@@ -475,16 +541,16 @@ class InvitedGuests extends Component {
                   </div>
                 </div>
 
-                <div class="row">
+                <div className="row">
                   <div className={threeColClassName}>
                     <button
                       type="button"
-                      class="btn btn-primary stretched margin-top-32"
+                      className="btn btn-primary stretched margin-top-32"
                       onClick={() => this.submitCreate()}
                       disabled={this.state.adding}>
                       {this.state.adding && (
                         <span
-                          class="spinner-grow spinner-grow-sm"
+                          className="spinner-grow spinner-grow-sm"
                           role="status"
                           aria-hidden="true" />
                       )}
@@ -495,6 +561,25 @@ class InvitedGuests extends Component {
               </div>}
           </div>
         </form>
+
+        <TagSelectorDialog
+            tags={this.state.filteredTags}
+            visible={this.state.tagSelectorVisible}
+            onCancel={() => this.setState({ tagSelectorVisible: false })}
+            onSelectTag={this.onSelectTag}
+        />
+
+        <ConfirmModal
+            visible={this.state.confirmRemoveTagVisible}
+            onOK={this.confirmRemoveTag}
+            onCancel={() => this.setState({ confirmRemoveTagVisible: false })}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+                {t('Are you sure you want to remove this tag?')}
+            </p>
+        </ConfirmModal>
+
       </div>
     );
   }

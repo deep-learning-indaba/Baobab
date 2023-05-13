@@ -1,8 +1,9 @@
-from app import db
-from app.invoice.models import PaymentStatus
 from datetime import datetime, date, time
 from sqlalchemy import func
 
+from app import db
+from app.invoice.models import PaymentStatus
+from app.tags.models import Tag
 
 class Offer(db.Model):
 
@@ -16,16 +17,13 @@ class Offer(db.Model):
     offer_date = db.Column(db.DateTime(), nullable=False)
     expiry_date = db.Column(db.DateTime(), nullable=False)
     payment_required = db.Column(db.Boolean(), nullable=False)
-    travel_award = db.Column(db.Boolean(), nullable=False)
-    accommodation_award = db.Column(db.Boolean(), nullable=False)
-    accepted_accommodation_award = db.Column(db.Boolean(), nullable=True)
-    accepted_travel_award = db.Column(db.Boolean(), nullable=True)
     rejected_reason = db.Column(db.String(5000), nullable=True)
     candidate_response = db.Column(db.Boolean(), nullable=True)
     responded_at = db.Column(db.DateTime(), nullable=True)
     payment_amount = db.Column(db.String(), nullable=True)
 
     user = db.relationship('AppUser', foreign_keys=[user_id])
+    offer_tags = db.relationship('OfferTag')
     offer_invoices = db.relationship('OfferInvoice')
 
     def is_expired(self):
@@ -43,6 +41,20 @@ class Offer(db.Model):
                 return True
         return False
 
+class OfferTag(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    offer_id = db.Column(db.Integer(), db.ForeignKey('offer.id'), nullable=False)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+    accepted = db.Column(db.Boolean(), nullable=True)
+
+    offer = db.relationship('Offer', foreign_keys=[offer_id])
+    tag = db.relationship('Tag', foreign_keys=[tag_id])
+
+    def __init__(self, offer_id, tag_id, accepted=None):
+        self.offer_id = offer_id
+        self.tag_id = tag_id
+        self.accepted = accepted
+
 class RegistrationForm(db.Model):
 
     __tablename__ = "registration_form"
@@ -52,6 +64,7 @@ class RegistrationForm(db.Model):
         "event.id"), nullable=False)
 
     event = db.relationship('Event', foreign_keys=[event_id])
+    registration_sections = db.relationship('RegistrationSection')
 
     def __init__(self, event_id):
         self.event_id = event_id
@@ -67,19 +80,17 @@ class RegistrationSection(db.Model):
     name = db.Column(db.String(), nullable=False)
     description = db.Column(db.String(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    show_for_travel_award = db.Column(db.Boolean(), nullable=True)
-    show_for_accommodation_award = db.Column(db.Boolean(), nullable=True)
-    show_for_payment_required = db.Column(db.Boolean(), nullable=True)
+    show_for_tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=True)
     show_for_invited_guest = db.Column(db.Boolean(), nullable=True)
 
-    def __init__(self, registration_form_id, name, description, order, show_for_travel_award, show_for_accommodation_award, show_for_payment_required, show_for_invited_guest=None):
+    registration_questions = db.relationship('RegistrationQuestion')
+
+    def __init__(self, registration_form_id, name, description, order, show_for_tag_id=None, show_for_invited_guest=None):
         self.registration_form_id = registration_form_id
         self.name = name
         self.description = description
         self.order = order
-        self.show_for_payment_required = show_for_payment_required
-        self.show_for_accommodation_award = show_for_accommodation_award
-        self.show_for_travel_award = show_for_travel_award
+        self.show_for_tag_id = show_for_tag_id
         self.show_for_invited_guest = show_for_invited_guest
 
 

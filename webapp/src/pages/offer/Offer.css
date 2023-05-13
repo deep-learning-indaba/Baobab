@@ -10,8 +10,11 @@
 
 .form{
     align-content: center;
-  
     text-align: center;
+}
+
+.offer-container {
+    width: 95%;
 }
 
 .container{
@@ -25,7 +28,6 @@
 .stretched{
     width:100%;
 }
-
 
 .card{
     margin-top: 30px;
@@ -56,9 +58,9 @@
     font-weight:bold; 
 }
 
-.accommodation-container {
+.grant-container {
     text-align: right;
-    display: contents;
+    display: inline-block;
 }
 
 .form-check-label {
