@@ -1,9 +1,13 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { offerServices } from "../../../services/offer/offer.service";
+import { responsesService } from '../../../services/responses/responses.service';
 import { withTranslation } from 'react-i18next';
 import Loading from "../../../components/Loading";
 import ReactTable from 'react-table';
+import FormTextBox from "../../../components/form/FormTextBox";
+import FormTextArea from "../../../components/form/FormTextArea";
+import FormSelect from "../../../components/form/FormSelect";
 
 /*
 TODO:
@@ -28,16 +32,39 @@ class OfferAdminComponent extends Component {
         this.state = {
             loading: true,
             error: "",
-            offers: []
+            offers: [],
+            offerEditorVisible: false,
+            updatedOffer: {
+                userId: 0,
+                tags: [],
+                expiryDate: null,
+                paymentRequired: false,
+                paymentAmount: 0
+            },
+            users: [],
+            errors: [],
+            isValid: true
         };
     }
 
     componentDidMount() {
-        offerServices.getOfferList(this.props.event.id).then(response => {
+        Promise.all([
+            offerServices.getOfferList(this.props.event.id),
+            responsesService.getResponseList(this.props.event.id, false, [])
+        ]).then(([offerResponse, responseResponse]) => {
+            const offers = offerResponse.offers || [];
+            const offerUsers = offers.map(o => o.user_id);
             this.setState({
                 loading: false,
-                offers: response.offers || [],
-                error: response.error
+                offers: offers,
+                error: offerResponse.error || responseResponse.error,
+                users: (responseResponse.responses || [])
+                    .filter(r => !offerUsers.includes(r.user_id))
+                    .map(r => ({
+                        userId: r.user_id,
+                        name: r.user_title + " " + r.firstname + " " + r.lastname,
+                        email: r.email    
+                    }))
             });
         });
     }
@@ -54,6 +81,7 @@ class OfferAdminComponent extends Component {
         const {t} = this.props;
         let className = "badge badge-secondary";
         let text = t("No Response");
+        let description = "";
 
         if (props.original.candidate_response === true) {
             className = "badge badge-success";
@@ -62,11 +90,21 @@ class OfferAdminComponent extends Component {
         else if (props.original.candidate_response === false) {
             className = "badge badge-danger";
             text = t("Rejected");
+            description = props.original.rejected_reason;
         }
 
         return <div>
-            <span className={className}>{text}</span>
+            <span className={className}>{text}</span> <span>{description}</span>
         </div>
+    }
+
+    paymentCell = (props) => {
+        if (props.original.payment_required === true) {
+            return <span>{props.original.payment_amount} {this.props.organisation.iso_currency_code === "None" ? "" : this.props.organisation.iso_currency_code}</span>;
+        }
+        else {
+            return "-";
+        }
     }
 
     getTableColumns = () => {
@@ -90,8 +128,7 @@ class OfferAdminComponent extends Component {
             Header: <div className="tags">{t("Tags")}</div>,
             Cell: props => <div>
               {props.original.tags.map(t => 
-                  <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
-              <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
+                  <span className="tag badge badge-primary" key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
             </div>,
             accessor: u => u.tags.map(t => t.name).join("; "),
             minWidth: 150
@@ -109,38 +146,162 @@ class OfferAdminComponent extends Component {
             minWidth: 80
           },
           {
+            id: "payment",
+            Header: <div className="payment-amount">{t("Payment")}</div>,
+            accessor: u => u.payment_amount,
+            Cell: this.paymentCell,
+            minWidth: 150
+          },
+          {
             id: "candidate_response",
             Header: <div className="candidate-response">{t("Response")}</div>,
             accessor: u => u.candidate_response,
             Cell: this.candidateResponseCell,
             minWidth: 80
-          },
-          {
-            id: "payment_required",
-            Header: <div className="payment-required">{t("Payment Required")}</div>,
-            accessor: u => u.payment_required,
-            minWidth: 150
-          },
-          {
-            id: "payment_amount",
-            Header: <div className="payment-amount">{t("Payment Amount")}</div>,
-            accessor: u => u.payment_amount,
-            minWidth: 150
-          },
-          {
-            id: "rejected_reason",
-            Header: <div className="rejected-reason">{t("Rejected Reason")}</div>,
-            accessor: u => u.rejected_reason,
-            minWidth: 150
           }
         ];
 
         return columns;
+    } 
+
+    setOfferEditorVisible = () => {
+        this.setState({
+            offerEditorVisible: true
+        });
+    };
+
+    updateDropDown = (fieldName, dropdown) => {
+        const u = {
+          ...this.state.updatedTag,
+          [fieldName]: dropdown.value
+        };
+        this.updateState(u);
+      };
+
+    validateOfferDetails = () => {
+        return [];
+    }
+
+    updateState = (offer) => {
+        this.setState({
+            updatedOffer: offer
+        }, () => {
+            const errors = this.validateOfferDetails();
+
+            this.setState({
+                errors: errors,
+                isValid: errors.length === 0
+            });
+        });
+    }
+
+/*
+    user_id = args['user_id']
+    awards = args['awards']
+    offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+    expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
+    payment_required = args['payment_required']
+    payment_amount = args['payment_amount']
+*/
+
+    renderOfferEditor = () => {
+        const t = this.props.t;
+        return <div className={"form-group margin-top-20px"}>
+        <div className={"form-group row"}>
+            <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor={"tag_type"}>
+            <span className="required-indicator">*</span>
+            {t("Candidate")}
+            </label>
+            <div className="col-sm-10">
+            <FormSelect
+                id={"candidate"}
+                name={"candidate"}
+                required={true}
+                defaultValue={this.state.updatedOffer.userId || null}
+                onChange={this.updateDropDown}
+                options={
+                    this.state.users.map((user) => ({
+                        value: user.userId,
+                        label: user.name + " (" + user.email + ")"
+                    }))
+                }
+            />
+            </div>
+        </div>
+
+        {this.props.organisation.languages.map((lang) => (
+            <div className={"form-group row"} key={"name_div"+lang.code}>
+            <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor={"name_" + lang.code}>
+                <span className="required-indicator">*</span>
+                {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
+            </label>
+
+            <div className="col-sm-10">
+                <FormTextBox
+                id={"name_" + lang.code}
+                name={"name_" + lang.code}
+                type="text"
+                placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Name of the tag", lang.description)) : t("Name of the tag")}
+                required={true}
+                onChange={e => this.updateTextField("name", e, lang.code)}
+                value={this.state.updatedTag.name[lang.code] || ""}
+                />
+            </div>
+            </div>
+        ))}
+        {this.props.organisation.languages.map((lang) => (
+            <div className={"form-group row"} key={"description_div"+lang.code}>
+            <label
+                className={"col-sm-2 col-form-label"}
+                htmlFor={"description_" + lang.code}>
+                <span className="required-indicator">*</span>
+                {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Description", lang.description)) : t("Tag Description")}
+            </label>
+                
+            <div className="col-sm-10">
+                <FormTextArea
+                id={"description_" + lang.code}
+                name={"description_" + lang.code}
+                type="text"
+                placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Description of the tag", lang.description)) : t("Description of the tag")}
+                required={true}
+                onChange={e => this.updateTextField("description", e, lang.code)}
+                value={this.state.updatedTag.description[lang.code] || ""}
+                />
+            </div>
+
+            {this.state.updatedTag.tag_type && this.state.updatedTag.tag_type === "GRANT" &&
+                <div className="required-indicator ml-2">{t("Note, the grant name and description will be visible to users when asked to accept/reject the grant.")}
+                </div>}
+            </div>
+        ))}
+        
+        <div className={"form-group row"} key="save-tag">
+            <div className="col-sm-2 ml-md-auto pr-2 pl-2">
+            <button
+                onClick={() => this.setState({ tagEntryVisible: false })}
+                className="btn btn-danger btn-block">
+                {t("Cancel")}
+            </button>
+            </div>
+            <div className="col-sm-2 pr-2 pl-2">
+            <button
+                onClick={() => this.onClickSave()}
+                className="btn btn-primary btn-block">
+                {t("Save Tag")}
+                </button>
+            </div>
+        </div>
+        </div>;
     }
 
     render() {
         const { t } = this.props;
-        const { loading, error, offers } = this.state;
+        const { loading, error, offers, offerEditorVisible } = this.state;
         console.log(offers);
 
         if (loading) { return <Loading />; }
@@ -162,6 +323,16 @@ class OfferAdminComponent extends Component {
                             minRows={0}
                         />
                     </div>
+                    {!offerEditorVisible && 
+                        <div className={"row-mb-3"}>
+                        <button
+                            onClick={() => this.setOfferEditorVisible()}
+                            className="btn btn-primary float-right margin-top-10px">
+                            {t("New Offer")}
+                        </button>
+                        </div>
+                    }
+                    {offerEditorVisible && this.renderOfferEditor()}
                 </div>
             </div>
         );

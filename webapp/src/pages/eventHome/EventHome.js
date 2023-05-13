@@ -270,7 +270,7 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/offerAdmin`}
-          render={(props) => <OfferAdmin {...props} event={event} />}
+          render={(props) => <OfferAdmin {...props} event={event} organisation={this.props.organisation}/>}
         />
 
       </div>

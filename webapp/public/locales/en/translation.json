@@ -544,7 +544,7 @@
     "Expiry Date": "Expiry Date",
     "Response": "Response",
     "No Response": "No Response",
-    "Payment Required": "Payment Required",
-    "Payment Amount": "Payment Amount",
-    "Rejected Reason": "Rejected Reason"
+    "Payment": "Payment",
+    "Rejected Reason": "Rejected Reason",
+    "New Offer": "New Offer"
 }

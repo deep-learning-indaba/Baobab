@@ -543,8 +543,8 @@
     "Expiry Date": "Date d'expiration",
     "Response": "Réponse",
     "No Response": "Pas de réponse",
-    "Payment Required": "Paiement requis",
-    "Payment Amount": "Montant du paiement",
-    "Rejected Reason": "Raison du rejet"
+    "Payment": "Paiement",
+    "Rejected Reason": "Raison du rejet",
+    "New Offer": "Nouvelle offre"
 }
 

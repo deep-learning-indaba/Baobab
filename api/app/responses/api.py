@@ -344,6 +344,7 @@ class ResponseListAPI(restful.Resource):
 
             serialized = {
                 'response_id': response.id,
+                'user_id': response.user_id,
                 'user_title': response.user.user_title,
                 'firstname': response.user.firstname,
                 'lastname': response.user.lastname,
