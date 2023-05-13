@@ -10,8 +10,11 @@
 
 .form{
     align-content: center;
-  
     text-align: center;
+}
+
+.offer-container {
+    width: 95%;
 }
 
 .container{
@@ -57,7 +60,7 @@
 
 .grant-container {
     text-align: right;
-    display: contents;
+    display: inline-block;
 }
 
 .form-check-label {

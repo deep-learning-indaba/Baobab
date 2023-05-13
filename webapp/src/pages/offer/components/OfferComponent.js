@@ -101,20 +101,20 @@ class Offer extends Component {
     const t = this.props.t;
 
     const eventName = event ? event.name : "";
-    const respondedDate = offer.responded_at !== undefined ? offer.responded_at.substring(0, 10) : "-date-";
+    const respondedDate = offer.responded_at ? offer.responded_at.substring(0, 10) : "-date-";
     const paymentAmount = offer.payment_amount;
     const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
       <div className="container">
-        <p className="h5 pt-5">
+        <p className="h5">
           {offer.candidate_response && <span>You accepted the following offer on {respondedDate}.</span>}
           {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
         </p>
 
-        {offer.candidate_response && <div className="white-background card form mt-5">
-          {this.row("Offer date", offer.offer_date !== undefined ? offer.offer_date.substring(0, 10) : "-date-")}
-          {this.row("Offer expiry date", offer.expiry_date !== undefined ? offer.expiry_date.substring(0, 10) : "-date-")}
+        {offer.candidate_response && <div className="white-background card form mt-5 offer-container">
+          {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
+          {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
           {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}}USD is required to confirm your place</Trans>: t("Fee Waived"))}
 
           {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
@@ -174,17 +174,22 @@ class Offer extends Component {
     const t = this.props.t;
 
     return <div class="row mb-3">
-      <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Grants")}</div>
-      {grant_tags ?
+      <div class="col-md-3 font-weight-bold pr-2 h4" align="left">{t("Grants")}</div>
+      {grant_tags.length > 0 ?
         <div>
-        <div class="col-md-12 pr-2" align="left">{t("We are pleased to offer you the following grants") + ":"}</div>
+          <div class="col-md-12 pr-2" align="left">
+            <div className="mb-5">{t("We are pleased to offer you the following grants") + ":"}</div>
+          </div>
           {grant_tags.map((grant_tag) => {
             return <div class="row mb-3" align="left" key={"grant_tag_"+grant_tag.id}>
-                      <div class="col-md-12" align="left">
-                        <span class="font-weight-bold">{grant_tag.name + ": "}</span>
+                      <div class="col-md-2">
+                        <span class="font-weight-bold">{grant_tag.name}</span>
+                        
+                      </div>
+                      <div class="col-md-8">
                         {grant_tag.description}
                       </div>
-                      <div class="col-md-12" align="center">
+                      <div class="col-md-2">
                         <div class="form-check grant-container">
                           <input type="checkbox" class="form-check-input"
                             checked={grant_tag.accepted}
@@ -199,6 +204,7 @@ class Offer extends Component {
         :
         <div class="row-mb-2 pr-2" align="center">{t("Unfortunately we are unable to award you any grants for this event")}</div>
       } 
+      <hr/>
     </div>
   }
 
@@ -217,21 +223,23 @@ class Offer extends Component {
           this.displayOfferResponse()
           :
           <div className="container">
-            <p className="h5 pt-5">
+            <p className="h5">
                 {t("We are pleased to offer you a place at") + " " + (this.props.event ? this.props.event.name : "") + ". "}
                 {t("Please see the details of this offer below") + "."}
             </p>
 
-            <form class="form pt-2 ">
+            <form class="form offer-container">
 
               <div className="white-background card form">
-                <p class="font-weight-bold">{t("Offer Details")}</p>
+                <p class="font-weight-bold h3">{t("Offer Details")}</p>
 
                 {this.props.event && grant_tags && this.renderGrants()}
 
-                <div class="row mb-3">
-                  <div class="col-md-3 font-weight-bold pr-2" align="left">{t("Registration Fee")}</div>
-                  <div class="col-md-6" align="left">
+                <div class="row">
+                  <div class="col-md-12 font-weight-bold pr-2 h4" align="left">{t("Registration Fee")}</div>
+                </div>
+                <div class="row mb-5">
+                  <div class="col-md-12" align="left">
                     {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}}USD registration fee.</Trans>}
                     {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
