@@ -323,7 +323,7 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
 
             included_sections = []
             for section in registration_form.registration_sections:
-                if ((section.show_for_tag_id is None or section.show_for_tag_id in [tag.id for tag in invited_guest.invited_guest_tags])
+                if ((section.show_for_tag_id is None or section.show_for_tag_id in [it.tag_id for it in invited_guest.invited_guest_tags])
                     and ((section.show_for_invited_guest is None) or section.show_for_invited_guest)):
                     included_sections.append(section)
 
