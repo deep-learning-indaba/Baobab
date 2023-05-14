@@ -488,7 +488,8 @@ class GuestRegistrationComponent extends Component {
                         <div
                           className="registration-question"
                           key={"question_" + question.id}>
-                          <h5 className="form-label">{question.headline}</h5>
+                          <h5 className="form-label">{question.is_required && <span className="required-indicator">*</span>} 
+                          {question.headline}</h5>
                           {this.formControl(
                             question.id,
                             question,
