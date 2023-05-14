@@ -270,8 +270,8 @@ class GuestRegistrationApi(restful.Resource):
 class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
     def _serialize_option(self, option):
         return {
-            'value': option.value,
-            'label': option.label
+            'value': option['value'],
+            'label': option['label']
         }
 
     def _serialize_question(self, question):

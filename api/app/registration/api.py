@@ -296,39 +296,43 @@ def registration_form_info(registration_form):
 
 class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
-    option_fields = {
-        'value': fields.String,
-        'label': fields.String
-    }
+    def _serialize_option(self, option):
+        return {
+            'value': option['value'],
+            'label': option['label']
+        }
 
-    registration_question_fields = {
-        'id': fields.Integer,
-        'description': fields.String,
-        'headline': fields.String,
-        'placeholder': fields.String,
-        'validation_regex': fields.String,
-        'validation_text': fields.String,
-        'depends_on_question_id': fields.String,
-        'hide_for_dependent_value': fields.String,
-        'type': fields.String,
-        'is_required': fields.Boolean,
-        'order': fields.Integer,
-        'options': fields.List(fields.Nested(option_fields))
-    }
+    def _serialize_question(self, question):
+        return {
+            'id': question.id,
+            'description': question.description,
+            'headline': question.headline,
+            'placeholder': question.placeholder,
+            'validation_regex': question.validation_regex,
+            'validation_text': question.validation_text,
+            'depends_on_question_id': question.depends_on_question_id,
+            'hide_for_dependent_value': question.hide_for_dependent_value,
+            'type': question.type,
+            'is_required': question.is_required,
+            'order': question.order,
+            'options': [] if not question.options else [self._serialize_option(option) for option in question.options]
+        }
 
-    registration_section_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'description': fields.String,
-        'order': fields.Integer,
-        'registration_questions': fields.List(fields.Nested(registration_question_fields))
-    }
+    def _serialize_section(self, section):
+        return {
+            'id': section.id,
+            'name': section.name,
+            'description': section.description,
+            'order': section.order,
+            'registration_questions': [self._serialize_question(question) for question in section.registration_questions]
+        }
 
-    registration_form_fields = {
-        'id':fields.Integer,
-        'event_id': fields.Integer,
-        'registration_sections': fields.List(fields.Nested(registration_section_fields), attribute='filtered_registration_sections')
-    }
+    def _serialize_registration_form(self, registration_form):
+        return {
+            'id': registration_form.id,
+            'event_id': registration_form.event_id,
+            'registration_sections': [self._serialize_section(section) for section in registration_form.filtered_registration_sections]
+        }
 
     @auth_required
     def get(self):
@@ -365,7 +369,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
 
             registration_form.filtered_registration_sections = included_sections
 
-            return marshal(registration_form, self.registration_form_fields), 200
+            return self._serialize_registration_form(registration_form), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
