@@ -2,7 +2,7 @@
 
 import React, { Component } from "react";
 import { withRouter } from "react-router";
-
+import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
@@ -470,7 +470,7 @@ class GuestRegistrationComponent extends Component {
                 <div class="card stretched" key={"section_" + section.id}>
                   <h3>{section.name}</h3>
                   <div className="padding-v-15 mb-4 text-left">
-                    {section.description}
+                    <MarkdownRenderer children={section.description}/>
                   </div>
 
                   {section.registration_questions
