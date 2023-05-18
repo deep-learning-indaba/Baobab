@@ -23,7 +23,8 @@ const roleOptions = [
   { value: "Dignitary", label: "Dignitary" },
   { value: "Indaba X", label: "Indaba X" },
   { value: "Sponsor", label: "Sponsor" },
-  { value: "Press", label: "Press" }
+  { value: "Press", label: "Press" },
+  { value: "Workshop Organiser", label: "Workshop Organiser" },
 ];
 
 function getRoles() {
