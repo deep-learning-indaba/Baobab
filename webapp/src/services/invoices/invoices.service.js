@@ -49,8 +49,6 @@ function initiatePayment(invoiceId) {
         invoice_id: invoiceId
     };
 
-    console.log("Data:", data);
-
     return axios
         .post(baseUrl + "/api/v1/payment", data, { headers: authHeader() })
         .then((response) => {

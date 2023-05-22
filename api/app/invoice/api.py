@@ -277,8 +277,7 @@ class PaymentsAPI(PaymentsMixin, restful.Resource):
         invoice_id = args['invoice_id']
 
         user_id = g.current_user["id"]
-        current_user = user_repository.get_by_id(user_id)
-        invoice = invoice_repository.get_one_for_customer(invoice_id, current_user.email)
+        invoice = invoice_repository.get_by_id(invoice_id)
 
         if not invoice:
             return INVOICE_NOT_FOUND
