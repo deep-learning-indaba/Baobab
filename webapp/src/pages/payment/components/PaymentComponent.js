@@ -26,8 +26,6 @@ class PaymentComponent extends Component {
     }
 
     initiatePayment = () => {
-        console.log("match params:", this.props.match.params);
-        console.log("invoiceId:", this.props.match.params.invoiceId);
         invoiceService.initiatePayment(this.props.match.params.invoiceId)
             .then(response => {
                 this.setState({
