@@ -11,6 +11,12 @@ from app.users.models import AppUser
 
 class Response(db.Model):
     __tablename__ = "response"
+    
+    __table_args__ = (
+        db.ForeignKeyConstraint(['application_form_id'], ['application_form.id'], name='fk_response_application_form_id'),
+        db.ForeignKeyConstraint(['user_id'], ['app_user.id'], name='fk_response_user_id'),
+        db.ForeignKeyConstraint(['parent_id'], ['response.id'], name='fk_response_parent_id')
+    )
 
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey("application_form.id"), nullable=False)
