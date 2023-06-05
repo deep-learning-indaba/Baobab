@@ -261,17 +261,8 @@ class CheckIfInvitedGuest(InvitedGuestListMixin, restful.Resource):
         event_id = args['event_id']
         current_user_id = g.current_user['id']
 
-        print("event_id: ", event_id)
-        print("current_user_id: ", current_user_id)
-
         existing_invited_guest = db.session.query(InvitedGuest).filter(
             InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == current_user_id).first()
-
-        print("existing_invited_guest: ", existing_invited_guest)
-
-        all_invited_guests = db.session.query(InvitedGuest).all()
-        for invited_guest in all_invited_guests:
-            print("invited_guest: ", invited_guest.user_id)
 
         try:
             if existing_invited_guest is None:

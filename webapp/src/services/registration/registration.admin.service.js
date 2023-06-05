@@ -8,9 +8,9 @@ export const registrationAdminService = {
   confirm
 };
 
-function getUnconfirmed(eventId) {
+function getUnconfirmed(eventId, includeGuests) {
   return axios
-    .get(baseUrl + "/api/v1/registration/unconfirmed?event_id=" + eventId, {
+    .get(baseUrl + `/api/v1/registration/unconfirmed?event_id=${eventId}&include_guests=${includeGuests}`, {
       headers: authHeader()
     })
     .then(function(response) {
