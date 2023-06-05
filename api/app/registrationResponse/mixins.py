@@ -7,6 +7,8 @@ class RegistrationAdminMixin(object):
     req_parser.add_argument('event_id', type=int, required=True)
     req_parser.add_argument('exclude_already_signed_in',
                             type=inputs.boolean, required=False)
+    req_parser.add_argument('include_guests',
+                            type=inputs.boolean, required=False)
 
 
 class RegistrationConfirmMixin(object):

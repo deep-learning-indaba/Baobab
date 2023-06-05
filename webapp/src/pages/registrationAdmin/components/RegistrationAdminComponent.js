@@ -23,7 +23,7 @@ class RegistrationAdminComponent extends Component {
   }
 
   getUnconfirmed = () => {
-    registrationAdminService.getUnconfirmed(this.props.event ? this.props.event.id : 0).then(response => {
+    registrationAdminService.getUnconfirmed(this.props.event ? this.props.event.id : 0, false).then(response => {
       this.setState({
         unconfirmedList: response.data,
         error: response.error,
