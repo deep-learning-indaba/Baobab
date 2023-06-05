@@ -326,7 +326,7 @@ registration_admin_fields = {
 }
 
 
-def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=False):
+def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=False, include_guests=True):
     try:
         current_user = UserRepository.get_by_id(user_id)
         if not current_user.is_registration_volunteer(event_id):
@@ -347,9 +347,12 @@ def _get_registrations(event_id, user_id, confirmed, exclude_already_signed_in=F
                 event_id)
 
         registrations = [map_registration_info(info) for info in registrations]
-        guest_registrations = [map_registration_info_guests(
-            info) for info in guest_registration]
-        all_registrations = registrations + guest_registrations
+        if include_guests:
+            guest_registrations = [map_registration_info_guests(
+                info) for info in guest_registration]
+            all_registrations = registrations + guest_registrations
+        else:
+            all_registrations = registrations
         # remove duplicates  
         all_registrations_no_duplicates = list()
         for name, group in itertools.groupby(sorted(all_registrations, key=lambda d : d['user_id']), key=lambda d : d['user_id']):
@@ -368,8 +371,9 @@ class RegistrationUnconfirmedAPI(RegistrationAdminMixin, restful.Resource):
         args = self.req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
+        include_guests = args['include_guests']
 
-        return _get_registrations(event_id, user_id, confirmed=False)
+        return _get_registrations(event_id, user_id, confirmed=False, include_guests=include_guests)
 
 
 class RegistrationConfirmedAPI(RegistrationAdminMixin, restful.Resource):
