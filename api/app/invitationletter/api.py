@@ -173,7 +173,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             if bringing_question is not None:
                 answer = find_registration_answer(is_guest_registration, bringing_question.id, user_id, event_id)
                 if answer is not None and answer.value == 'yes':
-                    text = "The participant will be presenting a poster of their research"
+                    text = description
                     if title_question is not None:
                         title_answer = find_registration_answer(is_guest_registration, title_question.id, user_id, event_id)
                         if title_answer is not None and len(title_answer.value) > 0:
@@ -187,19 +187,19 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         bringing_poster = make_presenting_text(
             "Would you like to present a poster session during the Africa Research Days?",
             "What is the provisional title of your poster?",
-            "The participant will be presenting a poster of their research")
+            f"{user.firstname} will be presenting a poster of their research")
 
         if not bringing_poster:
             bringing_poster = make_presenting_text(
                 "Do you have an African Dataset that you would like to showcase during the African Datasets Session?",
                 "What is the provisional title of your dataset?",
-                "The participant will be presenting an African dataset")
+                f"{user.firstname} will be presenting an African dataset")
         
         if not bringing_poster:
             bringing_poster = make_presenting_text(
                 "Would you like to show a demo of something you are working on?",
                 "What is the provisional title of your demo?",
-                "The participant will be showcasing a demo of their work")
+                f"{user.firstname} will be showcasing a demo of their work")
         
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
