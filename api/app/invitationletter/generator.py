@@ -76,14 +76,14 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     template = 'app/invitationletter/template/tmp.docx'
     template_merged = 'app/invitationletter/template/template.docx'
 
-    download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
-                  destination_file_name=template)
+    # download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
+    #               destination_file_name=template)
 
     if not os.path.exists(template):
         return errors.TEMPLATE_NOT_FOUND
 
     document = MailMerge(template)
-    LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
+
     document.merge(
         TITLE=user_title,
         FIRSTNAME=firstname,

@@ -45,6 +45,11 @@ def find_registration_answer(is_guest_registration: bool, registration_question_
     return answer
 
 
+def find_registration_question_by_headline(headline: str, registration_form_id: int):
+    return (db.session.query(RegistrationQuestion)
+            .filter_by(headline=headline, registration_form_id=registration_form_id)
+            .first())
+
 class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
     @auth_required
@@ -135,19 +140,16 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             LOGGER.error('Failed to add invitation letter request for user id {} due to: {}'.format(user_id, e))
             return errors.ADD_INVITATION_REQUEST_FAILED
 
-        if (is_guest_registration and invited_guest is not None and invited_guest.role == "Indaba X"):
-            LOGGER.info("Generating invitation letter for IndabaX Guest")
-            accommodation = True
-            travel = True
-        elif is_guest_registration:
-            LOGGER.info("Generating invitation letter for Invited Guest")
-            accommodation = False
-            travel = False
-        elif offer is not None:
-            # TODO: Base on tags
-            accommodation = offer.accepted_accommodation_award
-            travel = offer.accepted_travel_award
-            LOGGER.info(f"Generating invitation letter for General attendee with accommodation: {accommodation}, Travel: {travel}")
+        # Look for travel and accommodation tags
+        if is_guest_registration and invited_guest is not None:
+            tags = [t.tag.get_translation('en').name for t in invited_guest.invited_guest_tags]
+        else:
+            tags = [t.tag.get_translation('en').name for t in offer.offer_tags if t.accepted]
+
+        accommodation = 'Accommodation' in tags
+        travel = 'Travel' in tags
+
+        LOGGER.info(f"Generating invitation letter for {passport_name} with accommodation: {accommodation}, Travel: {travel}")
         
         invitation_template = (
             db.session.query(InvitationTemplate)
@@ -163,30 +165,42 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
         user = db.session.query(AppUser).filter(AppUser.id==user_id).first()
 
+        def make_presenting_text(bringing_question_headline: str, title_question_headline: str, description: str) -> str:
+            text = ""
+            bringing_question = find_registration_question_by_headline(bringing_question_headline, registration_form.id)
+            title_question = find_registration_question_by_headline(title_question_headline, registration_form.id)
+            
+            if bringing_question is not None:
+                answer = find_registration_answer(is_guest_registration, bringing_question.id, user_id, event_id)
+                if answer is not None and answer.value == 'yes':
+                    text = "The participant will be presenting a poster of their research"
+                    if title_question is not None:
+                        title_answer = find_registration_answer(is_guest_registration, title_question.id, user_id, event_id)
+                        if title_answer is not None and len(title_answer.value) > 0:
+                            text += f' titled "{title_answer.value}"'
+                    
+                    text += "."
+
+            return text
+
         # Poster registration
-        bringing_poster = ""
-        poster_registration_question = (db.session.query(RegistrationQuestion)
-                .filter_by(
-                    headline="Will you be bringing a poster?",
-                    registration_form_id=registration_form.id
-                ).first())
-        poster_title_question = (db.session.query(RegistrationQuestion)
-                .filter_by(
-                    headline="What is the provisional title of your poster?",
-                    registration_form_id=registration_form.id
-                ).first())
-        if poster_registration_question is not None:
-            poster_answer = find_registration_answer(is_guest_registration, poster_registration_question.id, user_id, event_id)
-            if poster_answer is not None and poster_answer.value == 'yes':
-                bringing_poster = "The participant will be presenting a poster of their research"
-                if poster_title_question is not None:
-                    poster_title_answer = find_registration_answer(is_guest_registration, poster_title_question.id, user_id, event_id)
-                    if poster_title_answer is not None and len(poster_title_answer.value) > 0:
-                        bringing_poster += f' titled "{poster_title_answer.value}"'
-                
-                bringing_poster += "."
+        bringing_poster = make_presenting_text(
+            "Would you like to present a poster session during the Africa Research Days?",
+            "What is the provisional title of your poster?",
+            "The participant will be presenting a poster of their research")
+
+        if not bringing_poster:
+            bringing_poster = make_presenting_text(
+                "Do you have an African Dataset that you would like to showcase during the African Datasets Session?",
+                "What is the provisional title of your dataset?",
+                "The participant will be presenting an African dataset")
         
-        LOGGER.info(f"Bringing poster: {bringing_poster}")
+        if not bringing_poster:
+            bringing_poster = make_presenting_text(
+                "Would you like to show a demo of something you are working on?",
+                "What is the provisional title of your demo?",
+                "The participant will be showcasing a demo of their work")
+        
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
         is_sent = generate(template_path=template_url,
@@ -222,4 +236,3 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             LOGGER.error(
                 "Failed to add invitation request for user with email: {} due to {}".format(user.email, e))
             return errors.ADD_INVITATION_REQUEST_FAILED
-
