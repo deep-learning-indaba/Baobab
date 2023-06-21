@@ -140,10 +140,10 @@ The terms and conditions are specified on our website and may be subject to chan
 
 Please note that breakfast and lunches are provided but dinner is not, although evening events may have snacks available.
 
-Please follow this link to see details and accept your offer: {host}/offer
+Please follow this link to see details and accept your offer: {host}/indabax2023/offer
 You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
 
-If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
+If you are unable to accept the offer for any reason, please do let us know by visiting {host}/indabax2023/offer, clicking "Reject" and filling in the reason. 
 We will read all of these and if there is anything we can do to accommodate you, we may extend you a new offer in a subsequent round.
 
 If you have any queries, please contact us at {event_email_from}
@@ -158,10 +158,10 @@ Congratulations! You've been selected for {event_name}!
 
 Please note that breakfast and lunches are provided but dinner is not, although evening events may have snacks available.
 
-Please follow the link below to see details and accept your offer: {host}/offer
+Please follow the link below to see details and accept your offer: {host}/indabax2023/offer
 You have up until {expiry_date} to accept the offer, otherwise we will automatically allocate your spot to someone else.
 
-If you are unable to accept the offer for any reason, please do let us know by visiting {host}/offer, clicking "Reject" and filling in the reason. 
+If you are unable to accept the offer for any reason, please do let us know by visiting {host}/indabax2023/offer, clicking "Reject" and filling in the reason. 
 We will read all of these and if there is anything we can do to accommodate you, we may extend you a new offer in a subsequent round.
 
 If you have any queries, please contact us at {event_email_from}
@@ -170,10 +170,10 @@ Kind Regards,
 The {event_name} organisers
 """
     
-    offer_award_template = EmailTemplate('offer-award', event.id, "{event_name} Application Status Update", offer_award_content, 'en')
+    offer_grants_template = EmailTemplate('offer-grants', event.id, "{event_name} Application Status Update", offer_award_content, 'en')
     offer_template = EmailTemplate('offer', event.id, "{event_name} Application Status Update", offer_content, 'en')
 
-    session.add_all([offer_award_template, offer_template])
+    session.add_all([offer_grants_template, offer_template])
     session.commit()
 
 
@@ -183,5 +183,5 @@ def downgrade():
     event = session.query(Event).filter_by(key='indabax2023').first()
 
     op.execute(f"""DELETE FROM email_template where event_id={event.id} AND language='en' AND key='offer'""")
-    op.execute(f"""DELETE FROM email_template where event_id={event.id} AND language='en' AND key='offer-award'""")
+    op.execute(f"""DELETE FROM email_template where event_id={event.id} AND language='en' AND key='offer-grants'""")
 
