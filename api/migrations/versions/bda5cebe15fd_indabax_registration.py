@@ -526,7 +526,7 @@ For details of expected conduct, unacceptable behaviour, how to report an incide
         travel_tag_transaction = TagTranslation(
             tag_id=travel_tag.id,
             language='en',
-            name='Travel'
+            name='Travel',
             description="For financial and logistic flexibility of travel arrangements, we are directly paying the amount specified below to your bank account entered in the registration form. This may take up to 10 working days to process, so confirm quickly. We realise this may not be the amount you wished, yet we hope it is enough to cover a large, if not full, portion of travelling to the event. By accepting this grant, you agree to the terms and conditions: https://indabax.co.za/register/travel-grants/"
         )
         session.add(travel_tag_transaction)
