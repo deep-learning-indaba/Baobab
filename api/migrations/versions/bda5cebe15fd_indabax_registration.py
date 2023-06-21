@@ -328,7 +328,7 @@ Data usage: We will use the information you provide in this form for registratio
         "",
         2,
         "multi-choice",
-        description="""Posters are a great way to learn, share, and get feedback on your work. The project does not have to be "done", in fact, it's probably more beneficial that your poster is on a work-in-progress project for something that you would like expert advice on. Take the opportunity.""" ,
+        description="""Posters are a great way to learn, share, and get feedback on your work. The project does not have to be "done", in fact, it's probably more beneficial that your poster is on a work-in-progress project for something that you would like advice on.""" ,
         options=[
             {"value": "Yes", "label": "Yes"},
             {"value": "No", "label": "No"},
