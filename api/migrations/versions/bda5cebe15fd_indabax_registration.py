@@ -77,13 +77,6 @@ class Event(Base):
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
 
-    organisation = db.relationship('Organisation', foreign_keys=[organisation_id])
-    application_forms = db.relationship('ApplicationForm')
-    email_templates = db.relationship('EmailTemplate')
-    event_roles = db.relationship('EventRole')
-    event_translations = db.relationship('EventTranslation', lazy='dynamic')
-    event_fees = db.relationship('EventFee')
-
     def __init__(
         self,
         names,
