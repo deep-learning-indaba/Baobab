@@ -10,6 +10,7 @@ Create Date: 2023-06-19 19:39:30.784502
 revision = 'bda5cebe15fd'
 down_revision = '627a96dad7e8'
 
+from datetime import datetime
 from enum import Enum
 
 from alembic import op
@@ -20,6 +21,28 @@ from app import db
 
 Base = declarative_base()
 
+class Organisation(Base):
+
+    __tablename__ = "organisation"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    system_name = db.Column(db.String(50), nullable=False)
+    small_logo = db.Column(db.String(100), nullable=False)
+    large_logo = db.Column(db.String(100), nullable=False)
+    icon_logo = db.Column(db.String(100), nullable=False)
+    domain = db.Column(db.String(100), nullable=False)
+    url = db.Column(db.String(100), nullable=False)
+    email_from = db.Column(db.String(100), nullable=True)
+    system_url = db.Column(db.String(100), nullable=False)
+    privacy_policy = db.Column(db.String(100), nullable=False)
+    languages = db.Column(db.JSON(), nullable=False)
+    iso_currency_code = db.Column(db.String(3), nullable=True)
+    stripe_api_publishable_key = db.Column(db.String(200), nullable=True)
+    stripe_api_secret_key = db.Column(db.String(200), nullable=True)
+    stripe_webhook_secret_key = db.Column(db.String(200), nullable=True)
+    
 class EventType(Enum):
     EVENT = 'event'
     AWARD = 'award'
@@ -244,7 +267,34 @@ def get_country_list(session):
 def upgrade():
     Base.metadata.bind = op.get_bind()
     session = orm.Session(bind=Base.metadata.bind)
+
     event = session.query(Event).filter_by(key='indabax2023').first()
+    if not event:
+        org = session.query(Organisation).filter_by(domain='indabax').first()
+        event = Event(
+            None,
+            None,
+            datetime(2023, 7, 12),
+            datetime(2023, 7, 14),
+            'indabax2023',
+            org.id,
+            'info@indabax.co.za',
+            'https://indabax.co.za',
+            datetime(2023, 5, 22),
+            datetime(2023, 6, 12),
+            datetime(2023, 6, 10),
+            datetime(2023, 6, 18),
+            datetime(2023, 6, 15),
+            datetime(2023, 6, 20),
+            datetime(2023, 6, 16),
+            datetime(2023, 7, 23),
+            datetime(2023, 6, 16),
+            datetime(2023, 7, 12),
+            EventType.EVENT,
+            True
+        )
+        session.add(event)
+        session.commit()
 
     form = RegistrationForm(event.id)
     session.add(form)
