@@ -51,7 +51,7 @@ class EventType(Enum):
     JOURNAL = 'journal'
     CONTINUOUS_JOURNAL = 'continuous_journal'
 
-class Event(db.Model):
+class Event(Base):
 
     __tablename__ = "event"
     __table_args__ = {'extend_existing': True}
