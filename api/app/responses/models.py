@@ -13,6 +13,8 @@ class Response(db.Model):
     __tablename__ = "response"
 
     id = db.Column(db.Integer(), primary_key=True)
+    submission_id = db.Column(db.Integer(), nullable=False)
+    version_id = db.Column(db.Integer(), nullable=False)
     application_form_id = db.Column(db.Integer(), db.ForeignKey("application_form.id"), nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
     is_submitted = db.Column(db.Boolean(), nullable=False)
@@ -29,9 +31,11 @@ class Response(db.Model):
     response_tags = db.relationship('ResponseTag')
     reviewers = db.relationship('ResponseReviewer')
 
-    def __init__(self, application_form_id, user_id, language):
+    def __init__(self, application_form_id, user_id, submission_id, version_id, language):
         self.application_form_id = application_form_id
         self.user_id = user_id
+        self.submission_id = submission_id
+        self.version_id = version_id
         self.is_submitted = False
         self.submitted_timestamp = None
         self.is_withdrawn = False

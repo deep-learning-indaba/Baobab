@@ -88,7 +88,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         if not application_form.nominations and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED
 
-        response = Response(application_form_id, user_id, language)
+        response = Response(application_form_id, user_id, len(responses) + 1 , 1, language)
         if is_submitted:
             response.submit()
             
