@@ -47,7 +47,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'started_timestamp': fields.DateTime(dt_format='iso8601'),
         'answers': fields.List(fields.Nested(answer_fields)),
         'language': fields.String,
-        'parent_id': fields.Integer
+        'parent_id': fields.Integer(default=None)
     }
 
     @auth_required
