@@ -83,7 +83,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         return errors.TEMPLATE_NOT_FOUND
 
     document = MailMerge(template)
-    LOGGER.debug("merge-fields.... {} .".format(document.get_merge_fields()))
+
     document.merge(
         TITLE=user_title,
         FIRSTNAME=firstname,

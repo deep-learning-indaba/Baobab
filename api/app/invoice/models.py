@@ -174,6 +174,7 @@ class OfferInvoice(db.Model):
 
     offer = db.relationship('Offer', foreign_keys=[offer_id])
     invoice = db.relationship('Invoice', foreign_keys=[invoice_id])
+
 class StripeWebhookEvent(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('idempotency_key', name='uq_stripe_webhook_events_idempotency_key')])
 
