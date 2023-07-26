@@ -93,15 +93,14 @@ class ReviewQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     review_section_id = db.Column(db.Integer(), db.ForeignKey('review_section.id'), nullable=False)
     question_id = db.Column(db.Integer(), db.ForeignKey('question.id'), nullable=True)
-
     type = db.Column(db.String(), nullable=False)
-
     is_required = db.Column(db.Boolean(), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
     weight = db.Column(db.Float(), nullable=False)
+    private = db.Column(db.Boolean(), nullable=True)
+
     review_section = db.relationship('ReviewSection', foreign_keys=[review_section_id])
     question = db.relationship('Question', foreign_keys=[question_id])
-
     translations = db.relationship('ReviewQuestionTranslation', lazy='dynamic')
 
     def __init__(self,
@@ -110,13 +109,15 @@ class ReviewQuestion(db.Model):
                  type,
                  is_required,
                  order,
-                 weight):
+                 weight,
+                 private):
         self.review_section_id = review_section_id
         self.question_id = question_id
         self.type = type
         self.is_required = is_required
         self.order = order
         self.weight = weight
+        self.private = private
 
     def get_translation(self, language):
         translation = self.translations.filter_by(language=language).first()

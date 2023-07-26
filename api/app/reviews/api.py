@@ -1007,7 +1007,9 @@ class ReviewFormDetailAPI(restful.Resource):
                     type=question_data['type'],
                     is_required=question_data['is_required'],
                     order=question_data['order'],
-                    weight=question_data['weight'])
+                    weight=question_data['weight'],
+                    # private=question_data['private'])
+                    private=None)
                 
                 review_repository.add_model(question)
 
@@ -1134,7 +1136,9 @@ class ReviewFormDetailAPI(restful.Resource):
                         type=question_data["type"],
                         is_required=question_data["is_required"],
                         order=question_data["order"],
-                        weight=question_data["weight"])
+                        weight=question_data["weight"],
+                        # private=question_data['private'])
+                        private=None)
 
                     review_repository.add_model(question)
 
