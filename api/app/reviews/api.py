@@ -958,6 +958,7 @@ class ReviewFormDetailAPI(restful.Resource):
         req_parser.add_argument('deadline', type=dt_format, required=True)
         req_parser.add_argument('active', type=bool, required=True)
         req_parser.add_argument('sections', type=dict, required=True, action='append')
+        # req_parser.add_argument('reviewer_type', type=dict, required=True, action='append')
         args = req_parser.parse_args()
 
         application_form_id = args['application_form_id']
@@ -966,6 +967,7 @@ class ReviewFormDetailAPI(restful.Resource):
         deadline = args['deadline']
         active = args['active']
         sections_data = args['sections']
+        # reviewer_type = args['reviewer_type']
 
         review_form = review_repository.get_review_form(event_id, stage)
         if review_form is not None:
@@ -978,8 +980,11 @@ class ReviewFormDetailAPI(restful.Resource):
             deadline, 
             stage, 
             # Only make this stage active if there is no other active stage.
-            active=not any(o.active for o in other_review_forms))
-        
+            active=not any(o.active for o in other_review_forms),
+            reviewer_type="Reviewer")
+            # reviewer_type="Meta-reviewer")
+            # reviewer_type=reviewer_type)
+
         review_repository.add_model(review_form)
 
         for section_data in sections_data:
