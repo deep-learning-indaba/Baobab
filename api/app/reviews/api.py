@@ -981,7 +981,7 @@ class ReviewFormDetailAPI(restful.Resource):
             stage, 
             # Only make this stage active if there is no other active stage.
             active=not any(o.active for o in other_review_forms),
-            reviewer_type="Reviewer")
+            reviewer_type=None)
             # reviewer_type="Meta-reviewer")
             # reviewer_type=reviewer_type)
 
