@@ -388,14 +388,14 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
         scores = args['scores']
         language = args['language']
         is_submitted = args['is_submitted']
-        # is_private = args['is_private']
+        is_private = args['is_private']
 
         response_reviewer = review_repository.get_response_reviewer(response_id, reviewer_user_id)
         if response_reviewer is None:
             return FORBIDDEN
 
-        # review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language, is_private)
-        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, language, True)
+        review_response = ReviewResponse(review_form_id, reviewer_user_id, response_id, 
+                                         language, is_private)
         review_response.review_scores = self.get_review_scores(scores)
         if is_submitted:
             review_response.submit()

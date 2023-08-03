@@ -18,6 +18,7 @@ class PostReviewResponseMixin(object):
     post_req_parser.add_argument('scores', type=dict, required=True, action='append')
     post_req_parser.add_argument('language', type=str, required=True)
     post_req_parser.add_argument('is_submitted', type=bool, required=True)
+    post_req_parser.add_argument('is_private', type=bool, required=True)
 
 class GetReviewAssignmentMixin(object):
     get_req_parser = reqparse.RequestParser()

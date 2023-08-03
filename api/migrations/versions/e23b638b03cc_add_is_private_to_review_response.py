@@ -17,7 +17,9 @@ from alembic import op
 import sqlalchemy as sa
 
 def upgrade():
-    op.add_column('review_response', sa.Column('is_private', sa.Boolean(), nullable=False))
+    op.add_column('review_response', sa.Column('is_private', sa.Boolean(), nullable=True))
+    op.execute("UPDATE review_response SET is_private = false")
+    op.alter_column('review_response', 'is_private', nullable=False)
 
 def downgrade():
     op.drop_column('review_response', 'is_private')
