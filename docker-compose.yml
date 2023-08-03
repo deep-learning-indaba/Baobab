@@ -39,7 +39,7 @@ services:
       GCP_PRIVATE_KEY: dummy
       GCP_PROJECT_NAME: __filler__
       GCP_BUCKET_NAME: __filler__
-      FILE_SIZE_LIMIT: 10485760
+      FILE_SIZE_LIMIT: 52428800
       BOABAB_HOST: http://localhost:8080
 
   webapp:
