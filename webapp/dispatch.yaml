@@ -28,3 +28,6 @@ dispatch:
   
   - url: "apply.indabax.co.za/*"
     service: prod-frontend
+
+  - url: "submit.jaisd.org/*"
+    service: prod-frontend
