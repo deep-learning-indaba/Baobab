@@ -87,8 +87,7 @@ class EventNav extends Component {
               </li>
             )}
             {this.props.user &&
-              this.props.event &&
-              this.props.event.is_registration_open && (
+               (
                 <li className="nav-item dropdown ">
                   <div
                     className="nav-link dropdown-toggle"
@@ -101,13 +100,14 @@ class EventNav extends Component {
                     {t('Registration')}
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
+                    {this.props.event && this.props.event.is_registration_open && (
                     <NavLink
                       to={`/${this.props.eventKey}/registration`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
                       {t('Registration Form')}
-                    </NavLink>
+                    </NavLink>)}
                     <NavLink
                       to={`/${this.props.eventKey}/invitationLetter`}
                       className="dropdown-item"
@@ -115,13 +115,13 @@ class EventNav extends Component {
                     >
                       {t('Invitation Letter')}
                     </NavLink>
-                    {/*<NavLink
+                    <NavLink
                       to={`/${this.props.eventKey}/indemnity`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
                       {t('Indemnity Form')}
-                    </NavLink> */}
+                    </NavLink>
                     {/* <NavLink
                       to={`/${this.props.eventKey}/invoices`}
                       className="dropdown-item"
