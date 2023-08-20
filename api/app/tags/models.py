@@ -5,6 +5,7 @@ class TagType(Enum):
     RESPONSE = 'response'
     REGISTRATION = 'registration'
     GRANT = 'grant'
+    QUESTION = 'question'
 
 class Tag(db.Model):
     __tablename__ = 'tag'
