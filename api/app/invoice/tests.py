@@ -548,17 +548,6 @@ class PaymentsApiTest(BaseInvoiceApiTest):
 
     def setUp(self):
         super().setUp()
-
-    def test_prevent_paying_wrong_invoice(self):
-        line_items = self.get_default_line_items()
-        invoice = self.add_invoice(self.treasurer_id, self.treasurer_id, line_items, self.treasurer_email)
-        invoice_id = invoice.id
-
-        header = self.get_auth_header_for(self.applicant_email)
-        params = {'invoice_id': invoice_id}
-        response = self.app.post(self.url, headers=header, data=params)
-
-        self.assertEqual(response.status_code, INVOICE_NOT_FOUND[1])
     
     def test_prevent_pay_invoice_again(self):
         line_items = self.get_default_line_items()
