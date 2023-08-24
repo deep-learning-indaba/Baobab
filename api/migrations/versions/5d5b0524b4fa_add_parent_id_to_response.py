@@ -1,13 +1,13 @@
 """
 Revision ID: 5d5b0524b4fa
-Revises: 627a96dad7e8
+Revises: 0edb89e87e72
 Create Date: 2023-05-27 07:46:16.735763
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '5d5b0524b4fa'
-down_revision = '627a96dad7e8'
+down_revision = '0edb89e87e72'
 
 from alembic import op
 import sqlalchemy as sa
