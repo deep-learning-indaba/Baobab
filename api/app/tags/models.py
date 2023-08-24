@@ -1,5 +1,6 @@
 from app import db
 from enum import Enum
+from app import LOGGER
 
 class TagType(Enum):
     RESPONSE = 'response'
@@ -33,6 +34,20 @@ class Tag(db.Model):
     def get_translation(self, language):
         translation = self.translations.filter_by(language=language).first()
         return translation
+
+    def stringify_tag_name_description(self, language='en'):
+        translation = self.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, self.tag.id))
+            translation = self.tag.get_translation('en')
+        return '{}: {}'.format(translation.name, translation.description)
+
+    def stringify_tag_name(self, language='en'):
+        translation = self.get_translation(language)
+        if translation is None:
+            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, self.tag.id))
+            translation = self.tag.get_translation('en')
+        return '{}'.format(translation.name)
 
 class TagTranslation(db.Model):
     __tablename__ = 'tag_translation'

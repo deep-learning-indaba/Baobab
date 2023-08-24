@@ -109,22 +109,6 @@ class TagAPI(restful.Resource):
         tag_repository.commit()
 
         return _serialize_tag_detail(tag), 200
-
-    @staticmethod
-    def _stringify_tag_name_description(tag, language='en'):
-        translation = tag.get_translation(language)
-        if translation is None:
-            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-            translation = tag.get_translation('en')
-        return '{}: {}'.format(translation.name, translation.description)
-
-    @staticmethod
-    def _stringify_tag_name(tag, language='en'):
-        translation = tag.get_translation(language)
-        if translation is None:
-            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
-            translation = tag.get_translation('en')
-        return '{}'.format(translation.name)
     
 class TagListAPI(restful.Resource):
     @event_admin_required

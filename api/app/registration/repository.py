@@ -115,7 +115,7 @@ class RegistrationFormRepository():
 
     @staticmethod
     def get_registration_questions_with_tags(event_id):
-        """Get all questions with active tags in a registration."""
+        """Get all questions with active tags in a registration form."""
         return db.session.query(RegistrationQuestion).join(
                 RegistrationForm, RegistrationQuestion.registration_form_id == RegistrationForm.id).filter(
                     RegistrationForm.event_id == event_id).filter(

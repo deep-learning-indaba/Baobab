@@ -19,7 +19,6 @@ from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND,
 from app.registration.models import Offer, OfferTag
 from app.registration.models import get_registration_answer_by_question_id
 from app.invitedGuest.models import InvitedGuest
-from app.tags.api import TagAPI
 
 attendance_fields = {
     'id': fields.Integer,
@@ -110,25 +109,22 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             invitedguest_role = "General Attendee"
             is_invited_guest = False
         
-        # collate all tags belonging to user into a list of (tag_id, tag_name, answer) tuples 
+        # collate all tags belonging to user
         # first, get all tags from registration questions
         registration_metadata = []
         questions_with_tags = registration_form_repository.get_registration_questions_with_tags(event_id)
         for question in questions_with_tags:
             for question_tag in question.tags:
                 answer = _get_registration_answer(user_id, event_id, question.id, is_invited_guest)
-                registration_metadata.append({"name": TagAPI._stringify_tag_name(question_tag.tag), "response": answer})
+                registration_metadata.append({"name": question_tag.tag.stringify_tag_name(), "response": answer})
         print(registration_metadata)
 
         # second, get all tags from offers
         offer_metadata = []
-        offer = db.session.query(Offer).filter(
-            Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
+        offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
         if offer:
-            offer_tags = db.session.query(OfferTag).filter(
-                OfferTag.offer_id == offer.id).all()
-            for offer_tag in offer_tags:
-                offer_metadata.append({"name": TagAPI._stringify_tag_name(offer_tag.tag)})    
+            for offer_tag in offer.offer_tags:
+                offer_metadata.append({"name": offer_tag.tag.stringify_tag_name()})    
         print(offer_metadata)
 
         attendance_user = AttendanceUser(user, attendance, is_invitedguest=is_invited_guest, 
