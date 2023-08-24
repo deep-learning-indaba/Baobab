@@ -420,7 +420,7 @@ class ApiTestCase(unittest.TestCase):
         return answer
 
     def add_review_response(self, reviewer_user_id, response_id, review_form_id=1, language='en', is_submitted=False):
-        rr = ReviewResponse(review_form_id, reviewer_user_id, response_id, language)
+        rr = ReviewResponse(review_form_id, reviewer_user_id, response_id, language, False)
         if is_submitted:
             rr.submit()
         db.session.add(rr)
