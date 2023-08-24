@@ -10,14 +10,16 @@ from app.registration.repository import OfferRepository as offer_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.registrationResponse.repository import RegistrationRepository as registration_response_repository
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
+from app.registration.repository import RegistrationFormRepository as registration_form_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
-from app.registration.models import Offer
-from app.registration.models import get_registration_answer_based_headline
+from app.registration.models import Offer, OfferTag
+from app.registration.models import get_registration_answer_by_question_id
 from app.invitedGuest.models import InvitedGuest
+from app.tags.api import TagAPI
 
 attendance_fields = {
     'id': fields.Integer,
@@ -27,13 +29,17 @@ attendance_fields = {
     'timestamp': fields.DateTime('iso8601'),
     'signed_indemnity_form': fields.Boolean,
     'updated_by_user_id': fields.Integer,
-    'accommodation_award': fields.Boolean,
-    'shirt_size': fields.String,
     'is_invitedguest': fields.Boolean,
-    'bringing_poster': fields.Boolean,
     'message': fields.String,
     'invitedguest_role': fields.String,
-    'confirmed': fields.Boolean
+    'confirmed': fields.Boolean,
+    'registration_metadata': fields.List(fields.Nested({
+        'name': fields.String,
+        'response': fields.String
+    })),
+    'offer_metadata': fields.List(fields.Nested({
+        'name': fields.String
+    }))
 }
 
 _attendee_fields = {
@@ -46,7 +52,7 @@ _attendee_fields = {
 
 
 class AttendanceUser():
-    def __init__(self, user, attendance, accommodation_award, shirt_size, is_invitedguest, bringing_poster, invitedguest_role, confirmed):
+    def __init__(self, user, attendance, is_invitedguest, invitedguest_role, confirmed, registration_metadata, offer_metadata):
         self.id = attendance.id if attendance is not None else None
         self.fullname = user.full_name  
         self.event_id = attendance.event_id if attendance is not None else None
@@ -54,25 +60,19 @@ class AttendanceUser():
         self.timestamp = attendance.timestamp if attendance is not None else None
         self.signed_indemnity_form = attendance.indemnity_signed if attendance is not None else None
         self.updated_by_user_id = attendance.updated_by_user_id if attendance is not None else None
-        self.accommodation_award = accommodation_award
-        self.shirt_size = shirt_size
         self.is_invitedguest = is_invitedguest
-        self.bringing_poster = bringing_poster
         self.invitedguest_role = invitedguest_role
         self.confirmed = confirmed
+        self.registration_metadata = registration_metadata
+        self.offer_metadata = offer_metadata
 
-
-def _get_registration_answer(user_id, event_id, headline, is_invited_guest):
+def _get_registration_answer(user_id, event_id, question_id, is_invited_guest):
     if is_invited_guest:
-        answer = guest_registration_repository.get_guest_registration_answer_by_headline(user_id, event_id, headline)
+        answer = guest_registration_repository.get_guest_registration_answer_by_question_id(user_id, event_id, question_id)
     else:
-        answer = get_registration_answer_based_headline(user_id, event_id, headline)
+        answer = get_registration_answer_by_question_id(user_id, event_id, question_id)
     
-    if answer is None:
-        return None
-    else:
-        return answer.value
-
+    return answer.value if answer else "Unanswered"
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
 
@@ -97,16 +97,10 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
 
         attendance = attendance_repository.get(event_id, user_id)
         
-        has_accepted_accom_award = False
-
-        offer = db.session.query(Offer).filter(
-            Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
-        # TODO: Add tags from offer to attendance.
-        
         # Check if invited guest
         invited_guest = db.session.query(InvitedGuest).filter(
                     InvitedGuest.event_id == event_id).filter(InvitedGuest.user_id == user.id).first()
-        if(invited_guest):
+        if (invited_guest):
             is_invited_guest = True
             invitedguest_role = invited_guest.role
             confirmed = True
@@ -115,16 +109,31 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             confirmed = registration.confirmed if registration is not None else True
             invitedguest_role = "General Attendee"
             is_invited_guest = False
-        # Shirt Size
-        shirt_answer = _get_registration_answer(user_id, event_id, "T-Shirt Size", is_invited_guest)
+        
+        # collate all tags belonging to user into a list of (tag_id, tag_name, answer) tuples 
+        # first, get all tags from registration questions
+        registration_metadata = []
+        questions_with_tags = registration_form_repository.get_registration_questions_with_tags(event_id)
+        for question in questions_with_tags:
+            for question_tag in question.tags:
+                answer = _get_registration_answer(user_id, event_id, question.id, is_invited_guest)
+                registration_metadata.append({"name": TagAPI._stringify_tag_name(question_tag.tag), "response": answer})
+        print(registration_metadata)
 
-        # Poster registration
-        bringing_poster = _get_registration_answer(user_id, event_id, "Will you be bringing a poster?", is_invited_guest) == 'yes'
+        # second, get all tags from offers
+        offer_metadata = []
+        offer = db.session.query(Offer).filter(
+            Offer.user_id == user_id).filter(Offer.event_id == event_id).first()
+        if offer:
+            offer_tags = db.session.query(OfferTag).filter(
+                OfferTag.offer_id == offer.id).all()
+            for offer_tag in offer_tags:
+                offer_metadata.append({"name": TagAPI._stringify_tag_name(offer_tag.tag)})    
+        print(offer_metadata)
 
-        attendance_user = AttendanceUser(user, attendance, accommodation_award=has_accepted_accom_award, 
-                                         shirt_size=shirt_answer, is_invitedguest=is_invited_guest, 
-                                         bringing_poster=bringing_poster, invitedguest_role=invitedguest_role,
-                                         confirmed=confirmed)
+        attendance_user = AttendanceUser(user, attendance, is_invitedguest=is_invited_guest, 
+                                         invitedguest_role=invitedguest_role,
+                                         confirmed=confirmed, registration_metadata=registration_metadata, offer_metadata=offer_metadata)
         return marshal(attendance_user, attendance_fields), 200
 
     @auth_required

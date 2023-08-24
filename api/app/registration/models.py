@@ -93,18 +93,16 @@ class RegistrationSection(db.Model):
         self.show_for_tag_id = show_for_tag_id
         self.show_for_invited_guest = show_for_invited_guest
 
-
-def get_registration_answer_based_headline(user_id, event_id, headline):
-    answer = (
-        db.session.query(RegistrationAnswer)
-        .join(Registration, RegistrationAnswer.registration_id == Registration.id)
-        .join(Offer, Offer.id == Registration.offer_id)
-        .filter_by(user_id=user_id, event_id=event_id)
-        .join(RegistrationQuestion, RegistrationAnswer.registration_question_id == RegistrationQuestion.id)
-        .filter_by(headline=headline)
-        .first())
-    return answer
-
+def get_registration_answer_by_question_id(user_id, event_id, question_id):
+        answer = (
+            db.session.query(RegistrationAnswer)
+            .join(Registration, RegistrationAnswer.registration_id == Registration.id)
+            .join(Offer, Offer.id == Registration.offer_id)
+            .filter_by(user_id=user_id, event_id=event_id)
+            .join(RegistrationQuestion, RegistrationAnswer.registration_question_id == RegistrationQuestion.id)
+            .filter_by(id=question_id)
+            .first())
+        return answer
 
 class RegistrationQuestion(db.Model):
 

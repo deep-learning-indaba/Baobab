@@ -1,5 +1,6 @@
 from app import db
-from app.registration.models import Offer, Registration, RegistrationForm, OfferTag
+from app.registration.models import Offer, Registration, RegistrationForm, RegistrationQuestion, OfferTag
+from app.tags.models import Tag
 from sqlalchemy import and_, func, cast, Date
 
 
@@ -101,7 +102,6 @@ class RegistrationRepository():
     def get_form_for_event(event_id):
         return (db.session.query(RegistrationForm).filter_by(event_id=event_id)).first()
 
-
 class RegistrationFormRepository():
     @staticmethod
     def get_by_event_id(event_id):
@@ -112,5 +112,15 @@ class RegistrationFormRepository():
     @staticmethod
     def get_by_id(id):
         return db.session.query(RegistrationForm).get(id)
+
+    @staticmethod
+    def get_registration_questions_with_tags(event_id):
+        """Get all questions with active tags in a registration."""
+        return db.session.query(RegistrationQuestion).join(
+                RegistrationForm, RegistrationQuestion.registration_form_id == RegistrationForm.id).filter(
+                    RegistrationForm.event_id == event_id).filter(
+                    RegistrationQuestion.tags != None).join(
+                    Tag, RegistrationQuestion.tags.any(Tag.active == True)
+            ).all()
     
     
