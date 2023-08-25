@@ -302,7 +302,7 @@ class AttendanceTable extends React.Component {
             <button 
               type="submit" 
               className="btn btn-primary confirm-submit"
-              disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked)} 
+              disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked) || !selectedUser.confirmed} 
               onClick={this.onConfirm}>
                 Confirm
             </button>
