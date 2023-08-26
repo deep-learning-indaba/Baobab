@@ -99,6 +99,7 @@ class GuestRegistrationRepository():
     def get_guest_registration_answer_by_question_id(user_id, event_id, question_id):
         answer = (
             db.session.query(GuestRegistrationAnswer)
+            .filter_by(is_active=True)
             .join(GuestRegistration, GuestRegistrationAnswer.guest_registration_id == GuestRegistration.id)
             .filter_by(user_id=user_id)
             .join(RegistrationForm, GuestRegistration.registration_form_id == RegistrationForm.id)
