@@ -627,7 +627,7 @@ class ReviewsApiTest(ApiTestCase):
         db.session.add(response_reviewer)
         db.session.commit()
 
-        review_response = ReviewResponse(1, 1, 1, 'en')
+        review_response = ReviewResponse(1, 1, 1, 'en', False)
         review_response.submit()
         review_response.review_scores = [ReviewScore(1, 'test_answer1'), ReviewScore(2, 'test_answer2')]
         db.session.add(review_response)
