@@ -219,7 +219,7 @@ class ResponseListComponent extends Component {
             reviewerAssignError,
             newReviewerEmail,
             reviewerAssignSuccess,
-            tags,
+            filteredTags,
             filteredResponses
         } = this.state
 
@@ -337,7 +337,7 @@ class ResponseListComponent extends Component {
                               closeMenuOnSelect={false}
                               components={animatedComponents}
                               isMulti
-                              options={this.getSearchTags(tags)}
+                              options={this.getSearchTags(filteredTags)}
                               id="TagFilter"
                               placeholder="Search"
                               onChange={this.updateTagSearch}

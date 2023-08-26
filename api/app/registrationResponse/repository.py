@@ -1,11 +1,9 @@
 from app import db
 from app.registration.models import Offer, Registration
+from app.tags.models import Tag
 from app.users.models import AppUser
-from app.events.models import Event
 from app.attendance.models import Attendance
 from sqlalchemy.sql import exists
-from app import LOGGER
-
 
 class RegistrationRepository():
 

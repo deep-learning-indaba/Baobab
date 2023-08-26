@@ -169,7 +169,7 @@ class RegistrationComponent extends Component {
                   });
                 }
                 else {
-                  this.setStats({
+                  this.setState({
                     error: result.error,
                     isLoading: false
                   });
