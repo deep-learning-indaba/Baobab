@@ -583,7 +583,7 @@ class ReviewsApiTest(ApiTestCase):
 
     def test_prevent_saving_review_response_reviewer_was_not_assigned_to_response(self):
         self.seed_static_data()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False, 'is_private': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -593,7 +593,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_can_still_submit_inactive_response_reviewer(self):
         self.seed_static_data()
         self.setup_one_reviewer_three_candidates()
-        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': True})
+        params = json.dumps({'review_form_id': 1, 'response_id': 2, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': True, 'is_private': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -610,7 +610,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_saving_review_response(self):
         self.seed_static_data()
         self.setup_response_reviewer()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer'}], 'language': 'en', 'is_submitted': False, 'is_private': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.post('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
@@ -636,7 +636,7 @@ class ReviewsApiTest(ApiTestCase):
     def test_updating_review_response(self):
         self.seed_static_data()
         self.setup_existing_review_response()
-        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en', 'is_submitted': True})
+        params = json.dumps({'review_form_id': 1, 'response_id': 1, 'scores': [{'review_question_id': 1, 'value': 'test_answer3'}, {'review_question_id': 2, 'value': 'test_answer4'}], 'language': 'en', 'is_submitted': True, 'is_private': False})
         header = self.get_auth_header_for('r1@r.com')
 
         response = self.app.put('/api/v1/reviewresponse', headers=header, data=params, content_type='application/json')
