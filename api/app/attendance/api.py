@@ -71,7 +71,7 @@ def _get_registration_answer(user_id, event_id, question_id, is_invited_guest):
     else:
         answer = get_registration_answer_by_question_id(user_id, event_id, question_id)
     
-    return answer.value if answer else "Unanswered"
+    return answer.value if answer else "No Answer"
 
 class AttendanceAPI(AttendanceMixin, restful.Resource):
 
