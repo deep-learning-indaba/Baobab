@@ -169,7 +169,7 @@ class RegistrationComponent extends Component {
                   });
                 }
                 else {
-                  this.setStats({
+                  this.setState({
                     error: result.error,
                     isLoading: false
                   });
@@ -416,7 +416,7 @@ class RegistrationComponent extends Component {
               id={`control_${question.id}`}
               name={`control_${question.id}`}
               description={question.description}
-              value={this.props.answer && this.props.answer.value}
+              value={answer && answer.value}
               validationError={validationError}
               onChange={(_, v) => this.onChange(question.id, v)}
               key={"i_" + key} />

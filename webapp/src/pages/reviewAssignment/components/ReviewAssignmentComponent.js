@@ -13,6 +13,8 @@ class ReviewAssignmentComponent extends Component {
   constructor(props) {
     super(props);
 
+    this.filterable_tag_types = ["RESPONSE"];
+
     this.state = {
       loading: true,
       reviewers: null,
@@ -33,7 +35,7 @@ class ReviewAssignmentComponent extends Component {
         reviewService.getReviewSummary(event_id, tags)
     ]).then(responses => {
         this.setState({
-            tags: responses[0].tags.map(tag => { return { ...tag, active: false } }),
+            tags: responses[0].tags.filter(tag => this.filterable_tag_types.includes(tag.tag_type)).map(tag => { return { ...tag, active: false } }),
             reviewers: responses[1].reviewers,
             reviewSummary: responses[2].reviewSummary,
             newReviewerEmail: "",

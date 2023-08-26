@@ -27,7 +27,6 @@ from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.registration.repository import OfferRepository as offer_repository
 from app.registration.repository import RegistrationRepository as registration_repository
-from app.users.repository import UserRepository as user_repository
 
 def offer_info(offer_entity, requested_travel=None):
     return {
@@ -96,14 +95,6 @@ class OfferAPI(OfferMixin, restful.Resource):
             'description': translation.description,
             'accepted': offer_tag.accepted
         }
-
-    @staticmethod
-    def _stringify_tag_name_description(offer_tag, language='en'):
-        translation = offer_tag.tag.get_translation(language)
-        if translation is None:
-            LOGGER.warn('Could not find {} translation for tag id {}'.format(language, offer_tag.tag.id))
-            translation = offer_tag.tag.get_translation('en')
-        return '{}: {}'.format(translation.name, translation.description)
 
     @auth_required
     def put(self):
@@ -210,7 +201,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         db.session.commit()
         
         if grant_tags:
-            grant_strs = [OfferAPI._stringify_tag_name_description(offer_tag) for offer_tag in offer_entity.offer_tags]
+            grant_strs = [offer_tag.tag.stringify_tag_name_description() for offer_tag in offer_entity.offer_tags]
             grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
             email_template = 'offer-grants'
         else:

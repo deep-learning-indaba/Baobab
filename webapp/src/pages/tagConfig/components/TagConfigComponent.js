@@ -8,7 +8,6 @@ import FormSelect from "../../../components/form/FormSelect";
 import ReactTable from 'react-table';
 import { ConfirmModal } from "react-bootstrap4-modal";
 
-//TODO not auto loading when tag is added or edited
 //TODO test multilingual language
 
 class TagConfigComponent extends Component {

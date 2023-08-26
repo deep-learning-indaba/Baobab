@@ -46,7 +46,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'withdrawn_timestamp': fields.DateTime(dt_format='iso8601'),
         'started_timestamp': fields.DateTime(dt_format='iso8601'),
         'answers': fields.List(fields.Nested(answer_fields)),
-        'language': fields.String
+        'language': fields.String,
+        'parent_id': fields.Integer(default=None)
     }
 
     @auth_required

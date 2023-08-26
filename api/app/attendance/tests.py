@@ -4,23 +4,21 @@ import json
 from app import db
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
-from app.events.models import Event, EventRole
-from app.users.models import AppUser, Country, UserCategory
+from app.events.models import EventRole
+from app.users.models import Country, UserCategory
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, FORBIDDEN
 from app.utils.testing import ApiTestCase
-from app.registration.models import Offer
-from app.registration.models import RegistrationQuestion
+from app.tags.models import Tag, TagTranslation
+from app.registration.models import Offer, OfferTag
+from app.registration.models import RegistrationQuestion, RegistrationQuestionTag
 from app.registration.models import RegistrationForm
 from app.registration.models import Registration
 from app.registration.models import RegistrationSection
 from app.registration.models import RegistrationAnswer
 from app.invitedGuest.models import InvitedGuest
 from datetime import datetime, timedelta
-from app.registrationResponse.repository import RegistrationRepository
 from app import LOGGER
 import json
-from app.organisation.models import Organisation
-from app.events.models import EventType
 import unittest
 
 
@@ -54,6 +52,24 @@ class AttendanceApiTest(ApiTestCase):
             payment_required=False
         )
         db.session.add_all([offer])
+        
+        self.tags = [
+            Tag(self.event.id, "RESPONSE"),
+            Tag(self.event.id, "QUESTION")
+            ]
+        db.session.add_all(self.tags)
+        db.session.commit()
+
+        tag_translations = [
+            TagTranslation(self.tags[0].id, 'en', 'Offer Tag', 'Offer Tag Description'),
+            TagTranslation(self.tags[1].id, 'en', 'Registration Question Tag', 'Registration Question Tag Description')
+        ]
+        db.session.add_all(tag_translations)
+        db.session.commit()
+
+        offer_tag = OfferTag(offer.id, self.tags[0].id)
+        db.session.add(offer_tag)
+        db.session.commit()
 
         form = RegistrationForm(
             event_id=event.id
@@ -82,6 +98,10 @@ class AttendanceApiTest(ApiTestCase):
             validation_text=" text"
         )
         db.session.add(rq)
+        db.session.commit()
+
+        self.rq_tag = RegistrationQuestionTag(rq.id, self.tags[1].id)
+        db.session.add(self.rq_tag)
         db.session.commit()
 
         registration = Registration(
@@ -144,8 +164,10 @@ class AttendanceApiTest(ApiTestCase):
         data = json.loads(response.data)
         self.assertEqual(data['user_id'], 1)
         self.assertEqual(data['event_id'], 1)
-        self.assertEqual(data['bringing_poster'], True)
-        self.assertEqual(data['updated_by_user_id'], 2)
+        self.assertEqual(len(data['registration_metadata']), 1)
+        self.assertEqual(data['registration_metadata'][0]['name'], "Registration Question Tag")
+        self.assertEqual(len(data['offer_metadata']), 1)
+        self.assertEqual(data['offer_metadata'][0]['name'], "Offer Tag")
 
     # Normal Attendance
     @unittest.skip("Deprecated API")

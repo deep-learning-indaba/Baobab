@@ -272,13 +272,15 @@ class AttendanceTable extends React.Component {
               <div className={this.styleFromRole(selectedUser.invitedguest_role)}>
                 {selectedUser.invitedguest_role}
               </div>
-            </h5>
-            <h5>
-              T-Shirt Size :
-              <div className="badge badge-light">
-                {selectedUser.shirt_size}
-              </div>
-            </h5>
+            </h5>              
+            {selectedUser.registration_metadata.map((i) => (
+              <h5>
+                {i.name} :
+                <div className="badge badge-light">
+                  {i.response}
+                </div>
+              </h5>
+            ))}
             <h5>
               Indemnity Form :
               {selectedUser.signed_indemnity_form && <div className="badge badge-success">
@@ -300,7 +302,7 @@ class AttendanceTable extends React.Component {
             <button 
               type="submit" 
               className="btn btn-primary confirm-submit"
-              disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked)} 
+              disabled={!(selectedUser.signed_indemnity_form || signedIndemnityChecked) || !selectedUser.confirmed} 
               onClick={this.onConfirm}>
                 Confirm
             </button>

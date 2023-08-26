@@ -94,9 +94,9 @@ class GuestRegistrationRepository():
                         .order_by(cast(GuestRegistration.created_at, Date))
                         .all())
         return timeseries
-
+    
     @staticmethod
-    def get_guest_registration_answer_by_headline(user_id, event_id, headline):
+    def get_guest_registration_answer_by_question_id(user_id, event_id, question_id):
         answer = (
             db.session.query(GuestRegistrationAnswer)
             .join(GuestRegistration, GuestRegistrationAnswer.guest_registration_id == GuestRegistration.id)
@@ -104,7 +104,7 @@ class GuestRegistrationRepository():
             .join(RegistrationForm, GuestRegistration.registration_form_id == RegistrationForm.id)
             .filter_by(event_id=event_id)
             .join(RegistrationQuestion, GuestRegistrationAnswer.registration_question_id == RegistrationQuestion.id)
-            .filter_by(headline=headline)
+            .filter_by(id=question_id)
             .first())
         return answer
     

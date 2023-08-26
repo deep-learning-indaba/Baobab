@@ -11,7 +11,7 @@ from app.users.models import AppUser
 
 class Response(db.Model):
     __tablename__ = "response"
-
+    
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey("application_form.id"), nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey("app_user.id"), nullable=False)
@@ -21,6 +21,7 @@ class Response(db.Model):
     withdrawn_timestamp = db.Column(db.DateTime(), nullable=True)
     started_timestamp = db.Column(db.DateTime(), nullable=True)
     language = db.Column(db.String(2), nullable=False)
+    parent_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=True)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
     user: AppUser = db.relationship('AppUser', foreign_keys=[user_id])
@@ -29,7 +30,7 @@ class Response(db.Model):
     response_tags = db.relationship('ResponseTag')
     reviewers = db.relationship('ResponseReviewer')
 
-    def __init__(self, application_form_id, user_id, language):
+    def __init__(self, application_form_id, user_id, language, parent_id=None):
         self.application_form_id = application_form_id
         self.user_id = user_id
         self.is_submitted = False
@@ -38,6 +39,7 @@ class Response(db.Model):
         self.withdrawn_timestamp = None
         self.started_timestamp = date.today()
         self.language = language
+        self.parent_id = parent_id
 
     def submit(self):
         self.is_submitted = True
