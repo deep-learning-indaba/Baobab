@@ -25,6 +25,8 @@ const roleOptions = [
   { value: "Sponsor", label: "Sponsor" },
   { value: "Press", label: "Press" },
   { value: "Workshop Organiser", label: "Workshop Organiser" },
+  { value: "Volunteer", label: "Volunteer" },
+
 ];
 
 function getRoles() {
