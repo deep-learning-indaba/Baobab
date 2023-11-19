@@ -28,3 +28,6 @@ dispatch:
   
   - url: "apply.indabax.co.za/*"
     service: prod-frontend
+
+  - url: "apply.aims-network.org/*"
+    service: prod-frontend
