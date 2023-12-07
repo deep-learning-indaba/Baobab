@@ -18,6 +18,7 @@ from .integration_tests import api as integration_tests_api
 from .outcome import api as outcome_api
 from .tags import api as tag_api
 from .invoice import api as invoice_api
+from .reporting import api as reporting_api
 
 rest_api.add_resource(users_api.UserAPI, '/api/v1/user')
 rest_api.add_resource(users_api.UserCommentAPI, '/api/v1/user-comment')
@@ -141,3 +142,4 @@ rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')
 rest_api.add_resource(attendance_api.GuestListApi, '/api/v1/guestlist')
 rest_api.add_resource(attendance_api.IndemnityAPI, '/api/v1/indemnity')
 rest_api.add_resource(registration_api.OfferListAPI, '/api/v1/offerlist')
+rest_api.add_resource(reporting_api.ApplicationResponseReportAPI, '/api/v1/reporting/applications')

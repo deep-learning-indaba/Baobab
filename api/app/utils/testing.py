@@ -302,6 +302,8 @@ class ApiTestCase(unittest.TestCase):
         }
         response = self.app.post('api/v1/authenticate', data=body)
         data = json.loads(response.data)
+        if 'token' not in data:
+            raise ValueError(f'Authentication failed: {data}')
         header = {'Authorization': data['token']}
         return header
 
