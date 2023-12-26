@@ -1,7 +1,7 @@
 from app.utils.testing import ApiTestCase
 from app import db
 
-class ApplicationResponseReportAPITest(ApiTestCase):
+class ReportingTest(ApiTestCase):
     
         def setUp(self):
             super().setUp()
@@ -23,8 +23,13 @@ class ApplicationResponseReportAPITest(ApiTestCase):
             self.question2_translation_en = self.add_question_translation(self.question2.id, 'en', 'What is your favourite colour?')
             self.question2_translation_fr = self.add_question_translation(self.question2.id, 'fr', 'What is your favourite colour? FR')
             
-            self.user1, self.user2, self.user3, self.admin_user = self.add_n_users(4)
+            self.user1, self.user2, self.user3, self.reviewer1, self.reviewer2, self.admin_user = self.add_n_users(6)
             self.add_event_role('admin', self.admin_user.id, self.event.id)
+            self.user1_firstname, self.user1_lastname = self.user1.firstname, self.user1.lastname
+            self.user2_firstname, self.user2_lastname = self.user2.firstname, self.user2.lastname
+            self.user3_firstname, self.user3_lastname = self.user3.firstname, self.user3.lastname
+            self.reviewer1_firstname, self.reviewer1_lastname = self.reviewer1.firstname, self.reviewer1.lastname
+            self.reviewer2_firstname, self.reviewer2_lastname = self.reviewer2.firstname, self.reviewer2.lastname
 
             self.response1 = self.add_response(self.application_form.id, self.user1.id, is_submitted=True, language='en')
             self.response2 = self.add_response(self.application_form.id, self.user2.id, is_submitted=True, language='fr')
@@ -36,6 +41,37 @@ class ApplicationResponseReportAPITest(ApiTestCase):
             self.add_answer(self.response2.id, self.question2.id, 'Rouge')
             self.add_answer(self.response3.id, self.question1.id, 'Jane Doe')
             self.add_answer(self.response3.id, self.question2.id, 'Green')
+            
+            self.review_form = self.add_review_form(self.application_form.id)
+            self.review_section1 = self.add_review_section(self.review_form.id)
+            self.review_section1_translation_en = self.add_review_section_translation(self.review_section1.id, 'en', 'Review Section 1')
+            self.review_section1_translation_fr = self.add_review_section_translation(self.review_section1.id, 'fr', 'Review Section 1 FR')
+
+            self.review_question1 = self.add_review_question(self.review_section1.id)
+            self.review_question1_translation_en = self.add_review_question_translation(self.review_question1.id, 'en', headline='How good are they?')
+            self.review_question1_translation_fr = self.add_review_question_translation(self.review_question1.id, 'fr', headline='How good are they? FR')
+
+            self.review_question2 = self.add_review_question(self.review_section1.id)
+            self.review_question2_translation_en = self.add_review_question_translation(self.review_question2.id, 'en', headline='Any other comments?')
+            self.review_question2_translation_fr = self.add_review_question_translation(self.review_question2.id, 'fr', headline='Any other comments? FR')
+
+            self.response1_review1 = self.add_review_response(self.reviewer1.id, self.response1.id)
+            self.response1_review2 = self.add_review_response(self.reviewer2.id, self.response1.id)
+
+            self.response2_review1 = self.add_review_response(self.reviewer1.id, self.response2.id)
+            self.response2_review2 = self.add_review_response(self.reviewer2.id, self.response2.id)
+
+            self.response1_review1_answer1 = self.add_review_score(self.response1_review1.id, self.review_question1.id, '5')
+            self.response1_review1_answer2 = self.add_review_score(self.response1_review1.id, self.review_question2.id, 'Good job!')
+
+            self.response1_review2_answer1 = self.add_review_score(self.response1_review2.id, self.review_question1.id, '3')
+            self.response1_review2_answer2 = self.add_review_score(self.response1_review2.id, self.review_question2.id, 'Could be better')
+
+            self.response2_review1_answer1 = self.add_review_score(self.response2_review1.id, self.review_question1.id, '4')
+            self.response2_review1_answer2 = self.add_review_score(self.response2_review1.id, self.review_question2.id, 'Good job!')
+
+            self.response2_review2_answer1 = self.add_review_score(self.response2_review2.id, self.review_question1.id, '2')
+            self.response2_review2_answer2 = self.add_review_score(self.response2_review2.id, self.review_question2.id, 'Could be better')
 
             db.session.flush()
 
@@ -44,9 +80,6 @@ class ApplicationResponseReportAPITest(ApiTestCase):
                 f'/api/v1/reporting/applications?language=en&event_id={self.event.id}',
                 headers=self.get_auth_header_for(self.admin_user.email, password='abcd')
             )
-
-            print("response.json", response.json)
-            print()
 
             self.assertEqual(200, response.status_code)
             self.assertEqual(4, len(response.json))  # 2 responses, 2 questions each
@@ -78,3 +111,94 @@ class ApplicationResponseReportAPITest(ApiTestCase):
             self.assertEqual('Section 2 FR', response.json[1]['section'])
             self.assertEqual('What is your name? FR', response.json[0]['question'])
             self.assertEqual('What is your favourite colour? FR', response.json[1]['question'])
+
+        def test_get_reviews_report(self):
+            response = self.app.get(
+                f'/api/v1/reporting/reviews?language=en&event_id={self.event.id}',
+                headers=self.get_auth_header_for(self.admin_user.email, password='abcd')
+            )
+            
+            self.assertEqual(200, response.status_code)
+
+            print(response.json)
+            self.assertEqual(8, len(response.json))
+
+            response1_review1_answer1 = response.json[0]
+            self.assertEqual('5', response1_review1_answer1['score'])
+            self.assertEqual('How good are they?', response1_review1_answer1['question'])
+            self.assertEqual('en', response1_review1_answer1['review_language'])
+            self.assertEqual('Review Section 1', response1_review1_answer1['section'])
+            self.assertEqual(self.user1_firstname, response1_review1_answer1['firstname'])
+            self.assertEqual(self.user1_lastname, response1_review1_answer1['lastname'])
+            self.assertEqual(self.reviewer1_firstname, response1_review1_answer1['reviewer_firstname'])
+            self.assertEqual(self.reviewer1_lastname, response1_review1_answer1['reviewer_lastname'])
+
+            response1_review1_answer2 = response.json[1]
+            self.assertEqual('Good job!', response1_review1_answer2['score'])
+            self.assertEqual('Any other comments?', response1_review1_answer2['question'])
+            self.assertEqual('en', response1_review1_answer2['review_language'])
+            self.assertEqual('Review Section 1', response1_review1_answer2['section'])
+            self.assertEqual(self.user1_firstname, response1_review1_answer2['firstname'])
+            self.assertEqual(self.user1_lastname, response1_review1_answer2['lastname'])
+            self.assertEqual(self.reviewer1_firstname, response1_review1_answer2['reviewer_firstname'])
+            self.assertEqual(self.reviewer1_lastname, response1_review1_answer2['reviewer_lastname'])
+
+            response1_review2_answer1 = response.json[2]
+            self.assertEqual('3', response1_review2_answer1['score'])
+            self.assertEqual('How good are they?', response1_review2_answer1['question'])
+            self.assertEqual('en', response1_review2_answer1['review_language'])
+            self.assertEqual('Review Section 1', response1_review2_answer1['section'])
+            self.assertEqual(self.user1_firstname, response1_review2_answer1['firstname'])
+            self.assertEqual(self.user1_lastname, response1_review2_answer1['lastname'])
+            self.assertEqual(self.reviewer2_firstname, response1_review2_answer1['reviewer_firstname'])
+            self.assertEqual(self.reviewer2_lastname, response1_review2_answer1['reviewer_lastname'])
+
+            response1_review2_answer2 = response.json[3]
+            self.assertEqual('Could be better', response1_review2_answer2['score'])
+            self.assertEqual('Any other comments?', response1_review2_answer2['question'])
+            self.assertEqual('en', response1_review2_answer2['review_language'])
+            self.assertEqual('Review Section 1', response1_review2_answer2['section'])
+            self.assertEqual(self.user1_firstname, response1_review2_answer2['firstname'])
+            self.assertEqual(self.user1_lastname, response1_review2_answer2['lastname'])
+            self.assertEqual(self.reviewer2_firstname, response1_review2_answer2['reviewer_firstname'])
+            self.assertEqual(self.reviewer2_lastname, response1_review2_answer2['reviewer_lastname'])
+
+            response2_review1_answer1 = response.json[4]
+            self.assertEqual('4', response2_review1_answer1['score'])
+            self.assertEqual('How good are they?', response2_review1_answer1['question'])
+            self.assertEqual('en', response2_review1_answer1['review_language'])
+            self.assertEqual('Review Section 1', response2_review1_answer1['section'])
+            self.assertEqual(self.user2_firstname, response2_review1_answer1['firstname'])
+            self.assertEqual(self.user2_lastname, response2_review1_answer1['lastname'])
+            self.assertEqual(self.reviewer1_firstname, response2_review1_answer1['reviewer_firstname'])
+            self.assertEqual(self.reviewer1_lastname, response2_review1_answer1['reviewer_lastname'])
+
+            response2_review1_answer2 = response.json[5]
+            self.assertEqual('Good job!', response2_review1_answer2['score'])
+            self.assertEqual('Any other comments?', response2_review1_answer2['question'])
+            self.assertEqual('en', response2_review1_answer2['review_language'])
+            self.assertEqual('Review Section 1', response2_review1_answer2['section'])
+            self.assertEqual(self.user2_firstname, response2_review1_answer2['firstname'])
+            self.assertEqual(self.user2_lastname, response2_review1_answer2['lastname'])
+            self.assertEqual(self.reviewer1_firstname, response2_review1_answer2['reviewer_firstname'])
+            self.assertEqual(self.reviewer1_lastname, response2_review1_answer2['reviewer_lastname'])
+
+            response2_review2_answer1 = response.json[6]
+            self.assertEqual('2', response2_review2_answer1['score'])
+            self.assertEqual('How good are they?', response2_review2_answer1['question'])
+            self.assertEqual('en', response2_review2_answer1['review_language'])
+            self.assertEqual('Review Section 1', response2_review2_answer1['section'])
+            self.assertEqual(self.user2_firstname, response2_review2_answer1['firstname'])
+            self.assertEqual(self.user2_lastname, response2_review2_answer1['lastname'])
+            self.assertEqual(self.reviewer2_firstname, response2_review2_answer1['reviewer_firstname'])
+            self.assertEqual(self.reviewer2_lastname, response2_review2_answer1['reviewer_lastname'])
+
+            response2_review2_answer2 = response.json[7]
+            self.assertEqual('Could be better', response2_review2_answer2['score'])
+            self.assertEqual('Any other comments?', response2_review2_answer2['question'])
+            self.assertEqual('en', response2_review2_answer2['review_language'])
+            self.assertEqual('Review Section 1', response2_review2_answer2['section'])
+            self.assertEqual(self.user2_firstname, response2_review2_answer2['firstname'])
+            self.assertEqual(self.user2_lastname, response2_review2_answer2['lastname'])
+            self.assertEqual(self.reviewer2_firstname, response2_review2_answer2['reviewer_firstname'])
+            self.assertEqual(self.reviewer2_lastname, response2_review2_answer2['reviewer_lastname'])
