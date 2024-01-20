@@ -223,7 +223,7 @@ class EventConfigComponent extends Component {
     if (this.state.updatedEvent.url.trim().length === 0) {
       errors.push(this.props.t("Event website is required")); //TODO: check if valid URL?
     }
-    if (this.state.updatedEvent.application_open < new Date().toISOString().slice(0,10) ) {
+    if (this.state.isNewEvent && this.state.updatedEvent.application_open < new Date().toISOString().slice(0,10) ) {
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
     //working backwards, check each phase ends before the previous phase starts
