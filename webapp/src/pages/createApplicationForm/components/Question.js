@@ -684,7 +684,7 @@ const Question = forwardRef(({
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
   const withMultifile = ['multi-file']
-  const withRegex = ['long-text', 'short-text', 'markdown'];
+  const withRegex = [...withOptions, 'long-text', 'short-text', 'markdown'];
   const dependencyOptions = optionz.filter(e => e.order < inputs.order
     || !e.order);
   let style = inputs.required
@@ -1050,6 +1050,7 @@ const Question = forwardRef(({
               inputs={inputs}
               lang={lang}
               handleChange={handleChange}
+              allowFriendlyMode={!withOptions.includes(inputs.type)}
               />
           )}
           {hasDependancy && (
