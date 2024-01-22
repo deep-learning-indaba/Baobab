@@ -412,8 +412,8 @@ export const Dependency = ({
             className='single-choice-check'
             checked={inputs.show_for_values[lang]
               && inputs.show_for_values[lang].length
-              && inputs.show_for_values[lang].includes(option.label)}
-            onChange={handleDependencyChange(option.label)}
+              && inputs.show_for_values[lang].includes(option.value)}
+            onChange={handleDependencyChange(option.value)}
           />
           <label htmlFor={option.id}>{option.label}</label>
         </div>
