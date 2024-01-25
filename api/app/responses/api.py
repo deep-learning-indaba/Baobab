@@ -1,32 +1,31 @@
-import datetime
 import io
 import itertools
-import traceback
 import json
 import tempfile
 
 import flask_restful as restful
-from app import LOGGER, bcrypt, db
-from app.applicationModel.models import ApplicationForm, Question
-from app.applicationModel.repository import \
-    ApplicationFormRepository as application_form_repository
-from app.events.models import Event, EventType
+from app import LOGGER
+from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
+from app.events.models import EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin, ResponseTagMixin
-from app.responses.models import Answer, Response, ResponseTag
+from app.responses.models import Answer, Response
 from app.responses.repository import ResponseRepository as response_repository
-from app.reviews.repository import \
-    ReviewConfigurationRepository as review_configuration_repository
+from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.reviews.repository import ReviewRepository as review_repository
-from app.users.models import AppUser
+from app.outcome.models import Outcome
+from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.users.repository import UserRepository as user_repository
-from app.utils import emailer, errors, strings, pdfconvertor, zipping, storage
+from app.utils import emailer, errors, strings, pdfconvertor, storage
 from app.utils.zipping import zip_in_memory
 from app.utils.auth import auth_required, event_admin_required
-from flask import g, request, send_file
-from flask_restful import fields, inputs, marshal_with, reqparse
-from sqlalchemy.exc import SQLAlchemyError
+from flask import g, send_file
+from flask_restful import fields, inputs, marshal, reqparse
 
+def _extract_outcome_status(response):
+    if not hasattr(response, "outcome") or not isinstance(response.outcome, Outcome):
+        return None
+    return response.outcome.status.name
 
 class ResponseAPI(ResponseMixin, restful.Resource):
 
@@ -47,11 +46,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'started_timestamp': fields.DateTime(dt_format='iso8601'),
         'answers': fields.List(fields.Nested(answer_fields)),
         'language': fields.String,
-        'parent_id': fields.Integer(default=None)
+        'parent_id': fields.Integer(default=None),
+        'outcome': fields.String(attribute=_extract_outcome_status)
     }
 
     @auth_required
-    @marshal_with(response_fields)
     def get(self):
         args = self.get_req_parser.parse_args()
         event_id = args['event_id']
@@ -66,10 +65,15 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         form = event.get_application_form()
         responses = response_repository.get_all_for_user_application(current_user_id, form.id)
-        return responses
+
+        # TODO: Link outcomes to responses rather than events to cater for multiple submissions.
+        outcome = outcome_repository.get_latest_by_user_for_event(current_user_id, event_id)
+        for response in responses:
+            response.outcome = outcome
+
+        return marshal(responses, ResponseAPI.response_fields), 200
 
     @auth_required
-    @marshal_with(response_fields)
     def post(self):
         args = self.post_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -116,10 +120,9 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         except:
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
-            return response, 201
+            return marshal(response, ResponseAPI.response_fields), 201
 
     @auth_required
-    @marshal_with(response_fields)
     def put(self):
         args = self.put_req_parser.parse_args()
         user_id = g.current_user['id']
@@ -168,7 +171,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         except:                
             LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
         finally:
-            return response, 200
+            return marshal(response, ResponseAPI.response_fields), 200
 
     @auth_required
     def delete(self):
@@ -315,8 +318,6 @@ class ResponseListAPI(restful.Resource):
         include_unsubmitted = args['include_unsubmitted']
         question_ids = args['question_ids[]']
         language = args['language']
-        
-        print(('Include unsubmitted:', include_unsubmitted))
 
         responses = response_repository.get_all_for_event(event_id, not include_unsubmitted)
 
@@ -384,7 +385,6 @@ class ResponseTagAPI(restful.Resource, ResponseTagMixin):
         'tag_id': fields.Integer
     }
 
-    @marshal_with(response_tag_fields)
     @auth_required
     def post(self):
         args = self.req_parser.parse_args()
@@ -396,7 +396,7 @@ class ResponseTagAPI(restful.Resource, ResponseTagMixin):
         if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
             return errors.FORBIDDEN
 
-        return response_repository.tag_response(response_id, tag_id), 201
+        return marshal(response_repository.tag_response(response_id, tag_id), ResponseTagAPI.response_tag_fields), 201
 
     @auth_required
     def delete(self):

@@ -19,6 +19,9 @@ class ApplicationFormRepository():
         db.session.add(obj)
         db.session.commit()
         return obj
+    
+    def save():
+        db.session.commit()
 
     @staticmethod
     def get_questions_for_event(event_id):
