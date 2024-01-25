@@ -207,44 +207,44 @@ const Question = forwardRef(({
   }
 
   const handleAddOption = () => {
-    const opt = inputs.options;
-    const updatedSections = sections.map(s => {
-      if (s.id === sectionId) {
-        s = {...section, questions: s.questions.map(q => {
-          if (q.id === inputs.id) {
-            q = {...q, options: {...opt, [lang]: [{
-              id: `${Math.random()}`,
-              value: inputs.value[lang],
-              label: inputs.label[lang],
-            }, ...opt[lang]]}}
-          }
-          return q
-        })}
-      }
-      return s
-    });
     if (!inputs.value[lang] || !inputs.label[lang]) {
       setErrorMessage('Label or Value cannot be empty');
     } else {
-      setSections(updatedSections);
-    }
-  }
+      const opt = inputs.options;
 
-  const resetInputs = () => {
-    const { value, label } = inputs;
-    const updatedSections = sections.map(s => {
-      if (s.id === sectionId) {
-        s = {...section, questions: s.questions.map(q => {
-          if (q.id === inputs.id) {
-            q = {...q, value: {...value, [lang]: ''}};
-            q = {...q, label: {...label, [lang]: ''}}
+      setSections(prevSections => prevSections.map(s => {
+        if (s.id === sectionId) {
+          s = {...section, questions: s.questions.map(q => {
+            if (q.id === inputs.id) {
+              q = {...q, options: {...opt, [lang]: [...opt[lang], {
+                id: `${Math.random()}`,
+                value: inputs.value[lang],
+                label: inputs.label[lang],
+              }]}}
+            }
+            return q
+          })}
+        }
+        return s
+      }));
+      
+      setSections(prevSections => {
+        const { value, label } = inputs;
+        return prevSections.map(s => {
+          if (s.id === sectionId) {
+            s = {...section, questions: s.questions.map(q => {
+              if (q.id === inputs.id) {
+                q = {...q, value: {...value, [lang]: ''}};
+                q = {...q, label: {...label, [lang]: ''}};
+              }
+              return q
+            })}
           }
-          return q
-        })}
-      }
-      return s
-    });
-    setSections(updatedSections);
+          return s;
+        });
+      });
+
+    }
   }
 
   const handleDeleteOption = (id, e) => {
@@ -684,7 +684,7 @@ const Question = forwardRef(({
   const withReferals = ['reference'];
   const withExtention = ['file', 'multi-file'];
   const withMultifile = ['multi-file']
-  const withRegex = ['long-text', 'short-text', 'markdown'];
+  const withRegex = [...withOptions, 'long-text', 'short-text', 'markdown'];
   const dependencyOptions = optionz.filter(e => e.order < inputs.order
     || !e.order);
   let style = inputs.required
@@ -886,6 +886,35 @@ const Question = forwardRef(({
                 className='options-table'
               >
                 <tbody className='options-row'>
+                  {inputs.options[lang] && inputs.options[lang].map((option, i) => (
+                    <tr key={i} className='options-row'>
+                      <td className='options-row'>
+                        <input
+                          type='text'
+                          value={option.value}
+                          className='option-inputs'
+                          disabled
+                        />
+                      </td>
+                      <td className='options-row'>
+                        <input
+                          type='text'
+                          value={option.label}
+                          className='option-inputs'
+                          disabled
+                        />
+                      </td>
+                      <td className='options-row'>
+                        <i
+                          data-title={t('Delete')}
+                          className="fas fa-minus-circle fa-lg fa-table-btns delete-row"
+                          onClick={e => handleDeleteOption(option.id, e)}
+                        ></i>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tbody className='options-row'>
                   <tr className='options-row'>
                     <td className='options-row'>
                       <input
@@ -914,39 +943,10 @@ const Question = forwardRef(({
                         className="fas fa-plus-circle  fa-lg fa-table-btns add-row"
                         data-title={t('Add')}
                         onMouseDown={handleAddOption}
-                        onMouseUp={resetInputs}
+                        // onMouseUp={resetInputs}
                       ></i>
                     </td>
                   </tr>
-                </tbody>
-                <tbody className='options-row'>
-                  {inputs.options[lang] && inputs.options[lang].map((option, i) => (
-                    <tr key={i} className='options-row'>
-                      <td className='options-row'>
-                        <input
-                          type='text'
-                          value={option.value}
-                          className='option-inputs'
-                          disabled
-                        />
-                      </td>
-                      <td className='options-row'>
-                        <input
-                          type='text'
-                          value={option.label}
-                          className='option-inputs'
-                          disabled
-                        />
-                      </td>
-                      <td className='options-row'>
-                        <i
-                          data-title={t('Delete')}
-                          className="fas fa-minus-circle fa-lg fa-table-btns delete-row"
-                          onClick={e => handleDeleteOption(option.id, e)}
-                        ></i>
-                      </td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
               <span className='error-label'>{t(errorMessage)}</span>
@@ -1050,6 +1050,7 @@ const Question = forwardRef(({
               inputs={inputs}
               lang={lang}
               handleChange={handleChange}
+              allowFriendlyMode={!withOptions.includes(inputs.type)}
               />
           )}
           {hasDependancy && (

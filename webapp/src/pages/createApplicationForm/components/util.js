@@ -412,8 +412,8 @@ export const Dependency = ({
             className='single-choice-check'
             checked={inputs.show_for_values[lang]
               && inputs.show_for_values[lang].length
-              && inputs.show_for_values[lang].includes(option.label)}
-            onChange={handleDependencyChange(option.label)}
+              && inputs.show_for_values[lang].includes(option.value)}
+            onChange={handleDependencyChange(option.value)}
           />
           <label htmlFor={option.id}>{option.label}</label>
         </div>
@@ -435,9 +435,9 @@ export const validationText = (min, max, t) => {
 }
 
 export const Validation = ({
-  t, options, inputs, lang, handleChange
+  t, options, inputs, lang, handleChange, allowFriendlyMode
 }) => {
-  const [isFriendlyMode, setIsFriendlyMode] = useState(true);
+  const [isFriendlyMode, setIsFriendlyMode] = useState(allowFriendlyMode);
   const maxMin = isFriendlyMode
     && inputs.validation_regex[lang]
     && inputs.validation_regex[lang].split('{')[1]
@@ -456,7 +456,7 @@ export const Validation = ({
         >
           {t('Regular Expressions')}
         </span>
-      <ReactSelect
+      {allowFriendlyMode && <ReactSelect
         options={options}
         placeholder={t('Enter Mode')}
         onChange={handleChangeMode}
@@ -481,7 +481,7 @@ export const Validation = ({
           })
         }}
         menuPlacement="auto"
-      />
+      />}
       {isFriendlyMode
         ? (
           <>

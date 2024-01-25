@@ -542,5 +542,7 @@
     "No Response": "No Response",
     "Payment": "Payment",
     "Rejected Reason": "Rejected Reason",
-    "New Offer": "New Offer"
+    "New Offer": "New Offer",
+    "You have already been accepted to this event.": "You have already been accepted to this event.",
+    "Unfortunately your application to this event has been rejected, you are not able to apply again.": "Unfortunately your application to this event has been rejected, you are not able to apply again."
 }

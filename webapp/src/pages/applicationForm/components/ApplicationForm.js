@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
+import { Link } from "react-router-dom";
 import { applicationFormService } from "../../../services/applicationForm";
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormSelect from "../../../components/form/FormSelect";
@@ -721,35 +722,18 @@ class ApplicationFormInstanceComponent extends Component {
     this.state = {
       isSubmitting: false,
       isError: false,
-      isSubmitted: false,
+      isSubmitted: props.response && props.response.is_submitted,
       isEditing: false,
-      responseId: null,
-      submittedTimestamp: null,
+      responseId: props.response && props.response.id,
+      submittedTimestamp: props.response && props.response.submitted_timestamp,
       errorMessage: "",
       errors: [],
-      answers: [],
+      answers: props.response ? props.response.answers : [],
       unsavedChanges: false,
-      startStep: 0
+      startStep: 0,
+      new_response: !props.response,
+      outcome: props.response && props.response.outcome
     };
-  }
-
-  componentDidMount() {
-    if (this.props.response) {
-      this.setState({
-        responseId: this.props.response.id,
-        new_response: false,
-        isSubmitted: this.props.response.is_submitted,
-        submittedTimestamp: this.props.response.submitted_timestamp,
-        answers: this.props.response.answers,
-        unsavedChanges: false
-      });
-    }
-    else {
-      this.setState({
-        new_response: true,
-        unsavedChanges: false
-      });
-    }
   }
 
   handleSubmit = event => {
@@ -763,7 +747,7 @@ class ApplicationFormInstanceComponent extends Component {
           applicationFormService
             .submit(this.props.formSpec.id, true, this.state.answers)
             .then(resp => {
-              let submitError = resp.response_id === null;
+              const submitError = resp.response_id === null;
               this.setState({
                 isError: submitError,
                 errorMessage: resp.message,
@@ -785,7 +769,7 @@ class ApplicationFormInstanceComponent extends Component {
               this.state.answers
             )
             .then(resp => {
-              let saveError = resp.response_id === null;
+              const saveError = resp.response_id === null;
               this.setState({
                 isError: saveError,
                 errorMessage: resp.message,
@@ -883,12 +867,25 @@ class ApplicationFormInstanceComponent extends Component {
       isEditing,
       errorMessage,
       answers,
-      isSubmitting
+      isSubmitting,
+      outcome
     } = this.state;
 
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>
         {errorMessage}
+      </div>;
+    }
+
+    if (outcome === "ACCEPTED" || outcome === "REJECTED") {
+      return <div className={"alert alert-success alert-container"}>
+        {outcome === "ACCEPTED" && <div>
+          <p>{this.props.t("You have already been accepted to this event.")}</p>
+          <Link to={`/${this.props.event.key}/offer`} className="btn btn-primary">
+            {this.props.t("View Offer")}
+          </Link>
+        </div>}
+        {outcome === "REJECTED" && <p>{this.props.t("Unfortunately your application to this event has been rejected, you are not able to apply again.")}</p>}
       </div>;
     }
 
@@ -899,7 +896,7 @@ class ApplicationFormInstanceComponent extends Component {
           onWithdrawn={this.handleWithdrawn}
           responseId={this.state.responseId}
           event={this.props.event}
-          onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to steo 1 in the Stepzilla
+          onEdit={() => this.setState({ isEditing: true, startStep: 0 })} // StartStep to jump to step 1 in the Stepzilla
         />
       );
     }
@@ -956,16 +953,6 @@ class ApplicationFormInstanceComponent extends Component {
           )
         };
       });
-
-    // const allQuestionModels =
-    //   sectionModels &&
-    //   sectionModels
-    //     .map(section =>
-    //       section.questionModels
-    //         .slice()
-    //         .sort((a, b) => a.question.order - b.question.order)
-    //     )
-    //     .reduce((a, b) => a.concat(b), []);
 
     steps.push({
       name: this.props.t("Confirmation"),
@@ -1090,8 +1077,8 @@ class ApplicationForm extends Component {
       applicationFormService.getResponse(eventId),
       eventService.getEvent(eventId)
     ]).then(responses => {
-      let [formResponse, responseResponse, eventResponse] = responses;
-      let selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
+      const [formResponse, responseResponse, eventResponse] = responses;
+      const selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
       this.setState({
         formSpec: formResponse.formSpec,
         responses: responseResponse.response,

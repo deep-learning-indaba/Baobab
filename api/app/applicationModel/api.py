@@ -12,7 +12,7 @@ from app.events.repository import EventRepository as event_repository
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
 from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required, event_admin_required
-from app.utils.errors import APPLICATION_FORM_EXISTS, EVENT_NOT_FOUND, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED
+from app.utils.errors import APPLICATION_FORM_EXISTS, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, DB_NOT_AVAILABLE, FORM_NOT_FOUND, APPLICATIONS_CLOSED, UPDATE_CONFLICT
 
 from app import db, bcrypt
 from app import LOGGER
@@ -227,6 +227,8 @@ class ApplicationFormDetailAPI(restful.Resource):
             if question_data['depends_on_question_id']:
                 question.depends_on_question_id = question_id_map[question_data['depends_on_question_id']]
 
+        application_form_repository.save()
+
         app_form = application_form_repository.get_by_id(app_form.id)
         return app_form, 201
 
@@ -245,7 +247,7 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         app_form = application_form_repository.get_by_id(application_form_id)  # type: ApplicationForm
         if not app_form:
-            return FORM_NOT_FOUND_BY_ID
+            return FORM_NOT_FOUND
 
         if event_id != app_form.event_id:
             return UPDATE_CONFLICT
@@ -330,6 +332,8 @@ class ApplicationFormDetailAPI(restful.Resource):
         for question, question_data in question_data_map.items():
             if question_data['depends_on_question_id']:
                 question.depends_on_question_id = question_id_map[question_data['depends_on_question_id']]
+
+        db.session.commit()
 
         app_form = application_form_repository.get_by_id(app_form.id)
 
