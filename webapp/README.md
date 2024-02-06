@@ -1,6 +1,6 @@
 # Baobab Webapp
 
-Webapp build using React.
+Front-end web application build using [ReactJS](https://react.dev/) and [Bootstrap](https://getbootstrap.com/).
 
 ### Prerequisites
 #### Runnning through Docker.
