@@ -260,14 +260,14 @@ class ApplicationFormDetailAPI(restful.Resource):
 
         # Delete questions in the application form that no longer exist
         all_question_ids = [q['id'] for s in incoming_sections for q in s['questions'] if 'id' in q]
-        print("all_question_ids:", all_question_ids)
+        
         for question in app_form.questions:
             if question.id not in all_question_ids:
                 print("DELETING QUESTION ID ", question.id)
                 application_form_repository.delete_question(question)
 
         all_section_ids = [s['id'] for s in incoming_sections if 'id' in s]
-        print("all_section_ids:", all_section_ids)
+        
         for section in app_form.sections:
             if section.id not in all_section_ids:
                 print("DELETING SECTION ID ", section.id)
