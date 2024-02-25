@@ -99,6 +99,7 @@ function submit(applicationFormId, isSubmitted, answers) {
             response_id: null,
             status: error.response.status,
             message: error.response.statusText,
+            errors: error.response.data,
             is_submitted: false,
             submitted_timestamp: null
           };
@@ -141,13 +142,14 @@ function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
           response_id: null,
           status: error.response.status,
           message: error.response.statusText,
+          errors: error.response.data,
           is_submitted: response.is_submitted,
           submitted_timestamp: null
         };
       } else {
         // The request was made but no response was received
         return {
-          response_id: response.id,
+          response_id: null,
           status: null,
           message: error.message,
           is_submitted: response.is_submitted,

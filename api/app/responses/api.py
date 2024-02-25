@@ -5,9 +5,9 @@ import tempfile
 
 import flask_restful as restful
 from app import LOGGER
-from typing import Optional, Sequence, Tuple, Mapping
+from typing import Optional, Sequence, Tuple, Mapping, Union
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
-from app.applicationModel.models import ApplicationForm, Question
+from app.applicationModel.models import ApplicationForm, Question, Section
 from app.events.models import EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin, ResponseTagMixin
@@ -57,43 +57,52 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         answer = next((a for a in answers if a.question_id == question_id), None)
         return answer
 
-    def is_question_required(self, question: Question, answers: Sequence[Answer], language: str) -> bool:
-        if not question.depends_on_question_id or not question.is_required:
-            return question.is_required
+    def is_entity_visible(self, entity: Union[Question, Section], answers: Sequence[Answer], language: str) -> bool:
+        if not entity.depends_on_question_id:
+            return True
         
-        dependency_answer = self.find_answer(question.depends_on_question_id, answers)
+        dependency_answer = self.find_answer(entity.depends_on_question_id, answers)
         if dependency_answer is None:
             return False
         
-        question_translation = question.get_translation(language)    
-        if question_translation is None:
-            LOGGER.warn('No {} translation found for question id {}'.format(language, question.id))
-            question_translation = question.get_translation('en')
+        translation = entity.get_translation(language)    
+        if translation is None:
+            LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
+            translation = entity.get_translation('en')
         
-        if dependency_answer.value in question_translation.show_for_values:
-            return question.is_required
+        return dependency_answer.value in translation.show_for_values
 
     def validate_response(self, response: Response, application_form: ApplicationForm) -> Tuple[bool, Mapping[int, ValidationError]]:
-        questions = application_form.questions
         answers = response.answers
         errors = []
-        for question in questions:
-            answer = self.find_answer(question.id, answers)
 
-            required = self.is_question_required(question, answers, response.language)
-            if required and answer is None:
-                errors[question.id] = ValidationError.REQUIRED
-                continue
-            
-            if answer is None:
+        for section in application_form.sections:
+            if not self.is_entity_visible(section, answers, response.language):
                 continue
 
-            is_valid, error = answer.is_valid(response.language)
-            if not is_valid:
-                errors.append({
-                    "question_id": question.id,
-                    "error": error
-                })
+            for question in section.questions:
+                answer = self.find_answer(question.id, answers)
+
+                visible = self.is_entity_visible(question, answers, response.language)
+                if not visible:
+                    continue
+
+                if question.is_required and answer is None:
+                    errors.append({
+                        "question_id": question.id,
+                        "error": ValidationError.REQUIRED
+                    })
+                    continue
+                
+                if answer is None:
+                    continue
+
+                is_valid, error = answer.is_valid(response.language)
+                if not is_valid:
+                    errors.append({
+                        "question_id": question.id,
+                        "error": error
+                    })
 
         return not bool(errors), errors
 
