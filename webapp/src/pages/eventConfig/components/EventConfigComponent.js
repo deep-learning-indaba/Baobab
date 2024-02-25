@@ -20,6 +20,7 @@ const REQUIRED_DATE_FIELDS_BY_EVENT = {
       "PROGRAMME": ALL_DATE_FIELDS,
       "AWARD": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES, OFFER_DATES],
       "CALL": [APPLICATION_DATES, REVIEW_DATES, SELECTION_DATES],
+      "JOURNAL": []
     }
 const DATE_NAMES = {
       "application_open": "Application Open",
@@ -227,51 +228,53 @@ class EventConfigComponent extends Component {
       errors.push(this.props.t("Application open date cannot be in the past"));
     }
     //working backwards, check each phase ends before the previous phase starts
-    if (this.state.requiredDateFields.includes("start_date") && this.state.requiredDateFields.includes("registration_close")) {
-      if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
-        errors.push(this.props.t("Event start date must be after registration close date"));
+    if (this.state.updatedEvent.event_type !== "JOURNAL") {
+      if (this.state.requiredDateFields.includes("start_date") && this.state.requiredDateFields.includes("registration_close")) {
+        if (this.state.updatedEvent.start_date <= this.state.updatedEvent.registration_close) {
+          errors.push(this.props.t("Event start date must be after registration close date"));
+        }
       }
-    }
-    if (this.state.requiredDateFields.includes("registration_open") && this.state.requiredDateFields.includes("review_close")) {
-      if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.review_close) {
-        errors.push(this.props.t("Registration open date must be after review close date"));
+      if (this.state.requiredDateFields.includes("registration_open") && this.state.requiredDateFields.includes("review_close")) {
+        if (this.state.updatedEvent.registration_open <= this.state.updatedEvent.review_close) {
+          errors.push(this.props.t("Registration open date must be after review close date"));
+        }
       }
-    }
-    if (this.state.requiredDateFields.includes("offer_open") && this.state.requiredDateFields.includes("review_close")) {
-      if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.review_close) {
-        errors.push(this.props.t("Offer open date must be after review close date"));
+      if (this.state.requiredDateFields.includes("offer_open") && this.state.requiredDateFields.includes("review_close")) {
+        if (this.state.updatedEvent.offer_open <= this.state.updatedEvent.review_close) {
+          errors.push(this.props.t("Offer open date must be after review close date"));
+        }
       }
-    }
-    if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
-      errors.push(this.props.t("Selection open date must be after review close date"));
-    }
-    if (this.state.updatedEvent.review_open <= this.state.updatedEvent.application_close) {
-      errors.push(this.props.t("Review open date must be after application close date"));
-    }
+      if (this.state.updatedEvent.selection_open <= this.state.updatedEvent.review_close) {
+        errors.push(this.props.t("Selection open date must be after review close date"));
+      }
+      if (this.state.updatedEvent.review_open <= this.state.updatedEvent.application_close) {
+        errors.push(this.props.t("Review open date must be after application close date"));
+      }
 
-    //check date ranges
-    if (this.state.updatedEvent.application_open >= this.state.updatedEvent.application_close) {
-      errors.push(this.props.t("Application close date must be after application open date"));
-    }
-    if (this.state.updatedEvent.review_open >= this.state.updatedEvent.review_close) {
-      errors.push(this.props.t("Review close date must be after review open date"));
-    }
-    if (this.state.updatedEvent.selection_open >= this.state.updatedEvent.selection_close) {
-      errors.push(this.props.t("Selection close date must be after selection open date"));
-    }
-    if (this.state.requiredDateFields.includes('offer_open') && this.state.requiredDateFields.includes('offer_close')) {
-      if (this.state.updatedEvent.offer_open >= this.state.updatedEvent.offer_close) {
-        errors.push(this.props.t("Offer close date must be after offer open date"));
+      //check date ranges
+      if (this.state.updatedEvent.application_open >= this.state.updatedEvent.application_close) {
+        errors.push(this.props.t("Application close date must be after application open date"));
       }
-    }
-    if (this.state.requiredDateFields.includes('registration_open') && this.state.requiredDateFields.includes('registration_close')) {
-      if (this.state.updatedEvent.registration_open >= this.state.updatedEvent.registration_close) {
-        errors.push(this.props.t("Registration close date must be after registration open date"));
+      if (this.state.updatedEvent.review_open >= this.state.updatedEvent.review_close) {
+        errors.push(this.props.t("Review close date must be after review open date"));
       }
-    }
-    if (this.state.requiredDateFields.includes('start_date') && this.state.requiredDateFields.includes('end_date')) {
-      if (this.state.updatedEvent.start_date >= this.state.updatedEvent.end_date) {
-        errors.push(this.props.t("Event end date must be after event start date"));
+      if (this.state.updatedEvent.selection_open >= this.state.updatedEvent.selection_close) {
+        errors.push(this.props.t("Selection close date must be after selection open date"));
+      }
+      if (this.state.requiredDateFields.includes('offer_open') && this.state.requiredDateFields.includes('offer_close')) {
+        if (this.state.updatedEvent.offer_open >= this.state.updatedEvent.offer_close) {
+          errors.push(this.props.t("Offer close date must be after offer open date"));
+        }
+      }
+      if (this.state.requiredDateFields.includes('registration_open') && this.state.requiredDateFields.includes('registration_close')) {
+        if (this.state.updatedEvent.registration_open >= this.state.updatedEvent.registration_close) {
+          errors.push(this.props.t("Registration close date must be after registration open date"));
+        }
+      }
+      if (this.state.requiredDateFields.includes('start_date') && this.state.requiredDateFields.includes('end_date')) {
+        if (this.state.updatedEvent.start_date >= this.state.updatedEvent.end_date) {
+          errors.push(this.props.t("Event end date must be after event start date"));
+        }
       }
     }
     return errors;
@@ -504,7 +507,8 @@ class EventConfigComponent extends Component {
                     { value: "EVENT", label: t("Event") },
                     { value: "AWARD", label: t("Award") },
                     { value: "CALL", label: t("Call"),  },
-                    { value: "PROGRAMME", label: t("Programme") }
+                    { value: "PROGRAMME", label: t("Programme") },
+                    { value: "JOURNAL", label: t("Journal") }
                   ]}
                 />
               </div>
