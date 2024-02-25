@@ -16,7 +16,8 @@ export const applicationFormService = {
 
 
 function getForEvent(eventId) {
-    const headers = authHeader() + {
+    const headers = {
+      ...authHeader(),
       'Cache-Control': 'no-cache',
       'Pragma': 'no-cache',
       'Expires': '0',
