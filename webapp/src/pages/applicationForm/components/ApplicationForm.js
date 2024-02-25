@@ -382,6 +382,7 @@ class Section extends React.Component {
   // validate
   validate = (questionModel, updatedAnswer) => {
     let errors = [];
+    
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
 
@@ -519,6 +520,8 @@ class ConfirmationComponent extends React.Component {
     const t = this.props.t;
 
     const allAnswers = this.props.sectionModels && this.props.sectionModels.flatMap(s=>s.questionModels.map(q=>q.answer));
+    const allErrors = this.props.sectionModels 
+      && this.props.sectionModels.flatMap(s=>s.questionModels.filter(qm => this.dependentQuestionFilter(qm.question, allAnswers)).map(q=>q.validationError)).filter(e=>e);
 
     return (
       <div>
@@ -534,13 +537,16 @@ class ConfirmationComponent extends React.Component {
             </div>
 
             <div class="text-center">
-              <button
+              {allErrors.length > 0 && <div class="alert alert-danger alert-container">
+                {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
+              </div>}
+              {allErrors.length === 0 && <button
                 className="btn btn-primary submit-application mx-auto"
                 onClick={this.props.submit}
                 disabled={this.props.isSubmitting}
               >
                 {t("Submit")}
-              </button>
+              </button>}
             </div>
 
           </div>
@@ -564,6 +570,7 @@ class ConfirmationComponent extends React.Component {
                           <div class="col">
                             <p class="answer-value">
                               <AnswerValue answer={qm.answer} question={qm.question} />
+                              {qm.validationError && <div className="alert alert-danger alert-container">{qm.validationError}</div>}
                             </p>
                           </div>
                         </div>
@@ -573,15 +580,17 @@ class ConfirmationComponent extends React.Component {
                 })}
             </div>
           })}
-
         
-        <button
+        {allErrors.length > 0 && <div class="alert alert-danger alert-container">
+          {t("Could not submit your application due to validation errors. Please go back and fix these any try again.")}
+        </div>}
+        {allErrors.length === 0 && <button
           className="btn btn-primary submit-application mx-auto"
           onClick={this.props.submit}
           disabled={this.props.isSubmitting}
         >
           {t("Submit")}
-        </button>
+        </button>}
       </div>
     );
   }
@@ -597,7 +606,8 @@ class SubmittedComponent extends React.Component {
     this.state = {
       withdrawModalVisible: false,
       isError: false,
-      errorMessage: ""
+      errorMessage: "",
+      submitValidationErrors: [],
     };
   }
 
@@ -732,7 +742,8 @@ class ApplicationFormInstanceComponent extends Component {
       unsavedChanges: false,
       startStep: 0,
       new_response: !props.response,
-      outcome: props.response && props.response.outcome
+      outcome: props.response && props.response.outcome,
+      submitValidationErrors: []
     };
   }
 
@@ -743,44 +754,25 @@ class ApplicationFormInstanceComponent extends Component {
         isSubmitting: true
       },
       () => {
-        if (this.state.new_response) {
-          applicationFormService
-            .submit(this.props.formSpec.id, true, this.state.answers)
-            .then(resp => {
-              const submitError = resp.response_id === null;
-              this.setState({
-                isError: submitError,
-                errorMessage: resp.message,
-                isSubmitting: false,
-                isSubmitted: resp.is_submitted,
-                isEditing: false,
-                submittedTimestamp: resp.submitted_timestamp,
-                unsavedChanges: false,
-                new_response: false,
-                responseId: resp.response_id
-              });
-            });
-        } else {
-          applicationFormService
-            .updateResponse(
-              this.state.responseId,
-              this.props.formSpec.id,
-              true,
-              this.state.answers
-            )
-            .then(resp => {
-              const saveError = resp.response_id === null;
-              this.setState({
-                isError: saveError,
-                errorMessage: resp.message,
-                isSubmitting: false,
-                isSubmitted: resp.is_submitted,
-                isEditing: false,
-                submittedTimestamp: resp.submitted_timestamp,
-                unsavedChanges: false
-              });
-            });
-        }
+        const promise = this.state.new_response 
+          ? applicationFormService.submit(this.props.formSpec.id, true, this.state.answers)
+          : applicationFormService.updateResponse(this.state.responseId, this.props.formSpec.id, true, this.state.answers);
+        
+        promise.then(resp => {
+            const submitError = resp.response_id === null && resp.status !== 422;
+            this.setState(prevState => ({
+              submitValidationErrors: resp.status === 422 && resp.errors,
+              isError: submitError,
+              errorMessage: resp.message,
+              isSubmitting: false,
+              isSubmitted: resp.response_id !== null && resp.status !== 422 && resp.is_submitted,
+              isEditing: false,
+              submittedTimestamp: resp.submitted_timestamp,
+              unsavedChanges: false,
+              new_response: false,
+              responseId: prevState.responseId || resp.response_id
+            }));
+          });
       }
     );
   };
@@ -846,7 +838,8 @@ class ApplicationFormInstanceComponent extends Component {
         return {
           answers: prevState.answers
             .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
-            .concat(answers)
+            .concat(answers),
+          submitValidationErrors: prevState.submitValidationErrors.filter(e => !answers.map(a => a.question_id).includes(e.question_id))
         };
       }, () => {
         if (save) {
@@ -859,6 +852,27 @@ class ApplicationFormInstanceComponent extends Component {
   handleStepChange = () => {
     window.scrollTo(0, 0);
   };
+
+  getSubmitValidationError = (q) => {
+    const validationError = this.state.submitValidationErrors.find(e => e.question_id === q.id);
+    if (!validationError) {
+      return "";
+    }
+
+    if (validationError.error === "required") {
+      return this.props.t("An answer is required.");
+    }
+
+    if (validationError.error === "validation_regex_failed") {
+      return q.validation_text;
+    }
+
+    if (validationError.error === "invalid_option") {
+      return this.props.t("Invalid option selected.");
+    }
+
+    return "";
+  }
 
   render() {
     const {
@@ -924,7 +938,7 @@ class ApplicationFormInstanceComponent extends Component {
             return {
               question: q,
               answer: answers.find(a => a.question_id === q.id),
-              validationError: ""
+              validationError: this.getSubmitValidationError(q)
             };
           })
         };

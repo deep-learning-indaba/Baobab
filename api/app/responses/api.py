@@ -5,11 +5,13 @@ import tempfile
 
 import flask_restful as restful
 from app import LOGGER
+from typing import Optional, Sequence, Tuple, Mapping, Union
 from app.applicationModel.repository import ApplicationFormRepository as application_form_repository
+from app.applicationModel.models import ApplicationForm, Question, Section
 from app.events.models import EventType
 from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin, ResponseTagMixin
-from app.responses.models import Answer, Response
+from app.responses.models import Answer, Response, ValidationError
 from app.responses.repository import ResponseRepository as response_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.reviews.repository import ReviewRepository as review_repository
@@ -26,6 +28,7 @@ def _extract_outcome_status(response):
     if not hasattr(response, "outcome") or not isinstance(response.outcome, Outcome):
         return None
     return response.outcome.status.name
+
 
 class ResponseAPI(ResponseMixin, restful.Resource):
 
@@ -49,6 +52,59 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         'parent_id': fields.Integer(default=None),
         'outcome': fields.String(attribute=_extract_outcome_status)
     }
+
+    def find_answer(self, question_id: int, answers: Sequence[Answer]) -> Optional[Answer]:
+        answer = next((a for a in answers if a.question_id == question_id), None)
+        return answer
+
+    def is_entity_visible(self, entity: Union[Question, Section], answers: Sequence[Answer], language: str) -> bool:
+        if not entity.depends_on_question_id:
+            return True
+        
+        dependency_answer = self.find_answer(entity.depends_on_question_id, answers)
+        if dependency_answer is None:
+            return False
+        
+        translation = entity.get_translation(language)    
+        if translation is None:
+            LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
+            translation = entity.get_translation('en')
+        
+        return dependency_answer.value in translation.show_for_values
+
+    def validate_response(self, response: Response, application_form: ApplicationForm) -> Tuple[bool, Mapping[int, ValidationError]]:
+        answers = response.answers
+        errors = []
+
+        for section in application_form.sections:
+            if not self.is_entity_visible(section, answers, response.language):
+                continue
+
+            for question in section.questions:
+                answer = self.find_answer(question.id, answers)
+
+                visible = self.is_entity_visible(question, answers, response.language)
+                if not visible:
+                    continue
+
+                if question.is_required and answer is None:
+                    errors.append({
+                        "question_id": question.id,
+                        "error": ValidationError.REQUIRED
+                    })
+                    continue
+                
+                if answer is None:
+                    continue
+
+                is_valid, error = answer.is_valid(response.language)
+                if not is_valid:
+                    errors.append({
+                        "question_id": question.id,
+                        "error": error
+                    })
+
+        return not bool(errors), errors
 
     @auth_required
     def get(self):
@@ -94,9 +150,6 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.RESPONSE_ALREADY_SUBMITTED
 
         response = Response(application_form_id, user_id, language)
-        if is_submitted:
-            response.submit()
-            
         response_repository.save(response)
 
         answers = []
@@ -105,8 +158,15 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             answers.append(answer)
         response_repository.save_answers(answers)
 
-        try:
-            if response.is_submitted:
+        if is_submitted:
+            is_valid, validation_errors = self.validate_response(response, application_form)
+            if not is_valid:
+                return validation_errors, 422
+            
+            response.submit()
+            response_repository.save(response)
+
+            try:
                 LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
                 user = user_repository.get_by_id(user_id)
                 response = response_repository.get_by_id_and_user_id(response.id, user_id)
@@ -117,10 +177,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                     event_admins = event_repository.get_event_admins(event_id=event.id)
                     for event_admin in event_admins:
                         self.send_confirmation(event_admin, response)
-        except:
-            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
-        finally:
-            return marshal(response, ResponseAPI.response_fields), 201
+            except:
+                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+
+        return marshal(response, ResponseAPI.response_fields), 201
 
     @auth_required
     def put(self):
@@ -128,20 +188,19 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user_id = g.current_user['id']
         is_submitted = args['is_submitted']
         language = args['language']
+        application_form_id = args['application_form_id']
 
         response = response_repository.get_by_id(args['id'])
         if not response:
             return errors.RESPONSE_NOT_FOUND
         if response.user_id != user_id:
             return errors.UNAUTHORIZED
-        if response.application_form_id != args['application_form_id']:
+        if response.application_form_id != application_form_id:
             return errors.UPDATE_CONFLICT
-
-        response.is_submitted = is_submitted
-        response.language = language
-        if is_submitted:
-            response.submit()
-        response_repository.save(response)
+        
+        application_form = application_form_repository.get_by_id(application_form_id)
+        if application_form is None:
+            return errors.FORM_NOT_FOUND_BY_ID
 
         answers = []
         for answer_args in args['answers']:
@@ -156,8 +215,18 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             answers.append(active_answer)
         response_repository.save_answers(answers)
 
-        try:
-            if response.is_submitted:
+        response.language = language
+        response_repository.save(response)
+
+        if is_submitted:
+            is_valid, validation_errors = self.validate_response(response, application_form)
+            if not is_valid:
+                return validation_errors, 422
+            
+            response.submit()
+            response_repository.save(response)
+
+            try:
                 LOGGER.info('Sending confirmation email for response with ID : {id}'.format(id=response.id))
                 user = user_repository.get_by_id(user_id)
                 response = response_repository.get_by_id_and_user_id(response.id, user_id)
@@ -168,10 +237,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                     event_admins = event_repository.get_event_admins(event_id=event.id)
                     for event_admin in event_admins:
                         self.send_confirmation(event_admin, response)
-        except:                
-            LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
-        finally:
-            return marshal(response, ResponseAPI.response_fields), 200
+            except:                
+                LOGGER.warn('Failed to send confirmation email for response with ID : {id}, but the response was submitted succesfully'.format(id=response.id))
+            
+        return marshal(response, ResponseAPI.response_fields), 200
 
     @auth_required
     def delete(self):

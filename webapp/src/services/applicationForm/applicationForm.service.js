@@ -16,8 +16,15 @@ export const applicationFormService = {
 
 
 function getForEvent(eventId) {
+    const headers = {
+      ...authHeader(),
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    };
+
     return axios
-    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId, { 'headers': authHeader() })
+    .get(baseUrl + "/api/v1/application-form?event_id=" + eventId, { 'headers': headers })
     .then(response => {
         let formSpec = null;
         if (response) formSpec = response.data;
@@ -92,6 +99,7 @@ function submit(applicationFormId, isSubmitted, answers) {
             response_id: null,
             status: error.response.status,
             message: error.response.statusText,
+            errors: error.response.data,
             is_submitted: false,
             submitted_timestamp: null
           };
@@ -134,13 +142,14 @@ function updateResponse(response_id, applicationFormId, isSubmitted, answers) {
           response_id: null,
           status: error.response.status,
           message: error.response.statusText,
+          errors: error.response.data,
           is_submitted: response.is_submitted,
           submitted_timestamp: null
         };
       } else {
         // The request was made but no response was received
         return {
-          response_id: response.id,
+          response_id: null,
           status: null,
           message: error.message,
           is_submitted: response.is_submitted,
