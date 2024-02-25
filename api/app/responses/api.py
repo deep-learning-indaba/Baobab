@@ -76,7 +76,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
     def validate_response(self, response: Response, application_form: ApplicationForm) -> Tuple[bool, Mapping[int, ValidationError]]:
         questions = application_form.questions
         answers = response.answers
-        errors = {}
+        errors = []
         for question in questions:
             answer = self.find_answer(question.id, answers)
 
@@ -90,7 +90,10 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
             is_valid, error = answer.is_valid(response.language)
             if not is_valid:
-                errors[question.id] = error
+                errors.append({
+                    "question_id": question.id,
+                    "error": error
+                })
 
         return not bool(errors), errors
 
