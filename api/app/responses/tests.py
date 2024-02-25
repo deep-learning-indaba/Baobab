@@ -252,6 +252,10 @@ class ResponseApiTest(ApiTestCase):
                 {
                     'question_id': self.question.id,
                     'value': 'Answer 1'
+                },
+                {
+                    'question_id': self.question2.id,
+                    'value': 'Hello world, this is the 2nd answer.'
                 }
             ]
         }
@@ -282,6 +286,10 @@ class ResponseApiTest(ApiTestCase):
                 {
                     'question_id': self.question1_with_nomination.id,
                     'value': 'Answer 1'
+                },
+                {
+                    'question_id': self.question2_with_nomination.id,
+                    'value': 'Answer 2'
                 }
             ]
         }

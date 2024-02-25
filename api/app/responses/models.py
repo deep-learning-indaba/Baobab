@@ -3,10 +3,19 @@ from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import column_property
 
+import re
+import enum
+from typing import Tuple, Optional
 from app import db, LOGGER
 from app.applicationModel.models import Question
 from app.tags.models import Tag
 from app.users.models import AppUser
+
+
+class ValidationError(str, enum.Enum):
+    REQUIRED = 'required'
+    INVALID_OPTION = 'invalid_option'
+    VALIDATION_REGEX_FAILED = 'validation_regex_failed'
 
 
 class Response(db.Model):
@@ -89,6 +98,24 @@ class Answer(db.Model):
             if option:
                 return option[0]['label']
         return self.value
+    
+    def is_valid(self, language: str) -> Tuple[bool, Optional[ValidationError]]:
+        if self.question.is_required and not self.value:
+            return False, ValidationError.REQUIRED
+        
+        question_translation = self.question.get_translation(language)
+        if question_translation is None:
+            LOGGER.error('Missing {} translation for question {}'.format(language, self.question.id))
+            question_translation = self.question.get_translation('en')
+
+        if question_translation.options and self.value not in [option['value'] for option in question_translation.options]:
+            return False, ValidationError.INVALID_OPTION
+        
+        validation_regex = question_translation.validation_regex
+        if validation_regex and not re.match(validation_regex, self.value):
+            return False, ValidationError.VALIDATION_REGEX_FAILED
+
+        return True, None
 
 
 class ResponseReviewer(db.Model):
