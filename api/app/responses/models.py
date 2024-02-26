@@ -108,8 +108,13 @@ class Answer(db.Model):
             LOGGER.error('Missing {} translation for question {}'.format(language, self.question.id))
             question_translation = self.question.get_translation('en')
 
-        if question_translation.options and self.value not in [option['value'] for option in question_translation.options]:
-            return False, ValidationError.INVALID_OPTION
+        if question_translation.options:
+            if self.question.type == "multi-choice" and self.value not in [option['value'] for option in question_translation.options]:
+                return False, ValidationError.INVALID_OPTION
+            if self.question.type == 'mutli-checkbox':
+                for value in self.value.split(' ; '):
+                    if value.strip() not in [option['value'] for option in question_translation.options]:
+                        return False, ValidationError.INVALID_OPTION
         
         validation_regex = question_translation.validation_regex
         if validation_regex and not re.match(validation_regex, self.value):
