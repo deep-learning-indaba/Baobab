@@ -1,5 +1,5 @@
 service: prod-frontend
-runtime: python37
+runtime: python312
 
 handlers:
   - url: /(.*\.(gif|png|jpg|css|js|pdf|json)(|\.map))$
