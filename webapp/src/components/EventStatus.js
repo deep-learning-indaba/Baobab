@@ -65,14 +65,27 @@ class EventStatus extends Component {
   applicationStatus = (event) => {
       const applyLink = `${event.key}/apply`
       if (event.status.application_status === "Submitted") {
-          return {
-              title: this.props.t("Application Submitted"),
-              titleClass: "text-success",
-              longText: this.props.t("You have submitted your application, you may still edit it before the deadline."),
-              shortText: this.props.t("View Application"),
-              linkClass: 'btn-secondary',
-              link: applyLink
-          };
+        if (event.event_type === "JOURNAL") {
+            return {
+                title: this.props.t("Article Submitted"),
+                titleClass: "text-success",
+                longText: this.props.t("You have submitted your article."),
+                shortText: this.props.t("View Submission"),
+                linkClass: 'btn-secondary',
+                link: applyLink
+            };  
+        }
+        else {
+            return {
+                title: this.props.t("Application Submitted"),
+                titleClass: "text-success",
+                longText: this.props.t("You have submitted your application, you may still edit it before the deadline."),
+                shortText: this.props.t("View Application"),
+                linkClass: 'btn-secondary',
+                link: applyLink
+            };
+        }
+          
       }
       else if (event.status.application_status === "Withdrawn") {
         return {
@@ -94,15 +107,27 @@ class EventStatus extends Component {
               link: applyLink
           };
       }
-      else {
-          return {
-              title: this.props.t("Apply Now"),
-              titleClass: "text-success",
-              longText: this.props.t("Start your application to attend") + ` ${event.name}`,
-              shortText: this.props.t("Apply Now"),
-              linkClass: "btn-success",
-              link: applyLink
-          };
+      else {      
+        if (event.event_type === "JOURNAL") {
+            return {
+                title: this.props.t("Submit Now"),
+                titleClass: "text-success",
+                longText: this.props.t("Submit your article to") + ` ${event.name}`,
+                shortText: this.props.t("Submit Now"),
+                linkClass: "btn-success",
+                link: applyLink
+            };
+        }
+        else {
+            return {
+                title: this.props.t("Apply Now"),
+                titleClass: "text-success",
+                longText: this.props.t("Start your application to attend") + ` ${event.name}`,
+                shortText: this.props.t("Apply Now"),
+                linkClass: "btn-success",
+                link: applyLink
+            };
+        }
       }
   }
 

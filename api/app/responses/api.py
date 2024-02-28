@@ -173,7 +173,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 self.send_confirmation(user, response)
                 
                 event = event_repository.get_event_by_response_id(response.id)
-                if event.event_type == EventType.CONTINUOUS_JOURNAL:
+                if event.event_type == EventType.JOURNAL:
                     event_admins = event_repository.get_event_admins(event_id=event.id)
                     for event_admin in event_admins:
                         self.send_confirmation(event_admin, response)
@@ -233,7 +233,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 self.send_confirmation(user, response)
                 
                 event = event_repository.get_event_by_response_id(response.id)
-                if event.event_type == EventType.CONTINUOUS_JOURNAL:
+                if event.event_type == EventType.JOURNAL:
                     event_admins = event_repository.get_event_admins(event_id=event.id)
                     for event_admin in event_admins:
                         self.send_confirmation(event_admin, response)
