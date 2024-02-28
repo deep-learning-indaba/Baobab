@@ -70,7 +70,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
             translation = entity.get_translation('en')
         
-        return dependency_answer.value in translation.show_for_values
+        return translation.show_for_values and dependency_answer.value in translation.show_for_values
 
     def validate_response(self, response: Response, application_form: ApplicationForm) -> Tuple[bool, Mapping[int, ValidationError]]:
         answers = response.answers
