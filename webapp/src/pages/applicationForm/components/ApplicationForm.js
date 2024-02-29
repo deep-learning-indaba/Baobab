@@ -662,6 +662,8 @@ class SubmittedComponent extends React.Component {
     const t = this.props.t;
     const initialText = this.props.event && this.props.event.event_type === "CALL" 
       ? t("Thank you for responding to the")
+      : this.props.event.event_type === "JOURNAL"
+      ? t("Thank you for submitting an article to the") 
       : t("Thank you for applying for"); 
 
     return (
@@ -675,25 +677,33 @@ class SubmittedComponent extends React.Component {
 
         <p class="thank-you">
           {initialText + " "} {this.props.event ? this.props.event.name : ""}. {" "}
-          {t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
+          {this.props.event.event_type === "JOURNAL" 
+          ? t("Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.")
+          : t("Your application will be reviewed by our committee and we will get back to you as soon as possible.")}
         </p>
 
         <p class="timestamp">
-          {t("You submitted your application on") + " "}
+          {this.props.event.event_type === "JOURNAL" 
+          ? t("You submitted your article on") + " "
+          : t("You submitted your application on") + " "}
           {this.props.timestamp && this.props.timestamp.toLocaleString()}
         </p>
 
         <div class="submitted-footer">
           <button class="btn btn-danger" onClick={this.handleWithdraw}>
-            {t("Withdraw Application")}
+            {this.props.event.event_type === "JOURNAL" 
+            ? t("Withdraw Article Submission") 
+            : t("Withdraw Application")}
           </button>
         </div>
-
-        <div class="submitted-footer">
-          <button class="btn btn-primary" onClick={this.handleEdit}>
-            {t("Edit Application")}
-          </button>
-        </div>
+        
+        {this.props.event.event_type === "JOURNAL" 
+        ? undefined
+        : <div class="submitted-footer">
+        <button class="btn btn-primary" onClick={this.handleEdit}>
+          {t("Edit Application")}
+        </button>
+        </div>}
 
         <ConfirmModal
           visible={this.state.withdrawModalVisible}

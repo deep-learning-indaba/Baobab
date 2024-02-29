@@ -95,10 +95,13 @@ class EventConfigComponent extends Component {
 
   stripTimeFromDates = event => {
     const u = {...event}
-    for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
-      u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10);
-      u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10);
+    if (u.event_type !== "JOURNAL"){
+      for (let i = 0; i < ALL_DATE_FIELDS.length; i++) {
+        u[ALL_DATE_FIELDS[i][0]] = u[ALL_DATE_FIELDS[i][0]].substring(0, 10);
+        u[ALL_DATE_FIELDS[i][1]] = u[ALL_DATE_FIELDS[i][1]].substring(0, 10);
+      }
     }
+
     return u;
   }
 
@@ -352,11 +355,12 @@ class EventConfigComponent extends Component {
         }
         else { //if a required date, set to empty string (if it was previously set to future_date), or just keep value as is
           u[date] = u[date] === future_date ? "" : u[date];
-        } //change the starting date for journal to be in the past as there should be no application submission limit time
-        if (this.state.updatedEvent.event_type == "JOURNAL") {
-          u.application_open = new Date("2000-12-31").toISOString().slice(0,10);
-        }
+        } 
+        
       });
+      if (this.state.updatedEvent.event_type === "JOURNAL") {
+        u.application_open = new Date("2000-12-31").toISOString().slice(0,10);
+      }
       this.updateEventState(u);
     }
   );

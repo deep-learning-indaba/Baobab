@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
+//import ApplicationForm from "../../../applicationForm/components/ApplicationForm"
 
 
 class EventStatus extends Component {
@@ -67,10 +68,11 @@ class EventStatus extends Component {
       if (event.status.application_status === "Submitted") {
         if (event.event_type === "JOURNAL") {
             return {
-                title: this.props.t("Article Submitted"),
+                title: this.props.t("Article(s) Submitted"),
+                //<button className="btn btn-primary" onClick={() => this.newNomination()}>{"New Submission"} &gt;</button>
                 titleClass: "text-success",
                 longText: this.props.t("You have submitted your article."),
-                shortText: this.props.t("View Submission"),
+                shortText: this.props.t("View Submission(s)"),
                 linkClass: 'btn-secondary',
                 link: applyLink
             };  
