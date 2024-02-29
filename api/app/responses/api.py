@@ -70,7 +70,7 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
             translation = entity.get_translation('en')
         
-        return dependency_answer.value in translation.show_for_values
+        return translation.show_for_values and dependency_answer.value in translation.show_for_values
 
     def validate_response(self, response: Response, application_form: ApplicationForm) -> Tuple[bool, Mapping[int, ValidationError]]:
         answers = response.answers
@@ -300,9 +300,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             else:
                 event_description = event.get_description('en')
 
-            if user.is_event_admin(event.id):
-                emailer.email_user(
-                'assign-action-editor',
+            emailer.email_user(
+                'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
                 template_parameters=dict(
                     event_description=event_description,
                     question_answer_summary=question_answer_summary,
@@ -310,16 +309,6 @@ class ResponseAPI(ResponseMixin, restful.Resource):
                 event=event,
                 user=user
             )
-            else:
-                emailer.email_user(
-                    'confirmation-response-call' if event.event_type == EventType.CALL else 'confirmation-response',
-                    template_parameters=dict(
-                        event_description=event_description,
-                        question_answer_summary=question_answer_summary,
-                    ),
-                    event=event,
-                    user=user
-                )
 
         except Exception as e:
             LOGGER.error('Could not send confirmation email for response with id : {response_id} due to: {e}'.format(response_id=response.id, e=e))

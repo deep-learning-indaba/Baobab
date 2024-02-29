@@ -58,11 +58,11 @@ class TitleContentAPI(restful.Resource):
 
         if language == 'fr':
             return [
-                {"value": "M.", "label": "M."},
+                {"value": "M", "label": "M"},
                 {"value": "Mme", "label": "Mme"},
                 {"value": "Mlle", "label": "Mlle"},
                 {"value": "Dr", "label": "Dr"},
-                {"value": "Pr", "label": "Pr"}
+                {"value": "Prof", "label": "Prof"}
             ]
 
         # Default to English if not another known language
