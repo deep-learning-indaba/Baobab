@@ -49,7 +49,7 @@ class EventType(Enum):
     CALL = 'call'
     PROGRAMME = 'programme'
     JOURNAL = 'journal'
-    JOURNAL = 'JOURNAL'
+    
 
 class Event(Base):
 
