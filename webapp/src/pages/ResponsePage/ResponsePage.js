@@ -660,6 +660,7 @@ class ResponsePage extends Component {
                     <div className="headings-lower">
                         <div className="user-details">
                             <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
+                            <p>{t("Language")}: {applicationData.language}</p>
                             <div className="tags">
                                 {this.renderTags()}
                                 <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>
