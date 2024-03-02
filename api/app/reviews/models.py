@@ -195,6 +195,7 @@ class ReviewResponse(db.Model):
     language = db.Column(db.String(2), nullable=False)
     is_submitted = db.Column(db.Boolean(), nullable=False)
     submitted_timestamp = db.Column(db.DateTime(), nullable=True)
+    is_private = db.Column(db.Boolean(), nullable=False)
 
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     reviewer_user = db.relationship('AppUser', foreign_keys=[reviewer_user_id])
@@ -207,12 +208,14 @@ class ReviewResponse(db.Model):
                  review_form_id,
                  reviewer_user_id,
                  response_id,
-                 language):
+                 language,
+                 is_private):
         self.review_form_id = review_form_id
         self.reviewer_user_id = reviewer_user_id
         self.response_id = response_id
         self.language = language
         self.is_submitted = False
+        self.is_private = is_private
 
     def submit(self):
         self.is_submitted = True
