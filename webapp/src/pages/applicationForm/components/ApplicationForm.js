@@ -343,13 +343,11 @@ class Section extends React.Component {
     };
   }
 
-
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
       value: value
     };
-
 
     const newQuestionModels = this.state.questionModels
       .map(q => {
@@ -374,14 +372,18 @@ class Section extends React.Component {
         if (this.props.changed) {
           this.props.changed();
         }
+        if (this.props.answerChanged) {
+          this.props.answerChanged(
+            [newAnswer]
+          );
+        }
       }
     );
   };
 
-
   // validate
   validate = (questionModel, updatedAnswer) => {
-    let errors = [];
+    const errors = [];
     
     const question = questionModel.question;
     const answer = updatedAnswer || questionModel.answer;
@@ -401,12 +403,10 @@ class Section extends React.Component {
     return errors.join("; ");
   };
 
-
   // isValidated
   isValidated = () => {
-    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
     const validatedModels = this.state.questionModels
-      .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+      .filter(q => this.props.showQuestionBasedOnSavedFormAnswers(q.question))
       .map(q => {
         return {
           ...q,
@@ -443,19 +443,6 @@ class Section extends React.Component {
     }
   };
 
-  /*
-   * Only include questions that depend on other question's answers if they match.
-   * If the value has been set, compare with that. If it hasn't been set, compare with the saved value.
-   */
-  dependentQuestionFilter = (question, sectionCurrentAnswers) => {
-    if (isEntityDependentOnAnswer(question)) {
-      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
-      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
-    } else {
-      return true;
-    }
-  }
-
   render() {
     const {
       section,
@@ -463,8 +450,6 @@ class Section extends React.Component {
       hasValidated,
       validationStale
     } = this.state;
-
-    const allAnswersInSection = questionModels.map(q => q.answer);
 
     return (
       <div className={"section"}>
@@ -476,7 +461,7 @@ class Section extends React.Component {
         </div>
         {questionModels &&
           questionModels
-            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+            .filter(q => this.props.showQuestionBasedOnSavedFormAnswers(q.question))
             .map(model => (
               <FieldEditor
                 key={"question_" + model.question.id}
