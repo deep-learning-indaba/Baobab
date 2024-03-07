@@ -15,6 +15,31 @@ import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
 
+/*
+ * Utility functions for the feature where questions are dependent on the answers of other questions
+ */
+const isEntityDependentOnAnswer = (entityToCheck) => {
+    return entityToCheck.depends_on_question_id && entityToCheck.show_for_values;
+}
+
+const findDependentQuestionAnswer = (entityToCheck, answers) => {
+    return answers.find(a => a && a.question_id === entityToCheck.depends_on_question_id);
+}
+
+const doesAnswerMatch = (entityToCheck, answer) => {
+    return entityToCheck.show_for_values.indexOf(answer.value) > -1;
+}
+
+const dependentQuestionFilter = (entity, allAnswers) => {
+    if (isEntityDependentOnAnswer(entity)) {
+        const answer = findDependentQuestionAnswer(entity, allAnswers);
+        return answer ? doesAnswerMatch(entity, answer) : false;
+    } else {
+        return true;
+    }
+}
+
+
 class ResponsePage extends Component {
     constructor(props) {
         super(props);
@@ -294,11 +319,13 @@ class ResponsePage extends Component {
     renderSections() {
         const applicationForm = this.state.applicationForm;
         const applicationData = this.state.applicationData;
-        let html = [];
+        const html = [];
 
         // main function
         if (applicationForm && applicationData) {
-            applicationForm.sections.forEach(section => {
+            applicationForm.sections
+            .filter(section => dependentQuestionFilter(section, applicationData.answers))
+            .forEach(section => {
                 html.push(<div key={section.name} className="section">
                     { /*Heading*/}
                     <div className="flex baseline"><h3>{section.name}</h3></div>
@@ -328,7 +355,8 @@ class ResponsePage extends Component {
     // Render questions and answers
     renderResponses(section) {
         const applicationData = this.state.applicationData;
-        const questions = section.questions.map(q => {
+        const questions = section.questions.filter(q=>dependentQuestionFilter(q, applicationData.answers))
+        .map(q => {
             const a = applicationData.answers.find(a => a.question_id === q.id);
             if (q.type === "information") {
                 return <h4>{q.headline}</h4>
@@ -346,7 +374,6 @@ class ResponsePage extends Component {
     // Render Answers 
     renderAnswer(id, type, headline, options) {
         const applicationData = this.state.applicationData;
-        const baseUrl = process.env.REACT_APP_API_URL;
 
         const a = applicationData.answers.find(a => a.question_id === id);
         if (!a) {
@@ -355,14 +382,14 @@ class ResponsePage extends Component {
         else {
             // file
             if (type == "file") {
-                return <a className="answer file" key={a.value} target="_blank" href={getDownloadURL(a.value)}>{this.props.t("Uploaded File")}</a>
+                return <a className="answer file" key={a.value} target="_blank" rel="noopener noreferrer" href={getDownloadURL(a.value)}>{this.props.t("Uploaded File")}</a>
             }
             // multi-file
             else if (type == "multi-file") {
                 const answerFiles = JSON.parse(a.value);
                 let files = [];
                 if (Array.isArray(answerFiles) && answerFiles.length > 0) {
-                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" href={getDownloadURL(JSON.stringify(file))}>{file.name}</a></div>)
+                    files = answerFiles.map(file => <div key={file.name}><a key={file.name} target="_blank" rel="noopener noreferrer" href={getDownloadURL(JSON.stringify(file))}>{file.name}</a></div>)
                 }
                 else {
                     files = "No files uploaded";
