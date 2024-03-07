@@ -267,7 +267,7 @@ class ResponseListComponent extends Component {
             minWidth: 150
           },
           {
-            id: "language",
+            id: "email",
             Header: <div className="response-language">{t("Language")}</div>,
             accessor: u => u.language,
             minWidth: 80
