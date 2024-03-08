@@ -26,6 +26,7 @@ class EventType(Enum):
     CALL = 'call'
     PROGRAMME = 'programme'
     JOURNAL = 'journal'
+    CONTINUOUS_JOURNAL = 'continuous_journal'
     
 
 class Event(Base):

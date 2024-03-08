@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
-//import ApplicationForm from "../../../applicationForm/components/ApplicationForm"
+
 
 
 class EventStatus extends Component {
