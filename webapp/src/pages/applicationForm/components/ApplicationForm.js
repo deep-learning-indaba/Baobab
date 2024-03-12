@@ -24,9 +24,6 @@ import FormMultiCheckboxOther from "../../../components/form/FormMultiCheckboxOt
 import FormCheckbox from "../../../components/form/FormCheckbox";
 import { eventService } from "../../../services/events";
 
-
-const baseUrl = process.env.REACT_APP_API_URL;
-
 const SHORT_TEXT = "short-text";
 const SINGLE_CHOICE = "single-choice";
 const LONG_TEXT = ["long-text", "long_text"];
@@ -39,7 +36,6 @@ const DATE = "date";
 const REFERENCE_REQUEST = "reference";
 const INFORMATION = ['information', 'sub-heading']
 const MULTI_FILE = 'multi-file';
-
 
 
 /*
@@ -333,107 +329,110 @@ class Section extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      section: props.section,
-      questionModels: props.questionModels
-        .slice()
-        .sort((a, b) => a.question.order - b.question.order),
       hasValidated: false,
-      validationStale: false,
-
+      validationStale: false
     };
   }
-
 
   onChange = (question, value) => {
     const newAnswer = {
       question_id: question.id,
       value: value
     };
+    if (this.props.answerChanged) {
+      this.props.answerChanged(newAnswer);
+    }
+  }
 
+  // onChange = (question, value) => {
+  //   const newAnswer = {
+  //     question_id: question.id,
+  //     value: value
+  //   };
 
-    const newQuestionModels = this.state.questionModels
-      .map(q => {
-        if (q.question.id !== question.id) {
-          return q;
-        }
-        return {
-          ...q,
-          validationError: this.state.hasValidated
-            ? this.validate(q, newAnswer)
-            : "",
-          answer: newAnswer
-        };
-      })
+  //   const newQuestionModels = this.state.questionModels
+  //     .map(q => {
+  //       if (q.question.id !== question.id) {
+  //         return q;
+  //       }
+  //       return {
+  //         ...q,
+  //         validationError: this.state.hasValidated
+  //           ? this.validate(q, newAnswer)
+  //           : "",
+  //         answer: newAnswer
+  //       };
+  //     })
 
-    this.setState(
-      {
-        questionModels: newQuestionModels,
-        validationStale: true
-      },
-      () => {
-        if (this.props.changed) {
-          this.props.changed();
-        }
-      }
-    );
-  };
+  //   this.setState(
+  //     {
+  //       questionModels: newQuestionModels,
+  //       validationStale: true
+  //     },
+  //     () => {
+  //       if (this.props.changed) {
+  //         this.props.changed();
+  //       }
+  //     }
+  //   );
+  // };
 
 
   // validate
-  validate = (questionModel, updatedAnswer) => {
-    let errors = [];
+  // validate = (questionModel, updatedAnswer) => {
+  //   let errors = [];
     
-    const question = questionModel.question;
-    const answer = updatedAnswer || questionModel.answer;
+  //   const question = questionModel.question;
+  //   const answer = updatedAnswer || questionModel.answer;
 
-    if (question.is_required && (!answer || !answer.value)) {
-      errors.push(this.props.t("An answer is required."));
-    }
+  //   if (question.is_required && (!answer || !answer.value)) {
+  //     errors.push(this.props.t("An answer is required."));
+  //   }
 
-    if (
-      answer &&
-      question.validation_regex &&
-      !answer.value.match(question.validation_regex)
-    ) {
-      errors.push(question.validation_text);
-    }
+  //   if (
+  //     answer &&
+  //     question.validation_regex &&
+  //     !answer.value.match(question.validation_regex)
+  //   ) {
+  //     errors.push(question.validation_text);
+  //   }
 
-    return errors.join("; ");
-  };
+  //   return errors.join("; ");
+  // };
 
 
   // isValidated
-  isValidated = () => {
-    const allAnswersInSection = this.state.questionModels.map(q => q.answer);
-    const validatedModels = this.state.questionModels
-      .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-      .map(q => {
-        return {
-          ...q,
-          validationError: this.validate(q)
-        };
-      });
+  // isValidated = () => {
+  //   const allAnswersInSection = this.state.questionModels.map(q => q.answer);
+  //   const validatedModels = this.state.questionModels
+  //     .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
+  //     .map(q => {
+  //       return {
+  //         ...q,
+  //         validationError: this.validate(q)
+  //       };
+  //     });
 
-    const isValid = !validatedModels.some(v => v.validationError);
+  //   const isValid = !validatedModels.some(v => v.validationError);
 
-    this.setState(
-      {
-        questionModels: validatedModels,
-        hasValidated: true,
-        validationStale: false
-      },
-      () => {
-        if (this.props.answerChanged) {
-          this.props.answerChanged(
-            this.state.questionModels.map(q => q.answer).filter(a => a),
-            isValid
-          );
-        }
-      }
-    );
+  //   this.setState(
+  //     {
+  //       questionModels: validatedModels,
+  //       hasValidated: true,
+  //       validationStale: false
+  //     },
+  //     () => {
+  //       if (this.props.answerChanged) {
+  //         this.props.answerChanged(
+  //           this.state.questionModels.map(q => q.answer).filter(a => a),
+  //           isValid
+  //         );
+  //       }
+  //     }
+  //   );
 
-    return isValid;
-  };
+  //   return isValid;
+  // };
 
   handleSave = () => {
     if (this.props.save) {
@@ -443,46 +442,31 @@ class Section extends React.Component {
     }
   };
 
-  /*
-   * Only include questions that depend on other question's answers if they match.
-   * If the value has been set, compare with that. If it hasn't been set, compare with the saved value.
-   */
-  dependentQuestionFilter = (question, sectionCurrentAnswers) => {
-    if (isEntityDependentOnAnswer(question)) {
-      const answer = findDependentQuestionAnswer(question, sectionCurrentAnswers);
-      return answer ? doesAnswerMatch(question, answer) : this.props.showQuestionBasedOnSavedFormAnswers(question);
-    } else {
-      return true;
-    }
-  }
-
   render() {
     const {
-      section,
-      questionModels,
       hasValidated,
       validationStale
     } = this.state;
 
-    const allAnswersInSection = questionModels.map(q => q.answer);
+    const model = this.props.model;
 
     return (
       <div className={"section"}>
         <div className={"headline"}>
-          <h1>{section.name}</h1>
+          <h1>{model.section.name}</h1>
           <div className="description">
-            <MarkdownRenderer children={section.description}/>
+            <MarkdownRenderer children={model.section.description}/>
           </div>
         </div>
-        {questionModels &&
-          questionModels
-            .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-            .map(model => (
+        {model.questionModels &&
+          model.questionModels
+            .filter(q => q.isVisible)
+            .map(qm => (
               <FieldEditor
-                key={"question_" + model.question.id}
-                question={model.question}
-                answer={model.answer}
-                validationError={model.validationError}
+                key={"question_" + qm.question.id}
+                question={qm.question}
+                answer={qm.answer}
+                validationError={qm.validationError}
                 onChange={this.onChange}
                 responseId={this.props.responseId}
               />
@@ -729,6 +713,26 @@ class ApplicationFormInstanceComponent extends Component {
   constructor(props) {
     super(props);
 
+    let sectionModels = this.props.formSpec.sections &&
+      this.props.formSpec.sections.map(section => ({
+        section: section,
+        isVisible: false,
+        questionModels: section.questions.map(q => {
+          return {
+            question: q,
+            answer: props.response && props.response.answers.find(a => a.question_id === q.id),
+            isVisible: false,
+          };
+        }).sort((a, b) => a.question.order - b.question.order)
+      })).sort((a, b) => a.section.order - b.section.order);
+
+    sectionModels.forEach(sectionModel => {
+      sectionModel.isVisible = this.isEntityVisible(sectionModel.section, sectionModels);
+      sectionModel.questionModels.forEach(qm => {
+        qm.isVisible = this.isEntityVisible(qm.question, sectionModels);
+      });
+    });
+
     this.state = {
       isSubmitting: false,
       isError: false,
@@ -743,8 +747,22 @@ class ApplicationFormInstanceComponent extends Component {
       startStep: 0,
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
-      submitValidationErrors: []
+      submitValidationErrors: [],
+      sections: sectionModels
     };
+
+  }
+
+  isEntityVisible = (entity, sectionModels, newAnswer) => {
+    if (isEntityDependentOnAnswer(entity)) {
+      const dependentQuestionModel = sectionModels.filter(s=>s.isVisible).flatMap(s => s.questionModels).find(qm => qm.question.id === entity.depends_on_question_id);
+      if (!dependentQuestionModel) {
+        return false;
+      }
+      const answer = newAnswer && newAnswer.question_id === dependentQuestionModel.question.id ? newAnswer : dependentQuestionModel.answer;
+      return dependentQuestionModel.isVisible && doesAnswerMatch(entity, answer);
+    }
+    return true;
   }
 
   handleSubmit = event => {
@@ -832,22 +850,20 @@ class ApplicationFormInstanceComponent extends Component {
     this.props.history.push("/");
   };
 
-  handleAnswerChanged = (answers, save) => {
-    if (answers) {
-      this.setState(prevState => {
-        return {
-          answers: prevState.answers
-            .filter(a => !answers.map(a => a.question_id).includes(a.question_id))
-            .concat(answers),
-          submitValidationErrors: prevState.submitValidationErrors.filter(e => !answers.map(a => a.question_id).includes(e.question_id))
-        };
-      }, () => {
-        if (save) {
-          this.handleSave([]);
-        }
-      });
-    }
-  };
+  handleAnswerChanged = (answer) => {
+    this.setState(prevState => ({
+      sections: prevState.sections.map(s => ({
+        ...s,
+        isVisible: this.isEntityVisible(s.section, prevState.sections, answer),
+        questionModels: s.questionModels.map(qm => ({
+          ...qm,
+          answer: qm.question.id === answer.question_id ? answer : qm.answer,
+          isVisible: this.isEntityVisible(qm.question, prevState.sections, answer)
+        }))
+      })),
+      unsavedChanges: true
+    }));
+  }
 
   handleStepChange = () => {
     window.scrollTo(0, 0);
@@ -880,9 +896,9 @@ class ApplicationFormInstanceComponent extends Component {
       isSubmitted,
       isEditing,
       errorMessage,
-      answers,
       isSubmitting,
-      outcome
+      outcome,
+      sections
     } = this.state;
 
     if (isError) {
@@ -915,49 +931,17 @@ class ApplicationFormInstanceComponent extends Component {
       );
     }
 
-    const includeEntityDueToDependentQuestion = (entity) => {
-      if (isEntityDependentOnAnswer(entity)) {
-        const answer = findDependentQuestionAnswer(entity, this.state.answers);
-        return answer ? doesAnswerMatch(entity, answer) : false;
-      } else {
-        return true;
-      }
-    }
-
-    const sections =
-      this.props.formSpec.sections &&
-      this.props.formSpec.sections.slice()
-        .filter(includeEntityDueToDependentQuestion)
-        .sort((a, b) => a.order - b.order);
-    const sectionModels =
-      sections &&
-      sections.map(section => {
-        return {
-          section: section,
-          questionModels: section.questions.map(q => {
-            return {
-              question: q,
-              answer: answers.find(a => a.question_id === q.id),
-              validationError: this.getSubmitValidationError(q)
-            };
-          })
-        };
-      });
-
     const steps =
-      sectionModels &&
-      sectionModels.map((model, i) => {
+      sections &&
+      sections.filter(s=>s.isVisible).map((model, i) => {
         return {
           name: this.props.t("Step") + " " + i,
           component: (
             <Section
               key={"section_" + model.section.id}
-              showQuestionBasedOnSavedFormAnswers={includeEntityDueToDependentQuestion}
-              section={model.section}
-              questionModels={model.questionModels}
+              model={model}
               answerChanged={this.handleAnswerChanged}
               save={this.handleSave}
-              changed={() => this.setState({ unsavedChanges: true })}
               unsavedChanges={this.state.unsavedChanges}
               isSaving={this.state.isSaving}
               responseId={this.state.responseId}
@@ -972,7 +956,7 @@ class ApplicationFormInstanceComponent extends Component {
       name: this.props.t("Confirmation"),
       component: (
         <Confirmation
-          sectionModels={sectionModels}
+          sectionModels={sections}
           submit={this.handleSubmit}
           isSubmitting={isSubmitting}
         />
