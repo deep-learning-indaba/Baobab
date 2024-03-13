@@ -35,14 +35,10 @@ def downgrade():
                existing_type=sa.Enum('RESPONSE', 'REGISTRATION', 'GRANT', 'QUESTION', name='tagtype'),
                type_=postgresql.ENUM('RESPONSE', 'REGISTRATION', 'GRANT', 'QUESTION', name='tag_type'),
                existing_nullable=True)
-    op.create_index('registration_answer_lookup', 'registration_answer', ['registration_id', 'registration_question_id'], unique=False)
-    op.create_index('invited_guest_lookup', 'invited_guest', ['event_id', 'user_id'], unique=False)
-    op.create_index('invited_guest_event_lookup', 'invited_guest', ['event_id'], unique=False)
-    op.create_index('guest_registration_answer_lookup', 'guest_registration_answer', ['guest_registration_id', 'registration_question_id', 'is_active'], unique=False)
+    
     op.alter_column('event', 'event_type',
                existing_type=sa.Enum('EVENT', 'AWARD', 'CALL', 'PROGRAMME', 'JOURNAL', name='eventtype'),
                type_=postgresql.ENUM('AWARD', 'EVENT', 'CALL', 'PROGRAMME', 'JOURNAL', 'CONTINUOUS_JOURNAL', name='event_type'),
                existing_nullable=False)
-    op.create_index('answer_response_lookup', 'answer', ['response_id', 'is_active'], unique=False)
-    op.create_index('answer_question_lookup', 'answer', ['question_id', 'response_id', 'is_active'], unique=False)
+    
     # ### end Alembic commands ###
