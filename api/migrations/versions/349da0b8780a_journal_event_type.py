@@ -1,4 +1,4 @@
-"""Add journal and continuous_journal event_type
+"""Add journal and JOURNAL event_type
 
 Revision ID: 349da0b8780a
 Revises: 93f4dbc510f9

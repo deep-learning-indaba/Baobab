@@ -14,7 +14,6 @@ class Home extends Component {
             upcomingEvents: null,
             awards: null,
             journals: null,
-            continuous_journals: null,
             organisation: null,
             errors: []
         }
@@ -35,8 +34,7 @@ class Home extends Component {
                     this.setState({
                         upcomingEvents: response.events.filter(e => e.event_type === 'EVENT' && (e.is_event_opening || e.is_event_open)),
                         awards: response.events.filter(e => e.event_type === 'AWARD'  && (e.is_event_opening || e.is_event_open)),
-                        journals: response.events.filter(e => e.event_type === 'JOURNAL'&& (e.is_event_opening || e.is_event_open)),
-                        continuous_journals: response.events.filter(e => e.event_type === 'CONTINUOUS_JOURNAL'),
+                        journals: response.events.filter(e => e.event_type === 'JOURNAL'),
                         calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
                         programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
                         attended: response.events.filter(e => !e.is_event_opening)
@@ -72,8 +70,8 @@ class Home extends Component {
         if (e.event_type === 'EVENT') {
             return `${e.start_date} to ${e.end_date}`;
         }
-        if (e.event_type === 'CONTINUOUS_JOURNAL') {
-            return `Rolling Submissions`;
+        if (e.event_type === 'JOURNAL') {
+            return ``;
         }
         else {
             return this.props.t("Applications Close") + " " + e.application_close_date;
@@ -135,7 +133,6 @@ class Home extends Component {
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}
                 {this.renderEventTable(this.state.awards, "Awards")}
                 {this.renderEventTable(this.state.journals, "Journals")}
-                {this.renderEventTable(this.state.continuous_journals, "Continuous Journals")}
                 {this.renderEventTable(this.state.calls, "Calls for Proposals")}
                 {this.renderEventTable(this.state.programmes, "Programmes")}
                 {this.renderEventTable(this.state.attended, "Past Events")}

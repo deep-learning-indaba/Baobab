@@ -40,7 +40,7 @@ class EventRepository(BaseRepository):
     @staticmethod
     def get_upcoming_for_organisation(organisation_id):
         return db.session.query(Event)\
-                         .filter(or_(Event.end_date >= datetime.now(), Event.event_type == EventType.CONTINUOUS_JOURNAL))\
+                         .filter(or_(Event.end_date >= datetime.now(), Event.event_type == EventType.JOURNAL))\
                          .filter_by(organisation_id=organisation_id)\
                          .all()
 

@@ -160,7 +160,7 @@ def get_user_event_response_status(user_id, event_id):
     _log_application_status('not available')
     return "Application not available"
 
-def make_continuous_journal_event(
+def make_journal_event(
     names,
     descriptions,
     start_date,
@@ -195,7 +195,7 @@ def make_continuous_journal_event(
                 miniconf_url=miniconf_url
     )
     
-def update_continuous_journal_event(
+def update_journal_event(
     event,
     names,
     descriptions,
@@ -268,11 +268,11 @@ class EventAPI(EventMixin, restful.Resource):
             args['offer_open'] and
             args['offer_close'] and
             args['registration_open'] and
-            args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
+            args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.JOURNAL):
             return EVENT_MUST_HAVE_DATES
         
-        if EventType[args['event_type'].upper()] == EventType.CONTINUOUS_JOURNAL:
-            event = make_continuous_journal_event(
+        if EventType[args['event_type'].upper()] == EventType.JOURNAL:
+            event = make_journal_event(
                 args['name'],
                 args['description'],
                 args['start_date'],
@@ -348,11 +348,11 @@ class EventAPI(EventMixin, restful.Resource):
             args['offer_open'] and
             args['offer_close'] and
             args['registration_open'] and
-            args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.CONTINUOUS_JOURNAL):
+            args['registration_close'])) and (EventType[args['event_type'].upper()] != EventType.JOURNAL):
             return EVENT_MUST_HAVE_DATES
         
-        if EventType[args['event_type'].upper()] == EventType.CONTINUOUS_JOURNAL:
-            update_continuous_journal_event(
+        if EventType[args['event_type'].upper()] == EventType.JOURNAL:
+            update_journal_event(
                 event,
                 args['name'],
                 args['description'],
