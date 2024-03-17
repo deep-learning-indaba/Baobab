@@ -344,103 +344,13 @@ class Section extends React.Component {
     }
   }
 
-  // onChange = (question, value) => {
-  //   const newAnswer = {
-  //     question_id: question.id,
-  //     value: value
-  //   };
-
-  //   const newQuestionModels = this.state.questionModels
-  //     .map(q => {
-  //       if (q.question.id !== question.id) {
-  //         return q;
-  //       }
-  //       return {
-  //         ...q,
-  //         validationError: this.state.hasValidated
-  //           ? this.validate(q, newAnswer)
-  //           : "",
-  //         answer: newAnswer
-  //       };
-  //     })
-
-  //   this.setState(
-  //     {
-  //       questionModels: newQuestionModels,
-  //       validationStale: true
-  //     },
-  //     () => {
-  //       if (this.props.changed) {
-  //         this.props.changed();
-  //       }
-  //     }
-  //   );
-  // };
-
-
-  // validate
-  // validate = (questionModel, updatedAnswer) => {
-  //   let errors = [];
-    
-  //   const question = questionModel.question;
-  //   const answer = updatedAnswer || questionModel.answer;
-
-  //   if (question.is_required && (!answer || !answer.value)) {
-  //     errors.push(this.props.t("An answer is required."));
-  //   }
-
-  //   if (
-  //     answer &&
-  //     question.validation_regex &&
-  //     !answer.value.match(question.validation_regex)
-  //   ) {
-  //     errors.push(question.validation_text);
-  //   }
-
-  //   return errors.join("; ");
-  // };
-
-
-  // isValidated
-  // isValidated = () => {
-  //   const allAnswersInSection = this.state.questionModels.map(q => q.answer);
-  //   const validatedModels = this.state.questionModels
-  //     .filter(q => this.dependentQuestionFilter(q.question, allAnswersInSection))
-  //     .map(q => {
-  //       return {
-  //         ...q,
-  //         validationError: this.validate(q)
-  //       };
-  //     });
-
-  //   const isValid = !validatedModels.some(v => v.validationError);
-
-  //   this.setState(
-  //     {
-  //       questionModels: validatedModels,
-  //       hasValidated: true,
-  //       validationStale: false
-  //     },
-  //     () => {
-  //       if (this.props.answerChanged) {
-  //         this.props.answerChanged(
-  //           this.state.questionModels.map(q => q.answer).filter(a => a),
-  //           isValid
-  //         );
-  //       }
-  //     }
-  //   );
-
-  //   return isValid;
-  // };
-
-  handleSave = () => {
-    if (this.props.save) {
-      this.props.save(
-        this.state.questionModels.map(q => q.answer).filter(a => a)
-      );
+  isValidated = () => {
+    if (this.props.triggerValidation) {
+      const isValid = this.props.triggerValidation(this.props.model);
+      return isValid;
     }
-  };
+    return true;
+  }
 
   render() {
     const {
@@ -474,7 +384,7 @@ class Section extends React.Component {
             )
         }
         {this.props.unsavedChanges && !this.props.isSaving && (
-          <button className="btn btn-secondary" onClick={this.handleSave} >
+          <button className="btn btn-secondary" onClick={this.props.save} >
             {this.props.t("Save for later")}...
           </button>
         )}
@@ -591,7 +501,6 @@ class SubmittedComponent extends React.Component {
       withdrawModalVisible: false,
       isError: false,
       errorMessage: "",
-      submitValidationErrors: [],
     };
   }
 
@@ -717,6 +626,7 @@ class ApplicationFormInstanceComponent extends Component {
       this.props.formSpec.sections.map(section => ({
         section: section,
         isVisible: false,
+        hasValidated: false,
         questionModels: section.questions.map(q => {
           return {
             question: q,
@@ -742,15 +652,53 @@ class ApplicationFormInstanceComponent extends Component {
       submittedTimestamp: props.response && props.response.submitted_timestamp,
       errorMessage: "",
       errors: [],
-      answers: props.response ? props.response.answers : [],
       unsavedChanges: false,
       startStep: 0,
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
-      submitValidationErrors: [],
       sections: sectionModels
     };
 
+  }
+
+  validate = (questionModel) => {
+    let errors = [];
+    
+    const question = questionModel.question;
+    const answer = questionModel.answer;
+
+    if (question.is_required && (!answer || !answer.value)) {
+      errors.push(this.props.t("An answer is required."));
+    }
+
+    if (
+      answer &&
+      question.validation_regex &&
+      !answer.value.match(question.validation_regex)
+    ) {
+      errors.push(question.validation_text);
+    }
+
+    return errors.join("; ");
+  };
+
+  triggerValidation = (sectionModel) => {
+    const newSectionModel = {
+      ...sectionModel,
+      hasValidated: true,
+      questionModels: sectionModel.questionModels.map(qm => ({
+          ...qm,
+          validationError: this.validate(qm)
+        }))
+    };
+    
+    const isValid = newSectionModel.questionModels.filter(qm => qm.isVisible).every(qm => !qm.validationError);
+
+    this.setState(prevState => ({
+      sections: prevState.sections.map(s => s.section.id === sectionModel.section.id ? newSectionModel : s)
+    }));
+
+    return isValid;
   }
 
   isEntityVisible = (entity, sectionModels, newAnswer) => {
@@ -772,14 +720,14 @@ class ApplicationFormInstanceComponent extends Component {
         isSubmitting: true
       },
       () => {
+        const answers = this.state.sections.flatMap(s => s.questionModels).map(qm => qm.answer);
         const promise = this.state.new_response 
-          ? applicationFormService.submit(this.props.formSpec.id, true, this.state.answers)
-          : applicationFormService.updateResponse(this.state.responseId, this.props.formSpec.id, true, this.state.answers);
+          ? applicationFormService.submit(this.props.formSpec.id, true, answers)
+          : applicationFormService.updateResponse(this.state.responseId, this.props.formSpec.id, true, answers);
         
         promise.then(resp => {
             const submitError = resp.response_id === null && resp.status !== 422;
             this.setState(prevState => ({
-              submitValidationErrors: resp.status === 422 && resp.errors,
               isError: submitError,
               errorMessage: resp.message,
               isSubmitting: false,
@@ -788,27 +736,31 @@ class ApplicationFormInstanceComponent extends Component {
               submittedTimestamp: resp.submitted_timestamp,
               unsavedChanges: false,
               new_response: false,
-              responseId: prevState.responseId || resp.response_id
+              responseId: prevState.responseId || resp.response_id,
+              sections: prevState.sections.map(s => ({
+                ...s,
+                hasValidated: true,
+                questionModels: s.questionModels.map(qm => ({
+                  ...qm,
+                  validationError: resp.status === 422 && this.getSubmitValidationError(qm.question, resp.errors)
+                }))
+              }))
             }));
           });
       }
     );
   };
 
-  handleSave = answers => {
+  handleSave = () => {
     this.setState(
-      prevState => {
-        return {
-          isSaving: true,
-          answers: prevState.answers
-            .filter(a => !answers.includes(a.question_id))
-            .concat(answers)
-        };
+      {
+        isSaving: true
       },
       () => {
+        const answers = this.state.sections.flatMap(s => s.questionModels).map(qm => qm.answer);
         if (this.state.new_response) {
           applicationFormService
-            .submit(this.props.formSpec.id, false, this.state.answers)
+            .submit(this.props.formSpec.id, false, answers)
             .then(resp => {
               let submitError = resp.response_id === null;
               this.setState({
@@ -828,7 +780,7 @@ class ApplicationFormInstanceComponent extends Component {
               this.state.responseId,
               this.props.formSpec.id,
               false,
-              this.state.answers
+              answers
             )
             .then(resp => {
               let saveError = resp.response_id === null;
@@ -858,7 +810,8 @@ class ApplicationFormInstanceComponent extends Component {
         questionModels: s.questionModels.map(qm => ({
           ...qm,
           answer: qm.question.id === answer.question_id ? answer : qm.answer,
-          isVisible: this.isEntityVisible(qm.question, prevState.sections, answer)
+          isVisible: this.isEntityVisible(qm.question, prevState.sections, answer),
+          validationError: s.hasValidated ? this.validate(qm) : ""
         }))
       })),
       unsavedChanges: true
@@ -869,8 +822,8 @@ class ApplicationFormInstanceComponent extends Component {
     window.scrollTo(0, 0);
   };
 
-  getSubmitValidationError = (q) => {
-    const validationError = this.state.submitValidationErrors.find(e => e.question_id === q.id);
+  getSubmitValidationError = (q, submitValidationErrors) => {
+    const validationError = submitValidationErrors.find(e => e.question_id === q.id);
     if (!validationError) {
       return "";
     }
@@ -915,7 +868,7 @@ class ApplicationFormInstanceComponent extends Component {
             {this.props.t("View Offer")}
           </Link>
         </div>}
-        {outcome === "REJECTED" && <p>{this.props.t("Unfortunately your application to this event has been rejected, you are not able to apply again.")}</p>}
+        {outcome === "REJECTED" && <p>{this.props.t("Unfortunately your application to this event was not successful, you are not able to apply again.")}</p>}
       </div>;
     }
 
@@ -947,6 +900,7 @@ class ApplicationFormInstanceComponent extends Component {
               responseId={this.state.responseId}
               stepProgress={i}
               t={this.props.t}
+              triggerValidation={this.triggerValidation}
             />
           )
         };

@@ -543,7 +543,7 @@
     "Rejected Reason": "Raison du rejet",
     "New Offer": "Nouvelle offre",
     "You have already been accepted to this event.": "Vous avez déjà été accepté à cet événement.",
-    "Unfortunately your application to this event has been rejected, you are not able to apply again.": "Malheureusement, votre candidature à cet événement a été rejetée, vous ne pouvez pas postuler à nouveau.",
+    "Unfortunately your application to this event was not successful, you are not able to apply again.": "Malheureusement, votre candidature à cet événement n'a pas été retenue, vous ne pouvez pas postuler à nouveau.",
     "Could not submit your application due to validation errors. Please go back and fix these any try again.": "Impossible de soumettre votre candidature en raison d'erreurs de validation. Veuillez revenir en arrière et corriger ces erreurs.",
     "Invalid option selected.": "Option invalide sélectionnée."
 }

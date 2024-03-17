@@ -544,7 +544,7 @@
     "Rejected Reason": "Rejected Reason",
     "New Offer": "New Offer",
     "You have already been accepted to this event.": "You have already been accepted to this event.",
-    "Unfortunately your application to this event has been rejected, you are not able to apply again.": "Unfortunately your application to this event has been rejected, you are not able to apply again.",
+    "Unfortunately your application to this event was not successful, you are not able to apply again.": "Unfortunately your application to this event was not successful, you are not able to apply again.",
     "Could not submit your application due to validation errors. Please go back and fix these any try again.": "Could not submit your application due to validation errors. Please go back and fix these any try again.",
     "Invalid option selected.": "Invalid option selected."
 }
