@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { withRouter } from "react-router";
 import { withTranslation } from 'react-i18next';
-
+import '../pages/home/Home.css';
 
 
 class EventStatus extends Component {
@@ -374,11 +374,15 @@ class EventStatus extends Component {
   }
 
   renderButton = (definition) => {
-    if (definition.link && definition.submissionLink) {
+    if (definition.link && this.props.submissionLink) {
         return (
-            <div>
+            <div className="inline-btn-container">
+                <div className="inline-btn-container">
                 <a href={definition.submissionLink} className={"btn " + definition.submissionLinkClass}>{definition.submissionShortText}</a>
+                </div>
+                <div className="inline-btn-container">
                 <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a>
+                </div>
             </div>
         );               
     }
@@ -401,7 +405,7 @@ class EventStatus extends Component {
                 <span>{definition.title}</span><br/>{this.renderButton(definition)}
             </div>
         }
-        else if (definition.shortText && definition.link && definition.submissionLink && definition.title !== definition.shortText) {
+        else if (definition.shortText && definition.link && this.props.submissionLink && definition.title !== definition.shortText) {
             return <div>
                 <span>{definition.title}</span><br/>{this.renderButton(definition)}
             </div>

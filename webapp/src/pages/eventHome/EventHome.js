@@ -49,7 +49,7 @@ class EventInfo extends Component {
         <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
         {isEventAdmin(this.props.user, this.props.event) 
-        && <EventStats event={this.props.event}/>}
+        && <EventStats submissionLink={false} event={this.props.event}/>}
       </div>
     );
   }

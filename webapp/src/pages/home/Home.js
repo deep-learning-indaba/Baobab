@@ -63,7 +63,12 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        return <EventStatus longForm={false} event={e} />;
+        if (e.event_type === 'JOURNAL') {
+           return <EventStatus longForm={false} submissionLink={true} event={e} />;
+        }
+        else {
+            return <EventStatus longForm={false} event={e} />;
+         }
     }
 
     dateDisplay = (e) => {
