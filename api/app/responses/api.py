@@ -13,7 +13,6 @@ from app.events.repository import EventRepository as event_repository
 from app.responses.mixins import ResponseMixin, ResponseTagMixin
 from app.responses.models import Answer, Response, ValidationError
 from app.responses.repository import ResponseRepository as response_repository
-from app.responses import utils as response_utils
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.reviews.repository import ReviewRepository as review_repository
 from app.outcome.models import Outcome
@@ -205,11 +204,13 @@ class ResponseAPI(ResponseMixin, restful.Resource):
 
         answers = []
         for answer_args in args['answers']:
-            existing_answers = response_repository.get_answer_by_question_id_and_response_id(answer_args['question_id'], response.id)
-            if existing_answers:
-                for existing_answer in existing_answers:
-                    existing_answer.deactivate()
-                    response_repository.merge_answer(existing_answer)
+            answer = response_repository.get_answer_by_question_id_and_response_id(answer_args['question_id'], response.id)
+            if answer:
+                if answer.value == answer_args['value']:
+                    # Value not changed, ignore
+                    continue
+                answer.deactivate()
+                response_repository.merge_answer(answer)
             active_answer = Answer(response.id, answer_args['question_id'], answer_args['value'])
             answers.append(active_answer)
         response_repository.save_answers(answers)
@@ -503,21 +504,21 @@ class ResponseDetailAPI(restful.Resource):
     @staticmethod
     def _serialize_reviewer(response_reviewer, review_form_id):
         if review_form_id is None:
-            status = 'not_started'
+            completed = False
         else:
             review_response = review_repository.get_review_response(review_form_id, response_reviewer.response_id, response_reviewer.reviewer_user_id)
-            status = _review_response_status(review_response)
 
         return {
             'reviewer_user_id': response_reviewer.user.id,
             'user_title': response_reviewer.user.user_title,
             'firstname': response_reviewer.user.firstname,
             'lastname': response_reviewer.user.lastname,
-            'status': status
+            'status': _review_response_status(review_response)
         }
 
+
     @staticmethod
-    def _serialize_response(response, response_with_form, language, review_form_id):
+    def _serialize_response(response, language, review_form_id, num_reviewers):
         return {
             'id': response.id,
             'application_form_id': response.application_form_id,
@@ -527,7 +528,7 @@ class ResponseDetailAPI(restful.Resource):
             'is_withdrawn': response.is_withdrawn,
             'withdrawn_timestamp': ResponseDetailAPI._serialize_date(response.withdrawn_timestamp),
             'started_timestamp': ResponseDetailAPI._serialize_date(response.started_timestamp),
-            'response_with_form': response_with_form,
+            'answers': [ResponseDetailAPI._serialize_answer(answer) for answer in response.answers],
             'language': response.language,
             'user_title': response.user.user_title,
             'firstname': response.user.firstname,
@@ -547,12 +548,13 @@ class ResponseDetailAPI(restful.Resource):
         language = args['language']
 
         response = response_repository.get_by_id(response_id)
-        response_with_form = response_utils.filtered_with_form(response, language)
-
         review_form = review_repository.get_review_form(event_id)
         review_form_id = None if review_form is None else review_form.id
 
-        return ResponseDetailAPI._serialize_response(response, response_with_form, language, review_form_id)
+        review_config = review_configuration_repository.get_configuration_for_event(event_id)
+        num_reviewers = review_config.num_reviews_required + review_config.num_optional_reviews if review_config is not None else 1
+
+        return ResponseDetailAPI._serialize_response(response, language, review_form_id, num_reviewers)
 
 class ResponseExportAPI(restful.Resource):
 
