@@ -415,13 +415,13 @@ class EventAPITest(ApiTestCase):
         'travel_grant': False
     }
     
-    test_continuous_journal_data_dict = {
+    test_journal_data_dict = {
         'name': {
-            'en': 'Test Continuous Journal',
+            'en': 'Test Journal',
             'fr': 'evenement de test'
         },
         'description': {
-            'en': 'Test Continuous Journal Description',
+            'en': 'Test Journal Description',
             'fr': "Description de l'evenement de test"
         },
         'start_date': datetime(2020, 6, 1).strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -440,7 +440,7 @@ class EventAPITest(ApiTestCase):
         'offer_close': None,
         'registration_open': None,
         'registration_close': None,
-        'event_type':'CONTINUOUS_JOURNAL',
+        'event_type':'JOURNAL',
         'travel_grant': False
     }
 
@@ -561,13 +561,13 @@ class EventAPITest(ApiTestCase):
         self.test_event_data_dict['end_date'] = current_end
         self.assertEqual(response.status_code, 400)
         
-    def test_post_event_continuous_journal(self):
+    def test_post_event_journal(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)
         response = self.app.post(
             'api/v1/event',
             headers=header, 
-            data=json.dumps(self.test_continuous_journal_data_dict),
+            data=json.dumps(self.test_journal_data_dict),
             content_type='application/json')
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
@@ -682,19 +682,19 @@ class EventAPITest(ApiTestCase):
 
         self.assertEqual(response.status_code, 400)
         
-    def test_put_event_continuous_journal(self):
+    def test_put_event_journal(self):
         self.seed_static_data()
         header = self.get_auth_header_for(self.test_admin_user.email)
         # update(put) event
-        self.test_continuous_journal_data_dict['id'] = 2
-        self.test_continuous_journal_data_dict['name'] = {'en': 'Test Continuous Journal'}
-        self.test_continuous_journal_data_dict['description'] = {'en': 'Test Continuous Journal Description'}
-        self.test_continuous_journal_data_dict['end_date'] = datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.test_journal_data_dict['id'] = 2
+        self.test_journal_data_dict['name'] = {'en': 'Test Journal'}
+        self.test_journal_data_dict['description'] = {'en': 'Test Journal Description'}
+        self.test_journal_data_dict['end_date'] = datetime(2020, 1, 1).strftime('%Y-%m-%dT%H:%M:%SZ')
         
         response = self.app.post(
             'api/v1/event',
             headers=header, 
-            data=json.dumps(self.test_continuous_journal_data_dict),
+            data=json.dumps(self.test_journal_data_dict),
             content_type='application/json')
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 201)
@@ -702,7 +702,7 @@ class EventAPITest(ApiTestCase):
         response = self.app.put(
             'api/v1/event',
             headers=header,
-            data=json.dumps(self.test_continuous_journal_data_dict),
+            data=json.dumps(self.test_journal_data_dict),
             content_type='application/json')
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)

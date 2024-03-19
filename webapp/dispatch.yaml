@@ -31,3 +31,6 @@ dispatch:
 
   - url: "apply.aims-network.org/*"
     service: prod-frontend
+
+  - url: "submit.jaisd.org/*"
+    service: prod-frontend
