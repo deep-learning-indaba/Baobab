@@ -49,7 +49,7 @@ class EventInfo extends Component {
         <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
         {isEventAdmin(this.props.user, this.props.event) 
-        && <EventStats event={this.props.event}/>}
+        && <EventStats submissionLink={false} event={this.props.event}/>}
       </div>
     );
   }
@@ -153,6 +153,11 @@ class EventHome extends Component {
           exact
           path={`${match.path}/apply`}
           render={(props) => <Application {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/apply/newSubmission`}
+          render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
         />
         <Route
         exact

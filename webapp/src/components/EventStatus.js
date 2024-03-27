@@ -5,6 +5,9 @@ import { withTranslation } from 'react-i18next';
 
 
 class EventStatus extends Component {
+    constructor(props) {
+        super(props);
+      }
 
   unknownStatus = (status_name, status) => {
       return {
@@ -62,19 +65,21 @@ class EventStatus extends Component {
         return this.registeredStatus(event);   
     }
   }
-
+  
   applicationStatus = (event) => {
       const applyLink = `${event.key}/apply`
+      const submissionLink = `${event.key}/apply/newSubmission`
       if (event.status.application_status === "Submitted") {
         if (event.event_type === "JOURNAL") {
             return {
-                title: this.props.t("Article(s) Submitted"),
-                //<button className="btn btn-primary" onClick={() => this.newNomination()}>{"New Submission"} &gt;</button>
                 titleClass: "text-success",
                 longText: this.props.t("You have submitted your article."),
                 shortText: this.props.t("View Submission(s)"),
                 linkClass: 'btn-secondary',
-                link: applyLink
+                link: applyLink,
+                submissionShortText: this.props.t("New submission"),
+                submissionLinkClass: "btn-primary",
+                submissionLink: submissionLink
             };  
         }
         else {
@@ -353,7 +358,7 @@ class EventStatus extends Component {
       }
       
       if (event.is_application_open) {
-          return this.applicationStatus(event);
+        return this.applicationStatus(event);    
       }
 
       if (event.status.offer_status) {
@@ -369,9 +374,22 @@ class EventStatus extends Component {
   }
 
   renderButton = (definition) => {
-    return <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a> 
+    if (definition.link && this.props.submissionLink) {
+        return (
+            <div className="inline-btn-container">
+                <div className="inline-btn-container">
+                <a href={definition.submissionLink} className={"btn " + definition.submissionLinkClass}>{definition.submissionShortText}</a>
+                </div>
+                <div className="inline-btn-container">
+                <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a>
+                </div>
+            </div>
+        );               
+    }
+    else {
+        return <a href={definition.link} className={"btn " + definition.linkClass}>{definition.shortText}</a> 
+    }
   }
-
   render() {
     const definition = this.mapStatus(this.props.event);
     if (this.props.longForm) {
@@ -383,6 +401,11 @@ class EventStatus extends Component {
     }
     else {
         if (definition.shortText && definition.link && definition.title !== definition.shortText) {
+            return <div>
+                <span>{definition.title}</span><br/>{this.renderButton(definition)}
+            </div>
+        }
+        else if (definition.shortText && definition.link && this.props.submissionLink && definition.title !== definition.shortText) {
             return <div>
                 <span>{definition.title}</span><br/>{this.renderButton(definition)}
             </div>

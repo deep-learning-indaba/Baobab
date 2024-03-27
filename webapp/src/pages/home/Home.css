@@ -25,6 +25,11 @@ img.large-logo {
     align-items: center;
 }
 
+.inline-btn-container {
+    display: flex;
+    margin-left: 5px;
+}
+
 .custom-card{
     position: relative;
     display: -ms-flexbox;

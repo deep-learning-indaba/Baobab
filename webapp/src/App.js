@@ -73,7 +73,7 @@ class EventNav extends Component {
                     {this.props.event.event_type === 'JOURNAL'? t('Submit') : t('Apply')}
                   </NavLink>
                 </li>
-              )}
+              )}            
             {this.props.user && this.props.event && this.props.event.is_offer_open && (
               <li className="nav-item">
                 <NavLink
@@ -546,9 +546,9 @@ class AppComponent extends Component {
                       eventKey={this.state.eventKey}
                       event={this.state.currentEvent}
                       organisation={this.props.organisation}
-                      />
+                      />         
                   )}
-                />
+                />             
               </Switch>
             </div>
           </div>
