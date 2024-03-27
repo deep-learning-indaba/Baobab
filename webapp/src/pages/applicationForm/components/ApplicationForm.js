@@ -1102,7 +1102,7 @@ class ApplicationForm extends Component {
       eventService.getEvent(eventId)
     ]).then(responses => {
       const [formResponse, responseResponse, eventResponse] = responses;
-      const selectFirstResponse = !formResponse.formSpec.nominations && responseResponse.response.length > 0;
+      const selectFirstResponse = formResponse && formResponse.formSpec && !formResponse.formSpec.nominations && responseResponse.response.length > 0;
       this.setState({
         formSpec: formResponse.formSpec,
         responses: responseResponse.response,
