@@ -91,7 +91,7 @@ class Section(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     application_form_id = db.Column(db.Integer(), db.ForeignKey('application_form.id'), nullable=False)
     order = db.Column(db.Integer(), nullable=False)
-    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', use_alter=True, ondelete="SET NULL"), nullable=True)
+    depends_on_question_id = db.Column(db.Integer(), db.ForeignKey('question.id', name="section_depends_on_question_id_fkey", use_alter=True, ondelete="SET NULL"), nullable=True)
     key = db.Column(db.String(255), nullable=True)
 
     application_form = db.relationship('ApplicationForm', foreign_keys=[application_form_id])
