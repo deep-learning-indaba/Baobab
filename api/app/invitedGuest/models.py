@@ -3,6 +3,10 @@ from app.tags.models import Tag
 
 class InvitedGuest(db.Model):
     __tablename__ = "invited_guest"
+    __table_args__ = tuple([
+        db.Index("invited_guest_lookup", "event_id", "user_id"),
+        db.Index("invited_guest_event_lookup", "event_id")
+    ])
 
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey(
@@ -49,6 +53,9 @@ class GuestRegistration(db.Model):
 
 class GuestRegistrationAnswer(db.Model):
     __tablename__ = "guest_registration_answer"
+    __table_args__ = tuple([
+        db.Index("guest_registration_answer_lookup", "guest_registration_id", "registration_question_id", "is_active"),
+    ])
 
     id = db.Column(db.Integer(), primary_key=True)
     guest_registration_id = db.Column(db.Integer(), db.ForeignKey(

@@ -181,6 +181,9 @@ class Registration(db.Model):
 
 class RegistrationAnswer(db.Model):
     __tablename__ = "registration_answer"
+    __table_args__ = tuple([
+        db.Index("registration_answer_lookup", "registration_id", "registration_question_id"),
+    ])
 
     id = db.Column(db.Integer(), primary_key=True)
     registration_id = db.Column(db.Integer(), db.ForeignKey(
