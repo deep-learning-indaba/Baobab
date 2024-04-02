@@ -1,4 +1,4 @@
-"""empty message
+"""Complete removal of continuous journal
 
 Revision ID: e511f343cb08
 Revises: 81526c9dbb6f
