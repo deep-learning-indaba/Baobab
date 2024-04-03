@@ -12,7 +12,7 @@ class Tag(db.Model):
     __tablename__ = 'tag'
     id = db.Column(db.Integer(), primary_key=True)
     event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
-    tag_type = db.Column(db.Enum(TagType), nullable=True)
+    tag_type = db.Column(db.Enum(TagType, name="tag_type"), nullable=True)
     active = db.Column(db.Boolean(), nullable=False, default=True)
 
     translations = db.relationship('TagTranslation', lazy='dynamic')

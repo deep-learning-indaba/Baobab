@@ -270,7 +270,7 @@ def _filter_response(response: Response) -> ResponseModel:
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses=None,
-                 review_response=None, reviewer=None, filtered_answers=None):
+                 review_response=None, reviewer=None):
         self.review_form = _serialize_review_form(review_form, language)
         self.response = response
         self.user = None if response is None else response.user
@@ -278,7 +278,6 @@ class ReviewResponseUser():
         self.references = reference_responses
         self.review_response = review_response
         self.reviewer = reviewer
-        self.filtered_answers = filtered_answers or response.answers
 
 class ReviewResponses():
     def __init__(self, review_form, review_responses, language):

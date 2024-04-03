@@ -65,6 +65,10 @@ class Response(db.Model):
 
 class Answer(db.Model):
     __tablename__ = "answer"
+    __table_args__ = tuple([
+        db.Index("answer_question_lookup", "question_id", "response_id", "is_active"),
+        db.Index("answer_response_lookup", "response_id", "is_active")
+    ])
 
     id = db.Column(db.Integer(), primary_key=True)
     response_id = db.Column(db.Integer(), db.ForeignKey("response.id"), nullable=False)

@@ -80,7 +80,7 @@ class Event(Base):
         miniconf_url=None
     ):
         self.start_date = start_date
-        self.end_date = None if event_type == EventType.JOURNAL else end_date
+        self.end_date = None if event_type == EventType.CONTINUOUS_JOURNAL else end_date
         self.key = key
         self.organisation_id = organisation_id
         self.email_from = email_from

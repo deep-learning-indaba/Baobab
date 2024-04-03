@@ -52,17 +52,21 @@ const formData = {
 const reviewersData = [
     {
         reviewer_user_id: 1,
+        email: "joebloggs@indaba.com",
         user_title: "Mr",
         firstname: "Joe",
         lastname: "Bloggs",
-        status: "completed"
+        reviews_allocated: 1,
+        reviews_completed: 1
     },
     {
         reviewer_user_id: 2,
+        email: "janebloggs@indaba.com",
         user_title: "Ms",
         firstname: "Jane",
         lastname: "Bloggs",
-        status: "started"
+        reviews_allocated: 1,
+        reviews_completed: 0
     }
 ]
 
@@ -94,7 +98,7 @@ test("Check if Question and Answer html renders.", async () => {
     const wrapper = shallow(<ResponsePage {...props} />);
     wrapper.setState({
         applicationForm: formData,
-        reviewers: reviewersData,
+        availableReviewers: reviewersData,
         applicationData: applicationData,
         isLoading: false
     })
@@ -107,7 +111,7 @@ test("Check if tag list renders.", async () => {
     wrapper.setState({
         isLoading: false,
         applicationData: applicationData,
-        reviewers: reviewersData,
+        availableReviewers: reviewersData,
         tagList: [{name: "tag-1", id: 1},{name: "tag-2", id:2}],
         filteredTagList: [{name: "tag-1", id:1},{name: "tag-2", id:2}],
         eventLanguages: ["En", "Fr"]
