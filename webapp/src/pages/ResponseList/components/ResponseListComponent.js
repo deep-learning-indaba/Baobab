@@ -41,7 +41,6 @@ class ResponseListComponent extends Component {
 
     componentDidMount() {
         this.setState({ loading: true }, () => this.getResponseList());
-
     }
 
     getResponseList() {

@@ -8,6 +8,7 @@ import 'react-table/react-table.css'
 
 import FormTextBox from "../../../components/form/FormTextBox";
 import { tagsService } from '../../../services/tags/tags.service';
+import TagSelectorDialog from '../../../components/TagSelectorDialog';
 
 class ReviewAssignmentComponent extends Component {
   constructor(props) {
@@ -141,6 +142,45 @@ class ReviewAssignmentComponent extends Component {
     this.setState({ tags }, this.refreshSummary);
   }
 
+  addTag = (reviewer) => {
+    const tagIds = reviewer.tags.map(t=>t.id);
+    this.setState({
+      selectedReviewer: reviewer,
+      tagSelectorVisible: true,
+      filteredTags: this.state.tags.filter(t=>!tagIds.includes(t.id) && this.filterable_tag_types.includes(t.tag_type))
+    })
+  }
+
+  onSelectTag = (tag) => {
+    reviewService.addReviewerTag({
+      reviewerUserId: this.state.selectedReviewer.reviewer_user_id,
+      tagId: tag.id,
+      eventId: this.props.event.id
+    })
+    .then(resp => {
+      if (resp.status === 201) {
+        const newReviewer = {
+          ...this.state.selectedReviewer,
+          tags: [...this.state.selectedReviewer.tags, tag]
+        } 
+        const newReviewers = this.state.reviewers.map(r => 
+          r.reviewer_user_id === this.state.selectedReviewer.reviewer_user_id  ? newReviewer : r);
+        this.setState({
+          tagSelectorVisible: false,
+          selectedResponse: null,
+          filteredTags: [],
+          reviewers: newReviewers
+        });  // TODO: Call filter reviewers
+      }
+      else {
+        this.setState({
+          tagSelectorVisible: false,
+          error: resp.error
+        });
+      }
+    });
+  }
+
   render() {
     const { loading, reviewers, error, newReviewerEmail, reviewSummary } = this.state;
 
@@ -161,6 +201,16 @@ class ReviewAssignmentComponent extends Component {
       id: 'fullName', // Required because our accessor is not a string
       Header: t("Name"),
       accessor: d => d.firstname + " " + d.lastname // Custom value accessors!
+    }, {
+      id: "tags",
+      Header: <div className="response-tags">{t("Tags")}</div>,
+      Cell: props => <div>
+        {props.original.tags.map(t => 
+            <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
+        <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
+      </div>,
+      accessor: u => u.tags.map(t => t.name).join("; "),
+      minWidth: 150
     }, {
       Header: t("No. Allocated"),
       accessor: 'reviews_allocated'
@@ -229,6 +279,14 @@ class ReviewAssignmentComponent extends Component {
             </button>
 
         </div>
+
+        <TagSelectorDialog
+            tags={this.state.filteredTags}
+            visible={this.state.tagSelectorVisible}
+            onCancel={() => this.setState({ tagSelectorVisible: false })}
+            onSelectTag={this.onSelectTag}
+        />
+          
       </section>
     )
   }

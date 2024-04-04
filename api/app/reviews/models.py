@@ -255,3 +255,11 @@ class ReviewConfiguration(db.Model):
 
     review_form = db.relationship('ReviewForm', foreign_keys=[review_form_id])
     review_question = db.relationship('ReviewQuestion', foreign_keys=[drop_optional_question_id])
+
+
+class ReviewerTag(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    reviewer_user_id = db.Column(db.Integer(), db.ForeignKey('app_user.id'), nullable=False)
+    tag_id = db.Column(db.Integer(), db.ForeignKey('tag.id'), nullable=False)
+    event_id = db.Column(db.Integer(), db.ForeignKey('event.id'), nullable=False)
+    tag = db.relationship('Tag', foreign_keys=[tag_id])
