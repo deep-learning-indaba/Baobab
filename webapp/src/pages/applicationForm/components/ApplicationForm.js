@@ -1153,7 +1153,7 @@ class ApplicationForm extends Component {
     if (this.props.event.event_type === 'JOURNAL' && journalSubmissionFlag) {
       return <ApplicationFormInstance
       formSpec={formSpec}
-      response={selectedResponse}
+      response={null}
       event={this.props.event} />
     }
     else if (formSpec.nominations && responses.length > 0 && !responseSelected) {

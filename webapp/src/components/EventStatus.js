@@ -5,10 +5,6 @@ import { withTranslation } from 'react-i18next';
 
 
 class EventStatus extends Component {
-    constructor(props) {
-        super(props);
-      }
-
   unknownStatus = (status_name, status) => {
       return {
         title: "ERROR",
