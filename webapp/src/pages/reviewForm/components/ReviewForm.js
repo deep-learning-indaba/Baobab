@@ -141,7 +141,7 @@ const ReviewForm = (props) => {
                 ...q,
                 id: `${Math.random()}`,
                 backendId: q.id,
-                required: false,
+                required: q.is_required,
                 type: type === 'long_text' ? 'long-text' : type
               }
               return q
