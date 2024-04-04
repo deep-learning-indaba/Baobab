@@ -3,17 +3,16 @@ import flask_restful as restful
 from flask_restful import reqparse, fields, marshal_with, marshal
 from math import ceil
 import random
-from sqlalchemy.sql import func, exists
 
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional, Sequence, Union
 from datetime import datetime
 
 from app import db, LOGGER
-from app.applicationModel.models import ApplicationForm
+from app.applicationModel.models import Question, Section
 from app.events.models import Event, EventRole
 from app.events.repository import EventRepository as event_repository
 from app.responses.repository import ResponseRepository as response_repository
-from app.responses.models import Response, ResponseReviewer
+from app.responses.models import Response, ResponseReviewer, Answer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
     GetReviewAssignmentMixin, GetReviewHistoryMixin
 from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation
@@ -21,7 +20,6 @@ from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
 from app.references.repository import ReferenceRequestRepository as reference_repository
 
-from app.users.models import AppUser, Country, UserCategory
 from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
@@ -29,7 +27,7 @@ from app.utils.auth import auth_required
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
-    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND
+    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND, REVIEW_FORM_EXISTS, UPDATE_CONFLICT, QUESTION_NOT_FOUND, SECTION_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -218,6 +216,57 @@ def _add_reviewer_role(user_id, event_id):
     db.session.add(event_role)
     db.session.commit()
 
+def _is_visible(answer: Answer, answers: Sequence[Answer], language: str) -> bool:
+    section = answer.question.section
+    if not _is_entity_visible(section, answers, language):
+        return False
+    
+    return _is_entity_visible(answer.question, answers, language)
+
+
+def _find_answer(question_id: int, answers: Sequence[Answer]) -> Optional[Answer]:
+    answer = next((a for a in answers if a.question_id == question_id), None)
+    return answer
+
+
+def _is_entity_visible(entity: Union[Question, Section], answers: Sequence[Answer], language: str) -> bool:
+    if not entity.depends_on_question_id:
+        return True
+    
+    dependency_answer = _find_answer(entity.depends_on_question_id, answers)
+    if dependency_answer is None:
+        return False
+    
+    translation = entity.get_translation(language)    
+    if translation is None:
+        LOGGER.warn('No {} translation found for {} id {}'.format(language, type(entity), entity.id))
+        translation = entity.get_translation('en')
+    
+    return translation.show_for_values and dependency_answer.value in translation.show_for_values
+
+
+class ResponseModel:
+    def __init__(self, response: Response, answers: Sequence[Answer]=None):
+        self.id = response.id
+        self.application_form_id = response.application_form_id
+        self.user_id = response.user_id
+        self.is_submitted = response.is_submitted
+        self.submitted_timestamp = response.submitted_timestamp
+        self.is_withdrawn = response.is_withdrawn
+        self.withdrawn_timestamp = response.withdrawn_timestamp
+        self.started_timestamp = response.started_timestamp
+        self.language = response.language
+        self.answers = answers or response.answers
+        self.user = response.user
+    
+
+def _filter_response(response: Response) -> ResponseModel:
+    if response is None:
+        return None
+
+    new_answers = [answer for answer in response.answers if _is_visible(answer, response.answers, response.language)]
+    return ResponseModel(response, new_answers)
+
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses=None,
@@ -262,6 +311,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
         skip = self.sanitise_skip(args['skip'], reviews_remaining_count)
 
         response = review_repository.get_response_to_review(skip, g.current_user['id'], review_form.application_form_id)
+        response = _filter_response(response)
 
         references = []
         if response is not None:
@@ -286,7 +336,7 @@ class ReviewAPI(ReviewMixin, restful.Resource):
             reviews_remaining_count,
             args['language'],
             reference_responses=references,
-            review_response=review_response
+            review_response=review_response,
         )
 
     def sanitise_skip(self, skip, reviews_remaining_count):
@@ -322,6 +372,7 @@ class ResponseReviewAPI(restful.Resource):
             return REVIEW_FORM_NOT_FOUND
 
         response = review_repository.get_response_by_reviewer(response_id, g.current_user['id'])
+        response = _filter_response(response)
 
         if response is None:
             return RESPONSE_NOT_FOUND
@@ -829,7 +880,7 @@ class ReviewResponseSummaryListAPI(restful.Resource):
                     review_question_translation = review_question.get_translation(language)
                     if not review_question_translation:
                         review_question_translation = review_question.get_translation('en')
-                        LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_score.review_question.id))
+                        LOGGER.warn('Could not find {} translation for review question id {}'.format(language, review_question.id))
 
                     average_score = review_repository.get_average_score_for_review_question(response.id, review_question.id)
 

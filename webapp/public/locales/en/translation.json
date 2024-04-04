@@ -479,6 +479,7 @@
     "Call": "Call",
     "Award": "Award",
     "Programme": "Programme",
+    "Journal": "Journal",
     "Awards Travel Grants": "Awards Travel Grants",
     "Edit Event Details": "Edit Event Details",
     "No event exists with that ID": "No event exists with that ID",
@@ -546,5 +547,12 @@
     "You have already been accepted to this event.": "You have already been accepted to this event.",
     "Unfortunately your application to this event has been rejected, you are not able to apply again.": "Unfortunately your application to this event has been rejected, you are not able to apply again.",
     "Could not submit your application due to validation errors. Please go back and fix these any try again.": "Could not submit your application due to validation errors. Please go back and fix these any try again.",
-    "Invalid option selected.": "Invalid option selected."
+    "Invalid option selected.": "Invalid option selected.",
+    "You have submitted your article.": "You have submitted your article.",
+    "View Submission(s)": "View Submission(s)",
+    "Submit your article to": "Submit your article to",
+    "Thank you for submitting an article to the": "Thank you for submitting an article to the",
+    "Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.": "Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.",
+    "You submitted your article on": "You submitted your article on",
+    "Withdraw Article Submission": "Withdraw Article Submission"
 }

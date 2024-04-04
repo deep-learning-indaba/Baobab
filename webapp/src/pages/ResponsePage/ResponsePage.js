@@ -45,6 +45,7 @@ class ResponsePage extends Component {
             applicationFormService.getForEvent(this.props.event.id),
             responsesService.getResponseDetail(this.props.match.params.id, this.props.event.id),
             tagsService.getTagList(this.props.event.id),
+            reviewService.getReviewAssignments(this.props.event.id)
         ]).then(responses => {
             this.setState({
                 eventLanguages: responses[0].event ? Object.keys(responses[0].event.name) : null,
@@ -52,7 +53,8 @@ class ResponsePage extends Component {
                 applicationForm: responses[1].formSpec,
                 applicationData: responses[2].detail,
                 tagList: responses[3].tags,
-                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error,
+                availableReviewers: responses[4].reviewers,
+                error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
             }, () => {
                 this.getOutcome();
                 this.getReviewResponses(responses[2].detail);
@@ -203,7 +205,7 @@ class ResponsePage extends Component {
                 }
             };
 
-            if (this.state.event_type === 'JOURNAL' || this.state.event_type === 'JOURNAL') {
+            if (this.state.event_type === 'JOURNAL') {
                 return <div className='user-details'>
                     <div className="user-details">
                         <button
@@ -591,7 +593,7 @@ class ResponsePage extends Component {
         return < ReviewModal
             handlePost={(data) => this.postReviewerService(data)}
             response={this.state.applicationData}
-            reviewers={this.state.reviewResponses.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
+            reviewers={this.state.availableReviewers.filter(r => !this.state.applicationData.reviewers.some(rr => rr.reviewer_user_id === r.reviewer_user_id))}
             event={this.props.event}
             t={this.props.t}
         />
@@ -660,6 +662,7 @@ class ResponsePage extends Component {
                     <div className="headings-lower">
                         <div className="user-details">
                             <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
+                            <p>{t("Language")}: {applicationData.language}</p>
                             <div className="tags">
                                 {this.renderTags()}
                                 <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>

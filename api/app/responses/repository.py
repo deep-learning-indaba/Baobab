@@ -73,7 +73,7 @@ class ResponseRepository():
     def get_answer_by_question_id_and_response_id(question_id, response_id):
         return db.session.query(Answer) \
             .filter_by(question_id=question_id, response_id=response_id, is_active=True) \
-            .first()
+            .all()
 
     @staticmethod
     def get_question_answers_by_section_key_and_response_id(section_key, response_id):

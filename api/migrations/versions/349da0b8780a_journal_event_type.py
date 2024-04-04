@@ -1,4 +1,4 @@
-"""Add journal and JOURNAL event_type
+"""Add journal and continuous_journal event_type
 
 Revision ID: 349da0b8780a
 Revises: 93f4dbc510f9
@@ -17,11 +17,11 @@ import sqlalchemy as sa
 def upgrade():
     op.execute("COMMIT")
     op.execute("ALTER TYPE event_type ADD VALUE 'JOURNAL'")
-    op.execute("ALTER TYPE event_type ADD VALUE 'JOURNAL'")
+    op.execute("ALTER TYPE event_type ADD VALUE 'CONTINUOUS_JOURNAL'")
 
 def downgrade():
     op.execute("""DELETE FROM pg_enum
-        WHERE enumlabel = 'JOURNAL' OR enumlabel = 'JOURNAL' 
+        WHERE enumlabel = 'JOURNAL' OR enumlabel = 'CONTINUOUS_JOURNAL' 
         AND enumtypid = (
         SELECT oid FROM pg_type WHERE typname = 'event_type'
         )""")

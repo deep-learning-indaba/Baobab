@@ -267,6 +267,12 @@ class ResponseListComponent extends Component {
             minWidth: 150
           },
           {
+            id: "email",
+            Header: <div className="response-language">{t("Language")}</div>,
+            accessor: u => u.language,
+            minWidth: 80
+          },
+          {
             id: "start_date",
             Header: <div className="response-start-date">{t("Start Date")}</div>,
             accessor: u => u.start_date,

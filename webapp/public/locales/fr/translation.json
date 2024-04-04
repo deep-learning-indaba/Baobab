@@ -478,6 +478,7 @@
     "Call": "Appel",
     "Award": "Prix",
     "Programme": "Programme",
+    "Journal": "Journal",
     "Awards Travel Grants": "Bourses de voyage",
     "Edit Event Details": "Modifier les détails de l'événement",
     "No event exists with that ID": "Aucun événement n'existe avec cet ID",
@@ -545,6 +546,13 @@
     "You have already been accepted to this event.": "Vous avez déjà été accepté à cet événement.",
     "Unfortunately your application to this event has been rejected, you are not able to apply again.": "Malheureusement, votre candidature à cet événement a été rejetée, vous ne pouvez pas postuler à nouveau.",
     "Could not submit your application due to validation errors. Please go back and fix these any try again.": "Impossible de soumettre votre candidature en raison d'erreurs de validation. Veuillez revenir en arrière et corriger ces erreurs.",
-    "Invalid option selected.": "Option invalide sélectionnée."
+    "Invalid option selected.": "Option invalide sélectionnée.",
+    "You have submitted your article.": "Vous avez soumis votre article",
+    "View Submission(s)": "Voir les soumissions",
+    "Submit your article to": "Envoyez votre article à",
+    "Thank you for submitting an article to the": "Merci d'avoir soumis un article au",
+    "Your article will be reviewed by our appointed reviewers and we will get back to you as soon as possible.": "Votre article sera examiné par nos réviseurs désignés et nous vous répondrons dans les plus brefs délais.",
+    "You submitted your article on": "Vous avez soumis votre article le",
+    "Withdraw Article Submission": "Retirer la soumission d'un article"
 }
 

@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - checkout
       - run:
@@ -26,7 +26,7 @@ jobs:
 
   front-end-tests:
     machine:
-      image: ubuntu-2004:202201-02
+      image: default
     steps:
       - checkout
       - run:

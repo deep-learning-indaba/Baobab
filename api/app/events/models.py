@@ -47,7 +47,7 @@ class Event(db.Model):
     offer_close = db.Column(db.DateTime(), nullable=True)
     registration_open = db.Column(db.DateTime(), nullable=True)
     registration_close = db.Column(db.DateTime(), nullable=True)
-    event_type = db.Column(db.Enum(EventType), nullable=False)
+    event_type = db.Column(db.Enum(EventType, name="event_type"), nullable=False)
     travel_grant = db.Column(db.Boolean(), nullable=False)
     miniconf_url = db.Column(db.String(100), nullable=True)
 
