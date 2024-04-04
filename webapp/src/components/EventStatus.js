@@ -64,7 +64,7 @@ class EventStatus extends Component {
   
   applicationStatus = (event) => {
       const applyLink = `${event.key}/apply`
-      const submissionLink = `${event.key}/apply/newSubmission`
+      const submissionLink = `${event.key}/apply/new`
       if (event.status.application_status === "Submitted") {
         if (event.event_type === "JOURNAL") {
             return {
@@ -397,11 +397,6 @@ class EventStatus extends Component {
     }
     else {
         if (definition.shortText && definition.link && definition.title !== definition.shortText) {
-            return <div>
-                <span>{definition.title}</span><br/>{this.renderButton(definition)}
-            </div>
-        }
-        else if (definition.shortText && definition.link && this.props.submissionLink && definition.title !== definition.shortText) {
             return <div>
                 <span>{definition.title}</span><br/>{this.renderButton(definition)}
             </div>

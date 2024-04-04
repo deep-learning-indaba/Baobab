@@ -1110,8 +1110,7 @@ class ApplicationForm extends Component {
         isLoading: false,
         selectedResponse: selectFirstResponse ? responseResponse.response[0] : null,
         responseSelected: selectFirstResponse,
-        event: eventResponse.event,
-        journalSubmissionFlag: this.props.journalSubmissionFlag
+        event: eventResponse.event
       });
     });
     
