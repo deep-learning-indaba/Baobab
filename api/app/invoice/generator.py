@@ -4,13 +4,10 @@ import os
 import requests
 import json
 import pytz
-import locale
 
 from datetime import datetime
 
-from app.invoice.models import Invoice, InvoiceLineItem
-
-_USDGBP_PATH = "https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd/gbp.json"
+_USDGBP_PATH = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"
 
 class InvoiceGenerator:
     URL = "https://invoice-generator.com"
@@ -170,7 +167,7 @@ class CustomField:
 
 def _get_exchange_rate():
     exchange_data = requests.get(_USDGBP_PATH)
-    return exchange_data.json()["gbp"]
+    return exchange_data.json()["usd"]["gbp"]
 
 
 # TODO: Move to organisation table

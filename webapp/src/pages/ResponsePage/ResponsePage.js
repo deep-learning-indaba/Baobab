@@ -205,7 +205,7 @@ class ResponsePage extends Component {
                 }
             };
 
-            if (this.state.event_type === 'JOURNAL' || this.state.event_type === 'JOURNAL') {
+            if (this.state.event_type === 'JOURNAL') {
                 return <div className='user-details'>
                     <div className="user-details">
                         <button
