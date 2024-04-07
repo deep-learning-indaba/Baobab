@@ -21,7 +21,9 @@ export const reviewService = {
   getReviewStage,
   getReviewFormDetails,
   updateReviewForm,
-  createReviewForm
+  createReviewForm,
+  addReviewerTag,
+  deleteReviewerTag
 };
 
 function getReviewForm(eventId, skip) {
@@ -490,6 +492,49 @@ function createReviewForm({
   .catch(error => {
     return {
       data: null,
+      error: extractErrorMessage(error)
+    };
+  });
+}
+
+function addReviewerTag({reviewerUserId, tagId, eventId}) {
+  return axios.post(
+    baseUrl + '/api/v1/reviewertag',
+    {
+      'reviewer_user_id': reviewerUserId,
+      'tag_id': tagId,
+      'event_id': eventId
+    },
+    {
+      headers: authHeader()
+    })
+    .then(res => ({
+      data: res.data,
+      error: "",
+      status: res.status
+    }))
+    .catch(error => ({
+      data: null,
+      error: extractErrorMessage(error)
+    }));
+}
+
+function deleteReviewerTag({reviewerUserId, tagId, eventId}) {
+  return axios.delete(baseUrl + "/api/v1/reviewertag", {
+    headers: authHeader(),
+    params: {
+      'reviewer_user_id': reviewerUserId,
+      'tag_id': tagId,
+      'event_id': eventId
+    }
+  })
+  .then(function(response) {
+    return {
+      error: ""
+    };
+  })
+  .catch(function(error) {
+    return {
       error: extractErrorMessage(error)
     };
   });

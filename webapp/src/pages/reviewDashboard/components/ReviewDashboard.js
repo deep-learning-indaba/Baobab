@@ -281,6 +281,12 @@ class ReviewAssignmentComponent extends Component {
             {
                 Header: t("No. Completed"),
                 accessor: 'reviews_completed'
+            },
+            {
+                id: "percent_complete",
+                Header: t("% Completed"),
+                accessor: u => u.reviews_allocated === 0 ? 100 : (u.reviews_completed / u.reviews_allocated) * 100,
+                Cell: props => <div> {props.value.toLocaleString(undefined, { minimumFractionDigits: 1 })} </div>
             }
         ];
 
@@ -290,7 +296,6 @@ class ReviewAssignmentComponent extends Component {
                     <h3 className="card-title">{t("Reviewers")}</h3>
                     <ReactTable
                         loading={loading}
-                        manual
                         data={reviewers}
                         columns={columns}
                         minRows={0}

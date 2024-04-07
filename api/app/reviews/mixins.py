@@ -22,6 +22,7 @@ class PostReviewResponseMixin(object):
 class GetReviewAssignmentMixin(object):
     get_req_parser = reqparse.RequestParser()
     get_req_parser.add_argument('event_id', type=int, required=True)
+    get_req_parser.add_argument('language', type=str, required=True)
 
 class PostReviewAssignmentMixin(object):
     post_req_parser = reqparse.RequestParser()
