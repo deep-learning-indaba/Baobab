@@ -556,7 +556,8 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         'firstname': fields.String,
         'lastname': fields.String,
         'reviews_allocated': fields.Integer,
-        'reviews_completed': fields.Integer
+        'reviews_completed': fields.Integer,
+        'tags': fields.Raw
     }
 
     @auth_required
@@ -585,7 +586,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         args = self.post_req_parser.parse_args()
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
-        tags = args['tags']
+        tags = args['tags'] or []
 
         event = event_repository.get_by_id(event_id)
         if not event:
@@ -601,8 +602,13 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         config = review_configuration_repository.get_configuration_for_event(event_id)
         num_reviews_required = config.num_reviews_required if config is not None else 1
 
+        # If the reviewer has any additional tags, then include those as well
+        reviewer_tags = reviewer_tag_repository.reviewer_tags_for_reviewer(user_id=reviewer_user.id, event_id=event_id)
+        reviewer_tag_ids = [rt.tag_id for rt in reviewer_tags]
+
+        filter_tags = set(tags) | set(reviewer_tag_ids)
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
-                                                      num_reviews_required, tags)
+                                                      num_reviews_required, filter_tags)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -618,7 +624,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                 ),
                 event=event,
                 user=reviewer_user)
-        return {}, 201
+        return {'reviews_assigned': len(response_ids)}, 201
 
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
@@ -631,7 +637,8 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if tags:
             filtered_candidates_responses = []
             for response in candidate_responses:
-                if all(rt.tag_id in tags for rt in response.response_tags) and len(response.response_tags) == len(tags):
+                response_tag_ids = [rt.tag_id for rt in response.response_tags]
+                if all(t in response_tag_ids for t in tags):
                     filtered_candidates_responses.append(response)
         else:
             filtered_candidates_responses = candidate_responses
@@ -1264,16 +1271,19 @@ class ReviewerTagAPI(restful.Resource):
             'tag_id': reviewer_tag.tag_id,
             'event_id': reviewer_tag.event_id,
             'name': tag_translation.name,
-            'description': tag_translation.descrtiption
+            'description': tag_translation.description
         }, 201
     
     @event_admin_required
     def delete(self, event_id: int):
         req_parser = reqparse.RequestParser()
-        req_parser.add_argument('reviewer_tag_id', type=int, required=True)
+        req_parser.add_argument('reviewer_user_id', type=int, required=True)
+        req_parser.add_argument('tag_id', type=int, required=True)
         args = req_parser.parse_args()
-        reviewer_tag_id = args['reviewer_tag_id']
-        reviewer_tag = reviewer_tag_repository.get_reviewer_tag(reviewer_tag_id, event_id)
+
+        reviewer_user_id = args['reviewer_user_id']
+        tag_id = args['tag_id']
+        reviewer_tag = reviewer_tag_repository.get_reviewer_tag(reviewer_user_id, tag_id, event_id)
         if not reviewer_tag:
             return FORBIDDEN
         

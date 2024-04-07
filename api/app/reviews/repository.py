@@ -429,8 +429,9 @@ class ReviewerTagRepository():
         db.session.commit()
 
     @staticmethod
-    def get_reviewer_tag(reviewer_tag_id: ReviewerTag, event_id: int) -> ReviewerTag:
-        reviewer_tag = db.session.query(ReviewerTag).filter_by(id=reviewer_tag_id, event_id=event_id).first()
+    def get_reviewer_tag(reviewer_user_id: int, tag_id: int, event_id: int) -> ReviewerTag:
+        reviewer_tag = db.session.query(ReviewerTag).filter_by(
+            id=reviewer_user_id, tag_id=tag_id, event_id=event_id).first()
         return reviewer_tag
 
     @staticmethod
@@ -441,4 +442,11 @@ class ReviewerTagRepository():
     @staticmethod
     def reviewer_tags_for_event(event_id: int) -> Sequence[ReviewerTag]:
         reviewer_tags = db.session.query(ReviewerTag).filter_by(event_id=event_id).all()
+        return reviewer_tags
+    
+    @staticmethod
+    def reviewer_tags_for_reviewer(user_id: int, event_id: int) -> Sequence[ReviewerTag]:
+        reviewer_tags = db.session.query(ReviewerTag).filter_by(
+            event_id=event_id, reviewer_user_id=user_id
+        ).all()
         return reviewer_tags

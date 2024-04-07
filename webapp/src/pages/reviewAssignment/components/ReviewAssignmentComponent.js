@@ -9,6 +9,7 @@ import 'react-table/react-table.css'
 import FormTextBox from "../../../components/form/FormTextBox";
 import { tagsService } from '../../../services/tags/tags.service';
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
+import { ConfirmModal } from "react-bootstrap4-modal";
 
 class ReviewAssignmentComponent extends Component {
   constructor(props) {
@@ -19,10 +20,12 @@ class ReviewAssignmentComponent extends Component {
     this.state = {
       loading: true,
       reviewers: null,
+      filteredReviewers: null,
       error: "",
       newReviewerEmail: "",
       reviewSummary: {},
-      tags: []
+      tags: [],
+      filteredTags: []
     };
   }
 
@@ -38,6 +41,7 @@ class ReviewAssignmentComponent extends Component {
         this.setState({
             tags: responses[0].tags.filter(tag => this.filterable_tag_types.includes(tag.tag_type)).map(tag => { return { ...tag, active: false } }),
             reviewers: responses[1].reviewers,
+            filteredReviewers: responses[1].reviewers,
             reviewSummary: responses[2].reviewSummary,
             newReviewerEmail: "",
             error: responses[0].error || responses[1].error || responses[2].error,
@@ -70,6 +74,7 @@ class ReviewAssignmentComponent extends Component {
         this.setState(prevState => ({
           loading: false,
           reviewers: result.reviewers,
+          filteredReviewers: this.filterReviewers(result.reviewers, this.state.tags),
           error: prevState.error + result.error,
           newReviewerEmail: ""
         }));
@@ -97,10 +102,9 @@ class ReviewAssignmentComponent extends Component {
         suppressContentEditableWarning
 
         onBlur={e => {
-          const reviewers = [...this.state.reviewers];
+          const reviewers = [...this.state.filteredReviewers];
           const reviewSummary = this.state.reviewSummary;
           reviewers[cellInfo.index][cellInfo.column.id] = parseInt(e.target.innerHTML);
-          reviewSummary.reviews_unallocated -= parseInt(e.target.innerHTML);
           this.setState({ reviewSummary });
         }}
 
@@ -139,7 +143,15 @@ class ReviewAssignmentComponent extends Component {
     const index = tags.indexOf(tag);
     tags[index].active = !tags[index].active;
 
-    this.setState({ tags }, this.refreshSummary);
+    this.setState(prevState => ({ 
+      tags,
+      filteredReviewers: this.filterReviewers(prevState.reviewers, tags)
+    }), this.refreshSummary);
+  }
+
+  filterReviewers = (reviewers, tags) => {
+    const activeTags = tags.filter(t=>t.active);
+    return reviewers.filter(r=>activeTags.length === 0 || r.tags.length === 0 || activeTags.map(t=>t.id).every(t=>r.tags.map(t=>t.id).includes(t)));
   }
 
   addTag = (reviewer) => {
@@ -165,12 +177,13 @@ class ReviewAssignmentComponent extends Component {
         } 
         const newReviewers = this.state.reviewers.map(r => 
           r.reviewer_user_id === this.state.selectedReviewer.reviewer_user_id  ? newReviewer : r);
-        this.setState({
+        this.setState(prevState => ({
           tagSelectorVisible: false,
           selectedResponse: null,
           filteredTags: [],
-          reviewers: newReviewers
-        });  // TODO: Call filter reviewers
+          reviewers: newReviewers,
+          filteredReviewers: this.filterReviewers(newReviewers, prevState.tags)
+        }));
       }
       else {
         this.setState({
@@ -181,8 +194,43 @@ class ReviewAssignmentComponent extends Component {
     });
   }
 
+  removeTag = (reviewer, tag) => {
+    this.setState({
+      selectedReviewer: reviewer,
+      selectedTag: tag,
+      confirmRemoveTagVisible: true
+    });
+  }
+
+  confirmRemoveTag = () => {
+    const {selectedReviewer, selectedTag} = this.state;
+
+    reviewService.deleteReviewerTag(selectedReviewer.reviewer_user_id, selectedTag.id, this.props.event.id)
+    .then(resp => {
+      if (resp.status === 200) {
+        const newReviewer = {
+          ...selectedReviewer,
+          tags: selectedReviewer.tags.filter(t=>t.id !== selectedTag.id)
+        }
+        const newReviewers = this.state.reviewers.map(r => 
+            r.response_id === selectedReviewer.response_id ? newReviewer : r);
+        this.setState({
+          reviewers: newReviewers,
+          confirmRemoveTagVisible: false,
+          filteredReviewers: this.filterReviewers(newReviewers, this.state.tags)
+        });
+      }
+      else {
+        this.setState({
+          error: resp.error,
+          confirmRemoveTagVisible: false
+        });
+      }
+    })
+  }
+
   render() {
-    const { loading, reviewers, error, newReviewerEmail, reviewSummary } = this.state;
+    const { loading, filteredReviewers, error, newReviewerEmail, reviewSummary } = this.state;
 
     const loadingStyle = {
       "width": "3rem",
@@ -190,6 +238,16 @@ class ReviewAssignmentComponent extends Component {
     }
 
     const t = this.props.t;
+
+    if (loading) {
+      return (
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border" style={loadingStyle} role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      )
+    }
 
     const columns = [{
       Header: t("Title"),
@@ -204,7 +262,7 @@ class ReviewAssignmentComponent extends Component {
     }, {
       id: "tags",
       Header: <div className="response-tags">{t("Tags")}</div>,
-      Cell: props => <div>
+      Cell: props => <div className="tags">
         {props.original.tags.map(t => 
             <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
         <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>
@@ -218,23 +276,18 @@ class ReviewAssignmentComponent extends Component {
       Header: t("No. Completed"),
       accessor: 'reviews_completed'
     }, {
+      id: "percent_complete",
+      Header: t("% Completed"),
+      accessor: u => u.reviews_allocated === 0 ? 100 : (u.reviews_completed / u.reviews_allocated) * 100,
+      Cell: props => <div> {props.value.toLocaleString(undefined, { minimumFractionDigits: 1 })} </div>
+    }, {
       Header: t("No. to Assign"),
       accessor: 'reviews_to_assign',
       Cell: this.renderEditable
     }, {
       Header: t("Assign"),
       Cell: this.renderButton
-    }]
-
-    if (loading) {
-      return (
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" style={loadingStyle} role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      )
-    }
+    }];
 
     return (
       <section className="review-assignment-wrapper">
@@ -258,7 +311,7 @@ class ReviewAssignmentComponent extends Component {
         <div className="review-assignment-note">{t("review-assignment-filter-note")}</div>
 
         <ReactTable
-          data={reviewers}
+          data={filteredReviewers}
           columns={columns}
           minRows={0} />
         <br />
@@ -286,6 +339,17 @@ class ReviewAssignmentComponent extends Component {
             onCancel={() => this.setState({ tagSelectorVisible: false })}
             onSelectTag={this.onSelectTag}
         />
+
+        <ConfirmModal
+            visible={this.state.confirmRemoveTagVisible}
+            onOK={this.confirmRemoveTag}
+            onCancel={() => this.setState({ confirmRemoveTagVisible: false })}
+            okText={t("Yes")}
+            cancelText={t("No")}>
+            <p>
+                {t('Are you sure you want to remove this tag?')}
+            </p>
+        </ConfirmModal>
           
       </section>
     )

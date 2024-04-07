@@ -519,11 +519,12 @@ function addReviewerTag({reviewerUserId, tagId, eventId}) {
     }));
 }
 
-function deleteReviewerTag({reviewerTagId, eventId}) {
-  return axios.delete(baseUrl + "/api/v1/assignresponsereviewer", {
+function deleteReviewerTag({reviewerUserId, tagId, eventId}) {
+  return axios.delete(baseUrl + "/api/v1/reviewertag", {
     headers: authHeader(),
     params: {
-      'reviewer_tag_id': reviewerTagId,
+      'reviewer_user_id': reviewerUserId,
+      'tag_id': tagId,
       'event_id': eventId
     }
   })
