@@ -3,7 +3,7 @@ from sqlalchemy import and_, or_, func, cast, Date
 from app import db
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response, ResponseReviewer, ResponseTag
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewSection, ReviewSectionTranslation, ReviewQuestion, ReviewQuestionTranslation, ReviewConfiguration
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewSection, ReviewSectionTranslation, ReviewQuestion, ReviewQuestionTranslation, ReviewConfiguration, ReviewerTag
 from app.users.models import AppUser
 from app.references.models import Reference
 from app.events.models import EventRole
@@ -419,4 +419,34 @@ class ReviewConfigurationRepository():
                     .filter(ApplicationForm.event_id == event_id)
                     .first())
         return config
+    
 
+class ReviewerTagRepository():
+
+    @staticmethod
+    def add_reviewer_tag(reviewer_tag: ReviewerTag):
+        db.session.add(reviewer_tag)
+        db.session.commit()
+
+    @staticmethod
+    def get_reviewer_tag(reviewer_user_id: int, tag_id: int, event_id: int) -> ReviewerTag:
+        reviewer_tag = db.session.query(ReviewerTag).filter_by(
+            id=reviewer_user_id, tag_id=tag_id, event_id=event_id).first()
+        return reviewer_tag
+
+    @staticmethod
+    def delete_reviewer_tag(reviewer_tag: ReviewerTag):
+        reviewer_tag.delete()
+        db.session.commit()
+
+    @staticmethod
+    def reviewer_tags_for_event(event_id: int) -> Sequence[ReviewerTag]:
+        reviewer_tags = db.session.query(ReviewerTag).filter_by(event_id=event_id).all()
+        return reviewer_tags
+    
+    @staticmethod
+    def reviewer_tags_for_reviewer(user_id: int, event_id: int) -> Sequence[ReviewerTag]:
+        reviewer_tags = db.session.query(ReviewerTag).filter_by(
+            event_id=event_id, reviewer_user_id=user_id
+        ).all()
+        return reviewer_tags

@@ -9,25 +9,28 @@ from datetime import datetime
 
 from app import db, LOGGER
 from app.applicationModel.models import Question, Section
-from app.events.models import Event, EventRole
+from app.events.models import EventRole
 from app.events.repository import EventRepository as event_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.responses.models import Response, ResponseReviewer, Answer
 from app.reviews.mixins import ReviewMixin, GetReviewResponseMixin, PostReviewResponseMixin, PostReviewAssignmentMixin, \
     GetReviewAssignmentMixin, GetReviewHistoryMixin
-from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation
+from app.reviews.models import ReviewForm, ReviewResponse, ReviewScore, ReviewQuestion, ReviewSection, ReviewSectionTranslation, ReviewQuestionTranslation, ReviewerTag
 from app.reviews.repository import ReviewRepository as review_repository
 from app.reviews.repository import ReviewConfigurationRepository as review_configuration_repository
+from app.reviews.repository import ReviewerTagRepository as reviewer_tag_repository
 from app.references.repository import ReferenceRequestRepository as reference_repository
+from app.tags.repository import TagRepository as tag_repository
 
 from app.users.repository import UserRepository as user_repository
 
 from app.events.repository import EventRepository as event_repository
 from app.utils.auth import auth_required
+from app.utils.language import translatable
 
 from app.utils.auth import auth_required, event_admin_required
 from app.utils.errors import EVENT_NOT_FOUND, REVIEW_RESPONSE_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, RESPONSE_NOT_FOUND, \
-    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND, REVIEW_FORM_EXISTS, UPDATE_CONFLICT, QUESTION_NOT_FOUND, SECTION_NOT_FOUND
+    REVIEW_FORM_NOT_FOUND, REVIEW_ALREADY_COMPLETED, NO_ACTIVE_REVIEW_FORM, REVIEW_FORM_FOR_STAGE_NOT_FOUND, REVIEW_FORM_EXISTS, UPDATE_CONFLICT, QUESTION_NOT_FOUND, SECTION_NOT_FOUND, TAG_NOT_FOUND
 
 from app.utils import misc
 from app.utils.emailer import email_user
@@ -163,6 +166,7 @@ response_review_fields = {
     'review_responses': fields.List(fields.Nested(extended_review_fields)),
 }
 
+
 def _serialize_review_question(review_question, language):
     translation = review_question.get_translation(language)
     if translation is None:
@@ -270,7 +274,7 @@ def _filter_response(response: Response) -> ResponseModel:
 
 class ReviewResponseUser():
     def __init__(self, review_form, response, reviews_remaining_count, language, reference_responses=None,
-                 review_response=None, reviewer=None, filtered_answers=None):
+                 review_response=None, reviewer=None):
         self.review_form = _serialize_review_form(review_form, language)
         self.response = response
         self.user = None if response is None else response.user
@@ -278,7 +282,6 @@ class ReviewResponseUser():
         self.references = reference_responses
         self.review_response = review_response
         self.reviewer = reviewer
-        self.filtered_answers = filtered_answers or response.answers
 
 class ReviewResponses():
     def __init__(self, review_form, review_responses, language):
@@ -503,7 +506,7 @@ class ReviewResponseAPI(GetReviewResponseMixin, PostReviewResponseMixin, restful
 
 
 class ReviewCountView():
-    def __init__(self, count):
+    def __init__(self, count, reviewer_tags: Sequence[ReviewerTag], language: str):
         self.email = count.email
         self.user_title = count.user_title
         self.firstname = count.firstname
@@ -511,6 +514,7 @@ class ReviewCountView():
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
         self.reviewer_user_id = count.reviewer_user_id
+        self.tags = [_serialize_tag(rt.tag, language) for rt in reviewer_tags]
 
 class ReviewSummaryAPI(restful.Resource):
 
@@ -530,6 +534,19 @@ class ReviewSummaryAPI(restful.Resource):
         }
 
 
+def _serialize_tag(tag, language):
+    translation = tag.get_translation(language)
+    if translation is None:
+        LOGGER.warn('Could not find {} translation for tag id {}'.format(language, tag.id))
+        translation = tag.get_translation('en')
+    return {
+        'id': tag.id,
+        'event_id': tag.event_id,
+        'tag_type': tag.tag_type.value.upper(),
+        'name': translation.name,
+        'description': translation.description
+    }
+
 class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, restful.Resource):
     reviews_count_fields = {
         'reviewer_user_id': fields.Integer,
@@ -538,7 +555,8 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         'firstname': fields.String,
         'lastname': fields.String,
         'reviews_allocated': fields.Integer,
-        'reviews_completed': fields.Integer
+        'reviews_completed': fields.Integer,
+        'tags': fields.Raw
     }
 
     @auth_required
@@ -547,13 +565,19 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         args = self.get_req_parser.parse_args()
         event_id = args['event_id']
         user_id = g.current_user['id']
+        language = args['language']
 
         current_user = user_repository.get_by_id(user_id)
         if not current_user.is_event_admin(event_id):
             return FORBIDDEN
 
         counts = review_repository.count_reviews_allocated_and_completed_per_reviewer(event_id)
-        views = [ReviewCountView(count) for count in counts]
+        reviewer_tags = reviewer_tag_repository.reviewer_tags_for_event(event_id)
+
+        def _filter_reviewer_tags(reviewer_user_id):
+            return [rt for rt in reviewer_tags if rt.reviewer_user_id == reviewer_user_id]
+
+        views = [ReviewCountView(count, _filter_reviewer_tags(count.reviewer_user_id), language) for count in counts]
         return views
 
     @event_admin_required
@@ -561,7 +585,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         args = self.post_req_parser.parse_args()
         reviewer_user_email = args['reviewer_user_email']
         num_reviews = args['num_reviews']
-        tags = args['tags']
+        tags = args['tags'] or []
 
         event = event_repository.get_by_id(event_id)
         if not event:
@@ -577,8 +601,13 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         config = review_configuration_repository.get_configuration_for_event(event_id)
         num_reviews_required = config.num_reviews_required if config is not None else 1
 
+        # If the reviewer has any additional tags, then include those as well
+        reviewer_tags = reviewer_tag_repository.reviewer_tags_for_reviewer(user_id=reviewer_user.id, event_id=event_id)
+        reviewer_tag_ids = [rt.tag_id for rt in reviewer_tags]
+
+        filter_tags = set(tags) | set(reviewer_tag_ids)
         response_ids = self.get_eligible_response_ids(event_id, reviewer_user.id, num_reviews,
-                                                      num_reviews_required, tags)
+                                                      num_reviews_required, filter_tags)
         response_reviewers = [ResponseReviewer(response_id, reviewer_user.id) for response_id in response_ids]
         db.session.add_all(response_reviewers)
         db.session.commit()
@@ -594,7 +623,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
                 ),
                 event=event,
                 user=reviewer_user)
-        return {}, 201
+        return {'reviews_assigned': len(response_ids)}, 201
 
     def add_reviewer_role(self, user_id, event_id):
         event_role = EventRole('reviewer', user_id, event_id)
@@ -607,7 +636,8 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         if tags:
             filtered_candidates_responses = []
             for response in candidate_responses:
-                if all(rt.tag_id in tags for rt in response.response_tags) and len(response.response_tags) == len(tags):
+                response_tag_ids = [rt.tag_id for rt in response.response_tags]
+                if all(t in response_tag_ids for t in tags):
                     filtered_candidates_responses.append(response)
         else:
             filtered_candidates_responses = candidate_responses
@@ -1205,3 +1235,56 @@ class ReviewFormDetailAPI(restful.Resource):
         review_form.event_id = event_id
 
         return review_form, 200
+
+class ReviewerTagAPI(restful.Resource):
+
+    @event_admin_required
+    @translatable
+    def post(self, event_id: int, language: str):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('reviewer_user_id', type=int, required=True)
+        req_parser.add_argument('tag_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        reviewer_user_id = args['reviewer_user_id']
+        reviewer_user = user_repository.get_by_id(reviewer_user_id)
+        if not reviewer_user:
+            return USER_NOT_FOUND
+        if not reviewer_user.is_reviewer(event_id):
+            return FORBIDDEN
+        
+        tag_id = args['tag_id']
+        tag = tag_repository.get_by_id(tag_id)
+        if not tag:
+            return TAG_NOT_FOUND
+        if tag.event_id != event_id:
+            return FORBIDDEN
+
+        reviewer_tag = ReviewerTag(reviewer_user_id=reviewer_user_id, tag_id=tag_id, event_id=event_id)
+        reviewer_tag_repository.add_reviewer_tag(reviewer_tag)
+        tag_translation = reviewer_tag.tag.get_translation(language)
+
+        return {
+            'id': reviewer_tag.id,
+            'reviewer_user_id': reviewer_tag.reviewer_user_id,
+            'tag_id': reviewer_tag.tag_id,
+            'event_id': reviewer_tag.event_id,
+            'name': tag_translation.name,
+            'description': tag_translation.description
+        }, 201
+    
+    @event_admin_required
+    def delete(self, event_id: int):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('reviewer_user_id', type=int, required=True)
+        req_parser.add_argument('tag_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        reviewer_user_id = args['reviewer_user_id']
+        tag_id = args['tag_id']
+        reviewer_tag = reviewer_tag_repository.get_reviewer_tag(reviewer_user_id, tag_id, event_id)
+        if not reviewer_tag:
+            return FORBIDDEN
+        
+        reviewer_tag_repository.delete_reviewer_tag(reviewer_tag)
+        return {}, 200
