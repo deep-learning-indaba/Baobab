@@ -519,7 +519,7 @@ function addReviewerTag({reviewerUserId, tagId, eventId}) {
     }));
 }
 
-function deleteReviewerTag({reviewerUserId, tagId, eventId}) {
+function deleteReviewerTag(reviewerUserId, tagId, eventId) {
   return axios.delete(baseUrl + "/api/v1/reviewertag", {
     headers: authHeader(),
     params: {

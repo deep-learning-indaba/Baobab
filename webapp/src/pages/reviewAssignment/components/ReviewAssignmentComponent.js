@@ -150,8 +150,7 @@ class ReviewAssignmentComponent extends Component {
   }
 
   filterReviewers = (reviewers, tags) => {
-    const activeTags = tags.filter(t=>t.active);
-    return reviewers.filter(r=>activeTags.length === 0 || r.tags.length === 0 || activeTags.map(t=>t.id).every(t=>r.tags.map(t=>t.id).includes(t)));
+    return reviewers;
   }
 
   addTag = (reviewer) => {
@@ -207,13 +206,13 @@ class ReviewAssignmentComponent extends Component {
 
     reviewService.deleteReviewerTag(selectedReviewer.reviewer_user_id, selectedTag.id, this.props.event.id)
     .then(resp => {
-      if (resp.status === 200) {
+      if (resp.error === "") {
         const newReviewer = {
           ...selectedReviewer,
           tags: selectedReviewer.tags.filter(t=>t.id !== selectedTag.id)
         }
         const newReviewers = this.state.reviewers.map(r => 
-            r.response_id === selectedReviewer.response_id ? newReviewer : r);
+            r.reviewer_user_id === selectedReviewer.reviewer_user_id ? newReviewer : r);
         this.setState({
           reviewers: newReviewers,
           confirmRemoveTagVisible: false,
