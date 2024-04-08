@@ -431,12 +431,12 @@ class ReviewerTagRepository():
     @staticmethod
     def get_reviewer_tag(reviewer_user_id: int, tag_id: int, event_id: int) -> ReviewerTag:
         reviewer_tag = db.session.query(ReviewerTag).filter_by(
-            id=reviewer_user_id, tag_id=tag_id, event_id=event_id).first()
+            reviewer_user_id=reviewer_user_id, tag_id=tag_id, event_id=event_id).first()
         return reviewer_tag
 
     @staticmethod
     def delete_reviewer_tag(reviewer_tag: ReviewerTag):
-        reviewer_tag.delete()
+        db.session.query(ReviewerTag).filter_by(id=reviewer_tag.id).delete()
         db.session.commit()
 
     @staticmethod
