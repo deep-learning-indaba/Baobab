@@ -1138,8 +1138,7 @@ class ApplicationForm extends Component {
       formSpec,
       responses,
       selectedResponse,
-      responseSelected,
-      journalSubmissionFlag } = this.state;
+      responseSelected} = this.state;
 
     if (isLoading) {
       return (<Loading />);
@@ -1149,7 +1148,7 @@ class ApplicationForm extends Component {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
     
-    if (this.props.event.event_type === 'JOURNAL' && journalSubmissionFlag) {
+    if (this.props.event.event_type === 'JOURNAL' && this.props.journalSubmissionFlag) {
       return <ApplicationFormInstance
       formSpec={formSpec}
       response={null}
