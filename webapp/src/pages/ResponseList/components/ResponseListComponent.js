@@ -41,7 +41,6 @@ class ResponseListComponent extends Component {
 
     componentDidMount() {
         this.setState({ loading: true }, () => this.getResponseList());
-
     }
 
     getResponseList() {
@@ -159,7 +158,7 @@ class ResponseListComponent extends Component {
         });
       }
     })
-    }
+  }
 
     updateNameSearch = (event) => {
         this.setState({nameSearch: event.target.value}, this.filterResponses);
@@ -258,7 +257,7 @@ class ResponseListComponent extends Component {
         }, {
             id: "tags",
             Header: <div className="response-tags">{t("Tags")}</div>,
-            Cell: props => <div>
+            Cell: props => <div className="tags">
               {props.original.tags.map(t => 
                   <span className="tag badge badge-primary" onClick={()=>this.removeTag(props.original, t)} key={`tag_${props.original.response_id}_${t.id}`}>{t.name}</span>)}
               <i className="fa fa-plus-circle" onClick={() => this.addTag(props.original)}></i>

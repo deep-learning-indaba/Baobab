@@ -2946,3 +2946,16 @@ class ReviewFormDetailAPITest(ApiTestCase):
         del data["sections"][1]["questions"][0]["id"]
         self.maxDiff = None
         self.assertEqual(data, REVIEW_FORM_PUT)
+
+
+class ReviewerTagAPITest(ApiTestCase):
+    """
+    TODO:
+        - Test adding a tag to a reviewer
+        - Test trying to add a tag to a non-reviewer
+        - Test trying to add a tag to a reviewer for a different event
+        - Test trying to add a non-existant tag
+        - Test trying to add a tag from a different event
+        - Test deleting a tag
+        - Test trying to delete a tag from a different event
+    """

@@ -15,11 +15,12 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.execute("""DELETE FROM pg_enum
-        WHERE enumlabel = 'CONTINUOUS_JOURNAL' 
-        AND enumtypid = (
-        SELECT oid FROM pg_type WHERE typname = 'event_type'
-        )""")
+    # https://blog.yo1.dog/updating-enum-values-in-postgresql-the-safe-and-easy-way/
+    op.execute("UPDATE event SET event_type = 'JOURNAL' WHERE event_type = 'CONTINUOUS_JOURNAL'")
+    op.execute("ALTER TYPE event_type RENAME TO event_type_old")
+    op.execute("CREATE TYPE event_type AS ENUM('EVENT', 'AWARD', 'CALL', 'PROGRAMME', 'JOURNAL')")
+    op.execute("ALTER TABLE event ALTER COLUMN event_type TYPE event_type USING event_type::text::event_type")
+    op.execute("DROP TYPE event_type_old")
 
 
 def downgrade():
