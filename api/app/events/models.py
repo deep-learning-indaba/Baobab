@@ -258,7 +258,7 @@ class Event(db.Model):
 
     @property
     def is_review_opening(self): 
-        return check_opening(self.registration_open)
+        return check_opening(self.review_open)
 
     @property
     def is_selection_open(self):

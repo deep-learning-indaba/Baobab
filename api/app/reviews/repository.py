@@ -86,11 +86,16 @@ class ReviewRepository():
         response_ids = [r.id for r in response_ids.all()]
 
         reviews = (
-            db.session.query(func.count(ResponseReviewer.id))
-            .filter(ResponseReviewer.response_id.in_(response_ids)).first()[0]
+            db.session.query(ResponseReviewer.response_id, func.count(ResponseReviewer.id))
+            .filter(ResponseReviewer.response_id.in_(response_ids))
+            .group_by(ResponseReviewer.response_id)
+            .all()
         )
 
-        return len(response_ids)*required_reviews_per_response - reviews
+        # Cap review count at required reviews per response, to avoid extra counting responses that had extra reviewers assigned manually.
+        capped_review_count = sum([min(r[1], required_reviews_per_response) for r in reviews])
+
+        return len(response_ids)*required_reviews_per_response - capped_review_count
 
     @staticmethod
     def get_review_form(event_id, stage=None):

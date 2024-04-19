@@ -347,6 +347,11 @@ font-size: 15px;
     padding: 10px 0;
 }
 
+.review-select .reviewer-email {
+    color: grey;
+    font-size: 12px;
+    margin-bottom: 0.75em;
+}
 
 /* Q&A Sections */
 .Q-A {

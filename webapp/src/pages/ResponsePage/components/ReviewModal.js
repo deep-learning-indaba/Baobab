@@ -53,7 +53,7 @@ class ReviewModal extends Component {
                                         key={val.reviewer_user_id}
                                     >
                                         <label> {val.user_title} {val.firstname} {val.lastname} </label>
-
+                                        <div class="reviewer-email">{val.email}</div>
                                         <div>
                                             <p> {t('Reviews Allocated')} : {val.reviews_allocated} </p>
                                             <p> {t('Reviews Completed')} : {val.reviews_completed} </p>
