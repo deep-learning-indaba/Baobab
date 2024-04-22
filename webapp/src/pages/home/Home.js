@@ -63,7 +63,12 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        return <EventStatus longForm={false} event={e} />;
+        if (e.event_type === 'JOURNAL') {
+           return <EventStatus longForm={false} submissionLink={true} event={e} />;
+        }
+        else {
+            return <EventStatus longForm={false} event={e} />;
+         }
     }
 
     dateDisplay = (e) => {
@@ -77,24 +82,24 @@ class Home extends Component {
             return this.props.t("Applications Close") + " " + e.application_close_date;
         }
     }
-
+                                      
     renderEventTable = (events, description) => {
         if (this.props.user && events && events.length > 0) {
             return (
                 <div className="event-table-container">
                     <h3 className="text-center">{this.props.t(description)}</h3>
                     <div className="custom-card">
-                           {events.map(e => {
-                                return (
-                                    <div className="event" key={e.key}>
-                                        <div className="event-info">
-                                            <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
-                                            {this.dateDisplay(e)}
-                                        </div>
-                                        <div className="status-holder">{this.statusDisplay(e)}</div>
+                        {events.map(e => {
+                            return (
+                                <div className="event" key={e.key}>
+                                    <div className="event-info">
+                                        <h5><NavLink to={`/${e.key}`}>{e.description}</NavLink></h5>
+                                        {this.dateDisplay(e)}
                                     </div>
-                                )
-                            })}
+                                    <div className="status-holder">{this.statusDisplay(e)}</div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             );

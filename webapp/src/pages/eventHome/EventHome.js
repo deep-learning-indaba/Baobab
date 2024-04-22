@@ -155,6 +155,11 @@ class EventHome extends Component {
           render={(props) => <Application {...props} event={event} />}
         />
         <Route
+          exact
+          path={`${match.path}/apply/new`}
+          render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
+        />
+        <Route
         exact
           path={`${match.path}/eventAttendance`}
           render={(props) => <Attendance {...props} event={event} />}

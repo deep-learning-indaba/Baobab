@@ -546,9 +546,9 @@ class AppComponent extends Component {
                       eventKey={this.state.eventKey}
                       event={this.state.currentEvent}
                       organisation={this.props.organisation}
-                      />
+                      />         
                   )}
-                />
+                />             
               </Switch>
             </div>
           </div>
