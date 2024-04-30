@@ -28,6 +28,7 @@ class AppUser(db.Model, UserMixin):
     password = db.Column(db.String(255), nullable=False)
     active = db.Column(db.Boolean(), nullable=False)
     is_admin = db.Column(db.Boolean(), nullable=False)
+    is_read_only = db.Column(db.Boolean(), nullable=False) # READ ONLY ACCESS
     is_deleted = db.Column(db.Boolean(), nullable=False)
     deleted_datetime_utc = db.Column(db.DateTime(), nullable=True)
     verified_email = db.Column(db.Boolean(), nullable=True)
@@ -49,7 +50,8 @@ class AppUser(db.Model, UserMixin):
                  user_title,
                  password,
                  organisation_id,
-                 is_admin=False):
+                 is_admin=False,
+                 is_read_only=False):
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
@@ -58,6 +60,7 @@ class AppUser(db.Model, UserMixin):
         self.organisation_id = organisation_id
         self.active = True
         self.is_admin = is_admin
+        self.is_read_only = is_read_only
         self.is_deleted = False
         self.deleted_datetime_utc = None
         self.verified_email = False
@@ -100,6 +103,19 @@ class AppUser(db.Model, UserMixin):
 
         for event_role in self.event_roles:
             if event_role.event_id == event_id and event_role.role == admin_role_name:
+                return True
+        
+        return False
+    
+    def _has_read_only_role(self, event_id):
+        if self.is_read_only:
+            return True
+        
+        if self.event_roles is None:
+            return False
+
+        for event_role in self.event_roles:
+            if event_role.event_id == event_id and event_role.role == "read_only":
                 return True
         
         return False

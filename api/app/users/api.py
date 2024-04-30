@@ -61,6 +61,7 @@ def user_info(user, roles):
         'email': user.email,
         'title': user.user_title,
         'is_admin': user.is_admin,
+        'is_read_only': user.is_read_only,
         'primary_language': user.user_primaryLanguage,
         'roles': [{'event_id': event_role.event_id, 'role': event_role.role} for event_role in roles]
     }
