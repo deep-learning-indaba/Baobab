@@ -292,7 +292,7 @@ class UserProfile(UserProfileMixin, restful.Resource):
 
         current_user = user_repository.get_by_id(current_user_id)
 
-        if current_user.is_admin:
+        if current_user.is_admin or current_user.is_read_only:
             user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND

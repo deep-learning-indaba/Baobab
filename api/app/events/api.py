@@ -246,7 +246,7 @@ class EventAPI(EventMixin, restful.Resource):
 
         user_id = g.current_user["id"]
         current_user = user_repository.get_by_id(user_id)
-        if not current_user.is_admin:
+        if not (current_user.is_admin or current_user.is_read_only):
             return FORBIDDEN
 
         if event_repository.exists_by_key(args['key']):
