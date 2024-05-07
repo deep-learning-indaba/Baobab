@@ -450,225 +450,397 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
-
-    return (
-      <div>
-        <div className="card">
-          <form>
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="organisation_name">
-                {t("Organisation")}
-              </label>
-
-              <div className="col-sm-10">
-                <input
-                  readOnly
-                  type="text"
-                  className={"form-control-plaintext readonly"}
-                  id="organisation_name"
-                  name="organisation_name"
-                  value={this.props.organisation.name}
-                />
-              </div>
-            </div>
-
-
-            {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"name_div"+lang.code}>
-                <label
-                  className={"col-sm-2 col-form-label"} 
-                  htmlFor={"name_" + lang.code}>
-                  <span className="required-indicator">*</span>
-                  {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
-                </label>
-
-                <div className="col-sm-10">
-                  <FormTextBox
-                    id={"name_" + lang.code}
-                    name={"name_" + lang.code}
-                    type="text"
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
-                    required={true}
-                    onChange={e => this.updateEventTextField("name", e, lang.code)}
-                    value={updatedEvent.name[lang.code]}
-                  />
-                </div>
-              </div>
-            ))}
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="event_type">
-                <span className="required-indicator">*</span>
-                {t("Event Type")}
-              </label>
-
-              <div className="col-sm-10">
-                <FormSelect
-                  id="event_type"
-                  name="event_type"
-                  defaultValue={updatedEvent.event_type || null}
-                  required={true}
-                  onChange={this.updateEventDropDown}
-                  options={[
-                    { value: "EVENT", label: t("Event") },
-                    { value: "AWARD", label: t("Award") },
-                    { value: "CALL", label: t("Call"),  },
-                    { value: "PROGRAMME", label: t("Programme") },
-                    { value: "JOURNAL", label: t("Journal") }
-                  ]}
-                />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor="travel_grant">
-                <span className="required-indicator">*</span>
-                {t("Awards Travel Grants")}
-              </label>
-
-              <div className="col-sm-10">
-                <FormSelect
-                  id="travel_grant"
-                  name="travel_grant"
-                  defaultValue={String(updatedEvent.travel_grant) || null}
-                  required={true}
-                  onChange={this.updateEventDropDown}
-                  options={[
-                    { value: "true", label: t("Yes") },
-                    { value: "false", label: t("No") }
-                  ]}
-                />
-              </div>
-            </div>
-
-            <div className={"form-group row"}>
-              <label 
-                className={"col-sm-2 col-form-label"}
-                htmlFor="key">
-                <span className="required-indicator">*</span>
-                {t("Event Key")}
-              </label>
-
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="key"
-                  name="key"
-                  type="text"
-                  placeholder={t("Event key for URLs (e.g. indaba2023)")}
-                  required={true}
-                  onChange={e => this.updateEventTextField("key", e)}
-                  value={updatedEvent.key}
-                />
-              </div>
-            </div>
-
-            {this.props.organisation.languages.map((lang) => (
-              <div className={"form-group row"} key={"description_div"+lang.code}>
+    if (this.props.user.is_read_only){
+      return (
+        <div>
+          <div className="card">
+            <form>
+              <div className={"form-group row"}>
                 <label
                   className={"col-sm-2 col-form-label"}
-                  htmlFor={"description_" + lang.code}>
-                  <span className="required-indicator">*</span>
-                  {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
+                  htmlFor="organisation_name">
+                  {t("Organisation")}
                 </label>
 
                 <div className="col-sm-10">
-                  <FormTextArea
-                    id={"description_" + lang.code}
-                    name={"description_" + lang.code}
-                    placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
-                    required={true}
-                    rows={2}
-                    onChange={e => this.updateEventTextField("description", e, lang.code)}
-                    value={updatedEvent.description[lang.code]}
+                  <input
+                    readOnly
+                    type="text"
+                    className={"form-control-plaintext readonly"}
+                    id="organisation_name"
+                    name="organisation_name"
+                    value={this.props.organisation.name}
                   />
                 </div>
               </div>
-            ))}
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
-                <span className="required-indicator">*</span>
-                {t("Email From")}
-              </label>
+              {this.props.organisation.languages.map((lang) => (
+                <div className={"form-group row"} key={"name_div"+lang.code}>
+                  <label
+                    className={"col-sm-2 col-form-label"} 
+                    htmlFor={"name_" + lang.code}>
+                    <span className="required-indicator">*</span>
+                    {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
+                  </label>
+                  <div className="col-sm-10">
+                    <input
+                      readOnly
+                      id={"name_" + lang.code}
+                      name={"name_" + lang.code}
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      value={updatedEvent.name[lang.code]}
+                    />
+                  </div> 
+                </div>
+              ))}
 
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="email_from"
-                  name="email_from"
-                  type="email"
-                  placeholder={t("Organisation email (e.g. indaba2023@deeplearningindaba.com)")}
-                  required={true}
-                  value={updatedEvent.email_from}
-                  onChange={e => this.updateEventTextField("email_from", e)}
+              <div className={"form-group row"}>
+                <label
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor="event_type">
+                  <span className="required-indicator">*</span>
+                  {t("Event Type")}
+                </label>
+
+                <div className="col-sm-10">
+                  <input
+                    readOnly
+                    id="event_type"
+                    name="event_type"
+                    className={"form-control-plaintext readonly"}
+                    value={updatedEvent.event_type}
                   />
+                </div>
               </div>
-            </div>
 
-            <div className={"form-group row"}>
-              <label className={"col-sm-2 col-form-label"}
-                htmlFor="url">
-                <span className="required-indicator">*</span>
-                {t("Event Website")}
-              </label>
+              <div className={"form-group row"}>
+                <label
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor="travel_grant">
+                  <span className="required-indicator">*</span>
+                  {t("Awards Travel Grants")}
+                </label>
 
-              <div className="col-sm-10">
-                <FormTextBox
-                  id="url"
-                  name="url"
-                  type="text"
-                  placeholder={t("Event website (e.g. www.deeplearningindaba.com)")}
-                  value={updatedEvent.url}
-                  required={true}
-                  onChange={e => this.updateEventTextField("url", e)}
+                <div className="col-sm-10">
+                  <input
+                    readOnly
+                    id="travel_grant"
+                    name="travel_grant"
+                    className={"form-control-plaintext readonly"}
+                    value={updatedEvent.travel_grant}
                   />
+                </div>
               </div>
+
+              <div className={"form-group row"}>
+                <label 
+                  className={"col-sm-2 col-form-label"}
+                  htmlFor="key">
+                  <span className="required-indicator">*</span>
+                  {t("Event Key")}
+                </label>
+
+                <div className="col-sm-10">
+                    <input
+                      readOnly
+                      id={"key"}
+                      name={"key"}
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      value={updatedEvent.key}
+                    />
+                </div>
+              </div>
+
+              {this.props.organisation.languages.map((lang) => (
+                <div className={"form-group row"} key={"description_div"+lang.code}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor={"description_" + lang.code}>
+                    <span className="required-indicator">*</span>
+                    {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
+                  </label>
+
+                  <div className="col-sm-10">
+                    <input
+                      readOnly
+                      id={"description"}
+                      name={"description"}
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      value={updatedEvent.description[lang.code]}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
+                  <span className="required-indicator">*</span>
+                  {t("Email From")}
+                </label>
+
+                <div className="col-sm-10">
+                    <input
+                      readOnly
+                      id={"email_from"}
+                      name={"email_from"}
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      value={updatedEvent.email_from}
+                    />
+                </div>
+              </div>
+
+              <div className={"form-group row"}>
+                <label className={"col-sm-2 col-form-label"}
+                  htmlFor="url">
+                  <span className="required-indicator">*</span>
+                  {t("Event Website")}
+                </label>
+
+                <div className="col-sm-10">
+                    <input
+                      readOnly
+                      id={"url"}
+                      name={"url"}
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      value={updatedEvent.url}
+                    />
+                </div>
+              </div>
+
+              {updatedEvent.event_type && this.renderDatePickerTable()}
+
+            </form>
+            <hr></hr>
+            <div className={"form-group-row"}>
+                {errors && showErrors && this.getErrorMessages(errors)}
             </div>
-
-            {updatedEvent.event_type && this.renderDatePickerTable()}
-
-          </form>
-
-          <hr></hr>
-
-          <div className={"form-group row"}>
-            <div className={"col-sm-4 ml-md-auto"}>
-              <Link to=".." className="btn btn-danger btn-lg btn-block">
-                {t("Cancel")}
-              </Link>
-            </div>
-            
-            <div className={"col-sm-4 "}>
-              {isNewEvent ? (
-                <button
-                  onClick={() => this.onClickCreate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Create Event")}
-                </button>
-                ) :
-                (
-                <button
-                  onClick={() => this.onClickUpdate()}
-                  className="btn btn-success btn-lg btn-block"
-                  disabled={!allFieldsComplete}>
-                  {t("Update Event")}
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className={"form-group-row"}>
-              {errors && showErrors && this.getErrorMessages(errors)}
           </div>
         </div>
-      </div>
-    );
+      );}
+
+      else {
+        return (
+          <div>
+            <div className="card">
+              <form>
+                <div className={"form-group row"}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="organisation_name">
+                    {t("Organisation")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <input
+                      readOnly
+                      type="text"
+                      className={"form-control-plaintext readonly"}
+                      id="organisation_name"
+                      name="organisation_name"
+                      value={this.props.organisation.name}
+                    />
+                  </div>
+                </div>
+  
+                {this.props.organisation.languages.map((lang) => (
+                  <div className={"form-group row"} key={"name_div"+lang.code}>
+                    <label
+                      className={"col-sm-2 col-form-label"} 
+                      htmlFor={"name_" + lang.code}>
+                      <span className="required-indicator">*</span>
+                      {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Name", lang.description)) : t("Event Name")}
+                    </label>
+                    <div className="col-sm-10">
+                      <FormTextBox
+                        id={"name_" + lang.code}
+                        name={"name_" + lang.code}
+                        type="text"
+                        placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Name of event", lang.description)) : t("Name of event")}
+                        required={true}
+                        onChange={e => this.updateEventTextField("name", e, lang.code)}
+                        value={updatedEvent.name[lang.code]}
+                      />
+                    </div> 
+                  </div>
+                ))}
+  
+                <div className={"form-group row"}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="event_type">
+                    <span className="required-indicator">*</span>
+                    {t("Event Type")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <FormSelect
+                      id="event_type"
+                      name="event_type"
+                      defaultValue={updatedEvent.event_type || null}
+                      required={true}
+                      onChange={this.updateEventDropDown}
+                      options={[
+                        { value: "EVENT", label: t("Event") },
+                        { value: "AWARD", label: t("Award") },
+                        { value: "CALL", label: t("Call"),  },
+                        { value: "PROGRAMME", label: t("Programme") },
+                        { value: "JOURNAL", label: t("Journal") }
+                      ]}
+                    />
+                  </div>
+                </div>
+  
+                <div className={"form-group row"}>
+                  <label
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="travel_grant">
+                    <span className="required-indicator">*</span>
+                    {t("Awards Travel Grants")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <FormSelect
+                      id="travel_grant"
+                      name="travel_grant"
+                      defaultValue={String(updatedEvent.travel_grant) || null}
+                      required={true}
+                      onChange={this.updateEventDropDown}
+                      options={[
+                        { value: "true", label: t("Yes") },
+                        { value: "false", label: t("No") }
+                      ]}
+                    />
+                  </div>
+                </div>
+  
+                <div className={"form-group row"}>
+                  <label 
+                    className={"col-sm-2 col-form-label"}
+                    htmlFor="key">
+                    <span className="required-indicator">*</span>
+                    {t("Event Key")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <FormTextBox
+                      id="key"
+                      name="key"
+                      type="text"
+                      placeholder={t("Event key for URLs (e.g. indaba2023)")}
+                      required={true}
+                      onChange={e => this.updateEventTextField("key", e)}
+                      value={updatedEvent.key}
+                    />
+                  </div>
+                </div>
+  
+                {this.props.organisation.languages.map((lang) => (
+                  <div className={"form-group row"} key={"description_div"+lang.code}>
+                    <label
+                      className={"col-sm-2 col-form-label"}
+                      htmlFor={"description_" + lang.code}>
+                      <span className="required-indicator">*</span>
+                      {isMultiLingual ? t(this.getFieldNameWithLanguage("Event Description", lang.description)) : t("Event Description")}
+                    </label>
+  
+                    <div className="col-sm-10">
+                      <FormTextArea
+                        id={"description_" + lang.code}
+                        name={"description_" + lang.code}
+                        placeholder={isMultiLingual ? t(this.getFieldNameWithLanguage("Description of event", lang.description)) : t("Description of event")}
+                        required={true}
+                        rows={2}
+                        onChange={e => this.updateEventTextField("description", e, lang.code)}
+                        value={updatedEvent.description[lang.code]}
+                      />
+                    </div>
+                  </div>
+                ))}
+  
+                <div className={"form-group row"}>
+                  <label className={"col-sm-2 col-form-label"} htmlFor="email_from">
+                    <span className="required-indicator">*</span>
+                    {t("Email From")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <FormTextBox
+                      id="email_from"
+                      name="email_from"
+                      type="email"
+                      placeholder={t("Organisation email (e.g. indaba2023@deeplearningindaba.com)")}
+                      required={true}
+                      value={updatedEvent.email_from}
+                      onChange={e => this.updateEventTextField("email_from", e)}
+                      />
+                  </div>
+                </div>
+  
+                <div className={"form-group row"}>
+                  <label className={"col-sm-2 col-form-label"}
+                    htmlFor="url">
+                    <span className="required-indicator">*</span>
+                    {t("Event Website")}
+                  </label>
+  
+                  <div className="col-sm-10">
+                    <FormTextBox
+                      id="url"
+                      name="url"
+                      type="text"
+                      placeholder={t("Event website (e.g. www.deeplearningindaba.com)")}
+                      value={updatedEvent.url}
+                      required={true}
+                      onChange={e => this.updateEventTextField("url", e)}
+                      />
+                  </div>
+                </div>
+  
+                {updatedEvent.event_type && this.renderDatePickerTable()}
+  
+              </form>
+  
+              <hr></hr>
+  
+              <div className={"form-group row"}>
+                <div className={"col-sm-4 ml-md-auto"}>
+                  <Link to=".." className="btn btn-danger btn-lg btn-block">
+                    {t("Cancel")}
+                  </Link>
+                </div>
+                
+                <div className={"col-sm-4 "}>
+                  {isNewEvent ? (
+                    <button
+                      onClick={() => this.onClickCreate()}
+                      className="btn btn-success btn-lg btn-block"
+                      disabled={!allFieldsComplete}>
+                      {t("Create Event")}
+                    </button>
+                    ) :
+                    (
+                    <button
+                      onClick={() => this.onClickUpdate()}
+                      className="btn btn-success btn-lg btn-block"
+                      disabled={!allFieldsComplete}>
+                      {t("Update Event")}
+                    </button>
+                  )}
+                </div>
+              </div>
+  
+              <div className={"form-group-row"}>
+                  {errors && showErrors && this.getErrorMessages(errors)}
+              </div>
+            </div>
+          </div>
+        );}
+    
   }
 }
 

@@ -11,6 +11,19 @@ export const isEventAdmin = (user, event) => {
     );
   };
 
+  export const isEventReadOnly = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      user.is_read_only ||
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "read_only" && event && r.event_id === event.id
+        ))
+    );
+  };
+
   export const isRegistrationAdmin = (user, event) => {
     if (!user) {
       return false;

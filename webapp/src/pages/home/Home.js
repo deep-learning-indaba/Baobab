@@ -131,7 +131,7 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user && this.props.user.is_admin &&
+                {this.props.user && this.props.user.is_admin && this.props.user.is_read_only &&
                     <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
                 }
 

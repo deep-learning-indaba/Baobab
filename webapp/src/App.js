@@ -22,7 +22,7 @@ import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
 
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
+import { isEventAdmin, isEventReadOnly, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
 
@@ -134,6 +134,74 @@ class EventNav extends Component {
               )}
             {isEventAdmin(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
+                <NavLink
+                    to={`/${this.props.eventKey}/eventConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Edit Event Details')}
+                </NavLink>
+                <NavLink
+                    to={`/${this.props.eventKey}/reviewAssignment`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Review Assignment')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/invitedGuests`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Invited Guests')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/responseList`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Response List')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/reviewDashboard`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Review Dashboard')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/tagConfig`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Configure Tags')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/offerAdmin`}
+                    className="dropdown-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Offers')}
+                  </NavLink>
+                  <h6 className='dropdown-submenu-header'>Form Settings</h6>
+                  <NavLink
+                    to={`/${this.props.eventKey}/applicationform`}
+                    className="dropdown-item dropdown-submenu-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Application Form')}
+                  </NavLink>
+                  <NavLink
+                    to={`/${this.props.eventKey}/reviewForm`}
+                    className="dropdown-item dropdown-submenu-item"
+                    onClick={this.props.toggleMenu}
+                  >
+                    {t('Review Form')}
+                  </NavLink>
+                </AdminMenu>
+            )}
+            {isEventReadOnly(this.props.user, this.props.event) && (
+              <AdminMenu t={t} label="Event Admin (Read Only)">
                 <NavLink
                     to={`/${this.props.eventKey}/eventConfig`}
                     className="dropdown-item"
