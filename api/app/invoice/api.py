@@ -1,22 +1,20 @@
 from datetime import datetime
 
 import flask_restful as restful
-from flask_restful import fields, marshal_with, marshal
+from flask_restful import fields, marshal
 from flask import g, request
 import stripe
 
 from app import LOGGER
 from app.events.repository import EventRepository as event_repository
 from app.invoice.mixins import InvoiceMixin, InvoiceAdminMixin, PaymentsMixin, PaymentsWebhookMixin
-from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentIntent, InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent, OfferInvoice
+from app.invoice.models import InvoicePaymentStatus, PaymentStatus, StripeWebhookEvent
+from app.invoice import service as invoice_service
 from app.invoice.repository import InvoiceRepository as invoice_repository
-from app.registration.repository import OfferRepository as offer_repository
+from app.offer.repository import OfferRepository as offer_repository
 from app.registration.repository import RegistrationRepository as registration_repository
 from app.users.repository import UserRepository as user_repository
-from app.invoice import generator
-from app.utils import emailer
 from app.registrationResponse import api as registration_response_api
-from app.utils import storage
 
 from app.utils.errors import (
     FORBIDDEN,
@@ -31,7 +29,6 @@ from app.utils.errors import (
     INVOICE_NEGATIVE)
 from app.utils.auth import auth_required
 from app.utils.exceptions import BaobabError
-from config import BOABAB_HOST
 
 invoice_payment_intent_fields = {
     'id': fields.Integer,
@@ -173,72 +170,25 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
         iso_currency_codes = set([event_fee.iso_currency_code for event_fee in event_fees])
         if len(iso_currency_codes) > 1:
             return EVENT_FEES_MUST_HAVE_SAME_CURRENCY
-        iso_currency_code = list(iso_currency_codes)[0]
 
         total_amount = sum([event_fee.amount for event_fee in event_fees])
         if total_amount < 0:
             return INVOICE_NEGATIVE
 
-        invoices = []
         invalid_offer_ids = []
         for offer in offers:
-            if offer.has_valid_invoice():
+            if offer.has_valid_invoice() or offer.is_accepted():
                 invalid_offer_ids.append(offer.id)
-            
-            line_items = []
-            for event_fee in event_fees:
-                line_item = InvoiceLineItem(event_fee.name, event_fee.description, event_fee.amount)
-                line_items.append(line_item)
-
-            invoice = Invoice(
-                offer.user.email,
-                offer.user.full_name,
-                iso_currency_code,
-                due_date,
-                line_items,
-                user_id,
-                str(offer.user_id)
-            )
-            invoice.link_offer(offer.id)
-
-            if invoice.total_amount == 0:
-                paid_status = InvoicePaymentStatus.from_baobab(PaymentStatus.PAID, user_id)
-                invoice.add_invoice_payment_status(paid_status)
-            
-            invoices.append(invoice)
         
         if invalid_offer_ids:
-            error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice."
+            error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice or are already accepted."
             return {'message': error_message}, 400
 
-        invoice_repository.add_all(invoices)
+        invoices = []
 
-        # Generate PDFs and email them
-        for invoice in invoices:
-            invoice_pdf, invoice_number = generator.from_invoice_model(invoice, g.organisation)
-            filename = f"invoice_{invoice_number}.pdf"
-            emailer.email_user(
-                'invoice',
-                event=event,
-                user=offer.user,
-                file_name=filename,
-                file_path=invoice_pdf,
-                template_parameters=dict(
-                    system_url=g.organisation.system_url,
-                    invoice_id=invoice.id
-                )
-            )
-            LOGGER.debug('successfully sent invoice...')
-
-            # Save invoice to Cloud storage
-            try:
-                bucket = storage.get_storage_bucket("indaba-invoices")  # TODO: Replace bucket name with config from organisation
-                blob = bucket.blob(filename)
-                with open(invoice_pdf, 'rb') as file:
-                    bytes_file = file.read()
-                    blob.upload_from_string(bytes_file, content_type="application/pdf")
-            except Exception as e:
-                LOGGER.error("Could not upload invoice to cloud storage: " + str(e))
+        for offer in offers:
+            invoice = invoice_service.issue_invoice_for_offer(offer, event_fees, due_date, user_id)
+            invoices.append(invoice)
 
         return marshal(invoices, invoice_list_fields), 201
 
