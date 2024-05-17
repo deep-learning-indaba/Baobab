@@ -513,6 +513,7 @@ class ReviewCountView():
         self.lastname = count.lastname
         self.reviews_allocated = count.reviews_allocated
         self.reviews_completed = count.reviews_completed
+        self.reviews_in_progress = count.reviews_in_progress
         self.reviewer_user_id = count.reviewer_user_id
         self.tags = [_serialize_tag(rt.tag, language) for rt in reviewer_tags]
 
@@ -556,6 +557,7 @@ class ReviewAssignmentAPI(GetReviewAssignmentMixin, PostReviewAssignmentMixin, r
         'lastname': fields.String,
         'reviews_allocated': fields.Integer,
         'reviews_completed': fields.Integer,
+        'reviews_in_progress': fields.Integer,
         'tags': fields.Raw
     }
 

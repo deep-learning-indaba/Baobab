@@ -26,6 +26,7 @@ def response_info(response):
 def review_info(review):
     return {
         'user_id': review.applicant_id,
+        'response_id': review.response_id,
         'email': review.applicant_email,
         'firstname': review.applicant_firstname,
         'lastname': review.applicant_lastname,

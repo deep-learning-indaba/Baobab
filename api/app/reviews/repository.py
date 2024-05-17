@@ -24,7 +24,8 @@ class ReviewRepository():
                         firstname,
                         lastname,
                         0 as reviews_allocated,
-                        0 as reviews_completed
+                        0 as reviews_completed,
+                        0 as reviews_in_progress
                     from app_user
                     join event_role on event_role.user_id = app_user.id
                     where event_role.role = 'reviewer'
@@ -47,7 +48,8 @@ class ReviewRepository():
                         firstname,
                         lastname,
                         count(response_reviewer.id) as reviews_allocated,
-                        count(review_response.id) as reviews_completed
+                        count(case when review_response.is_submitted then 1 end) as reviews_completed,
+                        count(review_response.id) - count(case when review_response.is_submitted then 1 end) as reviews_in_progress
                     from response_reviewer
                     join app_user
                     on response_reviewer.reviewer_user_id = app_user.id
@@ -58,7 +60,7 @@ class ReviewRepository():
                     join application_form on response.application_form_id = application_form.id
                     left join review_response
                     on review_response.response_id = response.id
-                    and review_response.reviewer_user_id = app_user.id
+                    and review_response.reviewer_user_id = app_user.id 
                     where
                         event_role.role = 'reviewer'
                         and event_role.event_id = {event_id}
