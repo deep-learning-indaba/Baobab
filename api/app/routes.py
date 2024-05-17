@@ -9,6 +9,7 @@ from .reviews import api as reviews_api
 from .invitedGuest import api as invitedGuest_api
 from .references import api as reference_api
 from .registration import api as registration_api
+from .offer import api as offer_api
 from .registrationResponse import api as registration_response
 from .guestRegistrations import api as guest_registration
 from .invitationletter import api as invitation_letter_api
@@ -90,8 +91,8 @@ rest_api.add_resource(reference_api.ReferenceRequestAPI,
                       '/api/v1/reference-request')
 rest_api.add_resource(reference_api.ReferenceAPI,
                       '/api/v1/reference')
-rest_api.add_resource(registration_api.OfferAPI, '/api/v1/offer')
-rest_api.add_resource(registration_api.OfferTagAPI, '/api/v1/offertag')
+rest_api.add_resource(offer_api.OfferAPI, '/api/v1/offer')
+rest_api.add_resource(offer_api.OfferTagAPI, '/api/v1/offertag')
 rest_api.add_resource(registration_api.RegistrationFormAPI,
                       '/api/v1/registration-form')
 rest_api.add_resource(registration_response.RegistrationApi,
@@ -141,7 +142,7 @@ rest_api.add_resource(invoice_api.PaymentsAPI, '/api/v1/payment')
 rest_api.add_resource(invoice_api.PaymentsWebhookAPI, '/api/v1/stripe-webhook')
 rest_api.add_resource(attendance_api.GuestListApi, '/api/v1/guestlist')
 rest_api.add_resource(attendance_api.IndemnityAPI, '/api/v1/indemnity')
-rest_api.add_resource(registration_api.OfferListAPI, '/api/v1/offerlist')
+rest_api.add_resource(offer_api.OfferListAPI, '/api/v1/offerlist')
 rest_api.add_resource(reporting_api.ApplicationResponseReportAPI, '/api/v1/reporting/applications')
 rest_api.add_resource(reporting_api.ReviewReportAPI, '/api/v1/reporting/reviews')
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')

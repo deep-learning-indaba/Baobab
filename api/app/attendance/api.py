@@ -6,7 +6,7 @@ from app.attendance.mixins import AttendanceMixin
 from app.attendance.models import Attendance
 from app.attendance.repository import AttendanceRepository as attendance_repository
 from app.attendance.repository import IndemnityRepository as indemnity_repository
-from app.registration.repository import OfferRepository as offer_repository
+from app.offer.repository import OfferRepository as offer_repository
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.registrationResponse.repository import RegistrationRepository as registration_response_repository
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
@@ -16,7 +16,6 @@ from app.users.repository import UserRepository as user_repository
 from app.utils.auth import auth_required
 from app.utils.emailer import email_user
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, ATTENDANCE_NOT_FOUND, EVENT_NOT_FOUND, FORBIDDEN, USER_NOT_FOUND, INDEMNITY_NOT_FOUND, INDEMNITY_NOT_SIGNED, NOT_A_GUEST
-from app.registration.models import Offer, OfferTag
 from app.registration.models import get_registration_answer_by_question_id
 from app.invitedGuest.models import InvitedGuest
 

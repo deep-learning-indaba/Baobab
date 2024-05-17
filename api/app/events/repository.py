@@ -4,7 +4,7 @@ from app.events.models import Event, EventFee, EventType, EventRole
 from app.organisation.models import Organisation
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
-from app.registration.models import Offer
+from app.offer.models import Offer
 from app.invitedGuest.models import InvitedGuest
 from app.utils.repository import BaseRepository
 from sqlalchemy import and_, or_

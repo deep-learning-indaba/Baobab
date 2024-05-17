@@ -6,7 +6,8 @@ from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 from app.utils.auth import verify_token
 from app.registrationResponse.mixins import RegistrationAdminMixin, RegistrationConfirmMixin
-from app.registration.models import Offer, Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
+from app.registration.models import Registration, RegistrationAnswer, RegistrationForm, RegistrationQuestion
+from app.offer.models import Offer
 from app.users.models import AppUser
 from app.events.models import Event
 from app.utils.auth import auth_required, admin_required

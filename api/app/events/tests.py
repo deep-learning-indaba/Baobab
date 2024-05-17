@@ -17,7 +17,8 @@ from app.outcome.models import Outcome
 from app.outcome.models import Status as OutcomeStatus
 from app.invitedGuest.models import InvitedGuest, GuestRegistration
 import app.events.status as event_status
-from app.registration.models import RegistrationForm, Offer, Registration
+from app.registration.models import Registration
+from app.offer.models import Offer
 
 class EventsAPITest(ApiTestCase):
 
