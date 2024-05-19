@@ -7,6 +7,7 @@ from app.offer.models import Offer
 from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.outcome.models import Status
+import mock
 
 OFFER_DATA = {
     'id': 1,
@@ -23,8 +24,11 @@ class OfferApiTest(ApiTestCase):
 
     def _seed_static_data(self, add_offer=True):
         test_user = self.add_user('something@email.com')
+        test_user2 = self.add_user('something2@email.com')
         offer_admin = self.add_user('offer_admin@ea.com', 'event_admin', is_admin=True)
+        self.offer_admin_id = offer_admin.id
         self.add_organisation('Deep Learning Indaba', 'blah.png', 'blah_big.png', 'deeplearningindaba')
+
         db.session.add(UserCategory('Offer Category'))
         db.session.add(Country('Suid Afrika'))
         db.session.commit()
@@ -41,22 +45,39 @@ class OfferApiTest(ApiTestCase):
 
         app_form = self.create_application_form()
         self.add_response(app_form.id, test_user.id, True, False)
+        self.add_response(app_form.id, test_user2.id, True, False)
+
+        self.add_event_fee(self.event_id, self.offer_admin_id, amount=1000)
 
         if add_offer:
-            offer = Offer(
+            offer_without_payment = Offer(
                 user_id=test_user.id,
                 event_id=event.id,
                 offer_date=datetime.now(),
                 expiry_date=datetime.now() + timedelta(days=15),
                 payment_required=False)
-            db.session.add(offer)
+            offer_with_payment = Offer(
+                user_id=test_user2.id,
+                event_id=event.id,
+                offer_date=datetime.now(),
+                expiry_date=datetime.now() + timedelta(days=15),
+                payment_required=True,
+                event_fee_id=1)
+            db.session.add(offer_without_payment)
+            db.session.add(offer_with_payment)
             db.session.commit()
 
+            self.offer_without_payment_id = offer_without_payment.id
+            self.offer_with_payment_id = offer_with_payment.id
+
         self.headers = self.get_auth_header_for("something@email.com")
+        self.headers2 = self.get_auth_header_for("something2@email.com")
         self.adminHeaders = self.get_auth_header_for("offer_admin@ea.com")
 
         self.add_email_template('offer')
         self.add_email_template('offer-grants', template='These are your grants: {grants}')
+        self.add_email_template('offer-paid')
+        self.add_email_template('invoice')
 
         db.session.flush()
 
@@ -249,6 +270,32 @@ class OfferApiTest(ApiTestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertTrue(data['candidate_response'])
+
+    def test_offer_invoice(self):
+        """Test that an invoice is issued when offer with payment required is accepted."""
+        self._seed_static_data()
+        event_id = 1
+        offer_id = self.offer_with_payment_id
+        candidate_response = True
+        url = "/api/v1/offer?offer_id=%d&event_id=%d&candidate_response=%s" % (
+            offer_id, event_id, candidate_response)
+
+        # Mock storage
+        with mock.patch('app.utils.storage.get_storage_bucket'):
+            response = self.app.put(url, headers=self.headers2)
+        
+        self.assertEqual(response.status_code, 201)
+        response = self.app.get(f'/api/v1/offer?event_id={event_id}', headers=self.headers2)
+        data = json.loads(response.data)
+
+        print(data)
+
+        self.assertFalse(data['is_paid'])
+        self.assertTrue(data['payment_required'])
+        self.assertEqual(data['payment_amount'], 1000)
+        self.assertEqual(data['payment_currency'], 'usd')
+        self.assertEqual(data['invoice_id'], 1)
+        
 
 class OfferTagAPITest(ApiTestCase):
 

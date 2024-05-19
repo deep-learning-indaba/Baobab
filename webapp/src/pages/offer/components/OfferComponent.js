@@ -104,6 +104,7 @@ class Offer extends Component {
     const eventName = event ? event.name : "";
     const respondedDate = offer.responded_at ? offer.responded_at.substring(0, 10) : "-date-";
     const paymentAmount = offer.payment_amount;
+    const paymentCurrency = offer.payment_currency;
     const acceptedGrants = grant_tags.filter(a => a.accepted);
 
     return (
@@ -118,7 +119,7 @@ class Offer extends Component {
         {offer.candidate_response && (offer.is_paid || (!offer.is_paid && !offer.is_expired)) && <div className="white-background card form mt-5 offer-container">
           {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}}USD is required to confirm your place</Trans>: t("Fee Waived"))}
+          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}} {{paymentCurrency}} is required to confirm your place</Trans>: t("Fee Waived"))}
 
           {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
@@ -251,6 +252,7 @@ class Offer extends Component {
 
     const t = this.props.t;
     const paymentAmount = offer.payment_amount;
+    const paymentCurrency = offer.payment_currency;
 
     return (
       <div>
@@ -275,7 +277,7 @@ class Offer extends Component {
                 </div>
                 <div class="row mb-5">
                   <div class="col-md-12" align="left">
-                    {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}}USD registration fee.</Trans>}
+                    {offer && offer.payment_required && <Trans i18nKey="registrationFee">In order to confirm your place, you will be liable for a {{paymentAmount}} {{paymentCurrency}} registration fee.</Trans>}
                     {offer && !offer.payment_required && (t("Your registration fee has been waived") + ".")}
                   </div>
                 </div>

@@ -2,7 +2,7 @@ from app.offer.models import Offer
 from app.events.models import EventFee
 from app.invoice.models import Invoice, InvoiceLineItem, InvoicePaymentStatus, PaymentStatus
 from app.invoice.repository import InvoiceRepository as invoice_repository
-from app.invoice.generator import InvoiceGenerator as generator
+from app.invoice import generator
 from flask import g
 from typing import Sequence
 from datetime import datetime
@@ -14,11 +14,6 @@ from app import LOGGER
 class OfferAlreadyHasInvoiceError(ValueError):
     def __init__(self):
         super().__init__("Offer already has an invoice")
-
-
-class OfferAlreadyAcceptedError(ValueError):
-    def __init__(self):
-        super().__init__("Offer is already accepted")
 
 
 class EventFeesMustHaveSameCurrencyError(ValueError):
@@ -39,8 +34,6 @@ class InvoiceNegativeError(ValueError):
 def issue_invoice_for_offer(offer: Offer, event_fees: Sequence[EventFee], due_date: datetime, issuing_user_id: int):
     if offer.has_valid_invoice():
         raise OfferAlreadyHasInvoiceError()
-    if offer.is_accepted():
-        raise OfferAlreadyAcceptedError()
     if due_date < datetime.now():
         raise DueDateInThePastError()
     
@@ -85,7 +78,8 @@ def issue_invoice_for_offer(offer: Offer, event_fees: Sequence[EventFee], due_da
         file_path=invoice_pdf,
         template_parameters=dict(
             system_url=g.organisation.system_url,
-            invoice_id=invoice.id
+            invoice_id=invoice.id,
+            due_date=invoice.due_date.strftime('%d %B %Y'),
         )
     )
 

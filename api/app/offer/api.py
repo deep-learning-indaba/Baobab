@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import flask_restful as restful
 from app.offer.mixins import OfferTagMixin, OfferMixin
 from app.utils.auth import verify_token
@@ -42,7 +42,9 @@ def offer_info(offer_entity, requested_travel=None):
         'requested_travel': requested_travel and (requested_travel.value == 'Travel' or requested_travel.value == 'Travel & Accommodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'Accommodation' or requested_travel.value == 'Travel & Accommodation'),
         'rejected_reason': offer_entity.rejected_reason,
-        'payment_amount': offer_entity.payment_amount,
+        'payment_amount': float(offer_entity.event_fee.amount) if offer_entity.event_fee_id else 0,
+        'payment_currency': offer_entity.event_fee.iso_currency_code if offer_entity.event_fee_id else '',
+        'event_fee_id': offer_entity.event_fee_id,
         'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
@@ -58,7 +60,9 @@ def offer_update_info(offer_entity):
         'rejected_reason': offer_entity.rejected_reason,
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
-        'payment_amount': offer_entity.payment_amount,
+        'payment_amount': float(offer_entity.event_fee.amount) if offer_entity.event_fee_id else 0,
+        'payment_currency': offer_entity.event_fee.iso_currency_code if offer_entity.event_fee_id else '',
+        'event_fee_id': offer_entity.event_fee_id,
         'is_paid': offer_entity.is_paid,
         'invoice_id': offer_entity.invoice_id,
         'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
@@ -136,10 +140,9 @@ class OfferAPI(OfferMixin, restful.Resource):
 
             if candidate_response and offer.payment_required:
                 # Temporarily get event fee corresponding to payment_amount until offer has event_fee directly
-                event_fees = event_repository.get_event_fees(offer.event_id)
-                fee = [e for e in event_fees if e.amount == offer.payment_amount][0]
-                if (offer.expiry_date - datetime.date.today()) < datetime.timedelta(days=7):
-                    due_date = datetime.date.today() + datetime.timedelta(days=7)
+                fee = event_repository.get_event_fee(offer.event_id, offer.event_fee_id)
+                if (offer.expiry_date - datetime.now()) < timedelta(days=7):
+                    due_date = datetime.now() + timedelta(days=7)
                     offer.expiry_date = due_date
                 else:
                     due_date = offer.expiry_date
@@ -160,7 +163,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
         payment_required = args['payment_required']
-        payment_amount = args['payment_amount']
+        event_fee_id = args['event_fee_id']
         user = db.session.query(AppUser).filter(AppUser.id == user_id).first()
         event = db.session.query(Event).filter(Event.id == event_id).first()
         event_email_from = event.email_from
@@ -174,6 +177,14 @@ class OfferAPI(OfferMixin, restful.Resource):
             if existing_outcome.status == Status.REJECTED:
                 return errors.CANDIDATE_REJECTED
             existing_outcome.reset_latest()
+
+        if payment_required and not event_fee_id:
+            return errors.EVENT_FEE_REQUIRED
+        
+        if payment_required:
+            event_fee = event_repository.get_event_fee(event_id, event_fee_id)
+            if not event_fee:
+                return errors.EVENT_FEE_NOT_FOUND
 
         new_outcome = Outcome(
             event_id,
@@ -189,7 +200,7 @@ class OfferAPI(OfferMixin, restful.Resource):
             offer_date=offer_date,
             expiry_date=expiry_date,
             payment_required=payment_required,
-            payment_amount=payment_amount
+            event_fee_id=event_fee_id
         )
 
         db.session.add(offer_entity)
