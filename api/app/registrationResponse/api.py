@@ -140,7 +140,7 @@ class RegistrationApi(restful.Resource):
             registration = Registration(
                 offer_id=args['offer_id'],
                 registration_form_id=args['registration_form_id'],
-                confirmed=True if (not offer.payment_required) else False,
+                confirmed=True,
                 confirmation_email_sent_at=date.today()
             )
 

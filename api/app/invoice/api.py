@@ -12,9 +12,8 @@ from app.invoice.models import InvoicePaymentStatus, PaymentStatus, StripeWebhoo
 from app.invoice import service as invoice_service
 from app.invoice.repository import InvoiceRepository as invoice_repository
 from app.offer.repository import OfferRepository as offer_repository
-from app.registration.repository import RegistrationRepository as registration_repository
 from app.users.repository import UserRepository as user_repository
-from app.registrationResponse import api as registration_response_api
+from app.offer import api as offer_api
 
 from app.utils.errors import (
     FORBIDDEN,
@@ -333,10 +332,7 @@ class PaymentsWebhookAPI(PaymentsWebhookMixin, restful.Resource):
             if invoice.is_paid and invoice.offer_id:
                 LOGGER.info(f"Invoice offer ID is {invoice.offer_id}")
                 offer = offer_repository.get_by_id(invoice.offer_id)
-                registration = registration_repository.from_offer(invoice.offer_id)
-                if registration:
-                    LOGGER.info(f"Confirming Registration ID {registration.id}")
-                    registration_response_api.confirm_registration(registration, offer)
+                offer_api.confirm_offer_payment(offer)
 
             invoice_repository.save()
         else:

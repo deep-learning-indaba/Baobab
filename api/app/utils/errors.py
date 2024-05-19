@@ -80,6 +80,8 @@ TEMPLATE_NOT_FOUND = (
     {'message': 'No template found for the given parameters'}, 404)
 OFFER_NOT_ACCEPTED = (
     {'message': 'Offer has not been accepted'}, 409)
+INVOICE_NOT_PAID = (
+    {'message': 'Invoice has not been paid'}, 409)
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (

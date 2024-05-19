@@ -4,13 +4,16 @@
  * @param   {String} value
  * @returns {String}
  */
-export function getDownloadURL(value) {
+export function getDownloadURL(value, bucketName) {
     const baseUrl = process.env.REACT_APP_API_URL;
     let url = baseUrl + "/api/v1/file?filename=";
     if (value) {
       try {
         const { filename, rename } = JSON.parse(value);
         url += filename + "&rename=" + encodeURIComponent(rename);
+        if (bucketName) {
+          url += "&bucket=" + bucketName;
+        }
       } catch (e) {
         url += value;
       }

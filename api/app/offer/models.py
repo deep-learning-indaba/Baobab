@@ -27,18 +27,31 @@ class Offer(db.Model):
 
     def is_expired(self):
         end_of_today = datetime.combine(date.today(), time())
-        return (self.candidate_response is None) and (self.expiry_date < end_of_today)
+        return (self.candidate_response is None or (self.candidate_response and not self.is_paid)) and (self.expiry_date < end_of_today)
     
-    def has_valid_invoice(self):
+    def get_valid_invoices(self):
         valid_payment_statuses = [
             PaymentStatus.UNPAID.value,
             PaymentStatus.PAID.value,
             PaymentStatus.FAILED.value
         ]
-        for offer_invoice in self.offer_invoices:
-            if offer_invoice.invoice.current_payment_status.payment_status in valid_payment_statuses:
-                return True
-        return False
+        return [offer_invoice.invoice for offer_invoice in self.offer_invoices if offer_invoice.invoice.current_payment_status.payment_status in valid_payment_statuses]
+
+    def has_valid_invoice(self):
+        return any(self.get_valid_invoices())
+    
+    @property
+    def is_paid(self):
+        valid_invoices = self.get_valid_invoices()
+        return all(invoice.current_payment_status.payment_status == PaymentStatus.PAID.value for invoice in valid_invoices)
+    
+    @property
+    def invoice_id(self):
+        valid_invoices = self.get_valid_invoices()
+        if len(valid_invoices) == 0:
+            return None
+        return valid_invoices[0].id
+
 
 class OfferTag(db.Model):
     id = db.Column(db.Integer(), primary_key=True)

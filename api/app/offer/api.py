@@ -19,6 +19,8 @@ from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.offer.repository import OfferRepository as offer_repository
+from app.invoice import service as invoice_service
+from app.events.repository import EventRepository as event_repository
 
 def offer_info(offer_entity, requested_travel=None):
     return {
@@ -35,8 +37,10 @@ def offer_info(offer_entity, requested_travel=None):
         'responded_at': offer_entity.responded_at and offer_entity.responded_at.strftime('%Y-%m-%d'),
         'candidate_response': offer_entity.candidate_response,
         'payment_required': offer_entity.payment_required,
-        'requested_travel': requested_travel and (requested_travel.value == 'travel' or requested_travel.value == 'travel_and_accomodation'),
-        'requested_accommodation': requested_travel and (requested_travel.value == 'accomodation' or requested_travel.value == 'travel_and_accomodation'),
+        'is_paid': offer_entity.is_paid,
+        'invoice_id': offer_entity.invoice_id,
+        'requested_travel': requested_travel and (requested_travel.value == 'Travel' or requested_travel.value == 'Travel & Accommodation'),
+        'requested_accommodation': requested_travel and (requested_travel.value == 'Accommodation' or requested_travel.value == 'Travel & Accommodation'),
         'rejected_reason': offer_entity.rejected_reason,
         'payment_amount': offer_entity.payment_amount,
         'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
@@ -55,24 +59,30 @@ def offer_update_info(offer_entity):
         'candidate_response': offer_entity.candidate_response,
         'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
         'payment_amount': offer_entity.payment_amount,
+        'is_paid': offer_entity.is_paid,
+        'invoice_id': offer_entity.invoice_id,
         'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
 
 
-class OfferAPI(OfferMixin, restful.Resource):
-    offer_fields = {
-        'id': fields.Integer,
-        'user_id': fields.Integer,
-        'event_id': fields.Integer,
-        'offer_date': fields.DateTime('iso8601'),
-        'expiry_date': fields.DateTime('iso8601'),
-        'payment_required': fields.Boolean,
-        'rejected_reason': fields.String,
-        'candidate_response': fields.Boolean,
-        'responded_at': fields.DateTime('iso8601'),
-        'payment_amount': fields.String
-    }
+def confirm_offer_payment(offer: Offer):
+    try:
+        email_user(
+            'offer-paid',
+            event=offer.event,
+            user=offer.user,
+            template_parameters=dict(
+                host=offer.event.organisation.system_url,
+                event_key=offer.event.key))
+        
+        return True
+    except Exception as e:
+        LOGGER.error(
+            'Error occured while sending email to {}: {}'.format(offer.user.email, e))
+        return False
 
+
+class OfferAPI(OfferMixin, restful.Resource):
     @staticmethod
     def _serialize_tag(offer_tag, language='en'):
         translation = offer_tag.tag.get_translation(language)
@@ -123,6 +133,18 @@ class OfferAPI(OfferMixin, restful.Resource):
                 offer_tag.accepted = tag_accepted
 
             db.session.commit()
+
+            if candidate_response and offer.payment_required:
+                # Temporarily get event fee corresponding to payment_amount until offer has event_fee directly
+                event_fees = event_repository.get_event_fees(offer.event_id)
+                fee = [e for e in event_fees if e.amount == offer.payment_amount][0]
+                if (offer.expiry_date - datetime.date.today()) < datetime.timedelta(days=7):
+                    due_date = datetime.date.today() + datetime.timedelta(days=7)
+                    offer.expiry_date = due_date
+                else:
+                    due_date = offer.expiry_date
+                invoice_service.issue_invoice_for_offer(offer, [fee], due_date, user_id)
+                db.session.commit()
 
         except Exception as e:
             LOGGER.error("Failed to update offer with id {} due to {}".format(args['offer_id'], e))
