@@ -563,6 +563,19 @@
     "You did not apply to attend": "Vous n'avez pas postulé pour participer.",
     "Please let us know why you are rejecting this offer": "Veuillez nous indiquer pourquoi vous rejetez cette offre",
     "Your offer is pending receipt of payment": "Votre offre est en attente de réception du paiement",
-    "Your offer has expired due to non payment": "Votre offre a expiré en raison de l'absence de paiement"
+    "Your offer has expired due to non payment": "Votre offre a expiré en raison de l'absence de paiement",
+    "Invoice Admin": "Facture Admin",
+    "Invoice Number": "Numéro de facture",
+    "Due Date": "Date d'échéance",
+    "Currency": "Devise",
+    "Amount": "Montant",
+    "paid": "Payé",
+    "unpaid": "Non payé",
+    "canceled": "Annulé",
+    "overdue": "En retard",
+    "Mark Paid": "Marquer comme payé",
+    "confirmInvoicePaid": "Êtes-vous sûr de vouloir marquer la facture {{selectedInvoiceNumber}} comme payée?",
+    "confirmInvoiceCancel": "Êtes-vous sûr de vouloir annuler la facture {{selectedInvoiceNumber}}?",
+    "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci"
 }
 

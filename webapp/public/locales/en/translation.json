@@ -536,7 +536,7 @@
     "Fee Waived": "Fee Waived",
     "paymentRequired": "Payment of {{paymentAmount}} {{paymentCurrency}} is required to confirm your place",
     "spotRejected": "You have rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:",
-    "spotAccepted": "You accepted the following offer on {respondedDate}",
+    "spotAccepted": "You accepted the following offer on {{respondedDate}}",
     "Invitation Letter": "Invitation Letter",
     "Are you sure you want to delete this tag? This will also un-tag all entities with this tag.": "Are you sure you want to delete this tag? This will also un-tag all entities with this tag.",
     "Note, the grant name and description will be visible to users when asked to accept/reject the grant.": "Note, the grant name and description will be visible to users when asked to accept/reject the grant.",
@@ -564,5 +564,18 @@
     "You did not apply to attend": "You did not apply to attend",
     "Please let us know why you are rejecting this offer": "Please let us know why you are rejecting this offer",
     "Your offer is pending receipt of payment": "Your offer is pending receipt of payment",
-    "Your offer has expired due to non payment": "Your offer has expired due to non payment"
+    "Your offer has expired due to non payment": "Your offer has expired due to non payment",
+    "Invoice Admin": "Invoice Admin",
+    "Invoice Number": "Invoice Number",
+    "Due Date": "Due Date",
+    "Currency": "Currency",
+    "Amount": "Amount",
+    "paid": "Paid",
+    "unpaid": "Unpaid",
+    "canceled": "Canceled",
+    "overdue": "Overdue",
+    "Mark Paid": "Mark Paid",
+    "confirmInvoicePaid": "Are you sure you want to mark invoice {{selectedInvoiceNumber}} as paid?",
+    "confirmInvoiceCancel": "Are you sure you want cancel invoice {{selectedInvoiceNumber}}?",
+    "You have paid your registration fee, thank you": "You have paid your registration fee, thank you"
 }

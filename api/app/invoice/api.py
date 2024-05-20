@@ -54,15 +54,18 @@ invoice_line_item_fields = {
 
 invoice_fields = {
     'id': fields.Integer,
+    'invoice_number': fields.String,
     'customer_email': fields.String,
     'customer_name': fields.String,
     'client_reference_id': fields.String,
     'iso_currency_code': fields.String,
     'due_date': fields.DateTime(dt_format='iso8601'),
+    'is_overdue': fields.Boolean,
     'created_by_user_id': fields.Integer,
     'created_by_user': fields.String(attribute='created_by.full_name'),
     'created_at': fields.DateTime(dt_format='iso8601'),
     'total_amount': fields.Float,
+    'current_payment_status': fields.String(attribute='current_payment_status.payment_status'),
     'offer_id': fields.Integer(default=None),
     'invoice_payment_statuses': fields.List(fields.Nested(invoice_payment_status_fields)),
     'invoice_line_items': fields.List(fields.Nested(invoice_line_item_fields)),
@@ -71,11 +74,13 @@ invoice_fields = {
 
 invoice_list_fields = {
     'id': fields.Integer,
+    'invoice_number': fields.String,
     'customer_email': fields.String,
     'customer_name': fields.String,
     'client_reference_id': fields.String,
     'iso_currency_code': fields.String,
     'due_date': fields.DateTime(dt_format='iso8601'),
+    'is_overdue': fields.Boolean,
     'created_by_user_id': fields.Integer,
     'created_by_user': fields.String(attribute='created_by.full_name'),
     'created_at': fields.DateTime(dt_format='iso8601'),
@@ -125,7 +130,8 @@ class InvoiceListAPI(restful.Resource):
         invoices = invoice_repository.get_all_for_user(g.current_user["id"])
         return marshal(invoices, invoice_list_fields), 200
 
-class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
+
+class InvoiceAdminListAPI(InvoiceAdminMixin, restful.Resource):
     @auth_required
     def get(self):
         args = self.get_parser.parse_args()
@@ -138,7 +144,11 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             return FORBIDDEN
 
         invoices = invoice_repository.get_for_event(event_id)
+        invoices = [i for i in invoices if not i.is_canceled]
         return marshal(invoices,invoice_list_fields), 200
+
+
+class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
     @auth_required
     def post(self):
@@ -190,6 +200,40 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
             invoices.append(invoice)
 
         return marshal(invoices, invoice_list_fields), 201
+
+    @auth_required
+    def put(self):
+        args = self.put_parser.parse_args()
+        event_id = args['event_id']
+        invoice_id = args['invoice_id']
+        action = args['action']
+
+        current_user_id = g.current_user["id"]
+        current_user = user_repository.get_by_id(current_user_id)
+        if not current_user.is_event_treasurer(event_id):
+            return FORBIDDEN
+        
+        invoice = invoice_repository.get_one_from_event(event_id, invoice_id)
+        if invoice is None:
+            return INVOICE_NOT_FOUND
+        
+        try:
+            if action == 'cancel':
+                invoice.cancel(current_user_id)
+                invoice_repository.save()
+            elif action == 'mark_as_paid':
+                invoice.mark_as_paid(current_user_id)
+                if invoice.offer_id:
+                    LOGGER.info(f"Invoice offer ID is {invoice.offer_id}")
+                    offer = offer_repository.get_by_id(invoice.offer_id)
+                    offer_api.confirm_offer_payment(offer)
+                invoice_repository.save()
+            else:
+                return {'message': 'Invalid action'}, 400
+        except BaobabError as be:
+            return {'message': be.message}, 400  
+        
+        return marshal(invoice, invoice_fields), 200
 
     @auth_required
     def delete(self):

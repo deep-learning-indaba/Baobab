@@ -5,7 +5,7 @@ import { applicationFormService } from "../../../services/applicationForm/applic
 import { userService } from "../../../services/user/user.service";
 import { NavLink } from "react-router-dom";
 import { Trans, withTranslation } from 'react-i18next';
-import { getDownloadURL } from "../../utils/files";
+import { getDownloadURL } from "../../../utils/files";
 
 class Offer extends Component {
   constructor(props) {
@@ -15,6 +15,7 @@ class Offer extends Component {
       user: {},
       userProfile: {},
       loading: true,
+      saving: false,
       error: "",
       rejected_reason: "",
       showReasonBox: false,
@@ -45,6 +46,8 @@ class Offer extends Component {
       grant_tags,
     } = this.state;
 
+    this.setState({saving: true});
+
     if (candidate_response !== null) {
       offerServices
         .updateOffer(
@@ -60,10 +63,10 @@ class Offer extends Component {
             this.setState({
               offer: response.response.data,
               grant_tags: this.initGrants(response.response.data.tags),
-              showReasonBox: false
+              showReasonBox: false,
+              saving: false
             }, () => {
-              this.displayOfferResponse();
-              if (candidate_response && this.props.event) {
+              if (candidate_response && this.state.offer.is_paid && this.props.event) {
                 this.props.history.push(`/${this.props.event.key}/registration`);
               }
             });
@@ -97,7 +100,7 @@ class Offer extends Component {
   }
 
   displayOfferResponse = () => {
-    const { offer, grant_tags } = this.state;
+    const { offer, grant_tags, saving } = this.state;
     const event = this.props.event;
     const t = this.props.t;
 
@@ -110,7 +113,7 @@ class Offer extends Component {
     return (
       <div className="container">
         <p className="h5">
-          {offer.candidate_response && offer.is_paid && <span><Trans i18nKey="spotAccepted">You accepted the following offer on {respondedDate}</Trans>.</span>}
+          {offer.candidate_response && offer.is_paid && <span><Trans i18nKey="spotAccepted">You accepted the following offer on {{respondedDate}}</Trans>.</span>}
           {!offer.candidate_response && <span><Trans i18nKey="spotRejected">You rejected your offer for a spot at {{eventName}} on {{respondedDate}} for the following reason:</Trans><br/><br/>{offer.rejected_reason}</span>}
           {offer.candidate_response && !offer.is_paid && !offer.is_expired && <span>{t("Your offer is pending receipt of payment")}</span>}
           {offer.candidate_response && !offer.is_paid && offer.is_expired && <span className="alert alert-danger">{t("Your offer has expired due to non payment")}</span>}
@@ -119,7 +122,12 @@ class Offer extends Component {
         {offer.candidate_response && (offer.is_paid || (!offer.is_paid && !offer.is_expired)) && <div className="white-background card form mt-5 offer-container">
           {this.row("Offer date", offer.offer_date ? offer.offer_date.substring(0, 10) : "-date-")}
           {this.row("Offer expiry date", offer.expiry_date ? offer.expiry_date.substring(0, 10) : "-date-")}
-          {this.row("Registration fee", offer.payment_required ? <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}} {{paymentCurrency}} is required to confirm your place</Trans>: t("Fee Waived"))}
+          {this.row("Registration fee", 
+                    offer.payment_required 
+                    ? offer.is_paid 
+                        ? t("You have paid your registration fee, thank you")
+                        : <Trans i18nKey="paymentRequired">Payment of {{paymentAmount}} {{paymentCurrency}} is required to confirm your place</Trans>
+                    : t("Fee Waived"))}
 
           {this.props.event && acceptedGrants.length > 0 && this.row(t("Grants"), t("You have accepted the following grants") + ": " + acceptedGrants.map(a => a.name).join(", "))}
         </div>}
@@ -131,6 +139,7 @@ class Offer extends Component {
                 type="button"
                 class="btn btn-danger"
                 id="reject"
+                disabled={saving}
                 onClick={() => {
                   this.setState(
                     {
@@ -158,6 +167,7 @@ class Offer extends Component {
                 type="button"
                 class="btn btn-danger"
                 id="reject"
+                disabled={saving}
                 onClick={() => {
                   this.setState(
                     {
@@ -169,7 +179,7 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <a href={getDownloadURL(this.props.value, "indaba-invoices")}>
+              <a href={getDownloadURL(`invoice_${offer.invoice_number}`, "indaba-invoices")}>
                 {t("View Invoice")}
               </a>
             </div>
@@ -191,6 +201,7 @@ class Offer extends Component {
               type="button"
               class="btn btn-outline-danger mt-2"
               align="center"
+              disabled={saving}
               onClick={() => {
                 this.setState({
                   candidate_response: false
@@ -248,6 +259,7 @@ class Offer extends Component {
     const { offer,
       rejected_reason,
       grant_tags,
+      saving
     } = this.state;
 
     const t = this.props.t;
@@ -298,6 +310,7 @@ class Offer extends Component {
                         type="button"
                         class="btn btn-outline-danger mt-2"
                         align="center"
+                        disabled={saving}
                         onClick={() => {
                           this.setState(
                             {
@@ -316,6 +329,7 @@ class Offer extends Component {
                             type="button"
                             class="btn btn-danger"
                             id="reject"
+                            disabled={saving}
                             onClick={() => {
                               this.setState({
                                 showReasonBox: true
@@ -330,6 +344,7 @@ class Offer extends Component {
                             type="button"
                             class="btn btn-success"
                             id="accept"
+                            disabled={saving}
                             onClick={() => {
                               this.setState({
                                 candidate_response: true

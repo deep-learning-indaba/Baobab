@@ -53,6 +53,13 @@ class Offer(db.Model):
         if len(valid_invoices) == 0:
             return None
         return valid_invoices[0].id
+    
+    @property
+    def invoice_number(self):
+        valid_invoices = self.get_valid_invoices()
+        if len(valid_invoices) == 0:
+            return None
+        return valid_invoices[0].invoice_number
 
 
 class OfferTag(db.Model):

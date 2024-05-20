@@ -39,6 +39,7 @@ def offer_info(offer_entity, requested_travel=None):
         'payment_required': offer_entity.payment_required,
         'is_paid': offer_entity.is_paid,
         'invoice_id': offer_entity.invoice_id,
+        'invoice_number': offer_entity.invoice_number,
         'requested_travel': requested_travel and (requested_travel.value == 'Travel' or requested_travel.value == 'Travel & Accommodation'),
         'requested_accommodation': requested_travel and (requested_travel.value == 'Accommodation' or requested_travel.value == 'Travel & Accommodation'),
         'rejected_reason': offer_entity.rejected_reason,
@@ -64,6 +65,7 @@ def offer_update_info(offer_entity):
         'payment_currency': offer_entity.event_fee.iso_currency_code if offer_entity.event_fee_id else '',
         'event_fee_id': offer_entity.event_fee_id,
         'is_paid': offer_entity.is_paid,
+        'invoice_id': offer_entity.invoice_id,
         'invoice_id': offer_entity.invoice_id,
         'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
     }
@@ -139,7 +141,6 @@ class OfferAPI(OfferMixin, restful.Resource):
             db.session.commit()
 
             if candidate_response and offer.payment_required:
-                # Temporarily get event fee corresponding to payment_amount until offer has event_fee directly
                 fee = event_repository.get_event_fee(offer.event_id, offer.event_fee_id)
                 if (offer.expiry_date - datetime.now()) < timedelta(days=7):
                     due_date = datetime.now() + timedelta(days=7)
@@ -147,6 +148,13 @@ class OfferAPI(OfferMixin, restful.Resource):
                 else:
                     due_date = offer.expiry_date
                 invoice_service.issue_invoice_for_offer(offer, [fee], due_date, user_id)
+                db.session.commit()
+            
+            if candidate_response == False and offer.payment_required:
+                for invoice in offer.get_valid_invoices():
+                    if not invoice.is_paid:
+                        invoice.cancel(user_id)
+                    # TODO: Send email to admin if there is a paid invoice.
                 db.session.commit()
 
         except Exception as e:
