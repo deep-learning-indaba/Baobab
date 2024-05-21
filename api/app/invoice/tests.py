@@ -210,7 +210,7 @@ class InvoiceListApiTest(BaseInvoiceApiTest):
 class InvoiceAdminApiTest(BaseInvoiceApiTest):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.url = "/api/v1/invoice-admin"
+        self.url = "/api/v1/invoice-admin-list"
 
     def setUp(self):
         super().setUp()
