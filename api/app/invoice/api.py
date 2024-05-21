@@ -186,11 +186,11 @@ class InvoiceAdminAPI(InvoiceAdminMixin, restful.Resource):
 
         invalid_offer_ids = []
         for offer in offers:
-            if offer.has_valid_invoice() or offer.is_accepted():
+            if offer.has_valid_invoice() or offer.candidate_response is not None:
                 invalid_offer_ids.append(offer.id)
         
         if invalid_offer_ids:
-            error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice or are already accepted."
+            error_message = f"Offers {','.join(str(id) for id in invalid_offer_ids)} already have an invoice or are already accepted or rejected."
             return {'message': error_message}, 400
 
         invoices = []

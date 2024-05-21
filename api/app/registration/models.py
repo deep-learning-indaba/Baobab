@@ -1,5 +1,6 @@
 from datetime import date
 from app import db
+from app.offer.models import Offer
 
 
 class RegistrationForm(db.Model):

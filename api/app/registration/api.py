@@ -73,7 +73,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             if not offer.candidate_response:
                 return errors.OFFER_NOT_ACCEPTED
             
-            if not offer.is_paid():
+            if not offer.is_paid:
                 return errors.INVOICE_NOT_PAID
 
             registration_form = registration_repository.get_form_for_event(event_id)
