@@ -60,7 +60,8 @@ class EventNav extends Component {
         } id="eventNavbar">
 
           <ul className="navbar-nav">
-            {this.props.user &&
+            {!isEventReadOnly(this.props.user, this.props.event) &&
+              this.props.user &&
               this.props.event &&
               this.props.event.is_application_open && (
                 <li className="nav-item">
@@ -74,7 +75,8 @@ class EventNav extends Component {
                   </NavLink>
                 </li>
               )}
-            {this.props.user && this.props.event && this.props.event.is_offer_open && (
+            {!isEventReadOnly(this.props.user, this.props.event) &&
+              this.props.user && this.props.event && this.props.event.is_offer_open && (
               <li className="nav-item">
                 <NavLink
                   to={`/${this.props.eventKey}/offer`}
@@ -86,7 +88,8 @@ class EventNav extends Component {
                 </NavLink>
               </li>
             )}
-            {this.props.user &&
+            {!isEventReadOnly(this.props.user, this.props.event) &&
+              this.props.user &&
                (
                 <li className="nav-item dropdown ">
                   <div
@@ -132,7 +135,7 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {isEventAdmin(this.props.user, this.props.event) && (
+            {isEventAdmin(this.props.user, this.props.event) && !isEventReadOnly(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
                 <NavLink
                     to={`/${this.props.eventKey}/eventConfig`}
@@ -199,75 +202,7 @@ class EventNav extends Component {
                     {t('Review Form')}
                   </NavLink>
                 </AdminMenu>
-            )}
-            {isEventReadOnly(this.props.user, this.props.event) && (
-              <AdminMenu t={t} label="Event Admin (Read Only)">
-                <NavLink
-                    to={`/${this.props.eventKey}/eventConfig`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Edit Event Details')}
-                </NavLink>
-                <NavLink
-                    to={`/${this.props.eventKey}/reviewAssignment`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Assignment')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/invitedGuests`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Invited Guests')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/responseList`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Response List')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewDashboard`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Dashboard')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/tagConfig`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Configure Tags')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/offerAdmin`}
-                    className="dropdown-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Offers')}
-                  </NavLink>
-                  <h6 className='dropdown-submenu-header'>Form Settings</h6>
-                  <NavLink
-                    to={`/${this.props.eventKey}/applicationform`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Application Form')}
-                  </NavLink>
-                  <NavLink
-                    to={`/${this.props.eventKey}/reviewForm`}
-                    className="dropdown-item dropdown-submenu-item"
-                    onClick={this.props.toggleMenu}
-                  >
-                    {t('Review Form')}
-                  </NavLink>
-                </AdminMenu>
-            )}
+            )}         
             {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_review_open && (
@@ -300,7 +235,7 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) &&
+            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) && !isEventReadOnly(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_registration_open && (
                 <li className="nav-item dropdown">

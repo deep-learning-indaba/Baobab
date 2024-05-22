@@ -5,6 +5,7 @@ import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
+import { isEventReadOnly } from '../../utils/user';
 
 class Home extends Component {
 
@@ -63,12 +64,14 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        if (e.event_type === 'JOURNAL') {
-           return <EventStatus longForm={false} submissionLink={true} event={e} />;
+        if (!isEventReadOnly(this.props.user, e)) {
+            if (e.event_type === 'JOURNAL') {
+            return <EventStatus longForm={false} submissionLink={true} event={e} />;
+            }
+            else {
+                return <EventStatus longForm={false} event={e} />;
+            }
         }
-        else {
-            return <EventStatus longForm={false} event={e} />;
-         }
     }
 
     dateDisplay = (e) => {
@@ -131,7 +134,7 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user && this.props.user.is_admin && this.props.user.is_read_only &&
+                {this.props.user && this.props.user.is_admin && !isEventReadOnly(this.props.user, this.props.event) &&
                     <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
                 }
 
