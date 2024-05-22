@@ -237,7 +237,7 @@ class InvoiceAdminApiTest(BaseInvoiceApiTest):
 
         params = {'event_id': self.event_id}
         header = self.get_auth_header_for(self.treasurer_email)
-        response = self.app.get("/api/v1/invoice-admin", headers=header, data=params)
+        response = self.app.get("/api/v1/invoice-admin-list", headers=header, data=params)
 
         data = json.loads(response.data)
         self.assertEqual(response.status_code, 200)
