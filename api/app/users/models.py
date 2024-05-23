@@ -61,14 +61,20 @@ class AppUser(db.Model, UserMixin):
         self.active = True
         self.is_admin = is_admin
         self.is_read_only = is_read_only
+        self.set_read_only()
         self.is_deleted = False
         self.deleted_datetime_utc = None
         self.verified_email = False
         self.agree_to_policy()
+        
 
     @property
     def full_name(self):
         return f"{self.firstname} {self.lastname}"
+    
+    def set_read_only(self):
+        if self.is_read_only:
+            self.is_admin = True
 
     def set_password(self, password):
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
