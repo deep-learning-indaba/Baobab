@@ -22,6 +22,11 @@ class InvoiceAdminMixin(object):
     delete_parser.add_argument('invoice_id', type=int, required=True)
     delete_parser.add_argument('event_id', type=int, required=True)
 
+    put_parser = reqparse.RequestParser()
+    put_parser.add_argument('invoice_id', type=int, required=True)
+    put_parser.add_argument('event_id', type=int, required=True)
+    put_parser.add_argument('action', type=str, required=True)
+
 class PaymentsMixin(object):
     post_parser = reqparse.RequestParser()
     post_parser.add_argument('invoice_id', type=int, required=True)

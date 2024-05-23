@@ -94,7 +94,8 @@ from .events.models import Event, EventRole
 from app.utils.auth import auth_required, admin_required, generate_token
 from app.utils.errors import UNAUTHORIZED, FORBIDDEN
 from .reviews.models import ReviewForm, ReviewQuestion
-from .registration.models import Offer, RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
+from .registration.models import RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
+from .offer.models import Offer
 from .invitationletter.models import InvitationTemplate, InvitationLetterRequest
 # Define login and registration forms (for flask-login)
 class LoginForm(form.Form):

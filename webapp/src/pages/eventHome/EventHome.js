@@ -21,7 +21,7 @@ import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
-import { InvoiceList } from "../invoices";
+import { InvoiceAdminList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList";
@@ -264,8 +264,8 @@ class EventHome extends Component {
         />
         <Route
           exact
-          path={`${match.path}/invoices`}
-          render={(props) => <InvoiceList {...props} event={event} />}
+          path={`${match.path}/invoices-admin`}
+          render={(props) => <InvoiceAdminList {...props} event={event} />}
         />
         <Route
           exact

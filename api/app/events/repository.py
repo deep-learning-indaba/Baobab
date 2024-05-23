@@ -1,10 +1,10 @@
 from datetime import datetime
 from app import db
 from app.events.models import Event, EventFee, EventType, EventRole
-from app.organisation.models import Organisation
+from app.users.models import AppUser
 from app.responses.models import Response
 from app.applicationModel.models import ApplicationForm
-from app.registration.models import Offer
+from app.offer.models import Offer
 from app.invitedGuest.models import InvitedGuest
 from app.utils.repository import BaseRepository
 from sqlalchemy import and_, or_
@@ -63,15 +63,11 @@ class EventRepository(BaseRepository):
         )
     
     @staticmethod
-    def get_event_fees(event_id, event_fee_ids):
-        return (
-            db.session.query(EventFee)
-            .filter(
-                EventFee.event_id==event_id,
-                EventFee.id.in_(event_fee_ids),
-                EventFee.is_active==True)
-            .all()
-        )
+    def get_event_fees(event_id, event_fee_ids=None):
+        query = db.session.query(EventFee).filter(EventFee.event_id==event_id, EventFee.is_active==True)
+        if event_fee_ids:
+            query = query.filter(EventFee.id.in_(event_fee_ids))
+        return query.all()
 
     @staticmethod
     def get_event_admins(event_id):

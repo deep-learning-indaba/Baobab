@@ -1,0 +1,26 @@
+.invoice-admin-list-container {
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+.invoice-admin-list-container .button-trash {
+    all: unset;
+    cursor: pointer;
+    font-size: 1.2em;
+    vertical-align: middle;
+    margin-left: 0.5em;
+}
+
+.invoice-admin-list-container .button-trash:hover {
+    color: brown !important;
+}
+
+.invoice-admin-list-container .btn-sm {
+    font-size: 0.9em;
+}
+
+.invoice-admin-list-container .title {
+    color: #5f6075;
+    font-weight: 300;
+    text-align: left;
+}

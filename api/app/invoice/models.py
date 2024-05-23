@@ -153,6 +153,16 @@ class Invoice(db.Model):
 
         canceled_status = InvoicePaymentStatus.from_baobab(PaymentStatus.CANCELED, user_id)
         self.add_invoice_payment_status(canceled_status)
+
+    def mark_as_paid(self, user_id):
+        if self.current_payment_status.payment_status == PaymentStatus.PAID.value:
+            raise BaobabError("Invoice has already been paid.")
+        
+        if self.current_payment_status.payment_status == PaymentStatus.CANCELED.value:
+            raise BaobabError("Cannot mark as paid an invoice that's been canceled.")
+
+        paid_status = InvoicePaymentStatus.from_baobab(PaymentStatus.PAID, user_id)
+        self.add_invoice_payment_status(paid_status)
     
     def link_offer(self, offer_id):
         offer_invoice = OfferInvoice(offer_id=offer_id)
@@ -164,6 +174,10 @@ class Invoice(db.Model):
 
     def add_invoice_payment_status(self, invoice_payment_status):
         self.invoice_payment_statuses.append(invoice_payment_status)
+
+    @property
+    def invoice_number(self):
+        return f"B{self.id:03d}"
 
 class OfferInvoice(db.Model):
     __table_args__ = tuple([db.UniqueConstraint('invoice_id', name='uq_offer_invoice_invoice_id')])
