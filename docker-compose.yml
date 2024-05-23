@@ -5,9 +5,13 @@ services:
     ports:
       - 6379:6379
   db:
-    image: orchardup/postgresql
+    image: postgres
     ports:
       - 5432:5432
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
   storage:
     image: fsouza/fake-gcs-server
     ports:
