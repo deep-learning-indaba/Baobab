@@ -14,7 +14,7 @@ from app.users.repository import UserRepository as user_repository
 from app.applicationModel.models import ApplicationForm
 from app.responses.models import Response
 from app.responses.repository import ResponseRepository as response_repository
-from app.registration.repository import OfferRepository as offer_repository
+from app.offer.repository import OfferRepository as offer_repository
 from app.registration.repository import RegistrationRepository as registration_repository
 from app.guestRegistrations.repository import GuestRegistrationRepository as guest_registration_repository
 

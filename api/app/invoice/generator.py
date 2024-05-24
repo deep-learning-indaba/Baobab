@@ -173,16 +173,13 @@ def _get_exchange_rate():
 # TODO: Move to organisation table
 _NOTES = """Pay online at {payment_url} or by bank transfer.
 
-** Please note that bank transfers must be in GBP (British Pounds) **
-Total Amount in GBP: {gbp_amount}
-
-Bank Details
+US Dollar Bank Details
 
 Account name:       Deep Learning Indaba Limited
 Bank:               Barclays Bank UK PLC
-Account number:     33650847
+Account number:     79451688
 Sort code:          20-10-53
-IBAN:               GB71 BUKB 20105333650847
+IBAN:               GB03 BUKB 2010 5379 4516 88
 SWIFT:              BUKBGB22
 Reference:          Invoice {invoice_no}
 
@@ -190,7 +187,6 @@ Please forward proof of payment to baobab@deeplearningindaba.com
 """
 
 def from_invoice_model(invoice, organisation):
-    print("Generating PDF invoice")
     invoice_number = f"B{invoice.id:03d}"
     payment_url = f"{organisation.system_url}/payment/{invoice.id}"
     generator = InvoiceGenerator(
@@ -200,7 +196,7 @@ def from_invoice_model(invoice, organisation):
         due_date=invoice.due_date,
         notes=_NOTES.format(invoice_no=invoice_number, 
                             payment_url=payment_url,
-                            gbp_amount=round(float(invoice.total_amount) * _get_exchange_rate())),
+                            ),
         amount_paid=float(invoice.total_amount) if invoice.is_paid else 0,
         currency=invoice.iso_currency_code,
         number=invoice_number)

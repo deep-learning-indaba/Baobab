@@ -1,5 +1,6 @@
 from app import db
-from app.registration.models import Offer, Registration
+from app.registration.models import Registration
+from app.offer.models import Offer
 from app.tags.models import Tag
 from app.users.models import AppUser
 from app.attendance.models import Attendance

@@ -21,7 +21,7 @@ import InvitedLetter from "../invitationLetter";
 import RegistrationAdmin from "../registrationAdmin";
 import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
-import { InvoiceList } from "../invoices";
+import { InvoiceAdminList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
 import { isEventAdmin, isEventReadOnly } from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList";
@@ -284,6 +284,37 @@ class EventHome extends Component {
     }
     else{
       return (
+          path={`${match.path}/responsePage/:id`}
+          render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/applicationform`}
+          render={(props) => <ApplicationFormSetting
+            {...props}
+            event={event}
+            languages={organisation && organisation.languages}
+            />}
+        />
+        <Route
+          exact
+          path={`${match.path}/reviewForm`}
+          render={(props) => <ReviewForm
+            {...props}
+            event={event}
+            languages={organisation && organisation.languages}
+            />}
+        />
+        <Route
+          exact
+          path={`${match.path}/invoices-admin`}
+          render={(props) => <InvoiceAdminList {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/indemnity`}
+          render={(props) => <Indemnity {...props} event={event} />}
+        />
         <Route
             exact
             path={`${match.path}/`}
