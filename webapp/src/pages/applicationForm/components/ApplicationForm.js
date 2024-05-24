@@ -1010,9 +1010,7 @@ class ApplicationFormInstanceComponent extends Component {
   }
 }
 
-
 const ApplicationFormInstance = withRouter(withTranslation()(ApplicationFormInstanceComponent));
-
 
 class ApplicationListComponent extends Component {
   constructor(props) {
@@ -1090,7 +1088,8 @@ class ApplicationForm extends Component {
       errorMessage: "",
       formSpec: null,
       responses: [],
-      selectedResponse: null
+      selectedResponse: null,
+      journalSubmissionFlag: false
     }
   }
 
@@ -1114,6 +1113,7 @@ class ApplicationForm extends Component {
         event: eventResponse.event
       });
     });
+    
   }
 
   responseSelected = response => {
@@ -1129,6 +1129,7 @@ class ApplicationForm extends Component {
     });
   }
 
+  
   render() {
     const {
       isLoading,
@@ -1137,7 +1138,7 @@ class ApplicationForm extends Component {
       formSpec,
       responses,
       selectedResponse,
-      responseSelected } = this.state;
+      responseSelected} = this.state;
 
     if (isLoading) {
       return (<Loading />);
@@ -1146,13 +1147,19 @@ class ApplicationForm extends Component {
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>{errorMessage}</div>;
     }
-
-    if (formSpec.nominations && responses.length > 0 && !responseSelected) {
+    
+    if (this.props.event.event_type === 'JOURNAL' && this.props.journalSubmissionFlag) {
+      return <ApplicationFormInstance
+      formSpec={formSpec}
+      response={null}
+      event={this.props.event} />
+    }
+    else if (formSpec.nominations && responses.length > 0 && !responseSelected) {
       let newForm = this.state.event.event_type ==='JOURNAL' ? this.props.t("New Submission") + " " : this.props.t("New Nomination") + " ";
       return <div>
-        <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
-        <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
-      </div>
+          <ApplicationList responses={responses} event={this.state.event} formSpec={formSpec} click={this.responseSelected} /><br />
+          <button className="btn btn-primary" onClick={() => this.newNomination()}>{newForm} &gt;</button>
+    </div>
     }
     else {
       return <ApplicationFormInstance
@@ -1161,9 +1168,5 @@ class ApplicationForm extends Component {
         event={this.props.event} />
     }
   }
-
 }
-
-
 export default withRouter(withTranslation()(ApplicationForm));
-

@@ -1,4 +1,4 @@
 import Invoice from "./Invoice.js";
-import InvoiceList from "./InvoiceList.js";
+import InvoiceAdminList from "./InvoiceAdminList.js";
 
-export {Invoice, InvoiceList};
+export {Invoice, InvoiceAdminList};

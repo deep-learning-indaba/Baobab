@@ -9,7 +9,7 @@ from app.users.models import Country, UserCategory
 from app.utils.errors import ATTENDANCE_ALREADY_CONFIRMED, FORBIDDEN
 from app.utils.testing import ApiTestCase
 from app.tags.models import Tag, TagTranslation
-from app.registration.models import Offer, OfferTag
+from app.offer.models import Offer, OfferTag
 from app.registration.models import RegistrationQuestion, RegistrationQuestionTag
 from app.registration.models import RegistrationForm
 from app.registration.models import Registration

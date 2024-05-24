@@ -21,9 +21,10 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('filename', type=str, required=True)
         req_parser.add_argument('rename', type=str, required=False)
+        req_parser.add_argument('bucket', type=str, required=False)
         args = req_parser.parse_args()
 
-        bucket = storage.get_storage_bucket()
+        bucket = storage.get_storage_bucket(args['bucket'])
 
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:

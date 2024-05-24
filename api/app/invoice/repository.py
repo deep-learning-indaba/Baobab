@@ -6,7 +6,7 @@ from app.invoice.models import (
     OfferInvoice,
     StripeWebhookEvent
 )
-from app.registration.models import Offer
+from app.offer.models import Offer
 from app.utils.repository import BaseRepository
 
 class InvoiceRepository(BaseRepository):

@@ -183,6 +183,13 @@ class EventNav extends Component {
                   >
                     {t('Offers')}
                   </NavLink>
+                  <NavLink
+                      to={`/${this.props.eventKey}/invoices-admin`}
+                      className="dropdown-item"
+                      onClick={this.props.toggleMenu}
+                    >
+                      {t('Invoices')}
+                    </NavLink>
                   <h6 className='dropdown-submenu-header'>Form Settings</h6>
                   <NavLink
                     to={`/${this.props.eventKey}/applicationform`}
@@ -248,11 +255,11 @@ class EventNav extends Component {
                   </div>
                   <div className="dropdown-menu" aria-labelledby="navbarDropdown">
                     {isRegistrationAdmin(this.props.user, this.props.event) && <NavLink
-                      to={`/${this.props.eventKey}/registrationAdmin`}
+                      to={`/${this.props.eventKey}/invoices-admin`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
                     >
-                      {t('Unconfirmed Registrations')}
+                      {t('Invoices')}
                     </NavLink>}
                     {isRegistrationVolunteer(this.props.user, this.props.event) && (
                       <NavLink
@@ -546,9 +553,9 @@ class AppComponent extends Component {
                       eventKey={this.state.eventKey}
                       event={this.state.currentEvent}
                       organisation={this.props.organisation}
-                      />
+                      />         
                   )}
-                />
+                />             
               </Switch>
             </div>
           </div>

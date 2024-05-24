@@ -6,7 +6,10 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const invoiceService = {
     getAllInvoices,
     getInvoice,
-    initiatePayment
+    initiatePayment,
+    getAllInvoicesForEvent,
+    cancelInvoice,
+    markInvoicePaid
 }
 
 function getAllInvoices() {
@@ -63,4 +66,53 @@ function initiatePayment(invoiceId) {
                 error: extractErrorMessage(error)
             }
         });
+}
+
+function getAllInvoicesForEvent(eventId) {
+    return axios
+        .get(baseUrl + `/api/v1/invoice-admin-list?event_id=${eventId}`, { headers: authHeader() })
+        .then((response) => {
+            return {
+                invoices: response.data,
+                error: ""
+            }
+        })
+        .catch((error) => {
+            return {
+                invoices: null,
+                error: extractErrorMessage(error)
+            }
+        });
+}
+
+function updateInvoice(invoiceId, eventId, action) {
+    const data = {
+        invoice_id: invoiceId,
+        event_id: eventId,
+        action: action
+    };
+
+    return axios
+        .put(baseUrl + "/api/v1/invoice-admin", data, { headers: authHeader() })
+        .then((response) => {
+            return {
+                updatedInvoice: response.data,
+                error: ""
+            }
+        })
+        .catch((error) => {
+            return {
+                updateInvoice: null,
+                error: extractErrorMessage(error)
+            }
+        });
+
+}
+
+function cancelInvoice(invoiceId, eventId) {
+    return updateInvoice(invoiceId, eventId, "cancel");
+}
+
+function markInvoicePaid(invoiceId, eventId) {
+    return updateInvoice(invoiceId, eventId, "mark_as_paid");
 }

@@ -80,6 +80,8 @@ TEMPLATE_NOT_FOUND = (
     {'message': 'No template found for the given parameters'}, 404)
 OFFER_NOT_ACCEPTED = (
     {'message': 'Offer has not been accepted'}, 409)
+INVOICE_NOT_PAID = (
+    {'message': 'Invoice has not been paid'}, 409)
 APPLICATIONS_CLOSED = (
     {'message': 'Applications are now closed'}, 403)
 DUPLICATE_OFFER = (
@@ -146,3 +148,4 @@ STRIPE_SETUP_INCOMPLETE = ({'message': 'Stripe setup has not yet been completed.
 INDEMNITY_NOT_FOUND = ({'message': "The event does not have an indemnity form"}, 404)
 INDEMNITY_NOT_SIGNED = ({'message': "Indemnity form has not been signed"}, 400)
 NOT_A_GUEST = ({'message': "You are not a confirmed guest of this event."}, 404)
+EVENT_FEE_REQUIRED = ({'message': "Event fee id is required for when payment is required."}, 400)

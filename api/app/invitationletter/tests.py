@@ -5,7 +5,7 @@ from app import db, LOGGER
 from app.utils.testing import ApiTestCase
 from app.users.models import AppUser, UserCategory, Country
 from app.events.models import Event
-from app.registration.models import Offer
+from app.offer.models import Offer
 from app.registration.models import Registration
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.models import InvitationTemplate

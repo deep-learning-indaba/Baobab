@@ -20,7 +20,8 @@ from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
 from app.organisation.resolver import OrganisationResolver
-from app.registration.models import Offer, RegistrationForm, OfferTag
+from app.registration.models import RegistrationForm
+from app.offer.models import Offer, OfferTag
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
 from app.email_template.models import EmailTemplate

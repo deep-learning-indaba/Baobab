@@ -3,7 +3,7 @@ from app.users.models import AppUser
 from app.invitedGuest.repository import InvitedGuestRepository as invited_guest_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.registrationResponse.repository import RegistrationRepository as registration_repository
-from app.registration.repository import OfferRepository as offer_repository
+from app.offer.repository import OfferRepository as offer_repository
 from app.outcome.repository import OutcomeRepository as outcome_repository
 
 
