@@ -24,12 +24,12 @@ class FileUploadAPI(FileUploadMixin, restful.Resource):
         req_parser.add_argument('bucket', type=str, required=False)
         args = req_parser.parse_args()
 
+        LOGGER.info("Downloading file: {}, from bucket".format(args['filename'], args['bucket']))
         bucket = storage.get_storage_bucket(args['bucket'])
 
         blob = bucket.blob(args['filename'])
         with tempfile.NamedTemporaryFile() as temp:
             blob.download_to_filename(temp.name)
-            renamed = args['rename'] or args['filename']
             return send_file(
                 temp.name, 
                 as_attachment=True, 
