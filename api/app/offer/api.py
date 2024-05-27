@@ -236,11 +236,13 @@ class OfferAPI(OfferMixin, restful.Resource):
         if grant_tags:
             grant_strs = [offer_tag.tag.stringify_tag_name_description() for offer_tag in offer_entity.offer_tags]
             grants_summary = "\n\u2022 " + "\n\u2022 ".join(grant_strs)
-            email_template = 'offer-grants'
+            email_template = 'offer-fee-grants' if payment_required else 'offer-nofee-grants'
         else:
             grants_summary = ''
-            email_template = 'offer'
+            email_template = 'offer-fee' if payment_required else 'offer-nofee'
 
+        # TODO: ADD A MIGRATION TO ADD DEFAULTS FOR THESE EMAIL TEMPLATES.
+        
         email_user(
             email_template,
             template_parameters=dict(
