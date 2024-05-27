@@ -241,15 +241,15 @@ class OfferAPI(OfferMixin, restful.Resource):
             grants_summary = ''
             email_template = 'offer-fee' if payment_required else 'offer-nofee'
 
-        # TODO: ADD A MIGRATION TO ADD DEFAULTS FOR THESE EMAIL TEMPLATES.
-        
         email_user(
             email_template,
             template_parameters=dict(
                 host=misc.get_baobab_host(),
                 expiry_date=offer_entity.expiry_date.strftime("%Y-%m-%d"),
                 event_email_from=event_email_from,
-                grants=grants_summary
+                grants=grants_summary,
+                payment_amount=float(event_fee.amount) if payment_required else 0,
+                payment_currency=event_fee.iso_currency_code if payment_required else '',
             ),
             event=event,
             user=user)
