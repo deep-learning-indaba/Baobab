@@ -50,27 +50,6 @@ def offer_info(offer_entity, requested_travel=None):
     }
 
 
-def offer_update_info(offer_entity):
-    return {
-        'id': offer_entity.id,
-        'user_id': offer_entity.user_id,
-        'event_id': offer_entity.event_id,
-        'offer_date': offer_entity.offer_date.strftime('%Y-%m-%d'),
-        'expiry_date': offer_entity.expiry_date.strftime('%Y-%m-%d'),
-        'payment_required': offer_entity.payment_required,        
-        'rejected_reason': offer_entity.rejected_reason,
-        'candidate_response': offer_entity.candidate_response,
-        'responded_at': offer_entity.responded_at.strftime('%Y-%m-%d'),
-        'payment_amount': float(offer_entity.event_fee.amount) if offer_entity.event_fee_id else 0,
-        'payment_currency': offer_entity.event_fee.iso_currency_code if offer_entity.event_fee_id else '',
-        'event_fee_id': offer_entity.event_fee_id,
-        'is_paid': offer_entity.is_paid,
-        'invoice_id': offer_entity.invoice_id,
-        'invoice_id': offer_entity.invoice_id,
-        'tags': [OfferAPI._serialize_tag(it) for it in offer_entity.offer_tags if it.tag.active]
-    }
-
-
 def confirm_offer_payment(offer: Offer):
     try:
         email_user(
@@ -160,7 +139,7 @@ class OfferAPI(OfferMixin, restful.Resource):
         except Exception as e:
             LOGGER.error("Failed to update offer with id {} due to {}".format(args['offer_id'], e))
             return errors.ADD_OFFER_FAILED
-        return offer_update_info(offer), 201
+        return offer_info(offer), 201
 
     @event_admin_required
     def post(self, event_id):
