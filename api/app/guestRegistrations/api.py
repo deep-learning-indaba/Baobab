@@ -274,10 +274,10 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
             'label': option['label']
         }
 
-    def _serialize_question(self, question):
+    def _serialize_question(self, question, boabab_id):
         return {
             'id': question.id,
-            'description': question.description,
+            'description': question.description.replace('{-baobab_id-}', baobab_id),
             'headline': question.headline,
             'placeholder': question.placeholder,
             'validation_regex': question.validation_regex,
@@ -290,20 +290,20 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
             'options': [] if not question.options else [self._serialize_option(option) for option in question.options]
         }
 
-    def _serialize_section(self, section):
+    def _serialize_section(self, section, baobab_id):
         return {
             'id': section.id,
             'name': section.name,
             'description': section.description,
             'order': section.order,
-            'registration_questions': [self._serialize_question(question) for question in section.registration_questions]
+            'registration_questions': [self._serialize_question(question, baobab_id) for question in section.registration_questions]
         }
 
-    def _serialize_registration_form(self, registration_form):
+    def _serialize_registration_form(self, registration_form, baobab_id):
         return {
             'id': registration_form.id,
             'event_id': registration_form.event_id,
-            'registration_sections': [self._serialize_section(section) for section in registration_form.filtered_registration_sections]
+            'registration_sections': [self._serialize_section(section, baobab_id) for section in registration_form.filtered_registration_sections]
         }
 
 
@@ -329,7 +329,10 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
 
             registration_form.filtered_registration_sections = included_sections
 
-            return self._serialize_registration_form(registration_form), 200
+            user = user_repository.get_by_id(g.current_user['id'])
+            baobab_id = user.verify_token
+
+            return self._serialize_registration_form(registration_form, baobab_id), 200
 
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
