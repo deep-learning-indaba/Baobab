@@ -1,7 +1,8 @@
 /**
  * Generate applicable download URL from `value`
  * which can either be a plain or JSON string value.
- * @param   {String} value
+ * @param   {String} value       The name of the file
+ * @param   {String} bucketName  (Optional) The bucket in which the file is stored
  * @returns {String}
  */
 export function getDownloadURL(value, bucketName) {
@@ -11,11 +12,12 @@ export function getDownloadURL(value, bucketName) {
       try {
         const { filename, rename } = JSON.parse(value);
         url += filename + "&rename=" + encodeURIComponent(rename);
-        if (bucketName) {
-          url += "&bucket=" + bucketName;
-        }
       } catch (e) {
         url += value;
+      }
+
+      if (bucketName) {
+        url += "&bucket=" + bucketName;
       }
     }
     return url;
