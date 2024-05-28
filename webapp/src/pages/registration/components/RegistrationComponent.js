@@ -27,6 +27,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const MULTI_CHECKBOX_OTHER = "multi-checkbox-with-other";
 const FILE = "file";
 const DATE = "date";
+const INFORMATION = "information";
 
 class RegistrationComponent extends Component {
   constructor(props) {
@@ -435,6 +436,8 @@ class RegistrationComponent extends Component {
               errorText={validationError}
               required={question.is_required} />
           );
+        case INFORMATION:
+          return question.description && <div className="application-form-information">{question.description}</div>
         default:
           return (
             <p className="text-danger">
