@@ -4,7 +4,7 @@
 [![Slack Status](https://img.shields.io/badge/slack-join_chat-white.svg?logo=slack&style=social)](https://join.slack.com/t/baobab-space/shared_invite/enQtOTc1MzUzNjAyODY0LTM2YmJiOTRiNWEyZWRjMjY5ZmNlYTNjY2Y3ODA4MjZjNDljZTFkZWU3YjU5OTk1MTI5MDQwYzI4YzQ0YjFiYzQ)
 ![Slack Status](https://img.shields.io/twitter/follow/DeepIndaba?label=Follow&style=social)
 [![deep-learning-indaba](https://circleci.com/gh/deep-learning-indaba/Baobab.svg?style=shield)](https://app.circleci.com/pipelines/github/deep-learning-indaba/Baobab?branch=develop)
-
+ 
 
 Baobab is an open source multi-tenant web application designed to facilitate the application and selection process for large scale meetings within the machine learning and artificial intelligence communities globally.
 
