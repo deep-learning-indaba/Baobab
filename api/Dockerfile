@@ -7,9 +7,9 @@ RUN virtualenv /env -p python3.7
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 
-RUN apt-get update -qq \
-    && apt-get install -y software-properties-common \
-    && apt-get install -y libreoffice
+RUN apt-get update -qq
+    # && apt-get install -y software-properties-common \
+    # && apt-get install -y libreoffice
 
 # Upgrade pip
 RUN python -m pip install --upgrade pip
