@@ -388,6 +388,7 @@ class GuestRegistrationComponent extends Component {
               value={answer && answer.value}
               validationError={validationError}
               onChange={(_, v) => this.onChange(question.id, v)}
+              options={question.options}
               key={"i_" + key} />
           );
         case DATE:

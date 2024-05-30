@@ -46,7 +46,7 @@ class Tag(db.Model):
         translation = self.get_translation(language)
         if translation is None:
             LOGGER.warn('Could not find {} translation for tag id {}'.format(language, self.tag.id))
-            translation = self.tag.get_translation('en')
+            translation = self.get_translation('en')
         return '{}'.format(translation.name)
 
 class TagTranslation(db.Model):
