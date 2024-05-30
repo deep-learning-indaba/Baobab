@@ -59,7 +59,8 @@ class FileUploadComponent extends Component {
           uploading={this.state.uploading}
           uploadPercentComplete={this.state.uploadPercentComplete}
           uploadFile={this.handleUploadFile}
-          uploaded={this.state.uploaded} />
+          uploaded={this.state.uploaded}
+          options={this.props.options} />
       );
     }
   }

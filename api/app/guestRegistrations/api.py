@@ -268,13 +268,7 @@ class GuestRegistrationApi(restful.Resource):
 
 
 class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
-    def _serialize_option(self, option):
-        return {
-            'value': option['value'],
-            'label': option['label']
-        }
-
-    def _serialize_question(self, question, boabab_id):
+    def _serialize_question(self, question, baobab_id):
         return {
             'id': question.id,
             'description': question.description.replace('{-baobab_id-}', baobab_id),
@@ -287,7 +281,7 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
             'type': question.type,
             'is_required': question.is_required,
             'order': question.order,
-            'options': [] if not question.options else [self._serialize_option(option) for option in question.options]
+            'options': question.options
         }
 
     def _serialize_section(self, section, baobab_id):
@@ -337,7 +331,6 @@ class GuestRegistrationFormAPI(GuestRegistrationFormMixin, restful.Resource):
         except SQLAlchemyError as e:
             LOGGER.error("Database error encountered: {}".format(e))
             return errors.DB_NOT_AVAILABLE
-        except:
-            LOGGER.error("Encountered unknown error: {}".format(
-                traceback.format_exc()))
+        except Exception as e:
+            LOGGER.error("Encountered unknown error: {}".format(e))
             return errors.DB_NOT_AVAILABLE

@@ -20,13 +20,6 @@ def registration_form_info(registration_form):
 
 
 class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
-
-    def _serialize_option(self, option):
-        return {
-            'value': option['value'],
-            'label': option['label']
-        }
-
     def _serialize_question(self, question, baobab_id):
         return {
             'id': question.id,
@@ -40,7 +33,7 @@ class RegistrationFormAPI(RegistrationFormMixin, restful.Resource):
             'type': question.type,
             'is_required': question.is_required,
             'order': question.order,
-            'options': [] if not question.options else [self._serialize_option(option) for option in question.options]
+            'options': question.options
         }
 
     def _serialize_section(self, section, baobab_id):
