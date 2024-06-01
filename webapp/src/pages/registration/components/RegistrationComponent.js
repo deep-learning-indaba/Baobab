@@ -472,7 +472,8 @@ class RegistrationComponent extends Component {
           <div>
             <div className="card flat-card success stretched">
               <h5>Successfully Registered</h5>
-              <p>We look forward to welcoming you at {this.props.event.name}! You can now generate an <Link to={`/${this.props.event.key}/invitationLetter`}>invitation letter</Link> if you require one.</p>
+              <p>We look forward to welcoming you at {this.props.event.name}!</p> 
+              {/* You can now generate an <Link to={`/${this.props.event.key}/invitationLetter`}>invitation letter</Link> if you require one.</p> */}
             </div>
             <br/><br/>
             <div className="col-12">
