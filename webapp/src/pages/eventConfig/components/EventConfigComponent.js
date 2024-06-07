@@ -7,6 +7,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormDate from "../../../components/form/FormDate";
 import FormSelect from "../../../components/form/FormSelect";
+import { isEventResponseEditorOnly, isEventResponseViewerOnly } from "../../../utils/user";
 
 const APPLICATION_DATES = ["application_open", "application_close"];
 const REVIEW_DATES = ["review_open", "review_close"];
@@ -450,7 +451,7 @@ class EventConfigComponent extends Component {
     }
 
     const t = this.props.t;
-    if (this.props.user.is_read_only){
+    if (!isEventResponseViewerOnly(this.props.user, this.props.event) || !isEventResponseEditorOnly(this.props.user, this.props.event)){
       return (
         <div>
           <div className="card">

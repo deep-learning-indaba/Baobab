@@ -11,15 +11,28 @@ export const isEventAdmin = (user, event) => {
     );
   };
 
-  export const isEventReadOnly = (user, event) => {
+  export const isEventResponseViewerOnly = (user, event) => {
     if (!user) {
       return false;
     }
     return (
-      user.is_read_only ||
+      //user.is_admin &&
       (user.roles &&
         user.roles.some(
-          r => r.role === "read_only" && event && r.event_id === event.id
+          r => r.role === "response_viewer" && event && r.event_id === event.id
+        ))
+    );
+  };
+
+  export const isEventResponseEditorOnly = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      //user.is_admin &&
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "response_editor" && event && r.event_id === event.id
         ))
     );
   };

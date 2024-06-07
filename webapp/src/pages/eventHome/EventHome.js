@@ -23,7 +23,7 @@ import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
 import { InvoiceAdminList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
-import { isEventAdmin, isEventReadOnly } from "../../utils/user";
+import { isEventAdmin, isEventResponseEditorOnly, isEventResponseViewerOnly} from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
@@ -127,7 +127,7 @@ class EventHome extends Component {
       );
     }
 
-    if (!isEventReadOnly(this.props.user, this.props.event)) {
+    if (!isEventResponseViewerOnly(this.props.user, this.props.event) && !isEventResponseEditorOnly(this.props.user, this.props.event)) {
       return (
         <div>
           <Route

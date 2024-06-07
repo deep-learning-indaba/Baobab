@@ -61,7 +61,6 @@ def user_info(user, roles):
         'email': user.email,
         'title': user.user_title,
         'is_admin': user.is_admin,
-        'is_read_only': user.is_read_only,
         'primary_language': user.user_primaryLanguage,
         'roles': [{'event_id': event_role.event_id, 'role': event_role.role} for event_role in roles]
     }
@@ -292,7 +291,7 @@ class UserProfile(UserProfileMixin, restful.Resource):
 
         current_user = user_repository.get_by_id(current_user_id)
 
-        if current_user.is_admin or current_user.is_read_only:
+        if current_user.is_admin:
             user = user_repository.get_by_id_with_response(user_id)
             if user is None:
                 return USER_NOT_FOUND
