@@ -73,6 +73,39 @@ class ReportingTest(ApiTestCase):
             self.response2_review2_answer1 = self.add_review_score(self.response2_review2.id, self.review_question1.id, '2')
             self.response2_review2_answer2 = self.add_review_score(self.response2_review2.id, self.review_question2.id, 'Could be better')
 
+            self.tag1 = self.add_tag(self.event.id, tag_type='GRANT')
+            self.tag2 = self.add_tag(self.event.id, tag_type='GRANT', names={'en': 'Tag 2 en', 'fr': 'Tag 2 fr'})
+
+            self.offer1 = self.add_offer(self.user1.id, self.event.id, tags=[self.tag1, self.tag2])
+            self.offer1_id = self.offer1.id
+            self.offer2 = self.add_offer(self.user2.id, self.event.id, tags=[self.tag1])
+            # User 2 has both an offer and is a guest, to check the de-duplication works
+            self.add_invited_guest(self.user2.id, self.event.id, 'Guest', tags=[self.tag1])
+            self.add_invited_guest(self.user3.id, self.event.id, 'Guest', tags=[self.tag2])
+
+            self.registration_form = self.create_registration_form(self.event.id)
+            self.registration_section1 = self.add_registration_section(self.registration_form.id)
+            self.registration_question1 = self.add_registration_question(self.registration_form.id, self.registration_section1.id)
+            self.registration_question2 = self.add_registration_question(self.registration_form.id, self.registration_section1.id, 'Question 2')
+            
+            self.registration1 = self.add_registration_response(self.offer1.id, self.registration_form.id, answers=[
+                self.registration_answer(self.registration_question1.id, 'Answer 1'),
+                self.registration_answer(self.registration_question2.id, 'Answer 2')
+            ])
+            self.registration2 = self.add_registration_response(self.offer2.id, self.registration_form.id, answers=[
+                self.registration_answer(self.registration_question1.id, 'Answer 3'),
+                self.registration_answer(self.registration_question2.id, 'Answer 4')
+            ])
+
+            self.guest_registration1 = self.add_guest_registration(self.user2.id, self.event.id, answers=[
+                self.guest_registration_answer(self.registration_question1.id, 'Answer 5'),
+                self.guest_registration_answer(self.registration_question2.id, 'Answer 6')
+            ])
+            self.guest_registration2 = self.add_guest_registration(self.user3.id, self.event.id, answers=[
+                self.guest_registration_answer(self.registration_question1.id, 'Answer 7'),
+                self.guest_registration_answer(self.registration_question2.id, 'Answer 8')
+            ])
+
             db.session.flush()
 
         def test_get_application_response_report_en(self):
@@ -202,3 +235,37 @@ class ReportingTest(ApiTestCase):
             self.assertEqual(self.user2_lastname, response2_review2_answer2['lastname'])
             self.assertEqual(self.reviewer2_firstname, response2_review2_answer2['reviewer_firstname'])
             self.assertEqual(self.reviewer2_lastname, response2_review2_answer2['reviewer_lastname'])
+
+        def test_get_registrations_report(self):
+            response = self.app.get(
+                f'/api/v1/reporting/registrations?event_id={self.event.id}',
+                headers=self.get_auth_header_for(self.admin_user.email, password='abcd')
+            )
+            
+            self.assertEqual(200, response.status_code)
+
+            self.assertEqual(3, len(response.json))
+
+            guest_registration1 = response.json[0]
+            self.assertEqual('Answer 5', guest_registration1['answers'][0]['answer'])
+            self.assertEqual('Answer 6', guest_registration1['answers'][1]['answer'])
+            self.assertEqual(self.user2_firstname, guest_registration1['firstname'])
+            self.assertEqual(self.user2_lastname, guest_registration1['lastname'])
+            self.assertEqual('guest', guest_registration1['type'])
+            self.assertEqual('Guest', guest_registration1['role'])
+            
+            guest_registration2 = response.json[1]
+            self.assertEqual('Answer 7', guest_registration2['answers'][0]['answer'])
+            self.assertEqual('Answer 8', guest_registration2['answers'][1]['answer'])
+            self.assertEqual(self.user3_firstname, guest_registration2['firstname'])
+            self.assertEqual(self.user3_lastname, guest_registration2['lastname'])
+            self.assertEqual('guest', guest_registration2['type'])
+            self.assertEqual('Guest', guest_registration2['role'])
+
+            registration1 = response.json[2]
+            self.assertEqual('Answer 1', registration1['answers'][0]['answer'])
+            self.assertEqual('Answer 2', registration1['answers'][1]['answer'])
+            self.assertEqual(self.user1_firstname, registration1['firstname'])
+            self.assertEqual(self.user1_lastname, registration1['lastname'])
+            self.assertEqual('attendee', registration1['type'])
+            self.assertEqual(self.offer1_id, registration1['offer_id'])

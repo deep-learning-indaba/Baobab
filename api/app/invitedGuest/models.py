@@ -46,6 +46,8 @@ class GuestRegistration(db.Model):
     created_at = db.Column(db.DateTime(), nullable=True)
     confirmation_email_sent_at = db.Column(db.DateTime(), nullable=True)
 
+    answers = db.relationship('GuestRegistrationAnswer')
+
     def confirm(self, timestamp):
         self.confirmed = True
         self.confirmation_email_sent_at = timestamp
@@ -62,6 +64,9 @@ class GuestRegistrationAnswer(db.Model):
         'guest_registration.id'), nullable=False)
     registration_question_id = db.Column(db.Integer(), db.ForeignKey(
         'registration_question.id'), nullable=False)
+    
+    registration_question = db.relationship('RegistrationQuestion', foreign_keys=[registration_question_id])
+
     value = db.Column(db.String(), nullable=False)
     is_active = db.Column(db.Boolean(), nullable=False)
     created_on = db.Column(db.DateTime, nullable=False)

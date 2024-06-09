@@ -27,7 +27,7 @@ class GuestRegistrationRepository():
         """Get all guests."""
         registration_form_id = db.session.query(RegistrationForm).filter_by(event_id=event_id).first().id
 
-        return db.session.query(InvitedGuest, AppUser,GuestRegistration).join(
+        return db.session.query(InvitedGuest, AppUser, GuestRegistration).join(
             AppUser, InvitedGuest.user_id == AppUser.id
         ).filter(
             InvitedGuest.event_id == event_id
