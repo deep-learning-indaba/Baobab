@@ -75,7 +75,7 @@ def guest_registration_info(guest_registration):
         'offer_id': None,
         'type': 'guest',
         'role': guest_registration.InvitedGuest.role,
-        'answers': [answer_info(answer) for answer in guest_registration.GuestRegistration.answers],
+        'answers': [answer_info(answer) for answer in guest_registration.GuestRegistration.answers if answer.is_active],
         'tags': [it.tag.stringify_tag_name() for it in guest_registration.InvitedGuest.invited_guest_tags]
     }
 
