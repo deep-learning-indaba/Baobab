@@ -106,7 +106,7 @@ class RegistrationsReportAPI(restful.Resource):
     
     @event_admin_required
     def get(self, event_id: int):
-        guest_registrations = GuestRegistrationRepository.get_all_guests(event_id)
+        guest_registrations = GuestRegistrationRepository.get_confirmed_guest_for_event(event_id, confirmed=True)
         registrations = RegistrationRepository.get_all_for_event(event_id)
 
         deduped = [guest_registration_info(guest_registration) for guest_registration in guest_registrations]
