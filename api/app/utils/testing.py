@@ -20,7 +20,8 @@ from app.invitedGuest.models import InvitedGuest, InvitedGuestTag
 from app.invoice.models import Invoice, InvoiceLineItem
 from app.organisation.models import Organisation
 from app.organisation.resolver import OrganisationResolver
-from app.registration.models import RegistrationForm
+from app.registration.models import RegistrationForm, RegistrationSection, RegistrationQuestion, Registration, RegistrationAnswer
+from app.invitedGuest.models import GuestRegistration, GuestRegistrationAnswer
 from app.offer.models import Offer, OfferTag
 from app.responses.models import Answer, Response, ResponseReviewer, ResponseTag
 from app.users.models import AppUser, Country, UserCategory
@@ -334,6 +335,48 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return registration_form
     
+    def add_registration_section(self, registration_form_id, name='Registration Section 1', description='Registration Section 1', order=1):
+        section = RegistrationSection(registration_form_id, name, description, order)
+        db.session.add(section)
+        db.session.commit()
+        return section
+    
+    def add_registration_question(self, registration_form_id, section_id, headline='Question 1', placeholder='Enter a value', order=1, type='short-text', validation_regex='', description=''):
+        question = RegistrationQuestion(registration_form_id, section_id, headline, placeholder, order, type, validation_regex, description='')
+        db.session.add(question)
+        db.session.commit()
+        return question
+    
+    def registration_answer(self, registration_question_id, value):
+        return RegistrationAnswer(registration_question_id=registration_question_id, value=value)
+
+    def add_registration_response(self, offer_id, registration_form_id, confirmed=True, answers=[]):
+        response = Registration(offer_id, registration_form_id, confirmed)
+        db.session.add(response)
+        db.session.commit()
+
+        for answer in answers:
+            answer.registration_id = response.id
+            db.session.add(answer)
+        db.session.commit()
+
+        return response
+    
+    def guest_registration_answer(self, registration_question_id, value):
+        return GuestRegistrationAnswer(registration_question_id=registration_question_id, value=value, is_active=True, created_on=datetime.now())
+
+    def add_guest_registration(self, user_id, registration_form_id, confirmed=True, answers=[]):
+        registration = GuestRegistration(user_id=user_id, registration_form_id=registration_form_id, confirmed=confirmed)
+        db.session.add(registration)
+        db.session.commit()
+
+        for answer in answers:
+            answer.guest_registration_id = registration.id
+            db.session.add(answer)
+        db.session.commit()
+        
+        return registration
+
     def add_section(self, application_form_id, order=1):
         section = Section(application_form_id, order)
         db.session.add(section)
@@ -398,18 +441,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.add(response)
         db.session.commit()
         return response
-    
-    def add_offer(self, user_id=1, event_id=1, offer_date=datetime.now(), expiry_date=datetime.now() + timedelta(days=15), payment_required=False):
-        offer = Offer(
-            user_id=user_id,
-            event_id=event_id,
-            offer_date=offer_date,
-            expiry_date=expiry_date,
-            payment_required=payment_required)
-        db.session.add(offer)
-        db.session.commit()
-        return offer
-    
+
     def add_response_reviewer(self, response_id, reviewer_user_id):
         rr = ResponseReviewer(response_id, reviewer_user_id)
         db.session.add(rr)
@@ -438,7 +470,7 @@ class ApiTestCase(unittest.TestCase):
         db.session.commit()
         return rs
 
-    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, candidate_response=None):
+    def add_offer(self, user_id, event_id=1, offer_date=None, expiry_date=None, payment_required=False, candidate_response=None, tags=[]):
         offer_date = offer_date or datetime.now()
         expiry_date = expiry_date or datetime.now() + timedelta(10)
 
@@ -452,13 +484,24 @@ class ApiTestCase(unittest.TestCase):
 
         db.session.add(offer)
         db.session.commit()
+
+        for tag in tags:
+            offer_tag = OfferTag(offer.id, tag.id)
+            db.session.add(offer_tag)
+        db.session.commit()
         return offer
 
-    def add_invited_guest(self, user_id, event_id=1, role='Guest'):
+    def add_invited_guest(self, user_id, event_id=1, role='Guest', tags=[]):
         print(('Adding invited guest for user: {}, event: {}, role: {}'.format(user_id, event_id, role)))
         guest = InvitedGuest(event_id, user_id, role)
         db.session.add(guest)
         db.session.commit()
+
+        for tag in tags:
+            gt = InvitedGuestTag(guest.id, tag.id)
+            db.session.add(gt)
+        db.session.commit()
+
         return guest
 
     def add_tag(self, event_id=1, tag_type='RESPONSE', names={'en': 'Tag 1 en', 'fr': 'Tag 1 fr'}, descriptions={'en': 'Tag 1 en description', 'fr': 'Tag 1 fr description'}, active=True):

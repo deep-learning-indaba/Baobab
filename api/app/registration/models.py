@@ -84,7 +84,7 @@ class RegistrationQuestion(db.Model):
         self.placeholder = placeholder
         self.order = order
         self.type = type
-        self.description = description
+        self.description = description or ''
         self.options = options
         self.is_required = is_required
         self.validation_regex = validation_regex
@@ -116,6 +116,8 @@ class Registration(db.Model):
     created_at = db.Column(db.DateTime(), nullable=True)
     confirmation_email_sent_at = db.Column(db.DateTime(), nullable=True)
 
+    answers = db.relationship('RegistrationAnswer')
+
     def __init__(self, offer_id, registration_form_id, confirmed=False, confirmation_email_sent_at=None):
         self.offer_id = offer_id
         self.registration_form_id = registration_form_id
@@ -139,3 +141,5 @@ class RegistrationAnswer(db.Model):
     registration_question_id = db.Column(db.Integer(), db.ForeignKey(
         'registration_question.id'), nullable=False)
     value = db.Column(db.String(), nullable=False)
+
+    registration_question = db.relationship('RegistrationQuestion', foreign_keys=[registration_question_id])
