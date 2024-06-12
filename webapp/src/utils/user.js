@@ -16,10 +16,9 @@ export const isEventAdmin = (user, event) => {
       return false;
     }
     return (
-      //user.is_admin &&
       (user.roles &&
         user.roles.some(
-          r => r.role === "response_viewer" && event && r.event_id === event.id
+          r => r.role === "response-viewer" && event && r.event_id === event.id
         ))
     );
   };
@@ -29,10 +28,9 @@ export const isEventAdmin = (user, event) => {
       return false;
     }
     return (
-      //user.is_admin &&
       (user.roles &&
         user.roles.some(
-          r => r.role === "response_editor" && event && r.event_id === event.id
+          r => r.role === "response-editor" && event && r.event_id === event.id
         ))
     );
   };
