@@ -27,6 +27,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const MULTI_CHECKBOX_OTHER = "multi-checkbox-with-other";
 const FILE = "file";
 const DATE = "date";
+const INFORMATION = "information";
 
 class RegistrationComponent extends Component {
   constructor(props) {
@@ -190,7 +191,7 @@ class RegistrationComponent extends Component {
   validate = (question, answer) => {
     if (question.depends_on_question_id) {
       let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
-      if (answer && answer.value === question.hide_for_dependent_value) {
+      if (!answer || answer.value === question.hide_for_dependent_value) {
         return {
           registration_question_id: question.id,
           error: ""
@@ -419,6 +420,7 @@ class RegistrationComponent extends Component {
               value={answer && answer.value}
               validationError={validationError}
               onChange={(_, v) => this.onChange(question.id, v)}
+              options={question.options}
               key={"i_" + key} />
           );
         case DATE:
@@ -435,6 +437,8 @@ class RegistrationComponent extends Component {
               errorText={validationError}
               required={question.is_required} />
           );
+        case INFORMATION:
+          return question.description && <div className="application-form-information">{question.description}</div>
         default:
           return (
             <p className="text-danger">
@@ -468,7 +472,8 @@ class RegistrationComponent extends Component {
           <div>
             <div className="card flat-card success stretched">
               <h5>Successfully Registered</h5>
-              <p>We look forward to welcoming you at {this.props.event.name}! You can now generate an <Link to={`/${this.props.event.key}/invitationLetter`}>invitation letter</Link> if you require one.</p>
+              <p>We look forward to welcoming you at {this.props.event.name}!</p> 
+              {/* You can now generate an <Link to={`/${this.props.event.key}/invitationLetter`}>invitation letter</Link> if you require one.</p> */}
             </div>
             <br/><br/>
             <div className="col-12">

@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from app.utils.language import translatable
 from app.reporting.repository import ReportingRepository
+from app.guestRegistrations.repository import GuestRegistrationRepository
+from app.registrationResponse.repository import RegistrationRepository
 from flask_restful import fields, marshal
 import flask_restful as restful
 
@@ -42,6 +44,41 @@ def review_info(review):
         'score': review.ReviewScore.value,
     }
 
+def answer_info(answer):
+    return {
+        'question_id': answer.registration_question_id,
+        'question': answer.registration_question.headline,
+        'answer': answer.value,
+    }
+
+def registration_info(registration):
+    return {
+        'user_id': registration.AppUser.id,
+        'email': registration.AppUser.email,
+        'firstname': registration.AppUser.firstname,
+        'lastname': registration.AppUser.lastname,
+        'registration_id': registration.Registration.id,
+        'offer_id': registration.Offer.id,
+        'type': 'attendee',
+        'role': None,
+        'answers': [answer_info(answer) for answer in registration.Registration.answers],
+        'tags': [ot.tag.stringify_tag_name() for ot in registration.Offer.offer_tags]
+    }
+
+def guest_registration_info(guest_registration):
+    return {
+        'user_id': guest_registration.AppUser.id,
+        'email': guest_registration.AppUser.email,
+        'firstname': guest_registration.AppUser.firstname,
+        'lastname': guest_registration.AppUser.lastname,
+        'registration_id': guest_registration.GuestRegistration.id,
+        'offer_id': None,
+        'type': 'guest',
+        'role': guest_registration.InvitedGuest.role,
+        'answers': [answer_info(answer) for answer in guest_registration.GuestRegistration.answers if answer.is_active],
+        'tags': [it.tag.stringify_tag_name() for it in guest_registration.InvitedGuest.invited_guest_tags]
+    }
+
 class ApplicationResponseReportAPI(restful.Resource):
 
     @event_admin_required
@@ -64,3 +101,18 @@ class ReviewReportAPI(restful.Resource):
             return errors.APPLICATION_FORM_NOT_FOUND
         reviews = ReportingRepository.get_reviews_for_form(app_form.id, language)
         return [review_info(review) for review in reviews]
+
+class RegistrationsReportAPI(restful.Resource):
+    
+    @event_admin_required
+    def get(self, event_id: int):
+        guest_registrations = GuestRegistrationRepository.get_confirmed_guest_for_event(event_id, confirmed=True)
+        registrations = RegistrationRepository.get_all_for_event(event_id)
+
+        deduped = [guest_registration_info(guest_registration) for guest_registration in guest_registrations]
+        user_ids = [d["user_id"] for d in deduped]
+        for registration in registrations:
+            if registration.AppUser.id not in user_ids:
+                deduped.append(registration_info(registration))
+
+        return deduped

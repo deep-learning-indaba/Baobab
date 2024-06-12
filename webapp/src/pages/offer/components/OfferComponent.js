@@ -179,7 +179,7 @@ class Offer extends Component {
             </div>
 
             <div className="col">
-              <a href={getDownloadURL(`invoice_${offer.invoice_number}`, "indaba-invoices")}>
+              <a href={getDownloadURL(`invoice_${offer.invoice_number}.pdf`, "indaba-invoices")}>
                 {t("View Invoice")}
               </a>
             </div>

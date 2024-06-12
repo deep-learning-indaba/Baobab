@@ -114,7 +114,7 @@ class EventNav extends Component {
                     >
                       {t('Registration Form')}
                     </NavLink>)}
-                    <NavLink
+                    {/* <NavLink
                       to={`/${this.props.eventKey}/invitationLetter`}
                       className="dropdown-item"
                       onClick={this.props.toggleMenu}
@@ -127,7 +127,7 @@ class EventNav extends Component {
                       onClick={this.props.toggleMenu}
                     >
                       {t('Indemnity Form')}
-                    </NavLink>
+                    </NavLink> */}
                     {/* <NavLink
                       to={`/${this.props.eventKey}/invoices`}
                       className="dropdown-item"

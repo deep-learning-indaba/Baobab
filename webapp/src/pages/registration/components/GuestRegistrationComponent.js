@@ -25,6 +25,7 @@ const MULTI_CHECKBOX = "multi-checkbox";
 const MULTI_CHECKBOX_OTHER = "multi-checkbox-with-other";
 const FILE = "file";
 const DATE = "date";
+const INFORMATION = "information";
 
 
 class GuestRegistrationComponent extends Component {
@@ -161,7 +162,7 @@ class GuestRegistrationComponent extends Component {
   validate = (question, answer) => {
     if (question.depends_on_question_id) {
       let answer = _.find(this.state.answers, a => a.registration_question_id.toString() === question.depends_on_question_id.toString());
-      if (answer && answer.value === question.hide_for_dependent_value) {
+      if (!answer || answer.value === question.hide_for_dependent_value) {
         return {
           registration_question_id: question.id,
           error: ""
@@ -388,6 +389,7 @@ class GuestRegistrationComponent extends Component {
               value={answer && answer.value}
               validationError={validationError}
               onChange={(_, v) => this.onChange(question.id, v)}
+              options={question.options}
               key={"i_" + key} />
           );
         case DATE:
@@ -404,6 +406,8 @@ class GuestRegistrationComponent extends Component {
               errorText={validationError}
               required={question.is_required} />
           );
+        case INFORMATION:
+          return question.description && <div className="application-form-information">{question.description}</div>
         default:
           return (
             <p className="text-danger">
