@@ -34,3 +34,6 @@ dispatch:
 
   - url: "submit.jaisd.org/*"
     service: prod-frontend
+
+  - url: "apply.khipu.ai/*"
+    service: prod-frontend
