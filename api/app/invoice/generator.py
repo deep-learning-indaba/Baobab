@@ -8,6 +8,7 @@ import pytz
 from datetime import datetime
 
 _USDGBP_PATH = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.min.json"
+_API_KEY = 'sk_LexJK2eK0jY3Kmm9gE6R6nJ4M8RwrZpN'
 
 class InvoiceGenerator:
     URL = "https://invoice-generator.com"
@@ -122,7 +123,10 @@ class InvoiceGenerator:
         """ Directly send the request and store the file on path """
         json_string = self._to_json()
         print(json_string)
-        response = requests.post(InvoiceGenerator.URL, json=json.loads(json_string), stream=True, headers={'Accept-Language': InvoiceGenerator.LOCALE})
+        response = requests.post(InvoiceGenerator.URL, json=json.loads(json_string), stream=True, headers={
+            'Accept-Language': InvoiceGenerator.LOCALE,
+            'Authorization': f'Bearer {_API_KEY}'  
+        })
         if response.status_code == 200:
             open(file_path, 'wb').write(response.content)
         else:
