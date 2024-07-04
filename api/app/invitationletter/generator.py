@@ -69,6 +69,8 @@ def _create_doc_service():
         docs_service = build('docs', 'v1')
     else:
         # Create credentials to access from anywhere
+        private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
+        GCP_CREDENTIALS_DICT["private_key"] = private_key
         credentials = service_account.Credentials.from_service_account_info(
             GCP_CREDENTIALS_DICT
         )
@@ -81,6 +83,8 @@ def _create_drive_service():
         drive_service = build('drive', 'v3')
     else:
         # Create credentials to access from anywhere
+        private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
+        GCP_CREDENTIALS_DICT["private_key"] = private_key
         credentials = service_account.Credentials.from_service_account_info(
             GCP_CREDENTIALS_DICT
         )
@@ -101,61 +105,49 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         return errors.EVENT_NOT_FOUND
 
     # Create credentials to access from anywhere
-    document_id = ""  # Get from some event configuration
+    document_id = template_path
     doc_service = _create_doc_service()
     drive_service = _create_drive_service()
 
-    copied_document = doc_service.files().copy(fileId=document_id, body={'name': f"Copy of {document_id}"}).execute()
-    document_id = copied_document.get('id')
-
-    # Find all text segments
-    body = doc_service.documents().getBody(documentId=document_id).execute()
-    text = body['content']
+    copied_document = drive_service.files().copy(fileId=document_id, body={'name': f"Copy of {document_id}"}).execute()
+    copied_document_id = copied_document.get('id')
 
     replace_variables = {
-        '{{work_address}}': work_address,
-        '{{addressed_to}}': addressed_to,
-        '{{residential_address}}': residential_address,
-        '{{passport_name}}': passport_name,
-        '{{passport_no}}': passport_no,
-        '{{passport_issued_by}}': passport_issued_by,
-        '{{invitation_letter_sent_at}}': invitation_letter_sent_at,
-        '{{to_date}}': to_date,
-        '{{from_date}}': from_date,
-        '{{country_of_residence}}': country_of_residence,
-        '{{nationality}}': nationality,
-        '{{date_of_birth}}': date_of_birth,
-        '{{email}}': email,
-        '{{user_title}}': user_title,
-        '{{firstname}}': firstname,
-        '{{lastname}}': lastname,
-        '{{bringing_poster}}': bringing_poster,
-        '{{expiry_date}}': expiry_date
+        '%WORK_ADDRESS%': work_address,
+        '%ADDRESSED_TO%': addressed_to,
+        '%RESIDENTIAL_ADDRESS%': residential_address,
+        '%PASSPORT_NAME%': passport_name,
+        '%PASSPORT_NO%': passport_no,
+        '%PASSPORT_ISSUED_BY%': passport_issued_by,
+        '%INVITATION_LETTER_SENT_AT%': invitation_letter_sent_at,
+        '%TO_DATE%': to_date,
+        '%FROM_DATE%': from_date,
+        '%COUNTRY_OF_RESIDENCE%': country_of_residence,
+        '%NATIONALITY%': nationality,
+        '%DATE_OF_BIRTH%': date_of_birth,
+        '%EMAIL%': email,
+        '%USER_TITLE%': user_title,
+        '%FIRSTNAME%': firstname,
+        '%LASTNAME%': lastname,
+        '%BRINGING_POSTER%': bringing_poster,
+        '%EXPIRY_DATE%': expiry_date
     }
 
     # Iterate through variables and perform replacements
     replace_requests = []
-    for segment in text:
-        if segment['segment']['type'] == 'TEXT':
-            start_index = segment['segment']['startIndex']
-            end_index = segment['segment']['endIndex']
-            text_content = segment['segment']['text']
-            for key, value in replace_variables.items():
-                escaped_key = key.replace("{{", r"\{\{").replace("}}", r"\}\}")
-                if re.search(escaped_key, text_content):
-                    replace_requests.append({
-                        'replaceAllText': {
-                            'replaceText': text_content.replace(key, str(value)),
-                            'startIndex': start_index,
-                            'endIndex': end_index
-                        }
-                    })
+    for key, value in replace_variables.items():
+        replace_requests.append({
+            'replaceAllText': {
+                'containsText': {"text": key, "matchCase": True},
+                "replaceText": value
+            }
+        })
 
     # Batch update the document with replacements
     if replace_requests:
-        batch = doc_service.documents().batchUpdate(documentId=document_id, body={'requests': replace_requests}).execute()
+        batch = doc_service.documents().batchUpdate(documentId=copied_document_id, body={'requests': replace_requests}).execute()
     
-    export_request = drive_service.files().export(fileId=document_id, mimeType='application/pdf').execute()
+    export_request = drive_service.files().export(fileId=copied_document_id, mimeType='application/pdf').execute()
     output_file = str(uuid.uuid4()) + ".pdf"
 
     with open(output_file, "wb") as f:
@@ -177,6 +169,4 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         return False
     finally:
         os.remove(output_file)
-        drive_service.files().delete(fileId=document_id).execute()
-
-    return False
+        drive_service.files().delete(fileId=copied_document_id).execute()
