@@ -34,6 +34,7 @@ GCP_CREDENTIALS_DICT = {
 }
 GCP_PROJECT_NAME = os.getenv('GCP_PROJECT_NAME', None)
 GCP_BUCKET_NAME = os.getenv('GCP_BUCKET_NAME', None)
+GCP_API_KEY = os.getenv('GCP_API_KEY', None)
 FILE_SIZE_LIMIT = int(os.getenv('FILE_SIZE_LIMIT', None))
 
 BOABAB_HOST = os.getenv('BOABAB_HOST', None)
