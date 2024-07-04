@@ -320,6 +320,7 @@ class PDFConverterTest(ApiTestCase):
                                   firstname='Jeff',
                                   lastname='Jeffdejeff',
                                   bringing_poster='',
+                                  bringing_poster_fr='',
                                   expiry_date=datetime(1984, 12, 12).strftime('%Y-%m-%d')), True, self.test_user)
 
 

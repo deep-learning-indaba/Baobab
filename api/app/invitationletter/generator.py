@@ -40,7 +40,7 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
 
 def check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date):
     assert template_path is not None and isinstance(template_path, string_types) 
     assert event_id is not None and isinstance(event_id, int) 
     assert work_address is not None and isinstance(work_address, string_types) 
@@ -60,6 +60,7 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
     assert firstname is not None and isinstance(firstname, string_types) 
     assert lastname is not None and isinstance(lastname, string_types) 
     assert bringing_poster is not None and isinstance(bringing_poster, string_types) 
+    assert bringing_poster_fr is not None and isinstance(bringing_poster_fr, string_types)
     assert expiry_date is not None and isinstance(expiry_date, string_types) 
 
 
@@ -94,11 +95,11 @@ def _create_drive_service():
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date, user):
+             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date, user):
 
     check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date)
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date)
     
     event = db.session.query(Event).get(event_id)
     if not event:
@@ -130,6 +131,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
         '%FIRSTNAME%': firstname,
         '%LASTNAME%': lastname,
         '%BRINGING_POSTER%': bringing_poster,
+        '%BRINGING_POSTER_FR%': bringing_poster_fr,
         '%EXPIRY_DATE%': expiry_date
     }
 
