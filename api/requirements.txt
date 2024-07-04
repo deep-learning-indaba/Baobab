@@ -47,3 +47,4 @@ pyrsistent
 rsa
 WTForms==2.3.3
 stripe==3.2.0
+google-api-python-client==2.23.0

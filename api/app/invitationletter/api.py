@@ -1,7 +1,5 @@
 from datetime import datetime
-from re import template
 import flask_restful as restful
-from sqlalchemy.exc import IntegrityError
 from app.utils.auth import verify_token
 from flask import g, request
 from app.invitationletter.models import InvitationTemplate
@@ -11,7 +9,7 @@ from app.invitedGuest.models import InvitedGuest, GuestRegistrationAnswer, Guest
 from app.invitationletter.mixins import InvitationMixin
 from app.invitationletter.models import InvitationLetterRequest
 from app.invitationletter.generator import generate
-from app.users.models import AppUser, Country
+from app.users.models import AppUser
 from app import db, LOGGER
 from app.utils import errors
 from app.utils.auth import auth_required
@@ -186,21 +184,36 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
 
         # Poster registration
         bringing_poster = make_presenting_text(
-            "Would you like to present a poster session during the Africa Research Days?",
+            "Would you like to present a poster during the Africa Research Days?",
             "What is the provisional title of your poster?",
             f"{user.firstname} will be presenting a poster of their research")
+        
+        bringing_poster_fr = make_presenting_text(
+           "Would you like to present a poster during the Africa Research Days?",
+            "What is the provisional title of your poster?",
+            f"{user.firstname} présentera un poster de leur recherche")
 
         if not bringing_poster:
             bringing_poster = make_presenting_text(
                 "Do you have an African Dataset that you would like to showcase during the African Datasets Session?",
                 "What is the provisional title of your dataset?",
                 f"{user.firstname} will be presenting an African dataset")
+            
+            bringing_poster_fr = make_presenting_text(
+                "Do you have an African Dataset that you would like to showcase during the African Datasets Session?",
+                "What is the provisional title of your dataset?",
+                f"{user.firstname} présentera un jeu de données africain")
         
         if not bringing_poster:
             bringing_poster = make_presenting_text(
                 "Would you like to show a demo of something you are working on?",
                 "What is the provisional title of your demo?",
                 f"{user.firstname} will be showcasing a demo of their work")
+            
+            bringing_poster_fr = make_presenting_text(
+                "Would you like to show a demo of something you are working on?",
+                "What is the provisional title of your demo?",
+                f"{user.firstname} présentera une démo de leur travail")
         
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()
@@ -224,6 +237,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
                             firstname=user.firstname,
                             lastname=user.lastname,
                             bringing_poster=bringing_poster,
+                            bringing_poster_fr=bringing_poster_fr,
                             user=user
                             )
         if not is_sent:

@@ -41,6 +41,14 @@ class OfferRepository():
                         .filter_by(event_id=event_id, candidate_response=True)
                         .count())
         return count
+    
+    @staticmethod
+    def count_offers_paid(event_id):
+        offers = (db.session.query(Offer)
+                        .filter_by(event_id=event_id, candidate_response=True)
+                        .all())
+        count = len([o for o in offers if o.is_paid])
+        return count
 
     @staticmethod
     def count_offers_rejected(event_id):

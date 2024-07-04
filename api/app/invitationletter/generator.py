@@ -1,18 +1,17 @@
-from mailmerge import MailMerge
 from app import LOGGER
-from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME, GCP_BUCKET_NAME, FILE_SIZE_LIMIT
-from config import GCP_BUCKET_NAME
-import json
+from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME
 from google.cloud import storage
-import os
 from app.utils import emailer
-from app.utils import pdfconvertor
 from app.events.models import Event
 from app import db
 from app.utils import errors
-
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+import re
 from google.oauth2 import service_account
 from six import string_types
+import uuid
+import os
 
 
 def download_blob(bucket_name, source_blob_name, destination_file_name):
@@ -41,7 +40,7 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
 
 def check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date):
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date):
     assert template_path is not None and isinstance(template_path, string_types) 
     assert event_id is not None and isinstance(event_id, int) 
     assert work_address is not None and isinstance(work_address, string_types) 
@@ -61,62 +60,100 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
     assert firstname is not None and isinstance(firstname, string_types) 
     assert lastname is not None and isinstance(lastname, string_types) 
     assert bringing_poster is not None and isinstance(bringing_poster, string_types) 
+    assert bringing_poster_fr is not None and isinstance(bringing_poster_fr, string_types)
     assert expiry_date is not None and isinstance(expiry_date, string_types) 
+
+
+def _create_doc_service():
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        # Running on GCP, so no credentials needed
+        docs_service = build('docs', 'v1')
+    else:
+        # Create credentials to access from anywhere
+        private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
+        GCP_CREDENTIALS_DICT["private_key"] = private_key
+        credentials = service_account.Credentials.from_service_account_info(
+            GCP_CREDENTIALS_DICT
+        )
+        docs_service = build('docs', 'v1', credentials=credentials)
+    return docs_service
+
+def _create_drive_service():
+    if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
+        # Running on GCP, so no credentials needed
+        drive_service = build('drive', 'v3')
+    else:
+        # Create credentials to access from anywhere
+        private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
+        GCP_CREDENTIALS_DICT["private_key"] = private_key
+        credentials = service_account.Credentials.from_service_account_info(
+            GCP_CREDENTIALS_DICT
+        )
+        drive_service = build('drive', 'v3', credentials=credentials)
+    return drive_service
 
 
 def generate(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
              passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date, user):
+             nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date, user):
 
     check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
-        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, expiry_date)
+        nationality, date_of_birth, email, user_title, firstname, lastname, bringing_poster, bringing_poster_fr, expiry_date)
     
-    # Path to store the template locally of merged and unmerged
-    template = 'app/invitationletter/template/tmp.docx'
-    template_merged = 'app/invitationletter/template/template.docx'
-
-    download_blob(bucket_name=GCP_BUCKET_NAME, source_blob_name=template_path,
-                  destination_file_name=template)
-
-    if not os.path.exists(template):
-        return errors.TEMPLATE_NOT_FOUND
-
-    document = MailMerge(template)
-
-    document.merge(
-        TITLE=user_title,
-        FIRSTNAME=firstname,
-        LASTNAME=lastname,
-        WORK_ADDRESS=work_address,
-        ADDRESSED_TO=addressed_to,
-        RESIDENTIAL_ADDRESS=residential_address,
-        PASSPORT_NAME=passport_name,
-        PASSPORT_NO=passport_no,
-        ISSUED_BY=passport_issued_by,
-        EXPIRY_DATE=expiry_date,
-        ACCOMMODATION_END_DATE=to_date,
-        ACCOMMODATION_START_DATE=from_date,
-        COUNTRY_OF_RESIDENCE=country_of_residence,
-        NATIONALITY=nationality,
-        DATE_OF_BIRTH=date_of_birth,
-        INVITATION_LETTER_SENT_AT=invitation_letter_sent_at,
-        BRINGING_POSTER=bringing_poster
-    )
-
-    document.write(template_merged)
-
-    # Conversion
-    template_pdf = 'app/invitationletter/letter/template.pdf'
-    if os.path.exists(template_pdf):
-        os.remove(template_pdf)
-    success = pdfconvertor.convert_to(folder='app/invitationletter/letter', source=template_merged, output=template_pdf)
-    if not success:
-        return errors.CREATING_INVITATION_FAILED
-
     event = db.session.query(Event).get(event_id)
     if not event:
         return errors.EVENT_NOT_FOUND
+
+    # Create credentials to access from anywhere
+    document_id = template_path
+    doc_service = _create_doc_service()
+    drive_service = _create_drive_service()
+
+    copied_document = drive_service.files().copy(fileId=document_id, body={'name': f"Copy of {document_id}"}).execute()
+    copied_document_id = copied_document.get('id')
+
+    replace_variables = {
+        '%WORK_ADDRESS%': work_address,
+        '%ADDRESSED_TO%': addressed_to,
+        '%RESIDENTIAL_ADDRESS%': residential_address,
+        '%PASSPORT_NAME%': passport_name,
+        '%PASSPORT_NO%': passport_no,
+        '%PASSPORT_ISSUED_BY%': passport_issued_by,
+        '%INVITATION_LETTER_SENT_AT%': invitation_letter_sent_at,
+        '%TO_DATE%': to_date,
+        '%FROM_DATE%': from_date,
+        '%COUNTRY_OF_RESIDENCE%': country_of_residence,
+        '%NATIONALITY%': nationality,
+        '%DATE_OF_BIRTH%': date_of_birth,
+        '%EMAIL%': email,
+        '%USER_TITLE%': user_title,
+        '%FIRSTNAME%': firstname,
+        '%LASTNAME%': lastname,
+        '%BRINGING_POSTER%': bringing_poster,
+        '%BRINGING_POSTER_FR%': bringing_poster_fr,
+        '%EXPIRY_DATE%': expiry_date
+    }
+
+    # Iterate through variables and perform replacements
+    replace_requests = []
+    for key, value in replace_variables.items():
+        replace_requests.append({
+            'replaceAllText': {
+                'containsText': {"text": key, "matchCase": True},
+                "replaceText": value
+            }
+        })
+
+    # Batch update the document with replacements
+    if replace_requests:
+        batch = doc_service.documents().batchUpdate(documentId=copied_document_id, body={'requests': replace_requests}).execute()
+    
+    export_request = drive_service.files().export(fileId=copied_document_id, mimeType='application/pdf').execute()
+    output_file = str(uuid.uuid4()) + ".pdf"
+
+    with open(output_file, "wb") as f:
+        f.write(export_request)
 
     try:
         emailer.email_user(
@@ -124,7 +161,7 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
             event=event,
             user=user,
             file_name="InvitationLetter.pdf",
-            file_path=template_pdf
+            file_path=output_file
         )
 
         LOGGER.debug('successfully sent email...')
@@ -132,5 +169,6 @@ def generate(template_path, event_id, work_address, addressed_to, residential_ad
     except ValueError:
         LOGGER.debug('Did not send email...')
         return False
-
-    return False
+    finally:
+        os.remove(output_file)
+        drive_service.files().delete(fileId=copied_document_id).execute()
