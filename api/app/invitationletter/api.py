@@ -191,7 +191,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
         bringing_poster_fr = make_presenting_text(
            "Would you like to present a poster during the Africa Research Days?",
             "What is the provisional title of your poster?",
-            f"{user.firstname} présentera un poster de leur recherche")
+            f"{user.firstname} présentera un poster de ses recherches")
 
         if not bringing_poster:
             bringing_poster = make_presenting_text(
@@ -202,7 +202,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             bringing_poster_fr = make_presenting_text(
                 "Do you have an African Dataset that you would like to showcase during the African Datasets Session?",
                 "What is the provisional title of your dataset?",
-                f"{user.firstname} présentera un jeu de données africain")
+                f"{user.firstname} présentera une base de données africaine")
         
         if not bringing_poster:
             bringing_poster = make_presenting_text(
@@ -213,7 +213,7 @@ class InvitationLetterAPI(InvitationMixin, restful.Resource):
             bringing_poster_fr = make_presenting_text(
                 "Would you like to show a demo of something you are working on?",
                 "What is the provisional title of your demo?",
-                f"{user.firstname} présentera une démo de leur travail")
+                f"{user.firstname} présentera une démonstration de ses travaux")
         
         # Handling fields
         invitation_letter_request.invitation_letter_sent_at=datetime.now()

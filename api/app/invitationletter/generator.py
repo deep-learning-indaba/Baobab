@@ -5,6 +5,7 @@ from app.utils import emailer
 from app.events.models import Event
 from app import db
 from app.utils import errors
+from google.auth import app_engine
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import re
@@ -14,29 +15,8 @@ import uuid
 import os
 
 
-def download_blob(bucket_name, source_blob_name, destination_file_name):
-    """Downloads a blob from the bucket."""
+SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
 
-    if GCP_CREDENTIALS_DICT['private_key'] == "dummy":
-        LOGGER.debug('Setting dummy storage client')
-        storage_client = storage.Client(project=GCP_PROJECT_NAME)
-    else:
-        LOGGER.debug('Setting GCP storage client')
-        credentials = service_account.Credentials.from_service_account_info(
-            GCP_CREDENTIALS_DICT
-        )
-        storage_client = storage.Client(credentials=credentials, project=GCP_PROJECT_NAME)
-
-    bucket = storage_client.get_bucket(bucket_name)
-    blob = bucket.blob(source_blob_name)
-
-    blob.download_to_filename(destination_file_name)
-
-    print(('Blob {} downloaded to {}.'.format(
-        source_blob_name,
-        destination_file_name)))
-
-    return source_blob_name
 
 def check_values(template_path, event_id, work_address, addressed_to, residential_address, passport_name,
         passport_no, passport_issued_by, invitation_letter_sent_at, to_date, from_date, country_of_residence,
@@ -66,8 +46,8 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
 
 def _create_doc_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
-        # Running on GCP, so no credentials needed
-        docs_service = build('docs', 'v1')
+        # Running on GCP, use App Engine credentials
+        credentials = app_engine.Credentials()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
@@ -75,13 +55,14 @@ def _create_doc_service():
         credentials = service_account.Credentials.from_service_account_info(
             GCP_CREDENTIALS_DICT
         )
-        docs_service = build('docs', 'v1', credentials=credentials)
+
+    docs_service = build('docs', 'v1', credentials=credentials)
     return docs_service
 
 def _create_drive_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
         # Running on GCP, so no credentials needed
-        drive_service = build('drive', 'v3')
+        credentials = app_engine.Credentials()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
@@ -89,7 +70,7 @@ def _create_drive_service():
         credentials = service_account.Credentials.from_service_account_info(
             GCP_CREDENTIALS_DICT
         )
-        drive_service = build('drive', 'v3', credentials=credentials)
+    drive_service = build('drive', 'v3', credentials=credentials)
     return drive_service
 
 
