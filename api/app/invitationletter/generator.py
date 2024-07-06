@@ -5,7 +5,7 @@ from app.utils import emailer
 from app.events.models import Event
 from app import db
 from app.utils import errors
-from google.auth import app_engine
+from google.auth import default
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import re
@@ -47,7 +47,7 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
 def _create_doc_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
         # Running on GCP, use App Engine credentials
-        credentials = app_engine.Credentials()
+        credentials, _ = default()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
@@ -61,8 +61,8 @@ def _create_doc_service():
 
 def _create_drive_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
-        # Running on GCP, so no credentials needed
-        credentials = app_engine.Credentials()
+        # Running on GCP, use App Engine credentials
+        credentials, _ = default()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
