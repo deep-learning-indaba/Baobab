@@ -196,3 +196,14 @@ div.card-container {
   margin-right: 0.5em;
   margin-bottom: 0.5em;
 }
+
+button.link-button {
+  background: none!important;
+  border: none;
+  padding: 0!important;
+  /*optional*/
+  font-family: arial, sans-serif;
+  /*input has OS specific font-family*/
+  color: #069;
+  cursor: pointer;
+}

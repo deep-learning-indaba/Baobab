@@ -35,13 +35,7 @@ class OfferAdminComponent extends Component {
             error: "",
             offers: [],
             offerEditorVisible: false,
-            updatedOffer: {
-                userId: 0,
-                tags: [],
-                expiryDate: null,
-                paymentRequired: false,
-                paymentAmount: 0
-            },
+            selectedOffer: null,
             users: [],
             errors: [],
             isValid: true
@@ -122,6 +116,13 @@ class OfferAdminComponent extends Component {
         return <span className={className}>{text}</span>;
     }
 
+    editOffer = (offer) => {
+        this.setState({
+            offerEditorVisible: true,
+            selectedOffer: offer
+        });
+    }
+
     paymentCell = (props) => {
         if (props.original.payment_required === true) {
             return <span>
@@ -192,6 +193,14 @@ class OfferAdminComponent extends Component {
             accessor: u => u.is_expired,
             Cell: this.statusCell,
             minWidth: 80
+          },
+          {
+            id: "actions",
+            Header: "",
+            Cell: props => <div>
+              <button className="link-button" onClick={() => this.editOffer(props.original)}><i className="fa fa-edit"></i></button>
+            </div>,
+            minWidth: 150
           }
         ];
 
@@ -229,108 +238,9 @@ class OfferAdminComponent extends Component {
         });
     }
 
-/*
-    user_id = args['user_id']
-    awards = args['awards']
-    offer_date = datetime.strptime((args['offer_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
-    expiry_date = datetime.strptime((args['expiry_date']), '%Y-%m-%dT%H:%M:%S.%fZ')
-    payment_required = args['payment_required']
-    payment_amount = args['payment_amount']
-*/
-
     renderOfferEditor = () => {
         const t = this.props.t;
-        return <div className={"form-group margin-top-20px"}>
-        <div className={"form-group row"}>
-            <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor={"tag_type"}>
-            <span className="required-indicator">*</span>
-            {t("Candidate")}
-            </label>
-            <div className="col-sm-10">
-            {/* <FormSelect
-                id={"candidate"}
-                name={"candidate"}
-                required={true}
-                defaultValue={this.state.updatedOffer.userId || null}
-                onChange={this.updateDropDown}
-                options={
-                    this.state.users.map((user) => ({
-                        value: user.userId,
-                        label: user.name + " (" + user.email + ")"
-                    }))
-                }
-            /> */}
-            </div>
-        </div>
-
-        {this.props.organisation.languages.map((lang) => (
-            <div className={"form-group row"} key={"name_div"+lang.code}>
-            <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor={"name_" + lang.code}>
-                <span className="required-indicator">*</span>
-                {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Name", lang.description)) : t("Tag Name")}
-            </label>
-
-            <div className="col-sm-10">
-                <FormTextBox
-                id={"name_" + lang.code}
-                name={"name_" + lang.code}
-                type="text"
-                placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Name of the tag", lang.description)) : t("Name of the tag")}
-                required={true}
-                onChange={e => this.updateTextField("name", e, lang.code)}
-                value={this.state.updatedTag.name[lang.code] || ""}
-                />
-            </div>
-            </div>
-        ))}
-        {this.props.organisation.languages.map((lang) => (
-            <div className={"form-group row"} key={"description_div"+lang.code}>
-            <label
-                className={"col-sm-2 col-form-label"}
-                htmlFor={"description_" + lang.code}>
-                <span className="required-indicator">*</span>
-                {this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Tag Description", lang.description)) : t("Tag Description")}
-            </label>
-                
-            <div className="col-sm-10">
-                <FormTextArea
-                id={"description_" + lang.code}
-                name={"description_" + lang.code}
-                type="text"
-                placeholder={this.state.isMultiLingual ? t(this.getFieldNameWithLanguage("Description of the tag", lang.description)) : t("Description of the tag")}
-                required={true}
-                onChange={e => this.updateTextField("description", e, lang.code)}
-                value={this.state.updatedTag.description[lang.code] || ""}
-                />
-            </div>
-
-            {this.state.updatedTag.tag_type && this.state.updatedTag.tag_type === "GRANT" &&
-                <div className="required-indicator ml-2">{t("Note, the grant name and description will be visible to users when asked to accept/reject the grant.")}
-                </div>}
-            </div>
-        ))}
         
-        <div className={"form-group row"} key="save-tag">
-            <div className="col-sm-2 ml-md-auto pr-2 pl-2">
-            <button
-                onClick={() => this.setState({ tagEntryVisible: false })}
-                className="btn btn-danger btn-block">
-                {t("Cancel")}
-            </button>
-            </div>
-            <div className="col-sm-2 pr-2 pl-2">
-            <button
-                onClick={() => this.onClickSave()}
-                className="btn btn-primary btn-block">
-                {t("Save Tag")}
-                </button>
-            </div>
-        </div>
-        </div>;
     }
 
     render() {
