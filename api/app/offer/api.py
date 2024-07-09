@@ -22,6 +22,7 @@ from app.offer.repository import OfferRepository as offer_repository
 from app.invoice import service as invoice_service
 from app.events.repository import EventRepository as event_repository
 
+
 def offer_info(offer_entity, requested_travel=None):
     return {
         'id': offer_entity.id,

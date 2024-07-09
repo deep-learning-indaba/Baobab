@@ -8,10 +8,11 @@ import ReactTable from 'react-table';
 import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
+import ReactToolTip from "react-tooltip";
 
 /*
 TODO:
-- View a list of offers - DONE
+- View a list of offers - DONE (add paid flag)
 - Add a new offer
 - Edit an existing offer (including tags)
 - Delete an existing offer
@@ -50,21 +51,21 @@ class OfferAdminComponent extends Component {
     componentDidMount() {
         Promise.all([
             offerServices.getOfferList(this.props.event.id),
-            responsesService.getResponseList(this.props.event.id, false, [])
-        ]).then(([offerResponse, responseResponse]) => {
+            //responsesService.getResponseList(this.props.event.id, false, [])
+        ]).then(([offerResponse]) => {
             const offers = offerResponse.offers || [];
-            const offerUsers = offers.map(o => o.user_id);
+            //const offerUsers = offers.map(o => o.user_id);
             this.setState({
                 loading: false,
                 offers: offers,
-                error: offerResponse.error || responseResponse.error,
-                users: (responseResponse.responses || [])
-                    .filter(r => !offerUsers.includes(r.user_id))
-                    .map(r => ({
-                        userId: r.user_id,
-                        name: r.user_title + " " + r.firstname + " " + r.lastname,
-                        email: r.email    
-                    }))
+                error: offerResponse.error //|| responseResponse.error,
+                // users: (responseResponse.responses || [])
+                //     .filter(r => !offerUsers.includes(r.user_id))
+                //     .map(r => ({
+                //         userId: r.user_id,
+                //         name: r.user_title + " " + r.firstname + " " + r.lastname,
+                //         email: r.email    
+                //     }))
             });
         });
     }
@@ -94,13 +95,39 @@ class OfferAdminComponent extends Component {
         }
 
         return <div>
-            <span className={className}>{text}</span> <span>{description}</span>
+            <span className={className}>{text}</span> <span data-tooltip-id="tooltip" data-tooltip-content={description}>{description}</span>
         </div>
+    }
+
+    statusCell = (props) => {
+        const {t} = this.props;
+        let className = "badge badge-secondary";
+        let text = t("Pending");
+
+        if (props.original.is_expired === true) {
+            className = "badge badge-danger";
+            text = t("Expired");
+        }
+
+        else if (props.original.candidate_response && props.original.is_paid) {
+            className = "badge badge-success";
+            text = t("Confirmed")
+        }
+
+        else if (props.original.candidate_response && !props.original.is_paid) {
+            className = "badge badge-warning";
+            text = t("Payment Pending")
+        }
+
+        return <span className={className}>{text}</span>;
     }
 
     paymentCell = (props) => {
         if (props.original.payment_required === true) {
-            return <span>{props.original.payment_amount} {this.props.organisation.iso_currency_code === "None" ? "" : this.props.organisation.iso_currency_code}</span>;
+            return <span>
+                {props.original.payment_amount} {this.props.organisation.iso_currency_code === "None" ? "" : this.props.organisation.iso_currency_code} 
+                {this.props.original.is_paid ? <span className="badge badge-success">Paid</span> : ""}
+                </span>;
         }
         else {
             return "-";
@@ -157,6 +184,13 @@ class OfferAdminComponent extends Component {
             Header: <div className="candidate-response">{t("Response")}</div>,
             accessor: u => u.candidate_response,
             Cell: this.candidateResponseCell,
+            minWidth: 80
+          },
+          {
+            id: "status",
+            Header: <div className="status">{t("Status")}</div>,
+            accessor: u => u.is_expired,
+            Cell: this.statusCell,
             minWidth: 80
           }
         ];
@@ -215,7 +249,7 @@ class OfferAdminComponent extends Component {
             {t("Candidate")}
             </label>
             <div className="col-sm-10">
-            <FormSelect
+            {/* <FormSelect
                 id={"candidate"}
                 name={"candidate"}
                 required={true}
@@ -227,7 +261,7 @@ class OfferAdminComponent extends Component {
                         label: user.name + " (" + user.email + ")"
                     }))
                 }
-            />
+            /> */}
             </div>
         </div>
 
@@ -334,6 +368,7 @@ class OfferAdminComponent extends Component {
                     }
                     {offerEditorVisible && this.renderOfferEditor()}
                 </div>
+                <ReactToolTip id="tooltip" type="info" place="right" effect="solid" />
             </div>
         );
     }   
