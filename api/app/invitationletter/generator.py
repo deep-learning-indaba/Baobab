@@ -1,6 +1,7 @@
 from app import LOGGER
 from config import GCP_CREDENTIALS_DICT, GCP_PROJECT_NAME
 from google.cloud import storage
+from google.auth.transport.requests import Request
 from app.utils import emailer
 from app.events.models import Event
 from app import db
@@ -44,10 +45,20 @@ def check_values(template_path, event_id, work_address, addressed_to, residentia
     assert expiry_date is not None and isinstance(expiry_date, string_types) 
 
 
+def get_default_credentials():
+    credentials, _ = default(scopes=SCOPES)
+    
+    # If credentials are not valid, refresh them
+    if not credentials.valid:
+        request = Request()
+        credentials.refresh(request)
+    
+    return credentials
+
 def _create_doc_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
         # Running on GCP, use App Engine credentials
-        credentials, _ = default()
+        credentials = get_default_credentials()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
@@ -62,7 +73,7 @@ def _create_doc_service():
 def _create_drive_service():
     if GCP_CREDENTIALS_DICT['private_key'] == 'dummy':
         # Running on GCP, use App Engine credentials
-        credentials, _ = default()
+        credentials = get_default_credentials()
     else:
         # Create credentials to access from anywhere
         private_key = GCP_CREDENTIALS_DICT['private_key'].replace('\\n', '\n')
