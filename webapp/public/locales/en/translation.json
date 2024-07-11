@@ -313,6 +313,9 @@
     "Enter File Name": "Enter File Name",
     "Edit Name": "Edit Name",
     "Delete": "Delete",
+    "Deleted": "Deleted",
+    "Removed": "Removed",
+    "from the guest list": "from the guest list",
     "Response List": "Response List",
     "Questions": "Questions",
     "questions": "questions",
@@ -579,5 +582,6 @@
     "Mark Paid": "Mark Paid",
     "confirmInvoicePaid": "Are you sure you want to mark invoice {{selectedInvoiceNumber}} as paid?",
     "confirmInvoiceCancel": "Are you sure you want cancel invoice {{selectedInvoiceNumber}}?",
-    "You have paid your registration fee, thank you": "You have paid your registration fee, thank you"
+    "You have paid your registration fee, thank you": "You have paid your registration fee, thank you",
+    "Remove Guest": "Remove Guest"
 }

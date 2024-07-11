@@ -186,7 +186,19 @@ class InvitedGuests extends Component {
         showErrors: false,
         adding: false
       }, this.getGuestList);
-    } else if (response.msg === "404") {
+    }
+    else if (response.msg === "deleted") {
+      this.setState({
+        addedSucess: true,
+        conflict: false,
+        notFound: false,
+        successMessage: this.props.t("Removed") + " " + response.response.data.fullname + " " + this.props.t("from the guest list"),
+        user: {},
+        showErrors: false,
+        adding: false
+      }, this.getGuestList);
+    }
+    else if (response.msg === "404") {
       this.setState({
         addedSucess: false,
         notFound: true,
@@ -227,6 +239,20 @@ class InvitedGuests extends Component {
           this.state.user.role)
         .then(resp => this.handleResponse(resp));
     });
+  }
+
+  buttonRemoveGuest() {
+    let errors = this.state.errors;
+    if (errors && errors.$set && errors.$set.length > 0) {
+      this.setState({ showErrors: true });
+      return;
+    }
+
+    invitedGuestServices
+      .removeInvitedGuest(this.state.user.email,
+        this.props.event ? this.props.event.id : 0,
+        this.state.user.role)
+      .then(resp => this.handleResponse(resp));
   }
 
   submitCreate = () => {
@@ -377,6 +403,15 @@ class InvitedGuests extends Component {
         <i className="fa fa-plus-circle add-tag" onClick={() => this.addTag(props.original)}></i>
       </div>,
       accessor: u => u.tags.map(t => t.name).join("; ")
+    }, {
+      id: "delete_user",
+      Header: <div className="invitedguest-remove">{t("Remove Guest")}</div>,
+      Cell: props => <button
+          className="pull-left link-style"
+          onClick={() => this.buttonRemoveGuest()}>
+          {t("Remove Guest")}
+          </button>,
+      accessor: u => u.user
     }];
 
     return (

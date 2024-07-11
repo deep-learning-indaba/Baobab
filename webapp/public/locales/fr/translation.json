@@ -313,6 +313,9 @@
     "Enter File Name": "Entrez le nom du fichier",
     "Edit Name": "Modifier le nom",
     "Delete": "Supprimer",
+    "Deleted": "Supprimé",
+    "Removed": "Supprimé",
+    "from the guest list": "de la liste des invités",
     "Response List": "Liste de réponse",
     "Questions": "Des questions",
     "questions": "des questions",
@@ -578,6 +581,7 @@
     "Mark Paid": "Marquer comme payé",
     "confirmInvoicePaid": "Êtes-vous sûr de vouloir marquer la facture {{selectedInvoiceNumber}} comme payée?",
     "confirmInvoiceCancel": "Êtes-vous sûr de vouloir annuler la facture {{selectedInvoiceNumber}}?",
-    "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci."
+    "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci.",
+    "Remove Guest": "Supprimer un invité"
 }
 
