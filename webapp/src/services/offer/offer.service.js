@@ -7,7 +7,8 @@ export const offerServices = {
     getOffer,
     addOffer,
     updateOffer,
-    getOfferList
+    getOfferList,
+    updateOfferAdmin
 }
 
 function getOffer(event_id){
@@ -88,6 +89,24 @@ function updateOffer(offer_id, event_id, candidate_response, rejected_reason, gr
                   : error.message
             };
           });     
+}
+
+function updateOfferAdmin(offer) {
+  return axios
+    .put(baseUrl + "/api/v1/offerAdmin", offer, { headers: authHeader() })
+    .then((response) => {
+        return {
+          message: "succeeded",
+          response: response
+        }
+    })
+    .catch((error) => {
+        return {
+          message: null,
+          error: extractErrorMessage(error)
+        }
+    });
+
 }
 
 function getOfferList(eventId) {

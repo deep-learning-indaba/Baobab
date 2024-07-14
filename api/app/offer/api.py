@@ -4,7 +4,7 @@ from app.offer.mixins import OfferTagMixin, OfferMixin
 from app.utils.auth import verify_token
 import traceback
 from flask import g, request
-from flask_restful import  fields, marshal_with
+from flask_restful import  fields, marshal_with, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 from app.events.models import Event
 from app.tags.models import Tag, TagType
@@ -303,3 +303,23 @@ class OfferListAPI(restful.Resource):
     def get(self, event_id):
         offers = offer_repository.get_all_offers_for_event(event_id)
         return [offer_info(offer) for offer in offers], 200
+    
+
+class OfferAdminAPI(restful.Resource):
+
+    @event_admin_required
+    def put(self, event_id):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('id', type=int, required=True)
+        req_parser.add_argument('expiry_date', type=str, required=True)
+        args = req_parser.parse_args()
+
+        offer = offer_repository.get_by_id(args['id'])
+        if offer.event_id != event_id:
+            return errors.OFFER_NOT_FOUND
+        
+        expiry_date = datetime.strptime(args['expiry_date'], '%Y-%m-%d')
+        expiry_date = expiry_date.replace(hour=23, minute=59, second=59)
+        offer.expiry_date = expiry_date
+        db.session.commit()
+        return offer_info(offer), 200

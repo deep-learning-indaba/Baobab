@@ -54,6 +54,7 @@ class FormDate extends React.Component {
             onChange={this.onChange}
             value={this.props.value ? new Date(this.props.value) : null}
             format="y-MM-dd"
+            disabled={this.props.disabled}
           />
 
         </FormGroup>

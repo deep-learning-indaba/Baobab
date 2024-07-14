@@ -9,6 +9,7 @@ import FormTextBox from "../../../components/form/FormTextBox";
 import FormTextArea from "../../../components/form/FormTextArea";
 import FormSelect from "../../../components/form/FormSelect";
 import ReactToolTip from "react-tooltip";
+import FormDate from "../../../components/form/FormDate";
 
 /*
 TODO:
@@ -38,7 +39,8 @@ class OfferAdminComponent extends Component {
             selectedOffer: null,
             users: [],
             errors: [],
-            isValid: true
+            isValid: true,
+            updated: false
         };
     }
 
@@ -127,7 +129,7 @@ class OfferAdminComponent extends Component {
         if (props.original.payment_required === true) {
             return <span>
                 {props.original.payment_amount} {this.props.organisation.iso_currency_code === "None" ? "" : this.props.organisation.iso_currency_code} 
-                {this.props.original.is_paid ? <span className="badge badge-success">Paid</span> : ""}
+                {props.original.is_paid ? <span className="badge badge-success">Paid</span> : ""}
                 </span>;
         }
         else {
@@ -213,6 +215,14 @@ class OfferAdminComponent extends Component {
         });
     };
 
+    setOfferExpiry = (expiry_date) => {
+        const u = {
+            ...this.state.selectedOffer,
+            expiry_date: expiry_date
+        };
+        this.updateState(u);
+    }
+
     updateDropDown = (fieldName, dropdown) => {
         const u = {
           ...this.state.updatedTag,
@@ -225,9 +235,28 @@ class OfferAdminComponent extends Component {
         return [];
     }
 
+    saveOffer = () => {
+        const { selectedOffer } = this.state;
+        offerServices.updateOfferAdmin(selectedOffer).then(response => {
+            if (response.error) {
+                this.setState({
+                    error: response.error
+                });
+            }
+            else {
+                this.setState({
+                    offerEditorVisible: false,
+                    updated: false,
+                    offers: this.state.offers.map(o => o.id === selectedOffer.id ? selectedOffer : o)
+                });
+            }
+        });
+    }
+
     updateState = (offer) => {
         this.setState({
-            updatedOffer: offer
+            selectedOffer: offer,
+            updated: true
         }, () => {
             const errors = this.validateOfferDetails();
 
@@ -240,7 +269,39 @@ class OfferAdminComponent extends Component {
 
     renderOfferEditor = () => {
         const t = this.props.t;
-        
+        const { selectedOffer } = this.state;
+        return <div className="card no-padding-h">
+            <p className="h4 text-center mb-4">{t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}</p>
+            <div className="form-group row">
+                <label
+                    className="col-sm-2 col-form-label">
+                    {t("Offer Date")}
+                </label>
+                <div className="col-sm-10">
+                <FormDate id="expiry_date" value={selectedOffer.offer_date} fieldName="expiry_date" disabled={true}/>
+                </div>
+            </div>
+            <div className="form-group row">
+                <label
+                    className="col-sm-2 col-form-label"
+                    html-for="expiry_date">
+                    {t("Expiry Date")}
+                </label>
+                <div className="col-sm-10">
+                    <FormDate id="expiry_date" value={selectedOffer.expiry_date} onChange={this.setOfferExpiry} fieldName="expiry_date" />
+                </div>
+            </div>
+            <div className="form-group row">
+                <div className="col-sm">
+                    <button 
+                        className="btn btn-primary float-right margin-top-10px" 
+                        onClick={() => this.saveOffer()}
+                        disabled={!this.state.isValid || !this.state.updated}>
+                            {t("Save")}
+                    </button>
+                </div>
+            </div>
+        </div>
     }
 
     render() {
@@ -276,8 +337,8 @@ class OfferAdminComponent extends Component {
                         </button>
                         </div>
                     }
-                    {offerEditorVisible && this.renderOfferEditor()}
                 </div>
+                {offerEditorVisible && this.renderOfferEditor()}
                 <ReactToolTip id="tooltip" type="info" place="right" effect="solid" />
             </div>
         );
