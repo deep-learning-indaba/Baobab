@@ -578,6 +578,7 @@
     "Mark Paid": "Marquer comme payé",
     "confirmInvoicePaid": "Êtes-vous sûr de vouloir marquer la facture {{selectedInvoiceNumber}} comme payée?",
     "confirmInvoiceCancel": "Êtes-vous sûr de vouloir annuler la facture {{selectedInvoiceNumber}}?",
-    "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci."
+    "You have paid your registration fee, thank you": "Vous avez payé vos frais d'inscription, merci.",
+    "Offer for": "Offre pour"
 }
 
