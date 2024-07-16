@@ -17,7 +17,7 @@ TODO:
 - Add a new offer
 - Edit an existing offer (including tags)
 - Delete an existing offer
-- Extend an offer
+- Extend an offer  - DONE 
 - Filter offers by candidate response
 - Filter offers by tags
 - Filter offers by expiry
@@ -35,12 +35,15 @@ class OfferAdminComponent extends Component {
             loading: true,
             error: "",
             offers: [],
+            filteredOffers: [],
             offerEditorVisible: false,
             selectedOffer: null,
             users: [],
             errors: [],
             isValid: true,
-            updated: false
+            updated: false,
+            search: "",
+            selectedResponseFilter: "all"
         };
     }
 
@@ -54,6 +57,7 @@ class OfferAdminComponent extends Component {
             this.setState({
                 loading: false,
                 offers: offers,
+                filteredOffers: offers,
                 error: offerResponse.error //|| responseResponse.error,
                 // users: (responseResponse.responses || [])
                 //     .filter(r => !offerUsers.includes(r.user_id))
@@ -267,11 +271,50 @@ class OfferAdminComponent extends Component {
         });
     }
 
+    updateSearch = (event) => {
+        const search = event.target.value;
+        this.setState({
+            search: search,
+            filteredOffers: this.state.offers.filter(o => o.firstname.toLowerCase().includes(search.toLowerCase()) || o.lastname.toLowerCase().includes(search.toLowerCase()) || o.email.toLowerCase().includes(search.toLowerCase()))
+        });
+    }
+
+    getCandidateResponseOptions = () => {
+        return [{ value: "all", label: this.props.t("All") }, 
+                { value: "true", label: this.props.t("Accepted") }, 
+                { value: "false", label: this.props.t("Rejected") },
+                { value: "null", label: this.props.t("No Response") }];
+    }
+
+    updateResponseFilter = (id, selected) => {
+        const selectedResponseFilter = selected.value;
+        let filteredOffers = this.state.offers;
+
+        if (selectedResponseFilter === "true") {
+            filteredOffers = this.state.offers.filter(o => o.candidate_response === true);
+        }
+        else if (selectedResponseFilter === "false") {
+            filteredOffers = this.state.offers.filter(o => o.candidate_response === false);
+        }
+        else if (selectedResponseFilter === "null") {
+            filteredOffers = this.state.offers.filter(o => o.candidate_response === null);
+        }
+
+        this.setState({
+            selectedResponseFilter: selectedResponseFilter,
+            filteredOffers: filteredOffers
+        });
+    }
+
     renderOfferEditor = () => {
         const t = this.props.t;
         const { selectedOffer } = this.state;
         return <div className="card no-padding-h">
-            <p className="h4 text-center mb-4">{t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}</p>
+            <p className="h4 text-center mb-4">
+                {t("Offer for")} {selectedOffer.user_title + " " + selectedOffer.firstname + " " + selectedOffer.lastname}
+                <span className="float-right small status-badge">{this.statusCell({original: selectedOffer})}</span>
+            </p>
+            
             <div className="form-group row">
                 <label
                     className="col-sm-2 col-form-label">
@@ -292,6 +335,61 @@ class OfferAdminComponent extends Component {
                 </div>
             </div>
             <div className="form-group row">
+                <label
+                    className="col-sm-2 col-form-label"
+                    html-for="expiry_date">
+                    {t("Tags")}
+                </label>
+                <div className="col-sm-10">
+                    {selectedOffer.tags.map(t => 
+                    <span className="tag badge badge-primary" key={`tag_${selectedOffer.response_id}_${t.id}`}>{t.name}</span>)}
+                </div>
+            </div>
+            <div className="form-group row">
+                <label
+                    className="col-sm-2 col-form-label"
+                    html-for="expiry_date">
+                    {t("Response")}
+                </label>
+                <div className="col-sm-10">
+                    {this.candidateResponseCell({original: selectedOffer})}
+                </div>
+            </div>
+            {selectedOffer.response_date &&
+                <div className="form-group row">
+                    <label
+                        className="col-sm-2 col-form-label"
+                        html-for="expiry_date">
+                        {t("Responded At")}
+                    </label>
+                    <div className="col-sm-10">
+                        {selectedOffer.response_date}
+                    </div>
+                </div>
+            }
+            {selectedOffer.candidate_response === false &&
+                <div className="form-group row">
+                    <label
+                        className="col-sm-2 col-form-label"
+                        html-for="expiry_date">
+                        {t("Rejected Reason")}
+                    </label>
+                    <div className="col-sm-10">
+                        {selectedOffer.rejected_reason}
+                    </div>
+                </div>
+            }
+            <div className="form-group row">
+                <label
+                    className="col-sm-2 col-form-label"
+                    html-for="expiry_date">
+                    {t("Payment")}
+                </label>
+                <div className="col-sm-10">
+                    {this.paymentCell({original: selectedOffer})}  
+                </div>
+            </div>
+            <div className="form-group row">
                 <div className="col-sm">
                     <button 
                         className="btn btn-primary float-right margin-top-10px" 
@@ -301,13 +399,13 @@ class OfferAdminComponent extends Component {
                     </button>
                 </div>
             </div>
+            
         </div>
     }
 
     render() {
         const { t } = this.props;
-        const { loading, error, offers, offerEditorVisible } = this.state;
-        console.log(offers);
+        const { loading, error, filteredOffers, offerEditorVisible } = this.state;
 
         if (loading) { return <Loading />; }
 
@@ -320,15 +418,39 @@ class OfferAdminComponent extends Component {
 
                 <div className="card no-padding-h">
                     <p className="h4 text-center mb-4">{t("Offers")}</p>
+
+                    <div className="row">
+                        <div className="col-sm-6">
+                            <FormTextBox
+                                id="s"
+                                type="text"
+                                placeholder={t("Search")}
+                                onChange={this.updateSearch}
+                                label={t("Filter by name or email")}
+                                name=""
+                                value={this.state.search} />
+                        </div>
+                        <div className="col-sm-6">
+                            <FormSelect
+                                options={this.getCandidateResponseOptions()}
+                                id="candidateResponseFilter"
+                                placeholder={t("Candidate Response")}
+                                onChange={this.updateResponseFilter}
+                                label={t("Filter by candidate response")}
+                                defaultValue={this.state.selectedResponseFilter || "all"}
+                                value={this.state.selectedResponseFilter || "all"} />
+                        </div>
+                    </div>
+
                     <div className="react-table">
                         <ReactTable
                             className="ReactTable"
-                            data={offers}
+                            data={filteredOffers}
                             columns={this.getTableColumns()}
                             minRows={0}
                         />
                     </div>
-                    {!offerEditorVisible && 
+                    {/* {!offerEditorVisible && 
                         <div className={"row-mb-3"}>
                         <button
                             onClick={() => this.setOfferEditorVisible()}
@@ -336,7 +458,7 @@ class OfferAdminComponent extends Component {
                             {t("New Offer")}
                         </button>
                         </div>
-                    }
+                    } */}
                 </div>
                 {offerEditorVisible && this.renderOfferEditor()}
                 <ReactToolTip id="tooltip" type="info" place="right" effect="solid" />
