@@ -320,6 +320,6 @@ class OfferAdminAPI(restful.Resource):
         
         expiry_date = datetime.strptime(args['expiry_date'], '%Y-%m-%d')
         expiry_date = expiry_date.replace(hour=23, minute=59, second=59)
-        offer.expiry_date = expiry_date
+        offer.update_expiry_date(expiry_date)
         db.session.commit()
         return offer_info(offer), 200

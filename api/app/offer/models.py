@@ -60,6 +60,12 @@ class Offer(db.Model):
         if len(valid_invoices) == 0:
             return None
         return valid_invoices[0].invoice_number
+    
+    def update_expiry_date(self, new_expiry_date):
+        self.expiry_date = new_expiry_date
+        for invoice in self.get_valid_invoices():
+            if invoice.current_payment_status.payment_status == PaymentStatus.UNPAID.value or invoice.current_payment_status.payment_status == PaymentStatus.FAILED.value:
+                invoice.due_date = new_expiry_date
 
 
 class OfferTag(db.Model):
