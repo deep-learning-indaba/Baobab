@@ -27,7 +27,9 @@ const roleOptions = [
   { value: "Workshop Organiser", label: "Workshop Organiser" },
   { value: "Volunteer", label: "Volunteer" },
   { value: "One day pass", label: "One day pass"},
-  { value: "Two day pass", label: "Two day pass"}
+  { value: "Two day pass", label: "Two day pass"},
+  { value: "Workshop Speaker", label: "Workshop Speaker"}
+
 ];
 
 function getRoles() {
