@@ -23,7 +23,7 @@ import Offer from "../offer";
 import OfferAdmin from "../offerAdmin";
 import { InvoiceAdminList } from "../invoices";
 import EventStatus from "../../components/EventStatus";
-import { isEventAdmin } from "../../utils/user";
+import { isEventAdmin, isEventResponseEditorOnly, isEventResponseViewerOnly} from "../../utils/user";
 import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
@@ -48,7 +48,7 @@ class EventInfo extends Component {
       <div className="event-home">
         <h2>{event.description}</h2>
         <EventStatus longForm={true} event={event} />
-        {isEventAdmin(this.props.user, this.props.event) 
+        {isEventAdmin(this.props.user, this.props.event)
         && <EventStats event={this.props.event}/>}
       </div>
     );
@@ -127,159 +127,200 @@ class EventHome extends Component {
       );
     }
 
-    return (
-      <div>
-        <Route
-          exact
-          path={`${match.path}/`}
-          render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
-        />
-        <Route
-          exact
-          path={`${match.path}/responseList`}
-          render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
-        />
-        <Route
-          exact
-          path={`${match.path}/reviewDashboard`}
-          render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
-        />
-        <Route
-          exact
-          path={`${match.path}/invitationLetter`}
-          render={(props) => <InvitedLetter {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/apply`}
-          render={(props) => <Application {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/apply/new`}
-          render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
-        />
-        <Route
-        exact
-          path={`${match.path}/eventAttendance`}
-          render={(props) => <Attendance {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/eventConfig`}
-          render={(props) => <EventConfig {...props} event={event} organisation={this.props.organisation} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/tagConfig`}
-          render={(props) => <TagConfig {...props} event={event} organisation={this.props.organisation} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/eventStats`}
-          render={(props) => <EventStats {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/reviewAssignment`}
-          render={(props) => <ReviewAssignment {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/reviewHistory`}
-          render={(props) => <ReviewHistory {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/invitedGuests`}
-          render={(props) => <InvitedGuests {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/invitedGuests/create`}
-          render={(props) => <CreateInvitedGuests {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/review`}
-          render={(props) => <Review {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/review/:id`}
-          render={(props) => <Review {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/reviewlist`}
-          render={(props) => <ReviewList {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/profile-list`}
-          render={(props) => <ProfileList {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/offer`}
-          render={(props) => <Offer {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/registration`}
-          render={(props) => <Registration {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/viewprofile/:id`}
-          render={(props) => <ViewProfile {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/registrationAdmin`}
-          render={(props) => <RegistrationAdmin {...props} event={event} />}
-        />
+    if (!isEventResponseViewerOnly(this.props.user, this.props.event) && !isEventResponseEditorOnly(this.props.user, this.props.event)) {
+      return (
+        <div>
+          <Route
+            exact
+            path={`${match.path}/`}
+            render={(props) => <EventInfo {...props} event={event} user={this.props.user}/>}
+          />
+          <Route
+            exact
+            path={`${match.path}/responseList`}
+            render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewDashboard`}
+            render={(props) => <ReviewDashboard {...props} event={event} user={this.props.user}/>}
+          />
+          <Route
+            exact
+            path={`${match.path}/invitationLetter`}
+            render={(props) => <InvitedLetter {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/apply`}
+            render={(props) => <Application {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/apply/new`}
+            render={(props) => <Application {...props} event={event} journalSubmissionFlag={true} /> }
+          />
           <Route
           exact
-          path={`${match.path}/responsePage/:id`}
-          render={(props) => <ResponsePage {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/applicationform`}
-          render={(props) => <ApplicationFormSetting
-            {...props}
-            event={event}
-            languages={organisation && organisation.languages}
-            />}
-        />
-        <Route
-          exact
-          path={`${match.path}/reviewForm`}
-          render={(props) => <ReviewForm
-            {...props}
-            event={event}
-            languages={organisation && organisation.languages}
-            />}
-        />
-        <Route
-          exact
-          path={`${match.path}/invoices-admin`}
-          render={(props) => <InvoiceAdminList {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/indemnity`}
-          render={(props) => <Indemnity {...props} event={event} />}
-        />
-        <Route
-          exact
-          path={`${match.path}/offerAdmin`}
-          render={(props) => <OfferAdmin {...props} event={event} organisation={this.props.organisation}/>}
-        />
+            path={`${match.path}/eventAttendance`}
+            render={(props) => <Attendance {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/eventConfig`}
+            render={(props) => <EventConfig {...props} event={event} organisation={this.props.organisation} user={this.props.user}/>}
+          />
+          <Route
+            exact
+            path={`${match.path}/tagConfig`}
+            render={(props) => <TagConfig {...props} event={event} organisation={this.props.organisation} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/eventStats`}
+            render={(props) => <EventStats {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewAssignment`}
+            render={(props) => <ReviewAssignment {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewHistory`}
+            render={(props) => <ReviewHistory {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/invitedGuests`}
+            render={(props) => <InvitedGuests {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/invitedGuests/create`}
+            render={(props) => <CreateInvitedGuests {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/review`}
+            render={(props) => <Review {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/review/:id`}
+            render={(props) => <Review {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewlist`}
+            render={(props) => <ReviewList {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/profile-list`}
+            render={(props) => <ProfileList {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/offer`}
+            render={(props) => <Offer {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/registration`}
+            render={(props) => <Registration {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/viewprofile/:id`}
+            render={(props) => <ViewProfile {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/registrationAdmin`}
+            render={(props) => <RegistrationAdmin {...props} event={event} />}
+          />
+            <Route
+            exact
+            path={`${match.path}/responsePage/:id`}
+            render={(props) => <ResponsePage {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/applicationform`}
+            render={(props) => <ApplicationFormSetting
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+              />}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewForm`}
+            render={(props) => <ReviewForm
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+              />}
+          />
+          <Route
+            exact
+            path={`${match.path}/indemnity`}
+            render={(props) => <Indemnity {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/offerAdmin`}
+            render={(props) => <OfferAdmin {...props} event={event} organisation={this.props.organisation}/>}
+          />
 
-      </div>
-    );
+        </div>
+      );
+    }
+    else{
+      return (
+        <div>
+          <Route
+            exact
+            path={`${match.path}/responsePage/:id`}
+            render={(props) => <ResponsePage {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/applicationform`}
+            render={(props) => <ApplicationFormSetting
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+              />}
+          />
+          <Route
+            exact
+            path={`${match.path}/reviewForm`}
+            render={(props) => <ReviewForm
+              {...props}
+              event={event}
+              languages={organisation && organisation.languages}
+              />}
+          />
+          <Route
+            exact
+            path={`${match.path}/invoices-admin`}
+            render={(props) => <InvoiceAdminList {...props} event={event} />}
+          />
+          <Route
+            exact
+            path={`${match.path}/indemnity`}
+            render={(props) => <Indemnity {...props} event={event} />}
+          />
+          <Route
+              exact
+              path={`${match.path}/`}
+              render={(props) => <ResponseList {...props} event={event} user={this.props.user}/>}
+          />
+        </div>
+      );
+    }
   }
 }
 

@@ -11,6 +11,30 @@ export const isEventAdmin = (user, event) => {
     );
   };
 
+  export const isEventResponseViewerOnly = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "response-viewer" && event && r.event_id === event.id
+        ))
+    );
+  };
+
+  export const isEventResponseEditorOnly = (user, event) => {
+    if (!user) {
+      return false;
+    }
+    return (
+      (user.roles &&
+        user.roles.some(
+          r => r.role === "response-editor" && event && r.event_id === event.id
+        ))
+    );
+  };
+
   export const isRegistrationAdmin = (user, event) => {
     if (!user) {
       return false;

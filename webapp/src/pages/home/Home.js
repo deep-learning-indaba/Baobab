@@ -5,6 +5,7 @@ import { eventService } from "../../services/events/events.service";
 import { organisationService } from "../../services/organisation/organisation.service";
 import EventStatus from "../../components/EventStatus";
 import { withTranslation } from 'react-i18next';
+import { isEventResponseEditorOnly, isEventResponseViewerOnly, isEventReadOnly } from '../../utils/user';
 
 class Home extends Component {
 
@@ -15,6 +16,7 @@ class Home extends Component {
             awards: null,
             journals: null,
             organisation: null,
+            event: null,
             errors: []
         }
     }
@@ -37,7 +39,8 @@ class Home extends Component {
                         journals: response.events.filter(e => e.event_type === 'JOURNAL'),
                         calls: response.events.filter(e => e.event_type === "CALL"  && (e.is_event_opening || e.is_event_open)),
                         programmes: response.events.filter(e => e.event_type === "PROGRAMME"  && (e.is_event_opening || e.is_event_open)),
-                        attended: response.events.filter(e => !e.is_event_opening)
+                        attended: response.events.filter(e => !e.is_event_opening),
+                        event: response.events
                     });
                 }
             });
@@ -63,12 +66,15 @@ class Home extends Component {
     }
 
     statusDisplay(e) {
-        if (e.event_type === 'JOURNAL') {
-           return <EventStatus longForm={false} submissionLink={true} event={e} />;
+        if (!isEventResponseViewerOnly(this.props.user, e) &&
+        !isEventResponseEditorOnly(this.props.user, e)) {
+            if (e.event_type === 'JOURNAL') {
+            return <EventStatus longForm={false} submissionLink={true} event={e} />;
+            }
+            else {
+                return <EventStatus longForm={false} event={e} />;
+            }
         }
-        else {
-            return <EventStatus longForm={false} event={e} />;
-         }
     }
 
     dateDisplay = (e) => {
@@ -114,7 +120,7 @@ class Home extends Component {
         if (this.state.organisation && this.state.organisation.name === "AI4D Africa" && this.props.i18n.language === "fr") {
             logo = "ai4d_logo_fr.png";
         }
-
+        
         return (
             <div>
                 <div>
@@ -131,8 +137,10 @@ class Home extends Component {
                     </div>
                 }
 
-                {this.props.user && this.props.user.is_admin &&
-                    <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
+                {!isEventResponseEditorOnly(this.props.user, this.state.event) &&
+                !isEventResponseViewerOnly(this.props.user, this.state.event) &&
+                this.props.user && this.props.user.is_admin && 
+                <a href="../eventConfig" id="new_event_button" name="new_event_button" className="btn btn-primary">{this.props.t("Create New Event")}</a>
                 }
 
                 {this.renderEventTable(this.state.upcomingEvents, "Upcoming Events")}

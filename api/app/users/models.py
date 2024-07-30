@@ -62,6 +62,7 @@ class AppUser(db.Model, UserMixin):
         self.deleted_datetime_utc = None
         self.verified_email = False
         self.agree_to_policy()
+        
 
     @property
     def full_name(self):
@@ -103,7 +104,25 @@ class AppUser(db.Model, UserMixin):
                 return True
         
         return False
+    
+    def _has_read_only_role(self, event_id):
+        if self.event_roles is None:
+            return False
+        for event_role in self.event_roles:
+            if self.is_admin and event_role.event_id == event_id and (event_role.role == "read_only" or event_role.role == "response_viewer" or event_role.role == "response_editor"):
+                return True
+        
+        return False
 
+    def is_event_admin(self, event_id):
+        return self._has_admin_role(event_id, 'admin')
+    
+    def is_event_response_viewer(self, event_id):
+        return self._has_read_only_role(event_id, 'response_viewer')
+    
+    def is_event_response_editor(self, event_id):
+        return self._has_read_only_role(event_id, 'response_editor')
+    
     def is_event_admin(self, event_id):
         return self._has_admin_role(event_id, 'admin')
 
