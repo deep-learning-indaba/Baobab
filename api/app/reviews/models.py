@@ -19,6 +19,8 @@ class ReviewForm(db.Model):
     def __init__(self, application_form_id, deadline, stage, active):
         self.application_form_id = application_form_id
         self.is_open = True
+        if deadline == None:
+            deadline = datetime.strptime("2099-12-31 00:00:00", "%Y-%m-%d %H:%M:%S")
         self.deadline = deadline
         self.stage = stage
         self.active = active
