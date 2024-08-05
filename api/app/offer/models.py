@@ -44,8 +44,13 @@ class Offer(db.Model):
     
     @property
     def is_paid(self):
-        valid_invoices = self.get_valid_invoices()
-        return all(invoice.current_payment_status.payment_status == PaymentStatus.PAID.value for invoice in valid_invoices)
+        if not self.payment_required:
+            return True
+        else:
+            valid_invoices = self.get_valid_invoices()
+            if not valid_invoices:
+                return False
+            return all(invoice.current_payment_status.payment_status == PaymentStatus.PAID.value for invoice in valid_invoices)
     
     @property
     def invoice_id(self):
