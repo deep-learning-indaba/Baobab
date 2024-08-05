@@ -44,7 +44,7 @@ class Offer(db.Model):
     
     @property
     def is_paid(self):
-        if not self.payment_required:
+        if not bool(self.payment_required):
             return True
         else:
             valid_invoices = self.get_valid_invoices()
