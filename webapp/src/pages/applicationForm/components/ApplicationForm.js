@@ -1040,7 +1040,13 @@ class ApplicationListComponent extends Component {
 
   getAction = (response) => {
     if (response.is_submitted) {
-      return <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
+      return (
+        <div style={{ display: 'flex', gap: '5px' }}>
+          <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => window.location.href = "/"}>{this.props.t("Reviews")}</button>
+        </div>
+      );
+  
     }
     else {
       return <button className="btn btn-success btn-sm" onClick={() => this.props.click(response)}>{this.props.t("Continue")}</button>
