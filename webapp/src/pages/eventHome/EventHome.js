@@ -28,6 +28,7 @@ import ResponseList from "../ResponseList/ResponseList";
 import ResponsePage from "../ResponsePage/ResponsePage";
 import ReviewDashboard from "../reviewDashboard";
 import { Attendance, Indemnity } from '../attendance';
+import Rebuttals from "../ResponsePage/Rebuttals";
 
 class EventInfo extends Component {
   constructor(props) {
@@ -239,10 +240,15 @@ class EventHome extends Component {
           path={`${match.path}/registrationAdmin`}
           render={(props) => <RegistrationAdmin {...props} event={event} />}
         />
-          <Route
+        <Route
           exact
           path={`${match.path}/responsePage/:id`}
           render={(props) => <ResponsePage {...props} event={event} />}
+        />
+        <Route
+          exact
+          path={`${match.path}/rebuttals/:id`}
+          render={(props) => <ResponsePage {...props} event={event} rebuttalFlag={true}/>}
         />
         <Route
           exact

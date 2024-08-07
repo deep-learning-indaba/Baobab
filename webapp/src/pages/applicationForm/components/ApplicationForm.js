@@ -1040,10 +1040,12 @@ class ApplicationListComponent extends Component {
 
   getAction = (response) => {
     if (response.is_submitted) {
+      //const { match, organisation } = this.props;
+      const rebuttalLink = `rebuttals/${response.id}`
       return (
         <div style={{ display: 'flex', gap: '5px' }}>
           <button className="btn btn-warning btn-sm" onClick={() => this.props.click(response)}>{this.props.t("View")}</button>
-          <button className="btn btn-primary btn-sm" onClick={() => window.location.href = "/"}>{this.props.t("Reviews")}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => window.location.href = rebuttalLink}>{this.props.t("Reviews")}</button>
         </div>
       );
   

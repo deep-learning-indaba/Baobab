@@ -15,7 +15,7 @@ import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
 
-class ResponsePage extends Component {
+class Rebuttals extends Component {
     constructor(props) {
         super(props);
 
@@ -35,7 +35,6 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
-            rebuttalFlag: false
         }
     };
 
@@ -139,7 +138,6 @@ class ResponsePage extends Component {
     renderCompleteReviews(){
         if (this.state.reviewResponses.length) {
                 const reviews = this.state.reviewResponses.map(val => {
-                    if (!this.props.rebuttalFlag) {
                     return <div className="section">
                             <h4
                                 className="reviewer-section" >
@@ -147,22 +145,12 @@ class ResponsePage extends Component {
                             </h4>
                         {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
                     </div>
-                    }
-                    else {
-                        return <div className="section">
-                                <h4
-                                    className="reviewer-section" >
-                                    {this.props.t("Reviewer 1")}
-                                </h4>
-                            {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
-                        </div>
-                    }
                 });
                 return reviews
             }
     }
 
-    getOutcome() {
+    getOutcome(applicationData) {
         outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
             if (response.status === 200) {
                 const newOutcome = {
@@ -655,99 +643,10 @@ class ResponsePage extends Component {
               </div>
             );
           }
-        
-        if (!this.props.rebuttalFlag) {
-            return (
-                <div className="table-wrapper response-page">
-                    {/* API Error */}
-                    {error &&
-                        <div className="alert alert-danger" role="alert">
-                            <p>{JSON.stringify(error)}</p>
-                        </div>
-                    }
 
-                    {this.renderReviewerModal()}
-                    {this.renderDeleteTagModal()}
-                    {this.renderDeleteReviewerModal()}
-
-                    {/* Headings */}
-                    {applicationData &&
-                        <div className="headings-lower">
-                            <div className="user-details">
-                                <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
-                                <p>{t("Language")}: {applicationData.language}</p>
-                                <div className="tags">
-                                    {this.renderTags()}
-                                    <span className="btn badge badge-add" onClick={() => this.setTagSelectorVisible()}>{t("Add tag")}</span>
-
-                                </div>
-
-                            </div>
-
-                            {/* User details Right Tab */}
-                            <div>
-                                <div className="user-details right">
-                                    <label>{t('Application Status')}</label> <p>{this.applicationStatus()}</p>
-                                    <label>{t('Application Outcome')}</label> <p>{this.outcomeStatus()}</p>
-                                    <button className="btn btn-secondary" onClick={((e) => this.goBack(e))}>{t('Go Back')}</button>
-                                </div>
-
-                            </div>
-                        </div>
-                    }
-
-
-                    {/*Response Data*/}
-                    {applicationData &&
-                        <div className="response-details">
-                            {/* Reviews */}
-                            <div className="reviewers-section">
-                            <h3>{t('Reviewers')}</h3>
-                                <div className="list">
-                                    {this.renderReviews()}
-                                    <div className="add-reviewer">
-                                        <button
-                                            data-toggle="modal"
-                                            type="button"
-                                            data-target="#exampleModalReview"
-                                            className="btn btn-light">
-                                            {t("Assign Reviewer")}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="divider"></div>
-                            </div>
-
-                            {this.renderSections()}
-                            {
-                                this.state.reviewResponses.length > 0 && (
-                            <div>
-                                <div className="divider"></div>
-                                <div className="reviewers-section">
-                                <h3>{t('Reviewer Feedback')}</h3>
-                                <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
-                                {this.renderCompleteReviews()}
-                                </div>
-                            </div>
-                            
-                            )}
-                        </div>
-                    }
-
-                    <TagSelectorDialog
-                        tags={this.state.filteredTagList}
-                        visible={this.state.tagSelectorVisible}
-                        onCancel={() => this.setState({ tagSelectorVisible: false })}
-                        onSelectTag={this.onSelectTag}
-                    />
-                </div>
-            )
-        }
-        else {
-            return (
+        return (
             <div className="table-wrapper response-page">
                 {/* API Error */}
-                
                 {error &&
                     <div className="alert alert-danger" role="alert">
                         <p>{JSON.stringify(error)}</p>
@@ -757,16 +656,17 @@ class ResponsePage extends Component {
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
+
                 {/*Response Data*/}
-                {applicationData &&
-                    <div className="response-details">
+                {<div className="response-details">
+                        {/* Reviews */}
                         {this.renderSections()}
                         {
                             this.state.reviewResponses.length > 0 && (
                         <div>
                             <div className="divider"></div>
                             <div className="reviewers-section">
-                            <h3>{t('Reviewer Response')}</h3>
+                            <h3>{t('Reviewer Feedback')}</h3>
                             <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
                             {this.renderCompleteReviews()}
                             </div>
@@ -775,19 +675,16 @@ class ResponsePage extends Component {
                         )}
                     </div>
                 }
+
                 <TagSelectorDialog
                     tags={this.state.filteredTagList}
                     visible={this.state.tagSelectorVisible}
                     onCancel={() => this.setState({ tagSelectorVisible: false })}
                     onSelectTag={this.onSelectTag}
                 />
-
             </div>
-
-            )
-        }
-
+        )
     };
 };
 
-export default withTranslation()(ResponsePage);
+export default withTranslation()(Rebuttals);
