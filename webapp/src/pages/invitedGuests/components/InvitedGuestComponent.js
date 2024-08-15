@@ -153,7 +153,8 @@ class InvitedGuests extends Component {
       let passed = true;
       if (nameSearch) {
         const fullname = g.user.user_title + " " + g.user.firstname + " " + g.user.lastname;
-        passed = fullname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1;
+        passed = (fullname.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1
+          || g.user.email.toLowerCase().indexOf(nameSearch.toLowerCase()) > -1);
       }
       if (roleSearch && passed && roleSearch !== "all") {
         passed = g.role === roleSearch;
@@ -396,7 +397,7 @@ class InvitedGuests extends Component {
                 type="text"
                 placeholder="Search"
                 onChange={this.updateNameSearch}
-                label={t("Filter by name")}
+                label={t("Filter by name or email")}
                 name=""
                 value={this.state.nameSearch} />
             </div>

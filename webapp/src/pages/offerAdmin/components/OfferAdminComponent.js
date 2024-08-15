@@ -103,8 +103,13 @@ class OfferAdminComponent extends Component {
         const {t} = this.props;
         let className = "badge badge-secondary";
         let text = t("Pending");
+        
+        if (props.original.candidate_response === false)  {
+            className = "badge badge-danger";
+            text = t("Rejected");
+        }
 
-        if (props.original.is_expired === true) {
+        else if (props.original.is_expired === true) {
             className = "badge badge-danger";
             text = t("Expired");
         }
