@@ -18,7 +18,7 @@ const roleOptions = [
   { value: "Speaker", label: "Speaker" },
   { value: "Guest", label: "Guest" },
   { value: "Mentor", label: "Mentor" },
-  { value: "Friend of the Indaba", label: "Friend of the Indaba" },
+{ value: "Friend of the Indaba", label: "Friend of the Indaba" },
   { value: "Organiser", label: "Organiser" },
   { value: "Dignitary", label: "Dignitary" },
   { value: "Indaba X", label: "Indaba X" },
@@ -28,8 +28,8 @@ const roleOptions = [
   { value: "Volunteer", label: "Volunteer" },
   { value: "One day pass", label: "One day pass"},
   { value: "Two day pass", label: "Two day pass"},
-  { value: "Workshop Speaker", label: "Workshop Speaker"}
-
+  { value: "Workshop Speaker", label: "Workshop Speaker"},
+  { value: "Africa Research Day Attendee", label: "Africa Research Day Attendee"}
 ];
 
 function getRoles() {
