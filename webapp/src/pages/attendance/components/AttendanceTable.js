@@ -264,8 +264,9 @@ class AttendanceTable extends React.Component {
             <h3>
               {selectedUser.fullname}
             </h3>
+            {/* // TODO: Check */}
             {!selectedUser.confirmed && <div className="alert alert-danger">
-              !Payment Required! Please refer to special situations desk.
+              !Payment Required! Please refer to special situations desk.  
               </div>}
             <h5>
               Role:
@@ -273,7 +274,7 @@ class AttendanceTable extends React.Component {
                 {selectedUser.invitedguest_role}
               </div>
             </h5>              
-            {selectedUser.registration_metadata.map((i) => (
+            {selectedUser.registration_metadata.map((i) => (  // TODO: Replace with tags! 
               <h5>
                 {i.name} :
                 <div className="badge badge-light">
