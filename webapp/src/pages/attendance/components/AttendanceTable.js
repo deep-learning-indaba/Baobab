@@ -155,8 +155,7 @@ class AttendanceTable extends React.Component {
     let value = this.state.searchTerm;
     let filteredList = this.state.originalAttendanceList.filter(
       u =>
-        u.firstname.toLowerCase().indexOf(value) > -1 ||
-        u.lastname.toLowerCase().indexOf(value) > -1 ||
+        (u.firstname + " " + u.lastname).toLowerCase().indexOf(value) > -1 ||
         u.email.toLowerCase().indexOf(value) > -1
     );
     this.setState({ filteredList: filteredList });
