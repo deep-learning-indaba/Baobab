@@ -67,8 +67,6 @@ class AttendanceTable extends React.Component {
   }
 
   onCheckin = user => {
-    console.log("On checkin, user is: ");
-    console.log(user);
     const { eventId } = this.state;
     attendanceService.checkIn(eventId, user.id).then(result => {
       this.setState({
@@ -263,16 +261,22 @@ class AttendanceTable extends React.Component {
             <h3>
               {selectedUser.fullname}
             </h3>
-            {/* // TODO: Check */}
+
             {!selectedUser.confirmed && <div className="alert alert-danger">
-              !Payment Required! Please refer to special situations desk.  
+              UNPAID FEES - Please refer to special situations desk.  
               </div>}
             <h5>
               Role:
               <div className={this.styleFromRole(selectedUser.invitedguest_role)}>
                 {selectedUser.invitedguest_role}
               </div>
-            </h5>              
+            </h5>
+            {selectedUser.invitedguest_role === "Africa Research Day Attendee" && <h5 className="text-danger">
+              Can only check-in on Wednesday or Thursday
+            </h5>}
+            {selectedUser.invitedguest_role === "Workshop Speaker" && <h5 className="text-danger">
+              Can only check-in on Friday or Saturday
+            </h5>}
             {selectedUser.registration_metadata.map((i) => (  // TODO: Replace with tags! 
               <h5>
                 {i.name} :

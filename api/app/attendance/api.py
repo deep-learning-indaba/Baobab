@@ -103,28 +103,28 @@ class AttendanceAPI(AttendanceMixin, restful.Resource):
             invitedguest_role = invited_guest.role
             confirmed = True
         else:
-            registration = registration_response_repository.get_by_user_id(user.id, event_id)
-            confirmed = registration.confirmed if registration is not None else True
+            offer = offer_repository.get_by_user_id_for_event(user.id, event_id)
+            confirmed = offer.is_paid
             invitedguest_role = "General Attendee"
             is_invited_guest = False
         
         # collate all tags belonging to user
         # first, get all tags from registration questions
         registration_metadata = []
-        questions_with_tags = registration_form_repository.get_registration_questions_with_tags(event_id)
-        for question in questions_with_tags:
-            for question_tag in question.tags:
-                answer = _get_registration_answer(user_id, event_id, question.id, is_invited_guest)
-                registration_metadata.append({"name": question_tag.tag.stringify_tag_name(), "response": answer})
-        print(registration_metadata)
+        # questions_with_tags = registration_form_repository.get_registration_questions_with_tags(event_id)
+        # for question in questions_with_tags:
+        #     for question_tag in question.tags:
+        #         answer = _get_registration_answer(user_id, event_id, question.id, is_invited_guest)
+        #         registration_metadata.append({"name": question_tag.tag.stringify_tag_name(), "response": answer})
+        # print(registration_metadata)
 
         # second, get all tags from offers
         offer_metadata = []
-        offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
-        if offer:
-            for offer_tag in offer.offer_tags:
-                offer_metadata.append({"name": offer_tag.tag.stringify_tag_name()})    
-        print(offer_metadata)
+        # offer = offer_repository.get_by_user_id_for_event(user_id, event_id)
+        # if offer:
+        #     for offer_tag in offer.offer_tags:
+        #         offer_metadata.append({"name": offer_tag.tag.stringify_tag_name()})    
+        # print(offer_metadata)
 
         attendance_user = AttendanceUser(user, attendance, is_invitedguest=is_invited_guest, 
                                          invitedguest_role=invitedguest_role,
@@ -296,7 +296,7 @@ class GuestListApi(restful.Resource):
 
         if exclude_already_checked_in:
             checked_in = attendance_repository.get_confirmed_attendees(event_id)
-            checked_in = [u.user_id for u in checked_in]
+            checked_in = set(u.user_id for u in checked_in)
             # TODO(avishkar): Check that this scales (n^2) appropriately.
             all_attendees = [u for u in all_attendees if u.id not in checked_in]
 
