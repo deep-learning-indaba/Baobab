@@ -155,3 +155,15 @@ class ResponseTag(db.Model):
     def __init__(self, response_id, tag_id):
         self.response_id = response_id
         self.tag_id = tag_id
+
+class Comment(db.Model):
+    __tablename__ = 'comment'
+
+    id = db.Column(db.Integer, primary_key=True)
+    response_id = db.Column(db.Integer, db.ForeignKey('response.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('app_user.id'), nullable=False)
+    content = db.Column(db.Text(), nullable=False)
+    timestamp = db.Column(db.DateTime(), nullable=False, default=datetime.utcnow)
+
+    response = db.relationship('Response', foreign_keys=[response_id])
+    user = db.relationship('AppUser', foreign_keys=[user_id])

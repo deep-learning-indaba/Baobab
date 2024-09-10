@@ -7,7 +7,10 @@ export const responsesService = {
     getResponseList,
     getResponseDetail,
     tagResponse,
-    removeTag
+    removeTag,
+    getComments,
+    postComment,
+    deleteComment
 }
 
 function getResponseList(eventId, includeUnsubmitted, questionIds) {
@@ -121,6 +124,81 @@ function removeTag(responseId, tagId, eventId) {
             return{
                 error:
                     error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function getComments(eventId, responseId) {
+    return axios
+        .get(`${baseUrl}/api/v1/comments`, {
+            headers: authHeader(),
+            params: {
+                event_id: eventId,
+                response_id: responseId
+            }
+        })
+        .then(response => {
+            return {
+                comments: response.data,
+                status: response.status,
+                message: response.statusText
+            };
+        })
+        .catch(error => {
+            return {
+                comments: null,
+                error: error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function postComment(eventId, responseId, content) {
+    return axios
+        .post(`${baseUrl}/api/v1/comments`, {
+            event_id: eventId,
+            response_id: responseId,
+            content: content
+        }, {
+            headers: authHeader()
+        })
+        .then(response => {
+            return {
+                comment: response.data,
+                status: response.status,
+                message: response.statusText
+            };
+        })
+        .catch(error => {
+            return {
+                comment: null,
+                error: error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function deleteComment(commentId) {
+    return axios
+        .delete(`${baseUrl}/api/v1/comments/${commentId}`, {
+            headers: authHeader()
+        })
+        .then(response => {
+            return {
+                status: response.status,
+                message: response.statusText
+            };
+        })
+        .catch(error => {
+            return {
+                error: error.response && error.response.data
                     ? error.response.data.message
                     : error.message,
                 status: error.response && error.response.status

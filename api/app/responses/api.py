@@ -21,6 +21,8 @@ from app.users.repository import UserRepository as user_repository
 from app.utils import emailer, errors, strings, pdfconvertor, storage
 from app.utils.zipping import zip_in_memory
 from app.utils.auth import auth_required, event_admin_required
+from app.responses.models import Comment
+from app.responses.repository import CommentRepository as comment_repository
 from flask import g, send_file
 from flask_restful import fields, inputs, marshal, reqparse
 
@@ -625,4 +627,67 @@ class ResponseExportAPI(restful.Resource):
                 attachment_filename=f"response_{response.id}.zip"
             )
     
+class CommentListAPI(restful.Resource):
+    #@auth_required
+    def get(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('response_id', type=int, required=True)
+        args = req_parser.parse_args()
 
+        event_id = args['event_id']
+        response_id = args['response_id']
+
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
+            return errors.FORBIDDEN
+
+        comments = comment_repository.get_comments_for_response(response_id)
+        return marshal(comments, {
+            'id': fields.Integer,
+            'response_id': fields.Integer,
+            'user_id': fields.Integer,
+            'user_name': fields.String,
+            'content': fields.String,
+            'timestamp': fields.DateTime(dt_format='iso8601')
+        }), 200
+
+    #@auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('response_id', type=int, required=True)
+        req_parser.add_argument('content', type=str, required=True)
+        args = req_parser.parse_args()
+
+        event_id = args['event_id']
+        response_id = args['response_id']
+        content = args['content']
+
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], event_id, response_id):
+            return errors.FORBIDDEN
+
+        user = user_repository.get_by_id(g.current_user['id'])
+        comment = Comment(response_id=response_id, user_id=user.id, content=content)
+        comment = comment_repository.add_comment(comment)
+
+        return marshal(comment, {
+            'id': fields.Integer,
+            'response_id': fields.Integer,
+            'user_id': fields.Integer,
+            'user_name': fields.String(attribute=lambda x: f"{user.firstname} {user.lastname}"),
+            'content': fields.String,
+            'timestamp': fields.DateTime(dt_format='iso8601')
+        }), 201
+
+class CommentAPI(restful.Resource):
+    #@auth_required
+    def delete(self, comment_id):
+        comment = comment_repository.get_by_id(comment_id)
+        if not comment:
+            return errors.COMMENT_NOT_FOUND
+
+        if not _validate_user_admin_or_reviewer(g.current_user['id'], comment.response.event_id, comment.response_id):
+            return errors.FORBIDDEN
+
+        comment_repository.delete_comment(comment)
+        return {}, 204

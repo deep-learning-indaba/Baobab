@@ -6,7 +6,7 @@ from app.applicationModel.models import ApplicationForm, Question, Section
 from app.users.models import AppUser
 from sqlalchemy import func, cast, Date
 import itertools
-
+from app.responses.models import Comment
 
 class ResponseRepository():
 
@@ -160,3 +160,23 @@ class ResponseRepository():
                .filter_by(event_id=event_id)
                .all())
         return itertools.chain.from_iterable(ids)
+    
+class CommentRepository():
+    @staticmethod
+    def get_comments_for_response(response_id):
+        return Comment.query.filter_by(response_id=response_id).order_by(Comment.timestamp.desc()).all()
+
+    @staticmethod
+    def add_comment(comment):
+        db.session.add(comment)
+        db.session.commit()
+        return comment
+
+    @staticmethod
+    def get_by_id(comment_id):
+        return Comment.query.get(comment_id)
+
+    @staticmethod
+    def delete_comment(comment):
+        db.session.delete(comment)
+        db.session.commit()

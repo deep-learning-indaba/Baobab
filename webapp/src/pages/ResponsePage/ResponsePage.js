@@ -35,12 +35,17 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
-            rebuttalFlag: false
+            rebuttalFlag: false,
+            comments: '',
+            newComment: '',
+            comments: [],
+            pdfFile: null
         }
     };
 
     componentDidMount() {
-
+        console.log("Event:", this.props.event);
+        
         Promise.all([
             eventService.getEvent(this.props.event.id),
             applicationFormService.getForEvent(this.props.event.id),
@@ -57,13 +62,115 @@ class ResponsePage extends Component {
                 availableReviewers: responses[4].reviewers,
                 error: responses[0].error || responses[1].error || responses[2].error || responses[3].error || responses[4].error,
             }, () => {
+                this.fetchComments();
                 this.getOutcome();
                 this.getReviewResponses(responses[2].detail);
                 this.filterTagList();
             });
         });
-    };
+    }
 
+    fetchComments = () => {
+        const { event, response } = this.props;
+        if (!event || !event.id || !response || !response.id) {
+            console.error("Event or response is undefined or missing id");
+            return;
+        }
+        responsesService.getComments(event.id, response.id)
+            .then(result => {
+                if (result.comments) {
+                    this.setState({ comments: result.comments });
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching comments:", error);
+            });
+    }
+    
+    handleCommentChange = (event) => {
+        this.setState({ newComment: event.target.value });
+    }
+
+    handlePdfUpload = (event) => {
+        const file = event.target.files[0];
+        if (file && file.type === "application/pdf") {
+            this.setState({ pdfFile: URL.createObjectURL(file) });
+        } else {
+            alert("Please upload a PDF file.");
+        }
+    }
+    
+    submitComment = () => {
+        const { user } = this.props;
+        const { newComment } = this.state;
+    
+        if (newComment.trim()) {
+            const newCommentObject = {
+                id: Date.now(), // Use timestamp as a simple unique id
+                user_name: `${user.firstname} ${user.lastname}`,
+                content: newComment,
+                timestamp: new Date().toISOString()
+            };
+    
+            this.setState(prevState => ({
+                comments: [newCommentObject, ...prevState.comments],
+                newComment: ""
+            }));
+        }
+    }
+
+    renderCommentSection() {
+        const { t, response } = this.props;
+        const { newComment, comments, pdfFile } = this.state;
+        
+        return (
+            <div className="comment-section">
+                <h3>{t('Comments')}</h3>
+                <div className="comments-list">
+                    {comments.length > 0 ? (
+                        comments.map((comment) => (
+                            <div key={comment.id} className="comment">
+                                <p><strong>{comment.user_name}</strong>: {comment.content}</p>
+                                <small>{new Date(comment.timestamp).toLocaleString()}</small>
+                            </div>
+                        ))
+                    ) : (
+                        <p>{t('No comments yet.')}</p>
+                    )}
+                </div>
+                <div className="comment-input">
+                    <textarea
+                        value={newComment}
+                        onChange={this.handleCommentChange}
+                        placeholder={t('Add a comment...')}
+                    />
+                    <button onClick={this.submitComment} className="btn btn-primary">
+                        {t('Post Comment')}
+                    </button>
+                </div>
+                <div className="pdf-upload">
+                    <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={this.handlePdfUpload}
+                    />
+                    {pdfFile && (
+                        <div className="pdf-preview">
+                            <h4>{t('Uploaded PDF')}</h4>
+                            <embed
+                                src={pdfFile}
+                                type="application/pdf"
+                                width="100%"
+                                height="600px"
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    
     getReviewResponses(applicationData) {
         reviewService.getResponseReviewAdmin(applicationData.id, this.props.event.id)
             .then(resp => {
@@ -138,30 +245,39 @@ class ResponsePage extends Component {
     // Render Reviews
     renderCompleteReviews(){
         if (this.state.reviewResponses.length) {
-                const reviews = this.state.reviewResponses.map(val => {
-                    if (!this.props.rebuttalFlag) {
-                    return <div className="section">
-                            <h4
-                                className="reviewer-section" >
+            const reviews = this.state.reviewResponses.map(val => {
+                if (!this.props.rebuttalFlag) {
+                    return (
+                        <div className="section" key={val.reviewer_user_id}>
+                            <h4 className="reviewer-section">
                                 {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
                             </h4>
-                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
-                    </div>
-                    }
-                    else {
-                        return <div className="section">
-                                <h4
-                                    className="reviewer-section" >
-                                    {this.props.t("Reviewer 1")}
-                                </h4>
                             {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
                         </div>
-                    }
-                });
-                return reviews
-            }
+                    );
+                } else {
+                    return (
+                        <div className="section" key={val.reviewer_user_id}>
+                            <h4 className="reviewer-section">
+                                {this.props.t("Reviewer 1")}
+                            </h4>
+                            {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
+                        </div>
+                    );
+                }
+            });
+    
+            // Add the comment section after the reviews
+            return (
+                <div>
+                    {reviews}
+                    <div className="divider"></div>
+                    {/*{this.renderCommentSection()}*/}
+                </div>
+            );
+        }
+        return null;
     }
-
     getOutcome() {
         outcomeService.getOutcome(this.props.event.id, this.state.applicationData.user_id).then(response => {
             if (response.status === 200) {
@@ -642,7 +758,7 @@ class ResponsePage extends Component {
     }
 
     render() {
-        const { applicationData, error, isLoading } = this.state;
+        const { applicationData, error, isLoading  } = this.state;
         // Translation
         const t = this.props.t;
 
@@ -719,17 +835,16 @@ class ResponsePage extends Component {
                             </div>
 
                             {this.renderSections()}
-                            {
-                                this.state.reviewResponses.length > 0 && (
+                            {this.state.reviewResponses.length > 0 && (
                             <div>
                                 <div className="divider"></div>
                                 <div className="reviewers-section">
                                 <h3>{t('Reviewer Feedback')}</h3>
                                 <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
-                                {this.renderCompleteReviews()}
+                                    {this.renderCompleteReviews()}
+                                    {this.renderCommentSection()}
+                                    </div>
                                 </div>
-                            </div>
-                            
                             )}
                         </div>
                     }
@@ -768,10 +883,10 @@ class ResponsePage extends Component {
                             <div className="reviewers-section">
                             <h3>{t('Reviewer Response')}</h3>
                             <h6>{t('Only feedback for the active review stage is shown below.')}</h6>
-                            {this.renderCompleteReviews()}
+                                {this.renderCompleteReviews()}
+                                {this.renderCommentSection()}
+                                </div>
                             </div>
-                        </div>
-                        
                         )}
                     </div>
                 }

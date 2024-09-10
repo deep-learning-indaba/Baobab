@@ -248,7 +248,7 @@ class EventHome extends Component {
         <Route
           exact
           path={`${match.path}/rebuttals/:id`}
-          render={(props) => <ResponsePage {...props} event={event} rebuttalFlag={true}/>}
+          render={(props) => <ResponsePage {...props} event={event} rebuttalFlag={true} user={this.props.user}/>}
         />
         <Route
           exact

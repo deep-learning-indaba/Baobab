@@ -45,6 +45,45 @@
     justify-content: center;
 }
 
+.comment-section {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.comment-input {
+    margin-bottom: 20px;
+}
+
+.comment-input textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.comments-list {
+    margin-top: 20px;
+}
+
+.comment {
+    background-color: white;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.pdf-upload {
+    margin-top: 20px;
+}
+
+.pdf-preview {
+    margin-top: 20px;
+}
+
+.pdf-preview h4 {
+    margin-bottom: 10px;
+}
 
 /* General and  User Details Heading */
 .headings-lower {
