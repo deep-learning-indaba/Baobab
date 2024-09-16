@@ -9,6 +9,7 @@ class Status(Enum):
     REVIEW = "in review"
     ACCEPT_W_REVISION = "accept with minor revision"
     REJECT_W_ENCOURAGEMENT = "reject with encouragement to resubmit"
+    DESK_REJECTED = "desk rejected"
 
 class Outcome(db.Model):
     id = db.Column(db.Integer(), primary_key = True, nullable = False)

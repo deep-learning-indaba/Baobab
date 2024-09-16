@@ -200,6 +200,8 @@ class ResponsePage extends Component {
                     return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 } else if (this.state.outcome.status === 'REJECTED') {
                     return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                } else if (this.state.outcome.status === 'DESK_REJECTED') {
+                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 } else {
                     return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 }
@@ -242,7 +244,16 @@ class ResponsePage extends Component {
                             onClick={(e) => this.submitOutcome('REJECTED')}>
                             Reject
                         </button>
-                    </div>    
+                    </div>  
+                    <div className="user-details">
+                        <button
+                            type="button"
+                            className="btn btn-danger"
+                            id="desk_reject"
+                            onClick={(e) => this.submitOutcome('DESK_REJECTED')}>
+                            Desk Reject
+                        </button>
+                    </div>  
                 </div>
             }
             else if (this.state.event_type === 'CALL') {

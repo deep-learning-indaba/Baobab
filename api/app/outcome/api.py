@@ -106,15 +106,22 @@ class OutcomeAPI(restful.Resource):
             outcome_repository.add(outcome)
             db.session.commit()
 
-            if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
-                email_user(
-                    'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
-                    template_parameters=dict(
-                        host=misc.get_baobab_host()
-                    ),
-                    event=event,
-                    user=user,
-                )
+            if status in [Status.REJECTED, Status.WAITLIST, Status.DESK_REJECTED]:
+                email_template = {
+                    Status.REJECTED: 'outcome-rejected',
+                    Status.WAITLIST: 'outcome-waitlist',
+                    Status.DESK_REJECTED: 'outcome-rejected' #TODO: add desk-rejected tempelate
+                }.get(status)
+
+                if email_template:
+                    email_user(
+                        email_template,
+                        template_parameters=dict(
+                            host=misc.get_baobab_host()
+                        ),
+                        event=event,
+                        user=user,
+                    )
 
             return outcome, 201
 
