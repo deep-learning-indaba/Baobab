@@ -75,6 +75,7 @@ class OutcomeAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
+        req_parser.add_argument('reason', type=str, required=False)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -84,6 +85,8 @@ class OutcomeAPI(restful.Resource):
         user = user_repository.get_by_id(args['user_id'])
         if not user:
             return errors.USER_NOT_FOUND
+        
+        reason = args.get('reason') if args['outcome'] == 'REJECTED' else None
 
         try:
             status = Status[args['outcome']]
@@ -101,7 +104,8 @@ class OutcomeAPI(restful.Resource):
                     event_id,
                     args['user_id'],
                     status,
-                    g.current_user['id'])
+                    g.current_user['id'],
+                    reason=reason)
 
             outcome_repository.add(outcome)
             db.session.commit()

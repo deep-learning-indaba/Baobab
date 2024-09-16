@@ -35,6 +35,8 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
+            showRejectModal: false,
+            rejectReason: '',
         }
     };
 
@@ -94,6 +96,23 @@ class ResponsePage extends Component {
     formatDate = (dateString) => {
         return moment(dateString).format('D MMM YYYY, H:mm:ss [(UTC)]');
     }
+
+    handleRejectClick = () => {
+        this.setState({ showRejectModal: true });
+    }
+
+    handleCloseRejectModal = () => {
+        this.setState({ showRejectModal: false, rejectReason: '' });
+    }
+
+    handleSubmitReject = () => {
+        const { rejectReason } = this.state;
+        const { user_id, event_id } = this.props;
+
+        this.submitOutcome('REJECTED', rejectReason);
+        this.handleCloseRejectModal();
+    }
+
 
     applicationStatus() {
         const data = this.state.applicationData;
@@ -173,12 +192,13 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
+    submitOutcome(selectedOutcome, reason = null) {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, reason).then(response => {
             if (response.status === 201) {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
+                    reason: response.outcome.reason,
                 };
 
                 this.setState({
@@ -190,6 +210,41 @@ class ResponsePage extends Component {
         });
     }
 
+    renderRejectModal() {
+        const { showRejectModal, rejectReason } = this.state;
+        const { t } = this.props;
+
+        if (!showRejectModal) return null;
+
+        return (
+            <div className="modal-overlay" onClick={this.handleCloseRejectModal}>
+                <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <div className="modal-header">
+                        <h2 className="modal-title">{t("Provide Reason for Rejection")}</h2>
+                        <button className="modal-close" onClick={this.handleCloseRejectModal}>&times;</button>
+                    </div>
+                    <div className="modal-body">
+                        <form>
+                            <label htmlFor="rejectReason">{t("Reason")}</label>
+                            <textarea
+                                id="rejectReason"
+                                rows="4"
+                                value={rejectReason}
+                                onChange={(e) => this.setState({ rejectReason: e.target.value })}
+                                placeholder={t("Enter the reason for rejection")}
+                                style={{ width: "100%", padding: "8px", marginTop: "8px" }}
+                            />
+                        </form>
+                    </div>
+                    <div className="modal-footer">
+                        <button onClick={this.handleCloseRejectModal} style={{ padding: "8px 16px" }}>{t("Cancel")}</button>
+                        <button onClick={this.handleSubmitReject} style={{ padding: "8px 16px", backgroundColor: "#dc3545", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}>{t("Submit")}</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     outcomeStatus() {
         const data = this.state.applicationData;
         
@@ -199,7 +254,17 @@ class ResponsePage extends Component {
                 if (this.state.outcome.status === 'ACCEPTED') {
                     return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 } else if (this.state.outcome.status === 'REJECTED') {
-                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                    return (
+                        <span>
+                            <span className={`badge badge-pill badge-danger`}>{this.state.outcome.status}</span> 
+                            {this.formatDate(this.state.outcome.timestamp)}
+                            {this.state.outcome.reason && (
+                                <div className="rejection-reason">
+                                    <strong>{this.props.t("Reason for Rejection")}: </strong>{this.state.outcome.reason}
+                                </div>
+                            )}
+                        </span>
+                    );
                 } else {
                     return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 }
@@ -239,7 +304,7 @@ class ResponsePage extends Component {
                             type="button"
                             class="btn btn-danger"
                             id="reject"
-                            onClick={(e) => this.submitOutcome('REJECTED')}>
+                            onClick={this.handleRejectClick}>
                             Reject
                         </button>
                     </div>    
@@ -653,6 +718,7 @@ class ResponsePage extends Component {
                     </div>
                 }
 
+                {this.renderRejectModal()}
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}

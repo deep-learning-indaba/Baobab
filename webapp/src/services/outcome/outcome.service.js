@@ -31,29 +31,23 @@ function getOutcome(event_id, user_id){
       });
 }
 
-function assignOutcome(user_id, event_id, outcome){
-  return axios
-        .post(baseUrl + "/api/v1/outcome", event_id, { 
-            "headers": authHeader(),
-            "params": {
-                outcome: outcome,
-                event_id: event_id,
-                user_id: user_id
-            }
-        })
-      .then(function (response){
-          return{
-              status:response.status,
-              outcome: response.data
-          }
-      })
-      .catch(function(error) {
-          return {
-            message: null,
-            error:
-              error.response && error.response.data
-                ? error.response.data.message
-                : error.message
-          };
-        });
+function assignOutcome(user_id, event_id, outcome, reason = null) {
+  const data = { user_id, event_id, outcome };
+  if (reason) {
+      data.reason = reason;
+  }
+
+  return axios.post(`${baseUrl}/api/v1/outcome`, data, {  
+      headers: authHeader(),
+  })
+  .then(response => ({
+      status: response.status,
+      outcome: response.data
+  }))
+  .catch(error => ({
+      message: null,
+      error: error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+  }));
 }

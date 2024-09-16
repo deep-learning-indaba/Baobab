@@ -1,3 +1,72 @@
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* Modal Body */
+.modal-body {
+    margin-top: 10px;
+}
+
+/* Modal Footer */
+.modal-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-footer button {
+    margin-left: 10px;
+}
+
+/* Rejection Reason Display */
+.rejection-reason {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8d7da;
+    border-left: 4px solid #f5c6cb;
+    border-radius: 4px;
+}
+
 /* Universal */
 .table-wrapper.response-page {
     width: 87vw;
@@ -406,3 +475,4 @@ font-size: 15px;
 .question-answer-block .question-headline {
     color: #666;
 }
+
