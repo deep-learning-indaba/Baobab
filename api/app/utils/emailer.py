@@ -19,7 +19,8 @@ def email_user(
     event=None,
     subject_parameters=None, 
     file_name='',
-    file_path=''
+    file_path='',
+    reason=None
 ):
     """Send an email to a specified user using an email template. Handles resolving the correct language."""
     if user is None:
@@ -46,6 +47,8 @@ def email_user(
         template_parameters['lastname'] = user.lastname
     if event is not None and 'event_name' not in template_parameters:
         template_parameters['event_name'] = event.get_name(language) if event.has_specific_translation(language) else event.get_name('en')
+    if reason is not None and reason not in template_parameters:
+        template_parameters['reason'] = reason
 
     body_text = email_template.template.format(**template_parameters)
     send_mail(recipient=user.email, subject=subject, body_text=body_text, file_name=file_name, file_path=file_path)

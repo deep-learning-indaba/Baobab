@@ -753,6 +753,7 @@ class ApplicationFormInstanceComponent extends Component {
       startStep: 0,
       new_response: !props.response,
       outcome: props.response && props.response.outcome,
+      reason: props.response && props.response.reason,
       submitValidationErrors: []
     };
   }
@@ -892,16 +893,22 @@ class ApplicationFormInstanceComponent extends Component {
       errorMessage,
       answers,
       isSubmitting,
-      outcome
+      outcome,
+      reason
     } = this.state;
 
+        
+    if (outcome && outcome === "DESK_REJECTED") {
+      console.log("Rejection reason:", reason);
+    }
+    
     if (isError) {
       return <div className={"alert alert-danger alert-container"}>
         {errorMessage}
       </div>;
     }
 
-    if (outcome === "ACCEPTED" || outcome === "REJECTED") {
+    if (outcome === "ACCEPTED" || outcome === "REJECTED" || outcome === "DESK_REJECTED") {
       return <div className={"alert alert-success alert-container"}>
         {outcome === "ACCEPTED" && <div>
           <p>{this.props.t("You have already been accepted to this event.")}</p>
@@ -909,7 +916,9 @@ class ApplicationFormInstanceComponent extends Component {
             {this.props.t("View Offer")}
           </Link>
         </div>}
+
         {outcome === "REJECTED" && <p>{this.props.t("Unfortunately your application to this event has been rejected, you are not able to apply again.")}</p>}
+        {outcome === "DESK_REJECTED" && <p>{"Unfortunately your application to this event has been desk rejected for the following reason:"} {outcome.reason}</p>}
       </div>;
     }
 

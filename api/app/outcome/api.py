@@ -26,6 +26,7 @@ outcome_fields = {
     'id': fields.Integer,
     'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
+    'reason': fields.String,
 }
 
 user_fields = {
@@ -75,6 +76,7 @@ class OutcomeAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
+        req_parser.add_argument('reason', type=str)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -101,7 +103,9 @@ class OutcomeAPI(restful.Resource):
                     event_id,
                     args['user_id'],
                     status,
-                    g.current_user['id'])
+                    g.current_user['id'],
+                    reason=args['reason']
+                )
 
             outcome_repository.add(outcome)
             db.session.commit()
@@ -110,17 +114,19 @@ class OutcomeAPI(restful.Resource):
                 email_template = {
                     Status.REJECTED: 'outcome-rejected',
                     Status.WAITLIST: 'outcome-waitlist',
-                    Status.DESK_REJECTED: 'outcome-rejected' #TODO: add desk-rejected tempelate
+                    Status.DESK_REJECTED: 'outcome-desk-rejected'
                 }.get(status)
 
                 if email_template:
                     email_user(
                         email_template,
                         template_parameters=dict(
-                            host=misc.get_baobab_host()
+                            host=misc.get_baobab_host(),
+                            reason=args['reason']
                         ),
                         event=event,
-                        user=user,
+                        user=user
+                        
                     )
 
             return outcome, 201

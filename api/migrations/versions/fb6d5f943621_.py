@@ -21,6 +21,7 @@ def upgrade():
     op.execute("ALTER TYPE outcome_status_new RENAME TO outcome_status")
 
 def downgrade():
+    op.execute("UPDATE outcome SET status = 'REJECTED' WHERE status = 'DESK_REJECTED'")
     op.execute("CREATE TYPE outcome_status_old AS ENUM ('ACCEPTED', 'REJECTED', 'WAITLIST', 'REVIEW', 'ACCEPT_W_REVISION', 'REJECT_W_ENCOURAGEMENT')")
     op.execute("ALTER TABLE outcome ALTER COLUMN status TYPE outcome_status_old USING status::text::outcome_status_old")
     op.execute("DROP TYPE outcome_status")

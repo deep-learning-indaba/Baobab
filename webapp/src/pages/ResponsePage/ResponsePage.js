@@ -14,6 +14,53 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
+import ApplicationForm from '../applicationForm/components/ApplicationForm';
+
+const PopupModal = ({ isOpen, onClose, children }) => {
+    if (!isOpen) return null;
+  
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <button className="modal-close" onClick={onClose}>&times;</button>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+const deskRejectReasons = [
+    "Incomplete submission",
+    "Out of scope",
+    "Plagiarism detected",
+    "Formatting issues",
+    "Other"
+  ];
+  
+const DeskRejectModal = ({ isOpen, onClose, onConfirm, onReasonChange, t }) => (
+    <PopupModal isOpen={isOpen} onClose={onClose}>
+      <div className="desk-reject-modal">
+        <h2>{t('Select Desk Rejection Reason')}</h2>
+        <div className="reason-list">
+          {deskRejectReasons.map((reason, index) => (
+            <label key={index} className="reason-option">
+              <input
+                type="radio"
+                name="deskRejectReason"
+                value={reason}
+                onChange={() => onReasonChange(reason)}
+              />
+              <span>{reason}</span>
+            </label>
+          ))}
+        </div>
+        <div className="modal-actions">
+          <button className="btn-cancel" onClick={onClose}>{t('Cancel')}</button>
+          <button className="btn-confirm" onClick={onConfirm}>{t('Confirm')}</button>
+        </div>
+      </div>
+    </PopupModal>
+);
 
 class ResponsePage extends Component {
     constructor(props) {
@@ -35,6 +82,8 @@ class ResponsePage extends Component {
             assignableTagTypes: ["RESPONSE"],
             reviewResponses: [],
             outcome: {'status':null,'timestamp':null},
+            deskRejectModalVisible: false,
+            deskRejectReason: '',
         }
     };
 
@@ -93,6 +142,25 @@ class ResponsePage extends Component {
 
     formatDate = (dateString) => {
         return moment(dateString).format('D MMM YYYY, H:mm:ss [(UTC)]');
+    }
+
+    showDeskRejectModal = () => {
+        this.setState({ deskRejectModalVisible: true });
+    }
+
+    hideDeskRejectModal = () => {
+        this.setState({ deskRejectModalVisible: false, deskRejectReason: '' });
+    }
+
+    handleDeskRejectReasonChange = (reason) => {
+        this.setState({ deskRejectReason: reason });
+    }
+
+    confirmDeskReject = () => {
+        if (this.state.deskRejectReason) {
+            this.submitOutcome('DESK_REJECTED', this.state.deskRejectReason);
+            this.hideDeskRejectModal();
+        }
     }
 
     applicationStatus() {
@@ -156,6 +224,7 @@ class ResponsePage extends Component {
                 const newOutcome = {
                     timestamp: response.outcome.timestamp,
                     status: response.outcome.status,
+                    reason: response.outcome.reason,
                 };
                 this.setState(
                     {
@@ -173,26 +242,28 @@ class ResponsePage extends Component {
         });
     };
 
-    submitOutcome(selectedOutcome) {
-        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome).then(response => {
-            if (response.status === 201) {
-                const newOutcome = {
-                    timestamp: response.outcome.timestamp,
-                    status: response.outcome.status,
-                };
+    submitOutcome = (selectedOutcome, reason = null) => {
+        outcomeService.assignOutcome(this.state.applicationData.user_id, this.props.event.id, selectedOutcome, reason)
+            .then(response => {
+                if (response.status === 201) {
+                    const newOutcome = {
+                        timestamp: response.outcome.timestamp,
+                        status: response.outcome.status,
+                        reason: response.outcome.reason, // Add this line
+                    };
 
-                this.setState({
-                    outcome: newOutcome
-                });
-            } else {
-                this.setState({erorr: response.error});
-            }
-        });
+                    this.setState({
+                        outcome: newOutcome
+                    });
+                } else {
+                    this.setState({error: response.error});
+                }
+            });
     }
 
     outcomeStatus() {
         const data = this.state.applicationData;
-        
+        console.log("reason", this.state.outcome.reason);
         if (data) {
 
             if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
@@ -201,7 +272,12 @@ class ResponsePage extends Component {
                 } else if (this.state.outcome.status === 'REJECTED') {
                     return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 } else if (this.state.outcome.status === 'DESK_REJECTED') {
-                    return <span><span class="badge badge-pill badge-danger">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                    return (<span>
+                        <span class="badge badge-pill badge-danger">{this.state.outcome.status}</span>
+                        {this.formatDate(this.state.outcome.timestamp)}
+                        {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>}
+                    </span>
+                    );
                 } else {
                     return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 }
@@ -250,7 +326,7 @@ class ResponsePage extends Component {
                             type="button"
                             className="btn btn-danger"
                             id="desk_reject"
-                            onClick={(e) => this.submitOutcome('DESK_REJECTED')}>
+                            onClick={this.showDeskRejectModal}>
                             Desk Reject
                         </button>
                     </div>  
@@ -664,6 +740,13 @@ class ResponsePage extends Component {
                     </div>
                 }
 
+                <DeskRejectModal
+                isOpen={this.state.deskRejectModalVisible}
+                onClose={this.hideDeskRejectModal}
+                onConfirm={this.confirmDeskReject}
+                onReasonChange={this.handleDeskRejectReasonChange}
+                t={this.props.t}
+                />
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
@@ -672,7 +755,8 @@ class ResponsePage extends Component {
                 {applicationData &&
                     <div className="headings-lower">
                         <div className="user-details">
-                            <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2>
+                            {/* <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2> */}
+                            <h2>User ID: {applicationData.id}</h2>
                             <p>{t("Language")}: {applicationData.language}</p>
                             <div className="tags">
                                 {this.renderTags()}
