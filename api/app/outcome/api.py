@@ -4,10 +4,12 @@ import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.events.models import EventType 
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
+from app.responses.repository import ResponseRepository as response_repository
 from app.utils.emailer import email_user
 
 from app.utils.auth import auth_required, event_admin_required
@@ -87,8 +89,13 @@ class OutcomeAPI(restful.Resource):
         if not user:
             return errors.USER_NOT_FOUND
 
+        response = response_repository.get_submitted_by_user_id_for_event(args['user_id'], event_id)
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
         try:
             status = Status[args['outcome']]
+
         except KeyError:
             return errors.OUTCOME_STATUS_NOT_VALID
 
@@ -109,12 +116,13 @@ class OutcomeAPI(restful.Resource):
 
             outcome_repository.add(outcome)
             db.session.commit()
-
+            print("event_type::::::::", event.event_type)
+            print("Type of event.event_type:::::::", type(event.event_type))
             if status in [Status.REJECTED, Status.WAITLIST, Status.DESK_REJECTED]:
                 email_template = {
-                    Status.REJECTED: 'outcome-rejected',
+                    Status.REJECTED: 'outcome-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-rejected',
                     Status.WAITLIST: 'outcome-waitlist',
-                    Status.DESK_REJECTED: 'outcome-desk-rejected'
+                    Status.DESK_REJECTED: 'outcome-desk-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-desk-rejected'
                 }.get(status)
 
                 if email_template:
@@ -122,7 +130,8 @@ class OutcomeAPI(restful.Resource):
                         email_template,
                         template_parameters=dict(
                             host=misc.get_baobab_host(),
-                            reason=args['reason']
+                            reason=args['reason'],
+                            response_id=response.id
                         ),
                         event=event,
                         user=user

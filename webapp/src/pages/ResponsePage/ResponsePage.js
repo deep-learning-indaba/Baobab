@@ -310,16 +310,17 @@ class ResponsePage extends Component {
                 } else if (this.state.outcome.status === 'REJECTED') {
                     return (
                         <span>
-                        <span className="badge badge-pill badge-danger">{this.state.outcome.status}</span>
+                        <span className="badge badge-pill badge-danger">{"Rejected"}</span>
                         {this.formatDate(this.state.outcome.timestamp)}
-                        {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>}
+                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
                     </span>
                     );
                 } else if (this.state.outcome.status === 'DESK_REJECTED') {
                     return (<span>
-                        <span class="badge badge-pill badge-danger">{this.state.outcome.status}</span>
+                        <span class="badge badge-pill badge-danger">{"Desk Rejected"}</span>
                         {this.formatDate(this.state.outcome.timestamp)}
-                        {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>}
+                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
+
                     </span>
                     );
                 } else {
@@ -792,7 +793,7 @@ class ResponsePage extends Component {
                 t={this.props.t}
                 />
 
-                <DeskRejectModal
+                <RejectModal
                 isOpen={this.state.deskRejectModalVisible}
                 onClose={this.hideDeskRejectModal}
                 onConfirm={this.confirmDeskReject}
@@ -808,7 +809,7 @@ class ResponsePage extends Component {
                     <div className="headings-lower">
                         <div className="user-details">
                             {/* <h2>{applicationData.user_title} {applicationData.firstname} {applicationData.lastname}</h2> */}
-                            <h2>User ID: {applicationData.id}</h2>
+                            <h2>Submission Number: {applicationData.id}</h2>
                             <p>{t("Language")}: {applicationData.language}</p>
                             <div className="tags">
                                 {this.renderTags()}
