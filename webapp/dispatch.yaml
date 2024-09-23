@@ -37,3 +37,6 @@ dispatch:
 
   - url: "apply.khipu.ai/*"
     service: prod-frontend
+
+  - url: "apply.mena.ml/*"
+    service: prod-frontend
