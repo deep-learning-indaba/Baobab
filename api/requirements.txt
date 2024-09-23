@@ -11,7 +11,6 @@ Flask-SQLAlchemy==2.5.1
 Flask-Script==2.0.6
 Flask-Login
 google-api-core
-google-api-python-client
 google-auth 
 google-auth-httplib2 
 google-auth-oauthlib
