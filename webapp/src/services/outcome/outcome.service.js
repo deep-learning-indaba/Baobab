@@ -31,29 +31,35 @@ function getOutcome(event_id, user_id){
       });
 }
 
-function assignOutcome(user_id, event_id, outcome){
+function assignOutcome(user_id, event_id, outcome, reason = null) {
+  const params = {
+      outcome: outcome,
+      event_id: event_id,
+      user_id: user_id
+  };
+  
+  if (reason) {
+      params.reason = reason;
+  }
+
   return axios
-        .post(baseUrl + "/api/v1/outcome", event_id, { 
-            "headers": authHeader(),
-            "params": {
-                outcome: outcome,
-                event_id: event_id,
-                user_id: user_id
-            }
-        })
-      .then(function (response){
-          return{
-              status:response.status,
+      .post(`${baseUrl}/api/v1/outcome`, null, { 
+          headers: authHeader(),
+          params: params
+      })
+      .then(function (response) {
+          return {
+              status: response.status,
               outcome: response.data
           }
       })
       .catch(function(error) {
           return {
-            message: null,
-            error:
-              error.response && error.response.data
-                ? error.response.data.message
-                : error.message
+              message: null,
+              error:
+                  error.response && error.response.data
+                  ? error.response.data.message
+                  : error.message
           };
-        });
+      });
 }
