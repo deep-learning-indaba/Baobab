@@ -136,6 +136,8 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         is_submitted = args['is_submitted']
         application_form_id = args['application_form_id']
         language = args['language']
+        parent_id = args.get('parent_id') # Arg for resubmission
+
         if len(language) != 2:
             language = 'en'  # Fallback to English if language doesn't look like an ISO 639-1 code
 
@@ -146,10 +148,21 @@ class ResponseAPI(ResponseMixin, restful.Resource):
         user = user_repository.get_by_id(user_id)
         responses = response_repository.get_all_for_user_application(user_id, application_form_id)
 
-        if not application_form.nominations and len(responses) > 0:
+        # Check if it's a resubmission
+        if parent_id:
+            parent_response = response_repository.get_by_id(parent_id)
+            if parent_response is None or parent_response.user_id != user_id:
+                return errors.RESPONSE_NOT_FOUND
+
+            # Check if resubmission is allowed
+            outcome = outcome_repository.get_latest_by_user_for_event(user_id, application_form.event_id)
+            if outcome.status not in ['ACCEPT_W_REVISION', 'REJECT_W_ENCOURAGEMENT']:
+                return errors.UNAUTHORIZED
+
+        elif not application_form.nominations and len(responses) > 0:
             return errors.RESPONSE_ALREADY_SUBMITTED
 
-        response = Response(application_form_id, user_id, language)
+        response = Response(application_form_id, user_id, language, parent_id=parent_id)
         response_repository.save(response)
 
         answers = []
@@ -197,6 +210,11 @@ class ResponseAPI(ResponseMixin, restful.Resource):
             return errors.UNAUTHORIZED
         if response.application_form_id != application_form_id:
             return errors.UPDATE_CONFLICT
+        if response.parent_id:
+            # Check if the user is allowed to update this resubmission
+            outcome = outcome_repository.get_latest_by_user_for_event(user_id, response.application_form.event_id)
+            if outcome.status not in ['ACCEPT_W_REVISION', 'REJECT_W_ENCOURAGEMENT']:
+                return errors.UNAUTHORIZED
         
         application_form = application_form_repository.get_by_id(application_form_id)
         if application_form is None:

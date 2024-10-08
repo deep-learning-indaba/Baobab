@@ -7,7 +7,8 @@ export const responsesService = {
     getResponseList,
     getResponseDetail,
     tagResponse,
-    removeTag
+    removeTag,
+    submit
 }
 
 function getResponseList(eventId, includeUnsubmitted, questionIds) {
@@ -119,6 +120,38 @@ function removeTag(responseId, tagId, eventId) {
         })
         .catch(function(error){
             return{
+                error:
+                    error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message,
+                status: error.response && error.response.status
+            };
+        });
+}
+
+function submit(response) {
+    return axios
+        .post(baseUrl + "/api/v1/response", {
+            application_form_id: response.application_form_id,
+            is_submitted: response.is_submitted,
+            answers: response.answers,
+            language: response.language,
+            parent_id: response.parent_id
+        }, { 
+            "headers": authHeader()
+        })
+        .then(response => {
+            let responseData = null;
+            if (response) responseData = response.data;
+            return {
+                response: responseData,
+                status: response.status,
+                message: response.statusText
+            }
+        })
+        .catch(function(error){
+            return{
+                response: null,
                 error:
                     error.response && error.response.data
                     ? error.response.data.message

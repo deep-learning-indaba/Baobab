@@ -149,3 +149,4 @@ rest_api.add_resource(reporting_api.ReviewReportAPI, '/api/v1/reporting/reviews'
 rest_api.add_resource(reporting_api.RegistrationsReportAPI, '/api/v1/reporting/registrations')
 rest_api.add_resource(reviews_api.ReviewerTagAPI, '/api/v1/reviewertag')
 rest_api.add_resource(offer_api.OfferAdminAPI, '/api/v1/offerAdmin')
+rest_api.add_resource(outcome_api.ResubmitAPI, '/api/v1/outcome/resubmit')

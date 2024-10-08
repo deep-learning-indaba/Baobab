@@ -11,7 +11,9 @@ from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
 from app.responses.repository import ResponseRepository as response_repository
 from app.utils.emailer import email_user
-
+from app.responses.models import Response
+from app.responses.repository import ResponseRepository as response_repository
+from app.responses.models import Answer
 from app.utils.auth import auth_required, event_admin_required
 from app import LOGGER
 from app import db
@@ -116,8 +118,6 @@ class OutcomeAPI(restful.Resource):
 
             outcome_repository.add(outcome)
             db.session.commit()
-            print("event_type::::::::", event.event_type)
-            print("Type of event.event_type:::::::", type(event.event_type))
             if status in [Status.REJECTED, Status.WAITLIST, Status.DESK_REJECTED]:
                 email_template = {
                     Status.REJECTED: 'outcome-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-rejected',
@@ -165,7 +165,50 @@ class OutcomeListAPI(restful.Resource):
         except: 
             LOGGER.error("Encountered unknown error: {}".format(traceback.format_exc()))
             return errors.DB_NOT_AVAILABLE
+        
 
+class ResubmitAPI(restful.Resource):
+    @auth_required
+    def post(self):
+        req_parser = reqparse.RequestParser()
+        req_parser.add_argument('user_id', type=int, required=True)
+        req_parser.add_argument('event_id', type=int, required=True)
+        req_parser.add_argument('response_id', type=int, required=True)
+        args = req_parser.parse_args()
+
+        user_id = args['user_id']
+        event_id = args['event_id']
+        response_id = args['response_id']
+
+        if g.current_user['id'] != user_id:
+            return errors.UNAUTHORIZED
+
+        outcome = outcome_repository.get_latest_by_user_for_event(user_id, event_id)
+        if outcome.status not in ['ACCEPT_W_REVISION', 'REJECT_W_ENCOURAGEMENT']:
+            return errors.UNAUTHORIZED
+
+        original_response = response_repository.get_by_id(response_id)
+        if original_response is None or original_response.user_id != user_id:
+            return errors.RESPONSE_NOT_FOUND
+
+        new_response = Response(
+            application_form_id=original_response.application_form_id,
+            user_id=user_id,
+            language=original_response.language,
+            parent_id=original_response.id
+        )
+        response_repository.save(new_response)
+
+        # Copy answers from the original response
+        for answer in original_response.answers:
+            new_answer = Answer(
+                response_id=new_response.id,
+                question_id=answer.question_id,
+                value=answer.value
+            )
+            response_repository.save_answer(new_answer)
+
+        return {'new_response_id': new_response.id}, 201
 
 
         

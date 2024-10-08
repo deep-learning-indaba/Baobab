@@ -6,6 +6,7 @@ const baseUrl = process.env.REACT_APP_API_URL;
 export const outcomeService = {
     getOutcome,
     assignOutcome,
+    resubmit
 }
 
 function getOutcome(event_id, user_id){
@@ -62,4 +63,29 @@ function assignOutcome(user_id, event_id, outcome, reason = null) {
                   : error.message
           };
       });
+}
+
+function resubmit(user_id, event_id, response_id) {
+    return axios
+        .post(`${baseUrl}/api/v1/outcome/resubmit`, null, { 
+            headers: authHeader(),
+            params: {
+                user_id: user_id,
+                event_id: event_id,
+                response_id: response_id
+            }
+        })
+        .then(function (response) {
+            return {
+                newResponseId: response.data.new_response_id
+            }
+        })
+        .catch(function(error) {
+            return {
+                error:
+                    error.response && error.response.data
+                    ? error.response.data.message
+                    : error.message
+            };
+        });
 }

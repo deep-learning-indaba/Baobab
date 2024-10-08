@@ -14,7 +14,7 @@ import { ConfirmModal } from "react-bootstrap4-modal";
 import moment from 'moment'
 import { getDownloadURL } from '../../utils/files';
 import TagSelectorDialog from '../../components/TagSelectorDialog';
-import ApplicationForm from '../applicationForm/components/ApplicationForm';
+import { NavLink, withRouter } from 'react-router-dom';
 
 const PopupModal = ({ isOpen, onClose, children }) => {
     if (!isOpen) return null;
@@ -62,6 +62,28 @@ const DeskRejectModal = ({ isOpen, onClose, onConfirm, onReasonChange, t }) => (
     </PopupModal>
 );
 
+const ResubmissionModal = ({ isOpen, onClose, onConfirm, t, newResponseUrl }) => (
+    <PopupModal isOpen={isOpen} onClose={onClose}>
+        <div className="resubmission-modal">
+            <h2>{t('Resubmit Application')}</h2>
+            <p>{t('Are you sure you want to resubmit your application? This will create a new submission based on your current application.')}</p>
+            <div className="modal-actions">
+                <button className="btn-cancel" onClick={onClose}>{t('Cancel')}</button>
+                <NavLink
+                    to={newResponseUrl}
+                    className="btn-confirm"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        onConfirm();
+                    }}
+                >
+                    {t('Confirm')}
+                </NavLink>
+            </div>
+        </div>
+    </PopupModal>
+);
+
 const RejectModal = ({ isOpen, onClose, onConfirm, onReasonChange, t }) => (
     <PopupModal isOpen={isOpen} onClose={onClose}>
       <div className="reject-modal">
@@ -103,6 +125,8 @@ class ResponsePage extends Component {
             deskRejectReason: '',
             rejectModalVisible: false,
             rejectReason: '',
+            resubmissionModalVisible: false,
+            newResponseUrl: ''
         }
     };
 
@@ -184,22 +208,52 @@ class ResponsePage extends Component {
 
     showRejectModal = () => {
         this.setState({ rejectModalVisible: true });
-      }
-    
-      hideRejectModal = () => {
-        this.setState({ rejectModalVisible: false, rejectReason: '' });
-      }
-    
-      handleRejectReasonChange = (reason) => {
-        this.setState({ rejectReason: reason });
-      }
-    
-      confirmReject = () => {
+    }
+
+    hideRejectModal = () => {
+      this.setState({ rejectModalVisible: false, rejectReason: '' });
+    }
+
+    handleRejectReasonChange = (reason) => {
+      this.setState({ rejectReason: reason });
+    }
+
+    confirmReject = () => {
         if (this.state.rejectReason) {
           this.submitOutcome('REJECTED', this.state.rejectReason);
           this.hideRejectModal();
         }
-      }
+    }
+
+    showResubmissionModal = () => {
+        const { event } = this.props;
+        this.setState({ 
+            resubmissionModalVisible: true,
+            newResponseUrl: `/${event.key}/apply/new`
+        });
+    }
+
+    hideResubmissionModal = () => {
+        this.setState({ resubmissionModalVisible: false });
+    }
+
+    handleResubmission = () => {
+        const { applicationData } = this.state;
+        const { event } = this.props;
+        
+        outcomeService.resubmit(applicationData.user_id, event.id, applicationData.id)
+            .then(response => {
+                if (response.error) {
+                    this.setState({ error: response.error });
+                } else {
+                    // Navigate to the new response page
+                    this.props.history.push(this.state.newResponseUrl);
+                }
+            });
+
+        this.hideResubmissionModal();
+    }
+
 
     applicationStatus() {
         const data = this.state.applicationData;
@@ -305,28 +359,35 @@ class ResponsePage extends Component {
         if (data) {
 
             if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
-                if (this.state.outcome.status === 'ACCEPTED') {
-                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
-                } else if (this.state.outcome.status === 'REJECTED') {
-                    return (
-                        <span>
-                        <span className="badge badge-pill badge-danger">{"Rejected"}</span>
-                        {this.formatDate(this.state.outcome.timestamp)}
-                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
-                    </span>
-                    );
-                } else if (this.state.outcome.status === 'DESK_REJECTED') {
-                    return (<span>
-                        <span class="badge badge-pill badge-danger">{"Desk Rejected"}</span>
-                        {this.formatDate(this.state.outcome.timestamp)}
-                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
-
-                    </span>
-                    );
-                } else {
-                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                let outcomeElement;
+                switch (this.state.outcome.status) {
+                    case 'ACCEPTED':
+                        outcomeElement = <span className="badge badge-pill badge-success">{this.state.outcome.status}</span>;
+                        break;
+                    case 'REJECTED':
+                    case 'DESK_REJECTED':
+                        outcomeElement = <span className="badge badge-pill badge-danger">{this.state.outcome.status === 'DESK_REJECTED' ? 'Desk Rejected' : 'Rejected'}</span>;
+                        break;
+                    case 'ACCEPT_W_REVISION':
+                    case 'REJECT_W_ENCOURAGEMENT':
+                        outcomeElement = (
+                            <>
+                                <span className="badge badge-pill badge-warning">{this.state.outcome.status}</span>
+                                <button className="btn btn-primary ml-2" onClick={this.showResubmissionModal}>Resubmit</button>
+                            </>
+                        );
+                        break;
+                    default:
+                        outcomeElement = <span className="badge badge-pill badge-warning">{this.state.outcome.status}</span>;
                 }
-            };
+                
+                return (
+                    <span>
+                        {outcomeElement} {this.formatDate(this.state.outcome.timestamp)}
+                        {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>}
+                    </span>
+                );
+            }
 
             if (this.state.event_type === 'JOURNAL') {
                 return <div className='user-details'>
@@ -800,6 +861,15 @@ class ResponsePage extends Component {
                 onReasonChange={this.handleDeskRejectReasonChange}
                 t={this.props.t}
                 />
+
+                <ResubmissionModal
+                    isOpen={this.state.resubmissionModalVisible}
+                    onClose={this.hideResubmissionModal}
+                    onConfirm={this.handleResubmission}
+                    t={this.props.t}
+                    newResponseUrl={this.state.newResponseUrl}
+                />
+
                 {this.renderReviewerModal()}
                 {this.renderDeleteTagModal()}
                 {this.renderDeleteReviewerModal()}
@@ -880,4 +950,4 @@ class ResponsePage extends Component {
     };
 };
 
-export default withTranslation()(ResponsePage);
+export default withTranslation()(withRouter(ResponsePage));
