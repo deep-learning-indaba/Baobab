@@ -116,8 +116,6 @@ class OutcomeAPI(restful.Resource):
 
             outcome_repository.add(outcome)
             db.session.commit()
-            print("event_type::::::::", event.event_type)
-            print("Type of event.event_type:::::::", type(event.event_type))
             if status in [Status.REJECTED, Status.WAITLIST, Status.DESK_REJECTED]:
                 email_template = {
                     Status.REJECTED: 'outcome-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-rejected',
