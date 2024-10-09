@@ -17,7 +17,7 @@ google-auth-oauthlib
 Mako
 MarkupSafe==2.0.0
 SQLAlchemy==1.3.23
-Werkzeug==0.16.1
+Werkzeug==2.2.3
 alembic
 aniso8601
 blinker
