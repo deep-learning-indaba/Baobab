@@ -299,32 +299,47 @@ class ResponsePage extends Component {
             });
     }
 
+    handleResubmit = () => {
+        const { applicationData, event } = this.props;
+        this.props.history.push(`/${event.key}/apply/new?resubmit=${applicationData.id}`);
+    }
+
     outcomeStatus() {
         const data = this.state.applicationData;
-        console.log("reason", this.state.outcome.reason);
         if (data) {
-
             if (this.state.outcome.status && this.state.outcome.status !== 'REVIEW') {
                 if (this.state.outcome.status === 'ACCEPTED') {
-                    return <span><span class="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                return <span><span className="badge badge-pill badge-success">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 } else if (this.state.outcome.status === 'REJECTED') {
-                    return (
-                        <span>
-                        <span className="badge badge-pill badge-danger">{"Rejected"}</span>
-                        {this.formatDate(this.state.outcome.timestamp)}
-                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
+                return (
+                    <span>
+                    <span className="badge badge-pill badge-danger">{this.props.t("Rejected")}</span>
+                    {this.formatDate(this.state.outcome.timestamp)}
                     </span>
-                    );
+                );
                 } else if (this.state.outcome.status === 'DESK_REJECTED') {
-                    return (<span>
-                        <span class="badge badge-pill badge-danger">{"Desk Rejected"}</span>
-                        {this.formatDate(this.state.outcome.timestamp)}
-                        {/* {this.state.outcome.reason && <span> <br/> - Reason: {this.state.outcome.reason}</span>} */}
-
+                return (
+                    <span>
+                    <span className="badge badge-pill badge-danger">{this.props.t("Desk Rejected")}</span>
+                    {this.formatDate(this.state.outcome.timestamp)}
                     </span>
-                    );
+                );
+                } else if (this.state.outcome.status === 'REJECT_W_ENCOURAGEMENT') {
+                return (
+                    <span>
+                    <span className="badge badge-pill badge-warning">{this.props.t("Rejected with Encouragement to resubmit")}</span>
+                    {this.formatDate(this.state.outcome.timestamp)}
+                    </span>
+                );
+                } else if (this.state.outcome.status === 'ACCEPT_W_REVISION') {
+                return (
+                    <span>
+                    <span className="badge badge-pill badge-info">{this.props.t("Accepted with Revision")}</span>
+                    {this.formatDate(this.state.outcome.timestamp)}
+                    </span>
+                );
                 } else {
-                    return <span><span class="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
+                return <span><span className="badge badge-pill badge-warning">{this.state.outcome.status}</span> {this.formatDate(this.state.outcome.timestamp)}</span>
                 }
             };
 
@@ -731,6 +746,26 @@ class ResponsePage extends Component {
         />
     };
 
+    renderReason() {
+        const { outcome } = this.state;
+        if ((outcome.status === 'DESK_REJECTED' || outcome.status === 'REJECTED') && outcome.reason) {
+            return (
+                
+                <div className="reviewers-section">
+                    <div className="divider"></div>
+                        <h3>{this.props.t("Editors' Note")}</h3>
+                        <div className="question-answer-block">
+                        {outcome.reason}
+                        </div>
+                    <div className="divider"></div>
+                </div>
+                
+            );
+        }
+        return null;
+    }
+
+
     renderDeleteReviewerModal() {
         const t = this.props.t;
 
@@ -854,6 +889,9 @@ class ResponsePage extends Component {
                         </div>
 
                         {this.renderSections()}
+                        {this.renderReason()}
+                        
+
                         {
                             this.state.reviewResponses.length > 0 && (
                         <div>
