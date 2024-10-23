@@ -220,40 +220,42 @@ class ResponsePage extends Component {
         };
     };
 
-    renderReviewResponse(review_response, section) {
-        const questions = section.review_questions.map(q => {
-            const a = review_response.scores.find(a => a.review_question_id === q.id);
-
-            if (a) {
-                return <div>
-            <div key={q.question_id} className="question-answer-block">
-                <p><span className="question-headline">{q.headline}</span>
-                    {q.description && a && <span className="question-description"><br/>{q.description}</span>}
-                </p>
-                <h6><AnswerValue answer={a} question={q} /></h6>
+    renderReviewResponse(review_response, sections) {
+        return sections.map(section => (
+            <div key={section.id} className="review-section">
+                <h5>{section.name}</h5>
+                {section.review_questions.map(q => {
+                    const a = review_response.scores.find(a => a.review_question_id === q.id);
+                    if (a) {
+                        return (
+                            <div key={q.id} className="question-answer-block">
+                                <p>
+                                    <span className="question-headline">{q.headline}</span>
+                                    {q.description && <span className="question-description"><br/>{q.description}</span>}
+                                </p>
+                                <h6><AnswerValue answer={a} question={q} /></h6>
+                            </div>
+                        );
+                    }
+                    return null;
+                })}
             </div>
-            </div>
-            }
-            
-            
-        });
-        return questions
-    };
+        ));
+    }
     
     // Render Reviews
-    renderCompleteReviews(){
-        if (this.state.reviewResponses.length) {
-                const reviews = this.state.reviewResponses.map(val => {
-                    return <div className="section">
-                            <h4
-                                className="reviewer-section" >
-                                {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
-                            </h4>
-                        {this.renderReviewResponse(val, this.state.reviewForm.review_sections[0])}
-                    </div>
-                });
-                return reviews
-            }
+    renderCompleteReviews() {
+        if (this.state.reviewResponses.length && this.state.reviewForm) {
+            return this.state.reviewResponses.map(val => (
+                <div key={val.id} className="section">
+                    <h4 className="reviewer-section">
+                        {this.props.t(val.reviewer_user_firstname + " " + val.reviewer_user_lastname)}
+                    </h4>
+                    {this.renderReviewResponse(val, this.state.reviewForm.review_sections)}
+                </div>
+            ));
+        }
+        return null;
     }
 
     getOutcome() {
