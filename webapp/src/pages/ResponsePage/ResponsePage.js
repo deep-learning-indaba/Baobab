@@ -757,7 +757,9 @@ class ResponsePage extends Component {
                     <div className="divider"></div>
                         <h3>{this.props.t("Editors' Note")}</h3>
                         <div className="question-answer-block">
-                        {outcome.reason}
+                        <div style={{ whiteSpace: 'pre-line' }}>
+                            {outcome.reason}
+                        </div>
                         </div>
                     <div className="divider"></div>
                 </div>
@@ -890,8 +892,9 @@ class ResponsePage extends Component {
                             <div className="divider"></div>
                         </div>
 
-                        {this.renderSections()}
                         {this.renderReason()}
+                        {this.renderSections()}
+                        
                         
 
                         {
