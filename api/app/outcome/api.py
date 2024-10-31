@@ -4,10 +4,12 @@ import flask_restful as restful
 from flask import g, request
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.events.models import EventType 
 from app.outcome.models import Outcome, Status
 from app.outcome.repository import OutcomeRepository as outcome_repository
 from app.events.repository import EventRepository as event_repository
 from app.users.repository import UserRepository as user_repository
+from app.responses.repository import ResponseRepository as response_repository
 from app.utils.emailer import email_user
 
 from app.utils.auth import auth_required, event_admin_required
@@ -26,6 +28,7 @@ outcome_fields = {
     'id': fields.Integer,
     'status': fields.String(attribute=_extract_status),
     'timestamp': fields.DateTime(dt_format='iso8601'),
+    'reason': fields.String,
 }
 
 user_fields = {
@@ -75,6 +78,7 @@ class OutcomeAPI(restful.Resource):
         req_parser = reqparse.RequestParser()
         req_parser.add_argument('user_id', type=int, required=True)
         req_parser.add_argument('outcome', type=str, required=True)
+        req_parser.add_argument('reason', type=str)
         args = req_parser.parse_args()
 
         event = event_repository.get_by_id(event_id)
@@ -85,8 +89,13 @@ class OutcomeAPI(restful.Resource):
         if not user:
             return errors.USER_NOT_FOUND
 
+        response = response_repository.get_submitted_by_user_id_for_event(args['user_id'], event_id)
+        if not response:
+            return errors.RESPONSE_NOT_FOUND
+
         try:
             status = Status[args['outcome']]
+
         except KeyError:
             return errors.OUTCOME_STATUS_NOT_VALID
 
@@ -101,20 +110,31 @@ class OutcomeAPI(restful.Resource):
                     event_id,
                     args['user_id'],
                     status,
-                    g.current_user['id'])
+                    g.current_user['id'],
+                    reason=args['reason']
+                )
 
             outcome_repository.add(outcome)
             db.session.commit()
+            if status in [Status.REJECTED, Status.WAITLIST, Status.DESK_REJECTED]:
+                email_template = {
+                    Status.REJECTED: 'outcome-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-rejected',
+                    Status.WAITLIST: 'outcome-waitlist',
+                    Status.DESK_REJECTED: 'outcome-desk-rejected' if not event.event_type == EventType.JOURNAL else 'outcome-journal-desk-rejected'
+                }.get(status)
 
-            if (status == Status.REJECTED or status == Status.WAITLIST):  # Email will be sent with offer for accepted candidates  
-                email_user(
-                    'outcome-rejected' if status == Status.REJECTED else 'outcome-waitlist',
-                    template_parameters=dict(
-                        host=misc.get_baobab_host()
-                    ),
-                    event=event,
-                    user=user,
-                )
+                if email_template:
+                    email_user(
+                        email_template,
+                        template_parameters=dict(
+                            host=misc.get_baobab_host(),
+                            reason=args['reason'],
+                            response_id=response.id
+                        ),
+                        event=event,
+                        user=user
+                        
+                    )
 
             return outcome, 201
 
