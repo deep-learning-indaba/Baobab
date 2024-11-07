@@ -13,6 +13,7 @@ import { reviewService } from '../../../services/reviews/review.service';
 import { ConfirmModal } from "react-bootstrap4-modal";
 import TagSelectorDialog from '../../../components/TagSelectorDialog';
 import { createColClassName } from "../../../utils/styling/styling";
+import { isEventResponseViewerOnly } from '../../../utils/user';
 
 class ResponseListComponent extends Component {
     constructor(props) {
@@ -373,42 +374,41 @@ class ResponseListComponent extends Component {
                         />
                     </div>
                 </div>
-
-                <form>
-                    <div className="card">
-                    <p className="h4 text-center mb-4">{t("Assign Reviewer")}</p>
-
-                    <div className="row">
-                        <p className="h6 text-center mb-3">{t("Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)")}</p>
-                        
-                        <div className="col-md-10 pr-2">
-                            <FormTextBox
-                                id={"newReviewEmail"}
-                                name={'newReviewEmail'}
-                                placeholder={t("Email")}
-                                onChange={this.handleChange}
-                                value={newReviewerEmail}
-                                key={"newReviewEmail"} />
-                        </div>
-                        <div className="col-md-2 pr-2">
-                            <button
-                                className="btn btn-primary btn-block"
-                                onClick={() => { this.assignReviewer() }}
-                                disabled={!newReviewerEmail}>
-                                {t("Assign")}
-                            </button>
-                        </div>
-
-                        {reviewerAssignError && <span className="alert alert-danger">
-                            {JSON.stringify(this.state.reviewerAssignError)}
-                        </span>}
-
-                        {reviewerAssignSuccess && <span className="alert alert-success">
-                            <Trans i18nKey="reviewsAssigned">Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}</Trans>
-                        </span>}
-                    </div>
-                    </div>
-                </form>
+                
+                {(!isEventResponseViewerOnly(this.props.user && this.props.event) &&
+                  <form>
+                      <div className="card">
+                      <p className="h4 text-center mb-4">{t("Assign Reviewer")}</p>
+                      <div className="row">
+                          <p className="h6 text-center mb-3">{t("Filter the table above then enter a reviewer's email to assign them the filtered rows (the reviewer must already have a Baobab account)")}</p>
+                          
+                          <div className="col-md-10 pr-2">
+                              <FormTextBox
+                                  id={"newReviewEmail"}
+                                  name={'newReviewEmail'}
+                                  placeholder={t("Email")}
+                                  onChange={this.handleChange}
+                                  value={newReviewerEmail}
+                                  key={"newReviewEmail"} />
+                          </div>
+                          <div className="col-md-2 pr-2">
+                              <button
+                                  className="btn btn-primary btn-block"
+                                  onClick={() => { this.assignReviewer() }}
+                                  disabled={!newReviewerEmail}>
+                                  {t("Assign")}
+                              </button>
+                          </div>
+                          {reviewerAssignError && <span className="alert alert-danger">
+                              {JSON.stringify(this.state.reviewerAssignError)}
+                          </span>}
+                          {reviewerAssignSuccess && <span className="alert alert-success">
+                              <Trans i18nKey="reviewsAssigned">Assigned {{numReviewsAssigned}} reviews to {{assignedReviewerEmail}}</Trans>
+                          </span>}
+                      </div>
+                      </div>
+                  </form>
+                )}
 
                 <TagSelectorDialog
                     tags={this.state.filteredTags}

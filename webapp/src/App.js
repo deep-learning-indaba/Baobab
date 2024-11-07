@@ -22,7 +22,7 @@ import ReactGA from "react-ga";
 import "./App.css";
 import history from "./History";
 
-import { isEventAdmin, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
+import { isEventAdmin, isEventResponseViewerOnly, isEventResponseEditorOnly, isRegistrationAdmin, isRegistrationVolunteer, isEventReviewer } from "./utils/user";
 import { withTranslation } from 'react-i18next';
 import { userService } from "./services/user";
 
@@ -60,7 +60,9 @@ class EventNav extends Component {
         } id="eventNavbar">
 
           <ul className="navbar-nav">
-            {this.props.user &&
+            {!isEventResponseViewerOnly(this.props.user, this.props.event) &&
+              !isEventResponseEditorOnly(this.props.user, this.props.event) &&
+              this.props.user &&
               this.props.event &&
               this.props.event.is_application_open && (
                 <li className="nav-item">
@@ -74,7 +76,9 @@ class EventNav extends Component {
                   </NavLink>
                 </li>
               )}
-            {this.props.user && this.props.event && this.props.event.is_offer_open && (
+            {!isEventResponseViewerOnly(this.props.user, this.props.event) &&
+              !isEventResponseEditorOnly(this.props.user, this.props.event) &&
+              this.props.user && this.props.event && this.props.event.is_offer_open && (
               <li className="nav-item">
                 <NavLink
                   to={`/${this.props.eventKey}/offer`}
@@ -86,7 +90,9 @@ class EventNav extends Component {
                 </NavLink>
               </li>
             )}
-            {this.props.user &&
+            {!isEventResponseViewerOnly(this.props.user, this.props.event) &&
+              !isEventResponseEditorOnly(this.props.user, this.props.event) &&
+              this.props.user &&
                (
                 <li className="nav-item dropdown ">
                   <div
@@ -132,7 +138,8 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {isEventAdmin(this.props.user, this.props.event) && (
+            {isEventAdmin(this.props.user, this.props.event) && !isEventResponseViewerOnly(this.props.user, this.props.event) &&
+              !isEventResponseEditorOnly(this.props.user, this.props.event) && (
               <AdminMenu t={t} label="Event Admin">
                 <NavLink
                     to={`/${this.props.eventKey}/eventConfig`}
@@ -206,7 +213,7 @@ class EventNav extends Component {
                     {t('Review Form')}
                   </NavLink>
                 </AdminMenu>
-            )}
+            )}         
             {isEventReviewer(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_review_open && (
@@ -239,7 +246,8 @@ class EventNav extends Component {
                   </div>
                 </li>
               )}
-            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) &&
+            {(isRegistrationAdmin(this.props.user, this.props.event) || isRegistrationVolunteer(this.props.user, this.props.event)) && !isEventResponseViewerOnly(this.props.user, this.props.event) &&
+              !isEventResponseEditorOnly(this.props.user, this.props.event) &&
               this.props.event &&
               this.props.event.is_registration_open && (
                 <li className="nav-item dropdown">
