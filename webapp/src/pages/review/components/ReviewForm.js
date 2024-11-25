@@ -376,7 +376,7 @@ class ReviewForm extends Component {
             }))
         }));
 
-        const isValid = !validatedModels.map(s=>s.questions).some(v => v.validationError);
+        const isValid = !validatedModels.flatMap(s=>s.questions).some(v => v.validationError);
 
         this.setState(
             {
