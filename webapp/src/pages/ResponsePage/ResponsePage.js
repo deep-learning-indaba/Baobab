@@ -24,7 +24,6 @@ class ResponsePage extends Component {
         this.state = {
             error: false,
             eventLanguages: [],
-            totalScore:0,
             isLoading: true,
             removeTagModalVisible: false,
             removeReviewerModalVisible: false,
@@ -59,7 +58,6 @@ class ResponsePage extends Component {
             }, () => {
                 this.getOutcome();
                 this.getReviewResponses(responses[2].detail);
-                this.getTotal(responses[2].detail);
                 this.filterTagList();
             });
         });
@@ -73,8 +71,6 @@ class ResponsePage extends Component {
                         error: resp.error
                     });
                 }
-               
-    
                 if(resp.form) {
                     this.setState( {
                         reviewResponses: resp.form.review_responses,
@@ -86,29 +82,6 @@ class ResponsePage extends Component {
                 }
             });
     }
-
-    getTotal(applicationData) {
-        reviewService.getReviewList(this.props.event.id)
-        .then(resp => {
-            if (resp.error) {
-                this.setState({
-                    error: resp.error
-                });
-            } else {                
-                const applicationId = applicationData.id;
-                const matchingResponse = resp.reviewList.find(review => review.response_id === applicationId);
-                this.setState( {
-                    totalScore: matchingResponse.total_score
-                 });
-    
-            }
-        })
-        .catch(error => {
-            console.error("Error fetching review list:", error);
-        });
-        
-    }
-
     
 
     // Misc Functions
@@ -144,10 +117,11 @@ class ResponsePage extends Component {
     };
 
 
+
     renderReviewResponse(review_response, section) {
         const questions = section.review_questions.map(q => {
             const a = review_response.scores.find(a => a.review_question_id === q.id);
-    
+
             if (a) {
                 return (
                     <div key={q.id} className="question-answer-block">
@@ -165,9 +139,22 @@ class ResponsePage extends Component {
         return questions;
     }
     
+
     renderCompleteReviews() {
         if (this.state.reviewResponses.length) {
             const reviews = this.state.reviewResponses.map(val => {
+                let totalScore = 0;
+    
+                // here compute total score 
+                this.state.reviewForm.review_sections.forEach(section => {
+                    section.review_questions.forEach(q => {
+                        const answer = val.scores.find(a => a.review_question_id === q.id);
+                        if (answer && answer.value) {
+                            totalScore += parseFloat(answer.value)*parseFloat(q.weight) || 0; 
+                        }
+                    });
+                });
+    
                 return (
                     <div key={val.id} className="review-container">
                         <h4 className="reviewer-section">
@@ -175,15 +162,15 @@ class ResponsePage extends Component {
                         </h4>
                         {this.state.reviewForm.review_sections.map(section => (
                             <div key={section.id} className="section">
-                            <div className="flex baseline"><h3>{section.headline}</h3></div>
+                                <h5>{section.headline}</h5>
                                 {this.renderReviewResponse(val, section)}
                             </div>
                         ))}
                         <hr/>
                         <div className="review-total-score">
-                        <h5>Total Score: {this.state.totalScore}</h5>
-                    </div>
-                    <hr/>
+                            <h5>Total Score: {totalScore.toFixed(2)}</h5>
+                        </div>
+                        <hr/>
                     </div>
                 );
             });
