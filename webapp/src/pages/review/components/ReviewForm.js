@@ -309,7 +309,7 @@ class ReviewForm extends Component {
 
     computeTotalScore = (questionModels) => {
         return questionModels.flatMap(s => s.questions).reduce((acc, q) =>
-            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value) : 0)
+            acc + (q.question.weight > 0 && q.score && parseFloat(q.score.value) ? parseFloat(q.score.value*q.question.weight) : 0)
         , 0);
     }
 
