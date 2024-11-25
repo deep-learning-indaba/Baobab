@@ -211,7 +211,13 @@ const Question = forwardRef(({
       setErrorMessage('Label or Value cannot be empty');
     } else {
       const opt = inputs.options;
-
+  
+      // validation to ensure unique option values
+      if (opt[lang].some(option => option.value === inputs.value[lang])) {
+        setErrorMessage('Value must be unique');
+        return;
+      }
+  
       setSections(prevSections => prevSections.map(s => {
         if (s.id === sectionId) {
           s = {...section, questions: s.questions.map(q => {
@@ -222,12 +228,12 @@ const Question = forwardRef(({
                 label: inputs.label[lang],
               }]}}
             }
-            return q
+            return q;
           })}
         }
-        return s
+        return s;
       }));
-      
+  
       setSections(prevSections => {
         const { value, label } = inputs;
         return prevSections.map(s => {
@@ -237,15 +243,15 @@ const Question = forwardRef(({
                 q = {...q, value: {...value, [lang]: ''}};
                 q = {...q, label: {...label, [lang]: ''}};
               }
-              return q
+              return q;
             })}
           }
           return s;
         });
       });
-
     }
-  }
+  };
+  
 
   const handleDeleteOption = (id, e) => {
     const newOptions = inputs.options[lang].filter(o => o.id !== id);
