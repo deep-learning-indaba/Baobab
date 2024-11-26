@@ -143,17 +143,6 @@ class ResponsePage extends Component {
     renderCompleteReviews() {
         if (this.state.reviewResponses.length) {
             const reviews = this.state.reviewResponses.map(val => {
-                let totalScore = 0;
-    
-                // here compute total score 
-                this.state.reviewForm.review_sections.forEach(section => {
-                    section.review_questions.forEach(q => {
-                        const answer = val.scores.find(a => a.review_question_id === q.id);
-                        if (answer && answer.value) {
-                            totalScore += parseFloat(answer.value)*parseFloat(q.weight) || 0; 
-                        }
-                    });
-                });
     
                 return (
                     <div key={val.id} className="review-container">
@@ -166,11 +155,6 @@ class ResponsePage extends Component {
                                 {this.renderReviewResponse(val, section)}
                             </div>
                         ))}
-                        <hr/>
-                        <div className="review-total-score">
-                            <h5>Total Score: {totalScore.toFixed(2)}</h5>
-                        </div>
-                        <hr/>
                     </div>
                 );
             });
